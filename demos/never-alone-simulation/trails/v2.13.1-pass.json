@@ -1,0 +1,367 @@
+{
+    "trails": [
+      {
+        "compliance_state": "COMPLIANT",
+        "compliance_status": {
+          "artifacts_statuses": {},
+          "attestations_statuses": {
+            "four-eyes-result": {
+              "attestation_data": {
+                "allow": true,
+                "input": {
+                  "trails": [
+                    {
+                      "compliance_state": "COMPLIANT",
+                      "compliance_status": {
+                        "artifacts_statuses": {},
+                        "attestations_statuses": {
+                          "pr-review": {
+                            "attestation_id": "9a1c6a0c-0c11-4647-bf84-e2af62fa",
+                            "attestation_name": "pr-review",
+                            "attestation_type": "pull_request",
+                            "created_at": 1779991840.6812742,
+                            "git_commit_info": {
+                              "author": "Peter Beckham \u003cpeter.beckham@gmail.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "Trim leading periods from artifacts (#713)\n\nKosli cli rejects artifact names that begin with a . so have to trim them",
+                              "sha1": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                              "timestamp": 1773911406,
+                              "url": "https://github.com/kosli-dev/cli/commit/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe"
+                            },
+                            "git_provider": "github",
+                            "has_audit_package": false,
+                            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe?attestation_id=9a1c6a0c-0c11-4647-bf84-e2af62fa",
+                            "is_compliant": true,
+                            "overridden_attestation_id": null,
+                            "pull_requests": [
+                              {
+                                "approvers": [
+                                  {
+                                    "state": "APPROVED",
+                                    "timestamp": 1773910425,
+                                    "username": "gsavage"
+                                  }
+                                ],
+                                "author": "pbeckham",
+                                "commits": [
+                                  {
+                                    "author": "Peter Beckham \u003cpeter.beckham@kosli.com\u003e",
+                                    "author_username": "pbeckham",
+                                    "branch": "trim-release-artifact-naming-for-binary-provenance",
+                                    "message": "Trim leading periods from artifacts",
+                                    "sha1": "65bf4b2ef82c7970d6b0fb21692a9a857a1924ed",
+                                    "timestamp": 1773908988,
+                                    "url": "https://github.com/kosli-dev/cli/commit/65bf4b2ef82c7970d6b0fb21692a9a857a1924ed"
+                                  }
+                                ],
+                                "created_at": 1773909058,
+                                "head_ref": "trim-release-artifact-naming-for-binary-provenance",
+                                "merge_commit": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                                "merged_at": 1773911406,
+                                "state": "MERGED",
+                                "title": "Trim leading periods from artifacts",
+                                "url": "https://github.com/kosli-dev/cli/pull/713"
+                              }
+                            ],
+                            "reported_by": "test",
+                            "schema_version": 2,
+                            "status": "COMPLETE",
+                            "unexpected": true,
+                            "user_data": {}
+                          }
+                        },
+                        "evaluated_at": 1779991839.8811657,
+                        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                        "is_compliant": true,
+                        "status": "COMPLIANT"
+                      },
+                      "created_at": 1779991839.8811657,
+                      "created_by": "test",
+                      "description": "",
+                      "events": [
+                        {
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Peter Beckham \u003cpeter.beckham@gmail.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Trim leading periods from artifacts (#713)\n\nKosli cli rejects artifact names that begin with a . so have to trim them",
+                            "parents": null,
+                            "sha1": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                            "timestamp": 1773911406,
+                            "url": "https://github.com/kosli-dev/cli/commit/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe"
+                          },
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "timestamp": 1779991839.8811657,
+                          "trail_data_json": {
+                            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                            "description": "",
+                            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                            "git_commit_info": {
+                              "author": "Peter Beckham \u003cpeter.beckham@gmail.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "Trim leading periods from artifacts (#713)\n\nKosli cli rejects artifact names that begin with a . so have to trim them",
+                              "sha1": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                              "timestamp": 1773911406,
+                              "url": "https://github.com/kosli-dev/cli/commit/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe"
+                            },
+                            "name": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                            "user_data": "{}"
+                          },
+                          "trail_id": "42f248c3-e13f-48d7-b92b-2ffb6a53",
+                          "type": "trail_reported"
+                        },
+                        {
+                          "attestation_id": "9a1c6a0c-0c11-4647-bf84-e2af62fa",
+                          "attestation_type": "pull_request",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Peter Beckham \u003cpeter.beckham@gmail.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Trim leading periods from artifacts (#713)\n\nKosli cli rejects artifact names that begin with a . so have to trim them",
+                            "parents": null,
+                            "sha1": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                            "timestamp": 1773911406,
+                            "url": "https://github.com/kosli-dev/cli/commit/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe"
+                          },
+                          "is_compliant": true,
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "template_reference_name": "pr-review",
+                          "timestamp": 1779991840.6812742,
+                          "trail_id": "42f248c3-e13f-48d7-b92b-2ffb6a53",
+                          "type": "trail_attestation_reported"
+                        }
+                      ],
+                      "external_urls": null,
+                      "flow": {
+                        "name": "cli-granular-demo-20260528180923",
+                        "tags": {}
+                      },
+                      "git_commit_info": {
+                        "author": "Peter Beckham \u003cpeter.beckham@gmail.com\u003e",
+                        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                        "message": "Trim leading periods from artifacts (#713)\n\nKosli cli rejects artifact names that begin with a . so have to trim them",
+                        "sha1": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                        "timestamp": 1773911406,
+                        "url": "https://github.com/kosli-dev/cli/commit/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe"
+                      },
+                      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                      "is_compliant": true,
+                      "last_modified_at": 1779991840.6812742,
+                      "name": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                      "origin_url": null,
+                      "repo_ids": [],
+                      "template": {
+                        "content": "version: 1",
+                        "trail": {
+                          "artifacts": [],
+                          "attestations": []
+                        },
+                        "version": 1
+                      },
+                      "user_data": {}
+                    }
+                  ]
+                },
+                "violations": null
+              },
+              "attestation_id": "9dca5bc8-894f-4baf-9268-7f6f1d4a",
+              "attestation_name": "four-eyes-result",
+              "attestation_type": "custom:four-eyes-result",
+              "created_at": 1779991841.421891,
+              "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+              "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/53a0210a-0e22-4186-ae17-b76275e7/four-eyes.rego",
+              "has_audit_package": true,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe?attestation_id=9dca5bc8-894f-4baf-9268-7f6f1d4a",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "reported_by": "test",
+              "result": {
+                "parts": [
+                  {
+                    "result": true,
+                    "rule": ".allow == true",
+                    "status": true
+                  }
+                ]
+              },
+              "schema_version": 1,
+              "status": "COMPLETE",
+              "type_name": "four-eyes-result",
+              "type_version": 6,
+              "unexpected": true,
+              "user_data": {}
+            },
+            "pr-review": {
+              "attestation_id": "9a1c6a0c-0c11-4647-bf84-e2af62fa",
+              "attestation_name": "pr-review",
+              "attestation_type": "pull_request",
+              "created_at": 1779991840.6812742,
+              "git_commit_info": {
+                "author": "Peter Beckham \u003cpeter.beckham@gmail.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "Trim leading periods from artifacts (#713)\n\nKosli cli rejects artifact names that begin with a . so have to trim them",
+                "sha1": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                "timestamp": 1773911406,
+                "url": "https://github.com/kosli-dev/cli/commit/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe"
+              },
+              "git_provider": "github",
+              "has_audit_package": false,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe?attestation_id=9a1c6a0c-0c11-4647-bf84-e2af62fa",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "pull_requests": [
+                {
+                  "approvers": [
+                    {
+                      "state": "APPROVED",
+                      "timestamp": 1773910425,
+                      "username": "gsavage"
+                    }
+                  ],
+                  "author": "pbeckham",
+                  "commits": [
+                    {
+                      "author": "Peter Beckham \u003cpeter.beckham@kosli.com\u003e",
+                      "author_username": "pbeckham",
+                      "branch": "trim-release-artifact-naming-for-binary-provenance",
+                      "message": "Trim leading periods from artifacts",
+                      "sha1": "65bf4b2ef82c7970d6b0fb21692a9a857a1924ed",
+                      "timestamp": 1773908988,
+                      "url": "https://github.com/kosli-dev/cli/commit/65bf4b2ef82c7970d6b0fb21692a9a857a1924ed"
+                    }
+                  ],
+                  "created_at": 1773909058,
+                  "head_ref": "trim-release-artifact-naming-for-binary-provenance",
+                  "merge_commit": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                  "merged_at": 1773911406,
+                  "state": "MERGED",
+                  "title": "Trim leading periods from artifacts",
+                  "url": "https://github.com/kosli-dev/cli/pull/713"
+                }
+              ],
+              "reported_by": "test",
+              "schema_version": 2,
+              "status": "COMPLETE",
+              "unexpected": true,
+              "user_data": {}
+            }
+          },
+          "evaluated_at": 1779991840.6812742,
+          "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+          "is_compliant": true,
+          "status": "COMPLIANT"
+        },
+        "created_at": 1779991839.8811657,
+        "created_by": "test",
+        "description": "",
+        "events": [
+          {
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Peter Beckham \u003cpeter.beckham@gmail.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Trim leading periods from artifacts (#713)\n\nKosli cli rejects artifact names that begin with a . so have to trim them",
+              "parents": null,
+              "sha1": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+              "timestamp": 1773911406,
+              "url": "https://github.com/kosli-dev/cli/commit/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe"
+            },
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "timestamp": 1779991839.8811657,
+            "trail_data_json": {
+              "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+              "description": "",
+              "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+              "git_commit_info": {
+                "author": "Peter Beckham \u003cpeter.beckham@gmail.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "Trim leading periods from artifacts (#713)\n\nKosli cli rejects artifact names that begin with a . so have to trim them",
+                "sha1": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+                "timestamp": 1773911406,
+                "url": "https://github.com/kosli-dev/cli/commit/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe"
+              },
+              "name": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+              "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+              "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+              "user_data": "{}"
+            },
+            "trail_id": "42f248c3-e13f-48d7-b92b-2ffb6a53",
+            "type": "trail_reported"
+          },
+          {
+            "attestation_id": "9a1c6a0c-0c11-4647-bf84-e2af62fa",
+            "attestation_type": "pull_request",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Peter Beckham \u003cpeter.beckham@gmail.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Trim leading periods from artifacts (#713)\n\nKosli cli rejects artifact names that begin with a . so have to trim them",
+              "parents": null,
+              "sha1": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+              "timestamp": 1773911406,
+              "url": "https://github.com/kosli-dev/cli/commit/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe"
+            },
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "pr-review",
+            "timestamp": 1779991840.6812742,
+            "trail_id": "42f248c3-e13f-48d7-b92b-2ffb6a53",
+            "type": "trail_attestation_reported"
+          },
+          {
+            "attestation_id": "9dca5bc8-894f-4baf-9268-7f6f1d4a",
+            "attestation_type": "custom:four-eyes-result",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": null,
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "four-eyes-result",
+            "timestamp": 1779991841.421891,
+            "trail_id": "42f248c3-e13f-48d7-b92b-2ffb6a53",
+            "type": "trail_attestation_reported"
+          }
+        ],
+        "external_urls": null,
+        "flow": {
+          "name": "cli-granular-demo-20260528180923",
+          "tags": {}
+        },
+        "git_commit_info": {
+          "author": "Peter Beckham \u003cpeter.beckham@gmail.com\u003e",
+          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+          "message": "Trim leading periods from artifacts (#713)\n\nKosli cli rejects artifact names that begin with a . so have to trim them",
+          "sha1": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+          "timestamp": 1773911406,
+          "url": "https://github.com/kosli-dev/cli/commit/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe"
+        },
+        "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+        "is_compliant": true,
+        "last_modified_at": 1779991841.421891,
+        "name": "f44c2ab26e8e7ddbf66cb15b7db8f29e3a23dffe",
+        "origin_url": null,
+        "repo_ids": [],
+        "template": {
+          "content": "version: 1",
+          "trail": {
+            "artifacts": [],
+            "attestations": []
+          },
+          "version": 1
+        },
+        "user_data": {}
+      }
+    ]
+  }

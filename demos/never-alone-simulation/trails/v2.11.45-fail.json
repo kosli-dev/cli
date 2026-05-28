@@ -1,0 +1,2212 @@
+{
+  "trails": [
+    {
+      "compliance_state": "COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": true,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "11a8aa12-bce5-4ea7-b8e2-e36d006f",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991784.9189498,
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Fix authentication error with dockerAuthConfig (#669)",
+                            "sha1": "167ed936f4fe57596a2a736de8a76e374deeab89",
+                            "timestamp": 1772101135,
+                            "url": "https://github.com/kosli-dev/cli/commit/167ed936f4fe57596a2a736de8a76e374deeab89"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/167ed936f4fe57596a2a736de8a76e374deeab89?attestation_id=11a8aa12-bce5-4ea7-b8e2-e36d006f",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1772101134,
+                                  "username": "sami-alajrami"
+                                }
+                              ],
+                              "author": "jumboduck",
+                              "commits": [
+                                {
+                                  "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                  "author_username": "jumboduck",
+                                  "branch": "4727-dockerauth-credentials",
+                                  "message": "Fix authentication error with dockerAuthConfig",
+                                  "sha1": "37c63bbbf8b806a3a9a5664b1ebbf78c54207cdd",
+                                  "timestamp": 1772033535,
+                                  "url": "https://github.com/kosli-dev/cli/commit/37c63bbbf8b806a3a9a5664b1ebbf78c54207cdd"
+                                }
+                              ],
+                              "created_at": 1772033560,
+                              "head_ref": "4727-dockerauth-credentials",
+                              "merge_commit": "167ed936f4fe57596a2a736de8a76e374deeab89",
+                              "merged_at": 1772101135,
+                              "state": "MERGED",
+                              "title": "Fix authentication error with dockerAuthConfig",
+                              "url": "https://github.com/kosli-dev/cli/pull/669"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991784.0746262,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991784.0746262,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Fix authentication error with dockerAuthConfig (#669)",
+                          "parents": null,
+                          "sha1": "167ed936f4fe57596a2a736de8a76e374deeab89",
+                          "timestamp": 1772101135,
+                          "url": "https://github.com/kosli-dev/cli/commit/167ed936f4fe57596a2a736de8a76e374deeab89"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991784.0746262,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Fix authentication error with dockerAuthConfig (#669)",
+                            "sha1": "167ed936f4fe57596a2a736de8a76e374deeab89",
+                            "timestamp": 1772101135,
+                            "url": "https://github.com/kosli-dev/cli/commit/167ed936f4fe57596a2a736de8a76e374deeab89"
+                          },
+                          "name": "167ed936f4fe57596a2a736de8a76e374deeab89",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "a91f766d-c3d2-4e17-872f-4228f0bd",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "11a8aa12-bce5-4ea7-b8e2-e36d006f",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Fix authentication error with dockerAuthConfig (#669)",
+                          "parents": null,
+                          "sha1": "167ed936f4fe57596a2a736de8a76e374deeab89",
+                          "timestamp": 1772101135,
+                          "url": "https://github.com/kosli-dev/cli/commit/167ed936f4fe57596a2a736de8a76e374deeab89"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991784.9189498,
+                        "trail_id": "a91f766d-c3d2-4e17-872f-4228f0bd",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "Fix authentication error with dockerAuthConfig (#669)",
+                      "sha1": "167ed936f4fe57596a2a736de8a76e374deeab89",
+                      "timestamp": 1772101135,
+                      "url": "https://github.com/kosli-dev/cli/commit/167ed936f4fe57596a2a736de8a76e374deeab89"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/167ed936f4fe57596a2a736de8a76e374deeab89",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991784.9189498,
+                    "name": "167ed936f4fe57596a2a736de8a76e374deeab89",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": null
+            },
+            "attestation_id": "850e588a-cd28-4e1e-ad4b-68b7518a",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991786.8329418,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/06e57ff2-e9a2-4ab1-ac1d-39c9ca50/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/167ed936f4fe57596a2a736de8a76e374deeab89?attestation_id=850e588a-cd28-4e1e-ad4b-68b7518a",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": true,
+                  "rule": ".allow == true",
+                  "status": true
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "11a8aa12-bce5-4ea7-b8e2-e36d006f",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991784.9189498,
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Fix authentication error with dockerAuthConfig (#669)",
+              "sha1": "167ed936f4fe57596a2a736de8a76e374deeab89",
+              "timestamp": 1772101135,
+              "url": "https://github.com/kosli-dev/cli/commit/167ed936f4fe57596a2a736de8a76e374deeab89"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/167ed936f4fe57596a2a736de8a76e374deeab89?attestation_id=11a8aa12-bce5-4ea7-b8e2-e36d006f",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1772101134,
+                    "username": "sami-alajrami"
+                  }
+                ],
+                "author": "jumboduck",
+                "commits": [
+                  {
+                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                    "author_username": "jumboduck",
+                    "branch": "4727-dockerauth-credentials",
+                    "message": "Fix authentication error with dockerAuthConfig",
+                    "sha1": "37c63bbbf8b806a3a9a5664b1ebbf78c54207cdd",
+                    "timestamp": 1772033535,
+                    "url": "https://github.com/kosli-dev/cli/commit/37c63bbbf8b806a3a9a5664b1ebbf78c54207cdd"
+                  }
+                ],
+                "created_at": 1772033560,
+                "head_ref": "4727-dockerauth-credentials",
+                "merge_commit": "167ed936f4fe57596a2a736de8a76e374deeab89",
+                "merged_at": 1772101135,
+                "state": "MERGED",
+                "title": "Fix authentication error with dockerAuthConfig",
+                "url": "https://github.com/kosli-dev/cli/pull/669"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991784.9189498,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": true,
+        "status": "COMPLIANT"
+      },
+      "created_at": 1779991784.0746262,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Fix authentication error with dockerAuthConfig (#669)",
+            "parents": null,
+            "sha1": "167ed936f4fe57596a2a736de8a76e374deeab89",
+            "timestamp": 1772101135,
+            "url": "https://github.com/kosli-dev/cli/commit/167ed936f4fe57596a2a736de8a76e374deeab89"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991784.0746262,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Fix authentication error with dockerAuthConfig (#669)",
+              "sha1": "167ed936f4fe57596a2a736de8a76e374deeab89",
+              "timestamp": 1772101135,
+              "url": "https://github.com/kosli-dev/cli/commit/167ed936f4fe57596a2a736de8a76e374deeab89"
+            },
+            "name": "167ed936f4fe57596a2a736de8a76e374deeab89",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "a91f766d-c3d2-4e17-872f-4228f0bd",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "11a8aa12-bce5-4ea7-b8e2-e36d006f",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Fix authentication error with dockerAuthConfig (#669)",
+            "parents": null,
+            "sha1": "167ed936f4fe57596a2a736de8a76e374deeab89",
+            "timestamp": 1772101135,
+            "url": "https://github.com/kosli-dev/cli/commit/167ed936f4fe57596a2a736de8a76e374deeab89"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991784.9189498,
+          "trail_id": "a91f766d-c3d2-4e17-872f-4228f0bd",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "850e588a-cd28-4e1e-ad4b-68b7518a",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991786.8329418,
+          "trail_id": "a91f766d-c3d2-4e17-872f-4228f0bd",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "Fix authentication error with dockerAuthConfig (#669)",
+        "sha1": "167ed936f4fe57596a2a736de8a76e374deeab89",
+        "timestamp": 1772101135,
+        "url": "https://github.com/kosli-dev/cli/commit/167ed936f4fe57596a2a736de8a76e374deeab89"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/167ed936f4fe57596a2a736de8a76e374deeab89",
+      "is_compliant": true,
+      "last_modified_at": 1779991786.8329418,
+      "name": "167ed936f4fe57596a2a736de8a76e374deeab89",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    },
+    {
+      "compliance_state": "COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": true,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "a9cf0787-2dd0-4735-9f62-d59a15ce",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991784.857124,
+                          "git_commit_info": {
+                            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "fix: escape parsing of angle-brackets in Mintlify doc gen (#668)",
+                            "sha1": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+                            "timestamp": 1771925039,
+                            "url": "https://github.com/kosli-dev/cli/commit/030cc31d84dfdba5d2e0916213be61ab04740e27"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/030cc31d84dfdba5d2e0916213be61ab04740e27?attestation_id=a9cf0787-2dd0-4735-9f62-d59a15ce",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771924992,
+                                  "username": "jumboduck"
+                                }
+                              ],
+                              "author": "dangrondahl",
+                              "commits": [
+                                {
+                                  "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                                  "author_username": "dangrondahl",
+                                  "branch": "fix_mintlify_parsing",
+                                  "message": "fix: escape parsing of angle-brackets in Mintlify doc gen",
+                                  "sha1": "fc76bab7b0cfb4773a0134ab9368798eff3e9ccd",
+                                  "timestamp": 1771920780,
+                                  "url": "https://github.com/kosli-dev/cli/commit/fc76bab7b0cfb4773a0134ab9368798eff3e9ccd"
+                                }
+                              ],
+                              "created_at": 1771920864,
+                              "head_ref": "fix_mintlify_parsing",
+                              "merge_commit": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+                              "merged_at": 1771925039,
+                              "state": "MERGED",
+                              "title": "fix(docgen): escape MDX-incompatible patterns in Mintlify output",
+                              "url": "https://github.com/kosli-dev/cli/pull/668"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991783.9322917,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991783.9322917,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "fix: escape parsing of angle-brackets in Mintlify doc gen (#668)",
+                          "parents": null,
+                          "sha1": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+                          "timestamp": 1771925039,
+                          "url": "https://github.com/kosli-dev/cli/commit/030cc31d84dfdba5d2e0916213be61ab04740e27"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991783.9322917,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "fix: escape parsing of angle-brackets in Mintlify doc gen (#668)",
+                            "sha1": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+                            "timestamp": 1771925039,
+                            "url": "https://github.com/kosli-dev/cli/commit/030cc31d84dfdba5d2e0916213be61ab04740e27"
+                          },
+                          "name": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "92cd9044-c4b1-4e77-9d47-023d11ee",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "a9cf0787-2dd0-4735-9f62-d59a15ce",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "fix: escape parsing of angle-brackets in Mintlify doc gen (#668)",
+                          "parents": null,
+                          "sha1": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+                          "timestamp": 1771925039,
+                          "url": "https://github.com/kosli-dev/cli/commit/030cc31d84dfdba5d2e0916213be61ab04740e27"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991784.857124,
+                        "trail_id": "92cd9044-c4b1-4e77-9d47-023d11ee",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "fix: escape parsing of angle-brackets in Mintlify doc gen (#668)",
+                      "sha1": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+                      "timestamp": 1771925039,
+                      "url": "https://github.com/kosli-dev/cli/commit/030cc31d84dfdba5d2e0916213be61ab04740e27"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/030cc31d84dfdba5d2e0916213be61ab04740e27",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991784.857124,
+                    "name": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": null
+            },
+            "attestation_id": "e7eac91c-0f1e-486d-bc7d-1880294b",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991787.5694857,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/2b02acd1-3314-4760-a06b-9920012d/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/030cc31d84dfdba5d2e0916213be61ab04740e27?attestation_id=e7eac91c-0f1e-486d-bc7d-1880294b",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": true,
+                  "rule": ".allow == true",
+                  "status": true
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "a9cf0787-2dd0-4735-9f62-d59a15ce",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991784.857124,
+            "git_commit_info": {
+              "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "fix: escape parsing of angle-brackets in Mintlify doc gen (#668)",
+              "sha1": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+              "timestamp": 1771925039,
+              "url": "https://github.com/kosli-dev/cli/commit/030cc31d84dfdba5d2e0916213be61ab04740e27"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/030cc31d84dfdba5d2e0916213be61ab04740e27?attestation_id=a9cf0787-2dd0-4735-9f62-d59a15ce",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771924992,
+                    "username": "jumboduck"
+                  }
+                ],
+                "author": "dangrondahl",
+                "commits": [
+                  {
+                    "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                    "author_username": "dangrondahl",
+                    "branch": "fix_mintlify_parsing",
+                    "message": "fix: escape parsing of angle-brackets in Mintlify doc gen",
+                    "sha1": "fc76bab7b0cfb4773a0134ab9368798eff3e9ccd",
+                    "timestamp": 1771920780,
+                    "url": "https://github.com/kosli-dev/cli/commit/fc76bab7b0cfb4773a0134ab9368798eff3e9ccd"
+                  }
+                ],
+                "created_at": 1771920864,
+                "head_ref": "fix_mintlify_parsing",
+                "merge_commit": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+                "merged_at": 1771925039,
+                "state": "MERGED",
+                "title": "fix(docgen): escape MDX-incompatible patterns in Mintlify output",
+                "url": "https://github.com/kosli-dev/cli/pull/668"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991784.857124,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": true,
+        "status": "COMPLIANT"
+      },
+      "created_at": 1779991783.9322917,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "fix: escape parsing of angle-brackets in Mintlify doc gen (#668)",
+            "parents": null,
+            "sha1": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+            "timestamp": 1771925039,
+            "url": "https://github.com/kosli-dev/cli/commit/030cc31d84dfdba5d2e0916213be61ab04740e27"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991783.9322917,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "fix: escape parsing of angle-brackets in Mintlify doc gen (#668)",
+              "sha1": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+              "timestamp": 1771925039,
+              "url": "https://github.com/kosli-dev/cli/commit/030cc31d84dfdba5d2e0916213be61ab04740e27"
+            },
+            "name": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "92cd9044-c4b1-4e77-9d47-023d11ee",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "a9cf0787-2dd0-4735-9f62-d59a15ce",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "fix: escape parsing of angle-brackets in Mintlify doc gen (#668)",
+            "parents": null,
+            "sha1": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+            "timestamp": 1771925039,
+            "url": "https://github.com/kosli-dev/cli/commit/030cc31d84dfdba5d2e0916213be61ab04740e27"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991784.857124,
+          "trail_id": "92cd9044-c4b1-4e77-9d47-023d11ee",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "e7eac91c-0f1e-486d-bc7d-1880294b",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991787.5694857,
+          "trail_id": "92cd9044-c4b1-4e77-9d47-023d11ee",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "fix: escape parsing of angle-brackets in Mintlify doc gen (#668)",
+        "sha1": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+        "timestamp": 1771925039,
+        "url": "https://github.com/kosli-dev/cli/commit/030cc31d84dfdba5d2e0916213be61ab04740e27"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/030cc31d84dfdba5d2e0916213be61ab04740e27",
+      "is_compliant": true,
+      "last_modified_at": 1779991787.5694857,
+      "name": "030cc31d84dfdba5d2e0916213be61ab04740e27",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    },
+    {
+      "compliance_state": "NON-COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": false,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "a0a1b09d-946f-4c08-af10-c0eb9511",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991784.7862768,
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Remove migration files from docs (#666)",
+                            "sha1": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+                            "timestamp": 1771857286,
+                            "url": "https://github.com/kosli-dev/cli/commit/2d1b55b3d20ca999e521a26bd4859bfed851349a"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/2d1b55b3d20ca999e521a26bd4859bfed851349a?attestation_id=a0a1b09d-946f-4c08-af10-c0eb9511",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771854221,
+                                  "username": "sami-alajrami"
+                                },
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771854237,
+                                  "username": "FayeSGW"
+                                }
+                              ],
+                              "author": "jumboduck",
+                              "commits": [
+                                {
+                                  "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                  "author_username": "jumboduck",
+                                  "branch": "cleanup-docs",
+                                  "message": "Remove migration files from docs",
+                                  "sha1": "0fffd086e093542db5e8fe8e9456e1a2c6614ef9",
+                                  "timestamp": 1771854178,
+                                  "url": "https://github.com/kosli-dev/cli/commit/0fffd086e093542db5e8fe8e9456e1a2c6614ef9"
+                                },
+                                {
+                                  "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                  "author_username": "jumboduck",
+                                  "branch": "cleanup-docs",
+                                  "message": "Merge branch 'main' into cleanup-docs",
+                                  "sha1": "a640cc48f1b34357b064990f1f8045d758f1367d",
+                                  "timestamp": 1771856869,
+                                  "url": "https://github.com/kosli-dev/cli/commit/a640cc48f1b34357b064990f1f8045d758f1367d"
+                                }
+                              ],
+                              "created_at": 1771854194,
+                              "head_ref": "cleanup-docs",
+                              "merge_commit": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+                              "merged_at": 1771857286,
+                              "state": "MERGED",
+                              "title": "Remove migration files from docs",
+                              "url": "https://github.com/kosli-dev/cli/pull/666"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991784.0269287,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991784.0269287,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Remove migration files from docs (#666)",
+                          "parents": null,
+                          "sha1": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+                          "timestamp": 1771857286,
+                          "url": "https://github.com/kosli-dev/cli/commit/2d1b55b3d20ca999e521a26bd4859bfed851349a"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991784.0269287,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Remove migration files from docs (#666)",
+                            "sha1": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+                            "timestamp": 1771857286,
+                            "url": "https://github.com/kosli-dev/cli/commit/2d1b55b3d20ca999e521a26bd4859bfed851349a"
+                          },
+                          "name": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "80bb5b8d-8628-43a9-b930-4a9b9822",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "a0a1b09d-946f-4c08-af10-c0eb9511",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Remove migration files from docs (#666)",
+                          "parents": null,
+                          "sha1": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+                          "timestamp": 1771857286,
+                          "url": "https://github.com/kosli-dev/cli/commit/2d1b55b3d20ca999e521a26bd4859bfed851349a"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991784.7862768,
+                        "trail_id": "80bb5b8d-8628-43a9-b930-4a9b9822",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "Remove migration files from docs (#666)",
+                      "sha1": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+                      "timestamp": 1771857286,
+                      "url": "https://github.com/kosli-dev/cli/commit/2d1b55b3d20ca999e521a26bd4859bfed851349a"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/2d1b55b3d20ca999e521a26bd4859bfed851349a",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991784.7862768,
+                    "name": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": [
+                "Commit 2d1b55b: no independent approval after latest code commit"
+              ]
+            },
+            "attestation_id": "b397f55c-3e2f-4bef-a287-501994f1",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991788.1888583,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/4e8a450a-8f69-4fd8-8341-b8a23fb6/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/2d1b55b3d20ca999e521a26bd4859bfed851349a?attestation_id=b397f55c-3e2f-4bef-a287-501994f1",
+            "is_compliant": false,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": false,
+                  "rule": ".allow == true",
+                  "status": false
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "a0a1b09d-946f-4c08-af10-c0eb9511",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991784.7862768,
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Remove migration files from docs (#666)",
+              "sha1": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+              "timestamp": 1771857286,
+              "url": "https://github.com/kosli-dev/cli/commit/2d1b55b3d20ca999e521a26bd4859bfed851349a"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/2d1b55b3d20ca999e521a26bd4859bfed851349a?attestation_id=a0a1b09d-946f-4c08-af10-c0eb9511",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771854221,
+                    "username": "sami-alajrami"
+                  },
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771854237,
+                    "username": "FayeSGW"
+                  }
+                ],
+                "author": "jumboduck",
+                "commits": [
+                  {
+                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                    "author_username": "jumboduck",
+                    "branch": "cleanup-docs",
+                    "message": "Remove migration files from docs",
+                    "sha1": "0fffd086e093542db5e8fe8e9456e1a2c6614ef9",
+                    "timestamp": 1771854178,
+                    "url": "https://github.com/kosli-dev/cli/commit/0fffd086e093542db5e8fe8e9456e1a2c6614ef9"
+                  },
+                  {
+                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                    "author_username": "jumboduck",
+                    "branch": "cleanup-docs",
+                    "message": "Merge branch 'main' into cleanup-docs",
+                    "sha1": "a640cc48f1b34357b064990f1f8045d758f1367d",
+                    "timestamp": 1771856869,
+                    "url": "https://github.com/kosli-dev/cli/commit/a640cc48f1b34357b064990f1f8045d758f1367d"
+                  }
+                ],
+                "created_at": 1771854194,
+                "head_ref": "cleanup-docs",
+                "merge_commit": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+                "merged_at": 1771857286,
+                "state": "MERGED",
+                "title": "Remove migration files from docs",
+                "url": "https://github.com/kosli-dev/cli/pull/666"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991784.7862768,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": false,
+        "status": "NON-COMPLIANT"
+      },
+      "created_at": 1779991784.0269287,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Remove migration files from docs (#666)",
+            "parents": null,
+            "sha1": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+            "timestamp": 1771857286,
+            "url": "https://github.com/kosli-dev/cli/commit/2d1b55b3d20ca999e521a26bd4859bfed851349a"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991784.0269287,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Remove migration files from docs (#666)",
+              "sha1": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+              "timestamp": 1771857286,
+              "url": "https://github.com/kosli-dev/cli/commit/2d1b55b3d20ca999e521a26bd4859bfed851349a"
+            },
+            "name": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "80bb5b8d-8628-43a9-b930-4a9b9822",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "a0a1b09d-946f-4c08-af10-c0eb9511",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Remove migration files from docs (#666)",
+            "parents": null,
+            "sha1": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+            "timestamp": 1771857286,
+            "url": "https://github.com/kosli-dev/cli/commit/2d1b55b3d20ca999e521a26bd4859bfed851349a"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991784.7862768,
+          "trail_id": "80bb5b8d-8628-43a9-b930-4a9b9822",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "b397f55c-3e2f-4bef-a287-501994f1",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": false,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991788.1888583,
+          "trail_id": "80bb5b8d-8628-43a9-b930-4a9b9822",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "Remove migration files from docs (#666)",
+        "sha1": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+        "timestamp": 1771857286,
+        "url": "https://github.com/kosli-dev/cli/commit/2d1b55b3d20ca999e521a26bd4859bfed851349a"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/2d1b55b3d20ca999e521a26bd4859bfed851349a",
+      "is_compliant": false,
+      "last_modified_at": 1779991788.1888583,
+      "name": "2d1b55b3d20ca999e521a26bd4859bfed851349a",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    },
+    {
+      "compliance_state": "COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": true,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "a047f8db-1555-43c1-9324-c1d62f22",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991784.7882588,
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Change PR number in test (#667)",
+                            "sha1": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+                            "timestamp": 1771856441,
+                            "url": "https://github.com/kosli-dev/cli/commit/6285697f5a31a801f1e77a2a8d78487b413ea066"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/6285697f5a31a801f1e77a2a8d78487b413ea066?attestation_id=a047f8db-1555-43c1-9324-c1d62f22",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771856090,
+                                  "username": "sami-alajrami"
+                                }
+                              ],
+                              "author": "jumboduck",
+                              "commits": [
+                                {
+                                  "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                  "author_username": "jumboduck",
+                                  "branch": "fix-pr-test",
+                                  "message": "Change PR number in test",
+                                  "sha1": "7024a8e3c6b133a6e61facb88ace1036d5a5b00a",
+                                  "timestamp": 1771855997,
+                                  "url": "https://github.com/kosli-dev/cli/commit/7024a8e3c6b133a6e61facb88ace1036d5a5b00a"
+                                }
+                              ],
+                              "created_at": 1771856008,
+                              "head_ref": "fix-pr-test",
+                              "merge_commit": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+                              "merged_at": 1771856442,
+                              "state": "MERGED",
+                              "title": "Change PR number in test",
+                              "url": "https://github.com/kosli-dev/cli/pull/667"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991783.9774024,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991783.9774024,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Change PR number in test (#667)",
+                          "parents": null,
+                          "sha1": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+                          "timestamp": 1771856441,
+                          "url": "https://github.com/kosli-dev/cli/commit/6285697f5a31a801f1e77a2a8d78487b413ea066"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991783.9774024,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Change PR number in test (#667)",
+                            "sha1": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+                            "timestamp": 1771856441,
+                            "url": "https://github.com/kosli-dev/cli/commit/6285697f5a31a801f1e77a2a8d78487b413ea066"
+                          },
+                          "name": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "cd8a4869-b870-4886-9774-212d71c6",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "a047f8db-1555-43c1-9324-c1d62f22",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Change PR number in test (#667)",
+                          "parents": null,
+                          "sha1": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+                          "timestamp": 1771856441,
+                          "url": "https://github.com/kosli-dev/cli/commit/6285697f5a31a801f1e77a2a8d78487b413ea066"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991784.7882588,
+                        "trail_id": "cd8a4869-b870-4886-9774-212d71c6",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "Change PR number in test (#667)",
+                      "sha1": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+                      "timestamp": 1771856441,
+                      "url": "https://github.com/kosli-dev/cli/commit/6285697f5a31a801f1e77a2a8d78487b413ea066"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/6285697f5a31a801f1e77a2a8d78487b413ea066",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991784.7882588,
+                    "name": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": null
+            },
+            "attestation_id": "935b2ac1-fd49-465a-b1db-7cc36139",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991788.8897514,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/65c8f07b-54f5-4593-909a-237efb98/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/6285697f5a31a801f1e77a2a8d78487b413ea066?attestation_id=935b2ac1-fd49-465a-b1db-7cc36139",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": true,
+                  "rule": ".allow == true",
+                  "status": true
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "a047f8db-1555-43c1-9324-c1d62f22",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991784.7882588,
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Change PR number in test (#667)",
+              "sha1": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+              "timestamp": 1771856441,
+              "url": "https://github.com/kosli-dev/cli/commit/6285697f5a31a801f1e77a2a8d78487b413ea066"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/6285697f5a31a801f1e77a2a8d78487b413ea066?attestation_id=a047f8db-1555-43c1-9324-c1d62f22",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771856090,
+                    "username": "sami-alajrami"
+                  }
+                ],
+                "author": "jumboduck",
+                "commits": [
+                  {
+                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                    "author_username": "jumboduck",
+                    "branch": "fix-pr-test",
+                    "message": "Change PR number in test",
+                    "sha1": "7024a8e3c6b133a6e61facb88ace1036d5a5b00a",
+                    "timestamp": 1771855997,
+                    "url": "https://github.com/kosli-dev/cli/commit/7024a8e3c6b133a6e61facb88ace1036d5a5b00a"
+                  }
+                ],
+                "created_at": 1771856008,
+                "head_ref": "fix-pr-test",
+                "merge_commit": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+                "merged_at": 1771856442,
+                "state": "MERGED",
+                "title": "Change PR number in test",
+                "url": "https://github.com/kosli-dev/cli/pull/667"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991784.7882588,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": true,
+        "status": "COMPLIANT"
+      },
+      "created_at": 1779991783.9774024,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Change PR number in test (#667)",
+            "parents": null,
+            "sha1": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+            "timestamp": 1771856441,
+            "url": "https://github.com/kosli-dev/cli/commit/6285697f5a31a801f1e77a2a8d78487b413ea066"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991783.9774024,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Change PR number in test (#667)",
+              "sha1": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+              "timestamp": 1771856441,
+              "url": "https://github.com/kosli-dev/cli/commit/6285697f5a31a801f1e77a2a8d78487b413ea066"
+            },
+            "name": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "cd8a4869-b870-4886-9774-212d71c6",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "a047f8db-1555-43c1-9324-c1d62f22",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Change PR number in test (#667)",
+            "parents": null,
+            "sha1": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+            "timestamp": 1771856441,
+            "url": "https://github.com/kosli-dev/cli/commit/6285697f5a31a801f1e77a2a8d78487b413ea066"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991784.7882588,
+          "trail_id": "cd8a4869-b870-4886-9774-212d71c6",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "935b2ac1-fd49-465a-b1db-7cc36139",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991788.8897514,
+          "trail_id": "cd8a4869-b870-4886-9774-212d71c6",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "Change PR number in test (#667)",
+        "sha1": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+        "timestamp": 1771856441,
+        "url": "https://github.com/kosli-dev/cli/commit/6285697f5a31a801f1e77a2a8d78487b413ea066"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/6285697f5a31a801f1e77a2a8d78487b413ea066",
+      "is_compliant": true,
+      "last_modified_at": 1779991788.8897514,
+      "name": "6285697f5a31a801f1e77a2a8d78487b413ea066",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    },
+    {
+      "compliance_state": "COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": true,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "5f9daaa6-5b6f-4fa5-b3d8-7599339a",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991786.1144626,
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Fix some links in docs (#665)",
+                            "sha1": "914c5de5f0551cf9466aa95645382403befa31a4",
+                            "timestamp": 1771853809,
+                            "url": "https://github.com/kosli-dev/cli/commit/914c5de5f0551cf9466aa95645382403befa31a4"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/914c5de5f0551cf9466aa95645382403befa31a4?attestation_id=5f9daaa6-5b6f-4fa5-b3d8-7599339a",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771853022,
+                                  "username": "sami-alajrami"
+                                }
+                              ],
+                              "author": "jumboduck",
+                              "commits": [
+                                {
+                                  "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                  "author_username": "jumboduck",
+                                  "branch": "fix-docs",
+                                  "message": "Fix some links in docs",
+                                  "sha1": "456a3dd7b39b7cc27f5e6e2770b9e662bddca5f8",
+                                  "timestamp": 1771852930,
+                                  "url": "https://github.com/kosli-dev/cli/commit/456a3dd7b39b7cc27f5e6e2770b9e662bddca5f8"
+                                }
+                              ],
+                              "created_at": 1771852951,
+                              "head_ref": "fix-docs",
+                              "merge_commit": "914c5de5f0551cf9466aa95645382403befa31a4",
+                              "merged_at": 1771853809,
+                              "state": "MERGED",
+                              "title": "Fix some links in docs",
+                              "url": "https://github.com/kosli-dev/cli/pull/665"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991784.9835424,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991784.9835424,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Fix some links in docs (#665)",
+                          "parents": null,
+                          "sha1": "914c5de5f0551cf9466aa95645382403befa31a4",
+                          "timestamp": 1771853809,
+                          "url": "https://github.com/kosli-dev/cli/commit/914c5de5f0551cf9466aa95645382403befa31a4"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991784.9835424,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Fix some links in docs (#665)",
+                            "sha1": "914c5de5f0551cf9466aa95645382403befa31a4",
+                            "timestamp": 1771853809,
+                            "url": "https://github.com/kosli-dev/cli/commit/914c5de5f0551cf9466aa95645382403befa31a4"
+                          },
+                          "name": "914c5de5f0551cf9466aa95645382403befa31a4",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "df9154fe-e514-476d-bb02-7efe9ba6",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "5f9daaa6-5b6f-4fa5-b3d8-7599339a",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Fix some links in docs (#665)",
+                          "parents": null,
+                          "sha1": "914c5de5f0551cf9466aa95645382403befa31a4",
+                          "timestamp": 1771853809,
+                          "url": "https://github.com/kosli-dev/cli/commit/914c5de5f0551cf9466aa95645382403befa31a4"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991786.1144626,
+                        "trail_id": "df9154fe-e514-476d-bb02-7efe9ba6",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "Fix some links in docs (#665)",
+                      "sha1": "914c5de5f0551cf9466aa95645382403befa31a4",
+                      "timestamp": 1771853809,
+                      "url": "https://github.com/kosli-dev/cli/commit/914c5de5f0551cf9466aa95645382403befa31a4"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/914c5de5f0551cf9466aa95645382403befa31a4",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991786.1144626,
+                    "name": "914c5de5f0551cf9466aa95645382403befa31a4",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": null
+            },
+            "attestation_id": "0c65a101-97ae-4c22-9e0d-6fedc483",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991789.5744064,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/2150f61b-e454-44a1-82bf-4e93b05c/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/914c5de5f0551cf9466aa95645382403befa31a4?attestation_id=0c65a101-97ae-4c22-9e0d-6fedc483",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": true,
+                  "rule": ".allow == true",
+                  "status": true
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "5f9daaa6-5b6f-4fa5-b3d8-7599339a",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991786.1144626,
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Fix some links in docs (#665)",
+              "sha1": "914c5de5f0551cf9466aa95645382403befa31a4",
+              "timestamp": 1771853809,
+              "url": "https://github.com/kosli-dev/cli/commit/914c5de5f0551cf9466aa95645382403befa31a4"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/914c5de5f0551cf9466aa95645382403befa31a4?attestation_id=5f9daaa6-5b6f-4fa5-b3d8-7599339a",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771853022,
+                    "username": "sami-alajrami"
+                  }
+                ],
+                "author": "jumboduck",
+                "commits": [
+                  {
+                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                    "author_username": "jumboduck",
+                    "branch": "fix-docs",
+                    "message": "Fix some links in docs",
+                    "sha1": "456a3dd7b39b7cc27f5e6e2770b9e662bddca5f8",
+                    "timestamp": 1771852930,
+                    "url": "https://github.com/kosli-dev/cli/commit/456a3dd7b39b7cc27f5e6e2770b9e662bddca5f8"
+                  }
+                ],
+                "created_at": 1771852951,
+                "head_ref": "fix-docs",
+                "merge_commit": "914c5de5f0551cf9466aa95645382403befa31a4",
+                "merged_at": 1771853809,
+                "state": "MERGED",
+                "title": "Fix some links in docs",
+                "url": "https://github.com/kosli-dev/cli/pull/665"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991786.1144626,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": true,
+        "status": "COMPLIANT"
+      },
+      "created_at": 1779991784.9835424,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Fix some links in docs (#665)",
+            "parents": null,
+            "sha1": "914c5de5f0551cf9466aa95645382403befa31a4",
+            "timestamp": 1771853809,
+            "url": "https://github.com/kosli-dev/cli/commit/914c5de5f0551cf9466aa95645382403befa31a4"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991784.9835424,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Fix some links in docs (#665)",
+              "sha1": "914c5de5f0551cf9466aa95645382403befa31a4",
+              "timestamp": 1771853809,
+              "url": "https://github.com/kosli-dev/cli/commit/914c5de5f0551cf9466aa95645382403befa31a4"
+            },
+            "name": "914c5de5f0551cf9466aa95645382403befa31a4",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "df9154fe-e514-476d-bb02-7efe9ba6",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "5f9daaa6-5b6f-4fa5-b3d8-7599339a",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Fix some links in docs (#665)",
+            "parents": null,
+            "sha1": "914c5de5f0551cf9466aa95645382403befa31a4",
+            "timestamp": 1771853809,
+            "url": "https://github.com/kosli-dev/cli/commit/914c5de5f0551cf9466aa95645382403befa31a4"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991786.1144626,
+          "trail_id": "df9154fe-e514-476d-bb02-7efe9ba6",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "0c65a101-97ae-4c22-9e0d-6fedc483",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991789.5744064,
+          "trail_id": "df9154fe-e514-476d-bb02-7efe9ba6",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "Fix some links in docs (#665)",
+        "sha1": "914c5de5f0551cf9466aa95645382403befa31a4",
+        "timestamp": 1771853809,
+        "url": "https://github.com/kosli-dev/cli/commit/914c5de5f0551cf9466aa95645382403befa31a4"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/914c5de5f0551cf9466aa95645382403befa31a4",
+      "is_compliant": true,
+      "last_modified_at": 1779991789.5744064,
+      "name": "914c5de5f0551cf9466aa95645382403befa31a4",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    },
+    {
+      "compliance_state": "COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": true,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "aa837d35-e441-4816-9a1c-e7349da5",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991786.1064434,
+                          "git_commit_info": {
+                            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "docs: add release guide (#664)",
+                            "sha1": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+                            "timestamp": 1771840532,
+                            "url": "https://github.com/kosli-dev/cli/commit/7ed1b9390a70c3c0eb4d76733f7869b7514b346b"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/7ed1b9390a70c3c0eb4d76733f7869b7514b346b?attestation_id=aa837d35-e441-4816-9a1c-e7349da5",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771840360,
+                                  "username": "JonJagger"
+                                }
+                              ],
+                              "author": "dangrondahl",
+                              "commits": [
+                                {
+                                  "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                                  "author_username": "dangrondahl",
+                                  "branch": "add_release_guide",
+                                  "message": "docs: add release guide",
+                                  "sha1": "139fa11e5dcc0e6563de74ae7d9bb5cb9b248dc7",
+                                  "timestamp": 1771839872,
+                                  "url": "https://github.com/kosli-dev/cli/commit/139fa11e5dcc0e6563de74ae7d9bb5cb9b248dc7"
+                                }
+                              ],
+                              "created_at": 1771840171,
+                              "head_ref": "add_release_guide",
+                              "merge_commit": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+                              "merged_at": 1771840532,
+                              "state": "MERGED",
+                              "title": "docs: add release guide",
+                              "url": "https://github.com/kosli-dev/cli/pull/664"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991785.2756937,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991785.2756937,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "docs: add release guide (#664)",
+                          "parents": null,
+                          "sha1": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+                          "timestamp": 1771840532,
+                          "url": "https://github.com/kosli-dev/cli/commit/7ed1b9390a70c3c0eb4d76733f7869b7514b346b"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991785.2756937,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "docs: add release guide (#664)",
+                            "sha1": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+                            "timestamp": 1771840532,
+                            "url": "https://github.com/kosli-dev/cli/commit/7ed1b9390a70c3c0eb4d76733f7869b7514b346b"
+                          },
+                          "name": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "5f3fb73a-2c3b-4545-ad91-c8502ca2",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "aa837d35-e441-4816-9a1c-e7349da5",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "docs: add release guide (#664)",
+                          "parents": null,
+                          "sha1": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+                          "timestamp": 1771840532,
+                          "url": "https://github.com/kosli-dev/cli/commit/7ed1b9390a70c3c0eb4d76733f7869b7514b346b"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991786.1064434,
+                        "trail_id": "5f3fb73a-2c3b-4545-ad91-c8502ca2",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "docs: add release guide (#664)",
+                      "sha1": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+                      "timestamp": 1771840532,
+                      "url": "https://github.com/kosli-dev/cli/commit/7ed1b9390a70c3c0eb4d76733f7869b7514b346b"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991786.1064434,
+                    "name": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": null
+            },
+            "attestation_id": "20701891-15f5-49bd-9d3e-275a8568",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991790.341736,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/19890ca7-e4bf-4f45-b0f8-ea38b79f/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/7ed1b9390a70c3c0eb4d76733f7869b7514b346b?attestation_id=20701891-15f5-49bd-9d3e-275a8568",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": true,
+                  "rule": ".allow == true",
+                  "status": true
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "aa837d35-e441-4816-9a1c-e7349da5",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991786.1064434,
+            "git_commit_info": {
+              "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "docs: add release guide (#664)",
+              "sha1": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+              "timestamp": 1771840532,
+              "url": "https://github.com/kosli-dev/cli/commit/7ed1b9390a70c3c0eb4d76733f7869b7514b346b"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/7ed1b9390a70c3c0eb4d76733f7869b7514b346b?attestation_id=aa837d35-e441-4816-9a1c-e7349da5",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771840360,
+                    "username": "JonJagger"
+                  }
+                ],
+                "author": "dangrondahl",
+                "commits": [
+                  {
+                    "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                    "author_username": "dangrondahl",
+                    "branch": "add_release_guide",
+                    "message": "docs: add release guide",
+                    "sha1": "139fa11e5dcc0e6563de74ae7d9bb5cb9b248dc7",
+                    "timestamp": 1771839872,
+                    "url": "https://github.com/kosli-dev/cli/commit/139fa11e5dcc0e6563de74ae7d9bb5cb9b248dc7"
+                  }
+                ],
+                "created_at": 1771840171,
+                "head_ref": "add_release_guide",
+                "merge_commit": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+                "merged_at": 1771840532,
+                "state": "MERGED",
+                "title": "docs: add release guide",
+                "url": "https://github.com/kosli-dev/cli/pull/664"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991786.1064434,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": true,
+        "status": "COMPLIANT"
+      },
+      "created_at": 1779991785.2756937,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "docs: add release guide (#664)",
+            "parents": null,
+            "sha1": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+            "timestamp": 1771840532,
+            "url": "https://github.com/kosli-dev/cli/commit/7ed1b9390a70c3c0eb4d76733f7869b7514b346b"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991785.2756937,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "docs: add release guide (#664)",
+              "sha1": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+              "timestamp": 1771840532,
+              "url": "https://github.com/kosli-dev/cli/commit/7ed1b9390a70c3c0eb4d76733f7869b7514b346b"
+            },
+            "name": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "5f3fb73a-2c3b-4545-ad91-c8502ca2",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "aa837d35-e441-4816-9a1c-e7349da5",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "docs: add release guide (#664)",
+            "parents": null,
+            "sha1": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+            "timestamp": 1771840532,
+            "url": "https://github.com/kosli-dev/cli/commit/7ed1b9390a70c3c0eb4d76733f7869b7514b346b"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991786.1064434,
+          "trail_id": "5f3fb73a-2c3b-4545-ad91-c8502ca2",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "20701891-15f5-49bd-9d3e-275a8568",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991790.341736,
+          "trail_id": "5f3fb73a-2c3b-4545-ad91-c8502ca2",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "docs: add release guide (#664)",
+        "sha1": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+        "timestamp": 1771840532,
+        "url": "https://github.com/kosli-dev/cli/commit/7ed1b9390a70c3c0eb4d76733f7869b7514b346b"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+      "is_compliant": true,
+      "last_modified_at": 1779991790.341736,
+      "name": "7ed1b9390a70c3c0eb4d76733f7869b7514b346b",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    }
+  ]
+}

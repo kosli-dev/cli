@@ -1,0 +1,1927 @@
+{
+  "trails": [
+    {
+      "compliance_state": "COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": true,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "52e76289-b418-48d6-9972-f274717b",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991777.7058601,
+                          "git_commit_info": {
+                            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "feat: add --mintlify flag to kosli docs command (#663)\n\n* feat: add --mintlify flag to kosli docs command\n\nIntroduce internal/docgen package with a Formatter interface and two\nimplementations (HugoFormatter, MintlifyFormatter) so the CLI can\ndirectly generate Mintlify-compatible MDX documentation.\n\n- Extract doc rendering logic from cmd/kosli/docs.go into docgen\n- Add MintlifyFormatter with \u003cWarning\u003e, \u003cTabs\u003e/\u003cTab\u003e,\n  \u003cAccordionGroup\u003e/\u003cAccordion\u003e components, JSX escaping, and\n  relative URLs\n- Move CommandsInTable and helpers to docgen/helpers.go\n- Add GenMarkdownTree tree walker using Formatter + callbacks\n- Wire --mintlify flag in docsOptions to select formatter\n- Add golden file tests for both Mintlify snyk and artifact pages\n- Existing Hugo golden file test unchanged (no regression)\n\n* refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests\n\nMove Hugo golden files from testdata/output/docs/ to\ntestdata/output/docs/hugo/ for symmetry with mintlify/.\nHugo golden file content is unchanged.\n\nAdd Mintlify golden file comparison tests for snyk and deprecated\nartifact commands. Update Hugo test golden path only.\n\n* fix: omit h1 title from Mintlify output\n\nMintlify renders the front matter title as h1 automatically, so\nthe generated docs should not include a duplicate # heading.\n\nAdd Title() method to Formatter interface — Hugo emits # name,\nMintlify returns empty string. Pages now start with ## Synopsis.\n\n* fix: convert docs.kosli.com URLs to clickable markdown links\n\nReplace bare https://docs.kosli.com/path URLs in Mintlify output\nwith markdown links [docs](/path) so they are clickable both\nlocally (mint dev) and when deployed.\n\nApplies to flag descriptions and synopsis text.\n\n* chore: minor formatting",
+                            "sha1": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+                            "timestamp": 1771835527,
+                            "url": "https://github.com/kosli-dev/cli/commit/96368697cb7cd4c2f8c45be29600dd6e759337e8"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/96368697cb7cd4c2f8c45be29600dd6e759337e8?attestation_id=52e76289-b418-48d6-9972-f274717b",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771835469,
+                                  "username": "AlexKantor87"
+                                }
+                              ],
+                              "author": "dangrondahl",
+                              "commits": [
+                                {
+                                  "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                                  "author_username": "dangrondahl",
+                                  "branch": "662-add---mintlify-flag-to-kosli-docs-command",
+                                  "message": "feat: add --mintlify flag to kosli docs command",
+                                  "sha1": "8562741b44d6f8dc668bcc35c480cad210a40920",
+                                  "timestamp": 1771747722,
+                                  "url": "https://github.com/kosli-dev/cli/commit/8562741b44d6f8dc668bcc35c480cad210a40920"
+                                },
+                                {
+                                  "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                                  "author_username": "dangrondahl",
+                                  "branch": "662-add---mintlify-flag-to-kosli-docs-command",
+                                  "message": "refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests",
+                                  "sha1": "32a47733dada65d3c7119800e8662b97c9785655",
+                                  "timestamp": 1771748879,
+                                  "url": "https://github.com/kosli-dev/cli/commit/32a47733dada65d3c7119800e8662b97c9785655"
+                                },
+                                {
+                                  "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                                  "author_username": "dangrondahl",
+                                  "branch": "662-add---mintlify-flag-to-kosli-docs-command",
+                                  "message": "fix: omit h1 title from Mintlify output",
+                                  "sha1": "8f4b227406bd921c876dde29414c1814b127e09a",
+                                  "timestamp": 1771750330,
+                                  "url": "https://github.com/kosli-dev/cli/commit/8f4b227406bd921c876dde29414c1814b127e09a"
+                                },
+                                {
+                                  "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                                  "author_username": "dangrondahl",
+                                  "branch": "662-add---mintlify-flag-to-kosli-docs-command",
+                                  "message": "fix: convert docs.kosli.com URLs to clickable markdown links",
+                                  "sha1": "7bade5ea4d46e9846c0cec2f974fa35dc7e147dc",
+                                  "timestamp": 1771752177,
+                                  "url": "https://github.com/kosli-dev/cli/commit/7bade5ea4d46e9846c0cec2f974fa35dc7e147dc"
+                                },
+                                {
+                                  "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                                  "author_username": "dangrondahl",
+                                  "branch": "662-add---mintlify-flag-to-kosli-docs-command",
+                                  "message": "chore: minor formatting",
+                                  "sha1": "1522c7a82e3d5d0c943f5a8888ad1d2d0b30fa30",
+                                  "timestamp": 1771834764,
+                                  "url": "https://github.com/kosli-dev/cli/commit/1522c7a82e3d5d0c943f5a8888ad1d2d0b30fa30"
+                                }
+                              ],
+                              "created_at": 1771769363,
+                              "head_ref": "662-add---mintlify-flag-to-kosli-docs-command",
+                              "merge_commit": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+                              "merged_at": 1771835527,
+                              "state": "MERGED",
+                              "title": "feat: add --mintlify flag to kosli docs command",
+                              "url": "https://github.com/kosli-dev/cli/pull/663"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991776.6658862,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991776.6658862,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "feat: add --mintlify flag to kosli docs command (#663)\n\n* feat: add --mintlify flag to kosli docs command\n\nIntroduce internal/docgen package with a Formatter interface and two\nimplementations (HugoFormatter, MintlifyFormatter) so the CLI can\ndirectly generate Mintlify-compatible MDX documentation.\n\n- Extract doc rendering logic from cmd/kosli/docs.go into docgen\n- Add MintlifyFormatter with \u003cWarning\u003e, \u003cTabs\u003e/\u003cTab\u003e,\n  \u003cAccordionGroup\u003e/\u003cAccordion\u003e components, JSX escaping, and\n  relative URLs\n- Move CommandsInTable and helpers to docgen/helpers.go\n- Add GenMarkdownTree tree walker using Formatter + callbacks\n- Wire --mintlify flag in docsOptions to select formatter\n- Add golden file tests for both Mintlify snyk and artifact pages\n- Existing Hugo golden file test unchanged (no regression)\n\n* refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests\n\nMove Hugo golden files from testdata/output/docs/ to\ntestdata/output/docs/hugo/ for symmetry with mintlify/.\nHugo golden file content is unchanged.\n\nAdd Mintlify golden file comparison tests for snyk and deprecated\nartifact commands. Update Hugo test golden path only.\n\n* fix: omit h1 title from Mintlify output\n\nMintlify renders the front matter title as h1 automatically, so\nthe generated docs should not include a duplicate # heading.\n\nAdd Title() method to Formatter interface — Hugo emits # name,\nMintlify returns empty string. Pages now start with ## Synopsis.\n\n* fix: convert docs.kosli.com URLs to clickable markdown links\n\nReplace bare https://docs.kosli.com/path URLs in Mintlify output\nwith markdown links [docs](/path) so they are clickable both\nlocally (mint dev) and when deployed.\n\nApplies to flag descriptions and synopsis text.\n\n* chore: minor formatting",
+                          "parents": null,
+                          "sha1": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+                          "timestamp": 1771835527,
+                          "url": "https://github.com/kosli-dev/cli/commit/96368697cb7cd4c2f8c45be29600dd6e759337e8"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991776.6658862,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "feat: add --mintlify flag to kosli docs command (#663)\n\n* feat: add --mintlify flag to kosli docs command\n\nIntroduce internal/docgen package with a Formatter interface and two\nimplementations (HugoFormatter, MintlifyFormatter) so the CLI can\ndirectly generate Mintlify-compatible MDX documentation.\n\n- Extract doc rendering logic from cmd/kosli/docs.go into docgen\n- Add MintlifyFormatter with \u003cWarning\u003e, \u003cTabs\u003e/\u003cTab\u003e,\n  \u003cAccordionGroup\u003e/\u003cAccordion\u003e components, JSX escaping, and\n  relative URLs\n- Move CommandsInTable and helpers to docgen/helpers.go\n- Add GenMarkdownTree tree walker using Formatter + callbacks\n- Wire --mintlify flag in docsOptions to select formatter\n- Add golden file tests for both Mintlify snyk and artifact pages\n- Existing Hugo golden file test unchanged (no regression)\n\n* refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests\n\nMove Hugo golden files from testdata/output/docs/ to\ntestdata/output/docs/hugo/ for symmetry with mintlify/.\nHugo golden file content is unchanged.\n\nAdd Mintlify golden file comparison tests for snyk and deprecated\nartifact commands. Update Hugo test golden path only.\n\n* fix: omit h1 title from Mintlify output\n\nMintlify renders the front matter title as h1 automatically, so\nthe generated docs should not include a duplicate # heading.\n\nAdd Title() method to Formatter interface — Hugo emits # name,\nMintlify returns empty string. Pages now start with ## Synopsis.\n\n* fix: convert docs.kosli.com URLs to clickable markdown links\n\nReplace bare https://docs.kosli.com/path URLs in Mintlify output\nwith markdown links [docs](/path) so they are clickable both\nlocally (mint dev) and when deployed.\n\nApplies to flag descriptions and synopsis text.\n\n* chore: minor formatting",
+                            "sha1": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+                            "timestamp": 1771835527,
+                            "url": "https://github.com/kosli-dev/cli/commit/96368697cb7cd4c2f8c45be29600dd6e759337e8"
+                          },
+                          "name": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "f122af43-256d-49c4-95b7-54908e9b",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "52e76289-b418-48d6-9972-f274717b",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "feat: add --mintlify flag to kosli docs command (#663)\n\n* feat: add --mintlify flag to kosli docs command\n\nIntroduce internal/docgen package with a Formatter interface and two\nimplementations (HugoFormatter, MintlifyFormatter) so the CLI can\ndirectly generate Mintlify-compatible MDX documentation.\n\n- Extract doc rendering logic from cmd/kosli/docs.go into docgen\n- Add MintlifyFormatter with \u003cWarning\u003e, \u003cTabs\u003e/\u003cTab\u003e,\n  \u003cAccordionGroup\u003e/\u003cAccordion\u003e components, JSX escaping, and\n  relative URLs\n- Move CommandsInTable and helpers to docgen/helpers.go\n- Add GenMarkdownTree tree walker using Formatter + callbacks\n- Wire --mintlify flag in docsOptions to select formatter\n- Add golden file tests for both Mintlify snyk and artifact pages\n- Existing Hugo golden file test unchanged (no regression)\n\n* refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests\n\nMove Hugo golden files from testdata/output/docs/ to\ntestdata/output/docs/hugo/ for symmetry with mintlify/.\nHugo golden file content is unchanged.\n\nAdd Mintlify golden file comparison tests for snyk and deprecated\nartifact commands. Update Hugo test golden path only.\n\n* fix: omit h1 title from Mintlify output\n\nMintlify renders the front matter title as h1 automatically, so\nthe generated docs should not include a duplicate # heading.\n\nAdd Title() method to Formatter interface — Hugo emits # name,\nMintlify returns empty string. Pages now start with ## Synopsis.\n\n* fix: convert docs.kosli.com URLs to clickable markdown links\n\nReplace bare https://docs.kosli.com/path URLs in Mintlify output\nwith markdown links [docs](/path) so they are clickable both\nlocally (mint dev) and when deployed.\n\nApplies to flag descriptions and synopsis text.\n\n* chore: minor formatting",
+                          "parents": null,
+                          "sha1": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+                          "timestamp": 1771835527,
+                          "url": "https://github.com/kosli-dev/cli/commit/96368697cb7cd4c2f8c45be29600dd6e759337e8"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991777.7058601,
+                        "trail_id": "f122af43-256d-49c4-95b7-54908e9b",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "feat: add --mintlify flag to kosli docs command (#663)\n\n* feat: add --mintlify flag to kosli docs command\n\nIntroduce internal/docgen package with a Formatter interface and two\nimplementations (HugoFormatter, MintlifyFormatter) so the CLI can\ndirectly generate Mintlify-compatible MDX documentation.\n\n- Extract doc rendering logic from cmd/kosli/docs.go into docgen\n- Add MintlifyFormatter with \u003cWarning\u003e, \u003cTabs\u003e/\u003cTab\u003e,\n  \u003cAccordionGroup\u003e/\u003cAccordion\u003e components, JSX escaping, and\n  relative URLs\n- Move CommandsInTable and helpers to docgen/helpers.go\n- Add GenMarkdownTree tree walker using Formatter + callbacks\n- Wire --mintlify flag in docsOptions to select formatter\n- Add golden file tests for both Mintlify snyk and artifact pages\n- Existing Hugo golden file test unchanged (no regression)\n\n* refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests\n\nMove Hugo golden files from testdata/output/docs/ to\ntestdata/output/docs/hugo/ for symmetry with mintlify/.\nHugo golden file content is unchanged.\n\nAdd Mintlify golden file comparison tests for snyk and deprecated\nartifact commands. Update Hugo test golden path only.\n\n* fix: omit h1 title from Mintlify output\n\nMintlify renders the front matter title as h1 automatically, so\nthe generated docs should not include a duplicate # heading.\n\nAdd Title() method to Formatter interface — Hugo emits # name,\nMintlify returns empty string. Pages now start with ## Synopsis.\n\n* fix: convert docs.kosli.com URLs to clickable markdown links\n\nReplace bare https://docs.kosli.com/path URLs in Mintlify output\nwith markdown links [docs](/path) so they are clickable both\nlocally (mint dev) and when deployed.\n\nApplies to flag descriptions and synopsis text.\n\n* chore: minor formatting",
+                      "sha1": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+                      "timestamp": 1771835527,
+                      "url": "https://github.com/kosli-dev/cli/commit/96368697cb7cd4c2f8c45be29600dd6e759337e8"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/96368697cb7cd4c2f8c45be29600dd6e759337e8",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991777.7058601,
+                    "name": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": null
+            },
+            "attestation_id": "1c882dd7-cfde-457b-b32b-ef0a302e",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991779.089317,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/6a874c70-573a-451b-abae-46a28bac/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/96368697cb7cd4c2f8c45be29600dd6e759337e8?attestation_id=1c882dd7-cfde-457b-b32b-ef0a302e",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": true,
+                  "rule": ".allow == true",
+                  "status": true
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "52e76289-b418-48d6-9972-f274717b",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991777.7058601,
+            "git_commit_info": {
+              "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "feat: add --mintlify flag to kosli docs command (#663)\n\n* feat: add --mintlify flag to kosli docs command\n\nIntroduce internal/docgen package with a Formatter interface and two\nimplementations (HugoFormatter, MintlifyFormatter) so the CLI can\ndirectly generate Mintlify-compatible MDX documentation.\n\n- Extract doc rendering logic from cmd/kosli/docs.go into docgen\n- Add MintlifyFormatter with \u003cWarning\u003e, \u003cTabs\u003e/\u003cTab\u003e,\n  \u003cAccordionGroup\u003e/\u003cAccordion\u003e components, JSX escaping, and\n  relative URLs\n- Move CommandsInTable and helpers to docgen/helpers.go\n- Add GenMarkdownTree tree walker using Formatter + callbacks\n- Wire --mintlify flag in docsOptions to select formatter\n- Add golden file tests for both Mintlify snyk and artifact pages\n- Existing Hugo golden file test unchanged (no regression)\n\n* refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests\n\nMove Hugo golden files from testdata/output/docs/ to\ntestdata/output/docs/hugo/ for symmetry with mintlify/.\nHugo golden file content is unchanged.\n\nAdd Mintlify golden file comparison tests for snyk and deprecated\nartifact commands. Update Hugo test golden path only.\n\n* fix: omit h1 title from Mintlify output\n\nMintlify renders the front matter title as h1 automatically, so\nthe generated docs should not include a duplicate # heading.\n\nAdd Title() method to Formatter interface — Hugo emits # name,\nMintlify returns empty string. Pages now start with ## Synopsis.\n\n* fix: convert docs.kosli.com URLs to clickable markdown links\n\nReplace bare https://docs.kosli.com/path URLs in Mintlify output\nwith markdown links [docs](/path) so they are clickable both\nlocally (mint dev) and when deployed.\n\nApplies to flag descriptions and synopsis text.\n\n* chore: minor formatting",
+              "sha1": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+              "timestamp": 1771835527,
+              "url": "https://github.com/kosli-dev/cli/commit/96368697cb7cd4c2f8c45be29600dd6e759337e8"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/96368697cb7cd4c2f8c45be29600dd6e759337e8?attestation_id=52e76289-b418-48d6-9972-f274717b",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771835469,
+                    "username": "AlexKantor87"
+                  }
+                ],
+                "author": "dangrondahl",
+                "commits": [
+                  {
+                    "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                    "author_username": "dangrondahl",
+                    "branch": "662-add---mintlify-flag-to-kosli-docs-command",
+                    "message": "feat: add --mintlify flag to kosli docs command",
+                    "sha1": "8562741b44d6f8dc668bcc35c480cad210a40920",
+                    "timestamp": 1771747722,
+                    "url": "https://github.com/kosli-dev/cli/commit/8562741b44d6f8dc668bcc35c480cad210a40920"
+                  },
+                  {
+                    "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                    "author_username": "dangrondahl",
+                    "branch": "662-add---mintlify-flag-to-kosli-docs-command",
+                    "message": "refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests",
+                    "sha1": "32a47733dada65d3c7119800e8662b97c9785655",
+                    "timestamp": 1771748879,
+                    "url": "https://github.com/kosli-dev/cli/commit/32a47733dada65d3c7119800e8662b97c9785655"
+                  },
+                  {
+                    "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                    "author_username": "dangrondahl",
+                    "branch": "662-add---mintlify-flag-to-kosli-docs-command",
+                    "message": "fix: omit h1 title from Mintlify output",
+                    "sha1": "8f4b227406bd921c876dde29414c1814b127e09a",
+                    "timestamp": 1771750330,
+                    "url": "https://github.com/kosli-dev/cli/commit/8f4b227406bd921c876dde29414c1814b127e09a"
+                  },
+                  {
+                    "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                    "author_username": "dangrondahl",
+                    "branch": "662-add---mintlify-flag-to-kosli-docs-command",
+                    "message": "fix: convert docs.kosli.com URLs to clickable markdown links",
+                    "sha1": "7bade5ea4d46e9846c0cec2f974fa35dc7e147dc",
+                    "timestamp": 1771752177,
+                    "url": "https://github.com/kosli-dev/cli/commit/7bade5ea4d46e9846c0cec2f974fa35dc7e147dc"
+                  },
+                  {
+                    "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+                    "author_username": "dangrondahl",
+                    "branch": "662-add---mintlify-flag-to-kosli-docs-command",
+                    "message": "chore: minor formatting",
+                    "sha1": "1522c7a82e3d5d0c943f5a8888ad1d2d0b30fa30",
+                    "timestamp": 1771834764,
+                    "url": "https://github.com/kosli-dev/cli/commit/1522c7a82e3d5d0c943f5a8888ad1d2d0b30fa30"
+                  }
+                ],
+                "created_at": 1771769363,
+                "head_ref": "662-add---mintlify-flag-to-kosli-docs-command",
+                "merge_commit": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+                "merged_at": 1771835527,
+                "state": "MERGED",
+                "title": "feat: add --mintlify flag to kosli docs command",
+                "url": "https://github.com/kosli-dev/cli/pull/663"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991777.7058601,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": true,
+        "status": "COMPLIANT"
+      },
+      "created_at": 1779991776.6658862,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "feat: add --mintlify flag to kosli docs command (#663)\n\n* feat: add --mintlify flag to kosli docs command\n\nIntroduce internal/docgen package with a Formatter interface and two\nimplementations (HugoFormatter, MintlifyFormatter) so the CLI can\ndirectly generate Mintlify-compatible MDX documentation.\n\n- Extract doc rendering logic from cmd/kosli/docs.go into docgen\n- Add MintlifyFormatter with \u003cWarning\u003e, \u003cTabs\u003e/\u003cTab\u003e,\n  \u003cAccordionGroup\u003e/\u003cAccordion\u003e components, JSX escaping, and\n  relative URLs\n- Move CommandsInTable and helpers to docgen/helpers.go\n- Add GenMarkdownTree tree walker using Formatter + callbacks\n- Wire --mintlify flag in docsOptions to select formatter\n- Add golden file tests for both Mintlify snyk and artifact pages\n- Existing Hugo golden file test unchanged (no regression)\n\n* refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests\n\nMove Hugo golden files from testdata/output/docs/ to\ntestdata/output/docs/hugo/ for symmetry with mintlify/.\nHugo golden file content is unchanged.\n\nAdd Mintlify golden file comparison tests for snyk and deprecated\nartifact commands. Update Hugo test golden path only.\n\n* fix: omit h1 title from Mintlify output\n\nMintlify renders the front matter title as h1 automatically, so\nthe generated docs should not include a duplicate # heading.\n\nAdd Title() method to Formatter interface — Hugo emits # name,\nMintlify returns empty string. Pages now start with ## Synopsis.\n\n* fix: convert docs.kosli.com URLs to clickable markdown links\n\nReplace bare https://docs.kosli.com/path URLs in Mintlify output\nwith markdown links [docs](/path) so they are clickable both\nlocally (mint dev) and when deployed.\n\nApplies to flag descriptions and synopsis text.\n\n* chore: minor formatting",
+            "parents": null,
+            "sha1": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+            "timestamp": 1771835527,
+            "url": "https://github.com/kosli-dev/cli/commit/96368697cb7cd4c2f8c45be29600dd6e759337e8"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991776.6658862,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "feat: add --mintlify flag to kosli docs command (#663)\n\n* feat: add --mintlify flag to kosli docs command\n\nIntroduce internal/docgen package with a Formatter interface and two\nimplementations (HugoFormatter, MintlifyFormatter) so the CLI can\ndirectly generate Mintlify-compatible MDX documentation.\n\n- Extract doc rendering logic from cmd/kosli/docs.go into docgen\n- Add MintlifyFormatter with \u003cWarning\u003e, \u003cTabs\u003e/\u003cTab\u003e,\n  \u003cAccordionGroup\u003e/\u003cAccordion\u003e components, JSX escaping, and\n  relative URLs\n- Move CommandsInTable and helpers to docgen/helpers.go\n- Add GenMarkdownTree tree walker using Formatter + callbacks\n- Wire --mintlify flag in docsOptions to select formatter\n- Add golden file tests for both Mintlify snyk and artifact pages\n- Existing Hugo golden file test unchanged (no regression)\n\n* refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests\n\nMove Hugo golden files from testdata/output/docs/ to\ntestdata/output/docs/hugo/ for symmetry with mintlify/.\nHugo golden file content is unchanged.\n\nAdd Mintlify golden file comparison tests for snyk and deprecated\nartifact commands. Update Hugo test golden path only.\n\n* fix: omit h1 title from Mintlify output\n\nMintlify renders the front matter title as h1 automatically, so\nthe generated docs should not include a duplicate # heading.\n\nAdd Title() method to Formatter interface — Hugo emits # name,\nMintlify returns empty string. Pages now start with ## Synopsis.\n\n* fix: convert docs.kosli.com URLs to clickable markdown links\n\nReplace bare https://docs.kosli.com/path URLs in Mintlify output\nwith markdown links [docs](/path) so they are clickable both\nlocally (mint dev) and when deployed.\n\nApplies to flag descriptions and synopsis text.\n\n* chore: minor formatting",
+              "sha1": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+              "timestamp": 1771835527,
+              "url": "https://github.com/kosli-dev/cli/commit/96368697cb7cd4c2f8c45be29600dd6e759337e8"
+            },
+            "name": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "f122af43-256d-49c4-95b7-54908e9b",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "52e76289-b418-48d6-9972-f274717b",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "feat: add --mintlify flag to kosli docs command (#663)\n\n* feat: add --mintlify flag to kosli docs command\n\nIntroduce internal/docgen package with a Formatter interface and two\nimplementations (HugoFormatter, MintlifyFormatter) so the CLI can\ndirectly generate Mintlify-compatible MDX documentation.\n\n- Extract doc rendering logic from cmd/kosli/docs.go into docgen\n- Add MintlifyFormatter with \u003cWarning\u003e, \u003cTabs\u003e/\u003cTab\u003e,\n  \u003cAccordionGroup\u003e/\u003cAccordion\u003e components, JSX escaping, and\n  relative URLs\n- Move CommandsInTable and helpers to docgen/helpers.go\n- Add GenMarkdownTree tree walker using Formatter + callbacks\n- Wire --mintlify flag in docsOptions to select formatter\n- Add golden file tests for both Mintlify snyk and artifact pages\n- Existing Hugo golden file test unchanged (no regression)\n\n* refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests\n\nMove Hugo golden files from testdata/output/docs/ to\ntestdata/output/docs/hugo/ for symmetry with mintlify/.\nHugo golden file content is unchanged.\n\nAdd Mintlify golden file comparison tests for snyk and deprecated\nartifact commands. Update Hugo test golden path only.\n\n* fix: omit h1 title from Mintlify output\n\nMintlify renders the front matter title as h1 automatically, so\nthe generated docs should not include a duplicate # heading.\n\nAdd Title() method to Formatter interface — Hugo emits # name,\nMintlify returns empty string. Pages now start with ## Synopsis.\n\n* fix: convert docs.kosli.com URLs to clickable markdown links\n\nReplace bare https://docs.kosli.com/path URLs in Mintlify output\nwith markdown links [docs](/path) so they are clickable both\nlocally (mint dev) and when deployed.\n\nApplies to flag descriptions and synopsis text.\n\n* chore: minor formatting",
+            "parents": null,
+            "sha1": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+            "timestamp": 1771835527,
+            "url": "https://github.com/kosli-dev/cli/commit/96368697cb7cd4c2f8c45be29600dd6e759337e8"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991777.7058601,
+          "trail_id": "f122af43-256d-49c4-95b7-54908e9b",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "1c882dd7-cfde-457b-b32b-ef0a302e",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991779.089317,
+          "trail_id": "f122af43-256d-49c4-95b7-54908e9b",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "Dan Grøndahl \u003cdan@kosli.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "feat: add --mintlify flag to kosli docs command (#663)\n\n* feat: add --mintlify flag to kosli docs command\n\nIntroduce internal/docgen package with a Formatter interface and two\nimplementations (HugoFormatter, MintlifyFormatter) so the CLI can\ndirectly generate Mintlify-compatible MDX documentation.\n\n- Extract doc rendering logic from cmd/kosli/docs.go into docgen\n- Add MintlifyFormatter with \u003cWarning\u003e, \u003cTabs\u003e/\u003cTab\u003e,\n  \u003cAccordionGroup\u003e/\u003cAccordion\u003e components, JSX escaping, and\n  relative URLs\n- Move CommandsInTable and helpers to docgen/helpers.go\n- Add GenMarkdownTree tree walker using Formatter + callbacks\n- Wire --mintlify flag in docsOptions to select formatter\n- Add golden file tests for both Mintlify snyk and artifact pages\n- Existing Hugo golden file test unchanged (no regression)\n\n* refactor: move Hugo golden files to hugo/ subdir, add Mintlify tests\n\nMove Hugo golden files from testdata/output/docs/ to\ntestdata/output/docs/hugo/ for symmetry with mintlify/.\nHugo golden file content is unchanged.\n\nAdd Mintlify golden file comparison tests for snyk and deprecated\nartifact commands. Update Hugo test golden path only.\n\n* fix: omit h1 title from Mintlify output\n\nMintlify renders the front matter title as h1 automatically, so\nthe generated docs should not include a duplicate # heading.\n\nAdd Title() method to Formatter interface — Hugo emits # name,\nMintlify returns empty string. Pages now start with ## Synopsis.\n\n* fix: convert docs.kosli.com URLs to clickable markdown links\n\nReplace bare https://docs.kosli.com/path URLs in Mintlify output\nwith markdown links [docs](/path) so they are clickable both\nlocally (mint dev) and when deployed.\n\nApplies to flag descriptions and synopsis text.\n\n* chore: minor formatting",
+        "sha1": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+        "timestamp": 1771835527,
+        "url": "https://github.com/kosli-dev/cli/commit/96368697cb7cd4c2f8c45be29600dd6e759337e8"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/96368697cb7cd4c2f8c45be29600dd6e759337e8",
+      "is_compliant": true,
+      "last_modified_at": 1779991779.089317,
+      "name": "96368697cb7cd4c2f8c45be29600dd6e759337e8",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    },
+    {
+      "compliance_state": "COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": true,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "5c7f3b70-d275-45ca-9e5a-839e8bae",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991777.1241817,
+                          "git_commit_info": {
+                            "author": "ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Update helm docs (#660)\n\nCo-authored-by: ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+                            "sha1": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+                            "timestamp": 1771590027,
+                            "url": "https://github.com/kosli-dev/cli/commit/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe?attestation_id=5c7f3b70-d275-45ca-9e5a-839e8bae",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771590022,
+                                  "username": "sami-alajrami"
+                                }
+                              ],
+                              "author": "ci-signed-commit-bot",
+                              "commits": [
+                                {
+                                  "author": "GitHub \u003cnoreply@github.com\u003e",
+                                  "branch": "helm-docs-update",
+                                  "message": "Update helm docs",
+                                  "sha1": "e058df27a6dcead3ed6d8abce7d83d6b132ca1df",
+                                  "timestamp": 1771517047,
+                                  "url": "https://github.com/kosli-dev/cli/commit/e058df27a6dcead3ed6d8abce7d83d6b132ca1df"
+                                }
+                              ],
+                              "created_at": 1771517049,
+                              "head_ref": "helm-docs-update",
+                              "merge_commit": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+                              "merged_at": 1771590028,
+                              "state": "MERGED",
+                              "title": "Update helm docs",
+                              "url": "https://github.com/kosli-dev/cli/pull/660"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991776.271417,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991776.271417,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Update helm docs (#660)\n\nCo-authored-by: ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+                          "parents": null,
+                          "sha1": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+                          "timestamp": 1771590027,
+                          "url": "https://github.com/kosli-dev/cli/commit/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991776.271417,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Update helm docs (#660)\n\nCo-authored-by: ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+                            "sha1": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+                            "timestamp": 1771590027,
+                            "url": "https://github.com/kosli-dev/cli/commit/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe"
+                          },
+                          "name": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "95ed5eaf-b630-4c2e-aeab-b59235d5",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "5c7f3b70-d275-45ca-9e5a-839e8bae",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Update helm docs (#660)\n\nCo-authored-by: ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+                          "parents": null,
+                          "sha1": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+                          "timestamp": 1771590027,
+                          "url": "https://github.com/kosli-dev/cli/commit/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991777.1241817,
+                        "trail_id": "95ed5eaf-b630-4c2e-aeab-b59235d5",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "Update helm docs (#660)\n\nCo-authored-by: ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+                      "sha1": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+                      "timestamp": 1771590027,
+                      "url": "https://github.com/kosli-dev/cli/commit/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991777.1241817,
+                    "name": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": null
+            },
+            "attestation_id": "c956e526-1b37-4e78-b8e9-36ed5b59",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991779.6938565,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/ee940343-4d8b-4f60-8892-b378a671/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe?attestation_id=c956e526-1b37-4e78-b8e9-36ed5b59",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": true,
+                  "rule": ".allow == true",
+                  "status": true
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "5c7f3b70-d275-45ca-9e5a-839e8bae",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991777.1241817,
+            "git_commit_info": {
+              "author": "ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Update helm docs (#660)\n\nCo-authored-by: ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+              "sha1": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+              "timestamp": 1771590027,
+              "url": "https://github.com/kosli-dev/cli/commit/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe?attestation_id=5c7f3b70-d275-45ca-9e5a-839e8bae",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771590022,
+                    "username": "sami-alajrami"
+                  }
+                ],
+                "author": "ci-signed-commit-bot",
+                "commits": [
+                  {
+                    "author": "GitHub \u003cnoreply@github.com\u003e",
+                    "branch": "helm-docs-update",
+                    "message": "Update helm docs",
+                    "sha1": "e058df27a6dcead3ed6d8abce7d83d6b132ca1df",
+                    "timestamp": 1771517047,
+                    "url": "https://github.com/kosli-dev/cli/commit/e058df27a6dcead3ed6d8abce7d83d6b132ca1df"
+                  }
+                ],
+                "created_at": 1771517049,
+                "head_ref": "helm-docs-update",
+                "merge_commit": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+                "merged_at": 1771590028,
+                "state": "MERGED",
+                "title": "Update helm docs",
+                "url": "https://github.com/kosli-dev/cli/pull/660"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991777.1241817,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": true,
+        "status": "COMPLIANT"
+      },
+      "created_at": 1779991776.271417,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Update helm docs (#660)\n\nCo-authored-by: ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+            "parents": null,
+            "sha1": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+            "timestamp": 1771590027,
+            "url": "https://github.com/kosli-dev/cli/commit/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991776.271417,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Update helm docs (#660)\n\nCo-authored-by: ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+              "sha1": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+              "timestamp": 1771590027,
+              "url": "https://github.com/kosli-dev/cli/commit/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe"
+            },
+            "name": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "95ed5eaf-b630-4c2e-aeab-b59235d5",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "5c7f3b70-d275-45ca-9e5a-839e8bae",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Update helm docs (#660)\n\nCo-authored-by: ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+            "parents": null,
+            "sha1": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+            "timestamp": 1771590027,
+            "url": "https://github.com/kosli-dev/cli/commit/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991777.1241817,
+          "trail_id": "95ed5eaf-b630-4c2e-aeab-b59235d5",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "c956e526-1b37-4e78-b8e9-36ed5b59",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991779.6938565,
+          "trail_id": "95ed5eaf-b630-4c2e-aeab-b59235d5",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "Update helm docs (#660)\n\nCo-authored-by: ci-signed-commit-bot[bot] \u003c247774526+ci-signed-commit-bot[bot]@users.noreply.github.com\u003e",
+        "sha1": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+        "timestamp": 1771590027,
+        "url": "https://github.com/kosli-dev/cli/commit/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+      "is_compliant": true,
+      "last_modified_at": 1779991779.6938565,
+      "name": "6589e8bb6159d6a6bc4ee6ceda3b46edbde0f9fe",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    },
+    {
+      "compliance_state": "COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": true,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "be9ae7ab-215b-4885-8ca4-589b699e",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991777.0927148,
+                          "git_commit_info": {
+                            "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Upgrade to CLI v2.11.43 (#659)\n\n* Upgrade to CLI v2.11.43\n\n* Remove build context from one mongo instance to solve race condition",
+                            "sha1": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+                            "timestamp": 1771517020,
+                            "url": "https://github.com/kosli-dev/cli/commit/5959d21ddffecbb3cc3c06a0f4431aec3398107c"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/5959d21ddffecbb3cc3c06a0f4431aec3398107c?attestation_id=be9ae7ab-215b-4885-8ca4-589b699e",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771517019,
+                                  "username": "AlexKantor87"
+                                }
+                              ],
+                              "author": "FayeSGW",
+                              "commits": [
+                                {
+                                  "author": "Faye \u003cfaye@kosli.com\u003e",
+                                  "author_username": "FayeSGW",
+                                  "branch": "upgrade-cli-20260219",
+                                  "message": "Upgrade to CLI v2.11.43",
+                                  "sha1": "c615a1207fe2b288e32b0aac847c03c35ade060c",
+                                  "timestamp": 1771510647,
+                                  "url": "https://github.com/kosli-dev/cli/commit/c615a1207fe2b288e32b0aac847c03c35ade060c"
+                                },
+                                {
+                                  "author": "Faye \u003cfaye@kosli.com\u003e",
+                                  "author_username": "FayeSGW",
+                                  "branch": "upgrade-cli-20260219",
+                                  "message": "Remove build context from one mongo instance",
+                                  "sha1": "35175c68cfac8dbedb671f2c5c8ddb6fc69678b9",
+                                  "timestamp": 1771513777,
+                                  "url": "https://github.com/kosli-dev/cli/commit/35175c68cfac8dbedb671f2c5c8ddb6fc69678b9"
+                                }
+                              ],
+                              "created_at": 1771510985,
+                              "head_ref": "upgrade-cli-20260219",
+                              "merge_commit": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+                              "merged_at": 1771517021,
+                              "state": "MERGED",
+                              "title": "Upgrade to CLI v2.11.43",
+                              "url": "https://github.com/kosli-dev/cli/pull/659"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991776.309091,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991776.309091,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Upgrade to CLI v2.11.43 (#659)\n\n* Upgrade to CLI v2.11.43\n\n* Remove build context from one mongo instance to solve race condition",
+                          "parents": null,
+                          "sha1": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+                          "timestamp": 1771517020,
+                          "url": "https://github.com/kosli-dev/cli/commit/5959d21ddffecbb3cc3c06a0f4431aec3398107c"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991776.309091,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Upgrade to CLI v2.11.43 (#659)\n\n* Upgrade to CLI v2.11.43\n\n* Remove build context from one mongo instance to solve race condition",
+                            "sha1": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+                            "timestamp": 1771517020,
+                            "url": "https://github.com/kosli-dev/cli/commit/5959d21ddffecbb3cc3c06a0f4431aec3398107c"
+                          },
+                          "name": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "a1841e03-7d4d-48e9-97fe-3e2bad81",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "be9ae7ab-215b-4885-8ca4-589b699e",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Upgrade to CLI v2.11.43 (#659)\n\n* Upgrade to CLI v2.11.43\n\n* Remove build context from one mongo instance to solve race condition",
+                          "parents": null,
+                          "sha1": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+                          "timestamp": 1771517020,
+                          "url": "https://github.com/kosli-dev/cli/commit/5959d21ddffecbb3cc3c06a0f4431aec3398107c"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991777.0927148,
+                        "trail_id": "a1841e03-7d4d-48e9-97fe-3e2bad81",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "Upgrade to CLI v2.11.43 (#659)\n\n* Upgrade to CLI v2.11.43\n\n* Remove build context from one mongo instance to solve race condition",
+                      "sha1": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+                      "timestamp": 1771517020,
+                      "url": "https://github.com/kosli-dev/cli/commit/5959d21ddffecbb3cc3c06a0f4431aec3398107c"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991777.0927148,
+                    "name": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": null
+            },
+            "attestation_id": "92781cf1-26b7-48a6-92e4-ada25dc8",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991780.3254702,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/bbed386b-4823-43d6-b1b8-dfc9b453/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/5959d21ddffecbb3cc3c06a0f4431aec3398107c?attestation_id=92781cf1-26b7-48a6-92e4-ada25dc8",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": true,
+                  "rule": ".allow == true",
+                  "status": true
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "be9ae7ab-215b-4885-8ca4-589b699e",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991777.0927148,
+            "git_commit_info": {
+              "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Upgrade to CLI v2.11.43 (#659)\n\n* Upgrade to CLI v2.11.43\n\n* Remove build context from one mongo instance to solve race condition",
+              "sha1": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+              "timestamp": 1771517020,
+              "url": "https://github.com/kosli-dev/cli/commit/5959d21ddffecbb3cc3c06a0f4431aec3398107c"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/5959d21ddffecbb3cc3c06a0f4431aec3398107c?attestation_id=be9ae7ab-215b-4885-8ca4-589b699e",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771517019,
+                    "username": "AlexKantor87"
+                  }
+                ],
+                "author": "FayeSGW",
+                "commits": [
+                  {
+                    "author": "Faye \u003cfaye@kosli.com\u003e",
+                    "author_username": "FayeSGW",
+                    "branch": "upgrade-cli-20260219",
+                    "message": "Upgrade to CLI v2.11.43",
+                    "sha1": "c615a1207fe2b288e32b0aac847c03c35ade060c",
+                    "timestamp": 1771510647,
+                    "url": "https://github.com/kosli-dev/cli/commit/c615a1207fe2b288e32b0aac847c03c35ade060c"
+                  },
+                  {
+                    "author": "Faye \u003cfaye@kosli.com\u003e",
+                    "author_username": "FayeSGW",
+                    "branch": "upgrade-cli-20260219",
+                    "message": "Remove build context from one mongo instance",
+                    "sha1": "35175c68cfac8dbedb671f2c5c8ddb6fc69678b9",
+                    "timestamp": 1771513777,
+                    "url": "https://github.com/kosli-dev/cli/commit/35175c68cfac8dbedb671f2c5c8ddb6fc69678b9"
+                  }
+                ],
+                "created_at": 1771510985,
+                "head_ref": "upgrade-cli-20260219",
+                "merge_commit": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+                "merged_at": 1771517021,
+                "state": "MERGED",
+                "title": "Upgrade to CLI v2.11.43",
+                "url": "https://github.com/kosli-dev/cli/pull/659"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991777.0927148,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": true,
+        "status": "COMPLIANT"
+      },
+      "created_at": 1779991776.309091,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Upgrade to CLI v2.11.43 (#659)\n\n* Upgrade to CLI v2.11.43\n\n* Remove build context from one mongo instance to solve race condition",
+            "parents": null,
+            "sha1": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+            "timestamp": 1771517020,
+            "url": "https://github.com/kosli-dev/cli/commit/5959d21ddffecbb3cc3c06a0f4431aec3398107c"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991776.309091,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Upgrade to CLI v2.11.43 (#659)\n\n* Upgrade to CLI v2.11.43\n\n* Remove build context from one mongo instance to solve race condition",
+              "sha1": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+              "timestamp": 1771517020,
+              "url": "https://github.com/kosli-dev/cli/commit/5959d21ddffecbb3cc3c06a0f4431aec3398107c"
+            },
+            "name": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "a1841e03-7d4d-48e9-97fe-3e2bad81",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "be9ae7ab-215b-4885-8ca4-589b699e",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Upgrade to CLI v2.11.43 (#659)\n\n* Upgrade to CLI v2.11.43\n\n* Remove build context from one mongo instance to solve race condition",
+            "parents": null,
+            "sha1": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+            "timestamp": 1771517020,
+            "url": "https://github.com/kosli-dev/cli/commit/5959d21ddffecbb3cc3c06a0f4431aec3398107c"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991777.0927148,
+          "trail_id": "a1841e03-7d4d-48e9-97fe-3e2bad81",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "92781cf1-26b7-48a6-92e4-ada25dc8",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991780.3254702,
+          "trail_id": "a1841e03-7d4d-48e9-97fe-3e2bad81",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "Upgrade to CLI v2.11.43 (#659)\n\n* Upgrade to CLI v2.11.43\n\n* Remove build context from one mongo instance to solve race condition",
+        "sha1": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+        "timestamp": 1771517020,
+        "url": "https://github.com/kosli-dev/cli/commit/5959d21ddffecbb3cc3c06a0f4431aec3398107c"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+      "is_compliant": true,
+      "last_modified_at": 1779991780.3254702,
+      "name": "5959d21ddffecbb3cc3c06a0f4431aec3398107c",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    },
+    {
+      "compliance_state": "COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": true,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "9e62c248-db28-4323-b431-8d5a30fc",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991777.2620928,
+                          "git_commit_info": {
+                            "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671 (#658)\n\n* CLAUDE: Added initial setup\n\n* Remove deprecated /api/v2/evidence/ commands and related code server/#4671\n\nMove JUnitResults struct and helper functions (ingestJunitDir,\ngetJunitFilenames, parseTimestamp) from the deleted\nreportEvidenceArtifactJunit.go into attestJunit.go, as they are\nstill used by the attest junit command.\n\nMove jiraTestsAdditionalConfig test helper struct from the deleted\nreportEvidenceCommitJira_test.go into attestJira_test.go, as it is\nstill used by the attest jira tests.",
+                            "sha1": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+                            "timestamp": 1771404862,
+                            "url": "https://github.com/kosli-dev/cli/commit/ee748df6acd8e75c241c43b6f05cee336c9f2c47"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/ee748df6acd8e75c241c43b6f05cee336c9f2c47?attestation_id=9e62c248-db28-4323-b431-8d5a30fc",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771404861,
+                                  "username": "jumboduck"
+                                }
+                              ],
+                              "author": "ToreMerkely",
+                              "commits": [
+                                {
+                                  "author": "Tore Martin Hagen \u003ctore@kosli.com\u003e",
+                                  "author_username": "ToreMerkely",
+                                  "branch": "rm-evidence",
+                                  "message": "CLAUDE: Added initial setup",
+                                  "sha1": "74b199371f92b59274a96ec46dd799c490792d3f",
+                                  "timestamp": 1771395054,
+                                  "url": "https://github.com/kosli-dev/cli/commit/74b199371f92b59274a96ec46dd799c490792d3f"
+                                },
+                                {
+                                  "author": "Tore Martin Hagen \u003ctore@kosli.com\u003e",
+                                  "author_username": "ToreMerkely",
+                                  "branch": "rm-evidence",
+                                  "message": "Remove deprecated /api/v2/evidence/ commands and related code server/…",
+                                  "sha1": "c16cc97a2a3eecdaf3b2223058adb8e5e2501811",
+                                  "timestamp": 1771401521,
+                                  "url": "https://github.com/kosli-dev/cli/commit/c16cc97a2a3eecdaf3b2223058adb8e5e2501811"
+                                }
+                              ],
+                              "created_at": 1771402614,
+                              "head_ref": "rm-evidence",
+                              "merge_commit": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+                              "merged_at": 1771404863,
+                              "state": "MERGED",
+                              "title": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671",
+                              "url": "https://github.com/kosli-dev/cli/pull/658"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991776.3514147,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991776.3514147,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671 (#658)\n\n* CLAUDE: Added initial setup\n\n* Remove deprecated /api/v2/evidence/ commands and related code server/#4671\n\nMove JUnitResults struct and helper functions (ingestJunitDir,\ngetJunitFilenames, parseTimestamp) from the deleted\nreportEvidenceArtifactJunit.go into attestJunit.go, as they are\nstill used by the attest junit command.\n\nMove jiraTestsAdditionalConfig test helper struct from the deleted\nreportEvidenceCommitJira_test.go into attestJira_test.go, as it is\nstill used by the attest jira tests.",
+                          "parents": null,
+                          "sha1": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+                          "timestamp": 1771404862,
+                          "url": "https://github.com/kosli-dev/cli/commit/ee748df6acd8e75c241c43b6f05cee336c9f2c47"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991776.3514147,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671 (#658)\n\n* CLAUDE: Added initial setup\n\n* Remove deprecated /api/v2/evidence/ commands and related code server/#4671\n\nMove JUnitResults struct and helper functions (ingestJunitDir,\ngetJunitFilenames, parseTimestamp) from the deleted\nreportEvidenceArtifactJunit.go into attestJunit.go, as they are\nstill used by the attest junit command.\n\nMove jiraTestsAdditionalConfig test helper struct from the deleted\nreportEvidenceCommitJira_test.go into attestJira_test.go, as it is\nstill used by the attest jira tests.",
+                            "sha1": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+                            "timestamp": 1771404862,
+                            "url": "https://github.com/kosli-dev/cli/commit/ee748df6acd8e75c241c43b6f05cee336c9f2c47"
+                          },
+                          "name": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "2c043a43-83cf-4fc7-8f29-a49caf6b",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "9e62c248-db28-4323-b431-8d5a30fc",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671 (#658)\n\n* CLAUDE: Added initial setup\n\n* Remove deprecated /api/v2/evidence/ commands and related code server/#4671\n\nMove JUnitResults struct and helper functions (ingestJunitDir,\ngetJunitFilenames, parseTimestamp) from the deleted\nreportEvidenceArtifactJunit.go into attestJunit.go, as they are\nstill used by the attest junit command.\n\nMove jiraTestsAdditionalConfig test helper struct from the deleted\nreportEvidenceCommitJira_test.go into attestJira_test.go, as it is\nstill used by the attest jira tests.",
+                          "parents": null,
+                          "sha1": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+                          "timestamp": 1771404862,
+                          "url": "https://github.com/kosli-dev/cli/commit/ee748df6acd8e75c241c43b6f05cee336c9f2c47"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991777.2620928,
+                        "trail_id": "2c043a43-83cf-4fc7-8f29-a49caf6b",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671 (#658)\n\n* CLAUDE: Added initial setup\n\n* Remove deprecated /api/v2/evidence/ commands and related code server/#4671\n\nMove JUnitResults struct and helper functions (ingestJunitDir,\ngetJunitFilenames, parseTimestamp) from the deleted\nreportEvidenceArtifactJunit.go into attestJunit.go, as they are\nstill used by the attest junit command.\n\nMove jiraTestsAdditionalConfig test helper struct from the deleted\nreportEvidenceCommitJira_test.go into attestJira_test.go, as it is\nstill used by the attest jira tests.",
+                      "sha1": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+                      "timestamp": 1771404862,
+                      "url": "https://github.com/kosli-dev/cli/commit/ee748df6acd8e75c241c43b6f05cee336c9f2c47"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991777.2620928,
+                    "name": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": null
+            },
+            "attestation_id": "8a8359df-442c-4f53-915b-eb6a02d4",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991780.9979177,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/d1fe417c-4f44-48fa-9adf-f2299cb9/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/ee748df6acd8e75c241c43b6f05cee336c9f2c47?attestation_id=8a8359df-442c-4f53-915b-eb6a02d4",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": true,
+                  "rule": ".allow == true",
+                  "status": true
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "9e62c248-db28-4323-b431-8d5a30fc",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991777.2620928,
+            "git_commit_info": {
+              "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671 (#658)\n\n* CLAUDE: Added initial setup\n\n* Remove deprecated /api/v2/evidence/ commands and related code server/#4671\n\nMove JUnitResults struct and helper functions (ingestJunitDir,\ngetJunitFilenames, parseTimestamp) from the deleted\nreportEvidenceArtifactJunit.go into attestJunit.go, as they are\nstill used by the attest junit command.\n\nMove jiraTestsAdditionalConfig test helper struct from the deleted\nreportEvidenceCommitJira_test.go into attestJira_test.go, as it is\nstill used by the attest jira tests.",
+              "sha1": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+              "timestamp": 1771404862,
+              "url": "https://github.com/kosli-dev/cli/commit/ee748df6acd8e75c241c43b6f05cee336c9f2c47"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/ee748df6acd8e75c241c43b6f05cee336c9f2c47?attestation_id=9e62c248-db28-4323-b431-8d5a30fc",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771404861,
+                    "username": "jumboduck"
+                  }
+                ],
+                "author": "ToreMerkely",
+                "commits": [
+                  {
+                    "author": "Tore Martin Hagen \u003ctore@kosli.com\u003e",
+                    "author_username": "ToreMerkely",
+                    "branch": "rm-evidence",
+                    "message": "CLAUDE: Added initial setup",
+                    "sha1": "74b199371f92b59274a96ec46dd799c490792d3f",
+                    "timestamp": 1771395054,
+                    "url": "https://github.com/kosli-dev/cli/commit/74b199371f92b59274a96ec46dd799c490792d3f"
+                  },
+                  {
+                    "author": "Tore Martin Hagen \u003ctore@kosli.com\u003e",
+                    "author_username": "ToreMerkely",
+                    "branch": "rm-evidence",
+                    "message": "Remove deprecated /api/v2/evidence/ commands and related code server/…",
+                    "sha1": "c16cc97a2a3eecdaf3b2223058adb8e5e2501811",
+                    "timestamp": 1771401521,
+                    "url": "https://github.com/kosli-dev/cli/commit/c16cc97a2a3eecdaf3b2223058adb8e5e2501811"
+                  }
+                ],
+                "created_at": 1771402614,
+                "head_ref": "rm-evidence",
+                "merge_commit": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+                "merged_at": 1771404863,
+                "state": "MERGED",
+                "title": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671",
+                "url": "https://github.com/kosli-dev/cli/pull/658"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991777.2620928,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": true,
+        "status": "COMPLIANT"
+      },
+      "created_at": 1779991776.3514147,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671 (#658)\n\n* CLAUDE: Added initial setup\n\n* Remove deprecated /api/v2/evidence/ commands and related code server/#4671\n\nMove JUnitResults struct and helper functions (ingestJunitDir,\ngetJunitFilenames, parseTimestamp) from the deleted\nreportEvidenceArtifactJunit.go into attestJunit.go, as they are\nstill used by the attest junit command.\n\nMove jiraTestsAdditionalConfig test helper struct from the deleted\nreportEvidenceCommitJira_test.go into attestJira_test.go, as it is\nstill used by the attest jira tests.",
+            "parents": null,
+            "sha1": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+            "timestamp": 1771404862,
+            "url": "https://github.com/kosli-dev/cli/commit/ee748df6acd8e75c241c43b6f05cee336c9f2c47"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991776.3514147,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671 (#658)\n\n* CLAUDE: Added initial setup\n\n* Remove deprecated /api/v2/evidence/ commands and related code server/#4671\n\nMove JUnitResults struct and helper functions (ingestJunitDir,\ngetJunitFilenames, parseTimestamp) from the deleted\nreportEvidenceArtifactJunit.go into attestJunit.go, as they are\nstill used by the attest junit command.\n\nMove jiraTestsAdditionalConfig test helper struct from the deleted\nreportEvidenceCommitJira_test.go into attestJira_test.go, as it is\nstill used by the attest jira tests.",
+              "sha1": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+              "timestamp": 1771404862,
+              "url": "https://github.com/kosli-dev/cli/commit/ee748df6acd8e75c241c43b6f05cee336c9f2c47"
+            },
+            "name": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "2c043a43-83cf-4fc7-8f29-a49caf6b",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "9e62c248-db28-4323-b431-8d5a30fc",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671 (#658)\n\n* CLAUDE: Added initial setup\n\n* Remove deprecated /api/v2/evidence/ commands and related code server/#4671\n\nMove JUnitResults struct and helper functions (ingestJunitDir,\ngetJunitFilenames, parseTimestamp) from the deleted\nreportEvidenceArtifactJunit.go into attestJunit.go, as they are\nstill used by the attest junit command.\n\nMove jiraTestsAdditionalConfig test helper struct from the deleted\nreportEvidenceCommitJira_test.go into attestJira_test.go, as it is\nstill used by the attest jira tests.",
+            "parents": null,
+            "sha1": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+            "timestamp": 1771404862,
+            "url": "https://github.com/kosli-dev/cli/commit/ee748df6acd8e75c241c43b6f05cee336c9f2c47"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991777.2620928,
+          "trail_id": "2c043a43-83cf-4fc7-8f29-a49caf6b",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "8a8359df-442c-4f53-915b-eb6a02d4",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991780.9979177,
+          "trail_id": "2c043a43-83cf-4fc7-8f29-a49caf6b",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "Remove deprecated /api/v2/evidence/ commands and related code server/#4671 (#658)\n\n* CLAUDE: Added initial setup\n\n* Remove deprecated /api/v2/evidence/ commands and related code server/#4671\n\nMove JUnitResults struct and helper functions (ingestJunitDir,\ngetJunitFilenames, parseTimestamp) from the deleted\nreportEvidenceArtifactJunit.go into attestJunit.go, as they are\nstill used by the attest junit command.\n\nMove jiraTestsAdditionalConfig test helper struct from the deleted\nreportEvidenceCommitJira_test.go into attestJira_test.go, as it is\nstill used by the attest jira tests.",
+        "sha1": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+        "timestamp": 1771404862,
+        "url": "https://github.com/kosli-dev/cli/commit/ee748df6acd8e75c241c43b6f05cee336c9f2c47"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+      "is_compliant": true,
+      "last_modified_at": 1779991780.9979177,
+      "name": "ee748df6acd8e75c241c43b6f05cee336c9f2c47",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    },
+    {
+      "compliance_state": "NON-COMPLIANT",
+      "compliance_status": {
+        "artifacts_statuses": {},
+        "attestations_statuses": {
+          "four-eyes-result": {
+            "attestation_data": {
+              "allow": false,
+              "input": {
+                "trails": [
+                  {
+                    "compliance_state": "COMPLIANT",
+                    "compliance_status": {
+                      "artifacts_statuses": {},
+                      "attestations_statuses": {
+                        "pr-review": {
+                          "attestation_id": "48314103-26a5-4763-8d48-f9ed7799",
+                          "attestation_name": "pr-review",
+                          "attestation_type": "pull_request",
+                          "created_at": 1779991778.4764404,
+                          "git_commit_info": {
+                            "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Removed link to api v1 server documentation (#656)",
+                            "sha1": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+                            "timestamp": 1771325325,
+                            "url": "https://github.com/kosli-dev/cli/commit/81a88f9d3fc855a93bdb99ec7682e855cc719d5c"
+                          },
+                          "git_provider": "github",
+                          "has_audit_package": false,
+                          "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/81a88f9d3fc855a93bdb99ec7682e855cc719d5c?attestation_id=48314103-26a5-4763-8d48-f9ed7799",
+                          "is_compliant": true,
+                          "overridden_attestation_id": null,
+                          "pull_requests": [
+                            {
+                              "approvers": [
+                                {
+                                  "state": "APPROVED",
+                                  "timestamp": 1771323465,
+                                  "username": "jumboduck"
+                                }
+                              ],
+                              "author": "ToreMerkely",
+                              "commits": [
+                                {
+                                  "author": "Tore Martin Hagen \u003ctore@kosli.com\u003e",
+                                  "author_username": "ToreMerkely",
+                                  "branch": "rm-api-v1-doc-ref",
+                                  "message": "Removed link to api v1 server documentation",
+                                  "sha1": "98e5666c9f68e425c62c78498f40729674c8f087",
+                                  "timestamp": 1771324403,
+                                  "url": "https://github.com/kosli-dev/cli/commit/98e5666c9f68e425c62c78498f40729674c8f087"
+                                }
+                              ],
+                              "created_at": 1771323235,
+                              "head_ref": "rm-api-v1-doc-ref",
+                              "merge_commit": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+                              "merged_at": 1771325326,
+                              "state": "MERGED",
+                              "title": "Removed link to api v1 server documentation",
+                              "url": "https://github.com/kosli-dev/cli/pull/656"
+                            }
+                          ],
+                          "reported_by": "test",
+                          "schema_version": 2,
+                          "status": "COMPLETE",
+                          "unexpected": true,
+                          "user_data": {}
+                        }
+                      },
+                      "evaluated_at": 1779991777.3121328,
+                      "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                      "is_compliant": true,
+                      "status": "COMPLIANT"
+                    },
+                    "created_at": 1779991777.3121328,
+                    "created_by": "test",
+                    "description": "",
+                    "events": [
+                      {
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Removed link to api v1 server documentation (#656)",
+                          "parents": null,
+                          "sha1": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+                          "timestamp": 1771325325,
+                          "url": "https://github.com/kosli-dev/cli/commit/81a88f9d3fc855a93bdb99ec7682e855cc719d5c"
+                        },
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                        "timestamp": 1779991777.3121328,
+                        "trail_data_json": {
+                          "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "description": "",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Removed link to api v1 server documentation (#656)",
+                            "sha1": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+                            "timestamp": 1771325325,
+                            "url": "https://github.com/kosli-dev/cli/commit/81a88f9d3fc855a93bdb99ec7682e855cc719d5c"
+                          },
+                          "name": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                          "user_data": "{}"
+                        },
+                        "trail_id": "79b788fc-6d68-494b-9e49-3c171827",
+                        "type": "trail_reported"
+                      },
+                      {
+                        "attestation_id": "48314103-26a5-4763-8d48-f9ed7799",
+                        "attestation_type": "pull_request",
+                        "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                        "git_commit_info": {
+                          "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                          "author_username": null,
+                          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                          "message": "Removed link to api v1 server documentation (#656)",
+                          "parents": null,
+                          "sha1": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+                          "timestamp": 1771325325,
+                          "url": "https://github.com/kosli-dev/cli/commit/81a88f9d3fc855a93bdb99ec7682e855cc719d5c"
+                        },
+                        "is_compliant": true,
+                        "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                        "repo_info": null,
+                        "template_reference_name": "pr-review",
+                        "timestamp": 1779991778.4764404,
+                        "trail_id": "79b788fc-6d68-494b-9e49-3c171827",
+                        "type": "trail_attestation_reported"
+                      }
+                    ],
+                    "external_urls": null,
+                    "flow": {
+                      "name": "cli-granular-demo-20260528180923",
+                      "tags": {}
+                    },
+                    "git_commit_info": {
+                      "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                      "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                      "message": "Removed link to api v1 server documentation (#656)",
+                      "sha1": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+                      "timestamp": 1771325325,
+                      "url": "https://github.com/kosli-dev/cli/commit/81a88f9d3fc855a93bdb99ec7682e855cc719d5c"
+                    },
+                    "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+                    "is_compliant": true,
+                    "last_modified_at": 1779991778.4764404,
+                    "name": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+                    "origin_url": null,
+                    "repo_ids": [],
+                    "template": {
+                      "content": "version: 1",
+                      "trail": {
+                        "artifacts": [],
+                        "attestations": []
+                      },
+                      "version": 1
+                    },
+                    "user_data": {}
+                  }
+                ]
+              },
+              "violations": [
+                "Commit 81a88f9: no independent approval after latest code commit"
+              ]
+            },
+            "attestation_id": "80673625-70f6-4e7c-a730-e2616ea6",
+            "attestation_name": "four-eyes-result",
+            "attestation_type": "custom:four-eyes-result",
+            "created_at": 1779991781.6710222,
+            "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+            "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/98e77a3e-e91c-47fd-99c7-306fd857/four-eyes.rego",
+            "has_audit_package": true,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/81a88f9d3fc855a93bdb99ec7682e855cc719d5c?attestation_id=80673625-70f6-4e7c-a730-e2616ea6",
+            "is_compliant": false,
+            "overridden_attestation_id": null,
+            "reported_by": "test",
+            "result": {
+              "parts": [
+                {
+                  "result": false,
+                  "rule": ".allow == true",
+                  "status": false
+                }
+              ]
+            },
+            "schema_version": 1,
+            "status": "COMPLETE",
+            "type_name": "four-eyes-result",
+            "type_version": 6,
+            "unexpected": true,
+            "user_data": {}
+          },
+          "pr-review": {
+            "attestation_id": "48314103-26a5-4763-8d48-f9ed7799",
+            "attestation_name": "pr-review",
+            "attestation_type": "pull_request",
+            "created_at": 1779991778.4764404,
+            "git_commit_info": {
+              "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Removed link to api v1 server documentation (#656)",
+              "sha1": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+              "timestamp": 1771325325,
+              "url": "https://github.com/kosli-dev/cli/commit/81a88f9d3fc855a93bdb99ec7682e855cc719d5c"
+            },
+            "git_provider": "github",
+            "has_audit_package": false,
+            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/81a88f9d3fc855a93bdb99ec7682e855cc719d5c?attestation_id=48314103-26a5-4763-8d48-f9ed7799",
+            "is_compliant": true,
+            "overridden_attestation_id": null,
+            "pull_requests": [
+              {
+                "approvers": [
+                  {
+                    "state": "APPROVED",
+                    "timestamp": 1771323465,
+                    "username": "jumboduck"
+                  }
+                ],
+                "author": "ToreMerkely",
+                "commits": [
+                  {
+                    "author": "Tore Martin Hagen \u003ctore@kosli.com\u003e",
+                    "author_username": "ToreMerkely",
+                    "branch": "rm-api-v1-doc-ref",
+                    "message": "Removed link to api v1 server documentation",
+                    "sha1": "98e5666c9f68e425c62c78498f40729674c8f087",
+                    "timestamp": 1771324403,
+                    "url": "https://github.com/kosli-dev/cli/commit/98e5666c9f68e425c62c78498f40729674c8f087"
+                  }
+                ],
+                "created_at": 1771323235,
+                "head_ref": "rm-api-v1-doc-ref",
+                "merge_commit": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+                "merged_at": 1771325326,
+                "state": "MERGED",
+                "title": "Removed link to api v1 server documentation",
+                "url": "https://github.com/kosli-dev/cli/pull/656"
+              }
+            ],
+            "reported_by": "test",
+            "schema_version": 2,
+            "status": "COMPLETE",
+            "unexpected": true,
+            "user_data": {}
+          }
+        },
+        "evaluated_at": 1779991778.4764404,
+        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+        "is_compliant": false,
+        "status": "NON-COMPLIANT"
+      },
+      "created_at": 1779991777.3121328,
+      "created_by": "test",
+      "description": "",
+      "events": [
+        {
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Removed link to api v1 server documentation (#656)",
+            "parents": null,
+            "sha1": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+            "timestamp": 1771325325,
+            "url": "https://github.com/kosli-dev/cli/commit/81a88f9d3fc855a93bdb99ec7682e855cc719d5c"
+          },
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+          "timestamp": 1779991777.3121328,
+          "trail_data_json": {
+            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "description": "",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Removed link to api v1 server documentation (#656)",
+              "sha1": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+              "timestamp": 1771325325,
+              "url": "https://github.com/kosli-dev/cli/commit/81a88f9d3fc855a93bdb99ec7682e855cc719d5c"
+            },
+            "name": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+            "user_data": "{}"
+          },
+          "trail_id": "79b788fc-6d68-494b-9e49-3c171827",
+          "type": "trail_reported"
+        },
+        {
+          "attestation_id": "48314103-26a5-4763-8d48-f9ed7799",
+          "attestation_type": "pull_request",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": {
+            "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+            "author_username": null,
+            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+            "message": "Removed link to api v1 server documentation (#656)",
+            "parents": null,
+            "sha1": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+            "timestamp": 1771325325,
+            "url": "https://github.com/kosli-dev/cli/commit/81a88f9d3fc855a93bdb99ec7682e855cc719d5c"
+          },
+          "is_compliant": true,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "pr-review",
+          "timestamp": 1779991778.4764404,
+          "trail_id": "79b788fc-6d68-494b-9e49-3c171827",
+          "type": "trail_attestation_reported"
+        },
+        {
+          "attestation_id": "80673625-70f6-4e7c-a730-e2616ea6",
+          "attestation_type": "custom:four-eyes-result",
+          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+          "git_commit_info": null,
+          "is_compliant": false,
+          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+          "repo_info": null,
+          "template_reference_name": "four-eyes-result",
+          "timestamp": 1779991781.6710222,
+          "trail_id": "79b788fc-6d68-494b-9e49-3c171827",
+          "type": "trail_attestation_reported"
+        }
+      ],
+      "external_urls": null,
+      "flow": {
+        "name": "cli-granular-demo-20260528180923",
+        "tags": {}
+      },
+      "git_commit_info": {
+        "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+        "message": "Removed link to api v1 server documentation (#656)",
+        "sha1": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+        "timestamp": 1771325325,
+        "url": "https://github.com/kosli-dev/cli/commit/81a88f9d3fc855a93bdb99ec7682e855cc719d5c"
+      },
+      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+      "is_compliant": false,
+      "last_modified_at": 1779991781.6710222,
+      "name": "81a88f9d3fc855a93bdb99ec7682e855cc719d5c",
+      "origin_url": null,
+      "repo_ids": [],
+      "template": {
+        "content": "version: 1",
+        "trail": {
+          "artifacts": [],
+          "attestations": []
+        },
+        "version": 1
+      },
+      "user_data": {}
+    }
+  ]
+}

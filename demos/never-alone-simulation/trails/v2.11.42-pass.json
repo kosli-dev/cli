@@ -1,0 +1,1456 @@
+{
+    "trails": [
+      {
+        "compliance_state": "COMPLIANT",
+        "compliance_status": {
+          "artifacts_statuses": {},
+          "attestations_statuses": {
+            "four-eyes-result": {
+              "attestation_data": {
+                "allow": true,
+                "input": {
+                  "trails": [
+                    {
+                      "compliance_state": "COMPLIANT",
+                      "compliance_status": {
+                        "artifacts_statuses": {},
+                        "attestations_statuses": {
+                          "pr-review": {
+                            "attestation_id": "e7e5519a-ed40-4afb-95a3-6ffc1ff8",
+                            "attestation_name": "pr-review",
+                            "attestation_type": "pull_request",
+                            "created_at": 1779991765.0478258,
+                            "git_commit_info": {
+                              "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "omit empty pr approver state and timestamp (#652)",
+                              "sha1": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                              "timestamp": 1770191490,
+                              "url": "https://github.com/kosli-dev/cli/commit/a7573bcb0efbb25949ac04826b3991d860293e9a"
+                            },
+                            "git_provider": "github",
+                            "has_audit_package": false,
+                            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/a7573bcb0efbb25949ac04826b3991d860293e9a?attestation_id=e7e5519a-ed40-4afb-95a3-6ffc1ff8",
+                            "is_compliant": true,
+                            "overridden_attestation_id": null,
+                            "pull_requests": [
+                              {
+                                "approvers": [
+                                  {
+                                    "state": "APPROVED",
+                                    "timestamp": 1770191489,
+                                    "username": "ToreMerkely"
+                                  }
+                                ],
+                                "author": "sami-alajrami",
+                                "commits": [
+                                  {
+                                    "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                                    "author_username": "sami-alajrami",
+                                    "branch": "omit-empty-pr-approver-fields",
+                                    "message": "omit empty pr approver state and timestamp",
+                                    "sha1": "6aa56c83276ae0fe2705514671c71ab68ed1e5ba",
+                                    "timestamp": 1770130023,
+                                    "url": "https://github.com/kosli-dev/cli/commit/6aa56c83276ae0fe2705514671c71ab68ed1e5ba"
+                                  }
+                                ],
+                                "created_at": 1770133289,
+                                "head_ref": "omit-empty-pr-approver-fields",
+                                "merge_commit": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                                "merged_at": 1770191490,
+                                "state": "MERGED",
+                                "title": "omit empty pr approver state and timestamp",
+                                "url": "https://github.com/kosli-dev/cli/pull/652"
+                              }
+                            ],
+                            "reported_by": "test",
+                            "schema_version": 2,
+                            "status": "COMPLETE",
+                            "unexpected": true,
+                            "user_data": {}
+                          }
+                        },
+                        "evaluated_at": 1779991764.173594,
+                        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                        "is_compliant": true,
+                        "status": "COMPLIANT"
+                      },
+                      "created_at": 1779991764.173594,
+                      "created_by": "test",
+                      "description": "",
+                      "events": [
+                        {
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "omit empty pr approver state and timestamp (#652)",
+                            "parents": null,
+                            "sha1": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                            "timestamp": 1770191490,
+                            "url": "https://github.com/kosli-dev/cli/commit/a7573bcb0efbb25949ac04826b3991d860293e9a"
+                          },
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "timestamp": 1779991764.173594,
+                          "trail_data_json": {
+                            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                            "description": "",
+                            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                            "git_commit_info": {
+                              "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "omit empty pr approver state and timestamp (#652)",
+                              "sha1": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                              "timestamp": 1770191490,
+                              "url": "https://github.com/kosli-dev/cli/commit/a7573bcb0efbb25949ac04826b3991d860293e9a"
+                            },
+                            "name": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                            "user_data": "{}"
+                          },
+                          "trail_id": "b1521151-9eb8-46ab-a59f-faf02bdb",
+                          "type": "trail_reported"
+                        },
+                        {
+                          "attestation_id": "e7e5519a-ed40-4afb-95a3-6ffc1ff8",
+                          "attestation_type": "pull_request",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "omit empty pr approver state and timestamp (#652)",
+                            "parents": null,
+                            "sha1": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                            "timestamp": 1770191490,
+                            "url": "https://github.com/kosli-dev/cli/commit/a7573bcb0efbb25949ac04826b3991d860293e9a"
+                          },
+                          "is_compliant": true,
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "template_reference_name": "pr-review",
+                          "timestamp": 1779991765.0478258,
+                          "trail_id": "b1521151-9eb8-46ab-a59f-faf02bdb",
+                          "type": "trail_attestation_reported"
+                        }
+                      ],
+                      "external_urls": null,
+                      "flow": {
+                        "name": "cli-granular-demo-20260528180923",
+                        "tags": {}
+                      },
+                      "git_commit_info": {
+                        "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                        "message": "omit empty pr approver state and timestamp (#652)",
+                        "sha1": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                        "timestamp": 1770191490,
+                        "url": "https://github.com/kosli-dev/cli/commit/a7573bcb0efbb25949ac04826b3991d860293e9a"
+                      },
+                      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/a7573bcb0efbb25949ac04826b3991d860293e9a",
+                      "is_compliant": true,
+                      "last_modified_at": 1779991765.0478258,
+                      "name": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                      "origin_url": null,
+                      "repo_ids": [],
+                      "template": {
+                        "content": "version: 1",
+                        "trail": {
+                          "artifacts": [],
+                          "attestations": []
+                        },
+                        "version": 1
+                      },
+                      "user_data": {}
+                    }
+                  ]
+                },
+                "violations": null
+              },
+              "attestation_id": "f5e7cdfd-e3f5-4c7a-a373-9caf7dab",
+              "attestation_name": "four-eyes-result",
+              "attestation_type": "custom:four-eyes-result",
+              "created_at": 1779991766.053771,
+              "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+              "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/6367f57c-6169-4af1-a733-909b5f4e/four-eyes.rego",
+              "has_audit_package": true,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/a7573bcb0efbb25949ac04826b3991d860293e9a?attestation_id=f5e7cdfd-e3f5-4c7a-a373-9caf7dab",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "reported_by": "test",
+              "result": {
+                "parts": [
+                  {
+                    "result": true,
+                    "rule": ".allow == true",
+                    "status": true
+                  }
+                ]
+              },
+              "schema_version": 1,
+              "status": "COMPLETE",
+              "type_name": "four-eyes-result",
+              "type_version": 6,
+              "unexpected": true,
+              "user_data": {}
+            },
+            "pr-review": {
+              "attestation_id": "e7e5519a-ed40-4afb-95a3-6ffc1ff8",
+              "attestation_name": "pr-review",
+              "attestation_type": "pull_request",
+              "created_at": 1779991765.0478258,
+              "git_commit_info": {
+                "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "omit empty pr approver state and timestamp (#652)",
+                "sha1": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                "timestamp": 1770191490,
+                "url": "https://github.com/kosli-dev/cli/commit/a7573bcb0efbb25949ac04826b3991d860293e9a"
+              },
+              "git_provider": "github",
+              "has_audit_package": false,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/a7573bcb0efbb25949ac04826b3991d860293e9a?attestation_id=e7e5519a-ed40-4afb-95a3-6ffc1ff8",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "pull_requests": [
+                {
+                  "approvers": [
+                    {
+                      "state": "APPROVED",
+                      "timestamp": 1770191489,
+                      "username": "ToreMerkely"
+                    }
+                  ],
+                  "author": "sami-alajrami",
+                  "commits": [
+                    {
+                      "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                      "author_username": "sami-alajrami",
+                      "branch": "omit-empty-pr-approver-fields",
+                      "message": "omit empty pr approver state and timestamp",
+                      "sha1": "6aa56c83276ae0fe2705514671c71ab68ed1e5ba",
+                      "timestamp": 1770130023,
+                      "url": "https://github.com/kosli-dev/cli/commit/6aa56c83276ae0fe2705514671c71ab68ed1e5ba"
+                    }
+                  ],
+                  "created_at": 1770133289,
+                  "head_ref": "omit-empty-pr-approver-fields",
+                  "merge_commit": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                  "merged_at": 1770191490,
+                  "state": "MERGED",
+                  "title": "omit empty pr approver state and timestamp",
+                  "url": "https://github.com/kosli-dev/cli/pull/652"
+                }
+              ],
+              "reported_by": "test",
+              "schema_version": 2,
+              "status": "COMPLETE",
+              "unexpected": true,
+              "user_data": {}
+            }
+          },
+          "evaluated_at": 1779991765.0478258,
+          "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+          "is_compliant": true,
+          "status": "COMPLIANT"
+        },
+        "created_at": 1779991764.173594,
+        "created_by": "test",
+        "description": "",
+        "events": [
+          {
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "omit empty pr approver state and timestamp (#652)",
+              "parents": null,
+              "sha1": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+              "timestamp": 1770191490,
+              "url": "https://github.com/kosli-dev/cli/commit/a7573bcb0efbb25949ac04826b3991d860293e9a"
+            },
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "timestamp": 1779991764.173594,
+            "trail_data_json": {
+              "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+              "description": "",
+              "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+              "git_commit_info": {
+                "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "omit empty pr approver state and timestamp (#652)",
+                "sha1": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+                "timestamp": 1770191490,
+                "url": "https://github.com/kosli-dev/cli/commit/a7573bcb0efbb25949ac04826b3991d860293e9a"
+              },
+              "name": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+              "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+              "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+              "user_data": "{}"
+            },
+            "trail_id": "b1521151-9eb8-46ab-a59f-faf02bdb",
+            "type": "trail_reported"
+          },
+          {
+            "attestation_id": "e7e5519a-ed40-4afb-95a3-6ffc1ff8",
+            "attestation_type": "pull_request",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "omit empty pr approver state and timestamp (#652)",
+              "parents": null,
+              "sha1": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+              "timestamp": 1770191490,
+              "url": "https://github.com/kosli-dev/cli/commit/a7573bcb0efbb25949ac04826b3991d860293e9a"
+            },
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "pr-review",
+            "timestamp": 1779991765.0478258,
+            "trail_id": "b1521151-9eb8-46ab-a59f-faf02bdb",
+            "type": "trail_attestation_reported"
+          },
+          {
+            "attestation_id": "f5e7cdfd-e3f5-4c7a-a373-9caf7dab",
+            "attestation_type": "custom:four-eyes-result",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": null,
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "four-eyes-result",
+            "timestamp": 1779991766.053771,
+            "trail_id": "b1521151-9eb8-46ab-a59f-faf02bdb",
+            "type": "trail_attestation_reported"
+          }
+        ],
+        "external_urls": null,
+        "flow": {
+          "name": "cli-granular-demo-20260528180923",
+          "tags": {}
+        },
+        "git_commit_info": {
+          "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+          "message": "omit empty pr approver state and timestamp (#652)",
+          "sha1": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+          "timestamp": 1770191490,
+          "url": "https://github.com/kosli-dev/cli/commit/a7573bcb0efbb25949ac04826b3991d860293e9a"
+        },
+        "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/a7573bcb0efbb25949ac04826b3991d860293e9a",
+        "is_compliant": true,
+        "last_modified_at": 1779991766.053771,
+        "name": "a7573bcb0efbb25949ac04826b3991d860293e9a",
+        "origin_url": null,
+        "repo_ids": [],
+        "template": {
+          "content": "version: 1",
+          "trail": {
+            "artifacts": [],
+            "attestations": []
+          },
+          "version": 1
+        },
+        "user_data": {}
+      },
+      {
+        "compliance_state": "COMPLIANT",
+        "compliance_status": {
+          "artifacts_statuses": {},
+          "attestations_statuses": {
+            "four-eyes-result": {
+              "attestation_data": {
+                "allow": true,
+                "input": {
+                  "trails": [
+                    {
+                      "compliance_state": "COMPLIANT",
+                      "compliance_status": {
+                        "artifacts_statuses": {},
+                        "attestations_statuses": {
+                          "pr-review": {
+                            "attestation_id": "b728f6d4-7d8a-4662-8ddd-b863dad7",
+                            "attestation_name": "pr-review",
+                            "attestation_type": "pull_request",
+                            "created_at": 1779991765.077797,
+                            "git_commit_info": {
+                              "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "update azure devops pr attestation to match v2 PR format (#651)",
+                              "sha1": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                              "timestamp": 1770110234,
+                              "url": "https://github.com/kosli-dev/cli/commit/c28d319aacd899a7305c0b3116ade3716d7707e7"
+                            },
+                            "git_provider": "github",
+                            "has_audit_package": false,
+                            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/c28d319aacd899a7305c0b3116ade3716d7707e7?attestation_id=b728f6d4-7d8a-4662-8ddd-b863dad7",
+                            "is_compliant": true,
+                            "overridden_attestation_id": null,
+                            "pull_requests": [
+                              {
+                                "approvers": [
+                                  {
+                                    "state": "APPROVED",
+                                    "timestamp": 1770108542,
+                                    "username": "jbpros"
+                                  }
+                                ],
+                                "author": "sami-alajrami",
+                                "commits": [
+                                  {
+                                    "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                                    "author_username": "sami-alajrami",
+                                    "branch": "azure-devops-pr-improvment",
+                                    "message": "update azure devops pr attestation to match v2 PR format",
+                                    "sha1": "de7e8605aa18b86b1d83b4c2d5186b9f129d6350",
+                                    "timestamp": 1770107561,
+                                    "url": "https://github.com/kosli-dev/cli/commit/de7e8605aa18b86b1d83b4c2d5186b9f129d6350"
+                                  }
+                                ],
+                                "created_at": 1770107597,
+                                "head_ref": "azure-devops-pr-improvment",
+                                "merge_commit": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                                "merged_at": 1770110235,
+                                "state": "MERGED",
+                                "title": "update azure devops pr attestation to match v2 PR format",
+                                "url": "https://github.com/kosli-dev/cli/pull/651"
+                              }
+                            ],
+                            "reported_by": "test",
+                            "schema_version": 2,
+                            "status": "COMPLETE",
+                            "unexpected": true,
+                            "user_data": {}
+                          }
+                        },
+                        "evaluated_at": 1779991764.076746,
+                        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                        "is_compliant": true,
+                        "status": "COMPLIANT"
+                      },
+                      "created_at": 1779991764.076746,
+                      "created_by": "test",
+                      "description": "",
+                      "events": [
+                        {
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "update azure devops pr attestation to match v2 PR format (#651)",
+                            "parents": null,
+                            "sha1": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                            "timestamp": 1770110234,
+                            "url": "https://github.com/kosli-dev/cli/commit/c28d319aacd899a7305c0b3116ade3716d7707e7"
+                          },
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "timestamp": 1779991764.076746,
+                          "trail_data_json": {
+                            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                            "description": "",
+                            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                            "git_commit_info": {
+                              "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "update azure devops pr attestation to match v2 PR format (#651)",
+                              "sha1": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                              "timestamp": 1770110234,
+                              "url": "https://github.com/kosli-dev/cli/commit/c28d319aacd899a7305c0b3116ade3716d7707e7"
+                            },
+                            "name": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                            "user_data": "{}"
+                          },
+                          "trail_id": "6e564fb6-0512-4dfc-9410-ddf83fc3",
+                          "type": "trail_reported"
+                        },
+                        {
+                          "attestation_id": "b728f6d4-7d8a-4662-8ddd-b863dad7",
+                          "attestation_type": "pull_request",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "update azure devops pr attestation to match v2 PR format (#651)",
+                            "parents": null,
+                            "sha1": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                            "timestamp": 1770110234,
+                            "url": "https://github.com/kosli-dev/cli/commit/c28d319aacd899a7305c0b3116ade3716d7707e7"
+                          },
+                          "is_compliant": true,
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "template_reference_name": "pr-review",
+                          "timestamp": 1779991765.077797,
+                          "trail_id": "6e564fb6-0512-4dfc-9410-ddf83fc3",
+                          "type": "trail_attestation_reported"
+                        }
+                      ],
+                      "external_urls": null,
+                      "flow": {
+                        "name": "cli-granular-demo-20260528180923",
+                        "tags": {}
+                      },
+                      "git_commit_info": {
+                        "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                        "message": "update azure devops pr attestation to match v2 PR format (#651)",
+                        "sha1": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                        "timestamp": 1770110234,
+                        "url": "https://github.com/kosli-dev/cli/commit/c28d319aacd899a7305c0b3116ade3716d7707e7"
+                      },
+                      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/c28d319aacd899a7305c0b3116ade3716d7707e7",
+                      "is_compliant": true,
+                      "last_modified_at": 1779991765.077797,
+                      "name": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                      "origin_url": null,
+                      "repo_ids": [],
+                      "template": {
+                        "content": "version: 1",
+                        "trail": {
+                          "artifacts": [],
+                          "attestations": []
+                        },
+                        "version": 1
+                      },
+                      "user_data": {}
+                    }
+                  ]
+                },
+                "violations": null
+              },
+              "attestation_id": "2612df0d-a3f5-461a-bbd0-fd8e4329",
+              "attestation_name": "four-eyes-result",
+              "attestation_type": "custom:four-eyes-result",
+              "created_at": 1779991766.8070729,
+              "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+              "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/81465f57-7ec8-4153-b561-31c72271/four-eyes.rego",
+              "has_audit_package": true,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/c28d319aacd899a7305c0b3116ade3716d7707e7?attestation_id=2612df0d-a3f5-461a-bbd0-fd8e4329",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "reported_by": "test",
+              "result": {
+                "parts": [
+                  {
+                    "result": true,
+                    "rule": ".allow == true",
+                    "status": true
+                  }
+                ]
+              },
+              "schema_version": 1,
+              "status": "COMPLETE",
+              "type_name": "four-eyes-result",
+              "type_version": 6,
+              "unexpected": true,
+              "user_data": {}
+            },
+            "pr-review": {
+              "attestation_id": "b728f6d4-7d8a-4662-8ddd-b863dad7",
+              "attestation_name": "pr-review",
+              "attestation_type": "pull_request",
+              "created_at": 1779991765.077797,
+              "git_commit_info": {
+                "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "update azure devops pr attestation to match v2 PR format (#651)",
+                "sha1": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                "timestamp": 1770110234,
+                "url": "https://github.com/kosli-dev/cli/commit/c28d319aacd899a7305c0b3116ade3716d7707e7"
+              },
+              "git_provider": "github",
+              "has_audit_package": false,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/c28d319aacd899a7305c0b3116ade3716d7707e7?attestation_id=b728f6d4-7d8a-4662-8ddd-b863dad7",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "pull_requests": [
+                {
+                  "approvers": [
+                    {
+                      "state": "APPROVED",
+                      "timestamp": 1770108542,
+                      "username": "jbpros"
+                    }
+                  ],
+                  "author": "sami-alajrami",
+                  "commits": [
+                    {
+                      "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                      "author_username": "sami-alajrami",
+                      "branch": "azure-devops-pr-improvment",
+                      "message": "update azure devops pr attestation to match v2 PR format",
+                      "sha1": "de7e8605aa18b86b1d83b4c2d5186b9f129d6350",
+                      "timestamp": 1770107561,
+                      "url": "https://github.com/kosli-dev/cli/commit/de7e8605aa18b86b1d83b4c2d5186b9f129d6350"
+                    }
+                  ],
+                  "created_at": 1770107597,
+                  "head_ref": "azure-devops-pr-improvment",
+                  "merge_commit": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                  "merged_at": 1770110235,
+                  "state": "MERGED",
+                  "title": "update azure devops pr attestation to match v2 PR format",
+                  "url": "https://github.com/kosli-dev/cli/pull/651"
+                }
+              ],
+              "reported_by": "test",
+              "schema_version": 2,
+              "status": "COMPLETE",
+              "unexpected": true,
+              "user_data": {}
+            }
+          },
+          "evaluated_at": 1779991765.077797,
+          "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+          "is_compliant": true,
+          "status": "COMPLIANT"
+        },
+        "created_at": 1779991764.076746,
+        "created_by": "test",
+        "description": "",
+        "events": [
+          {
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "update azure devops pr attestation to match v2 PR format (#651)",
+              "parents": null,
+              "sha1": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+              "timestamp": 1770110234,
+              "url": "https://github.com/kosli-dev/cli/commit/c28d319aacd899a7305c0b3116ade3716d7707e7"
+            },
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "timestamp": 1779991764.076746,
+            "trail_data_json": {
+              "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+              "description": "",
+              "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+              "git_commit_info": {
+                "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "update azure devops pr attestation to match v2 PR format (#651)",
+                "sha1": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+                "timestamp": 1770110234,
+                "url": "https://github.com/kosli-dev/cli/commit/c28d319aacd899a7305c0b3116ade3716d7707e7"
+              },
+              "name": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+              "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+              "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+              "user_data": "{}"
+            },
+            "trail_id": "6e564fb6-0512-4dfc-9410-ddf83fc3",
+            "type": "trail_reported"
+          },
+          {
+            "attestation_id": "b728f6d4-7d8a-4662-8ddd-b863dad7",
+            "attestation_type": "pull_request",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "update azure devops pr attestation to match v2 PR format (#651)",
+              "parents": null,
+              "sha1": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+              "timestamp": 1770110234,
+              "url": "https://github.com/kosli-dev/cli/commit/c28d319aacd899a7305c0b3116ade3716d7707e7"
+            },
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "pr-review",
+            "timestamp": 1779991765.077797,
+            "trail_id": "6e564fb6-0512-4dfc-9410-ddf83fc3",
+            "type": "trail_attestation_reported"
+          },
+          {
+            "attestation_id": "2612df0d-a3f5-461a-bbd0-fd8e4329",
+            "attestation_type": "custom:four-eyes-result",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": null,
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "four-eyes-result",
+            "timestamp": 1779991766.8070729,
+            "trail_id": "6e564fb6-0512-4dfc-9410-ddf83fc3",
+            "type": "trail_attestation_reported"
+          }
+        ],
+        "external_urls": null,
+        "flow": {
+          "name": "cli-granular-demo-20260528180923",
+          "tags": {}
+        },
+        "git_commit_info": {
+          "author": "Sami Alajrami \u003csami@kosli.com\u003e",
+          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+          "message": "update azure devops pr attestation to match v2 PR format (#651)",
+          "sha1": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+          "timestamp": 1770110234,
+          "url": "https://github.com/kosli-dev/cli/commit/c28d319aacd899a7305c0b3116ade3716d7707e7"
+        },
+        "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/c28d319aacd899a7305c0b3116ade3716d7707e7",
+        "is_compliant": true,
+        "last_modified_at": 1779991766.8070729,
+        "name": "c28d319aacd899a7305c0b3116ade3716d7707e7",
+        "origin_url": null,
+        "repo_ids": [],
+        "template": {
+          "content": "version: 1",
+          "trail": {
+            "artifacts": [],
+            "attestations": []
+          },
+          "version": 1
+        },
+        "user_data": {}
+      },
+      {
+        "compliance_state": "COMPLIANT",
+        "compliance_status": {
+          "artifacts_statuses": {},
+          "attestations_statuses": {
+            "four-eyes-result": {
+              "attestation_data": {
+                "allow": true,
+                "input": {
+                  "trails": [
+                    {
+                      "compliance_state": "COMPLIANT",
+                      "compliance_status": {
+                        "artifacts_statuses": {},
+                        "attestations_statuses": {
+                          "pr-review": {
+                            "attestation_id": "f03b8f4d-d78c-445e-b07d-c93dfb4b",
+                            "attestation_name": "pr-review",
+                            "attestation_type": "pull_request",
+                            "created_at": 1779991765.0601654,
+                            "git_commit_info": {
+                              "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "Added minimum _test.go files for files that does not have tests. (#650)\n\nWe use the tool cover for coverage, but if there is no _test.go file,\nthen Go use the tool covdata. At the same time, they removed covdata\nas a precompiled binary in the distribution. This made the coverage\ncalculation fail for some of us.\n\nAs described in this discussion\n  https://github.com/golang/go/issues/75031\nthere is an other option to fix this by modifying the\nGOTOOLCHAIN variable, but that is too much magic for me and\ncould be very hard to debug for the next person who stumbles\nover this.",
+                              "sha1": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                              "timestamp": 1770104448,
+                              "url": "https://github.com/kosli-dev/cli/commit/152d5931f4f544d6320b5ca34a3a4357009d5286"
+                            },
+                            "git_provider": "github",
+                            "has_audit_package": false,
+                            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/152d5931f4f544d6320b5ca34a3a4357009d5286?attestation_id=f03b8f4d-d78c-445e-b07d-c93dfb4b",
+                            "is_compliant": true,
+                            "overridden_attestation_id": null,
+                            "pull_requests": [
+                              {
+                                "approvers": [
+                                  {
+                                    "state": "APPROVED",
+                                    "timestamp": 1770104447,
+                                    "username": "gsavage"
+                                  }
+                                ],
+                                "author": "ToreMerkely",
+                                "commits": [
+                                  {
+                                    "author": "Tore Martin Hagen \u003ctore@kosli.com\u003e",
+                                    "author_username": "ToreMerkely",
+                                    "branch": "fix-cov-data-problem",
+                                    "message": "Added minimum _test.go files for files that does not have tests.",
+                                    "sha1": "24cae6e2ced1f838fdca08b010a5ac61fa366e1d",
+                                    "timestamp": 1770101925,
+                                    "url": "https://github.com/kosli-dev/cli/commit/24cae6e2ced1f838fdca08b010a5ac61fa366e1d"
+                                  }
+                                ],
+                                "created_at": 1770102927,
+                                "head_ref": "fix-cov-data-problem",
+                                "merge_commit": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                                "merged_at": 1770104448,
+                                "state": "MERGED",
+                                "title": "Added minimum _test.go files for files that does not have tests.",
+                                "url": "https://github.com/kosli-dev/cli/pull/650"
+                              }
+                            ],
+                            "reported_by": "test",
+                            "schema_version": 2,
+                            "status": "COMPLETE",
+                            "unexpected": true,
+                            "user_data": {}
+                          }
+                        },
+                        "evaluated_at": 1779991764.224045,
+                        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                        "is_compliant": true,
+                        "status": "COMPLIANT"
+                      },
+                      "created_at": 1779991764.224045,
+                      "created_by": "test",
+                      "description": "",
+                      "events": [
+                        {
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Added minimum _test.go files for files that does not have tests. (#650)\n\nWe use the tool cover for coverage, but if there is no _test.go file,\nthen Go use the tool covdata. At the same time, they removed covdata\nas a precompiled binary in the distribution. This made the coverage\ncalculation fail for some of us.\n\nAs described in this discussion\n  https://github.com/golang/go/issues/75031\nthere is an other option to fix this by modifying the\nGOTOOLCHAIN variable, but that is too much magic for me and\ncould be very hard to debug for the next person who stumbles\nover this.",
+                            "parents": null,
+                            "sha1": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                            "timestamp": 1770104448,
+                            "url": "https://github.com/kosli-dev/cli/commit/152d5931f4f544d6320b5ca34a3a4357009d5286"
+                          },
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "timestamp": 1779991764.224045,
+                          "trail_data_json": {
+                            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                            "description": "",
+                            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                            "git_commit_info": {
+                              "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "Added minimum _test.go files for files that does not have tests. (#650)\n\nWe use the tool cover for coverage, but if there is no _test.go file,\nthen Go use the tool covdata. At the same time, they removed covdata\nas a precompiled binary in the distribution. This made the coverage\ncalculation fail for some of us.\n\nAs described in this discussion\n  https://github.com/golang/go/issues/75031\nthere is an other option to fix this by modifying the\nGOTOOLCHAIN variable, but that is too much magic for me and\ncould be very hard to debug for the next person who stumbles\nover this.",
+                              "sha1": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                              "timestamp": 1770104448,
+                              "url": "https://github.com/kosli-dev/cli/commit/152d5931f4f544d6320b5ca34a3a4357009d5286"
+                            },
+                            "name": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                            "user_data": "{}"
+                          },
+                          "trail_id": "b6558be1-40b7-443e-9f2f-f071253e",
+                          "type": "trail_reported"
+                        },
+                        {
+                          "attestation_id": "f03b8f4d-d78c-445e-b07d-c93dfb4b",
+                          "attestation_type": "pull_request",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Added minimum _test.go files for files that does not have tests. (#650)\n\nWe use the tool cover for coverage, but if there is no _test.go file,\nthen Go use the tool covdata. At the same time, they removed covdata\nas a precompiled binary in the distribution. This made the coverage\ncalculation fail for some of us.\n\nAs described in this discussion\n  https://github.com/golang/go/issues/75031\nthere is an other option to fix this by modifying the\nGOTOOLCHAIN variable, but that is too much magic for me and\ncould be very hard to debug for the next person who stumbles\nover this.",
+                            "parents": null,
+                            "sha1": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                            "timestamp": 1770104448,
+                            "url": "https://github.com/kosli-dev/cli/commit/152d5931f4f544d6320b5ca34a3a4357009d5286"
+                          },
+                          "is_compliant": true,
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "template_reference_name": "pr-review",
+                          "timestamp": 1779991765.0601654,
+                          "trail_id": "b6558be1-40b7-443e-9f2f-f071253e",
+                          "type": "trail_attestation_reported"
+                        }
+                      ],
+                      "external_urls": null,
+                      "flow": {
+                        "name": "cli-granular-demo-20260528180923",
+                        "tags": {}
+                      },
+                      "git_commit_info": {
+                        "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                        "message": "Added minimum _test.go files for files that does not have tests. (#650)\n\nWe use the tool cover for coverage, but if there is no _test.go file,\nthen Go use the tool covdata. At the same time, they removed covdata\nas a precompiled binary in the distribution. This made the coverage\ncalculation fail for some of us.\n\nAs described in this discussion\n  https://github.com/golang/go/issues/75031\nthere is an other option to fix this by modifying the\nGOTOOLCHAIN variable, but that is too much magic for me and\ncould be very hard to debug for the next person who stumbles\nover this.",
+                        "sha1": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                        "timestamp": 1770104448,
+                        "url": "https://github.com/kosli-dev/cli/commit/152d5931f4f544d6320b5ca34a3a4357009d5286"
+                      },
+                      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/152d5931f4f544d6320b5ca34a3a4357009d5286",
+                      "is_compliant": true,
+                      "last_modified_at": 1779991765.0601654,
+                      "name": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                      "origin_url": null,
+                      "repo_ids": [],
+                      "template": {
+                        "content": "version: 1",
+                        "trail": {
+                          "artifacts": [],
+                          "attestations": []
+                        },
+                        "version": 1
+                      },
+                      "user_data": {}
+                    }
+                  ]
+                },
+                "violations": null
+              },
+              "attestation_id": "9543e9b6-8164-4639-8b24-0d76a66e",
+              "attestation_name": "four-eyes-result",
+              "attestation_type": "custom:four-eyes-result",
+              "created_at": 1779991767.5745828,
+              "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+              "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/94ae023c-6c79-4b9f-9e55-ab01264c/four-eyes.rego",
+              "has_audit_package": true,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/152d5931f4f544d6320b5ca34a3a4357009d5286?attestation_id=9543e9b6-8164-4639-8b24-0d76a66e",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "reported_by": "test",
+              "result": {
+                "parts": [
+                  {
+                    "result": true,
+                    "rule": ".allow == true",
+                    "status": true
+                  }
+                ]
+              },
+              "schema_version": 1,
+              "status": "COMPLETE",
+              "type_name": "four-eyes-result",
+              "type_version": 6,
+              "unexpected": true,
+              "user_data": {}
+            },
+            "pr-review": {
+              "attestation_id": "f03b8f4d-d78c-445e-b07d-c93dfb4b",
+              "attestation_name": "pr-review",
+              "attestation_type": "pull_request",
+              "created_at": 1779991765.0601654,
+              "git_commit_info": {
+                "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "Added minimum _test.go files for files that does not have tests. (#650)\n\nWe use the tool cover for coverage, but if there is no _test.go file,\nthen Go use the tool covdata. At the same time, they removed covdata\nas a precompiled binary in the distribution. This made the coverage\ncalculation fail for some of us.\n\nAs described in this discussion\n  https://github.com/golang/go/issues/75031\nthere is an other option to fix this by modifying the\nGOTOOLCHAIN variable, but that is too much magic for me and\ncould be very hard to debug for the next person who stumbles\nover this.",
+                "sha1": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                "timestamp": 1770104448,
+                "url": "https://github.com/kosli-dev/cli/commit/152d5931f4f544d6320b5ca34a3a4357009d5286"
+              },
+              "git_provider": "github",
+              "has_audit_package": false,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/152d5931f4f544d6320b5ca34a3a4357009d5286?attestation_id=f03b8f4d-d78c-445e-b07d-c93dfb4b",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "pull_requests": [
+                {
+                  "approvers": [
+                    {
+                      "state": "APPROVED",
+                      "timestamp": 1770104447,
+                      "username": "gsavage"
+                    }
+                  ],
+                  "author": "ToreMerkely",
+                  "commits": [
+                    {
+                      "author": "Tore Martin Hagen \u003ctore@kosli.com\u003e",
+                      "author_username": "ToreMerkely",
+                      "branch": "fix-cov-data-problem",
+                      "message": "Added minimum _test.go files for files that does not have tests.",
+                      "sha1": "24cae6e2ced1f838fdca08b010a5ac61fa366e1d",
+                      "timestamp": 1770101925,
+                      "url": "https://github.com/kosli-dev/cli/commit/24cae6e2ced1f838fdca08b010a5ac61fa366e1d"
+                    }
+                  ],
+                  "created_at": 1770102927,
+                  "head_ref": "fix-cov-data-problem",
+                  "merge_commit": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                  "merged_at": 1770104448,
+                  "state": "MERGED",
+                  "title": "Added minimum _test.go files for files that does not have tests.",
+                  "url": "https://github.com/kosli-dev/cli/pull/650"
+                }
+              ],
+              "reported_by": "test",
+              "schema_version": 2,
+              "status": "COMPLETE",
+              "unexpected": true,
+              "user_data": {}
+            }
+          },
+          "evaluated_at": 1779991765.0601654,
+          "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+          "is_compliant": true,
+          "status": "COMPLIANT"
+        },
+        "created_at": 1779991764.224045,
+        "created_by": "test",
+        "description": "",
+        "events": [
+          {
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Added minimum _test.go files for files that does not have tests. (#650)\n\nWe use the tool cover for coverage, but if there is no _test.go file,\nthen Go use the tool covdata. At the same time, they removed covdata\nas a precompiled binary in the distribution. This made the coverage\ncalculation fail for some of us.\n\nAs described in this discussion\n  https://github.com/golang/go/issues/75031\nthere is an other option to fix this by modifying the\nGOTOOLCHAIN variable, but that is too much magic for me and\ncould be very hard to debug for the next person who stumbles\nover this.",
+              "parents": null,
+              "sha1": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+              "timestamp": 1770104448,
+              "url": "https://github.com/kosli-dev/cli/commit/152d5931f4f544d6320b5ca34a3a4357009d5286"
+            },
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "timestamp": 1779991764.224045,
+            "trail_data_json": {
+              "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+              "description": "",
+              "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+              "git_commit_info": {
+                "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "Added minimum _test.go files for files that does not have tests. (#650)\n\nWe use the tool cover for coverage, but if there is no _test.go file,\nthen Go use the tool covdata. At the same time, they removed covdata\nas a precompiled binary in the distribution. This made the coverage\ncalculation fail for some of us.\n\nAs described in this discussion\n  https://github.com/golang/go/issues/75031\nthere is an other option to fix this by modifying the\nGOTOOLCHAIN variable, but that is too much magic for me and\ncould be very hard to debug for the next person who stumbles\nover this.",
+                "sha1": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+                "timestamp": 1770104448,
+                "url": "https://github.com/kosli-dev/cli/commit/152d5931f4f544d6320b5ca34a3a4357009d5286"
+              },
+              "name": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+              "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+              "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+              "user_data": "{}"
+            },
+            "trail_id": "b6558be1-40b7-443e-9f2f-f071253e",
+            "type": "trail_reported"
+          },
+          {
+            "attestation_id": "f03b8f4d-d78c-445e-b07d-c93dfb4b",
+            "attestation_type": "pull_request",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Added minimum _test.go files for files that does not have tests. (#650)\n\nWe use the tool cover for coverage, but if there is no _test.go file,\nthen Go use the tool covdata. At the same time, they removed covdata\nas a precompiled binary in the distribution. This made the coverage\ncalculation fail for some of us.\n\nAs described in this discussion\n  https://github.com/golang/go/issues/75031\nthere is an other option to fix this by modifying the\nGOTOOLCHAIN variable, but that is too much magic for me and\ncould be very hard to debug for the next person who stumbles\nover this.",
+              "parents": null,
+              "sha1": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+              "timestamp": 1770104448,
+              "url": "https://github.com/kosli-dev/cli/commit/152d5931f4f544d6320b5ca34a3a4357009d5286"
+            },
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "pr-review",
+            "timestamp": 1779991765.0601654,
+            "trail_id": "b6558be1-40b7-443e-9f2f-f071253e",
+            "type": "trail_attestation_reported"
+          },
+          {
+            "attestation_id": "9543e9b6-8164-4639-8b24-0d76a66e",
+            "attestation_type": "custom:four-eyes-result",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": null,
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "four-eyes-result",
+            "timestamp": 1779991767.5745828,
+            "trail_id": "b6558be1-40b7-443e-9f2f-f071253e",
+            "type": "trail_attestation_reported"
+          }
+        ],
+        "external_urls": null,
+        "flow": {
+          "name": "cli-granular-demo-20260528180923",
+          "tags": {}
+        },
+        "git_commit_info": {
+          "author": "Tore Martin Hagen \u003c93583343+ToreMerkely@users.noreply.github.com\u003e",
+          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+          "message": "Added minimum _test.go files for files that does not have tests. (#650)\n\nWe use the tool cover for coverage, but if there is no _test.go file,\nthen Go use the tool covdata. At the same time, they removed covdata\nas a precompiled binary in the distribution. This made the coverage\ncalculation fail for some of us.\n\nAs described in this discussion\n  https://github.com/golang/go/issues/75031\nthere is an other option to fix this by modifying the\nGOTOOLCHAIN variable, but that is too much magic for me and\ncould be very hard to debug for the next person who stumbles\nover this.",
+          "sha1": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+          "timestamp": 1770104448,
+          "url": "https://github.com/kosli-dev/cli/commit/152d5931f4f544d6320b5ca34a3a4357009d5286"
+        },
+        "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/152d5931f4f544d6320b5ca34a3a4357009d5286",
+        "is_compliant": true,
+        "last_modified_at": 1779991767.5745828,
+        "name": "152d5931f4f544d6320b5ca34a3a4357009d5286",
+        "origin_url": null,
+        "repo_ids": [],
+        "template": {
+          "content": "version: 1",
+          "trail": {
+            "artifacts": [],
+            "attestations": []
+          },
+          "version": 1
+        },
+        "user_data": {}
+      },
+      {
+        "compliance_state": "COMPLIANT",
+        "compliance_status": {
+          "artifacts_statuses": {},
+          "attestations_statuses": {
+            "four-eyes-result": {
+              "attestation_data": {
+                "allow": true,
+                "input": {
+                  "trails": [
+                    {
+                      "compliance_state": "COMPLIANT",
+                      "compliance_status": {
+                        "artifacts_statuses": {},
+                        "attestations_statuses": {
+                          "pr-review": {
+                            "attestation_id": "6e653e09-9b94-40b3-8ee8-6da857ec",
+                            "attestation_name": "pr-review",
+                            "attestation_type": "pull_request",
+                            "created_at": 1779991765.0753615,
+                            "git_commit_info": {
+                              "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "Add flow name config to Sonar Integration docs page (#649)",
+                              "sha1": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                              "timestamp": 1770015753,
+                              "url": "https://github.com/kosli-dev/cli/commit/d211fd4ba70d3b0822674e9f51d51965f886ef6e"
+                            },
+                            "git_provider": "github",
+                            "has_audit_package": false,
+                            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/d211fd4ba70d3b0822674e9f51d51965f886ef6e?attestation_id=6e653e09-9b94-40b3-8ee8-6da857ec",
+                            "is_compliant": true,
+                            "overridden_attestation_id": null,
+                            "pull_requests": [
+                              {
+                                "approvers": [
+                                  {
+                                    "state": "APPROVED",
+                                    "timestamp": 1770015747,
+                                    "username": "sami-alajrami"
+                                  }
+                                ],
+                                "author": "FayeSGW",
+                                "commits": [
+                                  {
+                                    "author": "Faye \u003cfaye@kosli.com\u003e",
+                                    "author_username": "FayeSGW",
+                                    "branch": "update-sonar-integration-docs",
+                                    "message": "Add flow name config to Sonar Integration docs page",
+                                    "sha1": "1b9cd3567601cad8318246a05a207b72de8318b0",
+                                    "timestamp": 1769779358,
+                                    "url": "https://github.com/kosli-dev/cli/commit/1b9cd3567601cad8318246a05a207b72de8318b0"
+                                  }
+                                ],
+                                "created_at": 1769779382,
+                                "head_ref": "update-sonar-integration-docs",
+                                "merge_commit": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                                "merged_at": 1770015754,
+                                "state": "MERGED",
+                                "title": "Add flow name config to Sonar Integration docs page",
+                                "url": "https://github.com/kosli-dev/cli/pull/649"
+                              }
+                            ],
+                            "reported_by": "test",
+                            "schema_version": 2,
+                            "status": "COMPLETE",
+                            "unexpected": true,
+                            "user_data": {}
+                          }
+                        },
+                        "evaluated_at": 1779991764.1367698,
+                        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                        "is_compliant": true,
+                        "status": "COMPLIANT"
+                      },
+                      "created_at": 1779991764.1367698,
+                      "created_by": "test",
+                      "description": "",
+                      "events": [
+                        {
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Add flow name config to Sonar Integration docs page (#649)",
+                            "parents": null,
+                            "sha1": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                            "timestamp": 1770015753,
+                            "url": "https://github.com/kosli-dev/cli/commit/d211fd4ba70d3b0822674e9f51d51965f886ef6e"
+                          },
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "timestamp": 1779991764.1367698,
+                          "trail_data_json": {
+                            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                            "description": "",
+                            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                            "git_commit_info": {
+                              "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "Add flow name config to Sonar Integration docs page (#649)",
+                              "sha1": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                              "timestamp": 1770015753,
+                              "url": "https://github.com/kosli-dev/cli/commit/d211fd4ba70d3b0822674e9f51d51965f886ef6e"
+                            },
+                            "name": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                            "user_data": "{}"
+                          },
+                          "trail_id": "a0cdf19a-04bd-4a37-9fab-002d2b93",
+                          "type": "trail_reported"
+                        },
+                        {
+                          "attestation_id": "6e653e09-9b94-40b3-8ee8-6da857ec",
+                          "attestation_type": "pull_request",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Add flow name config to Sonar Integration docs page (#649)",
+                            "parents": null,
+                            "sha1": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                            "timestamp": 1770015753,
+                            "url": "https://github.com/kosli-dev/cli/commit/d211fd4ba70d3b0822674e9f51d51965f886ef6e"
+                          },
+                          "is_compliant": true,
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "template_reference_name": "pr-review",
+                          "timestamp": 1779991765.0753615,
+                          "trail_id": "a0cdf19a-04bd-4a37-9fab-002d2b93",
+                          "type": "trail_attestation_reported"
+                        }
+                      ],
+                      "external_urls": null,
+                      "flow": {
+                        "name": "cli-granular-demo-20260528180923",
+                        "tags": {}
+                      },
+                      "git_commit_info": {
+                        "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                        "message": "Add flow name config to Sonar Integration docs page (#649)",
+                        "sha1": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                        "timestamp": 1770015753,
+                        "url": "https://github.com/kosli-dev/cli/commit/d211fd4ba70d3b0822674e9f51d51965f886ef6e"
+                      },
+                      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                      "is_compliant": true,
+                      "last_modified_at": 1779991765.0753615,
+                      "name": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                      "origin_url": null,
+                      "repo_ids": [],
+                      "template": {
+                        "content": "version: 1",
+                        "trail": {
+                          "artifacts": [],
+                          "attestations": []
+                        },
+                        "version": 1
+                      },
+                      "user_data": {}
+                    }
+                  ]
+                },
+                "violations": null
+              },
+              "attestation_id": "122b741f-50a1-474e-8da9-c3d85417",
+              "attestation_name": "four-eyes-result",
+              "attestation_type": "custom:four-eyes-result",
+              "created_at": 1779991768.5065203,
+              "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+              "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/d38348ca-d12f-4be8-af1d-f1c8e880/four-eyes.rego",
+              "has_audit_package": true,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/d211fd4ba70d3b0822674e9f51d51965f886ef6e?attestation_id=122b741f-50a1-474e-8da9-c3d85417",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "reported_by": "test",
+              "result": {
+                "parts": [
+                  {
+                    "result": true,
+                    "rule": ".allow == true",
+                    "status": true
+                  }
+                ]
+              },
+              "schema_version": 1,
+              "status": "COMPLETE",
+              "type_name": "four-eyes-result",
+              "type_version": 6,
+              "unexpected": true,
+              "user_data": {}
+            },
+            "pr-review": {
+              "attestation_id": "6e653e09-9b94-40b3-8ee8-6da857ec",
+              "attestation_name": "pr-review",
+              "attestation_type": "pull_request",
+              "created_at": 1779991765.0753615,
+              "git_commit_info": {
+                "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "Add flow name config to Sonar Integration docs page (#649)",
+                "sha1": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                "timestamp": 1770015753,
+                "url": "https://github.com/kosli-dev/cli/commit/d211fd4ba70d3b0822674e9f51d51965f886ef6e"
+              },
+              "git_provider": "github",
+              "has_audit_package": false,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/d211fd4ba70d3b0822674e9f51d51965f886ef6e?attestation_id=6e653e09-9b94-40b3-8ee8-6da857ec",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "pull_requests": [
+                {
+                  "approvers": [
+                    {
+                      "state": "APPROVED",
+                      "timestamp": 1770015747,
+                      "username": "sami-alajrami"
+                    }
+                  ],
+                  "author": "FayeSGW",
+                  "commits": [
+                    {
+                      "author": "Faye \u003cfaye@kosli.com\u003e",
+                      "author_username": "FayeSGW",
+                      "branch": "update-sonar-integration-docs",
+                      "message": "Add flow name config to Sonar Integration docs page",
+                      "sha1": "1b9cd3567601cad8318246a05a207b72de8318b0",
+                      "timestamp": 1769779358,
+                      "url": "https://github.com/kosli-dev/cli/commit/1b9cd3567601cad8318246a05a207b72de8318b0"
+                    }
+                  ],
+                  "created_at": 1769779382,
+                  "head_ref": "update-sonar-integration-docs",
+                  "merge_commit": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                  "merged_at": 1770015754,
+                  "state": "MERGED",
+                  "title": "Add flow name config to Sonar Integration docs page",
+                  "url": "https://github.com/kosli-dev/cli/pull/649"
+                }
+              ],
+              "reported_by": "test",
+              "schema_version": 2,
+              "status": "COMPLETE",
+              "unexpected": true,
+              "user_data": {}
+            }
+          },
+          "evaluated_at": 1779991765.0753615,
+          "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+          "is_compliant": true,
+          "status": "COMPLIANT"
+        },
+        "created_at": 1779991764.1367698,
+        "created_by": "test",
+        "description": "",
+        "events": [
+          {
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Add flow name config to Sonar Integration docs page (#649)",
+              "parents": null,
+              "sha1": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+              "timestamp": 1770015753,
+              "url": "https://github.com/kosli-dev/cli/commit/d211fd4ba70d3b0822674e9f51d51965f886ef6e"
+            },
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "timestamp": 1779991764.1367698,
+            "trail_data_json": {
+              "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+              "description": "",
+              "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+              "git_commit_info": {
+                "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "Add flow name config to Sonar Integration docs page (#649)",
+                "sha1": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+                "timestamp": 1770015753,
+                "url": "https://github.com/kosli-dev/cli/commit/d211fd4ba70d3b0822674e9f51d51965f886ef6e"
+              },
+              "name": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+              "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+              "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+              "user_data": "{}"
+            },
+            "trail_id": "a0cdf19a-04bd-4a37-9fab-002d2b93",
+            "type": "trail_reported"
+          },
+          {
+            "attestation_id": "6e653e09-9b94-40b3-8ee8-6da857ec",
+            "attestation_type": "pull_request",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Add flow name config to Sonar Integration docs page (#649)",
+              "parents": null,
+              "sha1": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+              "timestamp": 1770015753,
+              "url": "https://github.com/kosli-dev/cli/commit/d211fd4ba70d3b0822674e9f51d51965f886ef6e"
+            },
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "pr-review",
+            "timestamp": 1779991765.0753615,
+            "trail_id": "a0cdf19a-04bd-4a37-9fab-002d2b93",
+            "type": "trail_attestation_reported"
+          },
+          {
+            "attestation_id": "122b741f-50a1-474e-8da9-c3d85417",
+            "attestation_type": "custom:four-eyes-result",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": null,
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "four-eyes-result",
+            "timestamp": 1779991768.5065203,
+            "trail_id": "a0cdf19a-04bd-4a37-9fab-002d2b93",
+            "type": "trail_attestation_reported"
+          }
+        ],
+        "external_urls": null,
+        "flow": {
+          "name": "cli-granular-demo-20260528180923",
+          "tags": {}
+        },
+        "git_commit_info": {
+          "author": "Faye \u003c108031168+FayeSGW@users.noreply.github.com\u003e",
+          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+          "message": "Add flow name config to Sonar Integration docs page (#649)",
+          "sha1": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+          "timestamp": 1770015753,
+          "url": "https://github.com/kosli-dev/cli/commit/d211fd4ba70d3b0822674e9f51d51965f886ef6e"
+        },
+        "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+        "is_compliant": true,
+        "last_modified_at": 1779991768.5065203,
+        "name": "d211fd4ba70d3b0822674e9f51d51965f886ef6e",
+        "origin_url": null,
+        "repo_ids": [],
+        "template": {
+          "content": "version: 1",
+          "trail": {
+            "artifacts": [],
+            "attestations": []
+          },
+          "version": 1
+        },
+        "user_data": {}
+      }
+    ]
+  }

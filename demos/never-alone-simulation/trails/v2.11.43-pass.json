@@ -1,0 +1,1209 @@
+{
+    "trails": [
+      {
+        "compliance_state": "COMPLIANT",
+        "compliance_status": {
+          "artifacts_statuses": {},
+          "attestations_statuses": {
+            "four-eyes-result": {
+              "attestation_data": {
+                "allow": true,
+                "input": {
+                  "trails": [
+                    {
+                      "compliance_state": "COMPLIANT",
+                      "compliance_status": {
+                        "artifacts_statuses": {},
+                        "attestations_statuses": {
+                          "pr-review": {
+                            "attestation_id": "72e564db-8198-4dda-b6fa-dba55ab1",
+                            "attestation_name": "pr-review",
+                            "attestation_type": "pull_request",
+                            "created_at": 1779991771.6377208,
+                            "git_commit_info": {
+                              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "Update dependencies because of snyk vulnerability (#655)",
+                              "sha1": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                              "timestamp": 1770806929,
+                              "url": "https://github.com/kosli-dev/cli/commit/ee2ac215064e10db11d479823ee8279ebad9f076"
+                            },
+                            "git_provider": "github",
+                            "has_audit_package": false,
+                            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/ee2ac215064e10db11d479823ee8279ebad9f076?attestation_id=72e564db-8198-4dda-b6fa-dba55ab1",
+                            "is_compliant": true,
+                            "overridden_attestation_id": null,
+                            "pull_requests": [
+                              {
+                                "approvers": [
+                                  {
+                                    "state": "APPROVED",
+                                    "timestamp": 1770806667,
+                                    "username": "ToreMerkely"
+                                  }
+                                ],
+                                "author": "jumboduck",
+                                "commits": [
+                                  {
+                                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                    "author_username": "jumboduck",
+                                    "branch": "update-deps",
+                                    "message": "Update dependencies because of snyk vulnerability",
+                                    "sha1": "e5bc6e951531fb2ab439cca2e8e26281f4f53915",
+                                    "timestamp": 1770806468,
+                                    "url": "https://github.com/kosli-dev/cli/commit/e5bc6e951531fb2ab439cca2e8e26281f4f53915"
+                                  }
+                                ],
+                                "created_at": 1770806481,
+                                "head_ref": "update-deps",
+                                "merge_commit": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                                "merged_at": 1770806930,
+                                "state": "MERGED",
+                                "title": "Update dependencies because of snyk vulnerability",
+                                "url": "https://github.com/kosli-dev/cli/pull/655"
+                              }
+                            ],
+                            "reported_by": "test",
+                            "schema_version": 2,
+                            "status": "COMPLETE",
+                            "unexpected": true,
+                            "user_data": {}
+                          }
+                        },
+                        "evaluated_at": 1779991770.5535572,
+                        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                        "is_compliant": true,
+                        "status": "COMPLIANT"
+                      },
+                      "created_at": 1779991770.5535572,
+                      "created_by": "test",
+                      "description": "",
+                      "events": [
+                        {
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Update dependencies because of snyk vulnerability (#655)",
+                            "parents": null,
+                            "sha1": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                            "timestamp": 1770806929,
+                            "url": "https://github.com/kosli-dev/cli/commit/ee2ac215064e10db11d479823ee8279ebad9f076"
+                          },
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "timestamp": 1779991770.5535572,
+                          "trail_data_json": {
+                            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                            "description": "",
+                            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                            "git_commit_info": {
+                              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "Update dependencies because of snyk vulnerability (#655)",
+                              "sha1": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                              "timestamp": 1770806929,
+                              "url": "https://github.com/kosli-dev/cli/commit/ee2ac215064e10db11d479823ee8279ebad9f076"
+                            },
+                            "name": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                            "user_data": "{}"
+                          },
+                          "trail_id": "ad33aacc-901a-4399-b366-451cb811",
+                          "type": "trail_reported"
+                        },
+                        {
+                          "attestation_id": "72e564db-8198-4dda-b6fa-dba55ab1",
+                          "attestation_type": "pull_request",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Update dependencies because of snyk vulnerability (#655)",
+                            "parents": null,
+                            "sha1": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                            "timestamp": 1770806929,
+                            "url": "https://github.com/kosli-dev/cli/commit/ee2ac215064e10db11d479823ee8279ebad9f076"
+                          },
+                          "is_compliant": true,
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "template_reference_name": "pr-review",
+                          "timestamp": 1779991771.6377208,
+                          "trail_id": "ad33aacc-901a-4399-b366-451cb811",
+                          "type": "trail_attestation_reported"
+                        }
+                      ],
+                      "external_urls": null,
+                      "flow": {
+                        "name": "cli-granular-demo-20260528180923",
+                        "tags": {}
+                      },
+                      "git_commit_info": {
+                        "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                        "message": "Update dependencies because of snyk vulnerability (#655)",
+                        "sha1": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                        "timestamp": 1770806929,
+                        "url": "https://github.com/kosli-dev/cli/commit/ee2ac215064e10db11d479823ee8279ebad9f076"
+                      },
+                      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/ee2ac215064e10db11d479823ee8279ebad9f076",
+                      "is_compliant": true,
+                      "last_modified_at": 1779991771.6377208,
+                      "name": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                      "origin_url": null,
+                      "repo_ids": [],
+                      "template": {
+                        "content": "version: 1",
+                        "trail": {
+                          "artifacts": [],
+                          "attestations": []
+                        },
+                        "version": 1
+                      },
+                      "user_data": {}
+                    }
+                  ]
+                },
+                "violations": null
+              },
+              "attestation_id": "e1343aa9-b1fe-4a11-a1e3-b86186da",
+              "attestation_name": "four-eyes-result",
+              "attestation_type": "custom:four-eyes-result",
+              "created_at": 1779991772.4044929,
+              "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+              "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/9838cbb0-8f58-42e4-81c1-6e88cf88/four-eyes.rego",
+              "has_audit_package": true,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/ee2ac215064e10db11d479823ee8279ebad9f076?attestation_id=e1343aa9-b1fe-4a11-a1e3-b86186da",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "reported_by": "test",
+              "result": {
+                "parts": [
+                  {
+                    "result": true,
+                    "rule": ".allow == true",
+                    "status": true
+                  }
+                ]
+              },
+              "schema_version": 1,
+              "status": "COMPLETE",
+              "type_name": "four-eyes-result",
+              "type_version": 6,
+              "unexpected": true,
+              "user_data": {}
+            },
+            "pr-review": {
+              "attestation_id": "72e564db-8198-4dda-b6fa-dba55ab1",
+              "attestation_name": "pr-review",
+              "attestation_type": "pull_request",
+              "created_at": 1779991771.6377208,
+              "git_commit_info": {
+                "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "Update dependencies because of snyk vulnerability (#655)",
+                "sha1": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                "timestamp": 1770806929,
+                "url": "https://github.com/kosli-dev/cli/commit/ee2ac215064e10db11d479823ee8279ebad9f076"
+              },
+              "git_provider": "github",
+              "has_audit_package": false,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/ee2ac215064e10db11d479823ee8279ebad9f076?attestation_id=72e564db-8198-4dda-b6fa-dba55ab1",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "pull_requests": [
+                {
+                  "approvers": [
+                    {
+                      "state": "APPROVED",
+                      "timestamp": 1770806667,
+                      "username": "ToreMerkely"
+                    }
+                  ],
+                  "author": "jumboduck",
+                  "commits": [
+                    {
+                      "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                      "author_username": "jumboduck",
+                      "branch": "update-deps",
+                      "message": "Update dependencies because of snyk vulnerability",
+                      "sha1": "e5bc6e951531fb2ab439cca2e8e26281f4f53915",
+                      "timestamp": 1770806468,
+                      "url": "https://github.com/kosli-dev/cli/commit/e5bc6e951531fb2ab439cca2e8e26281f4f53915"
+                    }
+                  ],
+                  "created_at": 1770806481,
+                  "head_ref": "update-deps",
+                  "merge_commit": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                  "merged_at": 1770806930,
+                  "state": "MERGED",
+                  "title": "Update dependencies because of snyk vulnerability",
+                  "url": "https://github.com/kosli-dev/cli/pull/655"
+                }
+              ],
+              "reported_by": "test",
+              "schema_version": 2,
+              "status": "COMPLETE",
+              "unexpected": true,
+              "user_data": {}
+            }
+          },
+          "evaluated_at": 1779991771.6377208,
+          "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+          "is_compliant": true,
+          "status": "COMPLIANT"
+        },
+        "created_at": 1779991770.5535572,
+        "created_by": "test",
+        "description": "",
+        "events": [
+          {
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Update dependencies because of snyk vulnerability (#655)",
+              "parents": null,
+              "sha1": "ee2ac215064e10db11d479823ee8279ebad9f076",
+              "timestamp": 1770806929,
+              "url": "https://github.com/kosli-dev/cli/commit/ee2ac215064e10db11d479823ee8279ebad9f076"
+            },
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "timestamp": 1779991770.5535572,
+            "trail_data_json": {
+              "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+              "description": "",
+              "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+              "git_commit_info": {
+                "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "Update dependencies because of snyk vulnerability (#655)",
+                "sha1": "ee2ac215064e10db11d479823ee8279ebad9f076",
+                "timestamp": 1770806929,
+                "url": "https://github.com/kosli-dev/cli/commit/ee2ac215064e10db11d479823ee8279ebad9f076"
+              },
+              "name": "ee2ac215064e10db11d479823ee8279ebad9f076",
+              "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+              "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+              "user_data": "{}"
+            },
+            "trail_id": "ad33aacc-901a-4399-b366-451cb811",
+            "type": "trail_reported"
+          },
+          {
+            "attestation_id": "72e564db-8198-4dda-b6fa-dba55ab1",
+            "attestation_type": "pull_request",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Update dependencies because of snyk vulnerability (#655)",
+              "parents": null,
+              "sha1": "ee2ac215064e10db11d479823ee8279ebad9f076",
+              "timestamp": 1770806929,
+              "url": "https://github.com/kosli-dev/cli/commit/ee2ac215064e10db11d479823ee8279ebad9f076"
+            },
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "pr-review",
+            "timestamp": 1779991771.6377208,
+            "trail_id": "ad33aacc-901a-4399-b366-451cb811",
+            "type": "trail_attestation_reported"
+          },
+          {
+            "attestation_id": "e1343aa9-b1fe-4a11-a1e3-b86186da",
+            "attestation_type": "custom:four-eyes-result",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": null,
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "four-eyes-result",
+            "timestamp": 1779991772.4044929,
+            "trail_id": "ad33aacc-901a-4399-b366-451cb811",
+            "type": "trail_attestation_reported"
+          }
+        ],
+        "external_urls": null,
+        "flow": {
+          "name": "cli-granular-demo-20260528180923",
+          "tags": {}
+        },
+        "git_commit_info": {
+          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+          "message": "Update dependencies because of snyk vulnerability (#655)",
+          "sha1": "ee2ac215064e10db11d479823ee8279ebad9f076",
+          "timestamp": 1770806929,
+          "url": "https://github.com/kosli-dev/cli/commit/ee2ac215064e10db11d479823ee8279ebad9f076"
+        },
+        "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/ee2ac215064e10db11d479823ee8279ebad9f076",
+        "is_compliant": true,
+        "last_modified_at": 1779991772.4044929,
+        "name": "ee2ac215064e10db11d479823ee8279ebad9f076",
+        "origin_url": null,
+        "repo_ids": [],
+        "template": {
+          "content": "version: 1",
+          "trail": {
+            "artifacts": [],
+            "attestations": []
+          },
+          "version": 1
+        },
+        "user_data": {}
+      },
+      {
+        "compliance_state": "COMPLIANT",
+        "compliance_status": {
+          "artifacts_statuses": {},
+          "attestations_statuses": {
+            "four-eyes-result": {
+              "attestation_data": {
+                "allow": true,
+                "input": {
+                  "trails": [
+                    {
+                      "compliance_state": "COMPLIANT",
+                      "compliance_status": {
+                        "artifacts_statuses": {},
+                        "attestations_statuses": {
+                          "pr-review": {
+                            "attestation_id": "ecc52fc7-77ac-4b05-b690-3f029854",
+                            "attestation_name": "pr-review",
+                            "attestation_type": "pull_request",
+                            "created_at": 1779991771.6038082,
+                            "git_commit_info": {
+                              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "Update description of list trails command to clarify filtering (#654)",
+                              "sha1": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                              "timestamp": 1770806038,
+                              "url": "https://github.com/kosli-dev/cli/commit/3e3d8de84d25a4d579ee72378a697bbcafd5f012"
+                            },
+                            "git_provider": "github",
+                            "has_audit_package": false,
+                            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/3e3d8de84d25a4d579ee72378a697bbcafd5f012?attestation_id=ecc52fc7-77ac-4b05-b690-3f029854",
+                            "is_compliant": true,
+                            "overridden_attestation_id": null,
+                            "pull_requests": [
+                              {
+                                "approvers": [
+                                  {
+                                    "state": "APPROVED",
+                                    "timestamp": 1770805805,
+                                    "username": "ToreMerkely"
+                                  }
+                                ],
+                                "author": "jumboduck",
+                                "commits": [
+                                  {
+                                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                    "author_username": "jumboduck",
+                                    "branch": "update-docs",
+                                    "message": "Update description of list trails command to clarify filtering",
+                                    "sha1": "ea20cf7359794c426b52ddb465dc857a5f3c653f",
+                                    "timestamp": 1770805617,
+                                    "url": "https://github.com/kosli-dev/cli/commit/ea20cf7359794c426b52ddb465dc857a5f3c653f"
+                                  }
+                                ],
+                                "created_at": 1770805631,
+                                "head_ref": "update-docs",
+                                "merge_commit": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                                "merged_at": 1770806038,
+                                "state": "MERGED",
+                                "title": "Update description of list trails command to clarify filtering",
+                                "url": "https://github.com/kosli-dev/cli/pull/654"
+                              }
+                            ],
+                            "reported_by": "test",
+                            "schema_version": 2,
+                            "status": "COMPLETE",
+                            "unexpected": true,
+                            "user_data": {}
+                          }
+                        },
+                        "evaluated_at": 1779991770.6406262,
+                        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                        "is_compliant": true,
+                        "status": "COMPLIANT"
+                      },
+                      "created_at": 1779991770.6406262,
+                      "created_by": "test",
+                      "description": "",
+                      "events": [
+                        {
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Update description of list trails command to clarify filtering (#654)",
+                            "parents": null,
+                            "sha1": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                            "timestamp": 1770806038,
+                            "url": "https://github.com/kosli-dev/cli/commit/3e3d8de84d25a4d579ee72378a697bbcafd5f012"
+                          },
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "timestamp": 1779991770.6406262,
+                          "trail_data_json": {
+                            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                            "description": "",
+                            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                            "git_commit_info": {
+                              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "Update description of list trails command to clarify filtering (#654)",
+                              "sha1": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                              "timestamp": 1770806038,
+                              "url": "https://github.com/kosli-dev/cli/commit/3e3d8de84d25a4d579ee72378a697bbcafd5f012"
+                            },
+                            "name": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                            "user_data": "{}"
+                          },
+                          "trail_id": "e517208c-6779-4ab9-8301-38bd5469",
+                          "type": "trail_reported"
+                        },
+                        {
+                          "attestation_id": "ecc52fc7-77ac-4b05-b690-3f029854",
+                          "attestation_type": "pull_request",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "Update description of list trails command to clarify filtering (#654)",
+                            "parents": null,
+                            "sha1": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                            "timestamp": 1770806038,
+                            "url": "https://github.com/kosli-dev/cli/commit/3e3d8de84d25a4d579ee72378a697bbcafd5f012"
+                          },
+                          "is_compliant": true,
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "template_reference_name": "pr-review",
+                          "timestamp": 1779991771.6038082,
+                          "trail_id": "e517208c-6779-4ab9-8301-38bd5469",
+                          "type": "trail_attestation_reported"
+                        }
+                      ],
+                      "external_urls": null,
+                      "flow": {
+                        "name": "cli-granular-demo-20260528180923",
+                        "tags": {}
+                      },
+                      "git_commit_info": {
+                        "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                        "message": "Update description of list trails command to clarify filtering (#654)",
+                        "sha1": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                        "timestamp": 1770806038,
+                        "url": "https://github.com/kosli-dev/cli/commit/3e3d8de84d25a4d579ee72378a697bbcafd5f012"
+                      },
+                      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                      "is_compliant": true,
+                      "last_modified_at": 1779991771.6038082,
+                      "name": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                      "origin_url": null,
+                      "repo_ids": [],
+                      "template": {
+                        "content": "version: 1",
+                        "trail": {
+                          "artifacts": [],
+                          "attestations": []
+                        },
+                        "version": 1
+                      },
+                      "user_data": {}
+                    }
+                  ]
+                },
+                "violations": null
+              },
+              "attestation_id": "52dd7f96-d574-479e-918b-cdf19e1a",
+              "attestation_name": "four-eyes-result",
+              "attestation_type": "custom:four-eyes-result",
+              "created_at": 1779991773.1141,
+              "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+              "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/d6575823-fc6d-44f6-834c-ec39605e/four-eyes.rego",
+              "has_audit_package": true,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/3e3d8de84d25a4d579ee72378a697bbcafd5f012?attestation_id=52dd7f96-d574-479e-918b-cdf19e1a",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "reported_by": "test",
+              "result": {
+                "parts": [
+                  {
+                    "result": true,
+                    "rule": ".allow == true",
+                    "status": true
+                  }
+                ]
+              },
+              "schema_version": 1,
+              "status": "COMPLETE",
+              "type_name": "four-eyes-result",
+              "type_version": 6,
+              "unexpected": true,
+              "user_data": {}
+            },
+            "pr-review": {
+              "attestation_id": "ecc52fc7-77ac-4b05-b690-3f029854",
+              "attestation_name": "pr-review",
+              "attestation_type": "pull_request",
+              "created_at": 1779991771.6038082,
+              "git_commit_info": {
+                "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "Update description of list trails command to clarify filtering (#654)",
+                "sha1": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                "timestamp": 1770806038,
+                "url": "https://github.com/kosli-dev/cli/commit/3e3d8de84d25a4d579ee72378a697bbcafd5f012"
+              },
+              "git_provider": "github",
+              "has_audit_package": false,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/3e3d8de84d25a4d579ee72378a697bbcafd5f012?attestation_id=ecc52fc7-77ac-4b05-b690-3f029854",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "pull_requests": [
+                {
+                  "approvers": [
+                    {
+                      "state": "APPROVED",
+                      "timestamp": 1770805805,
+                      "username": "ToreMerkely"
+                    }
+                  ],
+                  "author": "jumboduck",
+                  "commits": [
+                    {
+                      "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                      "author_username": "jumboduck",
+                      "branch": "update-docs",
+                      "message": "Update description of list trails command to clarify filtering",
+                      "sha1": "ea20cf7359794c426b52ddb465dc857a5f3c653f",
+                      "timestamp": 1770805617,
+                      "url": "https://github.com/kosli-dev/cli/commit/ea20cf7359794c426b52ddb465dc857a5f3c653f"
+                    }
+                  ],
+                  "created_at": 1770805631,
+                  "head_ref": "update-docs",
+                  "merge_commit": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                  "merged_at": 1770806038,
+                  "state": "MERGED",
+                  "title": "Update description of list trails command to clarify filtering",
+                  "url": "https://github.com/kosli-dev/cli/pull/654"
+                }
+              ],
+              "reported_by": "test",
+              "schema_version": 2,
+              "status": "COMPLETE",
+              "unexpected": true,
+              "user_data": {}
+            }
+          },
+          "evaluated_at": 1779991771.6038082,
+          "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+          "is_compliant": true,
+          "status": "COMPLIANT"
+        },
+        "created_at": 1779991770.6406262,
+        "created_by": "test",
+        "description": "",
+        "events": [
+          {
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Update description of list trails command to clarify filtering (#654)",
+              "parents": null,
+              "sha1": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+              "timestamp": 1770806038,
+              "url": "https://github.com/kosli-dev/cli/commit/3e3d8de84d25a4d579ee72378a697bbcafd5f012"
+            },
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "timestamp": 1779991770.6406262,
+            "trail_data_json": {
+              "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+              "description": "",
+              "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+              "git_commit_info": {
+                "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "Update description of list trails command to clarify filtering (#654)",
+                "sha1": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+                "timestamp": 1770806038,
+                "url": "https://github.com/kosli-dev/cli/commit/3e3d8de84d25a4d579ee72378a697bbcafd5f012"
+              },
+              "name": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+              "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+              "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+              "user_data": "{}"
+            },
+            "trail_id": "e517208c-6779-4ab9-8301-38bd5469",
+            "type": "trail_reported"
+          },
+          {
+            "attestation_id": "ecc52fc7-77ac-4b05-b690-3f029854",
+            "attestation_type": "pull_request",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "Update description of list trails command to clarify filtering (#654)",
+              "parents": null,
+              "sha1": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+              "timestamp": 1770806038,
+              "url": "https://github.com/kosli-dev/cli/commit/3e3d8de84d25a4d579ee72378a697bbcafd5f012"
+            },
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "pr-review",
+            "timestamp": 1779991771.6038082,
+            "trail_id": "e517208c-6779-4ab9-8301-38bd5469",
+            "type": "trail_attestation_reported"
+          },
+          {
+            "attestation_id": "52dd7f96-d574-479e-918b-cdf19e1a",
+            "attestation_type": "custom:four-eyes-result",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": null,
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "four-eyes-result",
+            "timestamp": 1779991773.1141,
+            "trail_id": "e517208c-6779-4ab9-8301-38bd5469",
+            "type": "trail_attestation_reported"
+          }
+        ],
+        "external_urls": null,
+        "flow": {
+          "name": "cli-granular-demo-20260528180923",
+          "tags": {}
+        },
+        "git_commit_info": {
+          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+          "message": "Update description of list trails command to clarify filtering (#654)",
+          "sha1": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+          "timestamp": 1770806038,
+          "url": "https://github.com/kosli-dev/cli/commit/3e3d8de84d25a4d579ee72378a697bbcafd5f012"
+        },
+        "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+        "is_compliant": true,
+        "last_modified_at": 1779991773.1141,
+        "name": "3e3d8de84d25a4d579ee72378a697bbcafd5f012",
+        "origin_url": null,
+        "repo_ids": [],
+        "template": {
+          "content": "version: 1",
+          "trail": {
+            "artifacts": [],
+            "attestations": []
+          },
+          "version": 1
+        },
+        "user_data": {}
+      },
+      {
+        "compliance_state": "COMPLIANT",
+        "compliance_status": {
+          "artifacts_statuses": {},
+          "attestations_statuses": {
+            "four-eyes-result": {
+              "attestation_data": {
+                "allow": true,
+                "input": {
+                  "trails": [
+                    {
+                      "compliance_state": "COMPLIANT",
+                      "compliance_status": {
+                        "artifacts_statuses": {},
+                        "attestations_statuses": {
+                          "pr-review": {
+                            "attestation_id": "bd0dd645-2cef-4b17-87bb-7d7518a2",
+                            "attestation_name": "pr-review",
+                            "attestation_type": "pull_request",
+                            "created_at": 1779991771.7696884,
+                            "git_commit_info": {
+                              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "env log repo filter (#653)\n\n* Add repo flag to log env command\n\n* Add repo flag to log environment command\n\n* Update cmd/kosli/logEnvironment.go\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e\n\n* Add note that repoNameFlag is optional\n\n* Update how url is built\n\n* Refactor url building to use JoinPath instead of string formatting\n\n* Fix integration test to create repo for second artifact\n\n---------\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e",
+                              "sha1": "89934a114fa604009c959475e62ba05c273b0478",
+                              "timestamp": 1770652652,
+                              "url": "https://github.com/kosli-dev/cli/commit/89934a114fa604009c959475e62ba05c273b0478"
+                            },
+                            "git_provider": "github",
+                            "has_audit_package": false,
+                            "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/89934a114fa604009c959475e62ba05c273b0478?attestation_id=bd0dd645-2cef-4b17-87bb-7d7518a2",
+                            "is_compliant": true,
+                            "overridden_attestation_id": null,
+                            "pull_requests": [
+                              {
+                                "approvers": [
+                                  {
+                                    "state": "APPROVED",
+                                    "timestamp": 1770652604,
+                                    "username": "jbpros"
+                                  },
+                                  {
+                                    "state": "APPROVED",
+                                    "timestamp": 1770652629,
+                                    "username": "jbpros"
+                                  }
+                                ],
+                                "author": "jumboduck",
+                                "commits": [
+                                  {
+                                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                    "author_username": "jumboduck",
+                                    "branch": "env-log-repo-filter",
+                                    "message": "Add repo flag to log env command",
+                                    "sha1": "735003edf7d0b0a02e145faf8125b18529a2be52",
+                                    "timestamp": 1770633393,
+                                    "url": "https://github.com/kosli-dev/cli/commit/735003edf7d0b0a02e145faf8125b18529a2be52"
+                                  },
+                                  {
+                                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                    "author_username": "jumboduck",
+                                    "branch": "env-log-repo-filter",
+                                    "message": "Add repo flag to log environment command",
+                                    "sha1": "ffd925b6de4a95fc33ec5870cd08be9acb89253c",
+                                    "timestamp": 1770646551,
+                                    "url": "https://github.com/kosli-dev/cli/commit/ffd925b6de4a95fc33ec5870cd08be9acb89253c"
+                                  },
+                                  {
+                                    "author": "GitHub \u003cnoreply@github.com\u003e",
+                                    "branch": "env-log-repo-filter",
+                                    "message": "Update cmd/kosli/logEnvironment.go",
+                                    "sha1": "5f89ca1cfb360085e784ea8ec9f691995fc1af75",
+                                    "timestamp": 1770647108,
+                                    "url": "https://github.com/kosli-dev/cli/commit/5f89ca1cfb360085e784ea8ec9f691995fc1af75"
+                                  },
+                                  {
+                                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                    "author_username": "jumboduck",
+                                    "branch": "env-log-repo-filter",
+                                    "message": "Add note that repoNameFlag is optional",
+                                    "sha1": "4c69c43ee52a8e05cde9771311a1afdecdc7833f",
+                                    "timestamp": 1770647271,
+                                    "url": "https://github.com/kosli-dev/cli/commit/4c69c43ee52a8e05cde9771311a1afdecdc7833f"
+                                  },
+                                  {
+                                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                    "author_username": "jumboduck",
+                                    "branch": "env-log-repo-filter",
+                                    "message": "Update how url is built",
+                                    "sha1": "5b6803316620b63a23adbb1df9f956b1e1a01e0d",
+                                    "timestamp": 1770648539,
+                                    "url": "https://github.com/kosli-dev/cli/commit/5b6803316620b63a23adbb1df9f956b1e1a01e0d"
+                                  },
+                                  {
+                                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                    "author_username": "jumboduck",
+                                    "branch": "env-log-repo-filter",
+                                    "message": "Refactor url building to use JoinPath instead of string formatting",
+                                    "sha1": "794f791b01ab0f0bdbe1e290f158ab8281192ced",
+                                    "timestamp": 1770650342,
+                                    "url": "https://github.com/kosli-dev/cli/commit/794f791b01ab0f0bdbe1e290f158ab8281192ced"
+                                  },
+                                  {
+                                    "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                                    "author_username": "jumboduck",
+                                    "branch": "env-log-repo-filter",
+                                    "message": "Fix integration test to create repo for second artifact",
+                                    "sha1": "109ead3d476d41505d3eefa2aeea9d4a8c2a1009",
+                                    "timestamp": 1770652222,
+                                    "url": "https://github.com/kosli-dev/cli/commit/109ead3d476d41505d3eefa2aeea9d4a8c2a1009"
+                                  }
+                                ],
+                                "created_at": 1770646703,
+                                "head_ref": "env-log-repo-filter",
+                                "merge_commit": "89934a114fa604009c959475e62ba05c273b0478",
+                                "merged_at": 1770652652,
+                                "state": "MERGED",
+                                "title": "env log repo filter",
+                                "url": "https://github.com/kosli-dev/cli/pull/653"
+                              }
+                            ],
+                            "reported_by": "test",
+                            "schema_version": 2,
+                            "status": "COMPLETE",
+                            "unexpected": true,
+                            "user_data": {}
+                          }
+                        },
+                        "evaluated_at": 1779991770.5963693,
+                        "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                        "is_compliant": true,
+                        "status": "COMPLIANT"
+                      },
+                      "created_at": 1779991770.5963693,
+                      "created_by": "test",
+                      "description": "",
+                      "events": [
+                        {
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "env log repo filter (#653)\n\n* Add repo flag to log env command\n\n* Add repo flag to log environment command\n\n* Update cmd/kosli/logEnvironment.go\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e\n\n* Add note that repoNameFlag is optional\n\n* Update how url is built\n\n* Refactor url building to use JoinPath instead of string formatting\n\n* Fix integration test to create repo for second artifact\n\n---------\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e",
+                            "parents": null,
+                            "sha1": "89934a114fa604009c959475e62ba05c273b0478",
+                            "timestamp": 1770652652,
+                            "url": "https://github.com/kosli-dev/cli/commit/89934a114fa604009c959475e62ba05c273b0478"
+                          },
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                          "timestamp": 1779991770.5963693,
+                          "trail_data_json": {
+                            "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+                            "description": "",
+                            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                            "git_commit_info": {
+                              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                              "message": "env log repo filter (#653)\n\n* Add repo flag to log env command\n\n* Add repo flag to log environment command\n\n* Update cmd/kosli/logEnvironment.go\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e\n\n* Add note that repoNameFlag is optional\n\n* Update how url is built\n\n* Refactor url building to use JoinPath instead of string formatting\n\n* Fix integration test to create repo for second artifact\n\n---------\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e",
+                              "sha1": "89934a114fa604009c959475e62ba05c273b0478",
+                              "timestamp": 1770652652,
+                              "url": "https://github.com/kosli-dev/cli/commit/89934a114fa604009c959475e62ba05c273b0478"
+                            },
+                            "name": "89934a114fa604009c959475e62ba05c273b0478",
+                            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                            "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+                            "user_data": "{}"
+                          },
+                          "trail_id": "6c068936-4828-40be-ae24-994a3082",
+                          "type": "trail_reported"
+                        },
+                        {
+                          "attestation_id": "bd0dd645-2cef-4b17-87bb-7d7518a2",
+                          "attestation_type": "pull_request",
+                          "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+                          "git_commit_info": {
+                            "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                            "author_username": null,
+                            "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                            "message": "env log repo filter (#653)\n\n* Add repo flag to log env command\n\n* Add repo flag to log environment command\n\n* Update cmd/kosli/logEnvironment.go\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e\n\n* Add note that repoNameFlag is optional\n\n* Update how url is built\n\n* Refactor url building to use JoinPath instead of string formatting\n\n* Fix integration test to create repo for second artifact\n\n---------\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e",
+                            "parents": null,
+                            "sha1": "89934a114fa604009c959475e62ba05c273b0478",
+                            "timestamp": 1770652652,
+                            "url": "https://github.com/kosli-dev/cli/commit/89934a114fa604009c959475e62ba05c273b0478"
+                          },
+                          "is_compliant": true,
+                          "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+                          "repo_info": null,
+                          "template_reference_name": "pr-review",
+                          "timestamp": 1779991771.7696884,
+                          "trail_id": "6c068936-4828-40be-ae24-994a3082",
+                          "type": "trail_attestation_reported"
+                        }
+                      ],
+                      "external_urls": null,
+                      "flow": {
+                        "name": "cli-granular-demo-20260528180923",
+                        "tags": {}
+                      },
+                      "git_commit_info": {
+                        "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                        "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                        "message": "env log repo filter (#653)\n\n* Add repo flag to log env command\n\n* Add repo flag to log environment command\n\n* Update cmd/kosli/logEnvironment.go\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e\n\n* Add note that repoNameFlag is optional\n\n* Update how url is built\n\n* Refactor url building to use JoinPath instead of string formatting\n\n* Fix integration test to create repo for second artifact\n\n---------\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e",
+                        "sha1": "89934a114fa604009c959475e62ba05c273b0478",
+                        "timestamp": 1770652652,
+                        "url": "https://github.com/kosli-dev/cli/commit/89934a114fa604009c959475e62ba05c273b0478"
+                      },
+                      "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/89934a114fa604009c959475e62ba05c273b0478",
+                      "is_compliant": true,
+                      "last_modified_at": 1779991771.7696884,
+                      "name": "89934a114fa604009c959475e62ba05c273b0478",
+                      "origin_url": null,
+                      "repo_ids": [],
+                      "template": {
+                        "content": "version: 1",
+                        "trail": {
+                          "artifacts": [],
+                          "attestations": []
+                        },
+                        "version": 1
+                      },
+                      "user_data": {}
+                    }
+                  ]
+                },
+                "violations": null
+              },
+              "attestation_id": "a9a0bc47-7e2e-43f7-8200-468a289d",
+              "attestation_name": "four-eyes-result",
+              "attestation_type": "custom:four-eyes-result",
+              "created_at": 1779991773.8700826,
+              "evidence_archive_fingerprint": "3c836515c7a2a670dbfd9e1ed8a1006cf2d322cad16728358c9a2447958e5b96",
+              "evidence_archive_path": "0378fdb1-52e8-4cbf-bef5-c2f73289/trail_attestation/618fc7a2-f19a-408d-a57e-70e05a93/four-eyes.rego",
+              "has_audit_package": true,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/89934a114fa604009c959475e62ba05c273b0478?attestation_id=a9a0bc47-7e2e-43f7-8200-468a289d",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "reported_by": "test",
+              "result": {
+                "parts": [
+                  {
+                    "result": true,
+                    "rule": ".allow == true",
+                    "status": true
+                  }
+                ]
+              },
+              "schema_version": 1,
+              "status": "COMPLETE",
+              "type_name": "four-eyes-result",
+              "type_version": 6,
+              "unexpected": true,
+              "user_data": {}
+            },
+            "pr-review": {
+              "attestation_id": "bd0dd645-2cef-4b17-87bb-7d7518a2",
+              "attestation_name": "pr-review",
+              "attestation_type": "pull_request",
+              "created_at": 1779991771.7696884,
+              "git_commit_info": {
+                "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "env log repo filter (#653)\n\n* Add repo flag to log env command\n\n* Add repo flag to log environment command\n\n* Update cmd/kosli/logEnvironment.go\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e\n\n* Add note that repoNameFlag is optional\n\n* Update how url is built\n\n* Refactor url building to use JoinPath instead of string formatting\n\n* Fix integration test to create repo for second artifact\n\n---------\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e",
+                "sha1": "89934a114fa604009c959475e62ba05c273b0478",
+                "timestamp": 1770652652,
+                "url": "https://github.com/kosli-dev/cli/commit/89934a114fa604009c959475e62ba05c273b0478"
+              },
+              "git_provider": "github",
+              "has_audit_package": false,
+              "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/89934a114fa604009c959475e62ba05c273b0478?attestation_id=bd0dd645-2cef-4b17-87bb-7d7518a2",
+              "is_compliant": true,
+              "overridden_attestation_id": null,
+              "pull_requests": [
+                {
+                  "approvers": [
+                    {
+                      "state": "APPROVED",
+                      "timestamp": 1770652604,
+                      "username": "jbpros"
+                    },
+                    {
+                      "state": "APPROVED",
+                      "timestamp": 1770652629,
+                      "username": "jbpros"
+                    }
+                  ],
+                  "author": "jumboduck",
+                  "commits": [
+                    {
+                      "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                      "author_username": "jumboduck",
+                      "branch": "env-log-repo-filter",
+                      "message": "Add repo flag to log env command",
+                      "sha1": "735003edf7d0b0a02e145faf8125b18529a2be52",
+                      "timestamp": 1770633393,
+                      "url": "https://github.com/kosli-dev/cli/commit/735003edf7d0b0a02e145faf8125b18529a2be52"
+                    },
+                    {
+                      "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                      "author_username": "jumboduck",
+                      "branch": "env-log-repo-filter",
+                      "message": "Add repo flag to log environment command",
+                      "sha1": "ffd925b6de4a95fc33ec5870cd08be9acb89253c",
+                      "timestamp": 1770646551,
+                      "url": "https://github.com/kosli-dev/cli/commit/ffd925b6de4a95fc33ec5870cd08be9acb89253c"
+                    },
+                    {
+                      "author": "GitHub \u003cnoreply@github.com\u003e",
+                      "branch": "env-log-repo-filter",
+                      "message": "Update cmd/kosli/logEnvironment.go",
+                      "sha1": "5f89ca1cfb360085e784ea8ec9f691995fc1af75",
+                      "timestamp": 1770647108,
+                      "url": "https://github.com/kosli-dev/cli/commit/5f89ca1cfb360085e784ea8ec9f691995fc1af75"
+                    },
+                    {
+                      "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                      "author_username": "jumboduck",
+                      "branch": "env-log-repo-filter",
+                      "message": "Add note that repoNameFlag is optional",
+                      "sha1": "4c69c43ee52a8e05cde9771311a1afdecdc7833f",
+                      "timestamp": 1770647271,
+                      "url": "https://github.com/kosli-dev/cli/commit/4c69c43ee52a8e05cde9771311a1afdecdc7833f"
+                    },
+                    {
+                      "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                      "author_username": "jumboduck",
+                      "branch": "env-log-repo-filter",
+                      "message": "Update how url is built",
+                      "sha1": "5b6803316620b63a23adbb1df9f956b1e1a01e0d",
+                      "timestamp": 1770648539,
+                      "url": "https://github.com/kosli-dev/cli/commit/5b6803316620b63a23adbb1df9f956b1e1a01e0d"
+                    },
+                    {
+                      "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                      "author_username": "jumboduck",
+                      "branch": "env-log-repo-filter",
+                      "message": "Refactor url building to use JoinPath instead of string formatting",
+                      "sha1": "794f791b01ab0f0bdbe1e290f158ab8281192ced",
+                      "timestamp": 1770650342,
+                      "url": "https://github.com/kosli-dev/cli/commit/794f791b01ab0f0bdbe1e290f158ab8281192ced"
+                    },
+                    {
+                      "author": "Simon Castagna \u003csimon@kosli.com\u003e",
+                      "author_username": "jumboduck",
+                      "branch": "env-log-repo-filter",
+                      "message": "Fix integration test to create repo for second artifact",
+                      "sha1": "109ead3d476d41505d3eefa2aeea9d4a8c2a1009",
+                      "timestamp": 1770652222,
+                      "url": "https://github.com/kosli-dev/cli/commit/109ead3d476d41505d3eefa2aeea9d4a8c2a1009"
+                    }
+                  ],
+                  "created_at": 1770646703,
+                  "head_ref": "env-log-repo-filter",
+                  "merge_commit": "89934a114fa604009c959475e62ba05c273b0478",
+                  "merged_at": 1770652652,
+                  "state": "MERGED",
+                  "title": "env log repo filter",
+                  "url": "https://github.com/kosli-dev/cli/pull/653"
+                }
+              ],
+              "reported_by": "test",
+              "schema_version": 2,
+              "status": "COMPLETE",
+              "unexpected": true,
+              "user_data": {}
+            }
+          },
+          "evaluated_at": 1779991771.7696884,
+          "flow_template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+          "is_compliant": true,
+          "status": "COMPLIANT"
+        },
+        "created_at": 1779991770.5963693,
+        "created_by": "test",
+        "description": "",
+        "events": [
+          {
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "env log repo filter (#653)\n\n* Add repo flag to log env command\n\n* Add repo flag to log environment command\n\n* Update cmd/kosli/logEnvironment.go\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e\n\n* Add note that repoNameFlag is optional\n\n* Update how url is built\n\n* Refactor url building to use JoinPath instead of string formatting\n\n* Fix integration test to create repo for second artifact\n\n---------\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e",
+              "parents": null,
+              "sha1": "89934a114fa604009c959475e62ba05c273b0478",
+              "timestamp": 1770652652,
+              "url": "https://github.com/kosli-dev/cli/commit/89934a114fa604009c959475e62ba05c273b0478"
+            },
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "setting_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+            "timestamp": 1779991770.5963693,
+            "trail_data_json": {
+              "creating_user_id": "e7cf1e3f-da58-4975-a35a-13537d42",
+              "description": "",
+              "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+              "git_commit_info": {
+                "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+                "branch": "claude/improve-kosli-evaluate-M3Vvy",
+                "message": "env log repo filter (#653)\n\n* Add repo flag to log env command\n\n* Add repo flag to log environment command\n\n* Update cmd/kosli/logEnvironment.go\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e\n\n* Add note that repoNameFlag is optional\n\n* Update how url is built\n\n* Refactor url building to use JoinPath instead of string formatting\n\n* Fix integration test to create repo for second artifact\n\n---------\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e",
+                "sha1": "89934a114fa604009c959475e62ba05c273b0478",
+                "timestamp": 1770652652,
+                "url": "https://github.com/kosli-dev/cli/commit/89934a114fa604009c959475e62ba05c273b0478"
+              },
+              "name": "89934a114fa604009c959475e62ba05c273b0478",
+              "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+              "template_id": "4427fbf5-fb7a-4a19-b913-87fe3236",
+              "user_data": "{}"
+            },
+            "trail_id": "6c068936-4828-40be-ae24-994a3082",
+            "type": "trail_reported"
+          },
+          {
+            "attestation_id": "bd0dd645-2cef-4b17-87bb-7d7518a2",
+            "attestation_type": "pull_request",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": {
+              "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+              "author_username": null,
+              "branch": "claude/improve-kosli-evaluate-M3Vvy",
+              "message": "env log repo filter (#653)\n\n* Add repo flag to log env command\n\n* Add repo flag to log environment command\n\n* Update cmd/kosli/logEnvironment.go\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e\n\n* Add note that repoNameFlag is optional\n\n* Update how url is built\n\n* Refactor url building to use JoinPath instead of string formatting\n\n* Fix integration test to create repo for second artifact\n\n---------\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e",
+              "parents": null,
+              "sha1": "89934a114fa604009c959475e62ba05c273b0478",
+              "timestamp": 1770652652,
+              "url": "https://github.com/kosli-dev/cli/commit/89934a114fa604009c959475e62ba05c273b0478"
+            },
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "pr-review",
+            "timestamp": 1779991771.7696884,
+            "trail_id": "6c068936-4828-40be-ae24-994a3082",
+            "type": "trail_attestation_reported"
+          },
+          {
+            "attestation_id": "a9a0bc47-7e2e-43f7-8200-468a289d",
+            "attestation_type": "custom:four-eyes-result",
+            "flow_id": "43ec75ee-bb86-4d3e-a2ee-2dad5c73",
+            "git_commit_info": null,
+            "is_compliant": true,
+            "org_id": "0378fdb1-52e8-4cbf-bef5-c2f73289",
+            "repo_info": null,
+            "template_reference_name": "four-eyes-result",
+            "timestamp": 1779991773.8700826,
+            "trail_id": "6c068936-4828-40be-ae24-994a3082",
+            "type": "trail_attestation_reported"
+          }
+        ],
+        "external_urls": null,
+        "flow": {
+          "name": "cli-granular-demo-20260528180923",
+          "tags": {}
+        },
+        "git_commit_info": {
+          "author": "SimonC \u003csd.castagna@gmail.com\u003e",
+          "branch": "claude/improve-kosli-evaluate-M3Vvy",
+          "message": "env log repo filter (#653)\n\n* Add repo flag to log env command\n\n* Add repo flag to log environment command\n\n* Update cmd/kosli/logEnvironment.go\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e\n\n* Add note that repoNameFlag is optional\n\n* Update how url is built\n\n* Refactor url building to use JoinPath instead of string formatting\n\n* Fix integration test to create repo for second artifact\n\n---------\n\nCo-authored-by: Copilot \u003c175728472+Copilot@users.noreply.github.com\u003e",
+          "sha1": "89934a114fa604009c959475e62ba05c273b0478",
+          "timestamp": 1770652652,
+          "url": "https://github.com/kosli-dev/cli/commit/89934a114fa604009c959475e62ba05c273b0478"
+        },
+        "html_url": "https://app.kosli.com/sofus-test/flows/cli-granular-demo-20260528180923/trails/89934a114fa604009c959475e62ba05c273b0478",
+        "is_compliant": true,
+        "last_modified_at": 1779991773.8700826,
+        "name": "89934a114fa604009c959475e62ba05c273b0478",
+        "origin_url": null,
+        "repo_ids": [],
+        "template": {
+          "content": "version: 1",
+          "trail": {
+            "artifacts": [],
+            "attestations": []
+          },
+          "version": 1
+        },
+        "user_data": {}
+      }
+    ]
+  }
