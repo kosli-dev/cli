@@ -209,7 +209,7 @@ function attest_commit_trail_never_alone
     local url_to_source_attestation never_alone_data latest_never_alone_data compliant
 
     COMPLIANT_STATUS="false"
-    if ! never_alone_data=$(echo_never_alone_attestation_in_trail "${source_flow_name}" "${source_trail_name}" "${source_attestation_name}"); then
+    if ! never_alone_data=$(echo_never_alone_attestation_in_trail ${source_flow_name} ${source_trail_name} ${source_attestation_name}); then
         die "Failed to query never-alone source data for commit ${commit_sha}"
     fi
     if [ "${never_alone_data}" != "[]" ]; then
@@ -284,7 +284,7 @@ function main
     done
 
     if [ -n "${PARENT_FLOW_NAME}" ]; then
-        attest_never_alone_trail_to_parent  ${FLOW_NAME} ${TRAIL_NAME} ${PARENT_FLOW_NAME} ${PARENT_TRAIL_NAME} ${trail_compliance}
+        attest_never_alone_trail_to_parent ${FLOW_NAME} ${TRAIL_NAME} ${PARENT_FLOW_NAME} ${PARENT_TRAIL_NAME} ${trail_compliance}
     fi
 }
 
