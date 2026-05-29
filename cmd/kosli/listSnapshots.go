@@ -91,12 +91,20 @@ func (o *listSnapshotsOptions) run(out io.Writer, args []string) error {
 }
 
 func (o *listSnapshotsOptions) getSnapshotsList(out io.Writer, envName, interval string) error {
-	url := fmt.Sprintf("%s/api/v2/snapshots/%s/%s?page=%d&per_page=%d&interval=%s&reverse=%t",
-		global.Host, global.Org, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
+	base, err := url.JoinPath(global.Host, "api/v2/snapshots", global.Org, envName)
+	if err != nil {
+		return err
+	}
+	params := url.Values{}
+	params.Set("page", fmt.Sprintf("%d", o.pageNumber))
+	params.Set("per_page", fmt.Sprintf("%d", o.pageLimit))
+	params.Set("interval", interval)
+	params.Set("reverse", fmt.Sprintf("%t", o.reverse))
+	reqURL := base + "?" + params.Encode()
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    reqURL,
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)

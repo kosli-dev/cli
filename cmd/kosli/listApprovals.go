@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -79,12 +80,18 @@ func newListApprovalsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listApprovalsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/approvals/%s/%s?page=%d&per_page=%d",
-		global.Host, global.Org, o.flowName, o.pageNumber, o.pageLimit)
+	base, err := url.JoinPath(global.Host, "api/v2/approvals", global.Org, o.flowName)
+	if err != nil {
+		return err
+	}
+	params := url.Values{}
+	params.Set("page", fmt.Sprintf("%d", o.pageNumber))
+	params.Set("per_page", fmt.Sprintf("%d", o.pageLimit))
+	reqURL := base + "?" + params.Encode()
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    reqURL,
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
