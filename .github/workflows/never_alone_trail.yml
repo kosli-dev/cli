@@ -24,7 +24,7 @@ on:
           kosli_org:
             required: true
             type: string
-        secrets:        
+        secrets:
             kosli_api_token:
                 required: true
             pr_github_token:
@@ -69,7 +69,7 @@ jobs:
             GH_TOKEN: ${{ github.token }}
           run: |
             START_COMMIT_SHA=$(./bin/never_alone/get_commit_of_latest_release.sh)
-            
+
             ./bin/never_alone/create_never_alone_trail.sh \
               -f ${{inputs.flow_name}} \
               -t ${{inputs.trail_name}} \

@@ -143,6 +143,7 @@ function echo_never_alone_attestation_in_trail
     local -r source_trail_name=$1; shift
     local -r source_attestation_name=$1; shift
     local -r never_alone_json_file_name=$(mktemp)
+    trap "rm -f '${never_alone_json_file_name}'" RETURN
 
     local -r source_never_alone_attestation_url="${KOSLI_HOST}/api/v2/attestations/${KOSLI_ORG}/${source_flow_name}/trail/${source_trail_name}/${source_attestation_name}"
     http_code=$(curl -X 'GET' \
@@ -151,13 +152,22 @@ function echo_never_alone_attestation_in_trail
         -H 'accept: application/json' \
         --output "${never_alone_json_file_name}" \
         --write-out "%{http_code}" \
+        --retry 3 \
+        --retry-connrefused \
+        --connect-timeout 5 \
+        --max-time 10 \
         --silent)
 
-    if [[ ${http_code} -lt 200 || ${http_code} -gt 299 ]] ; then
-        # Error in curl command so print error and return empty array
-        >&2 cat "${never_alone_json_file_name}"
+    if [[ "${http_code}" == "404" ]]; then
+        # Source trail/attestation genuinely absent for this commit; not an error.
         echo "[]"
-        return
+        return 0
+    fi
+    if [[ ${http_code} -lt 200 || ${http_code} -gt 299 ]]; then
+        # Any other non-2xx is an infra/auth/transient failure, not a compliance result.
+        >&2 echo "Error: failed to query attestation '${source_attestation_name}' in flow '${source_flow_name}' trail '${source_trail_name}' (HTTP ${http_code})"
+        >&2 cat "${never_alone_json_file_name}"
+        return 1
     fi
 
     cat "${never_alone_json_file_name}"
@@ -167,7 +177,7 @@ function set_never_alone_compliance
 {
     local -r never_alone_data=$1; shift
     local pr_data compliant reviews pr_author reviews_length review state review_author
-    
+
     COMPLIANT_STATUS="false"
     REASON_FOR_NON_COMPLIANT="Pull-request has not been approved by someone other than pr-author"
     pr_data=$(echo "${never_alone_data}" | jq '.user_data.pullRequest')
@@ -194,12 +204,14 @@ function attest_commit_trail_never_alone
     local -r commit_sha=$1; shift
     local -r source_flow_name=$1; shift
     local -r source_attestation_name=$1; shift
-    
-    local -r source_trail_name=${commit_sha:0:7}
+
+    local -r source_trail_name=${commit_sha}
     local url_to_source_attestation never_alone_data latest_never_alone_data compliant
 
     COMPLIANT_STATUS="false"
-    never_alone_data=$(echo_never_alone_attestation_in_trail ${source_flow_name} ${source_trail_name} ${source_attestation_name})
+    if ! never_alone_data=$(echo_never_alone_attestation_in_trail ${source_flow_name} ${source_trail_name} ${source_attestation_name}); then
+        die "Failed to query never-alone source data for commit ${commit_sha}"
+    fi
     if [ "${never_alone_data}" != "[]" ]; then
         latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
         url_to_source_attestation=$(echo $latest_never_alone_data | jq -r '.html_url')
@@ -221,7 +233,7 @@ function attest_commit_trail_never_alone
                 --annotate="review_decision=${review_decision}" \
                 --annotate="pull_request=${pr_url}" \
                 --annotate="reviewers=${reviewers}"
-        else        
+        else
             kosli attest generic \
                 --flow=${flow_name} \
                 --trail=${trail_name} \
@@ -262,9 +274,9 @@ function main
     local -r commits=($(git rev-list --first-parent ${START_COMMIT_SHA}...${END_COMMIT_SHA}))
 
     begin_trail_with_template ${FLOW_NAME} ${TRAIL_NAME} "${commits[@]}"
-    
+
     local trail_compliance="true"
-    for commit in "${commits[@]}"; do        
+    for commit in "${commits[@]}"; do
         attest_commit_trail_never_alone ${FLOW_NAME} ${TRAIL_NAME} ${commit} ${SOURCE_FLOW_NAME} ${SOURCE_ATTESTATION_NAME}
         if [ "${COMPLIANT_STATUS}" == "false" ]; then
             trail_compliance="false"
@@ -272,7 +284,7 @@ function main
     done
 
     if [ -n "${PARENT_FLOW_NAME}" ]; then
-        attest_never_alone_trail_to_parent  ${FLOW_NAME} ${TRAIL_NAME} ${PARENT_FLOW_NAME} ${PARENT_TRAIL_NAME} ${trail_compliance}
+        attest_never_alone_trail_to_parent ${FLOW_NAME} ${TRAIL_NAME} ${PARENT_FLOW_NAME} ${PARENT_TRAIL_NAME} ${trail_compliance}
     fi
 }
 

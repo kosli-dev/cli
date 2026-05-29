@@ -21,7 +21,7 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          TRAIL_NAME=$(echo $GITHUB_SHA | head -c 7)
+          TRAIL_NAME=$GITHUB_SHA
 
           echo "TRAIL_NAME=${TRAIL_NAME}" >> $GITHUB_ENV
           echo "trail_name=$TRAIL_NAME" >> $GITHUB_OUTPUT
