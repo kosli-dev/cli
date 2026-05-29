@@ -146,7 +146,7 @@ function echo_never_alone_attestation_in_trail
     trap "rm -f '${never_alone_json_file_name}'" RETURN
 
     local -r source_never_alone_attestation_url="${KOSLI_HOST}/api/v2/attestations/${KOSLI_ORG}/${source_flow_name}/trail/${source_trail_name}/${source_attestation_name}"
-    local -r http_code=$(curl -X 'GET' \
+    http_code=$(curl -X 'GET' \
         --user ${KOSLI_API_TOKEN}:unused \
         "${source_never_alone_attestation_url}" \
         -H 'accept: application/json' \
