@@ -129,7 +129,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	envDescriptionFlag              = "[optional] The environment description."
 	flowDescriptionFlag             = "[optional] The Kosli flow description."
 	trailDescriptionFlag            = "[optional] The Kosli trail description."
-	visibilityFlag                  = "[defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]."
 	templateFlag                    = "[defaulted] The comma-separated list of required compliance controls names."
 	templateFileFlag                = "[optional] The path to a yaml template file. Cannot be used together with --use-empty-template"
 	templateFileSimpleFlag          = "[optional] The path to a yaml template file."

@@ -341,8 +341,8 @@ func CreateFlow(flowName string, t *testing.T) {
 		payload: FlowPayload{
 			Name:        flowName,
 			Description: "test flow",
-			Visibility:  "private",
 		},
+		UseEmptyTemplate: true,
 	}
 
 	err := o.run([]string{flowName})
@@ -356,7 +356,6 @@ func CreateFlowWithTemplate(flowName, templatePath string, t *testing.T) {
 		payload: FlowPayload{
 			Name:        flowName,
 			Description: "test flow",
-			Visibility:  "private",
 		},
 		TemplateFile: templatePath,
 	}
