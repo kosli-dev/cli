@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -96,10 +97,10 @@ func (o *listSnapshotsOptions) getSnapshotsList(out io.Writer, envName, interval
 		return err
 	}
 	params := url.Values{}
-	params.Set("page", fmt.Sprintf("%d", o.pageNumber))
-	params.Set("per_page", fmt.Sprintf("%d", o.pageLimit))
+	params.Set("page", strconv.Itoa(o.pageNumber))
+	params.Set("per_page", strconv.Itoa(o.pageLimit))
 	params.Set("interval", interval)
-	params.Set("reverse", fmt.Sprintf("%t", o.reverse))
+	params.Set("reverse", strconv.FormatBool(o.reverse))
 	reqURL := base + "?" + params.Encode()
 
 	reqParams := &requests.RequestParams{

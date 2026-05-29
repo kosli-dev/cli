@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -85,8 +86,8 @@ func (o *listApprovalsOptions) run(out io.Writer) error {
 		return err
 	}
 	params := url.Values{}
-	params.Set("page", fmt.Sprintf("%d", o.pageNumber))
-	params.Set("per_page", fmt.Sprintf("%d", o.pageLimit))
+	params.Set("page", strconv.Itoa(o.pageNumber))
+	params.Set("per_page", strconv.Itoa(o.pageLimit))
 	reqURL := base + "?" + params.Encode()
 
 	reqParams := &requests.RequestParams{
