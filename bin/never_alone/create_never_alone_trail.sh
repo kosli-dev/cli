@@ -143,6 +143,7 @@ function echo_never_alone_attestation_in_trail
     local -r source_trail_name=$1; shift
     local -r source_attestation_name=$1; shift
     local -r never_alone_json_file_name=$(mktemp)
+    trap "rm -f '${never_alone_json_file_name}'" RETURN
 
     local -r source_never_alone_attestation_url="${KOSLI_HOST}/api/v2/attestations/${KOSLI_ORG}/${source_flow_name}/trail/${source_trail_name}/${source_attestation_name}"
     http_code=$(curl -X 'GET' \
@@ -160,7 +161,6 @@ function echo_never_alone_attestation_in_trail
     if [[ "${http_code}" == "404" ]]; then
         # Source trail/attestation genuinely absent for this commit; not an error.
         echo "[]"
-        rm -f "${never_alone_json_file_name}"
         return 0
     fi
     if [[ ${http_code} -lt 200 || ${http_code} -gt 299 ]]; then
