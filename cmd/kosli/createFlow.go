@@ -26,7 +26,6 @@ const createFlowExample = `
 # create/update a Kosli flow (with empty template):
 kosli create flow yourFlowName \
 	--description yourFlowDescription \
-	--visibility private OR public \
 	--use-empty-template \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -34,7 +33,6 @@ kosli create flow yourFlowName \
 # create/update a Kosli flow (with template file):
 kosli create flow yourFlowName \
 	--description yourFlowDescription \
-	--visibility private OR public \
 	--template-file /path/to/your/template/file.yml \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -49,7 +47,6 @@ type createFlowOptions struct {
 type FlowPayload struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
-	Visibility  string   `json:"visibility"`
 	Template    []string `json:"template,omitempty"`
 }
 
@@ -85,7 +82,6 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", flowDescriptionFlag)
-	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "private", visibilityFlag)
 	cmd.Flags().StringSliceVarP(&o.payload.Template, "template", "t", []string{}, templateFlag)
 	cmd.Flags().StringVarP(&o.TemplateFile, "template-file", "f", "", templateFileFlag)
 	cmd.Flags().BoolVar(&o.UseEmptyTemplate, "use-empty-template", false, useEmptyTemplateFlag)
@@ -137,6 +133,7 @@ func (o *createFlowOptions) run(args []string) error {
 		}
 	} else {
 		// legacy flows
+		logger.Warn("creating a flow without --template-file or --use-empty-template uses a deprecated API endpoint and will stop working in a future release; please provide a template")
 		url, err = neturl.JoinPath(global.Host, "api/v2/flows", global.Org)
 		if err != nil {
 			return err

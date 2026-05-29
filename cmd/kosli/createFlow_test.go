@@ -25,6 +25,7 @@ func (suite *CreateFlowCommandTestSuite) SetupTest() {
 }
 
 func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
+	deprecationWarning := "[warning] creating a flow without --template-file or --use-empty-template uses a deprecated API endpoint and will stop working in a future release; please provide a template\n"
 	tests := []cmdTestCase{
 		{
 			wantError: true,
@@ -36,17 +37,17 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			wantError:   true,
 			name:        "fails when name is considered invalid by the server",
 			cmd:         "create flow 'foo bar'" + suite.defaultKosliArguments,
-			goldenRegex: "^Error: .*foo bar",
+			goldenRegex: "Error: .*foo bar",
 		},
 		{
 			name:   "can create a flow (by default legacy template is used)",
 			cmd:    "create flow newFlow --description \"my new flow\" " + suite.defaultKosliArguments,
-			golden: "flow 'newFlow' was created\n",
+			golden: deprecationWarning + "flow 'newFlow' was created\n",
 		},
 		{
 			name:   "re-creating a flow updates its metadata",
 			cmd:    "create flow newFlow --description \"changed description\" " + suite.defaultKosliArguments,
-			golden: "flow 'newFlow' was updated\n",
+			golden: deprecationWarning + "flow 'newFlow' was updated\n",
 		},
 		{
 			wantError: true,
