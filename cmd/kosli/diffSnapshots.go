@@ -113,12 +113,18 @@ func newDiffSnapshotsCmd(out io.Writer) *cobra.Command {
 func (o *diffSnapshotsOptions) run(out io.Writer, args []string) error {
 	snappish1 := args[0]
 	snappish2 := args[1]
-	url := fmt.Sprintf("%s/api/v2/env-diff/%s?snappish1=%s&snappish2=%s",
-		global.Host, global.Org, url.QueryEscape(snappish1), url.QueryEscape(snappish2))
+	base, err := url.JoinPath(global.Host, "api/v2/env-diff", global.Org)
+	if err != nil {
+		return err
+	}
+	params := url.Values{}
+	params.Set("snappish1", snappish1)
+	params.Set("snappish2", snappish2)
+	reqURL := base + "?" + params.Encode()
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    reqURL,
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)

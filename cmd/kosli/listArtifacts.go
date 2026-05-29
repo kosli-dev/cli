@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -79,18 +81,23 @@ func newListArtifactsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listArtifactsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/artifacts/%s?page=%d&per_page=%d",
-		global.Host, global.Org, o.pageNumber, o.pageLimit)
-
-	if o.flowName != "" {
-		url = url + fmt.Sprintf("&flow_name=%s", o.flowName)
-	} else if o.repoName != "" {
-		url = url + fmt.Sprintf("&repo_name=%s", o.repoName)
+	base, err := url.JoinPath(global.Host, "api/v2/artifacts", global.Org)
+	if err != nil {
+		return err
 	}
+	params := url.Values{}
+	params.Set("page", strconv.Itoa(o.pageNumber))
+	params.Set("per_page", strconv.Itoa(o.pageLimit))
+	if o.flowName != "" {
+		params.Set("flow_name", o.flowName)
+	} else if o.repoName != "" {
+		params.Set("repo_name", o.repoName)
+	}
+	reqURL := base + "?" + params.Encode()
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    reqURL,
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
