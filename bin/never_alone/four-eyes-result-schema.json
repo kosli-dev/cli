@@ -40,7 +40,7 @@
     },
     "params": {
       "type": "object",
-      "description": "Parameters passed via --params, surfaced in the output. Available to the policy as data.params. attestation_name selects which attestation pr_attest reads (default \"pr-review\")."
+      "description": "Parameters passed via --params, surfaced in the output. Available to the policy as data.params. attestation_name selects which attestation pr_attest reads (default: pr-review)."
     },
     "input": {
       "type": "object",
