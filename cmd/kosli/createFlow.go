@@ -100,7 +100,6 @@ func (o *createFlowOptions) run(args []string) error {
 	var url string
 	var err error
 	o.payload.Name = args[0]
-	// TODO: Remove when not required anymore
 	o.payload.Visibility = "private"
 
 	if o.TemplateFile != "" || o.UseEmptyTemplate {
