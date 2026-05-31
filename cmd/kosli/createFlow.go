@@ -45,9 +45,14 @@ type createFlowOptions struct {
 }
 
 type FlowPayload struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Template    []string `json:"template,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	// TODO: Visibility is deprecated and ignored by recent Kosli servers, but older
+	// instances still reject the payload without it. Keep sending
+	// "private" until the minimum supported server version no longer requires
+	// this field, then remove the field and the assignment in run().
+	Visibility string   `json:"visibility"`
+	Template   []string `json:"template,omitempty"`
 }
 
 func newCreateFlowCmd(out io.Writer) *cobra.Command {
@@ -95,6 +100,7 @@ func (o *createFlowOptions) run(args []string) error {
 	var url string
 	var err error
 	o.payload.Name = args[0]
+	o.payload.Visibility = "private"
 
 	if o.TemplateFile != "" || o.UseEmptyTemplate {
 		url, err = neturl.JoinPath(global.Host, "api/v2/flows", global.Org, "template_file")
