@@ -47,11 +47,10 @@ type createFlowOptions struct {
 type FlowPayload struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	// TODO: Visibility is deprecated and ignored by recent Kosli servers, but older
-	// instances still reject the payload without it. Keep sending
-	// "private" until the minimum supported server version no longer requires
-	// this field, then remove the field and the assignment in run().
-	Visibility string   `json:"visibility"`
+	// Visibility is deprecated. It is only sent when the user explicitly passes
+	// the deprecated --visibility flag, so that older instances that still
+	// require the field keep working.
+	Visibility string   `json:"visibility,omitempty"`
 	Template   []string `json:"template,omitempty"`
 }
 
@@ -87,10 +86,16 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", flowDescriptionFlag)
+	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "", visibilityFlag)
 	cmd.Flags().StringSliceVarP(&o.payload.Template, "template", "t", []string{}, templateFlag)
 	cmd.Flags().StringVarP(&o.TemplateFile, "template-file", "f", "", templateFileFlag)
 	cmd.Flags().BoolVar(&o.UseEmptyTemplate, "use-empty-template", false, useEmptyTemplateFlag)
 	addDryRunFlag(cmd)
+
+	err := cmd.Flags().MarkDeprecated("visibility", "this flag is deprecated and will be removed in a future version.")
+	if err != nil {
+		logger.Error("failed to mark visibility as deprecated: %v", err)
+	}
 
 	return cmd
 }
@@ -100,7 +105,6 @@ func (o *createFlowOptions) run(args []string) error {
 	var url string
 	var err error
 	o.payload.Name = args[0]
-	o.payload.Visibility = "private"
 
 	if o.TemplateFile != "" || o.UseEmptyTemplate {
 		url, err = neturl.JoinPath(global.Host, "api/v2/flows", global.Org, "template_file")
