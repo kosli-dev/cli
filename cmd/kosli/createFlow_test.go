@@ -26,6 +26,7 @@ func (suite *CreateFlowCommandTestSuite) SetupTest() {
 
 func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 	deprecationWarning := "[warning] creating a flow without --template-file or --use-empty-template uses a deprecated API endpoint and will stop working in a future release; please provide a template\n"
+	visibilityDeprecationNotice := "Flag --visibility has been deprecated, this flag is deprecated and will be removed in a future version.\n"
 	tests := []cmdTestCase{
 		{
 			wantError: true,
@@ -72,6 +73,11 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			name:      "cannot use --template and --template-file together",
 			cmd:       "create flow newFlow --description \"my new flow\" --template foo --template-file testdata/valid_template.yml" + suite.defaultKosliArguments,
 			golden:    "Error: only one of --template, --template-file is allowed\n",
+		},
+		{
+			name:   "deprecated --visibility flag is accepted (no longer illegal) and warns",
+			cmd:    "create flow newFlowWithVisibility --visibility public --use-empty-template --description \"my new flow\" " + suite.defaultKosliArguments,
+			golden: visibilityDeprecationNotice + "flow 'newFlowWithVisibility' was created\n",
 		},
 		// flows v2
 		{
