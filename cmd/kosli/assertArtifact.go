@@ -221,13 +221,23 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 							ruleDefinition := rule["definition"].(map[string]interface{})
 							attestationName := ruleDefinition["name"]
 							attestationType := ruleDefinition["type"]
+							context, _ := resolution["context"].(map[string]interface{})
+							forControl, _ := context["for_control"].(string)
 							switch resolutionType {
 							case "legacy_flow":
 								failures = append(failures, "artifact comes from a legacy flow and does not have the new attestations")
 							case "missing_attestation":
-								failures = append(failures, fmt.Sprintf("artifact is missing required '%v' (type: %v) attestation in trail", attestationName, attestationType))
+								if forControl != "" {
+									failures = append(failures, fmt.Sprintf("artifact is missing required decision for control '%v'", forControl))
+								} else {
+									failures = append(failures, fmt.Sprintf("artifact is missing required '%v' (type: %v) attestation in trail", attestationName, attestationType))
+								}
 							case "non_compliant_attestation":
-								failures = append(failures, fmt.Sprintf("attestation '%v' is non-compliant in trail", attestationName))
+								if forControl != "" {
+									failures = append(failures, fmt.Sprintf("decision for control '%v' is non-compliant in trail", forControl))
+								} else {
+									failures = append(failures, fmt.Sprintf("attestation '%v' is non-compliant in trail", attestationName))
+								}
 							case "non_compliant_in_trail":
 								failures = append(failures, "artifact is not compliant in trail")
 							}

@@ -1,0 +1,9 @@
+_schema: https://kosli.com/schemas/policy/environment/v1
+
+artifacts:
+  provenance:
+    required: true
+  attestations:
+    - name: decision
+      type: decision
+      for_control: assert-artifact-ctl

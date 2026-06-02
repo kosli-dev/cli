@@ -30,6 +30,17 @@ type AssertArtifactCommandTestSuite struct {
 	artifactName3         string
 	artifact3Path         string
 	fingerprint3          string
+	// for_control test fixtures
+	controlIdentifier    string
+	controlPolicyName    string
+	controlEnvName       string
+	flowNameForControl   string
+	trailNameNoDecision  string
+	artifact4Path        string
+	fingerprint4         string
+	trailNameBadDecision string
+	artifact5Path        string
+	fingerprint5         string
 }
 
 func (suite *AssertArtifactCommandTestSuite) SetupTest() {
@@ -78,6 +89,34 @@ func (suite *AssertArtifactCommandTestSuite) SetupTest() {
 	require.NoError(suite.T(), err)
 	CreateGenericArtifactAttestation(suite.flowName3, suite.trailName, suite.fingerprint3, "failing-attestation", false, suite.T())
 	require.NoError(suite.T(), err)
+
+	// Setup for for_control policy evaluation tests
+	suite.controlIdentifier = "assert-artifact-ctl"
+	suite.controlPolicyName = "assert-artifact-control-pol"
+	suite.controlEnvName = "assert-artifact-control-env"
+	suite.flowNameForControl = "assert-artifact-control-flow"
+	suite.trailNameNoDecision = "assert-artifact-no-decision-trail"
+	suite.trailNameBadDecision = "assert-artifact-bad-decision-trail"
+	suite.artifact4Path = "testdata/artifacts/AssertArtifactCommandTestSuiteArtifact4.txt"
+	suite.artifact5Path = "testdata/artifacts/AssertArtifactCommandTestSuiteArtifact5.txt"
+
+	CreateControl(global.Org, suite.controlIdentifier, "Test Control For Assert", suite.T())
+	CreatePolicyWithFile(global.Org, suite.controlPolicyName, "testdata/policy-files/test-policy-for-control.yml", suite.T())
+	CreateEnv(global.Org, suite.controlEnvName, "server", suite.T())
+	AttachPolicy([]string{suite.controlEnvName}, suite.controlPolicyName, suite.T())
+
+	CreateFlow(suite.flowNameForControl, suite.T())
+
+	BeginTrail(suite.trailNameNoDecision, suite.flowNameForControl, "", suite.T())
+	suite.fingerprint4, err = GetSha256Digest(suite.artifact4Path, fingerprintOptions, logger)
+	require.NoError(suite.T(), err)
+	CreateArtifactOnTrail(suite.flowNameForControl, suite.trailNameNoDecision, "cli", suite.fingerprint4, "arti-no-decision", suite.T())
+
+	BeginTrail(suite.trailNameBadDecision, suite.flowNameForControl, "", suite.T())
+	suite.fingerprint5, err = GetSha256Digest(suite.artifact5Path, fingerprintOptions, logger)
+	require.NoError(suite.T(), err)
+	CreateArtifactOnTrail(suite.flowNameForControl, suite.trailNameBadDecision, "cli", suite.fingerprint5, "arti-bad-decision", suite.T())
+	CreateDecisionAttestation(suite.flowNameForControl, suite.trailNameBadDecision, suite.controlIdentifier, "decision", false, suite.T())
 }
 
 func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
@@ -198,6 +237,18 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			name:        "17 asserting a single existing non-compliant artifact (using --artifact-type) results in non-zero exit",
 			cmd:         fmt.Sprintf(`assert artifact %s --artifact-type file %s`, suite.artifact3Path, suite.defaultKosliArguments),
 			goldenRegex: "^Error: NON-COMPLIANT\n",
+		},
+		{
+			wantError:   true,
+			name:        "18 asserting artifact against env policy with for_control reports control ID when decision is missing",
+			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s --environment %s %s`, suite.fingerprint4, suite.controlEnvName, suite.defaultKosliArguments),
+			goldenRegex: fmt.Sprintf("(?s).*artifact is missing required decision for control '%v'.*", suite.controlIdentifier),
+		},
+		{
+			wantError:   true,
+			name:        "19 asserting artifact against env policy with for_control reports control ID when decision is non-compliant",
+			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s --environment %s %s`, suite.fingerprint5, suite.controlEnvName, suite.defaultKosliArguments),
+			goldenRegex: fmt.Sprintf("(?s).*decision for control '%v' is non-compliant in trail.*", suite.controlIdentifier),
 		},
 	}
 

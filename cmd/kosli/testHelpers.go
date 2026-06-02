@@ -551,6 +551,44 @@ func CreatePolicy(org, policyName string, t *testing.T) {
 	require.NoError(t, err, "policy should be created without error")
 }
 
+// CreatePolicyWithFile creates a policy on the server using the given policy file.
+func CreatePolicyWithFile(org, policyName, policyFilePath string, t *testing.T) {
+	t.Helper()
+	o := &createPolicyOptions{
+		payload: PolicyPayload{
+			Name:        policyName,
+			Type:        "env",
+			Description: "test policy",
+		},
+	}
+
+	err := o.run([]string{policyName, policyFilePath})
+	require.NoError(t, err, "policy should be created without error")
+}
+
+// CreateDecisionAttestation records a decision attestation against a trail.
+func CreateDecisionAttestation(flowName, trailName, controlID, attestationName string, compliant bool, t *testing.T) {
+	t.Helper()
+	o := &attestDecisionOptions{
+		CommonAttestationOptions: &CommonAttestationOptions{
+			flowName:                flowName,
+			trailName:               trailName,
+			fingerprintOptions:      &fingerprintOptions{},
+			attestationNameTemplate: attestationName,
+		},
+		payload: DecisionAttestationPayload{
+			CommonAttestationPayload: &CommonAttestationPayload{},
+			TypeName:                 "decision",
+			Control:                  controlID,
+			AttestationData: DecisionAttestationData{
+				Compliant: compliant,
+			},
+		},
+	}
+	err := o.run([]string{})
+	require.NoError(t, err, "decision attestation should be created without error")
+}
+
 func AttachPolicy(envNames []string, policyName string, t *testing.T) {
 	t.Helper()
 	o := &attachPolicyOptions{
