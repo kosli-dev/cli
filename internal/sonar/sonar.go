@@ -159,7 +159,6 @@ func sonarURL(serverURL, apiPath string, params url.Values) (string, error) {
 }
 
 func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error) {
-	httpClient := &http.Client{}
 	var analysisID, tokenHeader string
 	var err error
 	project := &Project{}
@@ -172,6 +171,10 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	} else {
 		return nil, fmt.Errorf("API token must be given to retrieve data from SonarQube")
 	}
+
+	// Authenticate via Bearer (SonarQube Cloud and Server >= 10.0), transparently
+	// falling back to Basic for a self-hosted Server < 10.0 that rejects Bearer tokens.
+	httpClient := newAuthedClient(sc.APIToken, schemeAuto)
 
 	// If explicit pull-request flag was given, set it on the results
 	if sc.pullRequest != "" {
@@ -303,7 +306,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
 		if err != nil {
 			_ = taskResponse.Body.Close()
-			return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+			return "", sonarResponseError(taskResponse.StatusCode)
 		}
 		// If the CETaskURL from the report-task.txt file gives a 404, the CE task does not exist, or SonarQube is down.
 		if taskResponseData.Errors != nil {
@@ -403,7 +406,7 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	projectAnalysesData := &ProjectAnalyses{}
 	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
 	if err != nil {
-		return "", fmt.Errorf("please check your API token and SonarQube server URL are correct and you have the correct permissions in SonarQube")
+		return "", sonarResponseError(projectAnalysesResponse.StatusCode)
 	}
 
 	if projectAnalysesData.Errors != nil {
@@ -450,7 +453,7 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 	projectAnalysesData := &ProjectAnalyses{}
 	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
 	if err != nil {
-		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+		return sonarResponseError(projectAnalysesResponse.StatusCode)
 	}
 
 	if projectAnalysesData.Errors != nil {
@@ -495,7 +498,7 @@ func GetPRAnalysisData(httpClient *http.Client, sonarResults *SonarResults, proj
 	prData := &PullRequestsResponse{}
 	err = json.NewDecoder(prResponse.Body).Decode(prData)
 	if err != nil {
-		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+		return sonarResponseError(prResponse.StatusCode)
 	}
 
 	if prData.Errors != nil {
@@ -542,7 +545,7 @@ func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, quality
 	qualityGateData := &QualityGateResponse{}
 	err = json.NewDecoder(qualityGateResponse.Body).Decode(qualityGateData)
 	if err != nil {
-		return nil, err
+		return nil, sonarResponseError(qualityGateResponse.StatusCode)
 	} else if qualityGateData.Errors != nil {
 		return nil, fmt.Errorf("SonarQube error: %s", qualityGateData.Errors[0].Msg) //We should never reach this point, since incorrect/outdated task/analysis IDs etc. should already have raised errors
 	} else {
@@ -590,7 +593,7 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 	CEActivityData := &ActivityResponse{}
 	err = json.NewDecoder(CEActivityResponse.Body).Decode(CEActivityData)
 	if err != nil {
-		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+		return sonarResponseError(CEActivityResponse.StatusCode)
 	}
 
 	for t := range CEActivityData.Tasks {
