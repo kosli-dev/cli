@@ -154,7 +154,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			wantError: true,
 			name:      "11 trying to fetch data from SonarCloud with incorrect API token gives error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-api-token xxxx --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
-			golden:    "Error: SonarQube rejected the request (HTTP 401): the API token is invalid or does not have permission to read this project. The Kosli CLI uses Bearer authentication for SonarQube Cloud and Server 10.0 and later, and Basic authentication for older self-hosted Servers\n",
+			golden:    "Error: SonarQube rejected the request (HTTP 401): the API token is invalid or does not have permission to read this project.\nThe Kosli CLI uses Bearer authentication for SonarQube Cloud and Server 10.0 and later, and Basic authentication for older self-hosted Servers\n",
 		},
 		{
 			wantError: true,
@@ -322,7 +322,7 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 			wantError: true,
 			name:      "110 trying to fetch data from SonarQube with incorrect API token gives error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-api-token xxxx --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
-			golden:    "Error: SonarQube rejected the request (HTTP 401): the API token is invalid or does not have permission to read this project. The Kosli CLI uses Bearer authentication for SonarQube Cloud and Server 10.0 and later, and Basic authentication for older self-hosted Servers\n",
+			golden:    "Error: SonarQube rejected the request (HTTP 401): the API token is invalid or does not have permission to read this project.\nThe Kosli CLI uses Bearer authentication for SonarQube Cloud and Server 10.0 and later, and Basic authentication for older self-hosted Servers\n",
 		},
 		{
 			wantError: true,

@@ -55,7 +55,7 @@ func TestGetProjectAnalysisFromAnalysisID_PassesBranch(t *testing.T) {
 	}
 	project := &sonar.Project{Key: "my-project"}
 
-	err := sonar.GetProjectAnalysisFromAnalysisID(http.DefaultClient, sonarResults, project, wantAnalysisID, "Bearer token")
+	err := sonar.GetProjectAnalysisFromAnalysisID(http.DefaultClient, sonarResults, project, wantAnalysisID)
 	if err != nil {
 		t.Fatalf("GetProjectAnalysisFromAnalysisID returned error: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestGetProjectAnalysisFromAnalysisID_NoBranch(t *testing.T) {
 	sonarResults := &sonar.SonarResults{ServerUrl: server.URL}
 	project := &sonar.Project{Key: "my-project"}
 
-	err := sonar.GetProjectAnalysisFromAnalysisID(http.DefaultClient, sonarResults, project, wantAnalysisID, "Bearer token")
+	err := sonar.GetProjectAnalysisFromAnalysisID(http.DefaultClient, sonarResults, project, wantAnalysisID)
 	if err != nil {
 		t.Fatalf("GetProjectAnalysisFromAnalysisID returned error: %v", err)
 	}

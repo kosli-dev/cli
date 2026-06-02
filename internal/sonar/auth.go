@@ -154,7 +154,7 @@ func newAuthedClient(token string, mode authScheme) *http.Client {
 func sonarResponseError(statusCode int) error {
 	switch {
 	case statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden:
-		return fmt.Errorf("SonarQube rejected the request (HTTP %d): the API token is invalid or does not have permission to read this project. The Kosli CLI uses Bearer authentication for SonarQube Cloud and Server 10.0 and later, and Basic authentication for older self-hosted Servers", statusCode)
+		return fmt.Errorf("SonarQube rejected the request (HTTP %d): the API token is invalid or does not have permission to read this project.\nThe Kosli CLI uses Bearer authentication for SonarQube Cloud and Server 10.0 and later, and Basic authentication for older self-hosted Servers", statusCode)
 	case statusCode >= 500:
 		return fmt.Errorf("SonarQube returned HTTP %d: the server may be unavailable or experiencing problems; please try again later", statusCode)
 	default:
