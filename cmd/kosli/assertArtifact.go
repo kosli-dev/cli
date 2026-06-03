@@ -228,7 +228,7 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 								failures = append(failures, "artifact comes from a legacy flow and does not have the new attestations")
 							case "missing_attestation":
 								if forControl != "" {
-									failures = append(failures, fmt.Sprintf("artifact is missing required decision for control '%v'", forControl))
+									failures = append(failures, fmt.Sprintf("artifact is missing required %v for control '%v'", attestationType, forControl))
 								} else {
 									failures = append(failures, fmt.Sprintf("artifact is missing required '%v' (type: %v) attestation in trail", attestationName, attestationType))
 								}

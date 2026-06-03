@@ -539,16 +539,7 @@ func CreateControl(org, identifier, name string, t *testing.T) {
 // CreatePolicy creates a policy on the server
 func CreatePolicy(org, policyName string, t *testing.T) {
 	t.Helper()
-	o := &createPolicyOptions{
-		payload: PolicyPayload{
-			Name:        policyName,
-			Type:        "env",
-			Description: "test policy",
-		},
-	}
-
-	err := o.run([]string{policyName, "testdata/policy-files/test-policy.yml"})
-	require.NoError(t, err, "policy should be created without error")
+	CreatePolicyWithFile(org, policyName, "testdata/policy-files/test-policy.yml", t)
 }
 
 // CreatePolicyWithFile creates a policy on the server using the given policy file.
