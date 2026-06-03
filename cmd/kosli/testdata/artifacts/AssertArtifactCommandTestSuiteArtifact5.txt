@@ -1,0 +1,1 @@
+artifact for AssertArtifactCommandTestSuite non-compliant-decision test
