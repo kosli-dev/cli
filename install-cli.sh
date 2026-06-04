@@ -150,9 +150,13 @@ else
             ARCH="arm64"
             debug_print "Mapped to ARM64 architecture"
             ;;
+        s390x)
+            ARCH="s390x"
+            debug_print "Mapped to s390x architecture"
+            ;;
         *)
             echo "Error: Unsupported Linux architecture: $MACHINE_TYPE"
-            echo "Kosli CLI is only available for amd64 and arm64 on Linux."
+            echo "Kosli CLI is only available for amd64, arm64, and s390x on Linux."
             exit 1
             ;;
     esac
