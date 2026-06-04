@@ -36,7 +36,7 @@ type PolicyMeta struct {
 }
 
 type Item struct {
-	ID     string  `json:"id,omitempty"`
+	ID     string  `json:"trail,omitempty"`
 	Result string  `json:"result"`
 	Checks []Check `json:"checks"`
 }
@@ -215,6 +215,7 @@ func evaluateIteration(parsed *ast.Module, policySource string, input interface{
 			return nil, err
 		}
 		item := Item{
+			ID:     elemID(elem),
 			Result: resultDeny,
 			Checks: []Check{},
 		}
@@ -889,4 +890,22 @@ func passOrFail(b bool) string {
 		return "pass"
 	}
 	return "fail"
+}
+
+// elemID extracts a human-readable identifier from an iteration element.
+// It tries "name" first (Kosli trail objects use name for the commit SHA)
+// then "id" (used by other array shapes like the bakery demo).
+func elemID(elem interface{}) string {
+	m, ok := elem.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+	for _, key := range []string{"name", "id"} {
+		if v, ok := m[key]; ok {
+			if s, ok := v.(string); ok && s != "" {
+				return s
+			}
+		}
+	}
+	return ""
 }
