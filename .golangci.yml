@@ -1,0 +1,13 @@
+version: "2"
+
+linters:
+  enable:
+    - forbidigo
+  settings:
+    forbidigo:
+      analyze-types: true
+      forbid:
+        - pattern: '^binary\.NativeEndian$'
+          msg: "binary.NativeEndian is not portable; s390x is big-endian. Use binary.BigEndian or binary.LittleEndian explicitly."
+        - pattern: '^unsafe\.Pointer$'
+          msg: "unsafe.Pointer byte reinterpretation is endian-sensitive on s390x. Prefer encoding/binary, or add //nolint:forbidigo with justification."
