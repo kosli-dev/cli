@@ -30,8 +30,8 @@ ifneq ($(BINARY_VERSION),)
 	LDFLAGS += -X github.com/kosli-dev/cli/internal/version.version=${BINARY_VERSION}
 endif
 
-VERSION_METADATA = unreleased
-# Clear the "unreleased" string in BuildMetadata
+VERSION_METADATA = $(GIT_SHA)
+# Clear the short-sha BuildMetadata for tagged releases
 ifneq ($(GIT_TAG),)
 	VERSION_METADATA =
 endif
