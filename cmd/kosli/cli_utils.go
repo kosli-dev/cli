@@ -22,7 +22,54 @@ import (
 	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 	"github.com/xeonx/timeago"
+	"golang.org/x/term"
 )
+
+// ANSI style codes for terminal output. Pass one or more of these to style().
+const (
+	ansiReset = "\033[0m"
+	ansiBold  = "\033[1m"
+
+	// standard foreground colors
+	ansiBlack   = "\033[30m"
+	ansiRed     = "\033[31m"
+	ansiGreen   = "\033[32m"
+	ansiYellow  = "\033[33m"
+	ansiBlue    = "\033[34m"
+	ansiMagenta = "\033[35m"
+	ansiCyan    = "\033[36m"
+	ansiWhite   = "\033[37m"
+
+	// bright foreground colors
+	ansiBrightBlack   = "\033[90m"
+	ansiBrightRed     = "\033[91m"
+	ansiBrightGreen   = "\033[92m"
+	ansiBrightYellow  = "\033[93m"
+	ansiBrightBlue    = "\033[94m"
+	ansiBrightMagenta = "\033[95m"
+	ansiBrightCyan    = "\033[96m"
+	ansiBrightWhite   = "\033[97m"
+)
+
+// styleEnabled reports whether ANSI styling should be applied to out:
+// only when out is an interactive terminal and NO_COLOR is not set.
+func styleEnabled(out io.Writer) bool {
+	if _, noColor := os.LookupEnv("NO_COLOR"); noColor {
+		return false
+	}
+	f, ok := out.(*os.File)
+	return ok && term.IsTerminal(int(f.Fd()))
+}
+
+// style wraps s in the given ANSI codes (bold, colors, ...) when styling is
+// enabled for out, otherwise returns s unchanged. Multiple codes can be
+// combined, e.g. style(out, s, ansiBold, ansiRed); a single reset closes them.
+func style(out io.Writer, s string, codes ...string) string {
+	if len(codes) == 0 || !styleEnabled(out) {
+		return s
+	}
+	return strings.Join(codes, "") + s + ansiReset
+}
 
 const (
 	bitbucket   = "Bitbucket"

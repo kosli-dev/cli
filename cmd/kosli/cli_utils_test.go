@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,6 +23,28 @@ type CliUtilsTestSuite struct {
 
 // All methods that begin with "Test" are run as tests within a
 // suite.
+func (suite *CliUtilsTestSuite) TestStyle() {
+	// every defined ANSI code
+	allCodes := []string{
+		ansiReset, ansiBold,
+		ansiBlack, ansiRed, ansiGreen, ansiYellow, ansiBlue, ansiMagenta, ansiCyan, ansiWhite,
+		ansiBrightBlack, ansiBrightRed, ansiBrightGreen, ansiBrightYellow, ansiBrightBlue,
+		ansiBrightMagenta, ansiBrightCyan, ansiBrightWhite,
+	}
+
+	// A bytes.Buffer is not a terminal, so styling must never be applied,
+	// regardless of which/how many codes are passed.
+	buf := new(bytes.Buffer)
+	require.False(suite.T(), styleEnabled(buf), "a non-*os.File writer is never a terminal")
+	for _, code := range allCodes {
+		require.Equal(suite.T(), "text", style(buf, "text", code),
+			"non-terminal output should never be styled")
+	}
+	require.Equal(suite.T(), "text", style(buf, "text"), "no codes returns the input unchanged")
+	require.Equal(suite.T(), "text", style(buf, "text", ansiBold, ansiYellow),
+		"combined codes are still plain on a non-terminal")
+}
+
 func (suite *CliUtilsTestSuite) TestWhichCI() {
 	for _, t := range []struct {
 		name    string
