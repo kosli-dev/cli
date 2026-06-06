@@ -107,9 +107,6 @@ func (o *revokeApiKeyOptions) run(out io.Writer, in io.Reader, args []string) er
 			Token:  global.ApiToken,
 		}
 		if _, err := kosliClient.Do(reqParams); err != nil {
-			// Keep the returned error plain (no ANSI): it may be logged or
-			// wrapped by callers that don't expect escape codes. Keys already
-			// revoked were each logged in bold green above (user-facing output).
 			return fmt.Errorf("failed to revoke API key %s: %w", keyID, err)
 		}
 		if !global.DryRun {
