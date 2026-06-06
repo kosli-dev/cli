@@ -16,7 +16,8 @@ const rotateApiKeyShortDesc = `Rotate an API key for a service account.`
 const rotateApiKeyLongDesc = rotateApiKeyShortDesc + `
 
 A new API key is generated immediately. The old key remains valid for a grace period
-(default 24 hours) to allow time to update dependent systems. The new key value is only
+to allow time to update dependent systems; the length of that grace period is
+server-managed unless overridden with ^--grace-period-hours^. The new key value is only
 returned once, so make sure to store it securely.`
 
 const rotateApiKeyExample = `
@@ -41,11 +42,12 @@ kosli service-account api-keys rotate yourApiKeyID \
 `
 
 type rotateApiKeyOptions struct {
-	serviceAccount   string
-	expiresAt        string
-	gracePeriodHours int
-	output           string
-	payload          rotateApiKeyPayload
+	serviceAccount      string
+	expiresAt           string
+	gracePeriodHours    int
+	gracePeriodHoursSet bool
+	output              string
+	payload             rotateApiKeyPayload
 }
 
 type rotateApiKeyPayload struct {
@@ -69,13 +71,14 @@ func newRotateApiKeyCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.gracePeriodHoursSet = cmd.Flags().Changed("grace-period-hours")
 			return o.run(out, args)
 		},
 	}
 
 	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
 	cmd.Flags().StringVarP(&o.expiresAt, "expires-at", "e", "", apiKeyExpiresAtFlag)
-	cmd.Flags().IntVarP(&o.gracePeriodHours, "grace-period-hours", "g", 24, apiKeyGracePeriodHoursFlag)
+	cmd.Flags().IntVarP(&o.gracePeriodHours, "grace-period-hours", "g", 0, apiKeyGracePeriodHoursFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	addDryRunFlag(cmd)
 
@@ -88,7 +91,11 @@ func newRotateApiKeyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *rotateApiKeyOptions) run(out io.Writer, args []string) error {
-	o.payload.GracePeriodHours = &o.gracePeriodHours
+	// Only send grace_period_hours when the user explicitly set it; otherwise
+	// let the server apply its own default.
+	if o.gracePeriodHoursSet {
+		o.payload.GracePeriodHours = &o.gracePeriodHours
+	}
 	if o.expiresAt != "" {
 		expiresAt, err := parseExpiresAt(o.expiresAt)
 		if err != nil {

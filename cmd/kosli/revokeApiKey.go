@@ -107,9 +107,10 @@ func (o *revokeApiKeyOptions) run(out io.Writer, in io.Reader, args []string) er
 			Token:  global.ApiToken,
 		}
 		if _, err := kosliClient.Do(reqParams); err != nil {
-			// revocation is destructive: the failed key is shown in bold red,
-			// while the keys already revoked were each logged in bold green above.
-			return fmt.Errorf("failed to revoke API key %s: %w", style(out, keyID, ansiBold, ansiRed), err)
+			// Keep the returned error plain (no ANSI): it may be logged or
+			// wrapped by callers that don't expect escape codes. Keys already
+			// revoked were each logged in bold green above (user-facing output).
+			return fmt.Errorf("failed to revoke API key %s: %w", keyID, err)
 		}
 		if !global.DryRun {
 			logger.Info("API key %s for service account %s was revoked", style(out, keyID, ansiBold, ansiGreen), o.serviceAccount)
@@ -126,10 +127,8 @@ func confirmApiKeyRevoke(keyIDs []string, serviceAccount string, out io.Writer, 
 		styledKeys[i] = style(out, keyID, ansiBold, ansiMagenta)
 	}
 
-	if _, err := fmt.Fprintf(out, "Are you sure you want to revoke API key(s) %s for service account %s? [y/N] ",
-		strings.Join(styledKeys, ", "), style(out, serviceAccount, ansiBold, ansiGreen)); err != nil {
-		return false, err
-	}
+	logger.Info("Are you sure you want to revoke API key(s) %s for service account %s? [y/N]",
+		strings.Join(styledKeys, ", "), style(out, serviceAccount, ansiBold, ansiGreen))
 
 	answer, err := bufio.NewReader(in).ReadString('\n')
 	if err != nil && err != io.EOF {

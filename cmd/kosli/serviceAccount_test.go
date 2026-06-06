@@ -161,9 +161,9 @@ func (suite *ServiceAccountApiKeysCommandTestSuite) TestRotateApiKeyCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError:   false,
-			name:        "rotate builds the right url and default grace period (dry-run)",
+			name:        "rotate without --grace-period-hours sends an empty payload (server owns the default)",
 			cmd:         "service-account api-keys rotate key-123 --service-account test-sa --dry-run" + suite.defaultKosliArguments,
-			goldenRegex: `(?s)service-accounts/docs-cmd-test-user/test-sa/api-keys/key-123/rotate.*"grace_period_hours": 24`,
+			goldenRegex: `(?s)service-accounts/docs-cmd-test-user/test-sa/api-keys/key-123/rotate.*real run:\s*\{\}`,
 		},
 		{
 			wantError:   false,
@@ -212,7 +212,7 @@ func (suite *ServiceAccountApiKeysCommandTestSuite) TestRevokeApiKeyCmd() {
 			wantError: false,
 			name:      "revoke without confirmation (empty stdin) is cancelled and makes no call",
 			cmd:       "service-account api-keys revoke key-123 --service-account test-sa" + suite.defaultKosliArguments,
-			golden:    "Are you sure you want to revoke API key(s) key-123 for service account test-sa? [y/N] revocation of API key(s) key-123 was cancelled\n",
+			golden:    "Are you sure you want to revoke API key(s) key-123 for service account test-sa? [y/N]\nrevocation of API key(s) key-123 was cancelled\n",
 		},
 		{
 			wantError:   false,
