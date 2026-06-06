@@ -351,7 +351,7 @@ func (suite *ServiceAccountApiKeysCommandTestSuite) TestRevokePartialFailure() {
 			wantError:   true,
 			name:        "revoke reports revoked keys before a later key fails",
 			cmd:         "service-account api-keys revoke k1 k2 -s test-sa --assume-yes" + args,
-			goldenRegex: `(?s)API key k1 for service account test-sa was revoked.*failed to revoke API key k2.*API key not found`,
+			goldenRegex: `(?s)API key k1 for service account test-sa was revoked.*already revoked before this failure: k1.*failed to revoke API key k2.*API key not found`,
 		},
 	}
 

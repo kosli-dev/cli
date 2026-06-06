@@ -94,7 +94,7 @@ func (o *revokeApiKeyOptions) run(out io.Writer, in io.Reader, args []string) er
 		}
 	}
 
-	for _, keyID := range args {
+	for i, keyID := range args {
 		url, err := url.JoinPath(global.Host, "api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys", keyID)
 		if err != nil {
 			return err
@@ -107,6 +107,16 @@ func (o *revokeApiKeyOptions) run(out io.Writer, in io.Reader, args []string) er
 			Token:  global.ApiToken,
 		}
 		if _, err := kosliClient.Do(reqParams); err != nil {
+			// revocation is destructive and one-way: make clear which keys were
+			// already revoked before this one failed (user-facing, styled green),
+			// while keeping the returned error plain (no ANSI).
+			if i > 0 {
+				revoked := make([]string, i)
+				for j, k := range args[:i] {
+					revoked[j] = style(out, k, ansiBold, ansiGreen)
+				}
+				logger.Info("keys already revoked before this failure: %s", strings.Join(revoked, ", "))
+			}
 			return fmt.Errorf("failed to revoke API key %s: %w", keyID, err)
 		}
 		if !global.DryRun {
