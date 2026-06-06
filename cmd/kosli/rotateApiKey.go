@@ -112,7 +112,8 @@ func (o *rotateApiKeyOptions) run(out io.Writer, args []string) error {
 	for _, keyID := range args {
 		url, err := url.JoinPath(global.Host, "api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys", keyID, "rotate")
 		if err != nil {
-			return err
+			runErr = err
+			break
 		}
 
 		reqParams := &requests.RequestParams{
