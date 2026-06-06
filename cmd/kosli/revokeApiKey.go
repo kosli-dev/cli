@@ -107,10 +107,12 @@ func (o *revokeApiKeyOptions) run(out io.Writer, in io.Reader, args []string) er
 			Token:  global.ApiToken,
 		}
 		if _, err := kosliClient.Do(reqParams); err != nil {
-			return err
+			// revocation is destructive: the failed key is shown in bold red,
+			// while the keys already revoked were each logged in bold green above.
+			return fmt.Errorf("failed to revoke API key %s: %w", style(out, keyID, ansiBold, ansiRed), err)
 		}
 		if !global.DryRun {
-			logger.Info("API key %s for service account %s was revoked", keyID, o.serviceAccount)
+			logger.Info("API key %s for service account %s was revoked", style(out, keyID, ansiBold, ansiGreen), o.serviceAccount)
 		}
 	}
 	return nil

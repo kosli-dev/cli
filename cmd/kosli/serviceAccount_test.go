@@ -330,6 +330,34 @@ func (suite *ServiceAccountApiKeysCommandTestSuite) TestRotatePartialFailure() {
 	runTestCmd(suite.T(), tests)
 }
 
+// TestRevokePartialFailure verifies that when one key in a multi-key revoke
+// fails, the keys already revoked are reported (revocation is destructive and
+// one-way) before the error is surfaced.
+func (suite *ServiceAccountApiKeysCommandTestSuite) TestRevokePartialFailure() {
+	fake := httpfake.New()
+	defer fake.Close()
+	fake.NewHandler().
+		Delete("/api/v2/service-accounts/docs-cmd-test-user/test-sa/api-keys/k1").
+		Reply(200).
+		BodyString(`"revoked"`)
+	fake.NewHandler().
+		Delete("/api/v2/service-accounts/docs-cmd-test-user/test-sa/api-keys/k2").
+		Reply(404).
+		BodyString(`{"message": "API key not found"}`)
+
+	args := fmt.Sprintf(" --host %s --org %s --api-token %s", fake.Server.URL, global.Org, global.ApiToken)
+	tests := []cmdTestCase{
+		{
+			wantError:   true,
+			name:        "revoke reports revoked keys before a later key fails",
+			cmd:         "service-account api-keys revoke k1 k2 -s test-sa --assume-yes" + args,
+			goldenRegex: `(?s)API key k1 for service account test-sa was revoked.*failed to revoke API key k2.*API key not found`,
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
 // TestRevokeApiKeyNotFound stubs the API with a 404 to verify that revoking a
 // non-existing key surfaces the server's "API key not found" error instead of
 // reporting success.
@@ -347,7 +375,7 @@ func (suite *ServiceAccountApiKeysCommandTestSuite) TestRevokeApiKeyNotFound() {
 			wantError:   true,
 			name:        "revoke surfaces a 404 from the API as an error",
 			cmd:         "service-account api-keys revoke missing-key --service-account test-sa --assume-yes" + args,
-			goldenRegex: `Error: API key not found`,
+			goldenRegex: `(?s)failed to revoke API key missing-key.*API key not found`,
 		},
 	}
 
