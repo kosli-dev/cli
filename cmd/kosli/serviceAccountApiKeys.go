@@ -106,13 +106,31 @@ func printApiKeysAsTable(raw string, out io.Writer, page int) error {
 	return nil
 }
 
+// optionalTimestamp formats an epoch timestamp, returning "N/A" when it is
+// unset (nil, or a zero value meaning "never"/"not set").
+func optionalTimestamp(epoch interface{}) (string, error) {
+	switch v := epoch.(type) {
+	case nil:
+		return "N/A", nil
+	case float64:
+		if v == 0 {
+			return "N/A", nil
+		}
+	case int64:
+		if v == 0 {
+			return "N/A", nil
+		}
+	}
+	return formattedTimestamp(epoch, false)
+}
+
 // apiKeyTableRows builds the key:value rows describing a single api key.
 func apiKeyTableRows(key apiKeyResponse) ([]string, error) {
 	createdAt, err := formattedTimestamp(key.CreatedAt, false)
 	if err != nil {
 		return nil, err
 	}
-	expiresAt, err := formattedTimestamp(key.ExpiresAt, false)
+	expiresAt, err := optionalTimestamp(key.ExpiresAt)
 	if err != nil {
 		return nil, err
 	}

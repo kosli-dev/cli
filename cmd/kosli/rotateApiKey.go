@@ -1,10 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -97,7 +97,11 @@ func (o *rotateApiKeyOptions) run(out io.Writer, args []string) error {
 		o.payload.ExpiresAt = &expiresAt
 	}
 
-	bodies := []string{}
+	// Rotated key values are only returned once, so collect each successful
+	// response and print what we have even if a later key fails (rather than
+	// losing the new keys that were already rotated).
+	keys := make([]json.RawMessage, 0, len(args))
+	var runErr error
 	for _, keyID := range args {
 		url, err := url.JoinPath(global.Host, "api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys", keyID, "rotate")
 		if err != nil {
@@ -113,21 +117,27 @@ func (o *rotateApiKeyOptions) run(out io.Writer, args []string) error {
 		}
 		response, err := kosliClient.Do(reqParams)
 		if err != nil {
-			return err
+			runErr = err
+			break
 		}
 		if !global.DryRun {
-			bodies = append(bodies, response.Body)
+			keys = append(keys, json.RawMessage(response.Body))
 		}
 	}
 
-	if global.DryRun {
-		return nil
+	if !global.DryRun && len(keys) > 0 {
+		raw, err := json.Marshal(keys)
+		if err != nil {
+			return err
+		}
+		if err := output.FormattedPrint(string(raw), o.output, out, 0,
+			map[string]output.FormatOutputFunc{
+				"table": printApiKeysAsTable,
+				"json":  output.PrintJson,
+			}); err != nil {
+			return err
+		}
 	}
 
-	raw := "[" + strings.Join(bodies, ",") + "]"
-	return output.FormattedPrint(raw, o.output, out, 0,
-		map[string]output.FormatOutputFunc{
-			"table": printApiKeysAsTable,
-			"json":  output.PrintJson,
-		})
+	return runErr
 }

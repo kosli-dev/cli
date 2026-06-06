@@ -104,11 +104,11 @@ func printApiKeysListAsTable(raw string, out io.Writer, page int) error {
 		if err != nil {
 			return err
 		}
-		expiresAt, err := formattedTimestamp(key["expires_at"], false)
+		expiresAt, err := optionalTimestamp(key["expires_at"])
 		if err != nil {
 			return err
 		}
-		lastUsedAt, err := formattedTimestamp(key["last_used_at"], false)
+		lastUsedAt, err := optionalTimestamp(key["last_used_at"])
 		if err != nil {
 			return err
 		}

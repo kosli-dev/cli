@@ -25,6 +25,9 @@ func TestPrintApiKeyAsTable(t *testing.T) {
 	require.Contains(t, out, "sk_secret_value")
 	require.Contains(t, out, "ci key")
 	require.Contains(t, out, "Old Key Valid Until")
+	// expires_at of 0 means "no expiry" and must render as N/A, not epoch zero
+	require.Regexp(t, `Expires At:\s+N/A`, out)
+	require.NotContains(t, out, "1970")
 }
 
 func TestPrintApiKeysAsTable(t *testing.T) {
@@ -56,6 +59,9 @@ func TestPrintApiKeysListAsTable(t *testing.T) {
 	for _, want := range []string{"ID", "DESCRIPTION", "CREATED", "EXPIRES", "LAST USED", "key-1", "first", "key-2", "second"} {
 		require.Contains(t, out, want)
 	}
+	// expires_at and last_used_at of 0 must render as N/A, not epoch zero (1970)
+	require.Contains(t, out, "N/A")
+	require.NotContains(t, out, "1970")
 }
 
 func TestParseExpiresAt(t *testing.T) {
@@ -290,6 +296,34 @@ func (suite *ServiceAccountApiKeysCommandTestSuite) TestApiKeysSuccessOutput() {
 			name:        "rotate of multiple keys prints all new key values",
 			cmd:         "service-account api-keys rotate k1 k2 -s test-sa --output json" + args,
 			goldenRegex: `(?s)sk_one.*sk_two`,
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
+// TestRotatePartialFailure verifies that when one key in a multi-key rotate
+// fails, the keys already rotated are still printed (their values are only
+// returned once) before the error is surfaced.
+func (suite *ServiceAccountApiKeysCommandTestSuite) TestRotatePartialFailure() {
+	fake := httpfake.New()
+	defer fake.Close()
+	fake.NewHandler().
+		Post("/api/v2/service-accounts/docs-cmd-test-user/test-sa/api-keys/k1/rotate").
+		Reply(201).
+		BodyString(`{"id":"k1","key":"sk_one","description":"one","created_at":1,"expires_at":0}`)
+	fake.NewHandler().
+		Post("/api/v2/service-accounts/docs-cmd-test-user/test-sa/api-keys/k2/rotate").
+		Reply(404).
+		BodyString(`{"message": "API key not found"}`)
+
+	args := fmt.Sprintf(" --host %s --org %s --api-token %s", fake.Server.URL, global.Org, global.ApiToken)
+	tests := []cmdTestCase{
+		{
+			wantError:   true,
+			name:        "rotate prints already-rotated keys then surfaces the error",
+			cmd:         "service-account api-keys rotate k1 k2 -s test-sa --output json" + args,
+			goldenRegex: `(?s)sk_one.*Error: API key not found`,
 		},
 	}
 

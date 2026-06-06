@@ -10,7 +10,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 const revokeApiKeyShortDesc = `Revoke an API key for a service account.`
@@ -68,13 +67,11 @@ func newRevokeApiKeyCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
 	cmd.Flags().BoolVarP(&o.assumeYes, "assume-yes", "y", false, revokeApiKeyYesFlag)
-	// allow --yes as an alias for --assume-yes
-	cmd.Flags().SetNormalizeFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {
-		if name == "yes" {
-			name = "assume-yes"
-		}
-		return pflag.NormalizedName(name)
-	})
+	// keep --yes as a hidden alias for --assume-yes (bound to the same option)
+	cmd.Flags().BoolVar(&o.assumeYes, "yes", false, revokeApiKeyYesFlag)
+	if f := cmd.Flags().Lookup("yes"); f != nil {
+		f.Hidden = true
+	}
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"service-account"})
