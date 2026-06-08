@@ -21,7 +21,7 @@ listed (they are only shown once, at creation or rotation time).`
 
 const listApiKeysExample = `
 # list the API keys for a service account:
-kosli service-account api-keys list \
+kosli list api-keys \
 	--service-account yourServiceAccountName \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -35,8 +35,8 @@ type listApiKeysOptions struct {
 func newListApiKeysCmd(out io.Writer) *cobra.Command {
 	o := new(listApiKeysOptions)
 	cmd := &cobra.Command{
-		Use:     "list",
-		Aliases: []string{"l", "ls"},
+		Use:     "api-keys",
+		Aliases: []string{"api-key", "ak"},
 		Short:   listApiKeysShortDesc,
 		Long:    listApiKeysLongDesc,
 		Example: listApiKeysExample,
@@ -87,7 +87,7 @@ func (o *listApiKeysOptions) run(out io.Writer, args []string) error {
 }
 
 func printApiKeysListAsTable(raw string, out io.Writer, page int) error {
-	var keys []map[string]interface{}
+	var keys []apiKeyMetadata
 	if err := json.Unmarshal([]byte(raw), &keys); err != nil {
 		return err
 	}
@@ -100,20 +100,20 @@ func printApiKeysListAsTable(raw string, out io.Writer, page int) error {
 	header := []string{"ID", "DESCRIPTION", "CREATED", "EXPIRES", "LAST USED"}
 	rows := []string{}
 	for _, key := range keys {
-		createdAt, err := formattedTimestamp(key["created_at"], false)
+		createdAt, err := formattedTimestamp(key.CreatedAt, false)
 		if err != nil {
 			return err
 		}
-		expiresAt, err := optionalTimestamp(key["expires_at"])
+		expiresAt, err := optionalTimestamp(key.ExpiresAt)
 		if err != nil {
 			return err
 		}
-		lastUsedAt, err := optionalTimestamp(key["last_used_at"])
+		lastUsedAt, err := optionalTimestamp(key.LastUsedAt)
 		if err != nil {
 			return err
 		}
 
-		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", key["id"], key["description"], createdAt, expiresAt, lastUsedAt)
+		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", key.Id, key.Description, createdAt, expiresAt, lastUsedAt)
 		rows = append(rows, row)
 	}
 	tabFormattedPrint(out, header, rows)

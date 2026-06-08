@@ -18,14 +18,14 @@ The key value is only returned once, at creation time, so make sure to store it 
 
 const createApiKeyExample = `
 # create an API key for a service account:
-kosli service-account api-keys create \
+kosli create api-key \
 	--service-account yourServiceAccountName \
 	--description "key for CI" \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # create an API key that expires on a given date:
-kosli service-account api-keys create \
+kosli create api-key \
 	--service-account yourServiceAccountName \
 	--description "key for CI" \
 	--expires-at 2026-12-31 \
@@ -48,8 +48,8 @@ type createApiKeyPayload struct {
 func newCreateApiKeyCmd(out io.Writer) *cobra.Command {
 	o := new(createApiKeyOptions)
 	cmd := &cobra.Command{
-		Use:     "create",
-		Aliases: []string{"c", "cr"},
+		Use:     "api-key",
+		Aliases: []string{"ak"},
 		Short:   createApiKeyShortDesc,
 		Long:    createApiKeyLongDesc,
 		Example: createApiKeyExample,
