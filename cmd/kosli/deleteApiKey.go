@@ -12,12 +12,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const deleteApiKeyShortDesc = `Delete (revoke) one or more API keys for a service account.`
+const deleteApiKeyShortDesc = `Delete one or more API keys for a service account.`
 
 const deleteApiKeyLongDesc = deleteApiKeyShortDesc + `
 
-This permanently revokes the API key(s) identified by KEY-ID. You are asked to confirm
-before the key is deleted; use ^--assume-yes^/^--yes^ to skip the confirmation prompt.`
+This permanently deletes the API key(s) identified by KEY-ID. Deletion is immediate and
+cannot be undone. You are asked to confirm before the key is deleted; use
+^--assume-yes^/^--yes^ to skip the confirmation prompt.`
 
 const deleteApiKeyExample = `
 # delete an API key for a service account (asks for confirmation):
@@ -94,9 +95,23 @@ func (o *deleteApiKeyOptions) run(out io.Writer, in io.Reader, args []string) er
 		}
 	}
 
+	// deletion is destructive and one-way: on any failure mid-batch, make clear
+	// which keys were already deleted before it (user-facing, styled green), while
+	// keeping the returned error plain (no ANSI).
+	reportAlreadyDeleted := func(i int) {
+		if i > 0 {
+			deleted := make([]string, i)
+			for j, k := range args[:i] {
+				deleted[j] = style(out, k, ansiBold, ansiGreen)
+			}
+			logger.Info("keys already deleted before this failure: %s", strings.Join(deleted, ", "))
+		}
+	}
+
 	for i, keyID := range args {
 		url, err := url.JoinPath(global.Host, "api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys", keyID)
 		if err != nil {
+			reportAlreadyDeleted(i)
 			return err
 		}
 
@@ -107,16 +122,7 @@ func (o *deleteApiKeyOptions) run(out io.Writer, in io.Reader, args []string) er
 			Token:  global.ApiToken,
 		}
 		if _, err := kosliClient.Do(reqParams); err != nil {
-			// deletion is destructive and one-way: make clear which keys were
-			// already deleted before this one failed (user-facing, styled green),
-			// while keeping the returned error plain (no ANSI).
-			if i > 0 {
-				deleted := make([]string, i)
-				for j, k := range args[:i] {
-					deleted[j] = style(out, k, ansiBold, ansiGreen)
-				}
-				logger.Info("keys already deleted before this failure: %s", strings.Join(deleted, ", "))
-			}
+			reportAlreadyDeleted(i)
 			return fmt.Errorf("failed to delete API key %s: %w", keyID, err)
 		}
 		if !global.DryRun {

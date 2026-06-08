@@ -23,11 +23,10 @@ type statusOptions struct {
 func newStatusCmd(out io.Writer) *cobra.Command {
 	o := new(statusOptions)
 	cmd := &cobra.Command{
-		Use:     "status",
-		Aliases: []string{"s", "st"},
-		Short:   statusShortDesc,
-		Long:    statusLongDesc,
-		Args:    cobra.NoArgs,
+		Use:   "status",
+		Short: statusShortDesc,
+		Long:  statusLongDesc,
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out)
 		},

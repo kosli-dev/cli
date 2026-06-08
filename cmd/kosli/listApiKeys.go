@@ -36,7 +36,7 @@ func newListApiKeysCmd(out io.Writer) *cobra.Command {
 	o := new(listApiKeysOptions)
 	cmd := &cobra.Command{
 		Use:     "api-keys",
-		Aliases: []string{"api-key", "ak"},
+		Aliases: []string{"ak", "aks", "api-key"},
 		Short:   listApiKeysShortDesc,
 		Long:    listApiKeysLongDesc,
 		Example: listApiKeysExample,

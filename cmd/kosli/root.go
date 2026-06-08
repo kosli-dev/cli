@@ -111,7 +111,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	apiKeyDescriptionFlag           = "A description for the API key."
 	apiKeyExpiresAtFlag             = "[optional] When the API key expires. Accepts an epoch timestamp or a date like '2026-06-04', '2026-06-04 15:04:05', or an RFC3339 timestamp. Defaults to no expiry."
 	apiKeyGracePeriodHoursFlag      = "[optional] How many hours the old API key remains valid after rotation, to allow time to update dependent systems. Defaults to the server-side value when not set."
-	apiKeyRotateFlag                = "Rotate the API key(s): generate a new key value and start the grace period on the old one. This is currently the only supported update."
 	apiKeyAssumeYesFlag             = "[optional] Skip the confirmation prompt and delete the API key without asking. (alias: --yes)"
 	environmentNameFlag             = "The environment name."
 	approvalEnvironmentNameFlag     = "[defaulted] The environment the artifact is approved for. (defaults to all environments)"
@@ -421,7 +420,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		newDetachPolicyCmd(out),
 		newEvaluateCmd(out),
 		newDeleteCmd(out),
-		newUpdateCmd(out),
+		newRotateCmd(out),
 	)
 
 	cobra.AddTemplateFunc("isBeta", isBeta)

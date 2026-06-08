@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -12,44 +11,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const updateApiKeyShortDesc = `Update one or more API keys for a service account.`
+const rotateApiKeyShortDesc = `Rotate one or more API keys for a service account.`
 
-const updateApiKeyLongDesc = updateApiKeyShortDesc + `
+const rotateApiKeyLongDesc = rotateApiKeyShortDesc + `
 
-Currently the only supported update is rotation, requested with ^--rotate^.
+A new API key is generated immediately. The old key remains valid for a grace period to
+allow time to update dependent systems; the length of that grace period is server-managed
+unless overridden with ^--grace-period-hours^. The new key value is only returned once, so
+make sure to store it securely.`
 
-When rotating, a new API key is generated immediately. The old key remains valid for a
-grace period to allow time to update dependent systems; the length of that grace period is
-server-managed unless overridden with ^--grace-period-hours^. The new key value is only
-returned once, so make sure to store it securely.`
-
-const updateApiKeyExample = `
+const rotateApiKeyExample = `
 # rotate an API key for a service account:
-kosli update api-key yourApiKeyID \
-	--rotate \
+kosli rotate api-key yourApiKeyID \
 	--service-account yourServiceAccountName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # rotate multiple API keys at once:
-kosli update api-key keyID1 keyID2 \
-	--rotate \
+kosli rotate api-key keyID1 keyID2 \
 	--service-account yourServiceAccountName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # rotate an API key, keeping the old key valid for 48 hours:
-kosli update api-key yourApiKeyID \
-	--rotate \
+kosli rotate api-key yourApiKeyID \
 	--grace-period-hours 48 \
 	--service-account yourServiceAccountName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
 
-type updateApiKeyOptions struct {
+type rotateApiKeyOptions struct {
 	serviceAccount      string
-	rotate              bool
 	expiresAt           string
 	gracePeriodHours    int
 	gracePeriodHoursSet bool
@@ -62,14 +55,14 @@ type rotateApiKeyPayload struct {
 	ExpiresAt        *int64 `json:"expires_at,omitempty"`
 }
 
-func newUpdateApiKeyCmd(out io.Writer) *cobra.Command {
-	o := new(updateApiKeyOptions)
+func newRotateApiKeyCmd(out io.Writer) *cobra.Command {
+	o := new(rotateApiKeyOptions)
 	cmd := &cobra.Command{
 		Use:     "api-key KEY-ID [KEY-ID...]",
 		Aliases: []string{"ak"},
-		Short:   updateApiKeyShortDesc,
-		Long:    updateApiKeyLongDesc,
-		Example: updateApiKeyExample,
+		Short:   rotateApiKeyShortDesc,
+		Long:    rotateApiKeyLongDesc,
+		Example: rotateApiKeyExample,
 		Args:    cobra.MinimumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := RequireGlobalFlags(global, []string{"Org", "ApiToken"}); err != nil {
@@ -84,7 +77,6 @@ func newUpdateApiKeyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
-	cmd.Flags().BoolVarP(&o.rotate, "rotate", "R", false, apiKeyRotateFlag)
 	cmd.Flags().StringVarP(&o.expiresAt, "expires-at", "e", "", apiKeyExpiresAtFlag)
 	cmd.Flags().IntVarP(&o.gracePeriodHours, "grace-period-hours", "g", 0, apiKeyGracePeriodHoursFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
@@ -98,11 +90,7 @@ func newUpdateApiKeyCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *updateApiKeyOptions) run(out io.Writer, args []string) error {
-	if !o.rotate {
-		return fmt.Errorf("nothing to update: use --rotate to rotate the API key(s)")
-	}
-
+func (o *rotateApiKeyOptions) run(out io.Writer, args []string) error {
 	// Only send grace_period_hours when the user explicitly set it; otherwise
 	// let the server apply its own default.
 	if o.gracePeriodHoursSet {

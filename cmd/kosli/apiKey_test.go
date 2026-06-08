@@ -43,7 +43,7 @@ func TestPrintApiKeyAsTable(t *testing.T) {
 }
 
 func TestPrintApiKeysAsTable(t *testing.T) {
-	// The update --rotate command aggregates one or more rotated keys into a JSON array.
+	// The rotate command aggregates one or more rotated keys into a JSON array.
 	raw := `[{"id":"key-1","key":"sk_one","description":"first","created_at":1780584129.5,"expires_at":0},` +
 		`{"id":"key-2","key":"sk_two","description":"second","created_at":1780584130.5,"expires_at":0}]`
 
@@ -163,60 +163,48 @@ func (suite *ApiKeyCommandTestSuite) TestCreateApiKeyCmd() {
 	runTestCmd(suite.T(), tests)
 }
 
-func (suite *ApiKeyCommandTestSuite) TestUpdateApiKeyCmd() {
+func (suite *ApiKeyCommandTestSuite) TestRotateApiKeyCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError:   false,
 			name:        "rotate without --grace-period-hours sends an empty payload (server owns the default)",
-			cmd:         "update api-key key-123 --rotate --service-account test-sa --dry-run" + suite.defaultKosliArguments,
+			cmd:         "rotate api-key key-123 --service-account test-sa --dry-run" + suite.defaultKosliArguments,
 			goldenRegex: `(?s)service-accounts/docs-cmd-test-user/test-sa/api-keys/key-123/rotate.*real run:\s*\{\}`,
 		},
 		{
 			wantError:   false,
 			name:        "rotate honours a custom --grace-period-hours (dry-run)",
-			cmd:         "update api-key key-123 --rotate --service-account test-sa --grace-period-hours 48 --dry-run" + suite.defaultKosliArguments,
+			cmd:         "rotate api-key key-123 --service-account test-sa --grace-period-hours 48 --dry-run" + suite.defaultKosliArguments,
 			goldenRegex: `"grace_period_hours": 48`,
 		},
 		{
 			wantError:   false,
 			name:        "the api-key alias (ak) and -s shorthand work",
-			cmd:         "update ak key-123 --rotate -s test-sa --dry-run" + suite.defaultKosliArguments,
+			cmd:         "rotate ak key-123 -s test-sa --dry-run" + suite.defaultKosliArguments,
 			goldenRegex: `service-accounts/docs-cmd-test-user/test-sa/api-keys/key-123/rotate`,
 		},
 		{
 			wantError:   false,
-			name:        "the update verb aliases (up, u) work",
-			cmd:         "u ak key-123 --rotate -s test-sa --dry-run" + suite.defaultKosliArguments,
-			goldenRegex: `service-accounts/docs-cmd-test-user/test-sa/api-keys/key-123/rotate`,
-		},
-		{
-			wantError:   false,
-			name:        "the -R, -g and -e shorthands work (dry-run)",
-			cmd:         "update ak key-123 -R -s test-sa -g 1 -e 2026-6-5 --dry-run" + suite.defaultKosliArguments,
+			name:        "the -g and -e shorthands work (dry-run)",
+			cmd:         "rotate ak key-123 -s test-sa -g 1 -e 2026-6-5 --dry-run" + suite.defaultKosliArguments,
 			goldenRegex: `(?s)"grace_period_hours": 1.*"expires_at": 1780617600`,
 		},
 		{
 			wantError:   false,
-			name:        "update --rotate accepts multiple KEY-IDs (dry-run)",
-			cmd:         "update api-key key-1 key-2 --rotate --service-account test-sa --dry-run" + suite.defaultKosliArguments,
+			name:        "rotate accepts multiple KEY-IDs (dry-run)",
+			cmd:         "rotate api-key key-1 key-2 --service-account test-sa --dry-run" + suite.defaultKosliArguments,
 			goldenRegex: `(?s)api-keys/key-1/rotate.*api-keys/key-2/rotate`,
 		},
 		{
-			wantError:   true,
-			name:        "update without --rotate has nothing to do",
-			cmd:         "update api-key key-123 --service-account test-sa" + suite.defaultKosliArguments,
-			goldenRegex: `Error: nothing to update`,
-		},
-		{
 			wantError: true,
-			name:      "update fails when KEY-ID argument is missing",
-			cmd:       "update api-key --rotate --service-account test-sa" + suite.defaultKosliArguments,
+			name:      "rotate fails when KEY-ID argument is missing",
+			cmd:       "rotate api-key --service-account test-sa" + suite.defaultKosliArguments,
 			golden:    "Error: requires at least 1 arg(s), only received 0\n",
 		},
 		{
 			wantError: true,
-			name:      "update fails when --service-account is missing",
-			cmd:       "update api-key key-123 --rotate" + suite.defaultKosliArguments,
+			name:      "rotate fails when --service-account is missing",
+			cmd:       "rotate api-key key-123" + suite.defaultKosliArguments,
 			golden:    "Error: required flag(s) \"service-account\" not set\n",
 		},
 	}
@@ -274,7 +262,7 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyCmd() {
 }
 
 // TestApiKeysSuccessOutput stubs successful (2xx) API responses to verify that
-// create/list/update render the server's response on the happy path.
+// create/list/rotate render the server's response on the happy path.
 func (suite *ApiKeyCommandTestSuite) TestApiKeysSuccessOutput() {
 	fake := httpfake.New()
 	defer fake.Close()
@@ -311,8 +299,8 @@ func (suite *ApiKeyCommandTestSuite) TestApiKeysSuccessOutput() {
 		},
 		{
 			wantError: false,
-			name:      "update --rotate of multiple keys prints all rotated keys",
-			cmd:       "update api-key k1 k2 --rotate -s test-sa --output json" + args,
+			name:      "rotate of multiple keys prints all rotated keys",
+			cmd:       "rotate api-key k1 k2 -s test-sa --output json" + args,
 			goldenJson: []jsonCheck{
 				{Path: "", Want: "length:2"},
 				{Path: "[0].key", Want: "sk_one"},
@@ -343,7 +331,7 @@ func (suite *ApiKeyCommandTestSuite) TestUpdatePartialFailure() {
 		{
 			wantError:   true,
 			name:        "rotate prints already-rotated keys then surfaces the error",
-			cmd:         "update api-key k1 k2 --rotate -s test-sa --output json" + args,
+			cmd:         "rotate api-key k1 k2 -s test-sa --output json" + args,
 			goldenRegex: `(?s)sk_one.*Error: API key not found`,
 		},
 	}
@@ -404,7 +392,7 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyNotFound() {
 }
 
 // TestApiErrorsAreSurfaced stubs the API with 4xx responses to verify that
-// create/update/list surface the server's error message instead of succeeding.
+// create/rotate/list surface the server's error message instead of succeeding.
 func (suite *ApiKeyCommandTestSuite) TestApiErrorsAreSurfaced() {
 	fake := httpfake.New()
 	defer fake.Close()
@@ -431,8 +419,8 @@ func (suite *ApiKeyCommandTestSuite) TestApiErrorsAreSurfaced() {
 		},
 		{
 			wantError:   true,
-			name:        "update --rotate surfaces a 404 from the API as an error",
-			cmd:         "update api-key missing-key --rotate --service-account test-sa" + args,
+			name:        "rotate surfaces a 404 from the API as an error",
+			cmd:         "rotate api-key missing-key --service-account test-sa" + args,
 			goldenRegex: `Error: API key not found`,
 		},
 		{
