@@ -10,9 +10,10 @@ const createDesc = `All Kosli create commands.`
 
 func newCreateCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: createDesc,
-		Long:  createDesc,
+		Use:     "create",
+		Aliases: []string{"c", "cr"},
+		Short:   createDesc,
+		Long:    createDesc,
 	}
 
 	// Add subcommands
@@ -21,6 +22,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 		newCreateFlowCmd(out),
 		newCreatePolicyCmd(out),
 		newCreateAttestationTypeCmd(out),
+		newCreateApiKeyCmd(out),
 	)
 	return cmd
 }

@@ -27,7 +27,7 @@ func (o *listOptions) validate(cmd *cobra.Command) error {
 func newListCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
-		Aliases: []string{"ls"},
+		Aliases: []string{"l", "ls"},
 		Short:   listDesc,
 		Long:    listDesc,
 	}
@@ -43,6 +43,7 @@ func newListCmd(out io.Writer) *cobra.Command {
 		newListPoliciesCmd(out),
 		newListAttestationTypesCmd(out),
 		newListReposCmd(out),
+		newListApiKeysCmd(out),
 	)
 
 	return cmd
