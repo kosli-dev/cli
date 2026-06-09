@@ -10,9 +10,10 @@ const getDesc = `All Kosli get commands.`
 
 func newGetCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get",
-		Short: getDesc,
-		Long:  getDesc,
+		Use:     "get",
+		Aliases: []string{"g"},
+		Short:   getDesc,
+		Long:    getDesc,
 	}
 
 	// Add subcommands

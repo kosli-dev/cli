@@ -77,6 +77,7 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 	o := new(searchOptions)
 	cmd := &cobra.Command{
 		Use:     "search {GIT-COMMIT | FINGERPRINT}",
+		Aliases: []string{"se"},
 		Short:   searchShortDesc,
 		Long:    searchLongDesc,
 		Example: searchExample,
