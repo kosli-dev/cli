@@ -56,10 +56,10 @@ func (o *listFlowsOptions) run(out io.Writer) error {
 	params := url.Values{}
 	if o.name != "" {
 		params.Set("search_by_name", o.name)
-	}
-	// case_sensitive only affects search, so only send it alongside a search term
-	if o.name != "" && o.ignoreCase {
-		params.Set("case_sensitive", "false")
+		// case_sensitive only affects search, so only send it alongside a search term
+		if o.ignoreCase {
+			params.Set("case_sensitive", "false")
+		}
 	}
 	reqURL := base
 	if encoded := params.Encode(); encoded != "" {
