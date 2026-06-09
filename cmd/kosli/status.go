@@ -24,7 +24,7 @@ func newStatusCmd(out io.Writer) *cobra.Command {
 	o := new(statusOptions)
 	cmd := &cobra.Command{
 		Use:     "status",
-		Aliases: []string{"s", "st"},
+		Aliases: []string{"st"},
 		Short:   statusShortDesc,
 		Long:    statusLongDesc,
 		Args:    cobra.NoArgs,

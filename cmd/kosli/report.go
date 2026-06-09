@@ -11,6 +11,7 @@ const reportDesc = `All Kosli report commands.`
 func newReportCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:        "report",
+		Aliases:    []string{"r", "rep"},
 		Short:      reportDesc,
 		Long:       reportDesc,
 		Deprecated: "this command is deprecated and will be removed in a future release.",
