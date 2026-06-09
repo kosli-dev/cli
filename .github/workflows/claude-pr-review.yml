@@ -20,7 +20,7 @@ jobs:
   review-dependency-updates:
     if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     permissions:
       id-token: write
       contents: read
@@ -47,8 +47,9 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'ci-signed-commit-bot, dependabot[bot]'
           claude_args: |
-            --max-turns 30
-            --model claude-opus-4-6
+            --max-turns 40
+            --max-budget-usd 5
+            --model claude-opus-4-8
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
           prompt: |
             REPO: ${{ github.repository }}
@@ -65,7 +66,8 @@ jobs:
             Note: The PR branch is already checked out in the current working directory.
             Focus on upgrade safety and actionable concerns; keep the review concise and scoped to this PR.
 
-            Use `gh pr comment` for top-level feedback.
+            Use `gh pr comment --edit-last --create-if-none` for top-level feedback,
+            so the summary replaces the previous run's summary instead of stacking.
             Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
             Only post GitHub comments - don't submit review text as messages.
 
@@ -73,7 +75,7 @@ jobs:
     # Skip for Dependabot PRs
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     permissions:
       id-token: write
       contents: read
@@ -105,8 +107,9 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'kosli-ai-agent'
           claude_args: |
-            --max-turns 30
-            --model claude-opus-4-6
+            --max-turns 40
+            --max-budget-usd 5
+            --model claude-opus-4-8
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(go build:*),Bash(go vet:*),Bash(go mod tidy:*),Bash(git diff:*),Bash(golangci-lint:*)"
 
           prompt: |
@@ -121,7 +124,7 @@ jobs:
             Run the following checks and note any failures:
             1. `go build ./...` — verify the code compiles
             2. `go vet ./...` — catch common Go mistakes
-            3. `go mod tidy && git diff --exit-code go.mod go.sum` — check for missing or unused dependencies
+            3. `go mod tidy` — then run `git diff --exit-code go.mod go.sum` to check for missing or unused dependencies
 
             Include any failures from these checks in your review as high-priority issues.
 
@@ -145,6 +148,7 @@ jobs:
             Note: The PR branch is already checked out in the current working directory.
             Be concise and actionable. Prefer inline suggestions where possible; add a short summary at the end.
 
-            Use `gh pr comment` for top-level feedback.
+            Use `gh pr comment --edit-last --create-if-none` for top-level feedback,
+            so the summary replaces the previous run's summary instead of stacking.
             Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
             Only post GitHub comments - don't submit review text as messages.
