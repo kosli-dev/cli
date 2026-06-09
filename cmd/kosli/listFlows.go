@@ -16,7 +16,9 @@ import (
 const listFlowsDesc = `List flows for an org.`
 
 type listFlowsOptions struct {
-	output string
+	output     string
+	name       string
+	ignoreCase bool
 }
 
 func newListFlowsCmd(out io.Writer) *cobra.Command {
@@ -39,19 +41,34 @@ func newListFlowsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().StringVarP(&o.name, "name", "n", "", searchByNameFlag)
+	cmd.Flags().BoolVarP(&o.ignoreCase, "ignore-case", "i", false, ignoreCaseFlag)
 
 	return cmd
 }
 
 func (o *listFlowsOptions) run(out io.Writer) error {
-	url, err := url.JoinPath(global.Host, "api/v2/flows", global.Org)
+	base, err := url.JoinPath(global.Host, "api/v2/flows", global.Org)
 	if err != nil {
 		return err
 	}
 
+	params := url.Values{}
+	if o.name != "" {
+		params.Set("search_by_name", o.name)
+		// case_sensitive only affects search, so only send it alongside a search term
+		if o.ignoreCase {
+			params.Set("case_sensitive", "false")
+		}
+	}
+	reqURL := base
+	if encoded := params.Encode(); encoded != "" {
+		reqURL = base + "?" + encoded
+	}
+
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    reqURL,
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
