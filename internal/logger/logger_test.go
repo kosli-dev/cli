@@ -37,18 +37,46 @@ func TestWarnEmittedWhenQuietDisabled(t *testing.T) {
 	}
 }
 
-func TestQuietDoesNotSuppressInfoOrDebug(t *testing.T) {
+func TestPrintWritesToInfoOutWithoutTrailingNewline(t *testing.T) {
+	var out, errOut bytes.Buffer
+	l := logger.NewLogger(&out, &errOut, false)
+
+	l.Print("answer? [y/N] ")
+	l.Print("key %s", "k1")
+
+	if out.String() != "answer? [y/N] key k1" {
+		t.Fatalf("expected raw output without newlines, got %q", out.String())
+	}
+}
+
+func TestPrintFollowsSetInfoOut(t *testing.T) {
+	var out, redirected bytes.Buffer
+	l := logger.NewLogger(&out, &out, false)
+	l.SetInfoOut(&redirected)
+
+	l.Print("prompt")
+
+	if out.Len() != 0 || redirected.String() != "prompt" {
+		t.Fatalf("expected output on redirected stream, got out=%q redirected=%q", out.String(), redirected.String())
+	}
+}
+
+func TestQuietDoesNotSuppressInfoDebugOrPrint(t *testing.T) {
 	var out, errOut bytes.Buffer
 	l := logger.NewLogger(&out, &errOut, true)
 	l.QuietEnabled = true
 
 	l.Info("hello")
 	l.Debug("debug-line")
+	l.Print("prompt-line")
 
 	if !strings.Contains(out.String(), "hello") {
 		t.Fatalf("expected info preserved, got %q", out.String())
 	}
 	if !strings.Contains(errOut.String(), "[debug] debug-line") {
 		t.Fatalf("expected debug preserved, got %q", errOut.String())
+	}
+	if !strings.Contains(out.String(), "prompt-line") {
+		t.Fatalf("expected print preserved, got %q", out.String())
 	}
 }

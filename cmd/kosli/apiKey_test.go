@@ -218,7 +218,7 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyCmd() {
 			wantError: false,
 			name:      "delete without confirmation (empty stdin) is cancelled and makes no call",
 			cmd:       "delete api-key key-123 --service-account test-sa" + suite.defaultKosliArguments,
-			golden:    "Are you sure you want to delete API key(s) key-123 for service account test-sa? [y/N] Deletion of API key(s) key-123 was cancelled!\n",
+			golden:    "Are you sure you want to delete API key(s) key-123 for service account test-sa? [y/N] Deletion of API key(s) key-123 was cancelled.\n",
 		},
 		{
 			wantError:   false,
