@@ -24,6 +24,10 @@ func (suite *ListFlowsCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
+	// create flows with deterministic names so the --name / --case-sensitive tests
+	// can assert match / no-match behaviour reliably
+	CreateFlow("list-flows-search-target", suite.T())
+
 	global.Org = "acme-org"
 	global.ApiToken = "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c"
 	suite.acmeOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
@@ -50,6 +54,31 @@ func (suite *ListFlowsCommandTestSuite) TestListFlowsCmd() {
 			name:       "listing flows with --output json works when there are no flows",
 			cmd:        fmt.Sprintf(`list flows --output json %s`, suite.acmeOrgKosliArguments),
 			goldenJson: []jsonCheck{{"", "[]"}},
+		},
+		{
+			name:       "--name matches flows whose name contains the substring",
+			cmd:        fmt.Sprintf(`list flows --name list-flows-search-target --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "non-empty"}, {"[0].name", "list-flows-search-target"}},
+		},
+		{
+			name:       "--name with no matching substring returns an empty list",
+			cmd:        fmt.Sprintf(`list flows --name no-such-flow-substring-xyz --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
+		},
+		{
+			name:       "--name matching is case sensitive by default so a wrong-case substring does not match",
+			cmd:        fmt.Sprintf(`list flows --name LIST-FLOWS-SEARCH-TARGET --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
+		},
+		{
+			name:       "--ignore-case makes a wrong-case substring match",
+			cmd:        fmt.Sprintf(`list flows --name LIST-FLOWS-SEARCH-TARGET --ignore-case --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "non-empty"}, {"[0].name", "list-flows-search-target"}},
+		},
+		{
+			name:       "short flags -n and -i work like --name and --ignore-case",
+			cmd:        fmt.Sprintf(`list flows -n LIST-FLOWS-SEARCH-TARGET -i --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "non-empty"}, {"[0].name", "list-flows-search-target"}},
 		},
 		{
 			wantError: true,
