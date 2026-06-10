@@ -46,8 +46,9 @@ Any candidate match is automatically excluded if every occurrence in the parsed 
 immediately followed by a hyphen and a digit — for example, ^CVE-2026-41284^ is excluded
 because ^CVE-2026^ would be followed by ^-4^. This applies across all parsed sources
 (commit message, branch name, and secondary source).
-Note: if your Jira project key itself matches this pattern (e.g. a project key of ^CVE^),
-its references will be filtered out. Use ^--jira-secondary-source^ with a different identifier
+Note: if your Jira project key collides with this pattern (e.g. a project key of ^CVE^), an
+issue reference that happens to be the prefix of a longer hyphenated number (such as a CVE
+identifier) will be filtered out. Use ^--jira-secondary-source^ with a different identifier
 format as a workaround.
 
 If you want to restrict the Jira issue matching to a specific project, use the
