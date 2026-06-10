@@ -47,6 +47,10 @@ If you want to restrict the Jira issue matching to a specific project, use the
 
 If the ^--ignore-branch-match^ is set, the branch name is not parsed for a match.
 
+Multi-segment identifiers such as CVE numbers (e.g. ^CVE-2026-41284^) are automatically
+excluded from matching — a candidate is discarded if every occurrence in the text is
+immediately followed by another ^-<digit>^ segment.
+
 The found issue references will be checked against Jira to confirm their existence.
 The attestation is reported in all cases, and its compliance status depends on referencing
 existing Jira issues.  
