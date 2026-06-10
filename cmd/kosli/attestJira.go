@@ -38,9 +38,18 @@ const attestJiraShortDesc = `Report a jira attestation to an artifact or a trail
 
 const attestJiraLongDesc = attestJiraShortDesc + `
 Parses the given commit's message, current branch name or the content of the ^--jira-secondary-source^
-argument for Jira issue references of the form:  
+argument for Jira issue references of the form:
 'at least 2 characters long, starting with an uppercase letter project key followed by
 dash and one or more digits'.
+
+Any candidate match is automatically excluded if every occurrence in the parsed text is
+immediately followed by a hyphen and a digit — for example, ^CVE-2026-41284^ is excluded
+because ^CVE-2026^ would be followed by ^-4^. This applies across all parsed sources
+(commit message, branch name, and secondary source).
+Note: if your Jira project key collides with this pattern (e.g. a project key of ^CVE^), an
+issue reference that happens to be the prefix of a longer hyphenated number (such as a CVE
+identifier) will be filtered out. Use ^--jira-secondary-source^ with a different identifier
+format as a workaround.
 
 If you want to restrict the Jira issue matching to a specific project, use the
 ^--jira-project-key^ flag to specify your own project key. You can specify multiple project keys if needed.
