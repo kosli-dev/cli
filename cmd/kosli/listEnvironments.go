@@ -202,12 +202,13 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 			last_modified_str = time.Unix(int64(last_modified_at.(float64)), 0).Format(time.RFC3339)
 		}
 
-		tags := env["tags"].(map[string]interface{})
 		tagsOutput := ""
-		for key, value := range tags {
-			tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
+		if tags, ok := env["tags"].(map[string]interface{}); ok {
+			for key, value := range tags {
+				tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
+			}
+			tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
 		}
-		tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
 
 		var policies []interface{}
 		if env["policies"] != nil {

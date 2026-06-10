@@ -118,7 +118,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	approvalEnvironmentNameFlag     = "[defaulted] The environment the artifact is approved for. (defaults to all environments)"
 	pageNumberFlag                  = "[defaulted] The page number of a response."
 	pageLimitFlag                   = "[defaulted] The number of elements per page."
-	newEnvTypeFlag                  = "The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker, azure-apps, logical]."
+	newEnvTypeFlag                  = "The type of environment. Valid types are: [K8S, ECS, S3, lambda, server, docker, azure-apps, cloud-run, logical]."
 	envSearchNameFlag               = "[optional] Only list environments whose name contains this substring (case-insensitive)."
 	envTypeFilterFlag               = "[optional] Only list environments of this type. Valid types are: [K8S, ECS, S3, lambda, server, docker, azure-apps, cloud-run, logical]. Can be repeated to match more than one type."
 	envSpaceIDFilterFlag            = "[optional] Only list environments in the space with this ID. Can be repeated to match more than one space."
