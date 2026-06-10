@@ -672,3 +672,15 @@ func TagFlow(flowName, tagKey, tagValue string, t *testing.T) {
 	err := o.run([]string{"flow", flowName})
 	require.NoError(t, err, "flow should be tagged without error")
 }
+
+// TagEnv tags an environment with a key-value pair
+func TagEnv(envName, tagKey, tagValue string, t *testing.T) {
+	t.Helper()
+	o := &tagOptions{
+		payload: TagResourcePayload{
+			SetTags: map[string]string{tagKey: tagValue},
+		},
+	}
+	err := o.run([]string{"env", envName})
+	require.NoError(t, err, "env should be tagged without error")
+}
