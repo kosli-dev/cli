@@ -118,7 +118,7 @@ func (o *deleteApiKeyOptions) run(in io.Reader, args []string) error {
 		}
 		if _, err := kosliClient.Do(reqParams); err != nil {
 			reportAlreadyDeleted(i)
-			return fmt.Errorf("failed to delete API key %s: %w", keyID, err)
+			return fmt.Errorf("failed to delete API key: %w", err)
 		}
 		if !global.DryRun {
 			logger.Info("API key %s for service account %s was deleted!", style(logger.Out, keyID, ansiBold, ansiCyan), o.serviceAccount)
