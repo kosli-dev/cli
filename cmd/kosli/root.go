@@ -85,6 +85,10 @@ The service principal needs to have the following permissions:
 Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using ^#^.
 The ^.kosli_ignore^ will be treated as part of the artifact like any other file, unless it is explicitly ignored itself.`
 
+	// single source of truth for the env type lists shown in flag help texts;
+	// the server is the authority on which types are actually accepted
+	validEnvTypesList = "K8S, ECS, S3, lambda, server, docker, azure-apps, cloud-run, logical"
+
 	// flags
 	apiTokenFlag                    = "The Kosli API token."
 	artifactName                    = "[optional] Artifact display name, if different from file, image or directory name."
@@ -118,7 +122,13 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	approvalEnvironmentNameFlag     = "[defaulted] The environment the artifact is approved for. (defaults to all environments)"
 	pageNumberFlag                  = "[defaulted] The page number of a response."
 	pageLimitFlag                   = "[defaulted] The number of elements per page."
-	newEnvTypeFlag                  = "The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker, azure-apps, logical]."
+	newEnvTypeFlag                  = "The type of environment. Valid types are: [" + validEnvTypesList + "]."
+	envSearchNameFlag               = "[optional] Only list environments whose name contains this substring (case-insensitive)."
+	envTypeFilterFlag               = "[optional] Only list environments of this type. Valid types are: [" + validEnvTypesList + "]. Can be repeated to match more than one type."
+	envSpaceIDFilterFlag            = "[optional] Only list environments in the space with this ID. Can be repeated to match more than one space."
+	envTagFilterFlag                = "[optional] Only list environments that have this tag, given as 'key' or 'key:value'. Can be repeated to match more than one tag."
+	envSortFlag                     = "[optional] The field to sort environments by. Valid values are: [name, last_modified_at, last_changed_at]. (defaults to name)"
+	envSortDirectionFlag            = "[optional] The direction to sort environments in. Valid values are: [asc, desc]. (defaults to asc)"
 	envAllowListFlag                = "The environment name for which the artifact is allowlisted."
 	reasonFlag                      = "The reason why this artifact is allowlisted."
 	oldestCommitFlag                = "[conditional] The source commit sha for the oldest change in the deployment. Can be any commit-ish. Only required if you don't specify '--environment'."
