@@ -332,7 +332,7 @@ func (suite *ApiKeyCommandTestSuite) TestUpdatePartialFailure() {
 			wantError:   true,
 			name:        "rotate prints already-rotated keys then surfaces the error",
 			cmd:         "rotate api-key k1 k2 -s test-sa --output json" + args,
-			goldenRegex: `(?s)sk_one.*Error: API key not found`,
+			goldenRegex: `(?s)sk_one.*Error: failed to rotate API key: API key not found`,
 		},
 	}
 
@@ -360,7 +360,7 @@ func (suite *ApiKeyCommandTestSuite) TestDeletePartialFailure() {
 			wantError:   true,
 			name:        "delete reports deleted keys before a later key fails",
 			cmd:         "delete api-key k1 k2 -s test-sa --assume-yes" + args,
-			goldenRegex: `(?s)API key k1 for service account test-sa was deleted!.*already deleted before this failure: k1.*failed to delete API key k2.*API key not found`,
+			goldenRegex: `(?s)API key k1 for service account test-sa was deleted!.*already deleted before this failure: k1.*failed to delete API key: API key not found`,
 		},
 	}
 
@@ -384,7 +384,7 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyNotFound() {
 			wantError:   true,
 			name:        "delete surfaces a 404 from the API as an error",
 			cmd:         "delete api-key missing-key --service-account test-sa --assume-yes" + args,
-			goldenRegex: `(?s)failed to delete API key missing-key.*API key not found`,
+			goldenRegex: `(?s)failed to delete API key: API key not found`,
 		},
 	}
 
@@ -421,7 +421,7 @@ func (suite *ApiKeyCommandTestSuite) TestApiErrorsAreSurfaced() {
 			wantError:   true,
 			name:        "rotate surfaces a 404 from the API as an error",
 			cmd:         "rotate api-key missing-key --service-account test-sa" + args,
-			goldenRegex: `Error: API key not found`,
+			goldenRegex: `Error: failed to rotate API key: API key not found`,
 		},
 		{
 			wantError:   true,

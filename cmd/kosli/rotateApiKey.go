@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -125,7 +126,7 @@ func (o *rotateApiKeyOptions) run(out io.Writer, args []string) error {
 		}
 		response, err := kosliClient.Do(reqParams)
 		if err != nil {
-			runErr = err
+			runErr = fmt.Errorf("failed to rotate API key: %w", err)
 			break
 		}
 		if !global.DryRun {
