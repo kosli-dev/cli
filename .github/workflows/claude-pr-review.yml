@@ -68,8 +68,6 @@ jobs:
 
             Use `gh pr comment --edit-last --create-if-none` for top-level feedback,
             so the summary replaces the previous run's summary instead of stacking.
-            The posted comment body must contain only the review content —
-            no branch name, commit hash, or other metadata appended at the end.
             Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
             Only post GitHub comments - don't submit review text as messages.
 
@@ -152,7 +150,5 @@ jobs:
 
             Use `gh pr comment --edit-last --create-if-none` for top-level feedback,
             so the summary replaces the previous run's summary instead of stacking.
-            The posted comment body must contain only the review content —
-            no branch name, commit hash, or other metadata appended at the end.
             Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
             Only post GitHub comments - don't submit review text as messages.
