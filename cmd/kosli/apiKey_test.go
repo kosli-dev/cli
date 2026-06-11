@@ -218,7 +218,7 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyCmd() {
 			wantError: false,
 			name:      "delete without confirmation (empty stdin) is cancelled and makes no call",
 			cmd:       "delete api-key key-123 --service-account test-sa" + suite.defaultKosliArguments,
-			golden:    "Are you sure you want to delete API key(s) key-123 for service account test-sa? [y/N]\ndeletion of API key(s) key-123 was cancelled\n",
+			golden:    "Are you sure you want to delete API key(s) key-123 for service account test-sa? [y/N] Deletion of API key(s) key-123 was cancelled.\n",
 		},
 		{
 			wantError:   false,
@@ -360,7 +360,7 @@ func (suite *ApiKeyCommandTestSuite) TestDeletePartialFailure() {
 			wantError:   true,
 			name:        "delete reports deleted keys before a later key fails",
 			cmd:         "delete api-key k1 k2 -s test-sa --assume-yes" + args,
-			goldenRegex: `(?s)API key k1 for service account test-sa was deleted.*already deleted before this failure: k1.*failed to delete API key k2.*API key not found`,
+			goldenRegex: `(?s)API key k1 for service account test-sa was deleted!.*already deleted before this failure: k1.*failed to delete API key k2.*API key not found`,
 		},
 	}
 

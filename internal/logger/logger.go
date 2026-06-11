@@ -70,3 +70,9 @@ func (l *Logger) Info(format string, v ...interface{}) {
 	format = fmt.Sprintf("%s\n", format)
 	l.infoLog.Printf(format, v...)
 }
+
+// Print writes to the info output without appending a trailing newline
+// (log.Logger always appends one), e.g. for inline prompts.
+func (l *Logger) Print(format string, v ...interface{}) {
+	_, _ = fmt.Fprintf(l.infoLog.Writer(), format, v...)
+}

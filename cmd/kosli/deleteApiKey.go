@@ -62,7 +62,7 @@ func newDeleteApiKeyCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out, cmd.InOrStdin(), args)
+			return o.run(cmd.InOrStdin(), args)
 		},
 	}
 
@@ -83,28 +83,23 @@ func newDeleteApiKeyCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *deleteApiKeyOptions) run(out io.Writer, in io.Reader, args []string) error {
+func (o *deleteApiKeyOptions) run(in io.Reader, args []string) error {
 	if !o.assumeYes && !global.DryRun {
-		confirmed, err := confirmApiKeyDeletion(args, o.serviceAccount, out, in)
+		confirmed, err := confirmApiKeyDeletion(args, o.serviceAccount, in)
 		if err != nil {
 			return err
 		}
 		if !confirmed {
-			logger.Info("deletion of API key(s) %s was cancelled", strings.Join(args, ", "))
+			logger.Info("Deletion of API key(s) %s was cancelled.", strings.Join(styleApiKeyIDs(args), ", "))
 			return nil
 		}
 	}
 
 	// deletion is destructive and one-way: on any failure mid-batch, make clear
-	// which keys were already deleted before it (user-facing, styled green), while
-	// keeping the returned error plain (no ANSI).
+	// which keys were already deleted before it.
 	reportAlreadyDeleted := func(i int) {
 		if i > 0 {
-			deleted := make([]string, i)
-			for j, k := range args[:i] {
-				deleted[j] = style(out, k, ansiBold, ansiGreen)
-			}
-			logger.Info("keys already deleted before this failure: %s", strings.Join(deleted, ", "))
+			logger.Info("Keys already deleted before this failure: %s", strings.Join(styleApiKeyIDs(args[:i]), ", "))
 		}
 	}
 
@@ -126,22 +121,28 @@ func (o *deleteApiKeyOptions) run(out io.Writer, in io.Reader, args []string) er
 			return fmt.Errorf("failed to delete API key %s: %w", keyID, err)
 		}
 		if !global.DryRun {
-			logger.Info("API key %s for service account %s was deleted", style(out, keyID, ansiBold, ansiGreen), o.serviceAccount)
+			logger.Info("API key %s for service account %s was deleted!", style(logger.Out, keyID, ansiBold, ansiCyan), o.serviceAccount)
 		}
 	}
 	return nil
 }
 
-// confirmApiKeyDeletion prompts the user to confirm deletion and returns true
-// only when the answer is an affirmative "y"/"yes" (case-insensitive).
-func confirmApiKeyDeletion(keyIDs []string, serviceAccount string, out io.Writer, in io.Reader) (bool, error) {
+// styleApiKeyIDs styles key IDs for user-facing messages printed via logger
+// (bold cyan when styling is enabled for the logger's info stream).
+func styleApiKeyIDs(keyIDs []string) []string {
 	styledKeys := make([]string, len(keyIDs))
 	for i, keyID := range keyIDs {
-		styledKeys[i] = style(out, keyID, ansiBold, ansiMagenta)
+		styledKeys[i] = style(logger.Out, keyID, ansiBold, ansiCyan)
 	}
+	return styledKeys
+}
 
-	logger.Info("Are you sure you want to delete API key(s) %s for service account %s? [y/N]",
-		strings.Join(styledKeys, ", "), style(out, serviceAccount, ansiBold, ansiGreen))
+// confirmApiKeyDeletion prompts the user to confirm deletion and returns true
+// only when the answer is an affirmative "y"/"yes" (case-insensitive). The
+// prompt has no trailing newline so the answer is typed on the same line.
+func confirmApiKeyDeletion(keyIDs []string, serviceAccount string, in io.Reader) (bool, error) {
+	logger.Print("Are you sure you want to delete API key(s) %s for service account %s? [y/N] ",
+		strings.Join(styleApiKeyIDs(keyIDs), ", "), style(logger.Out, serviceAccount, ansiBold, ansiGreen))
 
 	answer, err := bufio.NewReader(in).ReadString('\n')
 	if err != nil && err != io.EOF {
