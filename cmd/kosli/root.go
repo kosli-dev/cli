@@ -107,6 +107,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	templateArtifactName            = "The name of the artifact in the yml template file."
 	flowNamesFlag                   = "[defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org."
 	outputFlag                      = "[defaulted] The format of the output. Valid formats are: [table, json]."
+	outputFlagWithMarkdown          = "[defaulted] The format of the output. Valid formats are: [table, json, markdown]."
 	searchByNameFlag                = "[optional] Only list flows whose name contains this substring. The Kosli API supports alphanumeric characters and '-'."
 	ignoreCaseFlag                  = "[optional] Perform case-insensitive matching for --name. By default matching is case sensitive."
 	serviceAccountNameFlag          = "The name of the service account whose API keys are managed."

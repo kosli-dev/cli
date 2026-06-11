@@ -1,0 +1,14 @@
+## Trail: cli-build-1
+
+| Field | Value |
+| --- | --- |
+| Name | cli-build-1 |
+| Description | test trail |
+| Compliance | INCOMPLETE |
+| Last modified at | Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16 |
+
+### Events
+
+| Time | Description | Git commit | Compliance |
+| --- | --- | --- | --- |
+| Sat, 16 Jan 2016 00:00:00 UTC | trail started |  |  |

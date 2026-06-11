@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -39,7 +40,7 @@ func newGetTrailCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlagWithMarkdown)
 
 	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
@@ -67,9 +68,80 @@ func (o *getTrailOptions) run(out io.Writer, args []string) error {
 
 	return output.FormattedPrint(response.Body, o.output, out, 0,
 		map[string]output.FormatOutputFunc{
-			"table": printTrailAsTable,
-			"json":  output.PrintJson,
+			"table":    printTrailAsTable,
+			"json":     output.PrintJson,
+			"markdown": printTrailAsMarkdown,
 		})
+}
+
+// printTrailAsMarkdown renders a trail as GitHub-Flavored Markdown, suitable for
+// piping into a CI job summary (e.g. GitHub's $GITHUB_STEP_SUMMARY or a GitLab
+// summary.md artifact).
+func printTrailAsMarkdown(raw string, out io.Writer, page int) error {
+	var trail map[string]interface{}
+	err := json.Unmarshal([]byte(raw), &trail)
+	if err != nil {
+		return err
+	}
+
+	lastModifiedAt, err := formattedTimestamp(trail["last_modified_at"], false)
+	if err != nil {
+		return err
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "## Trail: %s\n\n", mdCell(trail["name"]))
+	b.WriteString("| Field | Value |\n")
+	b.WriteString("| --- | --- |\n")
+	fmt.Fprintf(&b, "| Name | %s |\n", mdCell(trail["name"]))
+	fmt.Fprintf(&b, "| Description | %s |\n", mdCell(trail["description"]))
+	fmt.Fprintf(&b, "| Compliance | %s |\n", mdCell(trail["compliance_state"]))
+	fmt.Fprintf(&b, "| Last modified at | %s |\n", mdCell(lastModifiedAt))
+
+	if commitInfo, ok := trail["git_commit_info"].(map[string]interface{}); ok {
+		commitTimestamp, err := formattedTimestamp(commitInfo["timestamp"], false)
+		if err != nil {
+			return err
+		}
+		b.WriteString("\n### Git commit\n\n")
+		b.WriteString("| Field | Value |\n")
+		b.WriteString("| --- | --- |\n")
+		fmt.Fprintf(&b, "| Sha1 | %s |\n", mdCell(commitInfo["sha1"]))
+		fmt.Fprintf(&b, "| Author | %s |\n", mdCell(commitInfo["author"]))
+		fmt.Fprintf(&b, "| Timestamp | %s |\n", mdCell(commitTimestamp))
+		if url, ok := commitInfo["url"]; ok {
+			fmt.Fprintf(&b, "| URL | %s |\n", mdCell(url))
+		}
+		fmt.Fprintf(&b, "| Message | %s |\n", mdCell(commitInfo["message"]))
+	}
+
+	b.WriteString("\n### Events\n\n")
+	if events, ok := trail["events"].([]interface{}); ok && len(events) > 0 {
+		b.WriteString("| Time | Description | Git commit | Compliance |\n")
+		b.WriteString("| --- | --- | --- | --- |\n")
+		for _, event := range events {
+			timestamp, description, commit, compliance, err := eventFields(event)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(&b, "| %s | %s | %s | %s |\n",
+				mdCell(timestamp), mdCell(description), mdCell(commit), mdCell(compliance))
+		}
+	} else {
+		b.WriteString("_No events._\n")
+	}
+
+	_, err = fmt.Fprint(out, b.String())
+	return err
+}
+
+// mdCell renders a value as a single markdown table cell, escaping characters
+// that would otherwise break the table layout.
+func mdCell(v interface{}) string {
+	s := fmt.Sprintf("%v", v)
+	s = strings.ReplaceAll(s, "|", "\\|")
+	s = strings.ReplaceAll(s, "\n", "<br>")
+	return s
 }
 
 func printTrailAsTable(raw string, out io.Writer, page int) error {
@@ -126,10 +198,20 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 }
 
 func eventRow(event interface{}) (string, error) {
+	eventTimestamp, eventDescription, eventCommit, eventCompliance, err := eventFields(event)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("\t%s\t%s\t%s\t%s", eventTimestamp, eventDescription, eventCommit, eventCompliance), nil
+}
+
+// eventFields extracts the displayable fields of a trail event so they can be
+// rendered in any output format (table, markdown).
+func eventFields(event interface{}) (timestamp, description, commit, compliance string, err error) {
 	eventMap := event.(map[string]interface{})
 	eventTimestamp, err := formattedTimestamp(eventMap["timestamp"].(float64), true)
 	if err != nil {
-		return "", err
+		return "", "", "", "", err
 	}
 
 	eventDescription := ""
@@ -174,5 +256,5 @@ func eventRow(event interface{}) (string, error) {
 	default:
 		eventDescription = eventType
 	}
-	return fmt.Sprintf("\t%s\t%s\t%s\t%s", eventTimestamp, eventDescription, eventCommit, eventCompliance), nil
+	return eventTimestamp, eventDescription, eventCommit, eventCompliance, nil
 }
