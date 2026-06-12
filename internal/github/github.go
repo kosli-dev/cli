@@ -263,6 +263,7 @@ type graphqlCommitNode struct {
 		Oid             graphql.String
 		MessageHeadline graphql.String
 		CommittedDate   graphql.String
+		AuthoredDate    graphql.String
 		URL             graphql.String
 		Committer       struct {
 			Name  graphql.String
@@ -326,9 +327,13 @@ func buildPREvidence(
 	}
 
 	for _, n := range commitNodes {
-		// TODO(server#5479): timestamp uses the committer date; consider authoredDate for
-		// author-consistency (cross-provider: also Azure commit.Committer.Date, GitLab CreatedAt).
-		timestamp, err := time.Parse(time.RFC3339, string(n.Commit.CommittedDate))
+		// Use the author date to match the recorded author identity; fall back to
+		// the committed date if the API omits it (server#5479).
+		dateStr := string(n.Commit.AuthoredDate)
+		if dateStr == "" {
+			dateStr = string(n.Commit.CommittedDate)
+		}
+		timestamp, err := time.Parse(time.RFC3339, dateStr)
 		if err != nil {
 			return nil, err
 		}
