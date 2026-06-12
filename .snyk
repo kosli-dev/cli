@@ -13,3 +13,7 @@ exclude:
   global:
     - internal/azure/azure_apps.go
     - cmd/kosli/root.go
+    # False positive: Snyk Code flags the GitHub username in this test fixture
+    # (a graphql `Login` field) as a hardcoded credential. It is a public
+    # identifier in test data, not a secret. See kosli-dev/server#5479.
+    - internal/github/build_pr_evidence_test.go
