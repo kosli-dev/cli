@@ -143,6 +143,65 @@ func TestPrintTrailAsMarkdownEventLinksAndCompliance(t *testing.T) {
 	require.Contains(t, got, "| ❌ non-compliant |")
 }
 
+// TestPrintTrailAsMarkdownAttestationLinks covers linking attestation events to
+// the attestation in the Kosli app:
+// {host}/{org}/flows/{flow}/trails/{trail}?attestation_id={id}.
+func TestPrintTrailAsMarkdownAttestationLinks(t *testing.T) {
+	t.Setenv("KOSLI_TESTS", "true")
+	global = &GlobalOpts{
+		Host: "https://app.kosli.com",
+		Org:  "my-org",
+	}
+	o := &getTrailOptions{flowName: "my-flow"}
+
+	raw := `{
+		"name": "cli-build-5",
+		"description": "attestation trail",
+		"compliance_state": "COMPLIANT",
+		"last_modified_at": 1452902400,
+		"events": [
+			{
+				"type": "trail_attestation_for_artifact_reported",
+				"timestamp": 1452902400,
+				"attestation_type": "snyk",
+				"target_artifact": "artifact",
+				"template_reference_name": "snyk-code-test",
+				"attestation_id": "b8366cb0-249f-419e-b68a-d7046b7b",
+				"is_compliant": true
+			},
+			{
+				"type": "trail_attestation_reported",
+				"timestamp": 1452902400,
+				"attestation_type": "junit",
+				"template_reference_name": "unit-tests",
+				"attestation_id": "59d541bb-136c-49d7-a086-6c4dc5eb",
+				"is_compliant": true
+			},
+			{
+				"type": "trail_attestation_reported",
+				"timestamp": 1452902400,
+				"attestation_type": "generic",
+				"template_reference_name": "no-id-attestation",
+				"is_compliant": true
+			}
+		]
+	}`
+
+	var buf bytes.Buffer
+	err := o.printTrailAsMarkdown(raw, &buf, 0)
+	require.NoError(t, err)
+
+	got := buf.String()
+
+	require.Contains(t, got,
+		"'snyk' attestation reported for [artifact.snyk-code-test](https://app.kosli.com/my-org/flows/my-flow/trails/cli-build-5?attestation_id=b8366cb0-249f-419e-b68a-d7046b7b)")
+	require.Contains(t, got,
+		"'junit' attestation reported for [unit-tests](https://app.kosli.com/my-org/flows/my-flow/trails/cli-build-5?attestation_id=59d541bb-136c-49d7-a086-6c4dc5eb) on the trail")
+	require.Contains(t, got,
+		"'generic' attestation reported for no-id-attestation on the trail",
+		"an attestation event without an id stays unlinked")
+}
+
 // TestPrintTrailAsMarkdownEnvironmentLinks covers linking the environment name
 // in started/stopped running events to the environment snapshot in the Kosli
 // app: {host}/{org}/environments/{env}/{snapshot-index}, falling back to the

@@ -91,8 +91,12 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 	}
 
 	var b strings.Builder
+	trailURL, err := url.JoinPath(global.Host, global.Org, "flows", o.flowName, "trails", fmt.Sprintf("%v", trail["name"]))
+	if err != nil {
+		trailURL = ""
+	}
 	heading := mdCell(trail["name"])
-	if trailURL, err := url.JoinPath(global.Host, global.Org, "flows", o.flowName, "trails", fmt.Sprintf("%v", trail["name"])); err == nil {
+	if trailURL != "" {
 		heading = fmt.Sprintf("[%s](%s)", heading, trailURL)
 	}
 	fmt.Fprintf(&b, "## Trail: %s\n\n", heading)
@@ -138,7 +142,7 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 				commit = fmt.Sprintf("[%s](%s)", commit, e.commitURL)
 			}
 			fmt.Fprintf(&b, "| %s | %s | %s | %s |\n",
-				mdCell(e.timestamp), mdEventDescription(e), commit, mdEventCompliance(e.compliance))
+				mdCell(e.timestamp), mdEventDescription(e, trailURL), commit, mdEventCompliance(e.compliance))
 		}
 	} else {
 		b.WriteString("_No events._\n")
@@ -196,23 +200,36 @@ func mdComplianceState(v interface{}) string {
 }
 
 // mdEventDescription renders an event description as a markdown cell, linking
-// the environment name of started/stopped running events to the environment
-// snapshot in the Kosli app ({host}/{org}/environments/{env}/{snapshot-index}),
-// or to the environment page when no snapshot index is available.
-func mdEventDescription(e trailEventFields) string {
+// the parts of the description that have a page in the Kosli app:
+//   - the environment name of started/stopped running events links to the
+//     environment snapshot ({host}/{org}/environments/{env}/{snapshot-index}),
+//     or to the environment page when no snapshot index is available
+//   - the attestation reference of attestation events links to the attestation
+//     on the trail page ({trail-url}?attestation_id={id})
+func mdEventDescription(e trailEventFields, trailURL string) string {
 	description := mdCell(e.description)
-	if e.environmentName == "" {
-		return description
+
+	if e.environmentName != "" {
+		envURL, err := url.JoinPath(global.Host, global.Org, "environments", e.environmentName, e.snapshotIndex)
+		if err == nil {
+			if e.snapshotIndex == "" {
+				envURL += "/"
+			}
+			quoted := "'" + mdCell(e.environmentName) + "'"
+			description = strings.Replace(description, quoted, fmt.Sprintf("[%s](%s)", quoted, envURL), 1)
+		}
 	}
-	envURL, err := url.JoinPath(global.Host, global.Org, "environments", e.environmentName, e.snapshotIndex)
-	if err != nil {
-		return description
+
+	if e.attestationID != "" && e.attestationRef != "" && trailURL != "" {
+		ref := mdCell(e.attestationRef)
+		// anchor on "for " to avoid linking an attestation type that happens
+		// to share its name with the reference
+		anchored := "for " + ref
+		link := fmt.Sprintf("for [%s](%s?attestation_id=%s)", ref, trailURL, e.attestationID)
+		description = strings.Replace(description, anchored, link, 1)
 	}
-	if e.snapshotIndex == "" {
-		envURL += "/"
-	}
-	quoted := "'" + mdCell(e.environmentName) + "'"
-	return strings.Replace(description, quoted, fmt.Sprintf("[%s](%s)", quoted, envURL), 1)
+
+	return description
 }
 
 // mdEventCompliance prefixes an event compliance value with a glanceable emoji.
@@ -298,6 +315,8 @@ type trailEventFields struct {
 	compliance      string
 	environmentName string
 	snapshotIndex   string
+	attestationID   string
+	attestationRef  string // the attestation reference as it appears in the description, e.g. "artifact.snyk-scan"
 }
 
 func eventFields(event interface{}) (trailEventFields, error) {
@@ -330,6 +349,8 @@ func eventFields(event interface{}) (trailEventFields, error) {
 
 	eventEnvironment := ""
 	eventSnapshotIndex := ""
+	eventAttestationID := ""
+	eventAttestationRef := ""
 
 	eventType := eventMap["type"].(string)
 	switch eventType {
@@ -339,10 +360,18 @@ func eventFields(event interface{}) (trailEventFields, error) {
 		eventDescription = "trail updated"
 	case "trail_attestation_reported":
 		eventDescription = fmt.Sprintf("'%s' attestation reported for %s on the trail", eventMap["attestation_type"], eventMap["template_reference_name"])
+		eventAttestationRef = fmt.Sprintf("%v", eventMap["template_reference_name"])
+		if id, ok := eventMap["attestation_id"].(string); ok {
+			eventAttestationID = id
+		}
 	case "artifact_creation_reported":
 		eventDescription = fmt.Sprintf("artifact '%s' created for template name '%s'", eventMap["artifact_name"], eventMap["template_reference_name"])
 	case "artifact_attestation_reported", "trail_attestation_for_artifact_reported":
 		eventDescription = fmt.Sprintf("'%s' attestation reported for %s.%s", eventMap["attestation_type"], eventMap["target_artifact"], eventMap["template_reference_name"])
+		eventAttestationRef = fmt.Sprintf("%v.%v", eventMap["target_artifact"], eventMap["template_reference_name"])
+		if id, ok := eventMap["attestation_id"].(string); ok {
+			eventAttestationID = id
+		}
 	case "artifact_approval_reported":
 		if eventMap["state"].(string) != "PENDING" {
 			eventDescription = fmt.Sprintf("approval #%.0f created by '%s'", eventMap["approval_number"].(float64), eventMap["reviewer"])
@@ -372,5 +401,7 @@ func eventFields(event interface{}) (trailEventFields, error) {
 		compliance:      eventCompliance,
 		environmentName: eventEnvironment,
 		snapshotIndex:   eventSnapshotIndex,
+		attestationID:   eventAttestationID,
+		attestationRef:  eventAttestationRef,
 	}, nil
 }
