@@ -178,12 +178,10 @@ func commitFromAzureCommit(commit git.GitCommitRef, branch string) types.Commit 
 	return types.Commit{
 		SHA:       *commit.CommitId,
 		Message:   *commit.Comment,
-		Author:    *commit.Author.Name,
+		Author:    fmt.Sprintf("%s <%s>", *commit.Author.Name, *commit.Author.Email),
 		Timestamp: commit.Committer.Date.Time.Unix(),
 		URL:       *commit.Url,
 		Branch:    branch,
-		// TODO(server#5479): AuthorUsername is sourced from the committer; should be the author.
-		AuthorUsername: *commit.Committer.Name,
 	}
 }
 
