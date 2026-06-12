@@ -179,7 +179,7 @@ func commitFromAzureCommit(commit git.GitCommitRef, branch string) types.Commit 
 		SHA:       *commit.CommitId,
 		Message:   *commit.Comment,
 		Author:    fmt.Sprintf("%s <%s>", *commit.Author.Name, *commit.Author.Email),
-		Timestamp: commit.Committer.Date.Time.Unix(),
+		Timestamp: commit.Author.Date.Time.Unix(),
 		URL:       *commit.Url,
 		Branch:    branch,
 	}

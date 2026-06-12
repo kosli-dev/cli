@@ -43,3 +43,12 @@ func TestCommitFromAzureCommit_RecordsAuthorIdentity(t *testing.T) {
 	require.Empty(t, c.AuthorUsername,
 		"Azure commits carry no login; author_username must be omitted, not the committer name")
 }
+
+// TestCommitFromAzureCommit_UsesAuthorDate is a regression test for server#5479:
+// the timestamp must match the recorded author identity.
+func TestCommitFromAzureCommit_UsesAuthorDate(t *testing.T) {
+	c := commitFromAzureCommit(azTestCommit(), "my-branch")
+
+	require.Equal(t, int64(1772630000), c.Timestamp,
+		"timestamp must be the author date, not the committer date")
+}
