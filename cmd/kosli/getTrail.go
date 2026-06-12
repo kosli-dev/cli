@@ -136,10 +136,16 @@ func printTrailAsMarkdown(raw string, out io.Writer, page int) error {
 }
 
 // mdCell renders a value as a single markdown table cell, escaping characters
-// that would otherwise break the table layout.
+// that would otherwise break the table layout. CR and CRLF count as line
+// endings in CommonMark, so they must be normalized along with LF.
 func mdCell(v interface{}) string {
+	if v == nil {
+		return ""
+	}
 	s := fmt.Sprintf("%v", v)
 	s = strings.ReplaceAll(s, "|", "\\|")
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\r", "\n")
 	s = strings.ReplaceAll(s, "\n", "<br>")
 	return s
 }
