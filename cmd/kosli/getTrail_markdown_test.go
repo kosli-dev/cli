@@ -142,3 +142,50 @@ func TestPrintTrailAsMarkdownEventLinksAndCompliance(t *testing.T) {
 	require.Contains(t, got, "| ✅ compliant |")
 	require.Contains(t, got, "| ❌ non-compliant |")
 }
+
+// TestPrintTrailAsMarkdownEnvironmentLinks covers linking the environment name
+// in started/stopped running events to the environment snapshot in the Kosli
+// app: {host}/{org}/environments/{env}/{snapshot-index}, falling back to the
+// environment page when no snapshot index is present.
+func TestPrintTrailAsMarkdownEnvironmentLinks(t *testing.T) {
+	t.Setenv("KOSLI_TESTS", "true")
+	global = &GlobalOpts{
+		Host: "https://app.kosli.com",
+		Org:  "my-org",
+	}
+	o := &getTrailOptions{flowName: "my-flow"}
+
+	raw := `{
+		"name": "cli-build-4",
+		"description": "env trail",
+		"compliance_state": "COMPLIANT",
+		"last_modified_at": 1452902400,
+		"events": [
+			{
+				"type": "artifact_started_running",
+				"timestamp": 1452902400,
+				"template_reference_name": "artifact",
+				"environment_name": "staging-aws",
+				"snapshot_index": 15144
+			},
+			{
+				"type": "artifact_stopped_running",
+				"timestamp": 1452902400,
+				"template_reference_name": "artifact",
+				"environment_name": "prod-aws"
+			}
+		]
+	}`
+
+	var buf bytes.Buffer
+	err := o.printTrailAsMarkdown(raw, &buf, 0)
+	require.NoError(t, err)
+
+	got := buf.String()
+
+	require.Contains(t, got,
+		"artifact 'artifact' started running in ['staging-aws'](https://app.kosli.com/my-org/environments/staging-aws/15144)")
+	require.Contains(t, got,
+		"artifact 'artifact' stopped running in ['prod-aws'](https://app.kosli.com/my-org/environments/prod-aws/)",
+		"without a snapshot index the link falls back to the environment page")
+}

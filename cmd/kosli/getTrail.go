@@ -138,7 +138,7 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 				commit = fmt.Sprintf("[%s](%s)", commit, e.commitURL)
 			}
 			fmt.Fprintf(&b, "| %s | %s | %s | %s |\n",
-				mdCell(e.timestamp), mdCell(e.description), commit, mdEventCompliance(e.compliance))
+				mdCell(e.timestamp), mdEventDescription(e), commit, mdEventCompliance(e.compliance))
 		}
 	} else {
 		b.WriteString("_No events._\n")
@@ -193,6 +193,26 @@ func mdComplianceState(v interface{}) string {
 	default:
 		return s
 	}
+}
+
+// mdEventDescription renders an event description as a markdown cell, linking
+// the environment name of started/stopped running events to the environment
+// snapshot in the Kosli app ({host}/{org}/environments/{env}/{snapshot-index}),
+// or to the environment page when no snapshot index is available.
+func mdEventDescription(e trailEventFields) string {
+	description := mdCell(e.description)
+	if e.environmentName == "" {
+		return description
+	}
+	envURL, err := url.JoinPath(global.Host, global.Org, "environments", e.environmentName, e.snapshotIndex)
+	if err != nil {
+		return description
+	}
+	if e.snapshotIndex == "" {
+		envURL += "/"
+	}
+	quoted := "'" + mdCell(e.environmentName) + "'"
+	return strings.Replace(description, quoted, fmt.Sprintf("[%s](%s)", quoted, envURL), 1)
 }
 
 // mdEventCompliance prefixes an event compliance value with a glanceable emoji.
@@ -271,11 +291,13 @@ func eventRow(event interface{}) (string, error) {
 // trailEventFields holds the displayable fields of a trail event so they can be
 // rendered in any output format (table, markdown).
 type trailEventFields struct {
-	timestamp   string
-	description string
-	commitSHA   string
-	commitURL   string
-	compliance  string
+	timestamp       string
+	description     string
+	commitSHA       string
+	commitURL       string
+	compliance      string
+	environmentName string
+	snapshotIndex   string
 }
 
 func eventFields(event interface{}) (trailEventFields, error) {
@@ -306,6 +328,9 @@ func eventFields(event interface{}) (trailEventFields, error) {
 		}
 	}
 
+	eventEnvironment := ""
+	eventSnapshotIndex := ""
+
 	eventType := eventMap["type"].(string)
 	switch eventType {
 	case "trail_reported":
@@ -324,18 +349,28 @@ func eventFields(event interface{}) (trailEventFields, error) {
 		} else {
 			eventDescription = fmt.Sprintf("approval #%.0f requested", eventMap["approval_number"].(float64))
 		}
-	case "artifact_started_running":
-		eventDescription = fmt.Sprintf("artifact '%s' started running in '%s'", eventMap["template_reference_name"], eventMap["environment_name"])
-	case "artifact_stopped_running":
-		eventDescription = fmt.Sprintf("artifact '%s' stopped running in '%s'", eventMap["template_reference_name"], eventMap["environment_name"])
+	case "artifact_started_running", "artifact_stopped_running":
+		verb := "started"
+		if eventType == "artifact_stopped_running" {
+			verb = "stopped"
+		}
+		eventDescription = fmt.Sprintf("artifact '%s' %s running in '%s'", eventMap["template_reference_name"], verb, eventMap["environment_name"])
+		if envName, ok := eventMap["environment_name"].(string); ok {
+			eventEnvironment = envName
+		}
+		if snapshotIndex, ok := eventMap["snapshot_index"].(float64); ok {
+			eventSnapshotIndex = fmt.Sprintf("%.0f", snapshotIndex)
+		}
 	default:
 		eventDescription = eventType
 	}
 	return trailEventFields{
-		timestamp:   eventTimestamp,
-		description: eventDescription,
-		commitSHA:   eventCommit,
-		commitURL:   eventCommitURL,
-		compliance:  eventCompliance,
+		timestamp:       eventTimestamp,
+		description:     eventDescription,
+		commitSHA:       eventCommit,
+		commitURL:       eventCommitURL,
+		compliance:      eventCompliance,
+		environmentName: eventEnvironment,
+		snapshotIndex:   eventSnapshotIndex,
 	}, nil
 }
