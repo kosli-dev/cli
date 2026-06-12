@@ -243,7 +243,7 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 			allCommits = append(allCommits, types.Commit{
 				SHA:       commit["hash"].(string),
 				Message:   commit["message"].(string),
-				Committer: commit["author"].(map[string]any)["raw"].(string),
+				Author:    commit["author"].(map[string]any)["raw"].(string),
 				Timestamp: timestamp,
 				URL:       commit["links"].(map[string]any)["html"].(map[string]any)["href"].(string),
 			})

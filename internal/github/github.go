@@ -263,11 +263,11 @@ type graphqlCommitNode struct {
 		Oid             graphql.String
 		MessageHeadline graphql.String
 		CommittedDate   graphql.String
+		AuthoredDate    graphql.String
 		URL             graphql.String
-		Committer       struct {
+		Author          struct {
 			Name  graphql.String
 			Email graphql.String
-			Date  graphql.String
 			User  *struct {
 				Login graphql.String
 			}
@@ -319,22 +319,28 @@ func buildPREvidence(
 	}
 
 	for _, n := range commitNodes {
-		timestamp, err := time.Parse(time.RFC3339, string(n.Commit.CommittedDate))
+		// Use the author date to match the recorded author identity; fall back to
+		// the committed date if the API omits it (server#5479).
+		dateStr := string(n.Commit.AuthoredDate)
+		if dateStr == "" {
+			dateStr = string(n.Commit.CommittedDate)
+		}
+		timestamp, err := time.Parse(time.RFC3339, dateStr)
 		if err != nil {
 			return nil, err
 		}
-		committerUsername := ""
-		if n.Commit.Committer.User != nil {
-			committerUsername = string(n.Commit.Committer.User.Login)
+		authorUsername := ""
+		if n.Commit.Author.User != nil {
+			authorUsername = string(n.Commit.Author.User.Login)
 		}
 		evidence.Commits = append(evidence.Commits, types.Commit{
-			SHA:               string(n.Commit.Oid),
-			Message:           string(n.Commit.MessageHeadline),
-			Committer:         fmt.Sprintf("%s <%s>", string(n.Commit.Committer.Name), string(n.Commit.Committer.Email)),
-			CommitterUsername: committerUsername,
-			Timestamp:         timestamp.Unix(),
-			Branch:            headRef,
-			URL:               string(n.Commit.URL),
+			SHA:            string(n.Commit.Oid),
+			Message:        string(n.Commit.MessageHeadline),
+			Author:         fmt.Sprintf("%s <%s>", string(n.Commit.Author.Name), string(n.Commit.Author.Email)),
+			AuthorUsername: authorUsername,
+			Timestamp:      timestamp.Unix(),
+			Branch:         headRef,
+			URL:            string(n.Commit.URL),
 		})
 	}
 

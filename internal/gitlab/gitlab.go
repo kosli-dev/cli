@@ -174,14 +174,25 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 		return commits, err
 	}
 	for _, commit := range glCommits {
-		commits = append(commits, types.Commit{
-			SHA:       commit.ID,
-			Message:   commit.Message,
-			Committer: fmt.Sprintf("%s <%s>", commit.CommitterName, commit.CommitterEmail),
-			Timestamp: commit.CreatedAt.Unix(),
-			Branch:    mr.SourceBranch,
-			URL:       commit.WebURL,
-		})
+		commits = append(commits, commitFromGitlabCommit(commit, mr.SourceBranch))
 	}
 	return commits, nil
+}
+
+// commitFromGitlabCommit maps a GitLab API commit to a types.Commit.
+func commitFromGitlabCommit(commit *gitlab.Commit, branch string) types.Commit {
+	// Use the authored date to match the recorded author identity; fall back to
+	// created_at if the API omits it (server#5479).
+	timestamp := commit.CreatedAt.Unix()
+	if commit.AuthoredDate != nil {
+		timestamp = commit.AuthoredDate.Unix()
+	}
+	return types.Commit{
+		SHA:       commit.ID,
+		Message:   commit.Message,
+		Author:    fmt.Sprintf("%s <%s>", commit.AuthorName, commit.AuthorEmail),
+		Timestamp: timestamp,
+		Branch:    branch,
+		URL:       commit.WebURL,
+	}
 }

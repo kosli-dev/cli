@@ -167,18 +167,22 @@ func (c *AzureConfig) GetPullRequestCommits(pr git.GitPullRequest) ([]types.Comm
 	}
 
 	for _, commit := range prCommitsResponse.Value {
-		commits = append(commits, types.Commit{
-			SHA:               *commit.CommitId,
-			Message:           *commit.Comment,
-			Committer:         *commit.Author.Name,
-			Timestamp:         commit.Committer.Date.Time.Unix(),
-			URL:               *commit.Url,
-			Branch:            *pr.SourceRefName,
-			CommitterUsername: *commit.Committer.Name,
-		})
+		commits = append(commits, commitFromAzureCommit(commit, *pr.SourceRefName))
 	}
 
 	return commits, nil
+}
+
+// commitFromAzureCommit maps an Azure DevOps API commit to a types.Commit.
+func commitFromAzureCommit(commit git.GitCommitRef, branch string) types.Commit {
+	return types.Commit{
+		SHA:       *commit.CommitId,
+		Message:   *commit.Comment,
+		Author:    fmt.Sprintf("%s <%s>", *commit.Author.Name, *commit.Author.Email),
+		Timestamp: commit.Author.Date.Time.Unix(),
+		URL:       *commit.Url,
+		Branch:    branch,
+	}
 }
 
 // PullRequestsForCommit returns a list of pull requests for a specific commit
