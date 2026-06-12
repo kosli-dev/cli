@@ -182,10 +182,9 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 // commitFromGitlabCommit maps a GitLab API commit to a types.Commit.
 func commitFromGitlabCommit(commit *gitlab.Commit, branch string) types.Commit {
 	return types.Commit{
-		SHA:     commit.ID,
-		Message: commit.Message,
-		// TODO(server#5479): author is sourced from the committer; switch to AuthorName/AuthorEmail.
-		Author:    fmt.Sprintf("%s <%s>", commit.CommitterName, commit.CommitterEmail),
+		SHA:       commit.ID,
+		Message:   commit.Message,
+		Author:    fmt.Sprintf("%s <%s>", commit.AuthorName, commit.AuthorEmail),
 		Timestamp: commit.CreatedAt.Unix(),
 		Branch:    branch,
 		URL:       commit.WebURL,
