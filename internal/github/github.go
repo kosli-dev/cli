@@ -326,6 +326,8 @@ func buildPREvidence(
 	}
 
 	for _, n := range commitNodes {
+		// TODO(server#5479): timestamp uses the committer date; consider authoredDate for
+		// author-consistency (cross-provider: also Azure commit.Committer.Date, GitLab CreatedAt).
 		timestamp, err := time.Parse(time.RFC3339, string(n.Commit.CommittedDate))
 		if err != nil {
 			return nil, err
