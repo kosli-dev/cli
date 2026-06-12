@@ -272,6 +272,13 @@ type graphqlCommitNode struct {
 				Login graphql.String
 			}
 		}
+		Author struct {
+			Name  graphql.String
+			Email graphql.String
+			User  *struct {
+				Login graphql.String
+			}
+		}
 	}
 }
 
@@ -323,15 +330,15 @@ func buildPREvidence(
 		if err != nil {
 			return nil, err
 		}
-		committerUsername := ""
-		if n.Commit.Committer.User != nil {
-			committerUsername = string(n.Commit.Committer.User.Login)
+		authorUsername := ""
+		if n.Commit.Author.User != nil {
+			authorUsername = string(n.Commit.Author.User.Login)
 		}
 		evidence.Commits = append(evidence.Commits, types.Commit{
 			SHA:            string(n.Commit.Oid),
 			Message:        string(n.Commit.MessageHeadline),
-			Author:         fmt.Sprintf("%s <%s>", string(n.Commit.Committer.Name), string(n.Commit.Committer.Email)),
-			AuthorUsername: committerUsername,
+			Author:         fmt.Sprintf("%s <%s>", string(n.Commit.Author.Name), string(n.Commit.Author.Email)),
+			AuthorUsername: authorUsername,
 			Timestamp:      timestamp.Unix(),
 			Branch:         headRef,
 			URL:            string(n.Commit.URL),
