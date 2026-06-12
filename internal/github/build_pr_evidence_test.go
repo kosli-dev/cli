@@ -21,12 +21,9 @@ func TestBuildPREvidence_RecordsAuthorNotCommitter(t *testing.T) {
 	node.Commit.CommittedDate = "2026-03-01T12:00:00Z"
 	node.Commit.URL = "https://github.com/kosli-dev/cli/commit/0e723254516c841126e81f76100be57258ff1386"
 
-	// Committer is GitHub's web-flow identity, with no associated user.
-	node.Commit.Committer.Name = "GitHub"
-	node.Commit.Committer.Email = "noreply@github.com"
-	node.Commit.Committer.User = nil
-
-	// Author is the real person who wrote the change.
+	// Author is the real person who wrote the change. The query no longer
+	// fetches the committer at all (it would be GitHub's web-flow identity for
+	// applied-suggestion / bot commits), so only the author is recorded.
 	node.Commit.Author.Name = "Steve Tooke"
 	node.Commit.Author.Email = "tooky@kosli.com"
 	node.Commit.Author.User = &struct {
