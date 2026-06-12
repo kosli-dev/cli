@@ -328,13 +328,13 @@ func buildPREvidence(
 			committerUsername = string(n.Commit.Committer.User.Login)
 		}
 		evidence.Commits = append(evidence.Commits, types.Commit{
-			SHA:               string(n.Commit.Oid),
-			Message:           string(n.Commit.MessageHeadline),
-			Committer:         fmt.Sprintf("%s <%s>", string(n.Commit.Committer.Name), string(n.Commit.Committer.Email)),
-			CommitterUsername: committerUsername,
-			Timestamp:         timestamp.Unix(),
-			Branch:            headRef,
-			URL:               string(n.Commit.URL),
+			SHA:            string(n.Commit.Oid),
+			Message:        string(n.Commit.MessageHeadline),
+			Author:         fmt.Sprintf("%s <%s>", string(n.Commit.Committer.Name), string(n.Commit.Committer.Email)),
+			AuthorUsername: committerUsername,
+			Timestamp:      timestamp.Unix(),
+			Branch:         headRef,
+			URL:            string(n.Commit.URL),
 		})
 	}
 

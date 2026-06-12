@@ -168,13 +168,13 @@ func (c *AzureConfig) GetPullRequestCommits(pr git.GitPullRequest) ([]types.Comm
 
 	for _, commit := range prCommitsResponse.Value {
 		commits = append(commits, types.Commit{
-			SHA:               *commit.CommitId,
-			Message:           *commit.Comment,
-			Committer:         *commit.Author.Name,
-			Timestamp:         commit.Committer.Date.Time.Unix(),
-			URL:               *commit.Url,
-			Branch:            *pr.SourceRefName,
-			CommitterUsername: *commit.Committer.Name,
+			SHA:            *commit.CommitId,
+			Message:        *commit.Comment,
+			Author:         *commit.Author.Name,
+			Timestamp:      commit.Committer.Date.Time.Unix(),
+			URL:            *commit.Url,
+			Branch:         *pr.SourceRefName,
+			AuthorUsername: *commit.Committer.Name,
 		})
 	}
 

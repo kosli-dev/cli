@@ -20,13 +20,13 @@ type PRApprovals struct {
 }
 
 type Commit struct {
-	SHA               string `json:"sha1"`
-	Message           string `json:"message"`
-	Committer         string `json:"author"`
-	CommitterUsername string `json:"author_username,omitempty"`
-	Timestamp         int64  `json:"timestamp"`
-	Branch            string `json:"branch"`
-	URL               string `json:"url,omitempty"`
+	SHA            string `json:"sha1"`
+	Message        string `json:"message"`
+	Author         string `json:"author"`
+	AuthorUsername string `json:"author_username,omitempty"`
+	Timestamp      int64  `json:"timestamp"`
+	Branch         string `json:"branch"`
+	URL            string `json:"url,omitempty"`
 }
 
 type PRRetriever interface {

@@ -177,7 +177,7 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 		commits = append(commits, types.Commit{
 			SHA:       commit.ID,
 			Message:   commit.Message,
-			Committer: fmt.Sprintf("%s <%s>", commit.CommitterName, commit.CommitterEmail),
+			Author:    fmt.Sprintf("%s <%s>", commit.CommitterName, commit.CommitterEmail),
 			Timestamp: commit.CreatedAt.Unix(),
 			Branch:    mr.SourceBranch,
 			URL:       commit.WebURL,
