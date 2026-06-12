@@ -70,14 +70,15 @@ func (o *getTrailOptions) run(out io.Writer, args []string) error {
 		map[string]output.FormatOutputFunc{
 			"table":    printTrailAsTable,
 			"json":     output.PrintJson,
-			"markdown": printTrailAsMarkdown,
+			"markdown": o.printTrailAsMarkdown,
 		})
 }
 
 // printTrailAsMarkdown renders a trail as GitHub-Flavored Markdown, suitable for
 // piping into a CI job summary (e.g. GitHub's $GITHUB_STEP_SUMMARY or a GitLab
-// summary.md artifact).
-func printTrailAsMarkdown(raw string, out io.Writer, page int) error {
+// summary.md artifact). It is a method so the trail heading can link to the
+// trail page in the Kosli app, which needs the flow name.
+func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page int) error {
 	var trail map[string]interface{}
 	err := json.Unmarshal([]byte(raw), &trail)
 	if err != nil {
@@ -90,29 +91,37 @@ func printTrailAsMarkdown(raw string, out io.Writer, page int) error {
 	}
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "## Trail: %s\n\n", mdCell(trail["name"]))
+	heading := mdCell(trail["name"])
+	if trailURL, err := url.JoinPath(global.Host, global.Org, "flows", o.flowName, "trails", fmt.Sprintf("%v", trail["name"])); err == nil {
+		heading = fmt.Sprintf("[%s](%s)", heading, trailURL)
+	}
+	fmt.Fprintf(&b, "## Trail: %s\n\n", heading)
 	b.WriteString("| Field | Value |\n")
 	b.WriteString("| --- | --- |\n")
 	fmt.Fprintf(&b, "| Name | %s |\n", mdCell(trail["name"]))
 	fmt.Fprintf(&b, "| Description | %s |\n", mdCell(trail["description"]))
-	fmt.Fprintf(&b, "| Compliance | %s |\n", mdCell(trail["compliance_state"]))
+	fmt.Fprintf(&b, "| Compliance | %s |\n", mdComplianceState(trail["compliance_state"]))
 	fmt.Fprintf(&b, "| Last modified at | %s |\n", mdCell(lastModifiedAt))
+	if originURL, ok := trail["origin_url"].(string); ok && originURL != "" {
+		fmt.Fprintf(&b, "| Origin | %s |\n", mdCell(originURL))
+	}
 
 	if commitInfo, ok := trail["git_commit_info"].(map[string]interface{}); ok {
 		commitTimestamp, err := formattedTimestamp(commitInfo["timestamp"], false)
 		if err != nil {
 			return err
 		}
+		sha := mdCell(commitInfo["sha1"])
+		if commitURL, ok := commitInfo["url"].(string); ok && commitURL != "" {
+			sha = fmt.Sprintf("[%s](%s)", sha, commitURL)
+		}
 		b.WriteString("\n### Git commit\n\n")
 		b.WriteString("| Field | Value |\n")
 		b.WriteString("| --- | --- |\n")
-		fmt.Fprintf(&b, "| Sha1 | %s |\n", mdCell(commitInfo["sha1"]))
+		fmt.Fprintf(&b, "| Sha1 | %s |\n", sha)
 		fmt.Fprintf(&b, "| Author | %s |\n", mdCell(commitInfo["author"]))
 		fmt.Fprintf(&b, "| Timestamp | %s |\n", mdCell(commitTimestamp))
-		if url, ok := commitInfo["url"]; ok {
-			fmt.Fprintf(&b, "| URL | %s |\n", mdCell(url))
-		}
-		fmt.Fprintf(&b, "| Message | %s |\n", mdCell(commitInfo["message"]))
+		fmt.Fprintf(&b, "| Message | %s |\n", mdCell(firstLine(commitInfo["message"])))
 	}
 
 	b.WriteString("\n### Events\n\n")
@@ -120,12 +129,16 @@ func printTrailAsMarkdown(raw string, out io.Writer, page int) error {
 		b.WriteString("| Time | Description | Git commit | Compliance |\n")
 		b.WriteString("| --- | --- | --- | --- |\n")
 		for _, event := range events {
-			timestamp, description, commit, compliance, err := eventFields(event)
+			e, err := eventFields(event)
 			if err != nil {
 				return err
 			}
+			commit := mdCell(e.commitSHA)
+			if commit != "" && e.commitURL != "" {
+				commit = fmt.Sprintf("[%s](%s)", commit, e.commitURL)
+			}
 			fmt.Fprintf(&b, "| %s | %s | %s | %s |\n",
-				mdCell(timestamp), mdCell(description), mdCell(commit), mdCell(compliance))
+				mdCell(e.timestamp), mdCell(e.description), commit, mdEventCompliance(e.compliance))
 		}
 	} else {
 		b.WriteString("_No events._\n")
@@ -136,18 +149,62 @@ func printTrailAsMarkdown(raw string, out io.Writer, page int) error {
 }
 
 // mdCell renders a value as a single markdown table cell, escaping characters
-// that would otherwise break the table layout. CR and CRLF count as line
-// endings in CommonMark, so they must be normalized along with LF.
+// that would otherwise break the table layout or be swallowed as HTML (e.g.
+// "<email>" in a commit author). CR and CRLF count as line endings in
+// CommonMark, so they must be normalized along with LF.
 func mdCell(v interface{}) string {
 	if v == nil {
 		return ""
 	}
 	s := fmt.Sprintf("%v", v)
+	s = strings.ReplaceAll(s, "&", "&amp;")
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
 	s = strings.ReplaceAll(s, "|", "\\|")
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	s = strings.ReplaceAll(s, "\r", "\n")
 	s = strings.ReplaceAll(s, "\n", "<br>")
 	return s
+}
+
+// firstLine returns the first line of a multi-line value, e.g. a git commit
+// message subject. A full commit message would dominate a CI summary table.
+func firstLine(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+	s := fmt.Sprintf("%v", v)
+	if i := strings.IndexAny(s, "\r\n"); i >= 0 {
+		return s[:i]
+	}
+	return s
+}
+
+// mdComplianceState prefixes a trail compliance state with a glanceable emoji.
+func mdComplianceState(v interface{}) string {
+	s := mdCell(v)
+	switch s {
+	case "COMPLIANT":
+		return "✅ " + s
+	case "NON_COMPLIANT", "NON-COMPLIANT":
+		return "❌ " + s
+	case "INCOMPLETE":
+		return "⏳ " + s
+	default:
+		return s
+	}
+}
+
+// mdEventCompliance prefixes an event compliance value with a glanceable emoji.
+func mdEventCompliance(compliance string) string {
+	switch compliance {
+	case "compliant":
+		return "✅ " + compliance
+	case "non-compliant":
+		return "❌ " + compliance
+	default:
+		return mdCell(compliance)
+	}
 }
 
 func printTrailAsTable(raw string, out io.Writer, page int) error {
@@ -204,20 +261,28 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 }
 
 func eventRow(event interface{}) (string, error) {
-	eventTimestamp, eventDescription, eventCommit, eventCompliance, err := eventFields(event)
+	e, err := eventFields(event)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("\t%s\t%s\t%s\t%s", eventTimestamp, eventDescription, eventCommit, eventCompliance), nil
+	return fmt.Sprintf("\t%s\t%s\t%s\t%s", e.timestamp, e.description, e.commitSHA, e.compliance), nil
 }
 
-// eventFields extracts the displayable fields of a trail event so they can be
+// trailEventFields holds the displayable fields of a trail event so they can be
 // rendered in any output format (table, markdown).
-func eventFields(event interface{}) (timestamp, description, commit, compliance string, err error) {
+type trailEventFields struct {
+	timestamp   string
+	description string
+	commitSHA   string
+	commitURL   string
+	compliance  string
+}
+
+func eventFields(event interface{}) (trailEventFields, error) {
 	eventMap := event.(map[string]interface{})
 	eventTimestamp, err := formattedTimestamp(eventMap["timestamp"].(float64), true)
 	if err != nil {
-		return "", "", "", "", err
+		return trailEventFields{}, err
 	}
 
 	eventDescription := ""
@@ -231,9 +296,13 @@ func eventFields(event interface{}) (timestamp, description, commit, compliance 
 	}
 
 	eventCommit := ""
+	eventCommitURL := ""
 	if commitInfo, ok := eventMap["git_commit_info"].(map[string]interface{}); ok {
 		if sha1, ok := commitInfo["sha1"].(string); ok {
 			eventCommit = sha1[0:7]
+		}
+		if commitURL, ok := commitInfo["url"].(string); ok {
+			eventCommitURL = commitURL
 		}
 	}
 
@@ -262,5 +331,11 @@ func eventFields(event interface{}) (timestamp, description, commit, compliance 
 	default:
 		eventDescription = eventType
 	}
-	return eventTimestamp, eventDescription, eventCommit, eventCompliance, nil
+	return trailEventFields{
+		timestamp:   eventTimestamp,
+		description: eventDescription,
+		commitSHA:   eventCommit,
+		commitURL:   eventCommitURL,
+		compliance:  eventCompliance,
+	}, nil
 }

@@ -1,10 +1,10 @@
-## Trail: cli-build-1
+## Trail: [cli-build-1](http://localhost:8001/docs-cmd-test-user-shared/flows/get-trail/trails/cli-build-1)
 
 | Field | Value |
 | --- | --- |
 | Name | cli-build-1 |
 | Description | test trail |
-| Compliance | INCOMPLETE |
+| Compliance | ⏳ INCOMPLETE |
 | Last modified at | Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16 |
 
 ### Events
