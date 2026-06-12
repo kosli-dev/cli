@@ -265,15 +265,7 @@ type graphqlCommitNode struct {
 		CommittedDate   graphql.String
 		AuthoredDate    graphql.String
 		URL             graphql.String
-		Committer       struct {
-			Name  graphql.String
-			Email graphql.String
-			Date  graphql.String
-			User  *struct {
-				Login graphql.String
-			}
-		}
-		Author struct {
+		Author          struct {
 			Name  graphql.String
 			Email graphql.String
 			User  *struct {
