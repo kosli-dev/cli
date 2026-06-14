@@ -279,8 +279,8 @@ func writeAttestationTable(b *strings.Builder, attestations []interface{}, trail
 // not expected by the template).
 func mdAttestationCompliance(status string, isCompliant interface{}, unexpected bool) string {
 	var label string
-	switch {
-	case status == "MISSING":
+	switch status {
+	case "MISSING":
 		label = "⏳ missing"
 	default:
 		if compliant, ok := isCompliant.(bool); ok {

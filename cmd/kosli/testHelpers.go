@@ -40,7 +40,8 @@ type cmdTestCase struct {
 	name             string
 	cmd              string
 	golden           string
-	goldenFile       string
+	goldenFile       string // file of per-line regex patterns (use for output with varying parts, e.g. timestamps)
+	goldenFileExact  string // file compared exactly (use for deterministic output containing regex metacharacters, e.g. markdown)
 	goldenRegex      string
 	goldenJson       []jsonCheck // Use like this for array {"[0].compliant", false}
 	goldenStdout     string      // expected stdout only (exact match, ignored when empty)
@@ -107,6 +108,13 @@ func runTestCmd(t *testing.T, tests []cmdTestCase) {
 			} else if tt.goldenFile != "" {
 				if err := compareAgainstFile([]byte(combined), goldenPath(tt.goldenFile)); err != nil {
 					t.Error(err)
+				}
+			} else if tt.goldenFileExact != "" {
+				expected, err := os.ReadFile(goldenPath(tt.goldenFileExact))
+				if err != nil {
+					t.Error(err)
+				} else if err := compareFileBytes([]byte(combined), expected); err != nil {
+					t.Errorf("does not match golden file %s\n\nWANT:\n'%s'\n\nGOT:\n'%s'\n", tt.goldenFileExact, expected, combined)
 				}
 			} else if tt.goldenRegex != "" {
 				require.Regexp(t, tt.goldenRegex, combined)

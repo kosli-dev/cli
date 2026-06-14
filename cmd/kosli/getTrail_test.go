@@ -61,9 +61,9 @@ func (suite *GetTrailCommandTestSuite) TestGetTrailCmd() {
 			cmd:  fmt.Sprintf(`get trail %s --flow %s --output json %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
 		},
 		{
-			name:       "getting an existing trail with --output markdown works",
-			cmd:        fmt.Sprintf(`get trail %s --flow %s --output markdown %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			goldenFile: "output/get/get-trail-markdown.txt",
+			name:            "getting an existing trail with --output markdown works",
+			cmd:             fmt.Sprintf(`get trail %s --flow %s --output markdown %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenFileExact: "output/get/get-trail-markdown.txt",
 		},
 	}
 
