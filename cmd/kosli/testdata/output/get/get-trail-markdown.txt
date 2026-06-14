@@ -1,6 +1,6 @@
 ## Trail: [cli-build-1](http://localhost:8001/docs-cmd-test-user-shared/flows/get-trail/trails/cli-build-1)
 
-| Field | Value |
+|  |  |
 | --- | --- |
 | Name | cli-build-1 |
 | Description | test trail |

@@ -100,7 +100,7 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 		heading = fmt.Sprintf("[%s](%s)", heading, trailURL)
 	}
 	fmt.Fprintf(&b, "## Trail: %s\n\n", heading)
-	b.WriteString("| Field | Value |\n")
+	b.WriteString("|  |  |\n")
 	b.WriteString("| --- | --- |\n")
 	fmt.Fprintf(&b, "| Name | %s |\n", mdCell(trail["name"]))
 	fmt.Fprintf(&b, "| Description | %s |\n", mdCell(trail["description"]))
@@ -120,7 +120,7 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 			sha = fmt.Sprintf("[%s](%s)", sha, commitURL)
 		}
 		b.WriteString("\n### Git commit\n\n")
-		b.WriteString("| Field | Value |\n")
+		b.WriteString("|  |  |\n")
 		b.WriteString("| --- | --- |\n")
 		fmt.Fprintf(&b, "| Sha1 | %s |\n", sha)
 		fmt.Fprintf(&b, "| Author | %s |\n", mdCell(commitInfo["author"]))
