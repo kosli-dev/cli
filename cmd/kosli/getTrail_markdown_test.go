@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"testing"
 
@@ -20,11 +21,33 @@ func TestPrintTrailAsMarkdown(t *testing.T) {
 	}
 	o := &getTrailOptions{flowName: "get-trail"}
 
+	// Mirrors the get-trail integration fixture: a freshly-begun trail from a
+	// template with a trail attestation "bar" and an artifact "cli" with
+	// attestation "foo", none reported yet (all MISSING).
 	raw := `{
 		"name": "cli-build-1",
 		"description": "test trail",
 		"compliance_state": "INCOMPLETE",
 		"last_modified_at": 1452902400,
+		"compliance_status": {
+			"status": "INCOMPLETE",
+			"is_compliant": false,
+			"attestations_statuses": [
+				{"attestation_name": "bar", "attestation_type": "generic", "attestation_id": null, "overridden_attestation_id": null, "status": "MISSING", "is_compliant": null, "unexpected": false}
+			],
+			"artifacts_statuses": {
+				"cli": {
+					"artifact_fingerprint": null,
+					"artifact_id": null,
+					"status": "MISSING",
+					"is_compliant": null,
+					"attestations_statuses": [
+						{"attestation_name": "foo", "attestation_type": "generic", "attestation_id": null, "overridden_attestation_id": null, "status": "MISSING", "is_compliant": null, "unexpected": false}
+					],
+					"unexpected": false
+				}
+			}
+		},
 		"events": [
 			{"type": "trail_reported", "timestamp": 1452902400}
 		]
@@ -141,6 +164,65 @@ func TestPrintTrailAsMarkdownEventLinksAndCompliance(t *testing.T) {
 	require.Contains(t, got, "| 9f8e7d6 |", "commit without a URL renders as plain short sha")
 	require.Contains(t, got, "| ✅ compliant |")
 	require.Contains(t, got, "| ❌ non-compliant |")
+}
+
+// TestPrintTrailAsMarkdownAttestationStatuses covers the attestation-statuses
+// table: each attestation name links to the attestation in the app, the
+// compliance column uses emoji, and every compliance status is handled
+// (COMPLETE+compliant, COMPLETE+non-compliant, MISSING, and the unexpected flag),
+// grouped by trail and by artifact.
+func TestPrintTrailAsMarkdownAttestationStatuses(t *testing.T) {
+	t.Setenv("KOSLI_TESTS", "true")
+	global = &GlobalOpts{
+		Host: "https://app.kosli.com",
+		Org:  "my-org",
+	}
+	o := &getTrailOptions{flowName: "my-flow"}
+
+	raw := `{
+		"name": "cli-build-6",
+		"description": "attestation statuses trail",
+		"compliance_state": "NON_COMPLIANT",
+		"last_modified_at": 1452902400,
+		"compliance_status": {
+			"status": "NON-COMPLIANT",
+			"is_compliant": false,
+			"attestations_statuses": [
+				{"attestation_name": "bar", "attestation_type": "generic", "attestation_id": "aaa-bar", "status": "COMPLETE", "is_compliant": true, "unexpected": false}
+			],
+			"artifacts_statuses": {
+				"cli": {
+					"status": "NON-COMPLIANT",
+					"is_compliant": false,
+					"attestations_statuses": [
+						{"attestation_name": "foo", "attestation_type": "generic", "attestation_id": "aaa-foo", "status": "COMPLETE", "is_compliant": true, "unexpected": false},
+						{"attestation_name": "baz", "attestation_type": "snyk", "attestation_id": "aaa-baz", "status": "COMPLETE", "is_compliant": false, "unexpected": false},
+						{"attestation_name": "qux", "attestation_type": "junit", "attestation_id": null, "status": "MISSING", "is_compliant": null, "unexpected": false},
+						{"attestation_name": "extra", "attestation_type": "generic", "attestation_id": "aaa-extra", "status": "COMPLETE", "is_compliant": true, "unexpected": true}
+					]
+				}
+			}
+		},
+		"events": []
+	}`
+
+	var buf bytes.Buffer
+	err := o.printTrailAsMarkdown(raw, &buf, 0)
+	require.NoError(t, err)
+
+	got := buf.String()
+	trailURL := "https://app.kosli.com/my-org/flows/my-flow/trails/cli-build-6"
+
+	require.Contains(t, got, "### Attestations")
+	require.Contains(t, got, "**Trail**")
+	require.Contains(t, got, "**cli** — ❌ NON-COMPLIANT")
+	// trail-level attestation, linked, compliant
+	require.Contains(t, got, fmt.Sprintf("| [bar](%s?attestation_id=aaa-bar) | ✅ compliant |", trailURL))
+	// artifact attestations: compliant, non-compliant, missing (unlinked), unexpected
+	require.Contains(t, got, fmt.Sprintf("| [foo](%s?attestation_id=aaa-foo) | ✅ compliant |", trailURL))
+	require.Contains(t, got, fmt.Sprintf("| [baz](%s?attestation_id=aaa-baz) | ❌ non-compliant |", trailURL))
+	require.Contains(t, got, "| qux | ⏳ missing |")
+	require.Contains(t, got, fmt.Sprintf("| [extra](%s?attestation_id=aaa-extra) | ✅ compliant — ⚠️ unexpected |", trailURL))
 }
 
 // TestPrintTrailAsMarkdownAttestationLinks covers linking attestation events to

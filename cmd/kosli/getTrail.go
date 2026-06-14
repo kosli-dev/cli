@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -128,6 +129,8 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 		fmt.Fprintf(&b, "| Message | %s |\n", mdCell(firstLine(commitInfo["message"])))
 	}
 
+	writeAttestationStatuses(&b, trail["compliance_status"], trailURL)
+
 	b.WriteString("\n### Events\n\n")
 	if events, ok := trail["events"].([]interface{}); ok && len(events) > 0 {
 		b.WriteString("| Time | Description | Git commit | Compliance |\n")
@@ -184,7 +187,9 @@ func firstLine(v interface{}) string {
 	return s
 }
 
-// mdComplianceState prefixes a trail compliance state with a glanceable emoji.
+// mdComplianceState prefixes a trail or artifact compliance state with a
+// glanceable emoji. Values come from the server: COMPLIANT / NON-COMPLIANT /
+// INCOMPLETE for trails, plus MISSING for artifacts.
 func mdComplianceState(v interface{}) string {
 	s := mdCell(v)
 	switch s {
@@ -192,11 +197,106 @@ func mdComplianceState(v interface{}) string {
 		return "✅ " + s
 	case "NON_COMPLIANT", "NON-COMPLIANT":
 		return "❌ " + s
-	case "INCOMPLETE":
+	case "INCOMPLETE", "MISSING":
 		return "⏳ " + s
 	default:
 		return s
 	}
+}
+
+// writeAttestationStatuses renders the trail's attestation compliance statuses
+// as headerless two-column tables (attestation name → compliance), grouped by
+// the trail and by each artifact. The attestation name links to the attestation
+// on the trail page when an attestation_id is present. The section is omitted
+// when the trail has no attestation statuses.
+func writeAttestationStatuses(b *strings.Builder, complianceStatus interface{}, trailURL string) {
+	cs, ok := complianceStatus.(map[string]interface{})
+	if !ok {
+		return
+	}
+	trailAtts, _ := cs["attestations_statuses"].([]interface{})
+	artifactsStatuses, _ := cs["artifacts_statuses"].(map[string]interface{})
+
+	artifactNames := make([]string, 0, len(artifactsStatuses))
+	for name := range artifactsStatuses {
+		artifactNames = append(artifactNames, name)
+	}
+	sort.Strings(artifactNames)
+
+	total := len(trailAtts)
+	for _, name := range artifactNames {
+		if artifact, ok := artifactsStatuses[name].(map[string]interface{}); ok {
+			if atts, ok := artifact["attestations_statuses"].([]interface{}); ok {
+				total += len(atts)
+			}
+		}
+	}
+	if total == 0 {
+		return
+	}
+
+	b.WriteString("\n### Attestations\n")
+
+	if len(trailAtts) > 0 {
+		b.WriteString("\n**Trail**\n\n")
+		writeAttestationTable(b, trailAtts, trailURL)
+	}
+
+	for _, name := range artifactNames {
+		artifact, ok := artifactsStatuses[name].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		fmt.Fprintf(b, "\n**%s** — %s\n\n", mdCell(name), mdComplianceState(artifact["status"]))
+		atts, _ := artifact["attestations_statuses"].([]interface{})
+		writeAttestationTable(b, atts, trailURL)
+	}
+}
+
+// writeAttestationTable writes a headerless two-column table of attestation
+// name (linked when possible) and compliance status.
+func writeAttestationTable(b *strings.Builder, attestations []interface{}, trailURL string) {
+	b.WriteString("|  |  |\n")
+	b.WriteString("| --- | --- |\n")
+	for _, a := range attestations {
+		att, ok := a.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name := mdCell(att["attestation_name"])
+		if id, ok := att["attestation_id"].(string); ok && id != "" && trailURL != "" {
+			name = fmt.Sprintf("[%s](%s?attestation_id=%s)", name, trailURL, id)
+		}
+		status, _ := att["status"].(string)
+		unexpected, _ := att["unexpected"].(bool)
+		fmt.Fprintf(b, "| %s | %s |\n", name, mdAttestationCompliance(status, att["is_compliant"], unexpected))
+	}
+}
+
+// mdAttestationCompliance maps an attestation's compliance to a glanceable emoji
+// label, covering every status the server produces: MISSING (not yet reported),
+// COMPLETE with is_compliant true/false, and the unexpected flag (reported but
+// not expected by the template).
+func mdAttestationCompliance(status string, isCompliant interface{}, unexpected bool) string {
+	var label string
+	switch {
+	case status == "MISSING":
+		label = "⏳ missing"
+	default:
+		if compliant, ok := isCompliant.(bool); ok {
+			if compliant {
+				label = "✅ compliant"
+			} else {
+				label = "❌ non-compliant"
+			}
+		} else {
+			label = "⏳ pending"
+		}
+	}
+	if unexpected {
+		label += " — ⚠️ unexpected"
+	}
+	return label
 }
 
 // mdEventDescription renders an event description as a markdown cell, linking

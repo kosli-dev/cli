@@ -7,6 +7,20 @@
 | Compliance | ⏳ INCOMPLETE |
 | Last modified at | Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16 |
 
+### Attestations
+
+**Trail**
+
+|  |  |
+| --- | --- |
+| bar | ⏳ missing |
+
+**cli** — ⏳ MISSING
+
+|  |  |
+| --- | --- |
+| foo | ⏳ missing |
+
 ### Events
 
 | Time | Description | Git commit | Compliance |
