@@ -131,6 +131,7 @@ func (c *AzureConfig) newPRAzureEvidenceV2(pr git.GitPullRequest) (*types.PREvid
 		CreatedAt:   pr.CreationDate.Time.Unix(),
 		Title:       *pr.Title,
 		HeadRef:     *pr.SourceRefName,
+		BaseRef:     *pr.TargetRefName,
 	}
 	if pr.Status != nil && pr.ClosedDate != nil && *pr.Status == git.PullRequestStatusValues.Completed {
 		evidence.MergedAt = pr.ClosedDate.Time.Unix()
