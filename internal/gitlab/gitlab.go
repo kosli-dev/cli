@@ -2,6 +2,7 @@ package gitlab
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/kosli-dev/cli/internal/types"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -107,6 +108,7 @@ func (c *GitlabConfig) newPRGitlabEvidenceV2(mr *gitlab.BasicMergeRequest) (*typ
 		MergedAt:    mr.MergedAt.Unix(),
 		Title:       mr.Title,
 		HeadRef:     mr.SourceBranch,
+		BaseRef:     mr.TargetBranch,
 	}
 	approvers, err := c.GetMergeRequestApprovers(mr.IID, 2)
 	if err != nil {
@@ -174,7 +176,20 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 		return commits, err
 	}
 	for _, commit := range glCommits {
-		commits = append(commits, commitFromGitlabCommit(commit, mr.SourceBranch))
+		mappedCommit := commitFromGitlabCommit(commit, mr.SourceBranch)
+		// Capture the commit signature. GitLab returns 404 for unsigned commits,
+		// which must be treated as "unsigned" (fields left nil), not an error —
+		// otherwise a single unsigned commit would fail the whole attestation
+		// (server#5892).
+		sig, resp, sigErr := client.Commits.GetGPGSignature(c.ProjectID(), commit.ID)
+		if sigErr != nil {
+			if resp == nil || resp.StatusCode != http.StatusNotFound {
+				return commits, sigErr
+			}
+		} else {
+			mappedCommit.Verified, mappedCommit.SignatureState = gitlabCommitVerification(sig.VerificationStatus)
+		}
+		commits = append(commits, mappedCommit)
 	}
 	return commits, nil
 }
@@ -195,4 +210,16 @@ func commitFromGitlabCommit(commit *gitlab.Commit, branch string) types.Commit {
 		Branch:    branch,
 		URL:       commit.WebURL,
 	}
+}
+
+// gitlabCommitVerification maps a GitLab signature verification_status to the
+// neutral verified/signature_state fields (server#5892). The status is
+// "verified" only when the signature is cryptographically valid; an empty
+// status leaves both nil (unsigned commits 404 and are handled by the caller).
+func gitlabCommitVerification(status string) (*bool, *string) {
+	if status == "" {
+		return nil, nil
+	}
+	verified := status == "verified"
+	return &verified, &status
 }
