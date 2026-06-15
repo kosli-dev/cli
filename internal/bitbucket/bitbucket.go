@@ -183,6 +183,7 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 			evidence.MergedAt = mergedAt
 			evidence.Title = responseData["title"].(string)
 			evidence.HeadRef = responseData["source"].(map[string]any)["branch"].(map[string]any)["name"].(string)
+			evidence.BaseRef = responseData["destination"].(map[string]any)["branch"].(map[string]any)["name"].(string)
 
 			prCommits, err := c.getPullRequestCommitsFromBitbucket(int(responseData["id"].(float64)))
 			if err != nil {
