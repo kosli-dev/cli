@@ -107,9 +107,8 @@ func (c *GitlabConfig) newPRGitlabEvidenceV2(mr *gitlab.BasicMergeRequest) (*typ
 		CreatedAt:   mr.CreatedAt.Unix(),
 		MergedAt:    mr.MergedAt.Unix(),
 		Title:       mr.Title,
-		HeadRef:     mr.SourceBranch,
-		BaseRef:     mr.TargetBranch,
 	}
+	evidence.HeadRef, evidence.BaseRef = gitlabMRRefs(mr)
 	approvers, err := c.GetMergeRequestApprovers(mr.IID, 2)
 	if err != nil {
 		return evidence, err
@@ -177,18 +176,14 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 	}
 	for _, commit := range glCommits {
 		mappedCommit := commitFromGitlabCommit(commit, mr.SourceBranch)
-		// Capture the commit signature. GitLab returns 404 for unsigned commits,
-		// which must be treated as "unsigned" (fields left nil), not an error —
-		// otherwise a single unsigned commit would fail the whole attestation
-		// (server#5892).
-		sig, resp, sigErr := client.Commits.GetGPGSignature(c.ProjectID(), commit.ID)
-		if sigErr != nil {
-			if resp == nil || resp.StatusCode != http.StatusNotFound {
-				return commits, sigErr
-			}
-		} else {
-			mappedCommit.Verified, mappedCommit.SignatureState = gitlabCommitVerification(sig.VerificationStatus)
+		verified, signatureState, err := resolveGitlabSignature(
+			client.Commits.GetGPGSignature(c.ProjectID(), commit.ID),
+		)
+		if err != nil {
+			return commits, err
 		}
+		mappedCommit.Verified = verified
+		mappedCommit.SignatureState = signatureState
 		commits = append(commits, mappedCommit)
 	}
 	return commits, nil
@@ -222,4 +217,26 @@ func gitlabCommitVerification(status string) (*bool, *string) {
 	}
 	verified := status == "verified"
 	return &verified, &status
+}
+
+// resolveGitlabSignature maps the result of a GetGPGSignature call to the
+// neutral verified/signature_state fields. GitLab returns 404 for unsigned
+// commits, which is treated as unsigned (nil fields) rather than a fatal error
+// (server#5892); other errors propagate so incomplete signature data is never
+// silently recorded.
+func resolveGitlabSignature(sig *gitlab.GPGSignature, resp *gitlab.Response, err error) (*bool, *string, error) {
+	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, nil, nil
+		}
+		return nil, nil, err
+	}
+	verified, signatureState := gitlabCommitVerification(sig.VerificationStatus)
+	return verified, signatureState, nil
+}
+
+// gitlabMRRefs returns the head (source) and base (target) branch names of a
+// merge request.
+func gitlabMRRefs(mr *gitlab.BasicMergeRequest) (head, base string) {
+	return mr.SourceBranch, mr.TargetBranch
 }

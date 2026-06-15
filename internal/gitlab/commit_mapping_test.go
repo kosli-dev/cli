@@ -1,6 +1,8 @@
 package gitlab
 
 import (
+	"errors"
+	"net/http"
 	"testing"
 	"time"
 
@@ -90,4 +92,46 @@ func TestGitlabCommitVerification(t *testing.T) {
 	verified, state = gitlabCommitVerification("")
 	require.Nil(t, verified, "empty status (unsigned) must leave verified nil")
 	require.Nil(t, state)
+}
+
+// TestResolveGitlabSignature covers the unsigned (404), fatal-error, and
+// verified/unverified outcomes of a GetGPGSignature call (server#5892).
+func TestResolveGitlabSignature(t *testing.T) {
+	notFound := &gitlab.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+	verified, state, err := resolveGitlabSignature(nil, notFound, errors.New("404"))
+	require.NoError(t, err, "404 (unsigned commit) must not be a fatal error")
+	require.Nil(t, verified, "unsigned commit must leave verified nil")
+	require.Nil(t, state)
+
+	serverErr := &gitlab.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}
+	_, _, err = resolveGitlabSignature(nil, serverErr, errors.New("boom"))
+	require.Error(t, err, "a non-404 error must propagate")
+
+	_, _, err = resolveGitlabSignature(nil, nil, errors.New("transport failure"))
+	require.Error(t, err, "an error with no response must propagate")
+
+	verified, state, err = resolveGitlabSignature(
+		&gitlab.GPGSignature{VerificationStatus: "verified"}, &gitlab.Response{}, nil,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, verified)
+	require.True(t, *verified)
+	require.Equal(t, "verified", *state)
+
+	verified, _, err = resolveGitlabSignature(
+		&gitlab.GPGSignature{VerificationStatus: "unverified"}, &gitlab.Response{}, nil,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, verified)
+	require.False(t, *verified, "a non-'verified' status must record verified=false")
+}
+
+// TestGitlabMRRefs verifies the head (source) / base (target) branch mapping.
+func TestGitlabMRRefs(t *testing.T) {
+	head, base := gitlabMRRefs(&gitlab.BasicMergeRequest{
+		SourceBranch: "feature-branch",
+		TargetBranch: "main",
+	})
+	require.Equal(t, "feature-branch", head)
+	require.Equal(t, "main", base)
 }

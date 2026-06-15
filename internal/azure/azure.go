@@ -130,9 +130,8 @@ func (c *AzureConfig) newPRAzureEvidenceV2(pr git.GitPullRequest) (*types.PREvid
 		Author:      fmt.Sprintf("%s (%s)", *pr.CreatedBy.DisplayName, *pr.CreatedBy.UniqueName),
 		CreatedAt:   pr.CreationDate.Time.Unix(),
 		Title:       *pr.Title,
-		HeadRef:     *pr.SourceRefName,
-		BaseRef:     *pr.TargetRefName,
 	}
+	evidence.HeadRef, evidence.BaseRef = azurePRRefs(pr)
 	if pr.Status != nil && pr.ClosedDate != nil && *pr.Status == git.PullRequestStatusValues.Completed {
 		evidence.MergedAt = pr.ClosedDate.Time.Unix()
 	}
@@ -146,6 +145,12 @@ func (c *AzureConfig) newPRAzureEvidenceV2(pr git.GitPullRequest) (*types.PREvid
 		return evidence, err
 	}
 	return evidence, nil
+}
+
+// azurePRRefs returns the head (source) and base (target) ref names of an Azure
+// DevOps pull request, kept raw (e.g. "refs/heads/main") to match head_ref.
+func azurePRRefs(pr git.GitPullRequest) (head, base string) {
+	return *pr.SourceRefName, *pr.TargetRefName
 }
 
 // GetPullRequestCommits returns a list of commits for a given pull request
