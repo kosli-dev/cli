@@ -294,7 +294,7 @@ func mdAttestationCompliance(status string, isCompliant interface{}, unexpected 
 		}
 	}
 	if unexpected {
-		label += " — ⚠️ unexpected"
+		label += " +"
 	}
 	return label
 }

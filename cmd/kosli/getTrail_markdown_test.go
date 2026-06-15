@@ -222,7 +222,7 @@ func TestPrintTrailAsMarkdownAttestationStatuses(t *testing.T) {
 	require.Contains(t, got, fmt.Sprintf("| [foo](%s?attestation_id=aaa-foo) | ✅ compliant |", trailURL))
 	require.Contains(t, got, fmt.Sprintf("| [baz](%s?attestation_id=aaa-baz) | ❌ non-compliant |", trailURL))
 	require.Contains(t, got, "| qux | ⏳ missing |")
-	require.Contains(t, got, fmt.Sprintf("| [extra](%s?attestation_id=aaa-extra) | ✅ compliant — ⚠️ unexpected |", trailURL))
+	require.Contains(t, got, fmt.Sprintf("| [extra](%s?attestation_id=aaa-extra) | ✅ compliant + |", trailURL))
 }
 
 // TestPrintTrailAsMarkdownAttestationLinks covers linking attestation events to
