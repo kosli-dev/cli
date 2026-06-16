@@ -225,6 +225,89 @@ func TestPrintTrailAsMarkdownAttestationStatuses(t *testing.T) {
 	require.Contains(t, got, fmt.Sprintf("| [extra](%s?attestation_id=aaa-extra) | ✅ compliant (+) |", trailURL))
 }
 
+// TestPrintTrailAsMarkdownSkipsEmptyArtifactAttestations covers an artifact in
+// artifacts_statuses that has no attestations of its own: it must not emit a
+// header followed by an empty table when another artifact (or the trail) does
+// have attestations, so the section-level total > 0 guard still passes.
+func TestPrintTrailAsMarkdownSkipsEmptyArtifactAttestations(t *testing.T) {
+	t.Setenv("KOSLI_TESTS", "true")
+	global = &GlobalOpts{
+		Host: "https://app.kosli.com",
+		Org:  "my-org",
+	}
+	o := &getTrailOptions{flowName: "my-flow"}
+
+	raw := `{
+		"name": "cli-build-7",
+		"description": "mixed artifacts trail",
+		"compliance_state": "COMPLIANT",
+		"last_modified_at": 1452902400,
+		"compliance_status": {
+			"status": "COMPLIANT",
+			"is_compliant": true,
+			"attestations_statuses": [],
+			"artifacts_statuses": {
+				"has-atts": {
+					"status": "COMPLIANT",
+					"is_compliant": true,
+					"attestations_statuses": [
+						{"attestation_name": "foo", "attestation_type": "generic", "attestation_id": "aaa-foo", "status": "COMPLETE", "is_compliant": true, "unexpected": false}
+					]
+				},
+				"no-atts": {
+					"status": "COMPLIANT",
+					"is_compliant": true,
+					"attestations_statuses": []
+				}
+			}
+		},
+		"events": []
+	}`
+
+	var buf bytes.Buffer
+	err := o.printTrailAsMarkdown(raw, &buf, 0)
+	require.NoError(t, err)
+
+	got := buf.String()
+
+	require.Contains(t, got, "**has-atts** — ✅ COMPLIANT",
+		"an artifact with attestations is still rendered")
+	require.NotContains(t, got, "no-atts",
+		"an artifact with zero attestations is skipped entirely, not rendered as an empty table")
+}
+
+// TestPrintTrailAsMarkdownShortCommitSha covers a malformed commit sha shorter
+// than 7 characters on an event: the short-sha slice must be length-guarded so
+// it can't panic with a slice-bounds error.
+func TestPrintTrailAsMarkdownShortCommitSha(t *testing.T) {
+	t.Setenv("KOSLI_TESTS", "true")
+	global = &GlobalOpts{
+		Host: "https://app.kosli.com",
+		Org:  "my-org",
+	}
+	o := &getTrailOptions{flowName: "my-flow"}
+
+	raw := `{
+		"name": "cli-build-8",
+		"description": "short sha trail",
+		"compliance_state": "COMPLIANT",
+		"last_modified_at": 1452902400,
+		"events": [
+			{
+				"type": "trail_reported",
+				"timestamp": 1452902400,
+				"git_commit_info": {"sha1": "abc"}
+			}
+		]
+	}`
+
+	var buf bytes.Buffer
+	require.NotPanics(t, func() {
+		err := o.printTrailAsMarkdown(raw, &buf, 0)
+		require.NoError(t, err)
+	})
+}
+
 // TestPrintTrailAsMarkdownAttestationLinks covers linking attestation events to
 // the attestation in the Kosli app:
 // {host}/{org}/flows/{flow}/trails/{trail}?attestation_id={id}.

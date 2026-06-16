@@ -247,8 +247,11 @@ func writeAttestationStatuses(b *strings.Builder, complianceStatus interface{}, 
 		if !ok {
 			continue
 		}
-		fmt.Fprintf(b, "\n**%s** — %s\n\n", mdCell(name), mdComplianceState(artifact["status"]))
 		atts, _ := artifact["attestations_statuses"].([]interface{})
+		if len(atts) == 0 {
+			continue
+		}
+		fmt.Fprintf(b, "\n**%s** — %s\n\n", mdCell(name), mdComplianceState(artifact["status"]))
 		writeAttestationTable(b, atts, trailURL)
 	}
 }
@@ -439,7 +442,7 @@ func eventFields(event interface{}) (trailEventFields, error) {
 	eventCommit := ""
 	eventCommitURL := ""
 	if commitInfo, ok := eventMap["git_commit_info"].(map[string]interface{}); ok {
-		if sha1, ok := commitInfo["sha1"].(string); ok {
+		if sha1, ok := commitInfo["sha1"].(string); ok && len(sha1) >= 7 {
 			eventCommit = sha1[0:7]
 		}
 		if commitURL, ok := commitInfo["url"].(string); ok {
