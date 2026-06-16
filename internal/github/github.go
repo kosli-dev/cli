@@ -272,6 +272,10 @@ type graphqlCommitNode struct {
 				Login graphql.String
 			}
 		}
+		Signature *struct {
+			IsValid graphql.Boolean
+			State   graphql.String
+		}
 	}
 }
 
@@ -288,7 +292,7 @@ type graphqlReviewNode struct {
 // raw GraphQL commit/review nodes. mergeCommit must be resolved by the caller
 // (it differs between commit-SHA queries and PR-number queries).
 func buildPREvidence(
-	url, mergeCommit, state, author, createdAtStr, mergedAtStr, title, headRef string,
+	url, mergeCommit, state, author, createdAtStr, mergedAtStr, title, headRef, baseRef string,
 	commitNodes []graphqlCommitNode,
 	reviewNodes []graphqlReviewNode,
 ) (*types.PREvidence, error) {
@@ -314,6 +318,7 @@ func buildPREvidence(
 		MergedAt:    mergedAt,
 		Title:       title,
 		HeadRef:     headRef,
+		BaseRef:     baseRef,
 		Approvers:   []any{},
 		Commits:     []types.Commit{},
 	}
@@ -333,6 +338,17 @@ func buildPREvidence(
 		if n.Commit.Author.User != nil {
 			authorUsername = string(n.Commit.Author.User.Login)
 		}
+		// Capture the commit signature when present. A nil signature node means
+		// the commit is unsigned, which must stay distinct from a present but
+		// invalid signature (verified=false) — so leave the fields nil (server#5892).
+		var verified *bool
+		var signatureState *string
+		if n.Commit.Signature != nil {
+			v := bool(n.Commit.Signature.IsValid)
+			s := string(n.Commit.Signature.State)
+			verified = &v
+			signatureState = &s
+		}
 		evidence.Commits = append(evidence.Commits, types.Commit{
 			SHA:            string(n.Commit.Oid),
 			Message:        string(n.Commit.MessageHeadline),
@@ -341,6 +357,8 @@ func buildPREvidence(
 			Timestamp:      timestamp.Unix(),
 			Branch:         headRef,
 			URL:            string(n.Commit.URL),
+			Verified:       verified,
+			SignatureState: signatureState,
 		})
 	}
 
@@ -377,6 +395,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 				Title       graphql.String
 				State       graphql.String
 				HeadRefName graphql.String
+				BaseRefName graphql.String
 				URL         graphql.String
 				CreatedAt   graphql.String
 				MergedAt    graphql.String
@@ -442,7 +461,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 
 	return buildPREvidence(
 		string(pr.URL), mergeCommit, string(pr.State), string(pr.Author.Login),
-		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName),
+		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
 		pr.Commits.Nodes, pr.Reviews.Nodes,
 	)
 }
@@ -469,6 +488,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							Title       graphql.String
 							State       graphql.String
 							HeadRefName graphql.String
+							BaseRefName graphql.String
 							URL         graphql.String
 							CreatedAt   graphql.String
 							MergedAt    graphql.String
@@ -522,7 +542,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		// so the commit is by definition the merge commit.
 		evidence, err := buildPREvidence(
 			string(pr.URL), commit, string(pr.State), string(pr.Author.Login),
-			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName),
+			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
 			pr.Commits.Nodes, pr.Reviews.Nodes,
 		)
 		if err != nil {

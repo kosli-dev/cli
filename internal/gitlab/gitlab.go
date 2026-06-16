@@ -2,6 +2,7 @@ package gitlab
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/kosli-dev/cli/internal/types"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -106,8 +107,8 @@ func (c *GitlabConfig) newPRGitlabEvidenceV2(mr *gitlab.BasicMergeRequest) (*typ
 		CreatedAt:   mr.CreatedAt.Unix(),
 		MergedAt:    mr.MergedAt.Unix(),
 		Title:       mr.Title,
-		HeadRef:     mr.SourceBranch,
 	}
+	evidence.HeadRef, evidence.BaseRef = gitlabMRRefs(mr)
 	approvers, err := c.GetMergeRequestApprovers(mr.IID, 2)
 	if err != nil {
 		return evidence, err
@@ -174,7 +175,16 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 		return commits, err
 	}
 	for _, commit := range glCommits {
-		commits = append(commits, commitFromGitlabCommit(commit, mr.SourceBranch))
+		mappedCommit := commitFromGitlabCommit(commit, mr.SourceBranch)
+		verified, signatureState, err := resolveGitlabSignature(
+			client.Commits.GetGPGSignature(c.ProjectID(), commit.ID),
+		)
+		if err != nil {
+			return commits, err
+		}
+		mappedCommit.Verified = verified
+		mappedCommit.SignatureState = signatureState
+		commits = append(commits, mappedCommit)
 	}
 	return commits, nil
 }
@@ -195,4 +205,38 @@ func commitFromGitlabCommit(commit *gitlab.Commit, branch string) types.Commit {
 		Branch:    branch,
 		URL:       commit.WebURL,
 	}
+}
+
+// gitlabCommitVerification maps a GitLab signature verification_status to the
+// neutral verified/signature_state fields (server#5892). The status is
+// "verified" only when the signature is cryptographically valid; an empty
+// status leaves both nil (unsigned commits 404 and are handled by the caller).
+func gitlabCommitVerification(status string) (*bool, *string) {
+	if status == "" {
+		return nil, nil
+	}
+	verified := status == "verified"
+	return &verified, &status
+}
+
+// resolveGitlabSignature maps the result of a GetGPGSignature call to the
+// neutral verified/signature_state fields. GitLab returns 404 for unsigned
+// commits, which is treated as unsigned (nil fields) rather than a fatal error
+// (server#5892); other errors propagate so incomplete signature data is never
+// silently recorded.
+func resolveGitlabSignature(sig *gitlab.GPGSignature, resp *gitlab.Response, err error) (*bool, *string, error) {
+	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, nil, nil
+		}
+		return nil, nil, err
+	}
+	verified, signatureState := gitlabCommitVerification(sig.VerificationStatus)
+	return verified, signatureState, nil
+}
+
+// gitlabMRRefs returns the head (source) and base (target) branch names of a
+// merge request.
+func gitlabMRRefs(mr *gitlab.BasicMergeRequest) (head, base string) {
+	return mr.SourceBranch, mr.TargetBranch
 }

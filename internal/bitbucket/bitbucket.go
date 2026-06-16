@@ -182,7 +182,8 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 			}
 			evidence.MergedAt = mergedAt
 			evidence.Title = responseData["title"].(string)
-			evidence.HeadRef = responseData["source"].(map[string]any)["branch"].(map[string]any)["name"].(string)
+			evidence.HeadRef = bitbucketBranchName(responseData, "source")
+			evidence.BaseRef = bitbucketBranchName(responseData, "destination")
 
 			prCommits, err := c.getPullRequestCommitsFromBitbucket(int(responseData["id"].(float64)))
 			if err != nil {
@@ -194,6 +195,12 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 		return evidence, fmt.Errorf("failed to get PR details, got HTTP status %d. Please review repository permissions", response.Resp.StatusCode)
 	}
 	return evidence, nil
+}
+
+// bitbucketBranchName extracts a branch name from a Bitbucket PR response for
+// the given side: "source" for the head branch, "destination" for the base.
+func bitbucketBranchName(prData map[string]any, side string) string {
+	return prData[side].(map[string]any)["branch"].(map[string]any)["name"].(string)
 }
 
 // getPullRequestCommitsFromBitbucket gets the commits of a pull request from the Bitbucket API

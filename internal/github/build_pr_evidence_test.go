@@ -39,6 +39,7 @@ func TestBuildPREvidence_RecordsAuthorNotCommitter(t *testing.T) {
 		"",
 		"Introduce kosli evaluate",
 		"introduce-kosli-evaluate",
+		"main",
 		[]graphqlCommitNode{node},
 		nil,
 	)
@@ -69,7 +70,7 @@ func TestBuildPREvidence_UsesAuthoredDate(t *testing.T) {
 		"https://github.com/kosli-dev/cli/pull/671",
 		"0e723254516c841126e81f76100be57258ff1386",
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
-		"Introduce kosli evaluate", "introduce-kosli-evaluate",
+		"Introduce kosli evaluate", "introduce-kosli-evaluate", "main",
 		[]graphqlCommitNode{node}, nil,
 	)
 	require.NoError(t, err)
@@ -95,7 +96,7 @@ func TestBuildPREvidence_FallsBackToCommittedDate(t *testing.T) {
 		"https://github.com/kosli-dev/cli/pull/671",
 		"0e723254516c841126e81f76100be57258ff1386",
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
-		"title", "branch",
+		"title", "branch", "main",
 		[]graphqlCommitNode{node}, nil,
 	)
 	require.NoError(t, err)
@@ -104,4 +105,74 @@ func TestBuildPREvidence_FallsBackToCommittedDate(t *testing.T) {
 	wantCommitted, _ := time.Parse(time.RFC3339, "2026-03-01T12:00:00Z")
 	require.Equal(t, wantCommitted.Unix(), evidence.Commits[0].Timestamp,
 		"timestamp must fall back to the committed date when authored date is absent")
+}
+
+// TestBuildPREvidence_RecordsBaseRef verifies the PR's base (target) branch is
+// captured, enabling a "merged into main" policy (server#5892).
+func TestBuildPREvidence_RecordsBaseRef(t *testing.T) {
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature-branch", "main",
+		nil, nil,
+	)
+	require.NoError(t, err)
+	require.Equal(t, "main", evidence.BaseRef,
+		"base_ref must record the PR target branch")
+}
+
+// TestBuildPREvidence_RecordsCommitSignature verifies a verified commit
+// signature is captured (server#5892, control 1.13).
+func TestBuildPREvidence_RecordsCommitSignature(t *testing.T) {
+	node := graphqlCommitNode{}
+	node.Commit.Oid = "0e723254516c841126e81f76100be57258ff1386"
+	node.Commit.MessageHeadline = "signed work"
+	node.Commit.CommittedDate = "2026-03-01T12:00:00Z"
+	node.Commit.Author.Name = "Steve Tooke"
+	node.Commit.Author.Email = "tooky@kosli.com"
+	node.Commit.Signature = &struct {
+		IsValid graphql.Boolean
+		State   graphql.String
+	}{IsValid: true, State: "VALID"}
+
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature", "main",
+		[]graphqlCommitNode{node}, nil,
+	)
+	require.NoError(t, err)
+	require.Len(t, evidence.Commits, 1)
+	c := evidence.Commits[0]
+	require.NotNil(t, c.Verified, "verified must be populated for a signed commit")
+	require.True(t, *c.Verified, "verified must be true for a valid signature")
+	require.NotNil(t, c.SignatureState)
+	require.Equal(t, "VALID", *c.SignatureState)
+}
+
+// TestBuildPREvidence_UnsignedCommitHasNoSignatureFields verifies an unsigned
+// commit (no signature node) leaves verified/signature_state nil, so "unsigned"
+// stays distinct from "present-but-invalid" (verified=false).
+func TestBuildPREvidence_UnsignedCommitHasNoSignatureFields(t *testing.T) {
+	node := graphqlCommitNode{}
+	node.Commit.Oid = "0e723254516c841126e81f76100be57258ff1386"
+	node.Commit.MessageHeadline = "unsigned work"
+	node.Commit.CommittedDate = "2026-03-01T12:00:00Z"
+	node.Commit.Author.Name = "Steve Tooke"
+	node.Commit.Author.Email = "tooky@kosli.com"
+	// node.Commit.Signature left nil — unsigned commit
+
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature", "main",
+		[]graphqlCommitNode{node}, nil,
+	)
+	require.NoError(t, err)
+	require.Len(t, evidence.Commits, 1)
+	require.Nil(t, evidence.Commits[0].Verified, "unsigned commit must leave verified nil")
+	require.Nil(t, evidence.Commits[0].SignatureState)
 }

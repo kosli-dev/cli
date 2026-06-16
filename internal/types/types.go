@@ -10,6 +10,7 @@ type PREvidence struct {
 	MergedAt    int64    `json:"merged_at,omitempty"`
 	Title       string   `json:"title,omitempty"`
 	HeadRef     string   `json:"head_ref,omitempty"`
+	BaseRef     string   `json:"base_ref,omitempty"`
 	Commits     []Commit `json:"commits,omitempty"`
 }
 
@@ -20,13 +21,15 @@ type PRApprovals struct {
 }
 
 type Commit struct {
-	SHA            string `json:"sha1"`
-	Message        string `json:"message"`
-	Author         string `json:"author"`
-	AuthorUsername string `json:"author_username,omitempty"`
-	Timestamp      int64  `json:"timestamp"`
-	Branch         string `json:"branch"`
-	URL            string `json:"url,omitempty"`
+	SHA            string  `json:"sha1"`
+	Message        string  `json:"message"`
+	Author         string  `json:"author"`
+	AuthorUsername string  `json:"author_username,omitempty"`
+	Timestamp      int64   `json:"timestamp"`
+	Branch         string  `json:"branch"`
+	URL            string  `json:"url,omitempty"`
+	Verified       *bool   `json:"verified,omitempty"`
+	SignatureState *string `json:"signature_state,omitempty"`
 }
 
 type PRRetriever interface {
