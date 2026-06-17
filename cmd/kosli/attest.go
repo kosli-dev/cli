@@ -20,6 +20,7 @@ func newAttestCmd(out io.Writer) *cobra.Command {
 		newAttestArtifactCmd(out),
 		newAttestGenericCmd(out),
 		newAttestSnykCmd(out),
+		newAttestSarifCmd(out),
 		newAttestJunitCmd(out),
 		newAttestJiraCmd(out),
 		newAttestPRCmd(out),

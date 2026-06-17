@@ -8,13 +8,13 @@ import (
 	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/kosli-dev/cli/internal/snyk"
+	"github.com/kosli-dev/cli/internal/sarif"
 	"github.com/spf13/cobra"
 )
 
 type SnykAttestationPayload struct {
 	*CommonAttestationPayload
-	SnykResults *snyk.SnykData `json:"snyk_results"`
+	SnykResults *sarif.SarifData `json:"snyk_results"`
 }
 
 type attestSnykOptions struct {
@@ -174,7 +174,7 @@ func (o *attestSnykOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.SnykResults, err = snyk.ProcessSnykResultFile(o.snykSarifFilePath)
+	o.payload.SnykResults, err = sarif.ProcessSarifResultFile(o.snykSarifFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to parse Snyk sarif results file [%s]: %s", o.snykSarifFilePath, err)
 	}
