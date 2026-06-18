@@ -38,7 +38,7 @@ jobs:
             egress-policy: audit
 
         - name: Checkout repository
-          uses: actions/checkout@v6
+          uses: actions/checkout@v7
 
         - name: Run install script test
           shell: bash
@@ -57,7 +57,7 @@ jobs:
             egress-policy: audit
 
         - name: Checkout repository
-          uses: actions/checkout@v6
+          uses: actions/checkout@v7
 
         - name: Run Homebrew install 
           shell: bash

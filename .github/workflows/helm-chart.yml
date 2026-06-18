@@ -28,7 +28,7 @@ jobs:
           app-id: ${{ vars.CI_SIGNED_COMMIT_APP_ID }}
           private-key: ${{ secrets.CI_SIGNED_COMMIT_APP_PRIVATE_KEY }}
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           token: ${{ steps.generate_token.outputs.token }}
           fetch-depth: 0
