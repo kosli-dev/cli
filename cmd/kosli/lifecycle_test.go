@@ -39,6 +39,21 @@ func TestLifecycleAttestDecisionIsBetaAndDocHidden(t *testing.T) {
 	}
 }
 
+func TestDeprecationHint(t *testing.T) {
+	generic := &cobra.Command{Use: "x", Deprecated: deprecatedCommandMsg}
+	if got := deprecationHint(generic); got != "" {
+		t.Errorf("expected generic deprecation message suppressed, got %q", got)
+	}
+	custom := &cobra.Command{Use: "y", Deprecated: "use 'kosli snapshot paths' instead"}
+	if got := deprecationHint(custom); got != "use 'kosli snapshot paths' instead" {
+		t.Errorf("expected custom hint preserved, got %q", got)
+	}
+	none := &cobra.Command{Use: "z"}
+	if got := deprecationHint(none); got != "" {
+		t.Errorf("expected empty for non-deprecated command, got %q", got)
+	}
+}
+
 func TestLifecycleNoBetaTextPrefix(t *testing.T) {
 	global = &GlobalOpts{}
 	cmds := []*cobra.Command{

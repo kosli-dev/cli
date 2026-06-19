@@ -13,7 +13,7 @@ func newRequestCmd(out io.Writer) *cobra.Command {
 		Use:        "request",
 		Short:      requestDesc,
 		Long:       requestDesc,
-		Deprecated: "this command is deprecated and will be removed in a future release.",
+		Deprecated: deprecatedCommandMsg,
 	}
 
 	// Add subcommands

@@ -56,7 +56,7 @@ func newGetApprovalCmd(out io.Writer) *cobra.Command {
 		Long:       getApprovalLongDesc,
 		Example:    getApprovalExample,
 		Args:       cobra.ExactArgs(1),
-		Deprecated: "this command is deprecated and will be removed in a future release.",
+		Deprecated: deprecatedCommandMsg,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

@@ -67,7 +67,7 @@ func (o *docsOptions) run() error {
 				Name:       cmd.CommandPath(),
 				Beta:       isBeta(cmd),
 				Deprecated: isDeprecated(cmd),
-				DeprecMsg:  cmd.Deprecated,
+				DeprecMsg:  deprecationHint(cmd),
 				Hidden:     isDocHidden(cmd),
 				Summary:    cmd.Short,
 				Long:       cmd.Long,

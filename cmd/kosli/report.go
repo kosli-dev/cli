@@ -13,7 +13,7 @@ func newReportCmd(out io.Writer) *cobra.Command {
 		Use:        "report",
 		Short:      reportDesc,
 		Long:       reportDesc,
-		Deprecated: "this command is deprecated and will be removed in a future release.",
+		Deprecated: deprecatedCommandMsg,
 	}
 
 	// Add subcommands
