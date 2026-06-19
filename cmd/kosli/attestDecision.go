@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +28,7 @@ type attestDecisionOptions struct {
 	payload DecisionAttestationPayload
 }
 
-const attestDecisionShortDesc = `[BETA] Record a compliance decision against a control in a Kosli trail.  `
+const attestDecisionShortDesc = `Record a compliance decision against a control in a Kosli trail.  `
 
 const attestDecisionLongDesc = attestDecisionShortDesc + `
 Use this command to record the outcome of evaluating a control as part of your delivery
@@ -92,11 +93,12 @@ func newAttestDecisionCmd(out io.Writer) *cobra.Command {
 		},
 	}
 	cmd := &cobra.Command{
-		Use:     "decision [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   attestDecisionShortDesc,
-		Long:    attestDecisionLongDesc,
-		Example: attestDecisionExample,
-		Hidden:  true,
+		Use:         "decision [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:       attestDecisionShortDesc,
+		Long:        attestDecisionLongDesc,
+		Example:     attestDecisionExample,
+		Hidden:      true,
+		Annotations: map[string]string{docgen.DocHiddenAnnotation: "", betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := CustomMaximumNArgs(1, args)
 			if err != nil {

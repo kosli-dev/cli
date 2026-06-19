@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const evaluateShortDesc = `[BETA] Evaluate data against Rego policies.`
+const evaluateShortDesc = `Evaluate data against Rego policies.`
 
 // Backtick breaks (`"` + "`x`" + `"`) are needed to embed markdown
 // inline code spans inside raw string literals.
@@ -36,9 +36,10 @@ logic reusable across environments with different tolerances.`
 
 func newEvaluateCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "evaluate",
-		Short: evaluateShortDesc,
-		Long:  evaluateLongDesc,
+		Use:         "evaluate",
+		Short:       evaluateShortDesc,
+		Long:        evaluateLongDesc,
+		Annotations: map[string]string{betaCLIAnnotation: ""},
 	}
 
 	// Add subcommands
