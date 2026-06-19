@@ -36,17 +36,60 @@ func TestMintlifyFrontMatterTruncatesLongDescription(t *testing.T) {
 	}
 }
 
+func TestMintlifyFrontMatterBetaTag(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.FrontMatter(CommandMeta{Name: "kosli evaluate", Beta: true})
+	if !strings.Contains(got, `tag: "BETA"`) {
+		t.Errorf("expected BETA tag, got:\n%s", got)
+	}
+}
+
+func TestMintlifyFrontMatterDeprecatedTag(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.FrontMatter(CommandMeta{Name: "kosli report approval", Deprecated: true})
+	if !strings.Contains(got, `tag: "DEPRECATED"`) {
+		t.Errorf("expected DEPRECATED tag, got:\n%s", got)
+	}
+}
+
+func TestMintlifyFrontMatterDeprecatedWinsOverBeta(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.FrontMatter(CommandMeta{Name: "cmd", Beta: true, Deprecated: true})
+	if !strings.Contains(got, `tag: "DEPRECATED"`) || strings.Contains(got, `tag: "BETA"`) {
+		t.Errorf("expected DEPRECATED to win, got:\n%s", got)
+	}
+}
+
+func TestMintlifyFrontMatterHidden(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.FrontMatter(CommandMeta{Name: "kosli attest decision", Hidden: true})
+	if !strings.Contains(got, "hidden: true") {
+		t.Errorf("expected hidden: true, got:\n%s", got)
+	}
+}
+
+func TestMintlifyFrontMatterNormalHasNoTagOrHidden(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.FrontMatter(CommandMeta{Name: "kosli attest snyk"})
+	if strings.Contains(got, "tag:") {
+		t.Errorf("expected no tag for normal command, got:\n%s", got)
+	}
+	if strings.Contains(got, "hidden:") {
+		t.Errorf("expected no hidden key for normal command, got:\n%s", got)
+	}
+}
+
 func TestMintlifyBetaWarning(t *testing.T) {
 	f := MintlifyFormatter{}
-	got := f.BetaWarning("kosli foo")
-	if !strings.Contains(got, "<Warning>") {
-		t.Error("expected Warning component")
+	got := f.BetaWarning("kosli evaluate")
+	if !strings.Contains(got, `import CliBetaNotice from "/snippets/cli-beta-notice.mdx";`) {
+		t.Errorf("expected beta snippet import, got:\n%s", got)
 	}
-	if !strings.Contains(got, "</Warning>") {
-		t.Error("expected closing Warning component")
+	if !strings.Contains(got, "<CliBetaNotice />") {
+		t.Errorf("expected beta snippet component, got:\n%s", got)
 	}
-	if !strings.Contains(got, "**kosli foo** is a beta feature") {
-		t.Error("expected command name in warning")
+	if strings.Contains(got, "<Warning>") {
+		t.Errorf("notice prose should live in the snippet, not the generator, got:\n%s", got)
 	}
 }
 
@@ -63,12 +106,26 @@ func TestMintlifyTutorialTip(t *testing.T) {
 
 func TestMintlifyDeprecatedWarning(t *testing.T) {
 	f := MintlifyFormatter{}
-	got := f.DeprecatedWarning("kosli artifact", "see kosli attest commands")
-	if !strings.Contains(got, "<Warning>") {
-		t.Error("expected Warning component")
+	got := f.DeprecatedWarning("kosli snapshot server", "use 'kosli snapshot paths' instead")
+	if !strings.Contains(got, `import CliDeprecatedNotice from "/snippets/cli-deprecated-notice.mdx";`) {
+		t.Errorf("expected deprecated snippet import, got:\n%s", got)
 	}
-	if !strings.Contains(got, "**kosli artifact** is deprecated") {
-		t.Error("expected deprecation message")
+	if !strings.Contains(got, "<CliDeprecatedNotice />") {
+		t.Errorf("expected deprecated snippet component, got:\n%s", got)
+	}
+	if !strings.Contains(got, "use 'kosli snapshot paths' instead") {
+		t.Errorf("expected migration message as plain text, got:\n%s", got)
+	}
+	if strings.Contains(got, "<Warning>") {
+		t.Errorf("notice prose should live in the snippet, not the generator, got:\n%s", got)
+	}
+}
+
+func TestMintlifyDeprecatedWarningEmptyMessage(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.DeprecatedWarning("cmd", "")
+	if !strings.Contains(got, "<CliDeprecatedNotice />") {
+		t.Errorf("expected snippet component, got:\n%s", got)
 	}
 }
 

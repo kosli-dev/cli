@@ -1,7 +1,5 @@
 ---
 title: "snyk"
-beta: false
-deprecated: false
 description: "Report a snyk attestation to an artifact or a trail in a Kosli flow.  "
 ---
 

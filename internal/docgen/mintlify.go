@@ -16,28 +16,43 @@ func (MintlifyFormatter) Title(name string) string {
 
 func (MintlifyFormatter) FrontMatter(meta CommandMeta) string {
 	desc := sanitizeDescription(meta.Summary)
-	return fmt.Sprintf("---\ntitle: \"%s\"\nbeta: %t\ndeprecated: %t\ndescription: \"%s\"\n---\n\n",
-		meta.Name, meta.Beta, meta.Deprecated, desc)
+	var b strings.Builder
+	fmt.Fprintf(&b, "---\ntitle: \"%s\"\n", meta.Name)
+	if tag := lifecycleTag(meta); tag != "" {
+		fmt.Fprintf(&b, "tag: \"%s\"\n", tag)
+	}
+	if meta.Hidden {
+		b.WriteString("hidden: true\n")
+	}
+	fmt.Fprintf(&b, "description: \"%s\"\n---\n\n", desc)
+	return b.String()
+}
+
+// lifecycleTag returns the Mintlify sidebar tag for a command's stage.
+// Deprecated takes precedence over beta if both are somehow set.
+func lifecycleTag(meta CommandMeta) string {
+	switch {
+	case meta.Deprecated:
+		return "DEPRECATED"
+	case meta.Beta:
+		return "BETA"
+	default:
+		return ""
+	}
 }
 
 func (MintlifyFormatter) BetaWarning(name string) string {
-	var b strings.Builder
-	b.WriteString("<Warning>\n")
-	fmt.Fprintf(&b, "**%s** is a beta feature. ", name)
-	fmt.Fprintf(&b, "Beta features provide early access to product functionality. ")
-	fmt.Fprintf(&b, "These features may change between releases without warning, or can be removed in a ")
-	fmt.Fprintf(&b, "future release.\n")
-	fmt.Fprintf(&b, "Please contact us to enable this feature for your organization.\n")
-	b.WriteString("</Warning>\n")
-	return b.String()
+	return "import CliBetaNotice from \"/snippets/cli-beta-notice.mdx\";\n\n<CliBetaNotice />\n\n"
 }
 
 func (MintlifyFormatter) DeprecatedWarning(name, message string) string {
 	var b strings.Builder
-	b.WriteString("<Warning>\n")
-	fmt.Fprintf(&b, "**%s** is deprecated. %s  ", name, message)
-	fmt.Fprintf(&b, "Deprecated commands will be removed in a future release.\n")
-	b.WriteString("</Warning>\n")
+	b.WriteString("import CliDeprecatedNotice from \"/snippets/cli-deprecated-notice.mdx\";\n\n<CliDeprecatedNotice />\n\n")
+	if message != "" {
+		// Escape the same way prose is escaped elsewhere, so a future hint
+		// containing <, {, or > does not break the MDX build.
+		fmt.Fprintf(&b, "%s\n\n", escapeMintlifyProse(message))
+	}
 	return b.String()
 }
 

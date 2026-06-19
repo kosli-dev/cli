@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/security"
 	"github.com/kosli-dev/cli/internal/version"
@@ -15,6 +16,10 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
+
+const betaCLIAnnotation = "betaCLI"
+
+const deprecatedCommandMsg = "this command is deprecated and will be removed in a future release."
 
 var globalUsage = `The Kosli CLI.
 
@@ -572,12 +577,12 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 }
 
 func isBeta(cmd *cobra.Command) bool {
-	if _, ok := cmd.Annotations["betaCLI"]; ok {
+	if _, ok := cmd.Annotations[betaCLIAnnotation]; ok {
 		return true
 	}
 	var beta bool
 	cmd.VisitParents(func(cmd *cobra.Command) {
-		if _, ok := cmd.Annotations["betaCLI"]; ok {
+		if _, ok := cmd.Annotations[betaCLIAnnotation]; ok {
 			beta = true
 		}
 	})
@@ -586,6 +591,21 @@ func isBeta(cmd *cobra.Command) bool {
 
 func isDeprecated(cmd *cobra.Command) bool {
 	return cmd.Deprecated != ""
+}
+
+func isDocHidden(cmd *cobra.Command) bool {
+	_, ok := cmd.Annotations[docgen.DocHiddenAnnotation]
+	return ok
+}
+
+// deprecationHint returns the per-command migration hint to show on the docs
+// page. The generic boilerplate is conveyed by the docs snippet, so it is
+// suppressed here to avoid duplication; only custom hints are surfaced.
+func deprecationHint(cmd *cobra.Command) string {
+	if cmd.Deprecated == deprecatedCommandMsg {
+		return ""
+	}
+	return cmd.Deprecated
 }
 
 const usageTemplate = `{{- if isBeta .}}Beta Feature:

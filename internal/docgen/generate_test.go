@@ -81,6 +81,46 @@ func TestGenMarkdownTreeSkipsHiddenCommands(t *testing.T) {
 	}
 }
 
+func TestGenMarkdownTreeIncludesDocHiddenCommands(t *testing.T) {
+	dir := t.TempDir()
+
+	root := &cobra.Command{Use: "root"}
+	docHidden := &cobra.Command{
+		Use:         "dochidden",
+		Short:       "A hidden but documented cmd",
+		Long:        "Hidden but documented long desc.",
+		Hidden:      true,
+		Annotations: map[string]string{DocHiddenAnnotation: ""},
+		RunE:        func(cmd *cobra.Command, args []string) error { return nil },
+	}
+	root.AddCommand(docHidden)
+
+	metaFn := func(cmd *cobra.Command) CommandMeta {
+		_, hidden := cmd.Annotations[DocHiddenAnnotation]
+		return CommandMeta{
+			Name:     cmd.CommandPath(),
+			Hidden:   hidden,
+			Summary:  cmd.Short,
+			Long:     cmd.Long,
+			UseLine:  cmd.UseLine(),
+			Runnable: cmd.Runnable(),
+		}
+	}
+
+	if err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn); err != nil {
+		t.Fatalf("GenMarkdownTree error: %v", err)
+	}
+
+	expected := filepath.Join(dir, "root_dochidden.md")
+	content, err := os.ReadFile(expected)
+	if err != nil {
+		t.Fatalf("expected doc-hidden command to be generated: %v", err)
+	}
+	if !strings.Contains(string(content), "hidden: true") {
+		t.Errorf("expected hidden: true front matter, got:\n%s", string(content))
+	}
+}
+
 func TestGenMarkdownTreeIncludesDeprecatedCommands(t *testing.T) {
 	dir := t.TempDir()
 
@@ -120,8 +160,8 @@ func TestGenMarkdownTreeIncludesDeprecatedCommands(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read file: %v", err)
 	}
-	if !strings.Contains(string(content), "<Warning>") {
-		t.Error("expected deprecation warning in output")
+	if !strings.Contains(string(content), "<CliDeprecatedNotice />") {
+		t.Error("expected deprecation snippet in output")
 	}
 }
 
