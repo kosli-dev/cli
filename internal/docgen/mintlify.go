@@ -49,7 +49,9 @@ func (MintlifyFormatter) DeprecatedWarning(name, message string) string {
 	var b strings.Builder
 	b.WriteString("import CliDeprecatedNotice from \"/snippets/cli-deprecated-notice.mdx\";\n\n<CliDeprecatedNotice />\n\n")
 	if message != "" {
-		fmt.Fprintf(&b, "%s\n\n", message)
+		// Escape the same way prose is escaped elsewhere, so a future hint
+		// containing <, {, or > does not break the MDX build.
+		fmt.Fprintf(&b, "%s\n\n", escapeMintlifyProse(message))
 	}
 	return b.String()
 }

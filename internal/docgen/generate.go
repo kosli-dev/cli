@@ -61,8 +61,9 @@ func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, met
 	// Title
 	buf.WriteString(formatter.Title(name))
 
-	// Beta warning
-	if meta.Beta {
+	// Beta warning. Deprecated takes precedence (matching lifecycleTag), so a
+	// command that is somehow both renders only the deprecated notice.
+	if meta.Beta && !meta.Deprecated {
 		buf.WriteString(formatter.BetaWarning(name))
 	}
 
