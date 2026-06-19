@@ -15,8 +15,9 @@ import (
 // leaf command using the provided Formatter.
 func GenMarkdownTree(cmd *cobra.Command, dir string, formatter Formatter, metaFn CommandMetaFunc) error {
 	for _, c := range cmd.Commands() {
-		// skip all unavailable commands except deprecated ones
-		if (!c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand()) && c.Deprecated == "" {
+		// skip unavailable commands, except deprecated ones and hidden-but-documented ones
+		_, docHidden := c.Annotations[DocHiddenAnnotation]
+		if (!c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand()) && c.Deprecated == "" && !docHidden {
 			continue
 		}
 		if err := GenMarkdownTree(c, dir, formatter, metaFn); err != nil {

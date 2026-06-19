@@ -2,6 +2,12 @@ package docgen
 
 import "github.com/spf13/cobra"
 
+// DocHiddenAnnotation marks a hidden command that should still get a generated
+// docs page (with hidden: true front matter), as opposed to internal commands
+// that are never documented. cmd/kosli sets this annotation; the tree walker
+// checks for its presence.
+const DocHiddenAnnotation = "docHidden"
+
 // CommandMeta holds metadata about a cobra command for doc generation.
 type CommandMeta struct {
 	Name       string
