@@ -42,23 +42,15 @@ func lifecycleTag(meta CommandMeta) string {
 }
 
 func (MintlifyFormatter) BetaWarning(name string) string {
-	var b strings.Builder
-	b.WriteString("<Warning>\n")
-	fmt.Fprintf(&b, "**%s** is a beta feature. ", name)
-	fmt.Fprintf(&b, "Beta features provide early access to product functionality. ")
-	fmt.Fprintf(&b, "These features may change between releases without warning, or can be removed in a ")
-	fmt.Fprintf(&b, "future release.\n")
-	fmt.Fprintf(&b, "Please contact us to enable this feature for your organization.\n")
-	b.WriteString("</Warning>\n")
-	return b.String()
+	return "import CliBetaNotice from \"/snippets/cli-beta-notice.mdx\";\n\n<CliBetaNotice />\n\n"
 }
 
 func (MintlifyFormatter) DeprecatedWarning(name, message string) string {
 	var b strings.Builder
-	b.WriteString("<Warning>\n")
-	fmt.Fprintf(&b, "**%s** is deprecated. %s  ", name, message)
-	fmt.Fprintf(&b, "Deprecated commands will be removed in a future release.\n")
-	b.WriteString("</Warning>\n")
+	b.WriteString("import CliDeprecatedNotice from \"/snippets/cli-deprecated-notice.mdx\";\n\n<CliDeprecatedNotice />\n\n")
+	if message != "" {
+		fmt.Fprintf(&b, "%s\n\n", message)
+	}
 	return b.String()
 }
 

@@ -120,8 +120,8 @@ func TestGenMarkdownTreeIncludesDeprecatedCommands(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read file: %v", err)
 	}
-	if !strings.Contains(string(content), "<Warning>") {
-		t.Error("expected deprecation warning in output")
+	if !strings.Contains(string(content), "<CliDeprecatedNotice />") {
+		t.Error("expected deprecation snippet in output")
 	}
 }
 
