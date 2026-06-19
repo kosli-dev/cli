@@ -16,8 +16,29 @@ func (MintlifyFormatter) Title(name string) string {
 
 func (MintlifyFormatter) FrontMatter(meta CommandMeta) string {
 	desc := sanitizeDescription(meta.Summary)
-	return fmt.Sprintf("---\ntitle: \"%s\"\nbeta: %t\ndeprecated: %t\ndescription: \"%s\"\n---\n\n",
-		meta.Name, meta.Beta, meta.Deprecated, desc)
+	var b strings.Builder
+	fmt.Fprintf(&b, "---\ntitle: \"%s\"\n", meta.Name)
+	if tag := lifecycleTag(meta); tag != "" {
+		fmt.Fprintf(&b, "tag: \"%s\"\n", tag)
+	}
+	if meta.Hidden {
+		b.WriteString("hidden: true\n")
+	}
+	fmt.Fprintf(&b, "description: \"%s\"\n---\n\n", desc)
+	return b.String()
+}
+
+// lifecycleTag returns the Mintlify sidebar tag for a command's stage.
+// Deprecated takes precedence over beta if both are somehow set.
+func lifecycleTag(meta CommandMeta) string {
+	switch {
+	case meta.Deprecated:
+		return "DEPRECATED"
+	case meta.Beta:
+		return "BETA"
+	default:
+		return ""
+	}
 }
 
 func (MintlifyFormatter) BetaWarning(name string) string {

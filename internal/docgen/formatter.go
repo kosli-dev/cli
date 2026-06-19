@@ -8,6 +8,7 @@ type CommandMeta struct {
 	Beta       bool
 	Deprecated bool
 	DeprecMsg  string
+	Hidden     bool
 	Summary    string
 	Long       string
 	UseLine    string

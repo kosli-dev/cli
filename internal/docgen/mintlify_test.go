@@ -36,6 +36,49 @@ func TestMintlifyFrontMatterTruncatesLongDescription(t *testing.T) {
 	}
 }
 
+func TestMintlifyFrontMatterBetaTag(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.FrontMatter(CommandMeta{Name: "kosli evaluate", Beta: true})
+	if !strings.Contains(got, `tag: "BETA"`) {
+		t.Errorf("expected BETA tag, got:\n%s", got)
+	}
+}
+
+func TestMintlifyFrontMatterDeprecatedTag(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.FrontMatter(CommandMeta{Name: "kosli report approval", Deprecated: true})
+	if !strings.Contains(got, `tag: "DEPRECATED"`) {
+		t.Errorf("expected DEPRECATED tag, got:\n%s", got)
+	}
+}
+
+func TestMintlifyFrontMatterDeprecatedWinsOverBeta(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.FrontMatter(CommandMeta{Name: "cmd", Beta: true, Deprecated: true})
+	if !strings.Contains(got, `tag: "DEPRECATED"`) || strings.Contains(got, `tag: "BETA"`) {
+		t.Errorf("expected DEPRECATED to win, got:\n%s", got)
+	}
+}
+
+func TestMintlifyFrontMatterHidden(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.FrontMatter(CommandMeta{Name: "kosli attest decision", Hidden: true})
+	if !strings.Contains(got, "hidden: true") {
+		t.Errorf("expected hidden: true, got:\n%s", got)
+	}
+}
+
+func TestMintlifyFrontMatterNormalHasNoTagOrHidden(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.FrontMatter(CommandMeta{Name: "kosli attest snyk"})
+	if strings.Contains(got, "tag:") {
+		t.Errorf("expected no tag for normal command, got:\n%s", got)
+	}
+	if strings.Contains(got, "hidden:") {
+		t.Errorf("expected no hidden key for normal command, got:\n%s", got)
+	}
+}
+
 func TestMintlifyBetaWarning(t *testing.T) {
 	f := MintlifyFormatter{}
 	got := f.BetaWarning("kosli foo")
