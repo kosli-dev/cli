@@ -46,6 +46,8 @@ Some tests are skipped without these env vars: `KOSLI_GITHUB_TOKEN`, `KOSLI_GITL
 - **`cmd/kosli/*.go`** — ~80+ command files, each following the pattern `new<Command>Cmd()` factory function returning a `*cobra.Command`
 - **`GlobalOpts`** struct in root.go holds shared config (ApiToken, Org, Host, HttpProxy, DryRun, MaxAPIRetries, etc.)
 
+> **Adding a command?** Use the `new-command` skill (invoke `/new-command`, or ask "add a command"). It interviews for archetype, endpoint (OpenAPI-driven), flags, args, and beta/hidden status, then scaffolds the command file, test skeleton, flag constants, and registration. See `.claude/skills/new-command/`.
+
 ### Internal Packages (`internal/`)
 
 | Package | Purpose |
