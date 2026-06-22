@@ -78,7 +78,7 @@ type FooPayload struct {
 }
 ```
 
-For the attest archetype the payload embeds `*CommonAttestationPayload` and adds a `type_name` field - see `cmd/kosli/attestDecision.go` for the exact shape.
+For the attest archetype the payload embeds `*CommonAttestationPayload` and adds a `type_name` field - see `references/archetype-attest.md` (canonical example `cmd/kosli/attestCustom.go`) for the exact shape.
 
 ---
 
