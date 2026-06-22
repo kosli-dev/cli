@@ -161,6 +161,14 @@ func ResetLambdaClientFactory() {
 	NewLambdaClientFunc = defaultNewLambdaClient
 }
 
+// ECSServicesAPI is the subset of AWS ECS operations used when listing and
+// describing services in a cluster. The real *ecs.Client satisfies this
+// implicitly.
+type ECSServicesAPI interface {
+	ListServices(ctx context.Context, params *ecs.ListServicesInput, optFns ...func(*ecs.Options)) (*ecs.ListServicesOutput, error)
+	DescribeServices(ctx context.Context, params *ecs.DescribeServicesInput, optFns ...func(*ecs.Options)) (*ecs.DescribeServicesOutput, error)
+}
+
 // NewECSClient returns a new ECS API client
 func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 	cfg, err := staticCreds.NewAWSConfigFromEnvOrFlags()
@@ -623,7 +631,7 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter 
 }
 
 // getFilteredECSServicesInCluster fetches a filtered set of ECS services recursively (10 at a time) and returns a list of ecs Services
-func getFilteredECSServicesInCluster(client *ecs.Client, cluster string, allServices *[]ecsTypes.Service, serviceFilter *filters.ResourceFilterOptions,
+func getFilteredECSServicesInCluster(client ECSServicesAPI, cluster string, allServices *[]ecsTypes.Service, serviceFilter *filters.ResourceFilterOptions,
 	nextToken *string, logger *logger.Logger) (*[]ecsTypes.Service, error) {
 	listInput := &ecs.ListServicesInput{
 		Cluster: aws.String(cluster),
@@ -634,6 +642,14 @@ func getFilteredECSServicesInCluster(client *ecs.Client, cluster string, allServ
 	listServicesOutput, err := client.ListServices(context.TODO(), listInput)
 	if err != nil {
 		return allServices, err
+	}
+
+	// A cluster with no services yields an empty ServiceArns list. The AWS ECS
+	// DescribeServices API rejects an empty Services list with
+	// "InvalidParameterException: Services cannot be empty", so skip the call
+	// and let the cluster contribute zero services.
+	if len(listServicesOutput.ServiceArns) == 0 {
+		return allServices, nil
 	}
 
 	describeServicesOutput, err := client.DescribeServices(context.TODO(), &ecs.DescribeServicesInput{Cluster: aws.String(cluster), Services: listServicesOutput.ServiceArns})
