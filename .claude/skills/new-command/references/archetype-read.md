@@ -48,7 +48,7 @@ Read whichever canonical file matches and adapt.
 - Simple: `--output` plus any filter flags added directly.
 
 **`run` method**
-- Build the base URL, then append query params via `url.Values{}` and `params.Encode()`.
+- Build the base URL into a `base` variable (not `url` — `listArtifacts.go` does this so the `net/url` package stays in scope), then append query params via `url.Values{}` and `params.Encode()`.
 - Same `GET` + `output.FormattedPrint` pattern as read-single.
 - The `print<Noun>sAsTable` helper unmarshals to a `[]map[string]interface{}` and handles the empty-list case with `logger.Info("No <nouns> were found.")`.
 
