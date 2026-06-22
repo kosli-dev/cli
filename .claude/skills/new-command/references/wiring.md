@@ -27,13 +27,13 @@ func newFooCmd(out io.Writer) *cobra.Command {
 }
 ```
 
-Then add `newFooCmd(out)` to the `AddCommand` block in `cmd/kosli/root.go` (around line 407 — the block that lists `newGetCmd`, `newCreateCmd`, etc.).
+Then add `newFooCmd(out)` to the `AddCommand` block in `cmd/kosli/root.go` (the block that lists `newGetCmd`, `newCreateCmd`, etc.).
 
 ---
 
 ## 2. Flag constants
 
-Append new flag description constants to `cmd/kosli/root.go` in the `const (...)` block (around line 97). Use the `[optional]`/`[conditional]`/`[defaulted]` prefix convention:
+Append new flag description constants to `cmd/kosli/root.go` in the large `const (...)` block that holds the flag-description strings (e.g. `apiTokenFlag`, `flowNameFlag`). Use the `[optional]`/`[conditional]`/`[defaulted]` prefix convention:
 
 ```go
 fooNameFlag    = "[optional] The name of the foo."
@@ -45,7 +45,7 @@ fooTimeoutFlag = "[defaulted] Timeout in seconds for the foo operation."
 - `[defaulted]` - always has a meaningful default; mention it in the description
 - No prefix - unconditionally required
 
-Reference the existing block in `root.go` (lines 97-160+) for naming and formatting conventions.
+Reference the existing flag-description `const` block in `root.go` for naming and formatting conventions.
 
 ---
 

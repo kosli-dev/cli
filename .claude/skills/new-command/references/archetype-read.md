@@ -33,7 +33,7 @@ Canonical example: `cmd/kosli/getFlow.go` — read it in full and adapt.
 
 Two patterns exist; pick based on whether the endpoint is paginated.
 
-- **Paginated (most lists):** canonical `cmd/kosli/listArtifacts.go` (or `listTrails.go`). Embed `listOptions` in your options struct and call `addListFlags(cmd, &o.listOptions)` (defined in `flags.go:84`) — it adds `--output`, `--page`, and `--page-limit`. Pass an optional custom page-limit as a third arg, e.g. `addListFlags(cmd, &o.listOptions, 20)` (see `listTrails.go`).
+- **Paginated (most lists):** canonical `cmd/kosli/listArtifacts.go` (or `listTrails.go`). Embed `listOptions` in your options struct and call `addListFlags(cmd, &o.listOptions)` (defined in `flags.go`) — it adds `--output`, `--page`, and `--page-limit`. Pass an optional custom page-limit as a third arg, e.g. `addListFlags(cmd, &o.listOptions, 20)` (see `listTrails.go`).
 - **Simple (non-paginated):** canonical `cmd/kosli/listFlows.go` — adds `--output` (and filter flags like `--name`, `--ignore-case`) directly with `StringVarP`/`BoolVarP`, no `addListFlags`.
 
 Read whichever canonical file matches and adapt.
