@@ -1,5 +1,5 @@
 version: 1
-trail: 
+trail:
   attestations:
   - name: foo
     type: not-supported
