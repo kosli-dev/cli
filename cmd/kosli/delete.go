@@ -19,6 +19,7 @@ func newDeleteCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newDeleteApiKeyCmd(out),
+		newDeleteServiceAccountCmd(out),
 	)
 
 	return cmd

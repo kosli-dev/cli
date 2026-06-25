@@ -23,6 +23,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 		newCreatePolicyCmd(out),
 		newCreateAttestationTypeCmd(out),
 		newCreateApiKeyCmd(out),
+		newCreateServiceAccountCmd(out),
 	)
 	return cmd
 }
