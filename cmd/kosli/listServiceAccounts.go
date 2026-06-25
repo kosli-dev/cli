@@ -12,6 +12,12 @@ import (
 
 const listServiceAccountsShortDesc = `List service accounts in an organization.`
 
+const listServiceAccountsLongDesc = listServiceAccountsShortDesc + `
+
+Each entry shows the name, description, privilege, and creation time. The secret
+values of any API keys are never listed. Use ^--output json^ to get the raw
+response for scripting.`
+
 const listServiceAccountsExample = `
 # list the service accounts in an organization:
 kosli list service-accounts \
@@ -29,7 +35,7 @@ func newListServiceAccountsCmd(out io.Writer) *cobra.Command {
 		Use:     "service-accounts",
 		Aliases: []string{"sa", "sas", "service-account"},
 		Short:   listServiceAccountsShortDesc,
-		Long:    listServiceAccountsShortDesc,
+		Long:    listServiceAccountsLongDesc,
 		Example: listServiceAccountsExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

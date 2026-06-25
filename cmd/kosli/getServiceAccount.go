@@ -12,6 +12,12 @@ import (
 
 const getServiceAccountShortDesc = `Get a service account's metadata.`
 
+const getServiceAccountLongDesc = getServiceAccountShortDesc + `
+
+The metadata includes the name, description, privilege, and creation time. The
+secret values of the account's API keys are never returned. Use ^--output json^
+to get the raw response for scripting.`
+
 const getServiceAccountExample = `
 # get the metadata of a service account:
 kosli get service-account yourServiceAccountName \
@@ -29,7 +35,7 @@ func newGetServiceAccountCmd(out io.Writer) *cobra.Command {
 		Use:     "service-account SERVICE-ACCOUNT-NAME",
 		Aliases: []string{"sa"},
 		Short:   getServiceAccountShortDesc,
-		Long:    getServiceAccountShortDesc,
+		Long:    getServiceAccountLongDesc,
 		Example: getServiceAccountExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
