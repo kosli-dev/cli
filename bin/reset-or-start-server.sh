@@ -24,10 +24,16 @@ check_success()
 restart_server() 
 {
     echo restarting server ...
-    ./bin/docker_login_aws.sh staging
+    # Only remote (digest-pinned) images need an AWS login and pull. The local-image
+    # flow uses the plain "merkely" tag, which is built locally — skip both.
+    if [[ "$KOSLI_SERVER_IMAGE" == *"@sha256:"* ]]; then
+        ./bin/docker_login_aws.sh staging
+        docker pull "${KOSLI_SERVER_IMAGE}" || true
+    else
+        echo "local image — skipping AWS login and pull"
+    fi
     docker compose down || true
     echo -e "\033[38;5;208musing server image\033[0m ${KOSLI_SERVER_IMAGE}"
-    docker pull ${KOSLI_SERVER_IMAGE} || true
     docker compose up -d
     ./mongo/ip_wait.sh localhost:9010/minio/health/live
     ./mongo/ip_wait.sh localhost:8001/ready
