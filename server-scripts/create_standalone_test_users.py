@@ -36,7 +36,8 @@ def create_standalone_test_users(test_users):
         users.create("descope", login_data)
         user = users.find_by_auth_user_id(login_data["userId"])
         user.completed_signup = True
-        user.add_api_key(api_key, user, 0, "")
+        user.add_api_key(api_key=api_key, setting_user=user, expires_at=0, description="")
+        # fixed auth_token so tests have a stable session token to authenticate with
         user.auth_token = "213c18081df7f738ec479107b86f97ec678b1d54"
 
         orgs.create_shared(f"{user_name}-shared", sku=Sku().existing_orgs, owner=user)
