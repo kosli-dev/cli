@@ -47,14 +47,23 @@ func TestPrintServiceAccountAsTableEmptyDescription(t *testing.T) {
 
 func TestPrintServiceAccountsListAsTable(t *testing.T) {
 	raw := `[{"name":"ci-bot","description":"first","privilege":"member","created_at":1780584129.5},` +
-		`{"name":"deployer","description":"","privilege":"admin","created_at":1780584130.5}]`
+		`{"name":"deployer","description":"","privilege":"admin","created_at":1780584130.5},` +
+		`{"name":"snapshot-bot","description":"snaps","privilege":"snapshotter","created_at":1780584131.5},` +
+		`{"name":"auditor","description":"ro","privilege":"reader","created_at":1780584132.5}]`
 
 	var buf bytes.Buffer
 	err := printServiceAccountsListAsTable(raw, &buf, 0)
 	require.NoError(t, err)
 
 	out := buf.String()
-	for _, want := range []string{"NAME", "DESCRIPTION", "PRIVILEGE", "CREATED", "ci-bot", "first", "deployer", "admin"} {
+	// every privilege must render in the PRIVILEGE column
+	for _, want := range []string{
+		"NAME", "DESCRIPTION", "PRIVILEGE", "CREATED",
+		"ci-bot", "first", "member",
+		"deployer", "admin",
+		"snapshot-bot", "snapshotter",
+		"auditor", "reader",
+	} {
 		require.Contains(t, out, want)
 	}
 	// the deployer's empty description must render as N/A, not blank
@@ -89,6 +98,18 @@ func (suite *ServiceAccountCommandTestSuite) TestCreateServiceAccountCmd() {
 			name:        "the service-account alias (sa) works",
 			cmd:         "create sa ci-bot --privilege member --dry-run" + suite.defaultKosliArguments,
 			goldenRegex: `service-accounts/docs-cmd-test-user`,
+		},
+		{
+			wantError:   false,
+			name:        "the snapshotter privilege passes through to the payload (dry-run)",
+			cmd:         "create service-account snapshot-bot --privilege snapshotter --dry-run" + suite.defaultKosliArguments,
+			goldenRegex: `(?s)service-accounts/docs-cmd-test-user.*"privilege": "snapshotter"`,
+		},
+		{
+			wantError:   false,
+			name:        "the reader privilege passes through to the payload (dry-run)",
+			cmd:         "create service-account auditor --privilege reader --dry-run" + suite.defaultKosliArguments,
+			goldenRegex: `(?s)service-accounts/docs-cmd-test-user.*"privilege": "reader"`,
 		},
 		{
 			wantError: true,
@@ -220,9 +241,9 @@ func (suite *ServiceAccountCommandTestSuite) TestServiceAccountSuccessOutput() {
 		},
 		{
 			wantError:   false,
-			name:        "list prints the returned service accounts",
-			cmd:         "list service-accounts --output json" + args,
-			goldenRegex: `(?s)ci-bot.*deployer`,
+			name:        "list prints the returned service accounts across all privileges",
+			cmd:         "list service-accounts" + args,
+			goldenRegex: `(?s)ci-bot.*member.*deployer.*admin.*snapshot-bot.*snapshotter.*auditor.*reader`,
 		},
 		{
 			wantError:   false,

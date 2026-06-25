@@ -20,7 +20,7 @@ response contract lives in one place.
 | Fixture | Endpoint / response |
 |---------|---------------------|
 | `created_service_account.json` | `POST /service-accounts/{org}` → `201` (create) |
-| `listed_service_accounts.json` | `GET /service-accounts/{org}` → `200` (list) |
+| `listed_service_accounts.json` | `GET /service-accounts/{org}` → `200` (list; one account per privilege: member, admin, snapshotter, reader) |
 | `service_account.json` | `GET /service-accounts/{org}/{name}` → `200` (get) |
 | `updated_service_account.json` | `PATCH /service-accounts/{org}/{name}` → `200` (update) |
 | `delete_success.json` | `DELETE /service-accounts/{org}/{name}` → `200` (bare `"OK"`) |
