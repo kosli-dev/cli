@@ -46,5 +46,5 @@ else
 fi
 
 echo creating test users on server ...
-docker exec $container_name /demo/create_standalone_test_users.py
+docker exec $container_name /app/test/create_standalone_test_users.py
 check_success
