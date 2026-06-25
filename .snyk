@@ -17,3 +17,7 @@ exclude:
     # (a graphql `Login` field) as a hardcoded credential. It is a public
     # identifier in test data, not a secret. See kosli-dev/server#5479.
     - internal/github/build_pr_evidence_test.go
+    # False positive: Snyk Code flags the hardcoded test session token (auth_token)
+    # in this test-user fixture as a secret. It is fake test data, not a real
+    # credential, and is used only to seed the local integration-test server.
+    - server-scripts/create_standalone_test_users.py
