@@ -28,6 +28,12 @@ func (suite *UpdateDefaultOrgCommandTestSuite) TestUpdateDefaultOrgCmd() {
 			golden: "default organization is set to: docs-cmd-test-user\n",
 		},
 		{
+			wantError:   false,
+			name:        "dry-run builds the right url without contacting the server",
+			cmd:         fmt.Sprintf(`update default-org docs-cmd-test-user --dry-run %s`, suite.defaultKosliArguments),
+			goldenRegex: `the request would have been sent to: .*api/v2/user/docs-cmd-test-user`,
+		},
+		{
 			wantError: true,
 			name:      "setting default org fails when no args are provided",
 			cmd:       fmt.Sprintf(`update default-org %s`, suite.defaultKosliArguments),
@@ -38,6 +44,12 @@ func (suite *UpdateDefaultOrgCommandTestSuite) TestUpdateDefaultOrgCmd() {
 			name:      "setting default org fails when 2 args are provided",
 			cmd:       fmt.Sprintf(`update default-org org1 org2 %s`, suite.defaultKosliArguments),
 			golden:    "Error: accepts 1 arg(s), received 2\n",
+		},
+		{
+			wantError: true,
+			name:      "setting default org fails when org name is empty",
+			cmd:       fmt.Sprintf(`update default-org "" %s`, suite.defaultKosliArguments),
+			golden:    "Error: ORG-NAME argument is required\nUsage: kosli update default-org ORG-NAME [flags]\n",
 		},
 		{
 			wantError: true,

@@ -34,6 +34,10 @@ func newUpdateDefaultOrgCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			if args[0] == "" {
+				return ErrorBeforePrintingUsage(cmd, "ORG-NAME argument is required")
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
