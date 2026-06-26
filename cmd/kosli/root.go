@@ -439,6 +439,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		newEvaluateCmd(out),
 		newDeleteCmd(out),
 		newRotateCmd(out),
+		newUpdateCmd(out),
 	)
 
 	cobra.AddTemplateFunc("isBeta", isBeta)
