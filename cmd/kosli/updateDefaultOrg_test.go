@@ -43,7 +43,7 @@ func (suite *UpdateDefaultOrgCommandTestSuite) TestUpdateDefaultOrgCmd() {
 			wantError: true,
 			name:      "setting default org fails for non-existing org",
 			cmd:       fmt.Sprintf(`update default-org non-existing-org-abc123 %s`, suite.defaultKosliArguments),
-			golden:    "Error: Organization named 'non-existing-org-abc123' does not exist\n",
+			golden:    "Error: Access denied to /api/v2/user/non-existing-org-abc123\n",
 		},
 	}
 
