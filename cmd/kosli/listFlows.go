@@ -16,23 +16,24 @@ import (
 
 const listFlowsShortDesc = `List flows for an org. `
 
-const listFlowsLongDesc = listFlowsShortDesc + `The results are paginated and ordered from latest to oldest.
-By default, the page limit is 20 flows per page.
+const listFlowsLongDesc = listFlowsShortDesc + `By default, all flows for the org are returned.
+Pass --page-limit and/or --page to paginate the results; when pagination is requested the output
+includes pagination metadata and a page footer (table) or a "data"/"pagination" envelope (JSON).
 The list can be filtered by name with --name (and --ignore-case for case-insensitive matching).`
 
 const listFlowsExample = `
-# list the first page of flows (20 per page):
+# list all flows for an org:
 kosli list flows \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list the first 30 flows:
+# list the first 30 flows (paginated):
 kosli list flows \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# show the second page of flows:
+# show the second page of flows (30 per page):
 kosli list flows \
 	--page-limit 30 \
 	--page 2 \
@@ -51,6 +52,7 @@ type listFlowsOptions struct {
 	listOptions
 	name       string
 	ignoreCase bool
+	paginate   bool
 }
 
 func newListFlowsCmd(out io.Writer) *cobra.Command {
@@ -69,6 +71,10 @@ func newListFlowsCmd(out io.Writer) *cobra.Command {
 			return o.validate(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// pagination is opt-in: only when the user explicitly sets --page or
+			// --page-limit do we paginate. Otherwise all flows are returned (the
+			// historical behaviour), keeping output backwards compatible.
+			o.paginate = cmd.Flags().Changed("page") || cmd.Flags().Changed("page-limit")
 			return o.run(out)
 		},
 	}
@@ -87,9 +93,12 @@ func (o *listFlowsOptions) run(out io.Writer) error {
 	}
 
 	params := url.Values{}
-	// sending per_page switches the endpoint to the paginated envelope response
-	params.Set("page", strconv.Itoa(o.pageNumber))
-	params.Set("per_page", strconv.Itoa(o.pageLimit))
+	if o.paginate {
+		// sending per_page switches the endpoint to the paginated {data, pagination}
+		// envelope; omitting it returns all flows as a plain array (the default)
+		params.Set("page", strconv.Itoa(o.pageNumber))
+		params.Set("per_page", strconv.Itoa(o.pageLimit))
+	}
 	if o.name != "" {
 		params.Set("search_by_name", o.name)
 		// case_sensitive only affects search, so only send it alongside a search term
@@ -97,7 +106,10 @@ func (o *listFlowsOptions) run(out io.Writer) error {
 			params.Set("case_sensitive", "false")
 		}
 	}
-	reqURL := base + "?" + params.Encode()
+	reqURL := base
+	if encoded := params.Encode(); encoded != "" {
+		reqURL = base + "?" + encoded
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
@@ -122,12 +134,23 @@ type listFlowsResponse struct {
 }
 
 func printFlowsListAsTable(raw string, out io.Writer, page int) error {
-	response := &listFlowsResponse{}
-	err := json.Unmarshal([]byte(raw), response)
-	if err != nil {
-		return err
+	var flows []map[string]interface{}
+	var pagination *Pagination
+
+	// The endpoint returns a plain array when unpaginated and a {data, pagination}
+	// envelope when paginated; handle both so the default behaviour is unchanged.
+	if strings.HasPrefix(strings.TrimSpace(raw), "[") {
+		if err := json.Unmarshal([]byte(raw), &flows); err != nil {
+			return err
+		}
+	} else {
+		response := &listFlowsResponse{}
+		if err := json.Unmarshal([]byte(raw), response); err != nil {
+			return err
+		}
+		flows = response.Data
+		pagination = &response.Pagination
 	}
-	flows := response.Data
 
 	if len(flows) == 0 {
 		msg := "No flows were found"
@@ -150,9 +173,10 @@ func printFlowsListAsTable(raw string, out io.Writer, page int) error {
 		row := fmt.Sprintf("%s\t%s\t%s\t%s", flow["name"], flow["description"], flow["visibility"], tagsOutput)
 		rows = append(rows, row)
 	}
-	pagination := response.Pagination
-	paginationInfo := fmt.Sprintf("\nShowing page %.0f of %.0f, total %.0f items", pagination.Page, pagination.PageCount, pagination.Total)
-	rows = append(rows, paginationInfo)
+	if pagination != nil {
+		paginationInfo := fmt.Sprintf("\nShowing page %.0f of %.0f, total %.0f items", pagination.Page, pagination.PageCount, pagination.Total)
+		rows = append(rows, paginationInfo)
+	}
 
 	tabFormattedPrint(out, header, rows)
 
