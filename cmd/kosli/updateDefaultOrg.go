@@ -12,7 +12,7 @@ import (
 const updateDefaultOrgShortDesc = `Set the default organization for the current user.`
 
 const updateDefaultOrgLongDesc = updateDefaultOrgShortDesc + `
-The default organization is used by Kosli Web UI when logging in.
+The default organization is the one selected by default in the Kosli Web UI when you log in.
 `
 
 const updateDefaultOrgExample = `
