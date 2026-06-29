@@ -94,6 +94,11 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	// the server is the authority on which types are actually accepted
 	validEnvTypesList = "K8S, ECS, S3, lambda, server, docker, azure-apps, cloud-run, logical"
 
+	// single source of truth for the service account privilege list shown in
+	// flag help texts; the server is the authority on which privileges are
+	// actually accepted
+	validServiceAccountPrivilegesList = "admin, member, snapshotter, reader"
+
 	// flags
 	apiTokenFlag                    = "The Kosli API token."
 	artifactName                    = "[optional] Artifact display name, if different from file, image or directory name."
@@ -120,6 +125,9 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	searchByNameFlag                = "[optional] Only list flows whose name contains this substring. The Kosli API supports alphanumeric characters and '-'."
 	ignoreCaseFlag                  = "[optional] Perform case-insensitive matching for --name. By default matching is case sensitive."
 	serviceAccountNameFlag          = "The name of the service account whose API keys are managed."
+	serviceAccountDescriptionFlag   = "[optional] A description for the service account."
+	serviceAccountPrivilegeFlag     = "The privilege granted to the service account. One of: [" + validServiceAccountPrivilegesList + "]."
+	serviceAccountAssumeYesFlag     = "[optional] Skip the confirmation prompt and delete the service account without asking. (alias: --yes)"
 	apiKeyDescriptionFlag           = "A description for the API key."
 	apiKeyExpiresAtFlag             = "[optional] When the API key expires. Accepts an epoch timestamp or a date like '2026-06-04', '2026-06-04 15:04:05', or an RFC3339 timestamp. Defaults to no expiry."
 	apiKeyGracePeriodHoursFlag      = "[optional] How many hours the old API key remains valid after rotation, to allow time to update dependent systems. Defaults to the server-side value when not set."
