@@ -23,6 +23,15 @@ func TestPrintDefaultOrgAsTable(t *testing.T) {
 	}
 }
 
+func TestPrintDefaultOrgAsTableNoneSet(t *testing.T) {
+	raw := `{"default_org_name":""}`
+
+	var buf bytes.Buffer
+	err := printDefaultOrgAsTable(raw, &buf, 0)
+	require.NoError(t, err)
+	require.Regexp(t, `Default organization:\s+\(none set\)`, buf.String())
+}
+
 type GetDefaultOrgCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string

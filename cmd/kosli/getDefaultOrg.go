@@ -14,7 +14,7 @@ import (
 const getDefaultOrgShortDesc = `Get the default organization for the current user.`
 
 const getDefaultOrgLongDesc = getDefaultOrgShortDesc + `
-The default organization is used by Kosli Web UI when logging in.`
+The default organization is the one selected by default in the Kosli Web UI when you log in.`
 
 const getDefaultOrgExample = `
 # get the default organization for the current user:
@@ -85,7 +85,11 @@ func printDefaultOrgAsTable(raw string, out io.Writer, page int) error {
 		return err
 	}
 
-	rows := []string{"Default organization:\t" + org.DefaultOrgName}
+	name := org.DefaultOrgName
+	if name == "" {
+		name = "(none set)"
+	}
+	rows := []string{"Default organization:\t" + name}
 	tabFormattedPrint(out, []string{}, rows)
 	return nil
 }
