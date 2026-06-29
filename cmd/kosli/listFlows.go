@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -16,9 +17,13 @@ import (
 const listFlowsDesc = `List flows for an org.`
 
 type listFlowsOptions struct {
-	output     string
+	listOptions
 	name       string
 	ignoreCase bool
+}
+
+func (o *listFlowsOptions) validate(cmd *cobra.Command) error {
+	return o.listOptions.validate(cmd)
 }
 
 func newListFlowsCmd(out io.Writer) *cobra.Command {
@@ -33,15 +38,15 @@ func newListFlowsCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			return nil
+			return o.validate(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out)
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().StringVarP(&o.name, "name", "n", "", searchByNameFlag)
+	addListFlags(cmd, &o.listOptions)
+	cmd.Flags().StringVarP(&o.name, "name", "N", "", searchByNameFlag)
 	cmd.Flags().BoolVarP(&o.ignoreCase, "ignore-case", "i", false, ignoreCaseFlag)
 
 	return cmd
@@ -54,6 +59,9 @@ func (o *listFlowsOptions) run(out io.Writer) error {
 	}
 
 	params := url.Values{}
+	// sending per_page switches the endpoint to the paginated envelope response
+	params.Set("page", strconv.Itoa(o.pageNumber))
+	params.Set("per_page", strconv.Itoa(o.pageLimit))
 	if o.name != "" {
 		params.Set("search_by_name", o.name)
 		// case_sensitive only affects search, so only send it alongside a search term
@@ -61,10 +69,7 @@ func (o *listFlowsOptions) run(out io.Writer) error {
 			params.Set("case_sensitive", "false")
 		}
 	}
-	reqURL := base
-	if encoded := params.Encode(); encoded != "" {
-		reqURL = base + "?" + encoded
-	}
+	reqURL := base + "?" + params.Encode()
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
@@ -76,22 +81,32 @@ func (o *listFlowsOptions) run(out io.Writer) error {
 		return err
 	}
 
-	return output.FormattedPrint(response.Body, o.output, out, 0,
+	return output.FormattedPrint(response.Body, o.output, out, o.pageNumber,
 		map[string]output.FormatOutputFunc{
 			"table": printFlowsListAsTable,
 			"json":  output.PrintJson,
 		})
 }
 
+type listFlowsResponse struct {
+	Data       []map[string]interface{} `json:"data"`
+	Pagination Pagination               `json:"pagination"`
+}
+
 func printFlowsListAsTable(raw string, out io.Writer, page int) error {
-	var flows []map[string]interface{}
-	err := json.Unmarshal([]byte(raw), &flows)
+	response := &listFlowsResponse{}
+	err := json.Unmarshal([]byte(raw), response)
 	if err != nil {
 		return err
 	}
+	flows := response.Data
 
 	if len(flows) == 0 {
-		logger.Info("No flows were found.")
+		msg := "No flows were found"
+		if page != 1 {
+			msg = fmt.Sprintf("%s at page number %d", msg, page)
+		}
+		logger.Info(msg + ".")
 		return nil
 	}
 
@@ -107,6 +122,10 @@ func printFlowsListAsTable(raw string, out io.Writer, page int) error {
 		row := fmt.Sprintf("%s\t%s\t%s\t%s", flow["name"], flow["description"], flow["visibility"], tagsOutput)
 		rows = append(rows, row)
 	}
+	pagination := response.Pagination
+	paginationInfo := fmt.Sprintf("\nShowing page %.0f of %.0f, total %.0f items", pagination.Page, pagination.PageCount, pagination.Total)
+	rows = append(rows, paginationInfo)
+
 	tabFormattedPrint(out, header, rows)
 
 	return nil
