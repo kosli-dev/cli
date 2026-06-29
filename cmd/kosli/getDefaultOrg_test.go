@@ -18,7 +18,7 @@ func TestPrintDefaultOrgAsTable(t *testing.T) {
 	require.NoError(t, err)
 
 	out := buf.String()
-	for _, want := range []string{"Default organization:", "test-org"} {
+	for _, want := range []string{"Default user organization:", "test-org"} {
 		require.Contains(t, out, want)
 	}
 }
@@ -29,7 +29,7 @@ func TestPrintDefaultOrgAsTableNoneSet(t *testing.T) {
 	var buf bytes.Buffer
 	err := printDefaultOrgAsTable(raw, &buf, 0)
 	require.NoError(t, err)
-	require.Regexp(t, `Default organization:\s+\(none set\)`, buf.String())
+	require.Regexp(t, `Default user organization:\s+\(none set\)`, buf.String())
 }
 
 type GetDefaultOrgCommandTestSuite struct {
@@ -59,7 +59,7 @@ func (suite *GetDefaultOrgCommandTestSuite) TestGetDefaultOrgCmd() {
 			wantError:   false,
 			name:        "get default-org prints the org name as a table",
 			cmd:         "get default-org" + args,
-			goldenRegex: `Default organization:\s+test-org`,
+			goldenRegex: `Default user organization:\s+test-org`,
 		},
 		{
 			wantError:   false,

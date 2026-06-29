@@ -89,7 +89,8 @@ func printDefaultOrgAsTable(raw string, out io.Writer, page int) error {
 	if name == "" {
 		name = "(none set)"
 	}
-	rows := []string{"Default organization:\t" + name}
+	rows := []string{"Default user organization: " + name}
 	tabFormattedPrint(out, []string{}, rows)
+
 	return nil
 }
