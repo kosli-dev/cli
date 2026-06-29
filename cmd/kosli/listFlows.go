@@ -14,7 +14,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const listFlowsDesc = `List flows for an org.`
+const listFlowsShortDesc = `List flows for an org. `
+
+const listFlowsLongDesc = listFlowsShortDesc + `The results are paginated and ordered from latest to oldest.
+By default, the page limit is 20 flows per page.
+The list can be filtered by name with --name (and --ignore-case for case-insensitive matching).`
+
+const listFlowsExample = `
+# list the first page of flows (20 per page):
+kosli list flows \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list the first 30 flows:
+kosli list flows \
+	--page-limit 30 \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# show the second page of flows:
+kosli list flows \
+	--page-limit 30 \
+	--page 2 \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list flows whose name contains "backend" (in JSON):
+kosli list flows \
+	--name backend \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+	--output json
+`
 
 type listFlowsOptions struct {
 	listOptions
@@ -22,17 +53,14 @@ type listFlowsOptions struct {
 	ignoreCase bool
 }
 
-func (o *listFlowsOptions) validate(cmd *cobra.Command) error {
-	return o.listOptions.validate(cmd)
-}
-
 func newListFlowsCmd(out io.Writer) *cobra.Command {
 	o := new(listFlowsOptions)
 	cmd := &cobra.Command{
-		Use:   "flows",
-		Short: listFlowsDesc,
-		Long:  listFlowsDesc,
-		Args:  cobra.NoArgs,
+		Use:     "flows",
+		Short:   listFlowsShortDesc,
+		Long:    listFlowsLongDesc,
+		Example: listFlowsExample,
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
@@ -45,7 +73,7 @@ func newListFlowsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	addListFlags(cmd, &o.listOptions)
+	addListFlags(cmd, &o.listOptions, 20)
 	cmd.Flags().StringVarP(&o.name, "name", "N", "", searchByNameFlag)
 	cmd.Flags().BoolVarP(&o.ignoreCase, "ignore-case", "i", false, ignoreCaseFlag)
 
