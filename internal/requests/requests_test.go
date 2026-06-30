@@ -57,6 +57,10 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Reply(409).
 		BodyString("resource temporarily locked")
 	suite.fakeService.NewHandler().
+		Get("/conflict/").
+		Reply(409).
+		BodyString(`{"message": "already exists"}`)
+	suite.fakeService.NewHandler().
 		Get("/fail/").
 		Reply(500).
 		BodyString("server broken")
@@ -306,6 +310,16 @@ func (suite *RequestsTestSuite) TestDo() {
 			},
 			wantError:        true,
 			expectedErrorMsg: fmt.Sprintf("Get \"%s\": GET %s giving up after 2 attempt(s)", suite.fakeService.ResolveURL("/locked/"), suite.fakeService.ResolveURL("/locked/")),
+		},
+		{
+			name: "409 is not retried and is surfaced when DisableConflictRetry is set",
+			params: &RequestParams{
+				Method:               http.MethodGet,
+				URL:                  suite.fakeService.ResolveURL("/conflict/"),
+				DisableConflictRetry: true,
+			},
+			wantError:        true,
+			expectedErrorMsg: "already exists",
 		},
 		{
 			name: "GET request to 500 endpoint",

@@ -298,6 +298,8 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	attestationTypeDescriptionFlag  = "[optional] The attestation type description."
 	attestationTypeSchemaFlag       = "[optional] Path to the attestation type schema in JSON Schema format."
 	attestationTypeJqFlag           = "[optional] The attestation type evaluation JQ rules."
+	controlNameFlag                 = "[required] The control name."
+	controlDescriptionFlag          = "[optional] The control description."
 	envNameFlag                     = "The Kosli environment name to assert the artifact against."
 	pathsWatchFlag                  = "[optional] Watch the filesystem for changes and report snapshots of artifacts running in specific filesystem paths to Kosli."
 	getAttestationFingerprintFlag   = "[conditional] The fingerprint of the artifact for the attestation. Cannot be used together with --trail or --attestation-id."

@@ -97,7 +97,16 @@ type RequestParams struct {
 	Password          string
 	Token             string
 	DryRun            bool
+	// DisableConflictRetry stops the client retrying on HTTP 409 for this
+	// request. By default 409 is retried (it signals a transient lock
+	// conflict), but some endpoints use 409 for a permanent client error
+	// (e.g. a duplicate identifier) that should be surfaced immediately.
+	DisableConflictRetry bool
 }
+
+type contextKey string
+
+const disableConflictRetryKey contextKey = "disableConflictRetry"
 
 func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]any, error) {
 	if len(p.AdditionalHeaders) == 0 {
@@ -130,6 +139,10 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]any, error) 
 	req, err := http.NewRequest(p.Method, p.URL, body)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create %s request to %s : %v", p.Method, p.URL, err)
+	}
+
+	if p.DisableConflictRetry {
+		req = req.WithContext(context.WithValue(req.Context(), disableConflictRetryKey, true))
 	}
 
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
@@ -340,8 +353,12 @@ func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool
 	if shouldRetry {
 		return true, nil
 	}
-	// The server gives 409 if we have a lock conflict.
+	// The server gives 409 if we have a lock conflict, so retry — unless the
+	// request opted out (some endpoints use 409 for a permanent client error).
 	if resp != nil && resp.StatusCode == 409 {
+		if disable, ok := ctx.Value(disableConflictRetryKey).(bool); ok && disable {
+			return false, nil
+		}
 		return true, nil
 	}
 	return false, nil
