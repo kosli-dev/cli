@@ -42,6 +42,16 @@ argument for Jira issue references of the form:
 'at least 2 characters long, starting with an uppercase letter project key followed by
 dash and one or more digits'.
 
+Matching is case-insensitive: ^proj-42^ and ^PROJ-42^ in a commit message are both
+recognised and returned as ^PROJ-42^. Any token that matches the Jira key format
+(a word boundary, two or more letters/digits starting with a letter, a dash, and one
+or more digits) is treated as a candidate, regardless of whether it is an intentional
+Jira reference. For example, a commit message ^see note-1 for context, fixes PROJ-42^
+will look up both ^NOTE-1^ and ^PROJ-42^ in Jira. If ^NOTE-1^ does not exist, the
+attestation will be non-compliant even though ^PROJ-42^ is valid.
+Use ^--jira-project-key^ to restrict matching to one or more known project keys and
+avoid unintended candidates.
+
 Any candidate match is automatically excluded if every occurrence in the parsed text is
 immediately followed by a hyphen and a digit — for example, ^CVE-2026-41284^ is excluded
 because ^CVE-2026^ would be followed by ^-4^. This applies across all parsed sources

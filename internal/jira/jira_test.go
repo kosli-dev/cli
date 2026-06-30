@@ -18,15 +18,15 @@ func TestMakeJiraIssueKey(t *testing.T) {
 		{
 			name:        "Empty project keys",
 			projectKeys: []string{},
-			want:        `[A-Z][A-Z0-9]{1,9}-[0-9]+`,
+			want:        `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`,
 			matches: []string{
 				"ABC-123",
 				"A1-456",
 				"XY-789",
 			},
 			nonMatches: []string{
-				"abc-123", // project key should start with uppercase
-				"A-123",   // project key too short
+				"abc-123", // pattern is uppercase-only; FindJiraIssueKeys uppercases the text before applying it
+				"A-123",   // project key too short (only 1 char)
 				"1A-123",  // project key starts with a number
 				"ABC_123", // wrong separator
 				"ABC-",    // missing number
@@ -36,17 +36,29 @@ func TestMakeJiraIssueKey(t *testing.T) {
 		{
 			name:        "With project keys",
 			projectKeys: []string{"ABC", "XYZ"},
-			want:        `(ABC|XYZ)-[0-9]+`, // Currently empty in the function implementation
+			want:        `\b(ABC|XYZ)-[0-9]+`,
 			matches: []string{
 				"ABC-123",
 				"XYZ-789",
 			},
 			nonMatches: []string{
-				"xyz-123", // project key should start with uppercase
+				"xyz-123", // pattern is uppercase-only; text is uppercased by FindJiraIssueKeys before matching
 				"ABC_123", // wrong separator
 				"ABC-",    // missing number
 				"-123",    // missing project key
 				"DEF-123", // wrong project key
+			},
+		},
+		{
+			name:        "With lowercase project keys they are uppercased in the pattern",
+			projectKeys: []string{"abc", "xyz"},
+			want:        `\b(ABC|XYZ)-[0-9]+`,
+			matches: []string{
+				"ABC-123",
+				"XYZ-789",
+			},
+			nonMatches: []string{
+				"DEF-123",
 			},
 		},
 	}
@@ -162,6 +174,45 @@ func TestFindJiraIssueKeys(t *testing.T) {
 			text:        "",
 			projectKeys: []string{},
 			want:        nil,
+		},
+		{
+			name:        "lowercase key is matched and returned uppercase",
+			text:        "tDIE-12419:Update test9882.ts",
+			projectKeys: []string{},
+			want:        []string{"TDIE-12419"},
+		},
+		{
+			name:        "lowercase prefix does not produce phantom substring match",
+			text:        "tDIE-12419 is the only ticket",
+			projectKeys: []string{},
+			want:        []string{"TDIE-12419"},
+		},
+		{
+			name:        "lowercase key alongside CVE is matched and CVE is filtered",
+			text:        "proj-42 fixes CVE-2026-41284",
+			projectKeys: []string{},
+			want:        []string{"PROJ-42"},
+		},
+		{
+			name:        "mixed-case duplicate keys are deduplicated",
+			text:        "tDIE-12419 and TDIE-12419",
+			projectKeys: []string{},
+			want:        []string{"TDIE-12419"},
+		},
+		{
+			name:        "CVE-like lowercase occurrence first does not suppress standalone uppercase occurrence",
+			text:        "tdie-12419-5 foo TDIE-12419",
+			projectKeys: []string{},
+			want:        []string{"TDIE-12419"},
+		},
+		{
+			name: "prose word matching Jira key format is treated as a candidate alongside a real key",
+			// "note-1" matches the pattern and becomes NOTE-1; if NOTE-1 does not exist in
+			// Jira, the attestation will be non-compliant even though PROJ-42 is a valid
+			// reference. Use --jira-project-key to restrict matching to known project keys.
+			text:        "see note-1 for context, fixes PROJ-42",
+			projectKeys: []string{},
+			want:        []string{"NOTE-1", "PROJ-42"},
 		},
 	}
 

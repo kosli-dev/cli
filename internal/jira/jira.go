@@ -108,26 +108,34 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 }
 
 func MakeJiraIssueKeyPattern(projectKeys []string) string {
-	// Jira issue keys consist of [project-key]-[sequential-number]
-	// project key must be at least 2 characters long and start with an uppercase letter
+	// Jira issue keys consist of [project-key]-[sequential-number].
+	// FindJiraIssueKeys uppercases the text before applying this pattern, so the
+	// pattern only needs to handle uppercase. Project keys supplied by the caller
+	// are also uppercased here for the same reason.
 	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
 	if len(projectKeys) == 0 {
-		return `[A-Z][A-Z0-9]{1,9}-[0-9]+`
-	} else {
-		return `(` + strings.Join(projectKeys, "|") + `)-[0-9]+`
+		return `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`
 	}
+	upper := make([]string, len(projectKeys))
+	for i, k := range projectKeys {
+		upper[i] = strings.ToUpper(k)
+	}
+	return `\b(` + strings.Join(upper, "|") + `)-[0-9]+`
 }
 
 // FindJiraIssueKeys finds all Jira issue keys in text, filtering out
 // partial matches from multi-segment identifiers like CVE-2026-41284.
-// A match is discarded if every occurrence in text is immediately
-// followed by "-<digit>".
+// Matching is case-insensitive: the text is uppercased before the regex
+// is applied, so all returned keys are in canonical uppercase form.
+// A match is discarded if every occurrence in the uppercased text is
+// immediately followed by a hyphen and a digit.
 func FindJiraIssueKeys(text string, projectKeys []string) []string {
+	upperText := strings.ToUpper(text)
 	pattern := MakeJiraIssueKeyPattern(projectKeys)
 	re := regexp.MustCompile(pattern)
-	candidates := re.FindAllString(text, -1)
+	candidates := re.FindAllString(upperText, -1)
 
-	// Deduplicate
+	// Deduplicate (all candidates are already uppercase).
 	seen := make(map[string]struct{})
 	var unique []string
 	for _, c := range candidates {
@@ -137,11 +145,11 @@ func FindJiraIssueKeys(text string, projectKeys []string) []string {
 		}
 	}
 
-	// Filter out matches that are always followed by -<digit> in the text
+	// Filter out matches that are always followed by -<digit> in the uppercased text.
 	dashDigit := regexp.MustCompile(`^-\d`)
 	var result []string
 	for _, m := range unique {
-		if isPartialMultiSegment(text, m, dashDigit) {
+		if isPartialMultiSegment(upperText, m, dashDigit) {
 			continue
 		}
 		result = append(result, m)
