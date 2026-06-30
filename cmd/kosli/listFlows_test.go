@@ -48,7 +48,7 @@ func (suite *ListFlowsCommandTestSuite) TestListFlowsCmd() {
 		{
 			name:       "listing flows with --output json works when there are flows",
 			cmd:        fmt.Sprintf(`list flows --output json %s`, suite.defaultKosliArguments),
-			goldenJson: []jsonCheck{{"", "non-empty"}},
+			goldenJson: []jsonCheck{{"", "non-empty"}}, // unpaginated default returns a plain array
 		},
 		{
 			name:       "listing flows with --output json works when there are no flows",
@@ -76,9 +76,48 @@ func (suite *ListFlowsCommandTestSuite) TestListFlowsCmd() {
 			goldenJson: []jsonCheck{{"", "non-empty"}, {"[0].name", "list-flows-search-target"}},
 		},
 		{
-			name:       "short flags -n and -i work like --name and --ignore-case",
-			cmd:        fmt.Sprintf(`list flows -n LIST-FLOWS-SEARCH-TARGET -i --output json %s`, suite.defaultKosliArguments),
+			name:       "short flags -N and -i work like --name and --ignore-case",
+			cmd:        fmt.Sprintf(`list flows -N LIST-FLOWS-SEARCH-TARGET -i --output json %s`, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{{"", "non-empty"}, {"[0].name", "list-flows-search-target"}},
+		},
+		{
+			name:       "pagination metadata is returned on page 1",
+			cmd:        fmt.Sprintf(`list flows --page-limit 1 --page 1 --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"data", "non-empty"}, {"pagination.page", float64(1)}},
+		},
+		{
+			name:       "can page through flows with --page",
+			cmd:        fmt.Sprintf(`list flows --page-limit 1 --page 2 --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"pagination.page", float64(2)}},
+		},
+		{
+			name:   "an empty page reports the page number",
+			cmd:    fmt.Sprintf(`list flows --page 99 %s`, suite.defaultKosliArguments),
+			golden: "No flows were found at page number 99.\n",
+		},
+		{
+			wantError: true,
+			name:      "negative page limit causes an error",
+			cmd:       fmt.Sprintf(`list flows --page-limit -1 %s`, suite.defaultKosliArguments),
+			golden:    "Error: flag '--page-limit' has value '-1' which is illegal\n",
+		},
+		{
+			wantError: true,
+			name:      "negative page number causes an error",
+			cmd:       fmt.Sprintf(`list flows --page -1 %s`, suite.defaultKosliArguments),
+			golden:    "Error: flag '--page' has value '-1' which is illegal\n",
+		},
+		{
+			wantError: true,
+			name:      "zero page limit causes an error",
+			cmd:       fmt.Sprintf(`list flows --page-limit 0 %s`, suite.defaultKosliArguments),
+			golden:    "Error: page limit must be a positive integer\nUsage: kosli list flows [flags]\n",
+		},
+		{
+			wantError: true,
+			name:      "zero page number causes an error",
+			cmd:       fmt.Sprintf(`list flows --page 0 %s`, suite.defaultKosliArguments),
+			golden:    "Error: page number must be a positive integer\nUsage: kosli list flows [flags]\n",
 		},
 		{
 			wantError: true,
