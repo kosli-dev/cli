@@ -55,6 +55,12 @@ func (suite *CreateControlTestSuite) TestCreateControlCmd() {
 			cmd:         "create control my-control --name 'My Control'" + suite.defaultKosliArguments,
 			goldenRegex: "^Error: A control with identifier 'my-control' already exists in organization",
 		},
+		{
+			wantError:   true,
+			name:        "fails when the identifier contains invalid characters",
+			cmd:         "create control 'bad identifier' --name 'My Control'" + suite.defaultKosliArguments,
+			goldenRegex: "^Error: Input payload validation failed:.*Control identifier 'bad identifier' contains invalid characters",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

@@ -83,6 +83,12 @@ func (suite *TagTestSuite) TestTagCmd() {
 			cmd:    fmt.Sprintf("tag controls %s --set key=value %s", suite.controlID, suite.defaultKosliArguments),
 			golden: "Tag(s) [key] added for controls 'tag-control'\n",
 		},
+		{
+			wantError:   true,
+			name:        "tagging a non-existing control gives a clear error",
+			cmd:         fmt.Sprintf("tag control no-such-control --set foo=bar %s", suite.defaultKosliArguments),
+			goldenRegex: "^Error: \"Control 'no-such-control' does not exist in organization",
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }

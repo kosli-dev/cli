@@ -41,6 +41,12 @@ func (suite *UnarchiveControlCommandTestSuite) TestUnarchiveControlCmd() {
 			cmd:        "get control unarchive-me --output json" + suite.defaultKosliArguments,
 			goldenJson: []jsonCheck{{"archived", false}},
 		},
+		{
+			wantError:   true,
+			name:        "unarchiving a non-existing control gives a clear error",
+			cmd:         "unarchive control no-such-control" + suite.defaultKosliArguments,
+			goldenRegex: "^Error: Control 'no-such-control' does not exist in org",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
