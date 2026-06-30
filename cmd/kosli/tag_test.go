@@ -16,12 +16,14 @@ type TagTestSuite struct {
 	flowName              string
 	envName               string
 	envType               string
+	controlID             string
 }
 
 func (suite *TagTestSuite) SetupTest() {
 	suite.flowName = "tag-flow"
 	suite.envName = "tag-env"
 	suite.envType = "K8S"
+	suite.controlID = "tag-control"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user",
@@ -31,6 +33,7 @@ func (suite *TagTestSuite) SetupTest() {
 
 	CreateFlow(suite.flowName, suite.T())
 	CreateEnv(global.Org, suite.envName, suite.envType, suite.T())
+	CreateControl(global.Org, suite.controlID, "Tag control", suite.T())
 }
 
 func (suite *TagTestSuite) TestTagCmd() {
@@ -64,6 +67,21 @@ func (suite *TagTestSuite) TestTagCmd() {
 			name:   "can tag a flow",
 			cmd:    fmt.Sprintf("tag flow %s --set foo=bar %s", suite.flowName, suite.defaultKosliArguments),
 			golden: "Tag(s) [foo] added for flow 'tag-flow'\n",
+		},
+		{
+			name:   "can tag a control",
+			cmd:    fmt.Sprintf("tag control %s --set foo=bar %s", suite.controlID, suite.defaultKosliArguments),
+			golden: "Tag(s) [foo] added for control 'tag-control'\n",
+		},
+		{
+			name:   "can remove a tag from a control",
+			cmd:    fmt.Sprintf("tag control %s --unset foo %s", suite.controlID, suite.defaultKosliArguments),
+			golden: "Tag(s) [foo] removed for control 'tag-control'\n",
+		},
+		{
+			name:   "can tag a control using the plural resource type",
+			cmd:    fmt.Sprintf("tag controls %s --set key=value %s", suite.controlID, suite.defaultKosliArguments),
+			golden: "Tag(s) [key] added for controls 'tag-control'\n",
 		},
 	}
 	runTestCmd(suite.T(), tests)
