@@ -23,6 +23,13 @@ func (suite *ListControlsCommandTestSuite) SetupTest() {
 	CreateControl(global.Org, "list-control-1", "First control", suite.T())
 	CreateControl(global.Org, "list-control-2", "Second control", suite.T())
 
+	// fixtures for filtering: a tagged control and an archived control with
+	// unique identifiers/tags so assertions are robust to shared server state.
+	CreateControl(global.Org, "tagged-control", "Tagged control", suite.T())
+	TagControl(global.Org, "tagged-control", map[string]string{"slice2b": "tagtest"}, suite.T())
+	CreateControl(global.Org, "archived-control", "Archived control", suite.T())
+	ArchiveControl(global.Org, "archived-control", suite.T())
+
 	global.Org = "acme-org"
 	global.ApiToken = "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c"
 	suite.acmeOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
@@ -82,6 +89,26 @@ func (suite *ListControlsCommandTestSuite) TestListControlsCmd() {
 			name:        "--page-limit must be a positive integer",
 			cmd:         "list controls --page-limit 0" + suite.defaultKosliArguments,
 			goldenRegex: "^Error: page limit must be a positive integer",
+		},
+		{
+			name:       "--search matches by identifier",
+			cmd:        "list controls --search list-control-1 --output json" + suite.defaultKosliArguments,
+			goldenJson: []jsonCheck{{"controls", "length:1"}, {"controls.[0].identifier", "list-control-1"}},
+		},
+		{
+			name:       "--tag returns only controls carrying that tag",
+			cmd:        "list controls --tag slice2b:tagtest --output json" + suite.defaultKosliArguments,
+			goldenJson: []jsonCheck{{"controls", "length:1"}, {"controls.[0].identifier", "tagged-control"}},
+		},
+		{
+			name:       "archived controls are excluded by default",
+			cmd:        "list controls --search archived-control --output json" + suite.defaultKosliArguments,
+			goldenJson: []jsonCheck{{"controls", "[]"}},
+		},
+		{
+			name:       "--archived returns archived controls",
+			cmd:        "list controls --archived --search archived-control --output json" + suite.defaultKosliArguments,
+			goldenJson: []jsonCheck{{"controls", "length:1"}, {"controls.[0].identifier", "archived-control"}},
 		},
 	}
 

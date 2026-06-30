@@ -35,6 +35,9 @@ kosli list controls \
 
 type listControlsOptions struct {
 	listOptions
+	search   string
+	tags     []string
+	archived bool
 }
 
 func newListControlsCmd(out io.Writer) *cobra.Command {
@@ -58,6 +61,9 @@ func newListControlsCmd(out io.Writer) *cobra.Command {
 	}
 
 	addListFlags(cmd, &o.listOptions)
+	cmd.Flags().StringVar(&o.search, "search", "", controlSearchFlag)
+	cmd.Flags().StringArrayVar(&o.tags, "tag", []string{}, controlTagFlag)
+	cmd.Flags().BoolVar(&o.archived, "archived", false, controlArchivedFlag)
 
 	return cmd
 }
@@ -71,6 +77,15 @@ func (o *listControlsOptions) run(out io.Writer) error {
 	params := url.Values{}
 	params.Set("page", strconv.Itoa(o.pageNumber))
 	params.Set("per_page", strconv.Itoa(o.pageLimit))
+	if o.search != "" {
+		params.Set("search", o.search)
+	}
+	for _, tag := range o.tags {
+		params.Add("tag", tag)
+	}
+	if o.archived {
+		params.Set("archived", "true")
+	}
 	reqURL := base + "?" + params.Encode()
 
 	reqParams := &requests.RequestParams{
