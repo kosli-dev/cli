@@ -440,6 +440,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		newRenameCmd(out),
 		newJoinCmd(out),
 		newArchiveCmd(out),
+		newUnarchiveCmd(out),
 		newSnapshotCmd(out),
 		newRequestCmd(out),
 		newLogCmd(out),
