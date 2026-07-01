@@ -57,6 +57,14 @@ func (suite *UpdateControlCommandTestSuite) TestUpdateControlCmd() {
 			golden: "control update-me was updated\n",
 		},
 		{
+			// Guards the core behaviour: only the flags the user set land in the
+			// PUT body. A name-only update must send exactly {"name": ...} — no
+			// stray empty description or links.
+			name:        "sends only the fields that were set (dry-run)",
+			cmd:         "update control update-me --name 'Only name' --dry-run" + suite.defaultKosliArguments,
+			goldenRegex: `(?s)controls/docs-cmd-test-user/update-me.*\{\s*"name": "Only name"\s*\}`,
+		},
+		{
 			wantError:   true,
 			name:        "updating a non-existing control gives a clear error",
 			cmd:         "update control no-such-control --name 'New name'" + suite.defaultKosliArguments,
