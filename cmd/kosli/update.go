@@ -20,6 +20,7 @@ func newUpdateCmd(out io.Writer) *cobra.Command {
 	cmd.AddCommand(
 		newUpdateServiceAccountCmd(out),
 		newUpdateDefaultOrgCmd(out),
+		newUpdateControlCmd(out),
 	)
 
 	return cmd
