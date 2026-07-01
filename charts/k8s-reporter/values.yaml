@@ -133,8 +133,20 @@ customCA:
   # -- key within the Secret that holds the PEM-formatted CA certificate (single cert or multi-cert PEM bundle)
   key: "ca.crt"
 
-# -- any custom annotations to be added to the cronjob
+# -- annotations to add to the CronJob object itself. For pod-level annotations (added to each reporter pod), use `podTemplateAnnotations` instead.
 podAnnotations: {}
+
+# -- annotations to add to the reporter pod template (applied to each Job pod that the CronJob creates)
+podTemplateAnnotations: {}
+
+# -- node labels for scheduling the reporter pod. On EKS with Karpenter, use this to pin the reporter to a stable managed node group (e.g. `eks.amazonaws.com/nodegroup: <name>`) so it does not interfere with node consolidation. See the "Running on EKS with Karpenter" section of the README.
+nodeSelector: {}
+
+# -- tolerations for scheduling the reporter pod, e.g. to run on a dedicated or tainted node group.
+tolerations: []
+
+# -- affinity rules for scheduling the reporter pod. Supports nodeAffinity, podAffinity and podAntiAffinity.
+affinity: {}
 
 resources:
   requests:
