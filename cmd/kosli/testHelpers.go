@@ -544,6 +544,35 @@ func CreateControl(org, identifier, name string, t *testing.T) {
 	require.NoError(t, err, "control should be created without error")
 }
 
+func ArchiveControl(org, identifier string, t *testing.T) {
+	t.Helper()
+	u, err := url.JoinPath(global.Host, "api/v2/controls", org, identifier, "archive")
+	require.NoError(t, err, "control archive URL should be constructed without error")
+
+	reqParams := &requests.RequestParams{
+		Method: http.MethodPost,
+		URL:    u,
+		Token:  global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	require.NoError(t, err, "control should be archived without error")
+}
+
+func TagControl(org, identifier string, tags map[string]string, t *testing.T) {
+	t.Helper()
+	u, err := url.JoinPath(global.Host, "api/v2/tags", org, "control", identifier)
+	require.NoError(t, err, "control tag URL should be constructed without error")
+
+	reqParams := &requests.RequestParams{
+		Method:  http.MethodPatch,
+		URL:     u,
+		Payload: TagResourcePayload{SetTags: tags},
+		Token:   global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	require.NoError(t, err, "control should be tagged without error")
+}
+
 // CreatePolicy creates a policy on the server
 func CreatePolicy(org, policyName string, t *testing.T) {
 	t.Helper()

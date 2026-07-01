@@ -298,6 +298,11 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	attestationTypeDescriptionFlag  = "[optional] The attestation type description."
 	attestationTypeSchemaFlag       = "[optional] Path to the attestation type schema in JSON Schema format."
 	attestationTypeJqFlag           = "[optional] The attestation type evaluation JQ rules."
+	controlNameFlag                 = "[required] The control name."
+	controlDescriptionFlag          = "[optional] The control description."
+	controlSearchFlag               = "[optional] Only list controls whose name or identifier contains this substring (case-insensitive)."
+	controlTagFlag                  = "[optional] Filter by tag, given as 'key' or 'key:value'. Can be repeated."
+	controlArchivedFlag             = "[optional] List archived controls instead of active ones."
 	envNameFlag                     = "The Kosli environment name to assert the artifact against."
 	pathsWatchFlag                  = "[optional] Watch the filesystem for changes and report snapshots of artifacts running in specific filesystem paths to Kosli."
 	getAttestationFingerprintFlag   = "[conditional] The fingerprint of the artifact for the attestation. Cannot be used together with --trail or --attestation-id."
@@ -435,6 +440,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		newRenameCmd(out),
 		newJoinCmd(out),
 		newArchiveCmd(out),
+		newUnarchiveCmd(out),
 		newSnapshotCmd(out),
 		newRequestCmd(out),
 		newLogCmd(out),
