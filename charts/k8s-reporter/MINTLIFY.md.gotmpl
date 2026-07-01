@@ -20,6 +20,8 @@ description: A Helm chart for installing the Kosli K8S reporter as a cronjob.
 
 {{ template "mintlify.customCA" . }}
 
+{{ template "mintlify.karpenter" . }}
+
 {{ template "mintlify.configurations" . }}
 
 ---

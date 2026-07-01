@@ -123,6 +123,59 @@ Both options use `secret`-backed volumes, which are permitted under the Pod Secu
 If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/trust/trust-manager/) to distribute a corporate CA bundle into a well-known ConfigMap in every namespace, point `extraVolumes` / `extraVolumeMounts` at that ConfigMap instead of creating a per-namespace Secret.
 {{- end }}
 
+{{ define "mintlify.karpenter" -}}
+## Running on EKS with Karpenter (or another node autoscaler)
+
+By default the reporter runs as a CronJob every 5 minutes. On clusters that use [Karpenter](https://karpenter.sh) for node autoscaling, this frequent scheduling can prevent nodes from being **consolidated** (scaled down).
+
+The cause is Karpenter's `consolidateAfter` timer: Karpenter only consolidates a node once it has seen no pod scheduling activity on it for the configured window. A reporter pod arriving every 5 minutes keeps resetting that timer, so any node whose `consolidateAfter` is longer than the reporter interval never becomes eligible for consolidation (see [karpenter#1921](https://github.com/kubernetes-sigs/karpenter/issues/1921)). This is Karpenter working as designed, not a reporter bug.
+
+There are three good ways to avoid it, in order of preference.
+
+### 1. Widen the report interval
+
+The simplest fix. Set `cronSchedule` longer than your NodePool's `consolidateAfter` so nodes get quiet windows long enough to consolidate. Environment snapshots rarely need 5-minute freshness.
+
+```yaml
+cronSchedule: "*/15 * * * *"
+```
+
+### 2. Pin the reporter to a stable node group
+
+If you run a stable managed node group that Karpenter does not manage, schedule the reporter there so it never disturbs Karpenter-managed nodes. Use `nodeSelector`, and `tolerations` if that node group is tainted:
+
+```yaml
+nodeSelector:
+  eks.amazonaws.com/nodegroup: system   # your managed node group
+
+tolerations:
+  - key: dedicated
+    operator: Equal
+    value: system
+    effect: NoSchedule
+```
+
+To steer the reporter away from Karpenter-managed nodes instead, use `affinity` (a plain `nodeSelector` cannot express "not on these nodes"):
+
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: karpenter.sh/nodepool
+              operator: DoesNotExist
+```
+
+### 3. Run the reporter out of the cluster
+
+For zero footprint on cluster nodes, run `kosli snapshot k8s` on a schedule outside the cluster (for example a CI cron job) with kubeconfig access. See the [Kubernetes environment reporting tutorial](/tutorials/report_k8s_envs).
+
+<Warning>
+`karpenter.sh/do-not-disrupt: "true"` is **not** a fix here. It prevents Karpenter from disrupting the pod, which protects a mid-run report from interruption but makes consolidation of that node *less* likely, not more. Likewise `cluster-autoscaler.kubernetes.io/safe-to-evict` only affects the Kubernetes Cluster Autoscaler and is ignored by Karpenter.
+</Warning>
+{{- end }}
+
 {{ define "mintlify.versionInfo" -}}
 <Info>
 This reference applies to **chart version {{ .Version }}**, which defaults to CLI **{{ .AppVersion }}** via `appVersion`. Override with `image.tag`.
