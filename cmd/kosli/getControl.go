@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -86,13 +87,13 @@ func printControlAsTable(raw string, out io.Writer, page int) error {
 	if description, ok := control["description"]; ok && description != nil {
 		rows = append(rows, fmt.Sprintf("Description:\t%s", description))
 	}
-	if version, ok := control["version"]; ok {
+	if version, ok := control["version"]; ok && version != nil {
 		rows = append(rows, fmt.Sprintf("Version:\t%.0f", version))
 	}
-	if archived, ok := control["archived"]; ok {
+	if archived, ok := control["archived"]; ok && archived != nil {
 		rows = append(rows, fmt.Sprintf("Archived:\t%t", archived))
 	}
-	if createdBy, ok := control["created_by"]; ok {
+	if createdBy, ok := control["created_by"]; ok && createdBy != nil {
 		rows = append(rows, fmt.Sprintf("Created by:\t%s", createdBy))
 	}
 	if createdAt, ok := control["created_at"]; ok && createdAt != nil {
@@ -104,17 +105,27 @@ func printControlAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	if tags, ok := control["tags"].(map[string]interface{}); ok && len(tags) > 0 {
-		tagPairs := []string{}
-		for key, value := range tags {
-			tagPairs = append(tagPairs, fmt.Sprintf("%s=%s", key, value))
+		tagKeys := make([]string, 0, len(tags))
+		for key := range tags {
+			tagKeys = append(tagKeys, key)
+		}
+		sort.Strings(tagKeys)
+		tagPairs := make([]string, 0, len(tags))
+		for _, key := range tagKeys {
+			tagPairs = append(tagPairs, fmt.Sprintf("%s=%s", key, tags[key]))
 		}
 		rows = append(rows, fmt.Sprintf("Tags:\t%s", strings.Join(tagPairs, ", ")))
 	}
 
 	if links, ok := control["links"].(map[string]interface{}); ok && len(links) > 0 {
 		rows = append(rows, "Links:\t")
-		for name, link := range links {
-			rows = append(rows, fmt.Sprintf("\t%s:\t%s", name, link))
+		linkNames := make([]string, 0, len(links))
+		for name := range links {
+			linkNames = append(linkNames, name)
+		}
+		sort.Strings(linkNames)
+		for _, name := range linkNames {
+			rows = append(rows, fmt.Sprintf("\t%s:\t%s", name, links[name]))
 		}
 	}
 
