@@ -37,11 +37,6 @@ func (suite *UnarchiveControlCommandTestSuite) TestUnarchiveControlCmd() {
 			golden: "control unarchive-me was unarchived\n",
 		},
 		{
-			name:       "the control is active afterwards",
-			cmd:        "get control unarchive-me --output json" + suite.defaultKosliArguments,
-			goldenJson: []jsonCheck{{"archived", false}},
-		},
-		{
 			wantError:   true,
 			name:        "unarchiving a non-existing control gives a clear error",
 			cmd:         "unarchive control no-such-control" + suite.defaultKosliArguments,

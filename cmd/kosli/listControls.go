@@ -31,6 +31,24 @@ kosli list controls \
 	--output json \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# list controls whose name or identifier contains "sdlc":
+kosli list controls \
+	--search sdlc \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list controls tagged framework=finos-sdlc (--tag can be repeated):
+kosli list controls \
+	--tag framework:finos-sdlc \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list archived controls instead of active ones:
+kosli list controls \
+	--archived \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type listControlsOptions struct {
@@ -38,6 +56,13 @@ type listControlsOptions struct {
 	search   string
 	tags     []string
 	archived bool
+}
+
+type listControlsResponse struct {
+	Controls   []map[string]interface{} `json:"controls"`
+	Page       int                      `json:"page"`
+	TotalPages int                      `json:"total_pages"`
+	TotalCount int                      `json:"total_count"`
 }
 
 func newListControlsCmd(out io.Writer) *cobra.Command {
@@ -104,13 +129,6 @@ func (o *listControlsOptions) run(out io.Writer) error {
 			"table": printControlsListAsTable,
 			"json":  output.PrintJson,
 		})
-}
-
-type listControlsResponse struct {
-	Controls   []map[string]interface{} `json:"controls"`
-	Page       int                      `json:"page"`
-	TotalPages int                      `json:"total_pages"`
-	TotalCount int                      `json:"total_count"`
 }
 
 func printControlsListAsTable(raw string, out io.Writer, page int) error {

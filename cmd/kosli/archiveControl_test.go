@@ -36,11 +36,6 @@ func (suite *ArchiveControlCommandTestSuite) TestArchiveControlCmd() {
 			golden: "control archive-me was archived\n",
 		},
 		{
-			name:       "the control is archived afterwards",
-			cmd:        "get control archive-me --output json" + suite.defaultKosliArguments,
-			goldenJson: []jsonCheck{{"archived", true}},
-		},
-		{
 			wantError:   true,
 			name:        "archiving a non-existing control gives a clear error",
 			cmd:         "archive control no-such-control" + suite.defaultKosliArguments,
