@@ -38,11 +38,12 @@ type ControlPayload struct {
 func newCreateControlCmd(out io.Writer) *cobra.Command {
 	o := new(createControlOptions)
 	cmd := &cobra.Command{
-		Use:     "control CONTROL-IDENTIFIER",
-		Short:   createControlShortDesc,
-		Long:    createControlLongDesc,
-		Example: createControlExample,
-		Args:    cobra.ExactArgs(1),
+		Use:         "control CONTROL-IDENTIFIER",
+		Short:       createControlShortDesc,
+		Long:        createControlLongDesc,
+		Example:     createControlExample,
+		Args:        cobra.ExactArgs(1),
+		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

@@ -39,6 +39,22 @@ func TestLifecycleAttestDecisionIsBetaAndDocHidden(t *testing.T) {
 	}
 }
 
+func TestLifecycleControlCommandsAreBeta(t *testing.T) {
+	global = &GlobalOpts{}
+	cmds := map[string]*cobra.Command{
+		"create control":    newCreateControlCmd(io.Discard),
+		"list controls":     newListControlsCmd(io.Discard),
+		"get control":       newGetControlCmd(io.Discard),
+		"archive control":   newArchiveControlCmd(io.Discard),
+		"unarchive control": newUnarchiveControlCmd(io.Discard),
+	}
+	for name, cmd := range cmds {
+		if !isBeta(cmd) {
+			t.Errorf("expected %q to be marked beta while controls is behind a feature flag", name)
+		}
+	}
+}
+
 func TestDeprecationHint(t *testing.T) {
 	generic := &cobra.Command{Use: "x", Deprecated: deprecatedCommandMsg}
 	if got := deprecationHint(generic); got != "" {

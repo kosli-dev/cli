@@ -30,11 +30,12 @@ type getControlOptions struct {
 func newGetControlCmd(out io.Writer) *cobra.Command {
 	o := new(getControlOptions)
 	cmd := &cobra.Command{
-		Use:     "control CONTROL-IDENTIFIER",
-		Short:   getControlShortDesc,
-		Long:    getControlShortDesc,
-		Example: getControlExample,
-		Args:    cobra.ExactArgs(1),
+		Use:         "control CONTROL-IDENTIFIER",
+		Short:       getControlShortDesc,
+		Long:        getControlShortDesc,
+		Example:     getControlExample,
+		Args:        cobra.ExactArgs(1),
+		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

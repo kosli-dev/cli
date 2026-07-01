@@ -24,11 +24,12 @@ kosli unarchive control yourControlIdentifier \
 
 func newUnarchiveControlCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "control CONTROL-IDENTIFIER",
-		Short:   unarchiveControlShortDesc,
-		Long:    unarchiveControlLongDesc,
-		Example: unarchiveControlExample,
-		Args:    cobra.ExactArgs(1),
+		Use:         "control CONTROL-IDENTIFIER",
+		Short:       unarchiveControlShortDesc,
+		Long:        unarchiveControlLongDesc,
+		Example:     unarchiveControlExample,
+		Args:        cobra.ExactArgs(1),
+		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

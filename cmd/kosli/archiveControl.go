@@ -25,11 +25,12 @@ kosli archive control yourControlIdentifier \
 
 func newArchiveControlCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "control CONTROL-IDENTIFIER",
-		Short:   archiveControlShortDesc,
-		Long:    archiveControlLongDesc,
-		Example: archiveControlExample,
-		Args:    cobra.ExactArgs(1),
+		Use:         "control CONTROL-IDENTIFIER",
+		Short:       archiveControlShortDesc,
+		Long:        archiveControlLongDesc,
+		Example:     archiveControlExample,
+		Args:        cobra.ExactArgs(1),
+		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

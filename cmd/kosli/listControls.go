@@ -43,11 +43,12 @@ type listControlsOptions struct {
 func newListControlsCmd(out io.Writer) *cobra.Command {
 	o := new(listControlsOptions)
 	cmd := &cobra.Command{
-		Use:     "controls",
-		Short:   listControlsShortDesc,
-		Long:    listControlsLongDesc,
-		Example: listControlsExample,
-		Args:    cobra.NoArgs,
+		Use:         "controls",
+		Short:       listControlsShortDesc,
+		Long:        listControlsLongDesc,
+		Example:     listControlsExample,
+		Args:        cobra.NoArgs,
+		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
