@@ -56,7 +56,7 @@ type driftCase struct {
 func (suite *OpenAPIContractTestSuite) SetupSuite() {
 	resp, err := http.Get("http://localhost:8001/api/v2/openapi.json")
 	require.NoError(suite.T(), err, "should fetch the OpenAPI schema from the test server")
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(suite.T(), err)
 	require.NoError(suite.T(), json.Unmarshal(body, &suite.schema), "OpenAPI schema should be valid JSON")
