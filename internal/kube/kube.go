@@ -9,7 +9,10 @@ import (
 	"github.com/kosli-dev/cli/internal/logger"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -18,6 +21,14 @@ import (
 const (
 	clientQPS   = 50
 	clientBurst = 100
+)
+
+// GroupVersionResources for the core resources this package reads. Using the
+// dynamic client (rather than the typed clientset) avoids linking the global
+// client-go scheme, which registers every API group and inflates the binary.
+var (
+	podsGVR       = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
+	namespacesGVR = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
 )
 
 // K8sEnvRequest represents the PUT request body to be sent to kosli from k8s
@@ -35,7 +46,7 @@ type PodData struct {
 }
 
 type K8SConnection struct {
-	*kubernetes.Clientset
+	dynamicClient dynamic.Interface
 }
 
 // NewPodData creates a PodData object from a k8s pod
@@ -94,12 +105,25 @@ func NewK8sClientSet(kubeconfigPath string) (*K8SConnection, error) {
 	config.QPS = clientQPS
 	config.Burst = clientBurst
 
-	clientset, err := kubernetes.NewForConfig(config)
+	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	return &K8SConnection{clientset}, nil
+	return &K8SConnection{dynamicClient: dynamicClient}, nil
+}
+
+// unstructuredToPods converts a dynamic-client UnstructuredList into typed pods.
+func unstructuredToPods(list *unstructured.UnstructuredList) ([]corev1.Pod, error) {
+	pods := make([]corev1.Pod, 0, len(list.Items))
+	for i := range list.Items {
+		pod := corev1.Pod{}
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(list.Items[i].Object, &pod); err != nil {
+			return nil, fmt.Errorf("could not convert unstructured object to pod: %v ", err)
+		}
+		pods = append(pods, pod)
+	}
+	return pods, nil
 }
 
 // GetPodsData lists pods in the target namespace(s) of a target cluster and creates a list of
@@ -113,11 +137,15 @@ func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOption
 
 	if len(filter.IncludeNames) == 0 && len(filter.IncludeNamesRegex) == 0 &&
 		len(filter.ExcludeNames) == 0 && len(filter.ExcludeNamesRegex) == 0 {
-		list, err := clientset.Clientset.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
+		ul, err := clientset.dynamicClient.Resource(podsGVR).Namespace("").List(context.Background(), metav1.ListOptions{})
 		if err != nil {
 			return podsData, fmt.Errorf("could not list pods on cluster scope: %v ", err)
 		}
-		return processPods(list, logger)
+		pods, err := unstructuredToPods(ul)
+		if err != nil {
+			return podsData, err
+		}
+		return processPods(&corev1.PodList{Items: pods}, logger)
 	} else {
 		list := &corev1.PodList{}
 		filteredNamespaces, err := clientset.filterNamespaces(filter)
@@ -297,21 +325,30 @@ func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterO
 // getPodsInNamespace get pods in a specific namespace in a cluster
 func (clientset *K8SConnection) getPodsInNamespace(namespace string) ([]corev1.Pod, error) {
 	ctx := context.Background()
-	podlist, err := clientset.Clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+	ul, err := clientset.dynamicClient.Resource(podsGVR).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return []corev1.Pod{}, fmt.Errorf("could not list pods on namespace %s: %v ", namespace, err)
 	}
-	return podlist.Items, nil
+	return unstructuredToPods(ul)
 }
 
 // GetClusterNamespaces gets a namespace list from the cluster
 func (clientset *K8SConnection) GetClusterNamespaces() ([]corev1.Namespace, error) {
 	ctx := context.Background()
 
-	namespaces, err := clientset.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	ul, err := clientset.dynamicClient.Resource(namespacesGVR).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return []corev1.Namespace{}, fmt.Errorf("could not list namespaces on cluster scope: %v ", err)
 	}
 
-	return namespaces.Items, nil
+	namespaces := make([]corev1.Namespace, 0, len(ul.Items))
+	for i := range ul.Items {
+		ns := corev1.Namespace{}
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(ul.Items[i].Object, &ns); err != nil {
+			return []corev1.Namespace{}, fmt.Errorf("could not convert unstructured object to namespace: %v ", err)
+		}
+		namespaces = append(namespaces, ns)
+	}
+
+	return namespaces, nil
 }

@@ -15,6 +15,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
@@ -30,6 +32,10 @@ type KubeTestSuite struct {
 	kubeConfigPath  string
 	namespacesLabel string
 	clientset       *K8SConnection
+	// typedClient is used only for test setup/teardown (creating namespaces
+	// and pods, waiting for readiness). Production code under test uses the
+	// dynamic client via clientset.
+	typedClient kubernetes.Interface
 }
 
 // create a KIND cluster and a tmp dir before the suite execution
@@ -47,6 +53,7 @@ func (suite *KubeTestSuite) SetupSuite() {
 	require.NoError(suite.T(), err, "exporting kubeconfig failed")
 	ctx := context.Background()
 	suite.clientset = suite.getK8sClient(ctx)
+	suite.typedClient = suite.getTypedClient()
 }
 
 // delete the KIND cluster and the tmp dir after the suite execution
@@ -60,11 +67,11 @@ func (suite *KubeTestSuite) TearDownSuite() {
 func (suite *KubeTestSuite) AfterTest(_, _ string) {
 	ctx := context.Background()
 
-	namespaces, err := suite.clientset.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{LabelSelector: suite.namespacesLabel})
+	namespaces, err := suite.typedClient.CoreV1().Namespaces().List(ctx, metav1.ListOptions{LabelSelector: suite.namespacesLabel})
 	require.NoErrorf(suite.T(), err, "error listing test namespaces with label %s", suite.namespacesLabel)
 
 	for _, ns := range namespaces.Items {
-		err = suite.clientset.Clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{})
+		err = suite.typedClient.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{})
 		if apierrors.IsNotFound(err) {
 			continue
 		}
@@ -255,6 +262,15 @@ func (suite *KubeTestSuite) getK8sClient(ctx context.Context) *K8SConnection {
 	return clientset
 }
 
+// getTypedClient creates a typed clientset used only for test setup/teardown.
+func (suite *KubeTestSuite) getTypedClient() kubernetes.Interface {
+	config, err := clientcmd.BuildConfigFromFlags("", suite.kubeConfigPath)
+	require.NoErrorf(suite.T(), err, "error building config for kubeconfig %s", suite.kubeConfigPath)
+	typedClient, err := kubernetes.NewForConfig(config)
+	require.NoErrorf(suite.T(), err, "error creating typed client for kubeconfig %s", suite.kubeConfigPath)
+	return typedClient
+}
+
 // createNamespace creates a namespace in the suite KIND cluster
 func (suite *KubeTestSuite) createNamespace(name string) {
 	ctx := context.Background()
@@ -266,7 +282,7 @@ func (suite *KubeTestSuite) createNamespace(name string) {
 			},
 		},
 	}
-	_, err := suite.clientset.Clientset.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
+	_, err := suite.typedClient.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
 	require.NoErrorf(suite.T(), err, "error creating namespace %s", name)
 }
 
@@ -295,9 +311,9 @@ func (suite *KubeTestSuite) getPodPayload(name string, images []string) *corev1.
 // createPod creates a pod in the suite KIND cluster
 func (suite *KubeTestSuite) createPod(namespace string, pod *corev1.Pod) {
 	ctx := context.Background()
-	_, err := suite.clientset.Clientset.CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
+	_, err := suite.typedClient.CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
 	require.NoErrorf(suite.T(), err, "error creating pod %s", pod.Name)
-	err = e2epod.WaitForPodNameRunningInNamespace(ctx, suite.clientset, pod.Name, namespace)
+	err = e2epod.WaitForPodNameRunningInNamespace(ctx, suite.typedClient, pod.Name, namespace)
 	require.NoErrorf(suite.T(), err, "error waiting for pod %s to be running in namespace %s", pod.Name, namespace)
 }
 
