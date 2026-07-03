@@ -17,7 +17,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
 
@@ -313,8 +312,34 @@ func (suite *KubeTestSuite) createPod(namespace string, pod *corev1.Pod) {
 	ctx := context.Background()
 	_, err := suite.typedClient.CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
 	require.NoErrorf(suite.T(), err, "error creating pod %s", pod.Name)
-	err = e2epod.WaitForPodNameRunningInNamespace(ctx, suite.typedClient, pod.Name, namespace)
+	err = waitForPodRunning(ctx, suite.typedClient, pod.Name, namespace, 5*time.Minute)
 	require.NoErrorf(suite.T(), err, "error waiting for pod %s to be running in namespace %s", pod.Name, namespace)
+}
+
+// waitForPodRunning polls until the named pod reaches the Running phase, or
+// returns an error if it reaches a terminal phase or the timeout elapses. It
+// replaces k8s.io/kubernetes/test/e2e/framework/pod so that the test does not
+// pull in the entire Kubernetes monorepo as a dependency.
+func waitForPodRunning(ctx context.Context, client kubernetes.Interface, podName, namespace string, timeout time.Duration) error {
+	deadline := time.After(timeout)
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+	for {
+		pod, err := client.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
+		if err == nil {
+			switch pod.Status.Phase {
+			case corev1.PodRunning:
+				return nil
+			case corev1.PodFailed, corev1.PodSucceeded:
+				return fmt.Errorf("pod %s/%s reached terminal phase %q while waiting for it to run", namespace, podName, pod.Status.Phase)
+			}
+		}
+		select {
+		case <-deadline:
+			return fmt.Errorf("timed out after %s waiting for pod %s/%s to be running", timeout, namespace, podName)
+		case <-ticker.C:
+		}
+	}
 }
 
 // In order for 'go test' to run this suite, we need to create
