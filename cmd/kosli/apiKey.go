@@ -93,6 +93,38 @@ func printApiKeysAsTable(raw string, out io.Writer, page int) error {
 	return nil
 }
 
+// printApiKeyMetadataAsTable renders a single api key's metadata (the get
+// response) as a table. The secret key value is never part of this response.
+func printApiKeyMetadataAsTable(raw string, out io.Writer, page int) error {
+	var key apiKeyMetadata
+	if err := json.Unmarshal([]byte(raw), &key); err != nil {
+		return err
+	}
+
+	createdAt, err := formattedTimestamp(key.CreatedAt, false)
+	if err != nil {
+		return err
+	}
+	expiresAt, err := optionalTimestamp(key.ExpiresAt)
+	if err != nil {
+		return err
+	}
+	lastUsedAt, err := optionalTimestamp(key.LastUsedAt)
+	if err != nil {
+		return err
+	}
+
+	rows := []string{
+		fmt.Sprintf("ID:\t%s", key.Id),
+		fmt.Sprintf("Description:\t%s", key.Description),
+		fmt.Sprintf("Created At:\t%s", createdAt),
+		fmt.Sprintf("Expires At:\t%s", expiresAt),
+		fmt.Sprintf("Last Used:\t%s", lastUsedAt),
+	}
+	tabFormattedPrint(out, []string{}, rows)
+	return nil
+}
+
 // optionalTimestamp formats an epoch timestamp, returning "N/A" when it is
 // unset (nil, or a zero value meaning "never"/"not set").
 func optionalTimestamp(epoch interface{}) (string, error) {
