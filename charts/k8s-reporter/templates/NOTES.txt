@@ -1,1 +1,1 @@
-K8S Reporter is deployed in the cluster.
+K8s Reporter is deployed in the cluster.

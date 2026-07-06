@@ -18,7 +18,7 @@ fullnameOverride: ""
 serviceAccount:
   # -- specifies whether a service account should be created
   create: true
-  # -- specifies whether to create a cluster-wide permissions for the service account or namespace-scoped permissions. allowed values are: `cluster` or `namespace`
+  # -- specifies whether to create cluster-wide permissions for the service account or namespace-scoped permissions. Allowed values are: `cluster` or `namespace`
   permissionScope: cluster
   # -- annotations to add to the service account
   annotations: {}
