@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   review-dependency-updates:
-    if: github.actor == 'dependabot[bot]'
+    if: contains(fromJSON('["dependabot[bot]", "ci-signed-commit-bot[bot]"]'), github.actor)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -45,7 +45,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           use_sticky_comment: true
-          allowed_bots: 'ci-signed-commit-bot, dependabot[bot]'
+          allowed_bots: 'ci-signed-commit-bot[bot], dependabot[bot]'
           claude_args: |
             --max-turns 40
             --max-budget-usd 5
@@ -72,8 +72,8 @@ jobs:
             Only post GitHub comments - don't submit review text as messages.
 
   review-general:
-    # Skip for Dependabot PRs
-    if: github.actor != 'dependabot[bot]'
+    # Skip for Dependabot|CI bot PRs
+    if: ${{ !contains(fromJSON('["dependabot[bot]", "ci-signed-commit-bot[bot]"]'), github.actor) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
