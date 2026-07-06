@@ -17,10 +17,10 @@ Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentNam
 
 ## Prerequisites
 
-- A Kubernetes cluster (minimum supported version is `v1.21`)
-- Helm v3.0+
-- If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
-- If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
+* A Kubernetes cluster (minimum supported version is `v1.21`)
+* Helm v3.0+
+* If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
+* If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
 
 ## Installing the chart
 
@@ -204,7 +204,7 @@ cronSchedule: "*/15 * * * *"
 | affinity | object | `{}` | affinity rules for scheduling the reporter pod. Supports nodeAffinity, podAffinity and podAntiAffinity. |
 | concurrencyPolicy | string | `"Replace"` | specifies how to treat concurrent executions of a Job that is created by this CronJob |
 | cronSchedule | string | `"*/5 * * * *"` | the cron schedule at which the reporter is triggered to report to Kosli |
-| customCA | object | `{"enabled":false,"key":"ca.crt","secretName":""}` | convenience wrapper for mounting a corporate / custom CA bundle. See the "Running behind a TLS-inspecting proxy" section of the README for usage. |
+| customCA | object | `{"enabled":false,"key":"ca.crt","secretName":""}` | convenience wrapper for mounting a corporate / custom CA bundle. See [Running behind a TLS-inspecting proxy](https://docs.kosli.com/helm/k8s_reporter/tls-proxy) for usage. |
 | customCA.enabled | bool | `false` | enable mounting a corporate/custom CA bundle into the trust store |
 | customCA.key | string | `"ca.crt"` | key within the Secret that holds the PEM-formatted CA certificate (single cert or multi-cert PEM bundle) |
 | customCA.secretName | string | `""` | name of an existing Secret in the same namespace containing the CA bundle |
@@ -220,7 +220,7 @@ cronSchedule: "*/15 * * * *"
 | kosliApiToken.secretKey | string | `"key"` | the name of the key in the secret data which contains the Kosli API token |
 | kosliApiToken.secretName | string | `"kosli-api-token"` | the name of the secret containing the kosli API token |
 | nameOverride | string | `""` | overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one |
-| nodeSelector | object | `{}` | node labels for scheduling the reporter pod. On EKS with Karpenter, use this to pin the reporter to a stable managed node group (e.g. `eks.amazonaws.com/nodegroup: <name>`) so it does not interfere with node consolidation. See the "Running on EKS with Karpenter" section of the README. |
+| nodeSelector | object | `{}` | node labels for scheduling the reporter pod. On EKS with Karpenter, use this to pin the reporter to a stable managed node group (e.g. `eks.amazonaws.com/nodegroup: <name>`) so it does not interfere with node consolidation. See [Running on EKS with Karpenter](https://docs.kosli.com/helm/k8s_reporter/karpenter). |
 | podAnnotations | object | `{}` | annotations to add to the CronJob object itself. For pod-level annotations (added to each reporter pod), use `podTemplateAnnotations` instead. |
 | podLabels | object | `{}` | custom labels to add to pods |
 | podTemplateAnnotations | object | `{}` | annotations to add to the reporter pod template (applied to each Job pod that the CronJob creates) |
@@ -238,7 +238,7 @@ cronSchedule: "*/15 * * * *"
 | serviceAccount.annotations | object | `{}` | annotations to add to the service account |
 | serviceAccount.create | bool | `true` | specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | the name of the service account to use. If not set and create is true, a name is generated using the fullname template |
-| serviceAccount.permissionScope | string | `"cluster"` | specifies whether to create a cluster-wide permissions for the service account or namespace-scoped permissions. allowed values are: [cluster, namespace] |
+| serviceAccount.permissionScope | string | `"cluster"` | specifies whether to create a cluster-wide permissions for the service account or namespace-scoped permissions. allowed values are: `cluster` or `namespace` |
 | successfulJobsHistoryLimit | int | `3` | specifies the number of successful finished jobs to keep |
 | tolerations | list | `[]` | tolerations for scheduling the reporter pod, e.g. to run on a dedicated or tainted node group. |
 

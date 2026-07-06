@@ -18,7 +18,7 @@ fullnameOverride: ""
 serviceAccount:
   # -- specifies whether a service account should be created
   create: true
-  # -- specifies whether to create a cluster-wide permissions for the service account or namespace-scoped permissions. allowed values are: [cluster, namespace]
+  # -- specifies whether to create a cluster-wide permissions for the service account or namespace-scoped permissions. allowed values are: `cluster` or `namespace`
   permissionScope: cluster
   # -- annotations to add to the service account
   annotations: {}
@@ -123,8 +123,8 @@ extraVolumeMounts: []
   #   mountPath: /etc/ssl/certs/corporate
   #   readOnly: true
 
-# -- convenience wrapper for mounting a corporate / custom CA bundle. See the
-# "Running behind a TLS-inspecting proxy" section of the README for usage.
+# -- convenience wrapper for mounting a corporate / custom CA bundle. See
+# [Running behind a TLS-inspecting proxy](https://docs.kosli.com/helm/k8s_reporter/tls-proxy) for usage.
 customCA:
   # -- enable mounting a corporate/custom CA bundle into the trust store
   enabled: false
@@ -139,7 +139,7 @@ podAnnotations: {}
 # -- annotations to add to the reporter pod template (applied to each Job pod that the CronJob creates)
 podTemplateAnnotations: {}
 
-# -- node labels for scheduling the reporter pod. On EKS with Karpenter, use this to pin the reporter to a stable managed node group (e.g. `eks.amazonaws.com/nodegroup: <name>`) so it does not interfere with node consolidation. See the "Running on EKS with Karpenter" section of the README.
+# -- node labels for scheduling the reporter pod. On EKS with Karpenter, use this to pin the reporter to a stable managed node group (e.g. `eks.amazonaws.com/nodegroup: <name>`) so it does not interfere with node consolidation. See [Running on EKS with Karpenter](https://docs.kosli.com/helm/k8s_reporter/karpenter).
 nodeSelector: {}
 
 # -- tolerations for scheduling the reporter pod, e.g. to run on a dedicated or tainted node group.
