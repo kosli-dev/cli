@@ -13,6 +13,7 @@ response contract lives in one place.
 | `created_api_key.json` | `POST .../{name}/api-keys` → `201` (create) |
 | `rotated_api_key.json` | `POST .../{name}/api-keys/{key_id}/rotate` → `201` (rotate; includes `grace_period_expires_at`) |
 | `listed_api_keys.json` | `GET .../{name}/api-keys` → `200` (list) |
+| `api_key.json` | `GET .../{name}/api-keys/{key_id}` → `200` (get; metadata only) |
 | `revoke_success.json` | `DELETE .../{name}/api-keys/{key_id}` → `200` (bare string) |
 
 ### Service account management endpoints
