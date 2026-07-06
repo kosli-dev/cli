@@ -1,92 +1,148 @@
-{{ define "mintlify.install" -}}
-## Installing the chart
+{{/*
+  Partials for the Mintlify docs pages published at docs.kosli.com/helm/k8s_reporter/.
+  Each "mintlify.*" define below is the body of one page; the page entry points
+  (frontmatter + template calls) live in the mintlify/ directory.
+  Rendered by .github/workflows/update-cli-docs.yml in the kosli-dev/docs repo.
+*/}}
 
+{{ define "mintlify.versionInfo" -}}
+<Info>
+  This reference applies to **chart version {{ .Version }}**, which defaults to CLI **{{ .AppVersion }}** via `appVersion`. Override with `image.tag`.
+</Info>
+{{- end }}
+
+{{ define "mintlify.overviewBody" -}}
+The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
+
+Configuration is done via **reporterConfig.environments**: a list of Kosli environments to report to. Each entry has a required `name` and optional namespace selectors. Use one entry for a single environment, or multiple entries to report to different environments with different selectors.
+
+<Note>Chart source can be found at [GitHub](https://github.com/kosli-dev/cli/tree/main/charts/k8s-reporter).</Note>
+
+## In this section
+
+<CardGroup cols={2}>
+  <Card title="Prerequisites" icon="clipboard-check" href="/helm/k8s_reporter/prerequisites" />
+  <Card title="Installing the chart" icon="download" href="/helm/k8s_reporter/installing" />
+  <Card title="Upgrading the chart" icon="arrow-up" href="/helm/k8s_reporter/upgrading" />
+  <Card title="Uninstalling the chart" icon="trash" href="/helm/k8s_reporter/uninstalling" />
+  <Card title="Running behind a TLS-inspecting proxy" icon="shield" href="/helm/k8s_reporter/tls-proxy" />
+  <Card title="Running on EKS with Karpenter" icon="server" href="/helm/k8s_reporter/karpenter" />
+  <Card title="Configuration reference" icon="gear" href="/helm/k8s_reporter/configuration" />
+</CardGroup>
+{{- end }}
+
+{{ define "mintlify.prerequisites" -}}
+* A Kubernetes cluster (minimum supported version is `v1.21`)
+* Helm v3.0+
+* If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
+* If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
+{{- end }}
+
+{{ define "mintlify.installing" -}}
 To install this chart via the Helm chart repository:
 
 <Steps>
   <Step title="Add the Kosli helm repo">
-  ```shell
-  helm repo add kosli https://charts.kosli.com/ && helm repo update
-  ```
+    ```shell
+    helm repo add kosli https://charts.kosli.com/ && helm repo update
+    ```
   </Step>
+
   <Step title="Create a secret for the Kosli API token">
-  ```shell
-  kubectl create secret generic kosli-api-token --from-literal=key=<your-api-key>
-  ```
+    ```shell
+    kubectl create secret generic kosli-api-token --from-literal=key=<your-api-key>
+    ```
   </Step>
+
   <Step title="Install the helm chart">
-  Configure **reporterConfig.environments** (required). Each entry has required `name` and optional `namespaces`, `namespacesRegex`, `excludeNamespaces`, `excludeNamespacesRegex`. Omit namespace fields for an entry to report the entire cluster to that environment.
+    Configure **reporterConfig.environments** (required). Each entry has required `name` and optional `namespaces`, `namespacesRegex`, `excludeNamespaces`, `excludeNamespacesRegex`. Omit namespace fields for an entry to report the entire cluster to that environment.
 
-  **One environment, entire cluster:**
+    **One environment, entire cluster:**
 
-  ```yaml
-  # values.yaml
-  reporterConfig:
-    kosliOrg: <your-org>
-    environments:
-      - name: <your-env-name>
-  ```
+    ```yaml
+    # values.yaml
+    reporterConfig:
+      kosliOrg: <your-org>
+      environments:
+        - name: <your-env-name>
+    ```
 
-  **One environment, specific namespaces:**
+    **One environment, specific namespaces:**
 
-  ```yaml
-  reporterConfig:
-    kosliOrg: <your-org>
-    environments:
-      - name: <your-env-name>
-        namespaces: [namespace1, namespace2]
-  ```
+    ```yaml
+    reporterConfig:
+      kosliOrg: <your-org>
+      environments:
+        - name: <your-env-name>
+          namespaces: [namespace1, namespace2]
+    ```
 
-  **Multiple environments with different selectors:**
+    **Multiple environments with different selectors:**
 
-  ```yaml
-  reporterConfig:
-    kosliOrg: <your-org>
-    environments:
-      - name: prod-env
-        namespaces: [prod-ns1, prod-ns2]
-      - name: staging-env
-        namespacesRegex: ["^staging-.*"]
-      - name: infra-env
-        excludeNamespaces: [prod-ns1, prod-ns2, default]
-  ```
+    ```yaml
+    reporterConfig:
+      kosliOrg: <your-org>
+      environments:
+        - name: prod-env
+          namespaces: [prod-ns1, prod-ns2]
+        - name: staging-env
+          namespacesRegex: ["^staging-.*"]
+        - name: infra-env
+          excludeNamespaces: [prod-ns1, prod-ns2, default]
+    ```
 
-  ```shell
-  helm install kosli-reporter kosli/k8s-reporter -f values.yaml
-  ```
+    ```shell
+    helm install kosli-reporter kosli/k8s-reporter -f values.yaml
+    ```
   </Step>
 </Steps>
 
-<Note>Chart source can be found at [GitHub](https://github.com/kosli-dev/cli/tree/main/charts/k8s-reporter).</Note>
-
-<Info>See all available [configuration options](#configurations) below.</Info>
-
+<Info>See all available options in the [configuration reference](/helm/k8s_reporter/configuration).</Info>
 {{- end }}
 
-{{ define "mintlify.customCA" -}}
-## Running behind a TLS-inspecting proxy (corporate / custom CA bundle)
+{{ define "mintlify.upgrading" -}}
+## Breaking change in v2.0.0
 
+Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentName` and the `namespaces` / `namespacesRegex` / `excludeNamespaces` / `excludeNamespacesRegex` flags). You now configure one or more environments only via **reporterConfig.environments**. To report a single environment, use a list with one entry.
+
+If upgrading from v1.x to v2.0.0, migrate your values to the **environments** list format (see [Installing the chart](/helm/k8s_reporter/installing)).
+
+## Upgrade command
+
+```shell
+helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
+```
+{{- end }}
+
+{{ define "mintlify.uninstalling" -}}
+```shell
+helm uninstall kosli-reporter
+```
+{{- end }}
+
+{{ define "mintlify.tlsProxy" -}}
 If your network sits behind a TLS-inspecting appliance (Zscaler, Netskope, Palo Alto, etc.) that re-signs HTTPS traffic with a corporate CA certificate, the reporter will fail with `x509: certificate signed by unknown authority`. To fix this, make the appliance's CA bundle available to the reporter.
 
 The chart offers two ways to do this. Use whichever fits your deployment flow.
 
-### Option 1 — customCA convenience wrapper (recommended for the common case)
+## Option 1 — customCA convenience wrapper (recommended for the common case)
 
 <Steps>
   <Step title="Create a Secret containing the corporate CA certificate">
-  PEM format, single cert or bundle:
+    PEM format, single cert or bundle:
 
-  ```shell
-  kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt
-  ```
+    ```shell
+    kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt
+    ```
   </Step>
+
   <Step title="Enable the wrapper in values.yaml">
-  ```yaml
-  customCA:
-    enabled: true
-    secretName: corporate-ca-bundle
-    key: ca.crt
-  ```
+    ```yaml
+    customCA:
+      enabled: true
+      secretName: corporate-ca-bundle
+      key: ca.crt
+    ```
   </Step>
 </Steps>
 
@@ -94,7 +150,7 @@ The chart mounts the certificate as a single file at `/etc/ssl/certs/kosli-custo
 
 The wrapper deliberately does **not** set `SSL_CERT_FILE`. Setting it would replace the system bundle entirely with the customer's file, breaking trust for any public CAs the bundle does not include.
 
-### Option 2 — generic extraVolumes / extraVolumeMounts / extraEnvVars
+## Option 2 — generic extraVolumes / extraVolumeMounts / extraEnvVars
 
 Use these when you need a non-default mount path, a ConfigMap instead of a Secret, multiple volumes, or any other shape the wrapper does not cover:
 
@@ -111,28 +167,26 @@ extraVolumeMounts:
 ```
 
 <Warning>
-If you mount the CA outside `/etc/ssl/certs/` and set `SSL_CERT_FILE` via `extraEnvVars`, your bundle must include the public CAs you also need to trust — Go uses only that file when `SSL_CERT_FILE` is set.
+  If you mount the CA outside `/etc/ssl/certs/` and set `SSL_CERT_FILE` via `extraEnvVars`, your bundle must include the public CAs you also need to trust — Go uses only that file when `SSL_CERT_FILE` is set.
 </Warning>
 
-### Pod Security Standards
+## Pod Security Standards
 
 Both options use `secret`-backed volumes, which are permitted under the Pod Security Standards `restricted` profile. `hostPath` mounts are not permitted under that profile and should not be used here.
 
-### Cluster-wide alternative
+## Cluster-wide alternative
 
 If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/trust/trust-manager/) to distribute a corporate CA bundle into a well-known ConfigMap in every namespace, point `extraVolumes` / `extraVolumeMounts` at that ConfigMap instead of creating a per-namespace Secret.
 {{- end }}
 
 {{ define "mintlify.karpenter" -}}
-## Running on EKS with Karpenter (or another node autoscaler)
-
 By default the reporter runs as a CronJob every 5 minutes. On clusters that use [Karpenter](https://karpenter.sh) for node autoscaling, this frequent scheduling can prevent nodes from being **consolidated** (scaled down).
 
 The cause is Karpenter's `consolidateAfter` timer: Karpenter only consolidates a node once it has seen no pod scheduling activity on it for the configured window. A reporter pod arriving every 5 minutes keeps resetting that timer, so any node whose `consolidateAfter` is longer than the reporter interval never becomes eligible for consolidation (see [karpenter#1921](https://github.com/kubernetes-sigs/karpenter/issues/1921)). This is Karpenter working as designed, not a reporter bug.
 
 Frequent snapshots are what let Kosli surface drift or an unauthorized change quickly, so the best fix keeps the 5-minute cadence and moves the reporter out of Karpenter's way. Widening the interval trades away that detection speed and should be a last resort.
 
-### 1. Pin the reporter to a stable node group (recommended)
+## 1. Pin the reporter to a stable node group (recommended)
 
 If you run a stable managed node group that Karpenter does not manage, schedule the reporter there so it never disturbs Karpenter-managed nodes. Use `nodeSelector`, and `tolerations` if that node group is tainted:
 
@@ -159,11 +213,11 @@ affinity:
               operator: DoesNotExist
 ```
 
-### 2. Run the reporter out of the cluster
+## 2. Run the reporter out of the cluster
 
 For zero footprint on cluster nodes, run `kosli snapshot k8s` on a schedule outside the cluster (for example a CI cron job) with kubeconfig access, keeping your reporting cadence without placing a pod on the cluster's nodes. See the [Kubernetes environment reporting tutorial](/tutorials/report_k8s_envs).
 
-### 3. Widen the report interval (last resort)
+## 3. Widen the report interval (last resort)
 
 Only if you cannot pin the reporter or move it out of cluster: set `cronSchedule` longer than your NodePool's `consolidateAfter` so nodes get quiet windows long enough to consolidate. This works, but a longer interval widens the window in which a change can go unreported, so prefer the options above.
 
@@ -172,20 +226,12 @@ cronSchedule: "*/15 * * * *"
 ```
 
 <Warning>
-`karpenter.sh/do-not-disrupt: "true"` is **not** a fix here. It prevents Karpenter from disrupting the pod, which protects a mid-run report from interruption but makes consolidation of that node *less* likely, not more. Likewise `cluster-autoscaler.kubernetes.io/safe-to-evict` only affects the Kubernetes Cluster Autoscaler and is ignored by Karpenter.
+  `karpenter.sh/do-not-disrupt: "true"` is **not** a fix here. It prevents Karpenter from disrupting the pod, which protects a mid-run report from interruption but makes consolidation of that node *less* likely, not more. Likewise `cluster-autoscaler.kubernetes.io/safe-to-evict` only affects the Kubernetes Cluster Autoscaler and is ignored by Karpenter.
 </Warning>
 {{- end }}
 
-{{ define "mintlify.versionInfo" -}}
-<Info>
-This reference applies to **chart version {{ .Version }}**, which defaults to CLI **{{ .AppVersion }}** via `appVersion`. Override with `image.tag`.
-</Info>
-{{- end }}
-
 {{ define "mintlify.configurations" -}}
-## Configurations
-
-### General
+## General
 
 {{ range .Values -}}
 {{ if not (or (hasPrefix "image." .Key) (hasPrefix "reporterConfig." .Key) (hasPrefix "kosliApiToken." .Key) (hasPrefix "customCA" .Key) (hasPrefix "resources." .Key) (hasPrefix "serviceAccount." .Key) (eq "env" .Key) (eq "extraEnvVars" .Key) (eq "extraVolumes" .Key) (eq "extraVolumeMounts" .Key)) -}}
@@ -194,7 +240,7 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
 {{ end -}}
 {{ end -}}
 
-### Image
+## Image
 
 {{ range .Values -}}
 {{ if hasPrefix "image." .Key -}}
@@ -203,7 +249,7 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
 {{ end -}}
 {{ end -}}
 
-### Reporter configuration
+## Reporter configuration
 
 {{ range .Values -}}
 {{ if hasPrefix "reporterConfig." .Key -}}
@@ -212,7 +258,7 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
 {{ end -}}
 {{ end -}}
 
-### Kosli API token
+## Kosli API token
 
 {{ range .Values -}}
 {{ if hasPrefix "kosliApiToken." .Key -}}
@@ -221,7 +267,7 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
 {{ end -}}
 {{ end -}}
 
-### Environment variables
+## Environment variables
 
 {{ range .Values -}}
 {{ if or (eq "env" .Key) (eq "extraEnvVars" .Key) -}}
@@ -230,7 +276,7 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
 {{ end -}}
 {{ end -}}
 
-### Volumes
+## Volumes
 
 {{ range .Values -}}
 {{ if or (eq "extraVolumes" .Key) (eq "extraVolumeMounts" .Key) -}}
@@ -239,7 +285,7 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
 {{ end -}}
 {{ end -}}
 
-### Custom CA
+## Custom CA
 
 {{ range .Values -}}
 {{ if hasPrefix "customCA" .Key -}}
@@ -248,7 +294,7 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
 {{ end -}}
 {{ end -}}
 
-### Resources
+## Resources
 
 {{ range .Values -}}
 {{ if hasPrefix "resources." .Key -}}
@@ -257,7 +303,7 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
 {{ end -}}
 {{ end -}}
 
-### Service account
+## Service account
 
 {{ range .Values -}}
 {{ if hasPrefix "serviceAccount." .Key -}}
@@ -269,7 +315,7 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
 
 {{ define "mintlify.paramField" -}}
 {{- $d := .Default | trimPrefix "`" | trimSuffix "`" -}}
-{{- $desc := or .Description .AutoDescription -}}
+{{- $desc := or .Description .AutoDescription | replace "https://docs.kosli.com/" "/" -}}
 {{- if $desc -}}
 {{- $desc = printf "%s%s" (substr 0 1 $desc | upper) (substr 1 -1 $desc) -}}
 {{- if not (hasSuffix "." $desc) -}}{{- $desc = printf "%s." $desc -}}{{- end -}}
@@ -283,4 +329,10 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
   {{ $desc }}
 </ParamField>
 {{- end }}
+{{- end }}
+
+{{ define "mintlify.versionFooter" -}}
+***
+
+Autogenerated from chart metadata using [helm-docs v{{ .HelmDocsVersion }}](https://github.com/norwoodj/helm-docs/releases/v{{ .HelmDocsVersion }}).
 {{- end }}
