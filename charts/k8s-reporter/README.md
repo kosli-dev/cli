@@ -17,10 +17,10 @@ Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentNam
 
 ## Prerequisites
 
-- A Kubernetes cluster (minimum supported version is `v1.21`)
-- Helm v3.0+
-- If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
-- If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
+* A Kubernetes cluster (minimum supported version is `v1.21`)
+* Helm v3.0+
+* If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
+* If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
 
 ## Installing the chart
 

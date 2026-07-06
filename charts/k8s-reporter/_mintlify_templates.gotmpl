@@ -2,6 +2,11 @@
   Partials for the Mintlify docs pages published at docs.kosli.com/helm/k8s_reporter/.
   Each "mintlify.*" define below is the body of one page; the page entry points
   (frontmatter + template calls) live in the mintlify/ directory.
+  Prose shared with the GitHub README lives in the body.* partials in
+  _templates.gotmpl. The installing / tls-proxy / karpenter partials are an
+  intentional fork of their extra.* counterparts: they use Mintlify components
+  (<Steps>, <Warning>, <Note>) and different heading levels, so they cannot be
+  shared verbatim -- keep them in sync with _templates.gotmpl when editing.
   Rendered by .github/workflows/update-cli-docs.yml in the kosli-dev/docs repo.
 */}}
 
@@ -12,9 +17,7 @@
 {{- end }}
 
 {{ define "mintlify.overviewBody" -}}
-The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
-
-Configuration is done via **reporterConfig.environments**: a list of Kosli environments to report to. Each entry has a required `name` and optional namespace selectors. Use one entry for a single environment, or multiple entries to report to different environments with different selectors.
+{{ template "body.description" . }}
 
 <Note>Chart source can be found at [GitHub](https://github.com/kosli-dev/cli/tree/main/charts/k8s-reporter).</Note>
 
@@ -32,10 +35,7 @@ Configuration is done via **reporterConfig.environments**: a list of Kosli envir
 {{- end }}
 
 {{ define "mintlify.prerequisites" -}}
-* A Kubernetes cluster (minimum supported version is `v1.21`)
-* Helm v3.0+
-* If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
-* If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
+{{ template "body.prerequisites" . }}
 {{- end }}
 
 {{ define "mintlify.installing" -}}
@@ -103,21 +103,19 @@ To install this chart via the Helm chart repository:
 {{ define "mintlify.upgrading" -}}
 ## Breaking change in v2.0.0
 
-Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentName` and the `namespaces` / `namespacesRegex` / `excludeNamespaces` / `excludeNamespacesRegex` flags). You now configure one or more environments only via **reporterConfig.environments**. To report a single environment, use a list with one entry.
+{{ template "body.breakingChangeV2" . }}
 
 If upgrading from v1.x to v2.0.0, migrate your values to the **environments** list format (see [Installing the chart](/helm/k8s_reporter/installing)).
 
 ## Upgrade command
 
-```shell
-helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
-```
+{{ template "body.upgradeCmd" . }}
 {{- end }}
 
 {{ define "mintlify.uninstalling" -}}
-```shell
-helm uninstall kosli-reporter
-```
+To remove the k8s-reporter release and its resources from your cluster:
+
+{{ template "body.uninstallCmd" . }}
 {{- end }}
 
 {{ define "mintlify.tlsProxy" -}}
