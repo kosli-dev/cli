@@ -29,6 +29,19 @@ type apiKeyMetadata struct {
 	LastUsedAt  float64 `json:"last_used_at"`
 }
 
+// apiKeyMetadataTimestamps formats the created/expires/last-used timestamps
+// of a key's metadata for table output.
+func apiKeyMetadataTimestamps(key apiKeyMetadata) (createdAt, expiresAt, lastUsedAt string, err error) {
+	if createdAt, err = formattedTimestamp(key.CreatedAt, false); err != nil {
+		return
+	}
+	if expiresAt, err = optionalTimestamp(key.ExpiresAt); err != nil {
+		return
+	}
+	lastUsedAt, err = optionalTimestamp(key.LastUsedAt)
+	return
+}
+
 // parseExpiresAt converts a user-supplied --expires-at value into a Unix
 // (epoch-second) timestamp. It accepts a bare epoch integer, or one of the
 // date/time layouts below (interpreted as UTC). An empty string returns 0.
@@ -101,15 +114,7 @@ func printApiKeyMetadataAsTable(raw string, out io.Writer, page int) error {
 		return err
 	}
 
-	createdAt, err := formattedTimestamp(key.CreatedAt, false)
-	if err != nil {
-		return err
-	}
-	expiresAt, err := optionalTimestamp(key.ExpiresAt)
-	if err != nil {
-		return err
-	}
-	lastUsedAt, err := optionalTimestamp(key.LastUsedAt)
+	createdAt, expiresAt, lastUsedAt, err := apiKeyMetadataTimestamps(key)
 	if err != nil {
 		return err
 	}
