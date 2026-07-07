@@ -59,6 +59,19 @@ a freshly built image (just ^docker build^) will not have one. If the image is a
 a registry, prefer ^--artifact-type=oci^, which fetches the digest directly from the
 registry without needing a local Docker daemon.
 
+For ^--artifact-type=oci^ (and for ^--artifact-type=docker^ when ^--registry-username^ is set),
+registry credentials are resolved as follows:
+  1) If ^--registry-username^ and ^--registry-password^ are both set, they are used directly.
+  2) Otherwise, credentials are discovered automatically from:
+     - the Docker config file (^~/.docker/config.json^, populated by ^docker login^)
+     - the Podman/containers auth file (^~/.config/containers/auth.json^, or ^$REGISTRY_AUTH_FILE^)
+     - any Docker credential helper configured in that config (e.g. ^docker-credential-ecr-login^
+       for AWS ECR, ^docker-credential-gcloud^ for GCR/Artifact Registry, an ACR helper for Azure,
+       or a local keychain helper), invoked as an external binary on ^$PATH^
+     - if none of the above yield credentials, the registry is accessed anonymously, which works
+       for public images
+  ^--registry-provider^ is deprecated and no longer used.
+
 `
 
 	attestationBindingDesc = `
@@ -199,8 +212,8 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	gitlabOrgFlag                   = "Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/integrations/ci_cd )."
 	gitlabBaseURLFlag               = "[optional] Gitlab base URL (only needed for on-prem Gitlab installations)."
 	registryProviderFlag            = "[deprecated] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry."
-	registryUsernameFlag            = "[conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry."
-	registryPasswordFlag            = "[conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry."
+	registryUsernameFlag            = "[conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry and it is not already accessible via Docker/Podman auth files or a credential helper."
+	registryPasswordFlag            = "[conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry and it is not already accessible via Docker/Podman auth files or a credential helper."
 	resultsDirFlag                  = "[defaulted] The path to a directory with JUnit test results. By default, the directory will be uploaded to Kosli's evidence vault."
 	snykJsonResultsFileFlag         = "The path to Snyk SARIF or JSON scan results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault."
 	snykSarifResultsFileFlag        = "The path to Snyk scan SARIF results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault."
