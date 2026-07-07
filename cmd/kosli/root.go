@@ -59,8 +59,8 @@ a freshly built image (just ^docker build^) will not have one. If the image is a
 a registry, prefer ^--artifact-type=oci^, which fetches the digest directly from the
 registry without needing a local Docker daemon.
 
-For ^--artifact-type=oci^ (and for ^--artifact-type=docker^ when ^--registry-username^ is set),
-registry credentials are resolved as follows:
+For ^--artifact-type=oci^ (and for ^--artifact-type=docker^), registry credentials
+are resolved as follows:
   1) If ^--registry-username^ and ^--registry-password^ are both set, they are used directly.
   2) Otherwise, credentials are discovered automatically from:
      - the Docker config file (^~/.docker/config.json^, populated by ^docker login^)
