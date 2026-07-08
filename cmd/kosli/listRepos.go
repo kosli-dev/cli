@@ -131,10 +131,13 @@ func printReposListAsTable(raw string, out io.Writer, page int) error {
 		return err
 	}
 
+	// both the empty-list message and the footer read the page from the
+	// response envelope (the server echoes the requested page), so the two
+	// paths never disagree on which page is being reported
 	if len(response.Repos) == 0 {
 		msg := "No repos were found"
-		if page != 1 {
-			msg = fmt.Sprintf("%s at page number %d", msg, page)
+		if response.Page != 1 {
+			msg = fmt.Sprintf("%s at page number %d", msg, response.Page)
 		}
 		logger.Info(msg + ".")
 		return nil
