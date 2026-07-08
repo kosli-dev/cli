@@ -38,6 +38,9 @@ Valid resource types are: %s.
 Repos are identified by their name. If multiple repos share the same name
 across VCS providers, use --provider to disambiguate, or tag the repo
 unambiguously by its internal ID with --repo-id (see: kosli get repo).
+Note: in dry-run mode the repo name is not resolved to its internal ID
+(no request is made to Kosli), so the previewed request URL contains the
+name as-is, whereas a real run sends the resolved ID.
 `, strings.Join(validTagResourceTypes, ", "))
 
 const tagExample = `

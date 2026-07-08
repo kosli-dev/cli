@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -141,6 +143,12 @@ func (suite *GetRepoCommandTestSuite) TestGetRepoCmd() {
 			cmd:         fmt.Sprintf(`get repo --repo-id no-such-inner-id %s`, suite.acmeOrgKosliArguments),
 			goldenRegex: `^Error: Repo .* not found`,
 		},
+		{
+			wantError:   true,
+			name:        "14-combining --provider with --repo-id fails",
+			cmd:         fmt.Sprintf(`get repo --repo-id %s --provider github %s`, suite.repoInnerID, suite.acmeOrgKosliArguments),
+			goldenRegex: `^Error: --provider cannot be combined with --repo-id`,
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
@@ -150,4 +158,30 @@ func (suite *GetRepoCommandTestSuite) TestGetRepoCmd() {
 // a normal test function and pass our suite to suite.Run
 func TestGetRepoCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(GetRepoCommandTestSuite))
+}
+
+func TestFormatRepoTags(t *testing.T) {
+	require.Equal(t, "", formatRepoTags(nil))
+	require.Equal(t, "", formatRepoTags(map[string]any{}))
+	require.Equal(t, "", formatRepoTags("not-a-map"))
+	require.Equal(t, "a=1, b=x", formatRepoTags(map[string]any{"b": "x", "a": float64(1)}))
+}
+
+func TestPrintRepoAsTableRendersNonStringValues(t *testing.T) {
+	// ids and tag values are rendered with %v so a numeric id from the
+	// server prints as a number instead of a %!s(float64=...) artifact
+	raw := `{"name":"my-org/my-repo","id":12345,"url":"https://github.com/my-org/my-repo","provider":"github","tags":{"count":7,"team":"platform"}}`
+	var buf bytes.Buffer
+	require.NoError(t, printRepoAsTable(raw, &buf, 0))
+	out := buf.String()
+	require.NotContains(t, out, "%!")
+	require.Contains(t, out, "12345")
+	require.Contains(t, out, "count=7, team=platform")
+}
+
+func TestPrintRepoAsTableShowsNoneForMissingTags(t *testing.T) {
+	raw := `{"name":"my-org/my-repo","id":"abc","url":"https://github.com/my-org/my-repo","provider":"github"}`
+	var buf bytes.Buffer
+	require.NoError(t, printRepoAsTable(raw, &buf, 0))
+	require.Contains(t, buf.String(), "None")
 }

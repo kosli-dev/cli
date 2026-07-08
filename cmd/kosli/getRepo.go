@@ -63,6 +63,9 @@ func newGetRepoCmd(out io.Writer) *cobra.Command {
 			if (len(args) == 1) == (o.repoID != "") {
 				return ErrorBeforePrintingUsage(cmd, "exactly one of the REPO-NAME argument or --repo-id must be provided")
 			}
+			if o.provider != "" && o.repoID != "" {
+				return ErrorBeforePrintingUsage(cmd, "--provider cannot be combined with --repo-id")
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -91,8 +94,7 @@ func (o *getRepoOptions) run(out io.Writer, args []string) error {
 	params := neturl.Values{}
 	if o.repoID != "" {
 		params.Set("id", o.repoID)
-	}
-	if o.provider != "" {
+	} else if o.provider != "" {
 		params.Set("provider", o.provider)
 	}
 	if len(params) > 0 {
@@ -129,10 +131,10 @@ func printRepoAsTable(raw string, out io.Writer, page int) error {
 		tagsOutput = "None"
 	}
 	rows := []string{
-		fmt.Sprintf("Name:\t%s", repo["name"]),
-		fmt.Sprintf("ID:\t%s", repo["id"]),
-		fmt.Sprintf("URL:\t%s", repo["url"]),
-		fmt.Sprintf("Provider:\t%s", repo["provider"]),
+		fmt.Sprintf("Name:\t%v", repo["name"]),
+		fmt.Sprintf("ID:\t%v", repo["id"]),
+		fmt.Sprintf("URL:\t%v", repo["url"]),
+		fmt.Sprintf("Provider:\t%v", repo["provider"]),
 		fmt.Sprintf("Tags:\t%s", tagsOutput),
 	}
 
@@ -154,7 +156,7 @@ func formatRepoTags(rawTags any) string {
 	sort.Strings(keys)
 	pairs := make([]string, 0, len(tags))
 	for _, key := range keys {
-		pairs = append(pairs, fmt.Sprintf("%s=%s", key, tags[key]))
+		pairs = append(pairs, fmt.Sprintf("%s=%v", key, tags[key]))
 	}
 	return strings.Join(pairs, ", ")
 }
