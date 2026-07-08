@@ -60,6 +60,7 @@ func newGetRepoCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+			// error unless exactly one of the REPO-NAME arg or --repo-id is set (XOR)
 			if (len(args) == 1) == (o.repoID != "") {
 				return ErrorBeforePrintingUsage(cmd, "exactly one of the REPO-NAME argument or --repo-id must be provided")
 			}
