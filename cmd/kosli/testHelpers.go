@@ -544,8 +544,9 @@ func CreateControl(org, identifier, name string, t *testing.T) {
 	require.NoError(t, err, "control should be created without error")
 }
 
-// GetRepoID fetches a repo's internal id via the get repo endpoint.
-func GetRepoID(org, repoName string, t *testing.T) string {
+// GetRepoInnerID fetches a repo by name and returns its Kosli inner id
+// (the `id` field), which is the identifier used to tag the repo.
+func GetRepoInnerID(org, repoName string, t *testing.T) string {
 	t.Helper()
 	u, err := url.JoinPath(global.Host, "api/v2/repos", org, repoName)
 	require.NoError(t, err, "repo URL should be constructed without error")

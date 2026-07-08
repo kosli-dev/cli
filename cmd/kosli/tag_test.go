@@ -49,7 +49,7 @@ func (suite *TagTestSuite) SetupTest() {
 	}, suite.T())
 	CreateFlowWithTemplate("tag-repo-flow", "testdata/valid_template.yml", suite.T())
 	BeginTrail("tag-repo-trail", "tag-repo-flow", "", suite.T())
-	suite.repoID = GetRepoID(global.Org, suite.repoName, suite.T())
+	suite.repoID = GetRepoInnerID(global.Org, suite.repoName, suite.T())
 }
 
 func (suite *TagTestSuite) TearDownTest() {
