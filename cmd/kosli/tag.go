@@ -62,6 +62,12 @@ kosli tag control yourControlIdentifier \
 	--set key1=value1 \
 	--api-token yourApiToken \
 	--org yourOrgName
+
+# tag a repo (the repo ID is the 'id' field returned by 'kosli get repo')
+kosli tag repo yourRepoID \
+	--set key1=value1 \
+	--api-token yourApiToken \
+	--org yourOrgName
 `
 
 func newTagCmd(out io.Writer) *cobra.Command {
@@ -149,7 +155,7 @@ func (o *tagOptions) run(args []string) error {
 }
 
 func validateResourceType(resourceType string) error {
-	options := []string{"flow", "flows", "env", "environment", "environments", "control", "controls"}
+	options := []string{"flow", "flows", "env", "environment", "environments", "control", "controls", "repo", "repos"}
 	match := false
 	for _, opt := range options {
 		if resourceType == opt {

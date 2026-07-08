@@ -573,6 +573,33 @@ func TagControl(org, identifier string, tags map[string]string, t *testing.T) {
 	require.NoError(t, err, "control should be tagged without error")
 }
 
+// GetRepoInnerID fetches a repo by name and returns its Kosli inner id
+// (the `id` field), which is the identifier used to tag the repo.
+func GetRepoInnerID(org, repoName string, t *testing.T) string {
+	t.Helper()
+	params := url.Values{}
+	params.Set("name", repoName)
+	base, err := url.JoinPath(global.Host, "api/v2/repos", org)
+	require.NoError(t, err, "repo URL should be constructed without error")
+
+	reqParams := &requests.RequestParams{
+		Method: http.MethodGet,
+		URL:    base + "?" + params.Encode(),
+		Token:  global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
+	require.NoError(t, err, "repo should be fetched without error")
+
+	var parsed struct {
+		Repos []struct {
+			ID string `json:"id"`
+		} `json:"repos"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(response.Body), &parsed), "repo response should be valid JSON")
+	require.NotEmpty(t, parsed.Repos, "repo %q should exist", repoName)
+	return parsed.Repos[0].ID
+}
+
 // CreatePolicy creates a policy on the server
 func CreatePolicy(org, policyName string, t *testing.T) {
 	t.Helper()

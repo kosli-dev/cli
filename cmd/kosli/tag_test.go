@@ -17,6 +17,7 @@ type TagTestSuite struct {
 	envName               string
 	envType               string
 	controlID             string
+	repoID                string
 }
 
 func (suite *TagTestSuite) SetupTest() {
@@ -34,6 +35,10 @@ func (suite *TagTestSuite) SetupTest() {
 	CreateFlow(suite.flowName, suite.T())
 	CreateEnv(global.Org, suite.envName, suite.envType, suite.T())
 	CreateControl(global.Org, suite.controlID, "Tag control", suite.T())
+
+	// A repo is created implicitly when a trail records its git repo info.
+	BeginTrail("tag-trail", suite.flowName, "", suite.T())
+	suite.repoID = GetRepoInnerID(global.Org, "kosli-dev/cli", suite.T())
 }
 
 func (suite *TagTestSuite) TestTagCmd() {
@@ -88,6 +93,27 @@ func (suite *TagTestSuite) TestTagCmd() {
 			name:        "tagging a non-existing control gives a clear error",
 			cmd:         fmt.Sprintf("tag control no-such-control --set foo=bar %s", suite.defaultKosliArguments),
 			goldenRegex: "^Error: \"Control 'no-such-control' does not exist in organization",
+		},
+		{
+			name:   "can tag a repo",
+			cmd:    fmt.Sprintf("tag repo %s --set foo=bar %s", suite.repoID, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("Tag(s) [foo] added for repo '%s'\n", suite.repoID),
+		},
+		{
+			name:   "can remove a tag from a repo",
+			cmd:    fmt.Sprintf("tag repo %s --unset foo %s", suite.repoID, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("Tag(s) [foo] removed for repo '%s'\n", suite.repoID),
+		},
+		{
+			name:   "can tag a repo using the plural resource type",
+			cmd:    fmt.Sprintf("tag repos %s --set key=value %s", suite.repoID, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("Tag(s) [key] added for repos '%s'\n", suite.repoID),
+		},
+		{
+			wantError:   true,
+			name:        "tagging a non-existing repo gives a clear error",
+			cmd:         fmt.Sprintf("tag repo no-such-repo --set foo=bar %s", suite.defaultKosliArguments),
+			goldenRegex: "^Error: \"Repo 'no-such-repo' does not exist in organization",
 		},
 	}
 	runTestCmd(suite.T(), tests)
