@@ -55,6 +55,22 @@ func TestLifecycleControlCommandsAreBeta(t *testing.T) {
 	}
 }
 
+func TestLifecycleRepoCommandsAreVisible(t *testing.T) {
+	global = &GlobalOpts{}
+	cmds := map[string]*cobra.Command{
+		"get repo":   newGetRepoCmd(io.Discard),
+		"list repos": newListReposCmd(io.Discard),
+	}
+	for name, cmd := range cmds {
+		if cmd.Hidden {
+			t.Errorf("expected %q to be visible (not Hidden)", name)
+		}
+		if isDocHidden(cmd) {
+			t.Errorf("expected %q to not be doc-hidden", name)
+		}
+	}
+}
+
 func TestDeprecationHint(t *testing.T) {
 	generic := &cobra.Command{Use: "x", Deprecated: deprecatedCommandMsg}
 	if got := deprecationHint(generic); got != "" {
