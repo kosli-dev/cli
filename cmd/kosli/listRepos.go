@@ -14,6 +14,33 @@ import (
 
 const listReposDesc = `List repos for an org.`
 
+const listReposExample = `
+# list all repos for an org:
+kosli list repos \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list repos filtered by name:
+kosli list repos \
+	--name my-org/my-repo \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list repos filtered by VCS provider (in JSON):
+kosli list repos \
+	--provider github \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+	--output json
+
+# show the second page of repos (15 per page):
+kosli list repos \
+	--page-limit 15 \
+	--page 2 \
+	--api-token yourAPIToken \
+	--org yourOrgName
+`
+
 type listReposOptions struct {
 	listOptions
 	name     string
@@ -24,10 +51,11 @@ type listReposOptions struct {
 func newListReposCmd(out io.Writer) *cobra.Command {
 	o := new(listReposOptions)
 	cmd := &cobra.Command{
-		Use:   "repos",
-		Short: listReposDesc,
-		Long:  listReposDesc,
-		Args:  cobra.NoArgs,
+		Use:     "repos",
+		Short:   listReposDesc,
+		Long:    listReposDesc,
+		Example: listReposExample,
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
