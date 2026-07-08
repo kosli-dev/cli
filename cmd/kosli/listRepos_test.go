@@ -103,7 +103,7 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		},
 		{
 			name:   "08-can list repos with pagination",
-			cmd:    fmt.Sprintf(`list repos --page-limit 15 --page 2 %s`, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf(`list repos --page-limit 25 --page 2 %s`, suite.defaultKosliArguments),
 			golden: "",
 		},
 		{
