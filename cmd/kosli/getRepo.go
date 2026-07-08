@@ -83,7 +83,8 @@ func newGetRepoCmd(out io.Writer) *cobra.Command {
 
 func (o *getRepoOptions) run(out io.Writer, args []string) error {
 	// the endpoint's path is the repo name; when fetching by internal id the
-	// server ignores the path, so the id doubles as the path segment
+	// server keys off the ?id= query param and ignores the path, so the id
+	// intentionally doubles as the path segment instead of a placeholder
 	pathName := o.repoID
 	if len(args) == 1 {
 		pathName = args[0]
@@ -119,6 +120,41 @@ func (o *getRepoOptions) run(out io.Writer, args []string) error {
 		})
 }
 
+// fetchRepoInnerID resolves a repo name to its internal id via the get repo
+// endpoint. An empty provider means no provider disambiguation.
+func fetchRepoInnerID(org, repoName, provider string) (string, error) {
+	reqURL, err := neturl.JoinPath(global.Host, "api/v2/repos", org, repoName)
+	if err != nil {
+		return "", err
+	}
+	if provider != "" {
+		params := neturl.Values{}
+		params.Set("provider", provider)
+		reqURL += "?" + params.Encode()
+	}
+
+	reqParams := &requests.RequestParams{
+		Method: http.MethodGet,
+		URL:    reqURL,
+		Token:  global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
+	if err != nil {
+		return "", err
+	}
+
+	var repo struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal([]byte(response.Body), &repo); err != nil {
+		return "", err
+	}
+	if repo.ID == "" {
+		return "", fmt.Errorf("could not resolve repo %q to an id", repoName)
+	}
+	return repo.ID, nil
+}
+
 func printRepoAsTable(raw string, out io.Writer, page int) error {
 	var repo map[string]any
 
@@ -143,8 +179,9 @@ func printRepoAsTable(raw string, out io.Writer, page int) error {
 	return nil
 }
 
-// formatRepoTags renders a repo's tags map as sorted "key=value" pairs,
-// or "" when there are no tags.
+// formatRepoTags renders a repo's tags map as sorted "key=value" pairs, or ""
+// when there are no tags. Following the flow/env table conventions, list
+// columns show the empty string while the get repo detail view shows "None".
 func formatRepoTags(rawTags any) string {
 	tags, ok := rawTags.(map[string]any)
 	if !ok || len(tags) == 0 {

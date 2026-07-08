@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -158,7 +157,7 @@ func (o *tagOptions) run(args []string) error {
 		o.resourceID = args[1]
 		urlResourceID = o.resourceID
 		if isRepo && !global.DryRun {
-			urlResourceID, err = o.resolveRepoID()
+			urlResourceID, err = fetchRepoInnerID(global.Org, o.resourceID, o.provider)
 			if err != nil {
 				return err
 			}
@@ -216,41 +215,6 @@ func (o *tagOptions) run(args []string) error {
 		logger.Info(msg)
 	}
 	return err
-}
-
-// resolveRepoID resolves the repo name in o.resourceID to the repo's internal
-// id via the get repo endpoint, passing --provider through for disambiguation.
-func (o *tagOptions) resolveRepoID() (string, error) {
-	reqURL, err := url.JoinPath(global.Host, "api/v2/repos", global.Org, o.resourceID)
-	if err != nil {
-		return "", err
-	}
-	if o.provider != "" {
-		params := url.Values{}
-		params.Set("provider", o.provider)
-		reqURL += "?" + params.Encode()
-	}
-
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    reqURL,
-		Token:  global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
-	if err != nil {
-		return "", err
-	}
-
-	var repo struct {
-		ID string `json:"id"`
-	}
-	if err := json.Unmarshal([]byte(response.Body), &repo); err != nil {
-		return "", err
-	}
-	if repo.ID == "" {
-		return "", fmt.Errorf("could not resolve repo %q to an id", o.resourceID)
-	}
-	return repo.ID, nil
 }
 
 func validateResourceType(resourceType string) error {

@@ -548,24 +548,9 @@ func CreateControl(org, identifier, name string, t *testing.T) {
 // (the `id` field), which is the identifier used to tag the repo.
 func GetRepoInnerID(org, repoName string, t *testing.T) string {
 	t.Helper()
-	u, err := url.JoinPath(global.Host, "api/v2/repos", org, repoName)
-	require.NoError(t, err, "repo URL should be constructed without error")
-
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    u,
-		Token:  global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
-	require.NoError(t, err, "repo should be fetched without error")
-
-	var repo struct {
-		ID string `json:"id"`
-	}
-	err = json.Unmarshal([]byte(response.Body), &repo)
-	require.NoError(t, err, "repo response should be valid JSON")
-	require.NotEmpty(t, repo.ID, "repo response should contain an id")
-	return repo.ID
+	id, err := fetchRepoInnerID(org, repoName, "")
+	require.NoError(t, err, "repo inner id should be resolved without error")
+	return id
 }
 
 func ArchiveControl(org, identifier string, t *testing.T) {
