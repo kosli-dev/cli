@@ -149,6 +149,16 @@ func (suite *GetRepoCommandTestSuite) TestGetRepoCmd() {
 			cmd:         fmt.Sprintf(`get repo --repo-id %s --provider github %s`, suite.repoInnerID, suite.acmeOrgKosliArguments),
 			goldenRegex: `^Error: --provider cannot be combined with --repo-id`,
 		},
+		{
+			name:       "15-a repo without tags returns an empty tags object in json",
+			cmd:        fmt.Sprintf(`get repo get-repo-suite-org/get-repo-ambiguous-repo --provider github --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"tags", "{}"}},
+		},
+		{
+			name:        "16-a repo without tags shows None in the table output",
+			cmd:         fmt.Sprintf(`get repo get-repo-suite-org/get-repo-ambiguous-repo --provider github %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `Tags:\s+None`,
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
