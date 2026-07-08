@@ -14,13 +14,14 @@ import (
 
 const listReposShortDesc = `List repos for an org. `
 
-const listReposLongDesc = listReposShortDesc + `By default, all repos for the org are returned.
-Pass --page-limit and/or --page to paginate the results.
+const listReposLongDesc = listReposShortDesc + `The results are always paginated:
+by default the first page is returned with 15 repos per page. Use --page to select
+a page and --page-limit to change the page size (maximum 50).
 The list can be filtered by name with --name (exact match), by VCS provider with
 --provider, and by external repo ID with --repo-id.`
 
 const listReposExample = `
-# list all repos for an org:
+# list repos for an org (first page, 15 per page):
 kosli list repos \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -38,9 +39,9 @@ kosli list repos \
 	--org yourOrgName \
 	--output json
 
-# show the second page of repos (25 per page):
+# show the second page of repos (15 per page):
 kosli list repos \
-	--page-limit 25 \
+	--page-limit 15 \
 	--page 2 \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -117,29 +118,37 @@ func (o *listReposOptions) run(out io.Writer) error {
 		})
 }
 
-func printReposListAsTable(raw string, out io.Writer, page int) error {
-	var repos []map[string]any
-	var response struct {
-		Repos []map[string]any `json:"repos"`
-	}
+type listReposResponse struct {
+	Repos      []map[string]any `json:"repos"`
+	Page       int              `json:"page"`
+	TotalPages int              `json:"total_pages"`
+	TotalCount int              `json:"total_count"`
+}
 
-	err := json.Unmarshal([]byte(raw), &response)
-	if err != nil {
+func printReposListAsTable(raw string, out io.Writer, page int) error {
+	response := &listReposResponse{}
+	if err := json.Unmarshal([]byte(raw), response); err != nil {
 		return err
 	}
-	repos = response.Repos
 
-	if len(repos) == 0 {
-		logger.Info("No repos were found.")
+	if len(response.Repos) == 0 {
+		msg := "No repos were found"
+		if page != 1 {
+			msg = fmt.Sprintf("%s at page number %d", msg, page)
+		}
+		logger.Info(msg + ".")
 		return nil
 	}
 
 	header := []string{"NAME", "URL", "PROVIDER", "TAGS"}
 	rows := []string{}
-	for _, repo := range repos {
+	for _, repo := range response.Repos {
 		row := fmt.Sprintf("%v\t%v\t%v\t%s", repo["name"], repo["url"], repo["provider"], formatRepoTags(repo["tags"]))
 		rows = append(rows, row)
 	}
+
+	rows = append(rows, fmt.Sprintf("\nShowing page %d of %d, total %d repos", response.Page, response.TotalPages, response.TotalCount))
+
 	tabFormattedPrint(out, header, rows)
 
 	return nil
