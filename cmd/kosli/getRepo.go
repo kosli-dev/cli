@@ -90,15 +90,13 @@ func (o *getRepoOptions) run(out io.Writer, args []string) error {
 	}
 
 	var parsed struct {
-		Embedded struct {
-			Repos []map[string]any `json:"repos"`
-		} `json:"_embedded"`
+		Repos []map[string]any `json:"repos"`
 	}
 	if err := json.Unmarshal([]byte(response.Body), &parsed); err != nil {
 		return err
 	}
-	if len(parsed.Embedded.Repos) > 1 {
-		return fmt.Errorf("found %d repos matching %q. Use --provider or --repo-id to narrow down the search", len(parsed.Embedded.Repos), args[0])
+	if len(parsed.Repos) > 1 {
+		return fmt.Errorf("found %d repos matching %q. Use --provider or --repo-id to narrow down the search", len(parsed.Repos), args[0])
 	}
 
 	return output.FormattedPrint(response.Body, o.output, out, 0,

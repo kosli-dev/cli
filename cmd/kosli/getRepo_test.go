@@ -35,6 +35,18 @@ func (suite *GetRepoCommandTestSuite) SetupTest() {
 		"GITHUB_REPOSITORY_ID": "1234567890",
 	}, suite.T())
 	BeginTrail("trail-name", "get-repo", "", suite.T())
+
+	// two repos sharing a name but with different external ids, to exercise
+	// the "narrow down the search" guard
+	SetEnvVars(map[string]string{
+		"GITHUB_REPOSITORY":    "ambiguous-org/ambiguous-repo",
+		"GITHUB_REPOSITORY_ID": "111",
+	}, suite.T())
+	BeginTrail("ambiguous-trail-1", "get-repo", "", suite.T())
+	SetEnvVars(map[string]string{
+		"GITHUB_REPOSITORY_ID": "222",
+	}, suite.T())
+	BeginTrail("ambiguous-trail-2", "get-repo", "", suite.T())
 }
 
 func (suite *GetRepoCommandTestSuite) TearDownTest() {
@@ -92,6 +104,16 @@ func (suite *GetRepoCommandTestSuite) TestGetRepoCmd() {
 			name:      "09-providing more than one argument fails",
 			cmd:       fmt.Sprintf(`get repo foo bar %s`, suite.defaultKosliArguments),
 			golden:    "Error: accepts 1 arg(s), received 2\n",
+		},
+		{
+			wantError: true,
+			name:      "10-getting a repo with multiple matches suggests narrowing the search",
+			cmd:       fmt.Sprintf(`get repo ambiguous-org/ambiguous-repo %s`, suite.acmeOrgKosliArguments),
+			golden:    "Error: found 2 repos matching \"ambiguous-org/ambiguous-repo\". Use --provider or --repo-id to narrow down the search\n",
+		},
+		{
+			name: "11-narrowing an ambiguous repo down with --repo-id works",
+			cmd:  fmt.Sprintf(`get repo ambiguous-org/ambiguous-repo --repo-id 111 %s`, suite.acmeOrgKosliArguments),
 		},
 	}
 

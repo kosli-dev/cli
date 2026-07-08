@@ -26,7 +26,9 @@ func (suite *TagTestSuite) SetupTest() {
 	suite.envName = "tag-env"
 	suite.envType = "K8S"
 	suite.controlID = "tag-control"
-	suite.repoName = "kosli-dev/cli"
+	// unique name: in CI, other suites implicitly create a repo for the real
+	// GITHUB_REPOSITORY in this org, and same-name repos make lookup ambiguous
+	suite.repoName = "tag-test-org/tag-test-repo"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user",
