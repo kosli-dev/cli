@@ -39,9 +39,9 @@ kosli list repos \
 	--org yourOrgName \
 	--output json
 
-# show the second page of repos (15 per page):
+# show the second page of repos (25 per page):
 kosli list repos \
-	--page-limit 15 \
+	--page-limit 25 \
 	--page 2 \
 	--api-token yourAPIToken \
 	--org yourOrgName
