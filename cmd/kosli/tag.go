@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,8 @@ import (
 type tagOptions struct {
 	resourceType string
 	resourceID   string
+	provider     string
+	repoID       string
 	payload      TagResourcePayload
 }
 
@@ -25,13 +28,17 @@ type TagResourcePayload struct {
 
 const tagShortDesc = `Tag a resource in Kosli with key-value pairs.  `
 
-const tagLongDesc = tagShortDesc + `
+var validTagResourceTypes = []string{"flow", "flows", "env", "environment", "environments", "control", "controls", "repo", "repos"}
+
+var tagLongDesc = tagShortDesc + fmt.Sprintf(`
 use --set to add or update tags, and --unset to remove tags.
 
-Flows, environments and controls are identified by their name or identifier.
-Repos are identified by their internal id (repo names are not unique across
-VCS providers), which you can find with: kosli get repo REPO-NAME
-`
+Valid resource types are: %s.
+
+Repos are identified by their name. If multiple repos share the same name
+across VCS providers, use --provider to disambiguate, or tag the repo
+unambiguously by its internal ID with --repo-id (see: kosli get repo).
+`, strings.Join(validTagResourceTypes, ", "))
 
 const tagExample = `
 # add/update tags to a flow
@@ -67,8 +74,21 @@ kosli tag control yourControlIdentifier \
 	--api-token yourApiToken \
 	--org yourOrgName
 
-# tag a repo (identified by its internal id, see: kosli get repo)
-kosli tag repo yourRepoID \
+# tag a repo
+kosli tag repo yourOrg/yourRepoName \
+	--set key1=value1 \
+	--api-token yourApiToken \
+	--org yourOrgName
+
+# tag a repo whose name exists across multiple VCS providers
+kosli tag repo yourOrg/yourRepoName \
+	--provider github \
+	--set key1=value1 \
+	--api-token yourApiToken \
+	--org yourOrgName
+
+# tag a repo by its internal ID (see: kosli get repo)
+kosli tag repo --repo-id yourRepoID \
 	--set key1=value1 \
 	--api-token yourApiToken \
 	--org yourOrgName
@@ -77,11 +97,11 @@ kosli tag repo yourRepoID \
 func newTagCmd(out io.Writer) *cobra.Command {
 	o := new(tagOptions)
 	cmd := &cobra.Command{
-		Use:     "tag RESOURCE-TYPE RESOURCE-ID",
+		Use:     "tag RESOURCE-TYPE [RESOURCE-ID]",
 		Short:   tagShortDesc,
 		Long:    tagLongDesc,
 		Example: tagExample,
-		Args:    cobra.ExactArgs(2),
+		Args:    cobra.RangeArgs(1, 2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
@@ -94,8 +114,10 @@ func newTagCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringToStringVar(&o.payload.SetTags, "set", map[string]string{}, setTagsFlag)
-	cmd.Flags().StringSliceVar(&o.payload.RemoveTags, "unset", []string{}, unsetTagsFlag)
+	cmd.Flags().StringToStringVarP(&o.payload.SetTags, "set", "s", map[string]string{}, setTagsFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.RemoveTags, "unset", "u", []string{}, unsetTagsFlag)
+	cmd.Flags().StringVar(&o.provider, "provider", "", "[optional] The VCS provider of the repo (e.g. github, gitlab). Only valid when tagging repos; required when multiple repos share the same name across providers.")
+	cmd.Flags().StringVar(&o.repoID, "repo-id", "", "[optional] The repo's internal ID (see: kosli get repo). Only valid when tagging repos; replaces the RESOURCE-ID argument and identifies the repo unambiguously.")
 
 	addDryRunFlag(cmd)
 
@@ -104,13 +126,48 @@ func newTagCmd(out io.Writer) *cobra.Command {
 
 func (o *tagOptions) run(args []string) error {
 	o.resourceType = args[0]
-	o.resourceID = args[1]
 
 	err := validateResourceType(o.resourceType)
 	if err != nil {
 		return err
 	}
-	url, err := url.JoinPath(global.Host, "api/v2/tags", global.Org, o.resourceType, o.resourceID)
+	isRepo := o.resourceType == "repo" || o.resourceType == "repos"
+	if !isRepo {
+		if o.provider != "" {
+			return fmt.Errorf("--provider is only valid when tagging repos")
+		}
+		if o.repoID != "" {
+			return fmt.Errorf("--repo-id is only valid when tagging repos")
+		}
+	}
+	if o.provider != "" && o.repoID != "" {
+		return fmt.Errorf("--provider cannot be combined with --repo-id")
+	}
+
+	// the tags endpoint identifies repos by their internal id (repo names are
+	// not unique across VCS providers): use --repo-id as-is, or resolve the
+	// repo name to it first
+	var urlResourceID string
+	switch {
+	case len(args) == 2 && o.repoID != "":
+		return fmt.Errorf("exactly one of the RESOURCE-ID argument or --repo-id must be provided")
+	case len(args) == 2:
+		o.resourceID = args[1]
+		urlResourceID = o.resourceID
+		if isRepo && !global.DryRun {
+			urlResourceID, err = o.resolveRepoID()
+			if err != nil {
+				return err
+			}
+		}
+	case o.repoID != "":
+		o.resourceID = o.repoID
+		urlResourceID = o.repoID
+	default:
+		return fmt.Errorf("the RESOURCE-ID argument is required unless tagging a repo with --repo-id")
+	}
+
+	url, err := url.JoinPath(global.Host, "api/v2/tags", global.Org, o.resourceType, urlResourceID)
 	if err != nil {
 		return err
 	}
@@ -158,10 +215,44 @@ func (o *tagOptions) run(args []string) error {
 	return err
 }
 
+// resolveRepoID resolves the repo name in o.resourceID to the repo's internal
+// id via the get repo endpoint, passing --provider through for disambiguation.
+func (o *tagOptions) resolveRepoID() (string, error) {
+	reqURL, err := url.JoinPath(global.Host, "api/v2/repos", global.Org, o.resourceID)
+	if err != nil {
+		return "", err
+	}
+	if o.provider != "" {
+		params := url.Values{}
+		params.Set("provider", o.provider)
+		reqURL += "?" + params.Encode()
+	}
+
+	reqParams := &requests.RequestParams{
+		Method: http.MethodGet,
+		URL:    reqURL,
+		Token:  global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
+	if err != nil {
+		return "", err
+	}
+
+	var repo struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal([]byte(response.Body), &repo); err != nil {
+		return "", err
+	}
+	if repo.ID == "" {
+		return "", fmt.Errorf("could not resolve repo %q to an id", o.resourceID)
+	}
+	return repo.ID, nil
+}
+
 func validateResourceType(resourceType string) error {
-	options := []string{"flow", "flows", "env", "environment", "environments", "control", "controls", "repo", "repos"}
 	match := false
-	for _, opt := range options {
+	for _, opt := range validTagResourceTypes {
 		if resourceType == opt {
 			match = true
 			break
@@ -169,7 +260,7 @@ func validateResourceType(resourceType string) error {
 	}
 
 	if !match {
-		return fmt.Errorf("%s is not a valid resource type. Valid resource types are: %s", resourceType, options)
+		return fmt.Errorf("%s is not a valid resource type. Valid resource types are: %s", resourceType, validTagResourceTypes)
 	}
 	return nil
 }

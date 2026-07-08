@@ -597,6 +597,22 @@ func TagControl(org, identifier string, tags map[string]string, t *testing.T) {
 	require.NoError(t, err, "control should be tagged without error")
 }
 
+// TagRepo sets tags on a repo identified by its inner id via the API.
+func TagRepo(org, innerID string, tags map[string]string, t *testing.T) {
+	t.Helper()
+	u, err := url.JoinPath(global.Host, "api/v2/tags", org, "repo", innerID)
+	require.NoError(t, err, "repo tag URL should be constructed without error")
+
+	reqParams := &requests.RequestParams{
+		Method:  http.MethodPatch,
+		URL:     u,
+		Payload: TagResourcePayload{SetTags: tags},
+		Token:   global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	require.NoError(t, err, "repo should be tagged without error")
+}
+
 // CreatePolicy creates a policy on the server
 func CreatePolicy(org, policyName string, t *testing.T) {
 	t.Helper()

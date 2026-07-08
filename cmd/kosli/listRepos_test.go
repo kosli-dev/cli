@@ -35,6 +35,10 @@ func (suite *ListReposCommandTestSuite) SetupTest() {
 		"GITHUB_REPOSITORY_ID": "1234567890",
 	}, suite.T())
 	BeginTrail("trail-name", "list-repos", "", suite.T())
+
+	// tag the repo so tests can assert tags are surfaced
+	innerID := GetRepoInnerID(global.Org, "kosli-dev/cli", suite.T())
+	TagRepo(global.Org, innerID, map[string]string{"team": "platform"}, suite.T())
 }
 
 func (suite *ListReposCommandTestSuite) TearDownTest() {
@@ -55,9 +59,9 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		// 	golden: "No repos were found.\n",
 		// },
 		{
-			name:        "02-listing repos works when there are no repos",
+			name:        "02-listing repos works when there are repos",
 			cmd:         fmt.Sprintf(`list repos %s`, suite.acmeOrgKosliArguments),
-			goldenRegex: ".*\nkosli-dev/cli.*https://github.com/kosli-dev/cli.*github.*",
+			goldenRegex: "NAME.*URL.*PROVIDER.*TAGS\nkosli-dev/cli.*https://github.com/kosli-dev/cli.*github.*team=platform.*",
 		},
 		{
 			name:       "03-listing repos with --output json works when there are repos",
