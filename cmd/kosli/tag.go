@@ -27,6 +27,10 @@ const tagShortDesc = `Tag a resource in Kosli with key-value pairs.  `
 
 const tagLongDesc = tagShortDesc + `
 use --set to add or update tags, and --unset to remove tags.
+
+Flows, environments and controls are identified by their name or identifier.
+Repos are identified by their internal id (repo names are not unique across
+VCS providers), which you can find with: kosli get repo REPO-NAME
 `
 
 const tagExample = `
@@ -59,6 +63,12 @@ kosli tag env yourEnvironmentName \
 
 # tag a control
 kosli tag control yourControlIdentifier \
+	--set key1=value1 \
+	--api-token yourApiToken \
+	--org yourOrgName
+
+# tag a repo (identified by its internal id, see: kosli get repo)
+kosli tag repo yourRepoID \
 	--set key1=value1 \
 	--api-token yourApiToken \
 	--org yourOrgName
@@ -149,7 +159,7 @@ func (o *tagOptions) run(args []string) error {
 }
 
 func validateResourceType(resourceType string) error {
-	options := []string{"flow", "flows", "env", "environment", "environments", "control", "controls"}
+	options := []string{"flow", "flows", "env", "environment", "environments", "control", "controls", "repo", "repos"}
 	match := false
 	for _, opt := range options {
 		if resourceType == opt {

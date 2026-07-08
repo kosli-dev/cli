@@ -41,7 +41,6 @@ func newGetRepoCmd(out io.Writer) *cobra.Command {
 	o := new(getRepoOptions)
 	cmd := &cobra.Command{
 		Use:     "repo REPO-NAME",
-		Hidden:  true,
 		Short:   getRepoShortDesc,
 		Long:    getRepoLongDesc,
 		Example: getRepoExample,

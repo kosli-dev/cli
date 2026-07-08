@@ -24,11 +24,10 @@ type listReposOptions struct {
 func newListReposCmd(out io.Writer) *cobra.Command {
 	o := new(listReposOptions)
 	cmd := &cobra.Command{
-		Use:    "repos",
-		Hidden: true,
-		Short:  listReposDesc,
-		Long:   listReposDesc,
-		Args:   cobra.NoArgs,
+		Use:   "repos",
+		Short: listReposDesc,
+		Long:  listReposDesc,
+		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

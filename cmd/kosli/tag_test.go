@@ -17,6 +17,8 @@ type TagTestSuite struct {
 	envName               string
 	envType               string
 	controlID             string
+	repoName              string
+	repoID                string
 }
 
 func (suite *TagTestSuite) SetupTest() {
@@ -24,6 +26,7 @@ func (suite *TagTestSuite) SetupTest() {
 	suite.envName = "tag-env"
 	suite.envType = "K8S"
 	suite.controlID = "tag-control"
+	suite.repoName = "kosli-dev/cli"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user",
@@ -34,6 +37,26 @@ func (suite *TagTestSuite) SetupTest() {
 	CreateFlow(suite.flowName, suite.T())
 	CreateEnv(global.Org, suite.envName, suite.envType, suite.T())
 	CreateControl(global.Org, suite.controlID, "Tag control", suite.T())
+
+	// repos are created implicitly when a trail is begun with git repo info
+	SetEnvVars(map[string]string{
+		"GITHUB_RUN_NUMBER":    "1234",
+		"GITHUB_SERVER_URL":    "https://github.com",
+		"GITHUB_REPOSITORY":    suite.repoName,
+		"GITHUB_REPOSITORY_ID": "1234567890",
+	}, suite.T())
+	CreateFlowWithTemplate("tag-repo-flow", "testdata/valid_template.yml", suite.T())
+	BeginTrail("tag-repo-trail", "tag-repo-flow", "", suite.T())
+	suite.repoID = GetRepoID(global.Org, suite.repoName, suite.T())
+}
+
+func (suite *TagTestSuite) TearDownTest() {
+	UnSetEnvVars(map[string]string{
+		"GITHUB_RUN_NUMBER":    "",
+		"GITHUB_SERVER_URL":    "",
+		"GITHUB_REPOSITORY":    "",
+		"GITHUB_REPOSITORY_ID": "",
+	}, suite.T())
 }
 
 func (suite *TagTestSuite) TestTagCmd() {
@@ -88,6 +111,33 @@ func (suite *TagTestSuite) TestTagCmd() {
 			name:        "tagging a non-existing control gives a clear error",
 			cmd:         fmt.Sprintf("tag control no-such-control --set foo=bar %s", suite.defaultKosliArguments),
 			goldenRegex: "^Error: \"Control 'no-such-control' does not exist in organization",
+		},
+		{
+			name:   "can tag a repo by its internal id",
+			cmd:    fmt.Sprintf("tag repo %s --set team=platform %s", suite.repoID, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("Tag(s) [team] added for repo '%s'\n", suite.repoID),
+		},
+		{
+			name:   "can remove a tag from a repo",
+			cmd:    fmt.Sprintf("tag repo %s --unset team %s", suite.repoID, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("Tag(s) [team] removed for repo '%s'\n", suite.repoID),
+		},
+		{
+			name:   "can tag a repo using the plural resource type",
+			cmd:    fmt.Sprintf("tag repos %s --set key=value %s", suite.repoID, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("Tag(s) [key] added for repos '%s'\n", suite.repoID),
+		},
+		{
+			wantError:   true,
+			name:        "tagging a non-existing repo id gives a clear error",
+			cmd:         fmt.Sprintf("tag repo no-such-repo-id --set foo=bar %s", suite.defaultKosliArguments),
+			goldenRegex: "^Error: \"Repo 'no-such-repo-id' does not exist in organization",
+		},
+		{
+			wantError:   true,
+			name:        "an invalid resource type gives a clear error listing valid types",
+			cmd:         fmt.Sprintf("tag junk some-id --set foo=bar %s", suite.defaultKosliArguments),
+			goldenRegex: `^Error: junk is not a valid resource type\. Valid resource types are: \[flow flows env environment environments control controls repo repos\]`,
 		},
 	}
 	runTestCmd(suite.T(), tests)
