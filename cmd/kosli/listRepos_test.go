@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -35,6 +37,17 @@ func (suite *ListReposCommandTestSuite) SetupTest() {
 		"GITHUB_REPOSITORY_ID": "1234567890",
 	}, suite.T())
 	BeginTrail("trail-name", "list-repos", "", suite.T())
+
+	// tag the repo so tests can assert tags are surfaced
+	innerID := GetRepoInnerID(global.Org, "kosli-dev/cli", suite.T())
+	TagRepo(global.Org, innerID, map[string]string{"team": "platform"}, suite.T())
+
+	// a second repo that is never tagged, to assert blank TAGS rendering
+	SetEnvVars(map[string]string{
+		"GITHUB_REPOSITORY":    "list-repos-suite-org/untagged-repo",
+		"GITHUB_REPOSITORY_ID": "555",
+	}, suite.T())
+	BeginTrail("untagged-trail", "list-repos", "", suite.T())
 }
 
 func (suite *ListReposCommandTestSuite) TearDownTest() {
@@ -55,9 +68,9 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		// 	golden: "No repos were found.\n",
 		// },
 		{
-			name:        "02-listing repos works when there are no repos",
+			name:        "02-listing repos works when there are repos",
 			cmd:         fmt.Sprintf(`list repos %s`, suite.acmeOrgKosliArguments),
-			goldenRegex: ".*\nkosli-dev/cli.*https://github.com/kosli-dev/cli.*github.*",
+			goldenRegex: `(?sm)NAME\s+URL\s+PROVIDER\s+TAGS.*^kosli-dev/cli\s+https://github\.com/kosli-dev/cli\s+github\s+team=platform`,
 		},
 		{
 			name:       "03-listing repos with --output json works when there are repos",
@@ -106,7 +119,7 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		{
 			name:        "11-listing repos with --provider filter works",
 			cmd:         fmt.Sprintf(`list repos --provider github %s`, suite.acmeOrgKosliArguments),
-			goldenRegex: ".*\nkosli-dev/cli.*https://github.com/kosli-dev/cli.*github.*",
+			goldenRegex: `(?m)^kosli-dev/cli\s+https://github\.com/kosli-dev/cli\s+github\b`,
 		},
 		{
 			name:   "12-listing repos with non-matching --provider returns no repos message",
@@ -118,6 +131,11 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 			cmd:    fmt.Sprintf(`list repos --repo-id non-existing-id %s`, suite.acmeOrgKosliArguments),
 			golden: "No repos were found.\n",
 		},
+		{
+			name:        "14-a repo without tags renders a blank TAGS cell",
+			cmd:         fmt.Sprintf(`list repos %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `(?m)^list-repos-suite-org/untagged-repo\s+https://github\.com/list-repos-suite-org/untagged-repo\s+github\s*$`,
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
@@ -127,4 +145,17 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 // a normal test function and pass our suite to suite.Run
 func TestListReposCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(ListReposCommandTestSuite))
+}
+
+func TestPrintReposListAsTableRendersBlankTagsCell(t *testing.T) {
+	raw := `{"repos":[
+		{"name":"o/tagged","url":"https://github.com/o/tagged","provider":"github","tags":{"team":"platform"}},
+		{"name":"o/untagged","url":"https://github.com/o/untagged","provider":"github","tags":{}}
+	]}`
+	var buf bytes.Buffer
+	require.NoError(t, printReposListAsTable(raw, &buf, 1))
+	out := buf.String()
+	require.Regexp(t, `(?m)^NAME\s+URL\s+PROVIDER\s+TAGS\s*$`, out)
+	require.Regexp(t, `(?m)^o/tagged\s+https://github\.com/o/tagged\s+github\s+team=platform\s*$`, out)
+	require.Regexp(t, `(?m)^o/untagged\s+https://github\.com/o/untagged\s+github\s*$`, out)
 }
