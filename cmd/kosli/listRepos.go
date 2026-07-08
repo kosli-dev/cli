@@ -12,7 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const listReposDesc = `List repos for an org.`
+const listReposShortDesc = `List repos for an org. `
+
+const listReposLongDesc = listReposShortDesc + `By default, all repos for the org are returned.
+Pass --page-limit and/or --page to paginate the results.
+The list can be filtered by name with --name (exact match), by VCS provider with
+--provider, and by external repo ID with --repo-id.`
 
 const listReposExample = `
 # list all repos for an org:
@@ -20,7 +25,7 @@ kosli list repos \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list repos filtered by name:
+# list repos filtered by name (exact match on the full repo name):
 kosli list repos \
 	--name my-org/my-repo \
 	--api-token yourAPIToken \
@@ -52,8 +57,8 @@ func newListReposCmd(out io.Writer) *cobra.Command {
 	o := new(listReposOptions)
 	cmd := &cobra.Command{
 		Use:     "repos",
-		Short:   listReposDesc,
-		Long:    listReposDesc,
+		Short:   listReposShortDesc,
+		Long:    listReposLongDesc,
 		Example: listReposExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -69,7 +74,7 @@ func newListReposCmd(out io.Writer) *cobra.Command {
 	}
 
 	addListFlags(cmd, &o.listOptions)
-	cmd.Flags().StringVar(&o.name, "name", "", "[optional] The repo name to filter by.")
+	cmd.Flags().StringVar(&o.name, "name", "", "[optional] The repo name to filter by (exact match).")
 	cmd.Flags().StringVar(&o.provider, "provider", "", "[optional] The VCS provider to filter repos by (e.g. github, gitlab).")
 	cmd.Flags().StringVar(&o.repoID, "repo-id", "", "[optional] The external repo ID to filter repos by.")
 
