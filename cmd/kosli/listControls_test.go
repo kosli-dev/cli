@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -101,16 +103,6 @@ func (suite *ListControlsCommandTestSuite) TestListControlsCmd() {
 			goldenJson: []jsonCheck{{"controls", "length:1"}, {"controls.[0].identifier", "tagged-control"}},
 		},
 		{
-			name:       "--sort-direction asc returns controls in ascending name order",
-			cmd:        "list controls --search list-control --sort-direction asc --output json" + suite.defaultKosliArguments,
-			goldenJson: []jsonCheck{{"controls", "length:2"}, {"controls.[0].identifier", "list-control-1"}, {"controls.[1].identifier", "list-control-2"}},
-		},
-		{
-			name:       "--sort-direction desc returns controls in descending name order",
-			cmd:        "list controls --search list-control --sort-direction desc --output json" + suite.defaultKosliArguments,
-			goldenJson: []jsonCheck{{"controls", "length:2"}, {"controls.[0].identifier", "list-control-2"}, {"controls.[1].identifier", "list-control-1"}},
-		},
-		{
 			name:       "archived controls are excluded by default",
 			cmd:        "list controls --search archived-control --output json" + suite.defaultKosliArguments,
 			goldenJson: []jsonCheck{{"controls", "[]"}},
@@ -123,6 +115,28 @@ func (suite *ListControlsCommandTestSuite) TestListControlsCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+// asserts both directions against each other rather than each against the
+// server default (asc): if the flag were silently dropped, both runs would
+// return the default order and the reversal below would fail.
+func (suite *ListControlsCommandTestSuite) TestListControlsSortDirectionIsHonored() {
+	identifiers := func(direction string) []string {
+		cmd := "list controls --search list-control --sort-direction " + direction +
+			" --output json" + suite.defaultKosliArguments
+		_, combined, _, _, err := executeCommandC(cmd)
+		require.NoError(suite.T(), err)
+		var response listControlsResponse
+		require.NoError(suite.T(), json.Unmarshal([]byte(combined), &response))
+		ids := []string{}
+		for _, control := range response.Controls {
+			ids = append(ids, control["identifier"].(string))
+		}
+		return ids
+	}
+
+	require.Equal(suite.T(), []string{"list-control-1", "list-control-2"}, identifiers("asc"))
+	require.Equal(suite.T(), []string{"list-control-2", "list-control-1"}, identifiers("desc"))
 }
 
 func TestListControlsCommandTestSuite(t *testing.T) {
