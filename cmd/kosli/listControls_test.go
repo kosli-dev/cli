@@ -15,7 +15,7 @@ type ListControlsCommandTestSuite struct {
 	acmeOrgKosliArguments string
 }
 
-func (suite *ListControlsCommandTestSuite) SetupTest() {
+func (suite *ListControlsCommandTestSuite) SetupSuite() {
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user",
