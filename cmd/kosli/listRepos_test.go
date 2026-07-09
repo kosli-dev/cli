@@ -103,7 +103,7 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		},
 		{
 			name:   "08-can list repos with pagination",
-			cmd:    fmt.Sprintf(`list repos --page-limit 15 --page 2 %s`, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf(`list repos --page-limit 25 --page 2 %s`, suite.defaultKosliArguments),
 			golden: "",
 		},
 		{
@@ -136,6 +136,11 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 			cmd:         fmt.Sprintf(`list repos %s`, suite.acmeOrgKosliArguments),
 			goldenRegex: `(?m)^list-repos-suite-org/untagged-repo\s+https://github\.com/list-repos-suite-org/untagged-repo\s+github\s*$`,
 		},
+		{
+			name:        "15-table output shows the pagination footer",
+			cmd:         fmt.Sprintf(`list repos %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `(?m)^Showing page 1 of \d+, total \d+ repos$`,
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
@@ -151,11 +156,12 @@ func TestPrintReposListAsTableRendersBlankTagsCell(t *testing.T) {
 	raw := `{"repos":[
 		{"name":"o/tagged","url":"https://github.com/o/tagged","provider":"github","tags":{"team":"platform"}},
 		{"name":"o/untagged","url":"https://github.com/o/untagged","provider":"github","tags":{}}
-	]}`
+	],"page":1,"total_pages":3,"total_count":45}`
 	var buf bytes.Buffer
 	require.NoError(t, printReposListAsTable(raw, &buf, 1))
 	out := buf.String()
 	require.Regexp(t, `(?m)^NAME\s+URL\s+PROVIDER\s+TAGS\s*$`, out)
 	require.Regexp(t, `(?m)^o/tagged\s+https://github\.com/o/tagged\s+github\s+team=platform\s*$`, out)
 	require.Regexp(t, `(?m)^o/untagged\s+https://github\.com/o/untagged\s+github\s*$`, out)
+	require.Regexp(t, `(?m)^Showing page 1 of 3, total 45 repos$`, out)
 }
