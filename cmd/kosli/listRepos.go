@@ -14,7 +14,7 @@ import (
 
 const listReposShortDesc = `List repos for an org.`
 
-const listReposLongDesc = listReposShortDesc + `The results are always paginated:
+const listReposLongDesc = listReposShortDesc + ` The results are always paginated:
 by default the first page is returned with 15 repos per page. Use --page to select
 a page and --page-limit to change the page size (maximum 50).
 The list can be filtered by name with --name (exact match), by VCS provider with
