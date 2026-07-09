@@ -132,6 +132,42 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 			golden: "No repos were found.\n",
 		},
 		{
+			name:        "14a-listing repos with --search substring works",
+			cmd:         fmt.Sprintf(`list repos --search cli %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `(?m)^kosli-dev/cli\s+https://github\.com/kosli-dev/cli\s+github\b`,
+		},
+		{
+			name:       "14b-listing repos with --search and --output json works",
+			cmd:        fmt.Sprintf(`list repos --search cli --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"repos", "non-empty"}},
+		},
+		{
+			wantError: true,
+			name:      "14c-using --name and --search together causes an error",
+			cmd:       fmt.Sprintf(`list repos --name kosli-dev/cli --search cli %s`, suite.acmeOrgKosliArguments),
+			golden:    "Error: if any flags in the group [name search] are set none of the others can be; [name search] were all set\n",
+		},
+		{
+			name:        "14d-listing repos filtered by --tag key:value works",
+			cmd:         fmt.Sprintf(`list repos --tag team:platform %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `(?m)^kosli-dev/cli\s+https://github\.com/kosli-dev/cli\s+github\s+team=platform`,
+		},
+		{
+			name:        "14e-listing repos filtered by --tag key only works",
+			cmd:         fmt.Sprintf(`list repos --tag team %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `(?m)^kosli-dev/cli\s+https://github\.com/kosli-dev/cli\s+github\s+team=platform`,
+		},
+		{
+			name:   "14f-listing repos with a non-matching --tag returns no repos message",
+			cmd:    fmt.Sprintf(`list repos --tag team:doesnotexist %s`, suite.acmeOrgKosliArguments),
+			golden: "No repos were found.\n",
+		},
+		{
+			name:       "14g-listing repos with --sort-direction desc works",
+			cmd:        fmt.Sprintf(`list repos --sort-direction desc --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"repos", "non-empty"}},
+		},
+		{
 			name:        "14-a repo without tags renders a blank TAGS cell",
 			cmd:         fmt.Sprintf(`list repos %s`, suite.acmeOrgKosliArguments),
 			goldenRegex: `(?m)^list-repos-suite-org/untagged-repo\s+https://github\.com/list-repos-suite-org/untagged-repo\s+github\s*$`,

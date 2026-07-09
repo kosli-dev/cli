@@ -12,13 +12,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const listReposShortDesc = `List repos for an org. `
+const listReposShortDesc = `List repos for an org.`
 
-const listReposLongDesc = listReposShortDesc + `The results are always paginated:
+const listReposLongDesc = listReposShortDesc + ` The results are always paginated:
 by default the first page is returned with 15 repos per page. Use --page to select
 a page and --page-limit to change the page size (maximum 50).
-The list can be filtered by name with --name (exact match), by VCS provider with
---provider, and by external repo ID with --repo-id.`
+The list can be filtered by name with --name (exact match), by name substring with
+--search (case-insensitive, mutually exclusive with --name), by VCS provider with
+--provider, by external repo ID with --repo-id, and by tags with --tag.
+Results are sorted by repo name; use --sort-direction to choose asc or desc.`
 
 const listReposExample = `
 # list repos for an org (first page, 15 per page):
@@ -32,12 +34,30 @@ kosli list repos \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
+# list repos whose name contains a substring (case-insensitive):
+kosli list repos \
+	--search cli \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # list repos filtered by VCS provider (in JSON):
 kosli list repos \
 	--provider github \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--output json
+
+# list repos tagged with team=platform:
+kosli list repos \
+	--tag team:platform \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list repos sorted by name, Z–A:
+kosli list repos \
+	--sort-direction desc \
+	--api-token yourAPIToken \
+	--org yourOrgName
 
 # show the second page of repos (25 per page):
 kosli list repos \
@@ -49,9 +69,12 @@ kosli list repos \
 
 type listReposOptions struct {
 	listOptions
-	name     string
-	provider string
-	repoID   string
+	name          string
+	search        string
+	provider      string
+	repoID        string
+	sortDirection string
+	tags          []string
 }
 
 func newListReposCmd(out io.Writer) *cobra.Command {
@@ -76,8 +99,12 @@ func newListReposCmd(out io.Writer) *cobra.Command {
 
 	addListFlags(cmd, &o.listOptions)
 	cmd.Flags().StringVar(&o.name, "name", "", "[optional] The repo name to filter by (exact match).")
+	cmd.Flags().StringVar(&o.search, "search", "", "[optional] Filter repos whose name contains this substring (case-insensitive). Mutually exclusive with --name.")
 	cmd.Flags().StringVar(&o.provider, "provider", "", "[optional] The VCS provider to filter repos by (e.g. github, gitlab).")
 	cmd.Flags().StringVar(&o.repoID, "repo-id", "", "[optional] The external repo ID to filter repos by.")
+	cmd.Flags().StringVar(&o.sortDirection, "sort-direction", "", "[optional] The direction to sort repos by name. Valid values are: [asc, desc]. (defaults to asc)")
+	cmd.Flags().StringSliceVar(&o.tags, "tag", []string{}, "[optional] Only list repos that have this tag, given as 'key' or 'key:value'. Can be repeated to match more than one tag.")
+	cmd.MarkFlagsMutuallyExclusive("name", "search")
 
 	return cmd
 }
@@ -89,11 +116,20 @@ func (o *listReposOptions) run(out io.Writer) error {
 	if o.name != "" {
 		params.Set("name", o.name)
 	}
+	if o.search != "" {
+		params.Set("search", o.search)
+	}
 	if o.provider != "" {
 		params.Set("provider", o.provider)
 	}
 	if o.repoID != "" {
 		params.Set("repo_id", o.repoID)
+	}
+	if o.sortDirection != "" {
+		params.Set("sort_direction", o.sortDirection)
+	}
+	for _, tag := range o.tags {
+		params.Add("tag", tag)
 	}
 	base, err := neturl.JoinPath(global.Host, "api/v2/repos", global.Org)
 	if err != nil {
