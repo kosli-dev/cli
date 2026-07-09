@@ -103,7 +103,7 @@ func newListReposCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.provider, "provider", "", "[optional] The VCS provider to filter repos by (e.g. github, gitlab).")
 	cmd.Flags().StringVar(&o.repoID, "repo-id", "", "[optional] The external repo ID to filter repos by.")
 	cmd.Flags().StringVar(&o.sortDirection, "sort-direction", "", "[optional] The direction to sort repos by name. Valid values are: [asc, desc]. (defaults to asc)")
-	cmd.Flags().StringSliceVar(&o.tags, "tag", []string{}, "[optional] Only list repos that have this tag, given as 'key' or 'key:value'. Can be repeated to match more than one tag.")
+	cmd.Flags().StringArrayVar(&o.tags, "tag", []string{}, "[optional] Only list repos that have this tag, given as 'key' or 'key:value'. Can be repeated to match more than one tag.")
 	cmd.MarkFlagsMutuallyExclusive("name", "search")
 
 	return cmd
