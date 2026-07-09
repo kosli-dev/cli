@@ -1,6 +1,6 @@
 module github.com/kosli-dev/cli
 
-go 1.26.4
+go 1.26.5
 
 require (
 	cloud.google.com/go/run v1.21.0
