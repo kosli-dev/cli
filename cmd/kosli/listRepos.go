@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const listReposShortDesc = `List repos for an org. `
+const listReposShortDesc = `List repos for an org.`
 
 const listReposLongDesc = listReposShortDesc + `The results are always paginated:
 by default the first page is returned with 15 repos per page. Use --page to select
