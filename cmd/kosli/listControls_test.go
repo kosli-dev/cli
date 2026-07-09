@@ -101,6 +101,16 @@ func (suite *ListControlsCommandTestSuite) TestListControlsCmd() {
 			goldenJson: []jsonCheck{{"controls", "length:1"}, {"controls.[0].identifier", "tagged-control"}},
 		},
 		{
+			name:       "--sort-direction asc returns controls in ascending name order",
+			cmd:        "list controls --search list-control --sort-direction asc --output json" + suite.defaultKosliArguments,
+			goldenJson: []jsonCheck{{"controls", "length:2"}, {"controls.[0].identifier", "list-control-1"}, {"controls.[1].identifier", "list-control-2"}},
+		},
+		{
+			name:       "--sort-direction desc returns controls in descending name order",
+			cmd:        "list controls --search list-control --sort-direction desc --output json" + suite.defaultKosliArguments,
+			goldenJson: []jsonCheck{{"controls", "length:2"}, {"controls.[0].identifier", "list-control-2"}, {"controls.[1].identifier", "list-control-1"}},
+		},
+		{
 			name:       "archived controls are excluded by default",
 			cmd:        "list controls --search archived-control --output json" + suite.defaultKosliArguments,
 			goldenJson: []jsonCheck{{"controls", "[]"}},
