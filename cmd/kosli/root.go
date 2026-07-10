@@ -318,6 +318,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	controlSearchFlag               = "[optional] Only list controls whose name or identifier contains this substring (case-insensitive)."
 	controlTagFlag                  = "[optional] Filter by tag, given as 'key' or 'key:value'. Can be repeated."
 	controlArchivedFlag             = "[optional] List archived controls instead of active ones."
+	controlSortDirectionFlag        = "[optional] The direction to sort controls in. Valid values are: [asc, desc]. (defaults to asc)"
 	envNameFlag                     = "The Kosli environment name to assert the artifact against."
 	pathsWatchFlag                  = "[optional] Watch the filesystem for changes and report snapshots of artifacts running in specific filesystem paths to Kosli."
 	getAttestationFingerprintFlag   = "[conditional] The fingerprint of the artifact for the attestation. Cannot be used together with --trail or --attestation-id."

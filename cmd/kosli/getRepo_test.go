@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -14,6 +16,7 @@ type GetRepoCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
 	acmeOrgKosliArguments string
+	repoInnerID           string
 }
 
 func (suite *GetRepoCommandTestSuite) SetupTest() {
@@ -35,6 +38,24 @@ func (suite *GetRepoCommandTestSuite) SetupTest() {
 		"GITHUB_REPOSITORY_ID": "1234567890",
 	}, suite.T())
 	BeginTrail("trail-name", "get-repo", "", suite.T())
+
+	// two repos sharing a name but with different external ids, to exercise
+	// the "narrow down the search" guard. The name is deliberately distinctive
+	// so no other suite creates a same-named repo in this shared org and makes
+	// the match count (asserted below) unstable.
+	SetEnvVars(map[string]string{
+		"GITHUB_REPOSITORY":    "get-repo-suite-org/get-repo-ambiguous-repo",
+		"GITHUB_REPOSITORY_ID": "111",
+	}, suite.T())
+	BeginTrail("ambiguous-trail-1", "get-repo", "", suite.T())
+	SetEnvVars(map[string]string{
+		"GITHUB_REPOSITORY_ID": "222",
+	}, suite.T())
+	BeginTrail("ambiguous-trail-2", "get-repo", "", suite.T())
+
+	// tag the repo so tests can assert tags are surfaced
+	suite.repoInnerID = GetRepoInnerID(global.Org, "kosli-dev/cli", suite.T())
+	TagRepo(global.Org, suite.repoInnerID, map[string]string{"team": "platform"}, suite.T())
 }
 
 func (suite *GetRepoCommandTestSuite) TearDownTest() {
@@ -49,18 +70,24 @@ func (suite *GetRepoCommandTestSuite) TearDownTest() {
 func (suite *GetRepoCommandTestSuite) TestGetRepoCmd() {
 	tests := []cmdTestCase{
 		{
-			name:   "01-getting a non-existing repo returns not-found message",
-			cmd:    fmt.Sprintf(`get repo non-existing/repo %s`, suite.defaultKosliArguments),
-			golden: "Repo was not found.\n",
+			wantError:   true,
+			name:        "01-getting a non-existing repo gives a not-found error",
+			cmd:         fmt.Sprintf(`get repo non-existing/repo %s`, suite.defaultKosliArguments),
+			goldenRegex: `^Error: Repo 'non-existing/repo' not found`,
 		},
 		{
-			name: "02-getting an existing repo works",
-			cmd:  fmt.Sprintf(`get repo kosli-dev/cli %s`, suite.acmeOrgKosliArguments),
+			name:        "02-getting an existing repo surfaces its id and tags",
+			cmd:         fmt.Sprintf(`get repo kosli-dev/cli %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `(?s)Name:\s+kosli-dev/cli\n.*ID:\s+\S+\n.*Tags:\s+team=platform`,
 		},
 		{
-			name:       "03-getting an existing repo with --output json works",
-			cmd:        fmt.Sprintf(`get repo kosli-dev/cli --output json %s`, suite.acmeOrgKosliArguments),
-			goldenJson: []jsonCheck{{"repos", "non-empty"}},
+			name: "03-getting an existing repo with --output json works",
+			cmd:  fmt.Sprintf(`get repo kosli-dev/cli --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{
+				{"name", "kosli-dev/cli"},
+				{"id", "not-nil"},
+				{"tags.team", "platform"},
+			},
 		},
 		{
 			name: "04-getting an existing repo with matching --provider works",
@@ -69,29 +96,68 @@ func (suite *GetRepoCommandTestSuite) TestGetRepoCmd() {
 		{
 			name:       "05-getting an existing repo with matching --provider and --output json works",
 			cmd:        fmt.Sprintf(`get repo kosli-dev/cli --provider github --output json %s`, suite.acmeOrgKosliArguments),
-			goldenJson: []jsonCheck{{"repos", "non-empty"}},
+			goldenJson: []jsonCheck{{"provider", "github"}, {"id", "not-nil"}},
 		},
 		{
-			name:   "06-getting a repo with a non-matching --provider returns not-found message",
-			cmd:    fmt.Sprintf(`get repo kosli-dev/cli --provider gitlab %s`, suite.acmeOrgKosliArguments),
-			golden: "Repo was not found.\n",
+			wantError:   true,
+			name:        "06-getting a repo with a non-matching --provider gives a not-found error",
+			cmd:         fmt.Sprintf(`get repo kosli-dev/cli --provider gitlab %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `^Error: Repo 'kosli-dev/cli' not found`,
 		},
 		{
-			name:   "07-getting a repo with a non-matching --repo-id returns not-found message",
-			cmd:    fmt.Sprintf(`get repo kosli-dev/cli --repo-id non-existing-id %s`, suite.acmeOrgKosliArguments),
-			golden: "Repo was not found.\n",
+			name:        "07-getting a repo by its internal id works",
+			cmd:         fmt.Sprintf(`get repo --repo-id %s %s`, suite.repoInnerID, suite.acmeOrgKosliArguments),
+			goldenRegex: `(?s)Name:\s+kosli-dev/cli\n.*ID:\s+\S+`,
 		},
 		{
-			wantError: true,
-			name:      "08-providing no argument fails",
-			cmd:       fmt.Sprintf(`get repo %s`, suite.defaultKosliArguments),
-			golden:    "Error: accepts 1 arg(s), received 0\n",
+			wantError:   true,
+			name:        "08-providing neither a name argument nor --repo-id fails",
+			cmd:         fmt.Sprintf(`get repo %s`, suite.defaultKosliArguments),
+			goldenRegex: `^Error: exactly one of the REPO-NAME argument or --repo-id must be provided`,
 		},
 		{
 			wantError: true,
 			name:      "09-providing more than one argument fails",
 			cmd:       fmt.Sprintf(`get repo foo bar %s`, suite.defaultKosliArguments),
-			golden:    "Error: accepts 1 arg(s), received 2\n",
+			golden:    "Error: accepts at most 1 arg(s), received 2\n",
+		},
+		{
+			wantError:   true,
+			name:        "10-getting a repo with multiple matches suggests specifying the provider",
+			cmd:         fmt.Sprintf(`get repo get-repo-suite-org/get-repo-ambiguous-repo %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `^Error: Multiple repos named 'get-repo-suite-org/get-repo-ambiguous-repo' exist \(github\)\. Specify the 'provider'`,
+		},
+		{
+			name: "11-narrowing an ambiguous repo down with --provider works",
+			cmd:  fmt.Sprintf(`get repo get-repo-suite-org/get-repo-ambiguous-repo --provider github %s`, suite.acmeOrgKosliArguments),
+		},
+		{
+			wantError:   true,
+			name:        "12-providing both a name argument and --repo-id fails",
+			cmd:         fmt.Sprintf(`get repo kosli-dev/cli --repo-id %s %s`, suite.repoInnerID, suite.acmeOrgKosliArguments),
+			goldenRegex: `^Error: exactly one of the REPO-NAME argument or --repo-id must be provided`,
+		},
+		{
+			wantError:   true,
+			name:        "13-getting a non-existing repo id gives a not-found error",
+			cmd:         fmt.Sprintf(`get repo --repo-id no-such-inner-id %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `^Error: Repo .* not found`,
+		},
+		{
+			wantError:   true,
+			name:        "14-combining --provider with --repo-id fails",
+			cmd:         fmt.Sprintf(`get repo --repo-id %s --provider github %s`, suite.repoInnerID, suite.acmeOrgKosliArguments),
+			goldenRegex: `^Error: --provider cannot be combined with --repo-id`,
+		},
+		{
+			name:       "15-a repo without tags returns an empty tags object in json",
+			cmd:        fmt.Sprintf(`get repo get-repo-suite-org/get-repo-ambiguous-repo --provider github --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"tags", "{}"}},
+		},
+		{
+			name:        "16-a repo without tags shows None in the table output",
+			cmd:         fmt.Sprintf(`get repo get-repo-suite-org/get-repo-ambiguous-repo --provider github %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `Tags:\s+None`,
 		},
 	}
 
@@ -102,4 +168,30 @@ func (suite *GetRepoCommandTestSuite) TestGetRepoCmd() {
 // a normal test function and pass our suite to suite.Run
 func TestGetRepoCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(GetRepoCommandTestSuite))
+}
+
+func TestFormatRepoTags(t *testing.T) {
+	require.Equal(t, "", formatRepoTags(nil))
+	require.Equal(t, "", formatRepoTags(map[string]any{}))
+	require.Equal(t, "", formatRepoTags("not-a-map"))
+	require.Equal(t, "a=1, b=x", formatRepoTags(map[string]any{"b": "x", "a": float64(1)}))
+}
+
+func TestPrintRepoAsTableRendersNonStringValues(t *testing.T) {
+	// ids and tag values are rendered with %v so a numeric id from the
+	// server prints as a number instead of a %!s(float64=...) artifact
+	raw := `{"name":"my-org/my-repo","id":12345,"url":"https://github.com/my-org/my-repo","provider":"github","tags":{"count":7,"team":"platform"}}`
+	var buf bytes.Buffer
+	require.NoError(t, printRepoAsTable(raw, &buf, 0))
+	out := buf.String()
+	require.NotContains(t, out, "%!")
+	require.Contains(t, out, "12345")
+	require.Contains(t, out, "count=7, team=platform")
+}
+
+func TestPrintRepoAsTableShowsNoneForMissingTags(t *testing.T) {
+	raw := `{"name":"my-org/my-repo","id":"abc","url":"https://github.com/my-org/my-repo","provider":"github"}`
+	var buf bytes.Buffer
+	require.NoError(t, printRepoAsTable(raw, &buf, 0))
+	require.Contains(t, buf.String(), "None")
 }
