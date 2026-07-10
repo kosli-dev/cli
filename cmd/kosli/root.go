@@ -316,7 +316,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	controlDescriptionFlag          = "[optional] The control description."
 	controlLinkFlag                 = "[optional] A link for the control, given as 'name=url'. Can be repeated. Replaces all existing links."
 	controlSearchFlag               = "[optional] Only list controls whose name or identifier contains this substring (case-insensitive)."
-	controlTagFlag                  = "[optional] Filter by tag, given as 'key' or 'key:value'. Can be repeated."
+	controlTagFlag                  = "[optional] Filter by tag, given as 'key' or 'key:value'. Can be repeated to match more than one tag."
 	controlArchivedFlag             = "[optional] List archived controls instead of active ones."
 	controlSortDirectionFlag        = "[optional] The direction to sort controls in. Valid values are: [asc, desc]. (defaults to asc)"
 	envNameFlag                     = "The Kosli environment name to assert the artifact against."
