@@ -163,6 +163,18 @@ func TestMintlifyExampleUseCases(t *testing.T) {
 	}
 }
 
+func TestMintlifyExampleUseCasesEscapesQuotesInTitle(t *testing.T) {
+	f := MintlifyFormatter{}
+	example := "# list controls whose name or identifier contains \"sdlc\":\nkosli list controls --search sdlc"
+	got := f.ExampleUseCases("kosli list controls", example)
+	if !strings.Contains(got, `<Accordion title="list controls whose name or identifier contains 'sdlc'">`) {
+		t.Errorf("expected double quotes in title to be replaced with single quotes, got:\n%s", got)
+	}
+	if strings.Contains(got, `contains "sdlc"`) {
+		t.Errorf("expected no raw double quotes inside the title attribute, got:\n%s", got)
+	}
+}
+
 func TestMintlifyLinkHandler(t *testing.T) {
 	f := MintlifyFormatter{}
 	got := f.LinkHandler("kosli_attest_snyk.md")
