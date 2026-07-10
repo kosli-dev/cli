@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -13,7 +15,7 @@ type ListControlsCommandTestSuite struct {
 	acmeOrgKosliArguments string
 }
 
-func (suite *ListControlsCommandTestSuite) SetupTest() {
+func (suite *ListControlsCommandTestSuite) SetupSuite() {
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user",
@@ -113,6 +115,28 @@ func (suite *ListControlsCommandTestSuite) TestListControlsCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+// asserts both directions against each other rather than each against the
+// server default (asc): if the flag were silently dropped, both runs would
+// return the default order and the reversal below would fail.
+func (suite *ListControlsCommandTestSuite) TestListControlsSortDirectionIsHonored() {
+	identifiers := func(direction string) []string {
+		cmd := "list controls --search list-control --sort-direction " + direction +
+			" --output json" + suite.defaultKosliArguments
+		_, combined, _, _, err := executeCommandC(cmd)
+		require.NoError(suite.T(), err)
+		var response listControlsResponse
+		require.NoError(suite.T(), json.Unmarshal([]byte(combined), &response))
+		ids := []string{}
+		for _, control := range response.Controls {
+			ids = append(ids, control["identifier"].(string))
+		}
+		return ids
+	}
+
+	require.Equal(suite.T(), []string{"list-control-1", "list-control-2"}, identifiers("asc"))
+	require.Equal(suite.T(), []string{"list-control-2", "list-control-1"}, identifiers("desc"))
 }
 
 func TestListControlsCommandTestSuite(t *testing.T) {

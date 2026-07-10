@@ -49,13 +49,20 @@ kosli list controls \
 	--archived \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# list controls sorted in descending name order:
+kosli list controls \
+	--sort-direction desc \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type listControlsOptions struct {
 	listOptions
-	search   string
-	tags     []string
-	archived bool
+	search        string
+	tags          []string
+	archived      bool
+	sortDirection string
 }
 
 type listControlsResponse struct {
@@ -90,6 +97,7 @@ func newListControlsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.search, "search", "", controlSearchFlag)
 	cmd.Flags().StringArrayVar(&o.tags, "tag", []string{}, controlTagFlag)
 	cmd.Flags().BoolVar(&o.archived, "archived", false, controlArchivedFlag)
+	cmd.Flags().StringVar(&o.sortDirection, "sort-direction", "", controlSortDirectionFlag)
 
 	return cmd
 }
@@ -111,6 +119,9 @@ func (o *listControlsOptions) run(out io.Writer) error {
 	}
 	if o.archived {
 		params.Set("archived", "true")
+	}
+	if o.sortDirection != "" {
+		params.Set("sort_direction", o.sortDirection)
 	}
 	reqURL := base + "?" + params.Encode()
 
