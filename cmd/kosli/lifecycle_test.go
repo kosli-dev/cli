@@ -45,6 +45,7 @@ func TestLifecycleControlCommandsAreBeta(t *testing.T) {
 		"create control":    newCreateControlCmd(io.Discard),
 		"list controls":     newListControlsCmd(io.Discard),
 		"get control":       newGetControlCmd(io.Discard),
+		"update control":    newUpdateControlCmd(io.Discard),
 		"archive control":   newArchiveControlCmd(io.Discard),
 		"unarchive control": newUnarchiveControlCmd(io.Discard),
 	}
