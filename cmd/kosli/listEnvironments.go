@@ -107,7 +107,7 @@ func newListEnvironmentsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.name, "name", "", envSearchNameFlag)
 	cmd.Flags().StringSliceVar(&o.envTypes, "type", []string{}, envTypeFilterFlag)
 	cmd.Flags().StringSliceVar(&o.spaceIDs, "space-id", []string{}, envSpaceIDFilterFlag)
-	cmd.Flags().StringSliceVar(&o.tags, "tag", []string{}, envTagFilterFlag)
+	cmd.Flags().StringArrayVar(&o.tags, "tag", []string{}, envTagFilterFlag)
 	cmd.Flags().StringVar(&o.sort, "sort", "", envSortFlag)
 	cmd.Flags().StringVar(&o.sortDirection, "sort-direction", "", envSortDirectionFlag)
 	addListFlags(cmd, &o.listOptions)
