@@ -48,6 +48,21 @@ func (suite *ListReposCommandTestSuite) SetupTest() {
 		"GITHUB_REPOSITORY_ID": "555",
 	}, suite.T())
 	BeginTrail("untagged-trail", "list-repos", "", suite.T())
+
+	// three repos sharing a search substring, in a known A–Z order, so the
+	// --sort-direction tests can assert the ordering actually reverses
+	sortRepos := []struct{ name, id string }{
+		{"list-repos-suite-org/sort-a", "701"},
+		{"list-repos-suite-org/sort-b", "702"},
+		{"list-repos-suite-org/sort-c", "703"},
+	}
+	for _, r := range sortRepos {
+		SetEnvVars(map[string]string{
+			"GITHUB_REPOSITORY":    r.name,
+			"GITHUB_REPOSITORY_ID": r.id,
+		}, suite.T())
+		BeginTrail("sort-trail-"+r.id, "list-repos", "", suite.T())
+	}
 }
 
 func (suite *ListReposCommandTestSuite) TearDownTest() {
@@ -130,6 +145,55 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 			name:   "13-listing repos with non-matching --repo-id returns no repos message",
 			cmd:    fmt.Sprintf(`list repos --repo-id non-existing-id %s`, suite.acmeOrgKosliArguments),
 			golden: "No repos were found.\n",
+		},
+		{
+			name:        "14a-listing repos with --search substring works",
+			cmd:         fmt.Sprintf(`list repos --search cli %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `(?m)^kosli-dev/cli\s+https://github\.com/kosli-dev/cli\s+github\b`,
+		},
+		{
+			name:       "14b-listing repos with --search and --output json works",
+			cmd:        fmt.Sprintf(`list repos --search cli --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"repos", "non-empty"}},
+		},
+		{
+			wantError: true,
+			name:      "14c-using --name and --search together causes an error",
+			cmd:       fmt.Sprintf(`list repos --name kosli-dev/cli --search cli %s`, suite.acmeOrgKosliArguments),
+			golden:    "Error: if any flags in the group [name search] are set none of the others can be; [name search] were all set\n",
+		},
+		{
+			name:        "14d-listing repos filtered by --tag key:value works",
+			cmd:         fmt.Sprintf(`list repos --tag team:platform %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `(?m)^kosli-dev/cli\s+https://github\.com/kosli-dev/cli\s+github\s+team=platform`,
+		},
+		{
+			name:        "14e-listing repos filtered by --tag key only works",
+			cmd:         fmt.Sprintf(`list repos --tag team %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: `(?m)^kosli-dev/cli\s+https://github\.com/kosli-dev/cli\s+github\s+team=platform`,
+		},
+		{
+			name:   "14f-listing repos with a non-matching --tag returns no repos message",
+			cmd:    fmt.Sprintf(`list repos --tag team:doesnotexist %s`, suite.acmeOrgKosliArguments),
+			golden: "No repos were found.\n",
+		},
+		{
+			name: "14g-listing repos with --sort-direction asc keeps A–Z order",
+			cmd:  fmt.Sprintf(`list repos --search list-repos-suite-org/sort- --sort-direction asc --page 1 --page-limit 50 --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{
+				{"repos", "length:3"},
+				{"repos.[0].name", "list-repos-suite-org/sort-a"},
+				{"repos.[2].name", "list-repos-suite-org/sort-c"},
+			},
+		},
+		{
+			name: "14h-listing repos with --sort-direction desc reverses the order",
+			cmd:  fmt.Sprintf(`list repos --search list-repos-suite-org/sort- --sort-direction desc --page 1 --page-limit 50 --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{
+				{"repos", "length:3"},
+				{"repos.[0].name", "list-repos-suite-org/sort-c"},
+				{"repos.[2].name", "list-repos-suite-org/sort-a"},
+			},
 		},
 		{
 			name:        "14-a repo without tags renders a blank TAGS cell",
