@@ -35,3 +35,7 @@ We are using semantic versioning (ie: 2.3.2).
 ```
 make release tag=v<version_number>
 ```
+
+## Adding a command using AI skill
+
+New CLI commands are scaffolded with the `new-command` skill - invoke `/new-command` in Claude Code, or ask Claude to "add a command". The skill interviews you for the command name, archetype (local, read, mutate, attest), endpoint details, and flags, then generates the command file, flag constants, registration wiring, lifecycle annotations (beta/hidden), and a test skeleton.

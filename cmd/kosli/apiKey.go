@@ -29,6 +29,19 @@ type apiKeyMetadata struct {
 	LastUsedAt  float64 `json:"last_used_at"`
 }
 
+// apiKeyMetadataTimestamps formats the created/expires/last-used timestamps
+// of a key's metadata for table output.
+func apiKeyMetadataTimestamps(key apiKeyMetadata) (createdAt, expiresAt, lastUsedAt string, err error) {
+	if createdAt, err = formattedTimestamp(key.CreatedAt, false); err != nil {
+		return
+	}
+	if expiresAt, err = optionalTimestamp(key.ExpiresAt); err != nil {
+		return
+	}
+	lastUsedAt, err = optionalTimestamp(key.LastUsedAt)
+	return
+}
+
 // parseExpiresAt converts a user-supplied --expires-at value into a Unix
 // (epoch-second) timestamp. It accepts a bare epoch integer, or one of the
 // date/time layouts below (interpreted as UTC). An empty string returns 0.
@@ -90,6 +103,30 @@ func printApiKeysAsTable(raw string, out io.Writer, page int) error {
 		}
 		tabFormattedPrint(out, []string{}, rows)
 	}
+	return nil
+}
+
+// printApiKeyMetadataAsTable renders a single api key's metadata (the get
+// response) as a table. The secret key value is never part of this response.
+func printApiKeyMetadataAsTable(raw string, out io.Writer, page int) error {
+	var key apiKeyMetadata
+	if err := json.Unmarshal([]byte(raw), &key); err != nil {
+		return err
+	}
+
+	createdAt, expiresAt, lastUsedAt, err := apiKeyMetadataTimestamps(key)
+	if err != nil {
+		return err
+	}
+
+	rows := []string{
+		fmt.Sprintf("ID:\t%s", key.Id),
+		fmt.Sprintf("Description:\t%s", key.Description),
+		fmt.Sprintf("Created At:\t%s", createdAt),
+		fmt.Sprintf("Expires At:\t%s", expiresAt),
+		fmt.Sprintf("Last Used:\t%s", lastUsedAt),
+	}
+	tabFormattedPrint(out, []string{}, rows)
 	return nil
 }
 

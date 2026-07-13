@@ -58,6 +58,25 @@ func TestPrintApiKeysAsTable(t *testing.T) {
 	require.Contains(t, out, "sk_two")
 }
 
+func TestPrintApiKeyMetadataAsTable(t *testing.T) {
+	// The get endpoint returns key metadata only (no secret key value), with
+	// timestamps as floating-point epoch seconds.
+	raw := `{"id":"key-1","description":"ci key","created_at":1780584129.6878593,"expires_at":0,"last_used_at":0}`
+
+	var buf bytes.Buffer
+	err := printApiKeyMetadataAsTable(raw, &buf, 0)
+	require.NoError(t, err)
+
+	out := buf.String()
+	require.Contains(t, out, "key-1")
+	require.Contains(t, out, "ci key")
+	// expires_at and last_used_at of 0 mean "never" and must render as N/A,
+	// not epoch zero (1970)
+	require.Regexp(t, `Expires At:\s+N/A`, out)
+	require.Regexp(t, `Last Used:\s+N/A`, out)
+	require.NotContains(t, out, "1970")
+}
+
 func TestPrintApiKeysListAsTable(t *testing.T) {
 	// The list endpoint returns key metadata only (no secret key value).
 	raw := `[{"id":"key-1","description":"first","created_at":1780584129.5,"expires_at":0,"last_used_at":0},` +
@@ -261,8 +280,33 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyCmd() {
 	runTestCmd(suite.T(), tests)
 }
 
+func (suite *ApiKeyCommandTestSuite) TestGetApiKeyCmd() {
+	tests := []cmdTestCase{
+		{
+			wantError: true,
+			name:      "get fails when --service-account is missing",
+			cmd:       "get api-key key-123" + suite.defaultKosliArguments,
+			golden:    "Error: required flag(s) \"service-account\" not set\n",
+		},
+		{
+			wantError: true,
+			name:      "get fails when KEY-ID argument is missing",
+			cmd:       "get api-key --service-account test-sa" + suite.defaultKosliArguments,
+			golden:    "Error: accepts 1 arg(s), received 0\n",
+		},
+		{
+			wantError: true,
+			name:      "get fails when more than one KEY-ID argument is given",
+			cmd:       "get api-key key-1 key-2 --service-account test-sa" + suite.defaultKosliArguments,
+			golden:    "Error: accepts 1 arg(s), received 2\n",
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
 // TestApiKeysSuccessOutput stubs successful (2xx) API responses to verify that
-// create/list/rotate render the server's response on the happy path.
+// create/list/rotate/get render the server's response on the happy path.
 func (suite *ApiKeyCommandTestSuite) TestApiKeysSuccessOutput() {
 	fake := httpfake.New()
 	defer fake.Close()
@@ -282,9 +326,34 @@ func (suite *ApiKeyCommandTestSuite) TestApiKeysSuccessOutput() {
 		Post("/api/v2/service-accounts/docs-cmd-test-user/test-sa/api-keys/k2/rotate").
 		Reply(201).
 		BodyString(apiKeyFixture(suite.T(), "rotated_api_key.json"))
+	fake.NewHandler().
+		Get("/api/v2/service-accounts/docs-cmd-test-user/test-sa/api-keys/id-1").
+		Reply(200).
+		BodyString(apiKeyFixture(suite.T(), "api_key.json"))
 
 	args := fmt.Sprintf(" --host %s --org %s --api-token %s", fake.Server.URL, global.Org, global.ApiToken)
 	tests := []cmdTestCase{
+		{
+			wantError: false,
+			name:      "get prints the key metadata as json",
+			cmd:       "get api-key id-1 -s test-sa --output json" + args,
+			goldenJson: []jsonCheck{
+				{Path: "id", Want: "id-1"},
+				{Path: "description", Want: "ci"},
+			},
+		},
+		{
+			wantError:   false,
+			name:        "get renders the key metadata as a table by default",
+			cmd:         "get api-key id-1 -s test-sa" + args,
+			goldenRegex: `(?s)ID:\s+id-1.*Description:\s+ci.*Expires At:\s+N/A.*Last Used:\s+N/A`,
+		},
+		{
+			wantError:   false,
+			name:        "the get api-key alias (ak) and -s shorthand work",
+			cmd:         "get ak id-1 -s test-sa --output json" + args,
+			goldenRegex: `id-1`,
+		},
 		{
 			wantError:   false,
 			name:        "create prints the new key value",
@@ -408,6 +477,10 @@ func (suite *ApiKeyCommandTestSuite) TestApiErrorsAreSurfaced() {
 		Get("/api/v2/service-accounts/docs-cmd-test-user/missing-sa/api-keys").
 		Reply(403).
 		BodyString(apiKeyFixture(suite.T(), "error_forbidden.json"))
+	fake.NewHandler().
+		Get("/api/v2/service-accounts/docs-cmd-test-user/test-sa/api-keys/missing-key").
+		Reply(404).
+		BodyString(apiKeyFixture(suite.T(), "error_api_key_not_found.json"))
 
 	args := fmt.Sprintf(" --host %s --org %s --api-token %s", fake.Server.URL, global.Org, global.ApiToken)
 	tests := []cmdTestCase{
@@ -428,6 +501,12 @@ func (suite *ApiKeyCommandTestSuite) TestApiErrorsAreSurfaced() {
 			name:        "list surfaces a 403 from the API as an error",
 			cmd:         "list api-keys --service-account missing-sa" + args,
 			goldenRegex: `Error: You don't have permission to access this resource`,
+		},
+		{
+			wantError:   true,
+			name:        "get surfaces a 404 from the API as an error",
+			cmd:         "get api-key missing-key --service-account test-sa" + args,
+			goldenRegex: `Error: API key not found`,
 		},
 	}
 

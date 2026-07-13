@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -97,8 +96,7 @@ func newAttestDecisionCmd(out io.Writer) *cobra.Command {
 		Short:       attestDecisionShortDesc,
 		Long:        attestDecisionLongDesc,
 		Example:     attestDecisionExample,
-		Hidden:      true,
-		Annotations: map[string]string{docgen.DocHiddenAnnotation: "", betaCLIAnnotation: ""},
+		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := CustomMaximumNArgs(1, args)
 			if err != nil {

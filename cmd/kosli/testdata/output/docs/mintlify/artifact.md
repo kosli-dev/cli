@@ -30,6 +30,19 @@ a freshly built image (just `docker build`) will not have one. If the image is a
 a registry, prefer `--artifact-type=oci`, which fetches the digest directly from the
 registry without needing a local Docker daemon.
 
+For `--artifact-type=oci` (and for `--artifact-type=docker` when `--registry-username`
+is set), registry credentials are resolved as follows:
+  1) If `--registry-username` (and optionally `--registry-password`) is set, it is used directly.
+  2) Otherwise, credentials are discovered automatically from:
+     - the Docker config file (`~/.docker/config.json`, populated by `docker login`)
+     - the Podman/containers auth file (`~/.config/containers/auth.json`, or `$REGISTRY_AUTH_FILE`)
+     - any Docker credential helper configured in that config (e.g. `docker-credential-ecr-login`
+       for AWS ECR, `docker-credential-gcloud` for GCR/Artifact Registry, an ACR helper for Azure,
+       or a local keychain helper), invoked as an external binary on `$PATH`
+     - if none of the above yield credentials, the registry is accessed anonymously, which works
+       for public images
+  `--registry-provider` is deprecated and no longer used.
+
 
 
 ## Flags
@@ -45,8 +58,8 @@ registry without needing a local Docker daemon.
 |    `-g`, `--git-commit` string  |  [defaulted] The git commit from which the artifact was created. (defaulted in some CIs: [docs](/integrations/ci_cd), otherwise defaults to HEAD ).  |
 |    `-h`, `--help`  |  help for artifact  |
 |    `-n`, `--name` string  |  [optional] Artifact display name, if different from file, image or directory name.  |
-|        `--registry-password` string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
-|        `--registry-username` string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
+|        `--registry-password` string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry and it is not already accessible via Docker/Podman auth files or a credential helper.  |
+|        `--registry-username` string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry and it is not already accessible via Docker/Podman auth files or a credential helper.  |
 |        `--repo-root` string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
 
 

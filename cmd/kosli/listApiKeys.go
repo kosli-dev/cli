@@ -100,15 +100,7 @@ func printApiKeysListAsTable(raw string, out io.Writer, page int) error {
 	header := []string{"ID", "DESCRIPTION", "CREATED", "EXPIRES", "LAST USED"}
 	rows := []string{}
 	for _, key := range keys {
-		createdAt, err := formattedTimestamp(key.CreatedAt, false)
-		if err != nil {
-			return err
-		}
-		expiresAt, err := optionalTimestamp(key.ExpiresAt)
-		if err != nil {
-			return err
-		}
-		lastUsedAt, err := optionalTimestamp(key.LastUsedAt)
+		createdAt, expiresAt, lastUsedAt, err := apiKeyMetadataTimestamps(key)
 		if err != nil {
 			return err
 		}

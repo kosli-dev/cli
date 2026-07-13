@@ -1,20 +1,50 @@
-{{ define "extra.longdescription" -}}
-The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
+{{/*
+  body.* partials contain prose shared verbatim between the GitHub README
+  (extra.* partials below) and the Mintlify docs pages (mintlify.* partials
+  in _mintlify_templates.gotmpl). Edit here to update both outputs.
+*/}}
+
+{{ define "body.description" -}}
+The chart allows you to create a Kubernetes CronJob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
 
 Configuration is done via **reporterConfig.environments**: a list of Kosli environments to report to. Each entry has a required `name` and optional namespace selectors. Use one entry for a single environment, or multiple entries to report to different environments with different selectors.
+{{- end }}
+
+{{ define "body.breakingChangeV2" -}}
+Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentName` and the `namespaces` / `namespacesRegex` / `excludeNamespaces` / `excludeNamespacesRegex` flags). You now configure one or more environments only via **reporterConfig.environments**. To report a single environment, use a list with one entry.
+{{- end }}
+
+{{ define "body.prerequisites" -}}
+* A Kubernetes cluster (minimum supported version is `v1.21`)
+* Helm v3.0+
+* If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
+* If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
+{{- end }}
+
+{{ define "body.upgradeCmd" -}}
+```shell
+helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
+```
+{{- end }}
+
+{{ define "body.uninstallCmd" -}}
+```shell
+helm uninstall kosli-reporter
+```
+{{- end }}
+
+{{ define "extra.longdescription" -}}
+{{ template "body.description" . }}
 
 ## Breaking change in v2.0.0
 
-Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentName` and the `namespaces` / `namespacesRegex` / `excludeNamespaces` / `excludeNamespacesRegex` flags). You now configure one or more environments only via **reporterConfig.environments**. To report a single environment, use a list with one entry.
+{{ template "body.breakingChangeV2" . }}
 {{- end }}
 
 {{ define "extra.prerequisites" -}}
 ## Prerequisites
 
-- A Kubernetes cluster (minimum supported version is `v1.21`)
-- Helm v3.0+
-- If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
-- If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
+{{ template "body.prerequisites" . }}
 {{- end }}
 
 {{ define "extra.install" -}}
@@ -85,17 +115,13 @@ helm install kosli-reporter kosli/k8s-reporter -f values.yaml
 
 If upgrading from v1.x to v2.0.0, migrate your values to the **environments** list format (see above). Then:
 
-```shell
-helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
-```
+{{ template "body.upgradeCmd" . }}
 {{- end }}
 
 {{ define "extra.uninstall" -}}
 ## Uninstalling chart
 
-```shell
-helm uninstall kosli-reporter
-```
+{{ template "body.uninstallCmd" . }}
 {{- end }}
 
 {{ define "extra.customCA" -}}
@@ -151,6 +177,57 @@ Both options use `secret`-backed volumes, which are permitted under the Pod Secu
 ### Cluster-wide alternative
 
 If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/trust/trust-manager/) to distribute a corporate CA bundle into a well-known ConfigMap in every namespace, point `extraVolumes` / `extraVolumeMounts` at that ConfigMap instead of creating a per-namespace Secret.
+{{- end }}
+
+{{ define "extra.karpenter" -}}
+## Running on EKS with Karpenter (or another node autoscaler)
+
+By default the reporter runs as a CronJob every 5 minutes. On clusters that use [Karpenter](https://karpenter.sh) for node autoscaling, this frequent scheduling can prevent nodes from being **consolidated** (scaled down).
+
+The cause is Karpenter's `consolidateAfter` timer: Karpenter only consolidates a node once it has seen no pod scheduling activity on it for the configured window. A reporter pod arriving every 5 minutes keeps resetting that timer, so any node whose `consolidateAfter` is longer than the reporter interval never becomes eligible for consolidation (see [karpenter#1921](https://github.com/kubernetes-sigs/karpenter/issues/1921)). This is Karpenter working as designed, not a reporter bug.
+
+Frequent snapshots are what let Kosli surface drift or an unauthorized change quickly, so the best fix keeps the 5-minute cadence and moves the reporter out of Karpenter's way. Widening the interval trades away that detection speed and should be a last resort.
+
+### 1. Pin the reporter to a stable node group (recommended)
+
+If you run a stable managed node group that Karpenter does not manage, schedule the reporter there so it never disturbs Karpenter-managed nodes. Use `nodeSelector`, and `tolerations` if that node group is tainted:
+
+```yaml
+nodeSelector:
+  eks.amazonaws.com/nodegroup: system   # your managed node group
+
+tolerations:
+  - key: dedicated
+    operator: Equal
+    value: system
+    effect: NoSchedule
+```
+
+To steer the reporter *away* from Karpenter-managed nodes instead, use `affinity` (a plain `nodeSelector` cannot express "not on these nodes"):
+
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: karpenter.sh/nodepool
+              operator: DoesNotExist
+```
+
+### 2. Run the reporter out of the cluster
+
+For zero footprint on cluster nodes, run `kosli snapshot k8s` on a schedule outside the cluster (for example a CI cron job) with kubeconfig access, keeping your reporting cadence without placing a pod on the cluster's nodes. See the [Kubernetes environment reporting tutorial](https://docs.kosli.com/tutorials/report_k8s_envs/).
+
+### 3. Widen the report interval (last resort)
+
+Only if you cannot pin the reporter or move it out of cluster: set `cronSchedule` longer than your NodePool's `consolidateAfter` so nodes get quiet windows long enough to consolidate. This works, but a longer interval widens the window in which a change can go unreported, so prefer the options above.
+
+```yaml
+cronSchedule: "*/15 * * * *"
+```
+
+> Note: `karpenter.sh/do-not-disrupt: "true"` is **not** a fix here. It prevents Karpenter from disrupting the pod, which protects a mid-run report from interruption but makes consolidation of that node *less* likely, not more. Likewise `cluster-autoscaler.kubernetes.io/safe-to-evict` only affects the Kubernetes Cluster Autoscaler and is ignored by Karpenter.
 {{- end }}
 
 {{ define "extra.valuesHeader" -}}

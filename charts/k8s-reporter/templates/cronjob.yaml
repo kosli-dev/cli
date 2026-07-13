@@ -3,7 +3,10 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: {{ include "reporter.fullname" . }}
-  annotations: {{ toYaml .Values.podAnnotations }}
+  {{- with .Values.podAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "reporter.labels" . | nindent 4 }}
 
@@ -17,12 +20,28 @@ spec:
     spec:
       template:
         metadata:
+          {{- with .Values.podTemplateAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           labels:
             {{- range $key, $value := .Values.podLabels }}
               {{ $key }}: {{ $value | quote }}
             {{- end }}
         spec:
           serviceAccountName: {{ include "reporter.serviceAccountName" . }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           volumes:
           - name: environments-config
             configMap:

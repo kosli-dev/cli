@@ -22,20 +22,37 @@ func TestLifecycleEvaluateIsBeta(t *testing.T) {
 	}
 }
 
-func TestLifecycleAttestDecisionIsBetaAndDocHidden(t *testing.T) {
+func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
 	global = &GlobalOpts{}
 	cmd := newAttestDecisionCmd(io.Discard)
-	if !cmd.Hidden {
-		t.Error("expected attest decision to stay Hidden")
+	if cmd.Hidden {
+		t.Error("expected attest decision to be visible (not Hidden)")
 	}
 	if !isBeta(cmd) {
 		t.Error("expected attest decision to be beta")
 	}
-	if _, ok := cmd.Annotations[docgen.DocHiddenAnnotation]; !ok {
-		t.Error("expected attest decision to carry the docHidden annotation")
+	if _, ok := cmd.Annotations[docgen.DocHiddenAnnotation]; ok {
+		t.Error("expected attest decision to no longer carry the docHidden annotation")
 	}
-	if !isDocHidden(cmd) {
-		t.Error("expected isDocHidden to be true for attest decision")
+	if isDocHidden(cmd) {
+		t.Error("expected isDocHidden to be false for attest decision")
+	}
+}
+
+func TestLifecycleControlCommandsAreBeta(t *testing.T) {
+	global = &GlobalOpts{}
+	cmds := map[string]*cobra.Command{
+		"create control":    newCreateControlCmd(io.Discard),
+		"list controls":     newListControlsCmd(io.Discard),
+		"get control":       newGetControlCmd(io.Discard),
+		"update control":    newUpdateControlCmd(io.Discard),
+		"archive control":   newArchiveControlCmd(io.Discard),
+		"unarchive control": newUnarchiveControlCmd(io.Discard),
+	}
+	for name, cmd := range cmds {
+		if !isBeta(cmd) {
+			t.Errorf("expected %q to be marked beta while controls is behind a feature flag", name)
+		}
 	}
 }
 

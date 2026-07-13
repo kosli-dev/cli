@@ -4,10 +4,10 @@ title: Kubernetes Reporter Helm Chart
 
 # k8s-reporter
 
-![Version: 2.2.1](https://img.shields.io/badge/Version-2.2.1-informational?style=flat-square)
+![Version: 2.5.0](https://img.shields.io/badge/Version-2.5.0-informational?style=flat-square)
 
-A Helm chart for installing the Kosli K8S reporter as a CronJob.
-The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
+A Helm chart for installing the Kosli K8s reporter as a CronJob.
+The chart allows you to create a Kubernetes CronJob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
 
 Configuration is done via **reporterConfig.environments**: a list of Kosli environments to report to. Each entry has a required `name` and optional namespace selectors. Use one entry for a single environment, or multiple entries to report to different environments with different selectors.
 
@@ -17,10 +17,10 @@ Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentNam
 
 ## Prerequisites
 
-- A Kubernetes cluster (minimum supported version is `v1.21`)
-- Helm v3.0+
-- If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
-- If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
+* A Kubernetes cluster (minimum supported version is `v1.21`)
+* Helm v3.0+
+* If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
+* If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
 
 ## Installing the chart
 
@@ -149,12 +149,62 @@ Both options use `secret`-backed volumes, which are permitted under the Pod Secu
 
 If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/trust/trust-manager/) to distribute a corporate CA bundle into a well-known ConfigMap in every namespace, point `extraVolumes` / `extraVolumeMounts` at that ConfigMap instead of creating a per-namespace Secret.
 
+## Running on EKS with Karpenter (or another node autoscaler)
+
+By default the reporter runs as a CronJob every 5 minutes. On clusters that use [Karpenter](https://karpenter.sh) for node autoscaling, this frequent scheduling can prevent nodes from being **consolidated** (scaled down).
+
+The cause is Karpenter's `consolidateAfter` timer: Karpenter only consolidates a node once it has seen no pod scheduling activity on it for the configured window. A reporter pod arriving every 5 minutes keeps resetting that timer, so any node whose `consolidateAfter` is longer than the reporter interval never becomes eligible for consolidation (see [karpenter#1921](https://github.com/kubernetes-sigs/karpenter/issues/1921)). This is Karpenter working as designed, not a reporter bug.
+
+Frequent snapshots are what let Kosli surface drift or an unauthorized change quickly, so the best fix keeps the 5-minute cadence and moves the reporter out of Karpenter's way. Widening the interval trades away that detection speed and should be a last resort.
+
+### 1. Pin the reporter to a stable node group (recommended)
+
+If you run a stable managed node group that Karpenter does not manage, schedule the reporter there so it never disturbs Karpenter-managed nodes. Use `nodeSelector`, and `tolerations` if that node group is tainted:
+
+```yaml
+nodeSelector:
+  eks.amazonaws.com/nodegroup: system   # your managed node group
+
+tolerations:
+  - key: dedicated
+    operator: Equal
+    value: system
+    effect: NoSchedule
+```
+
+To steer the reporter *away* from Karpenter-managed nodes instead, use `affinity` (a plain `nodeSelector` cannot express "not on these nodes"):
+
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: karpenter.sh/nodepool
+              operator: DoesNotExist
+```
+
+### 2. Run the reporter out of the cluster
+
+For zero footprint on cluster nodes, run `kosli snapshot k8s` on a schedule outside the cluster (for example a CI cron job) with kubeconfig access, keeping your reporting cadence without placing a pod on the cluster's nodes. See the [Kubernetes environment reporting tutorial](https://docs.kosli.com/tutorials/report_k8s_envs/).
+
+### 3. Widen the report interval (last resort)
+
+Only if you cannot pin the reporter or move it out of cluster: set `cronSchedule` longer than your NodePool's `consolidateAfter` so nodes get quiet windows long enough to consolidate. This works, but a longer interval widens the window in which a change can go unreported, so prefer the options above.
+
+```yaml
+cronSchedule: "*/15 * * * *"
+```
+
+> Note: `karpenter.sh/do-not-disrupt: "true"` is **not** a fix here. It prevents Karpenter from disrupting the pod, which protects a mid-run report from interruption but makes consolidation of that node *less* likely, not more. Likewise `cluster-autoscaler.kubernetes.io/safe-to-evict` only affects the Kubernetes Cluster Autoscaler and is ignored by Karpenter.
+
 ## Configurations
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| affinity | object | `{}` | affinity rules for scheduling the reporter pod. Supports nodeAffinity, podAffinity and podAntiAffinity. |
 | concurrencyPolicy | string | `"Replace"` | specifies how to treat concurrent executions of a Job that is created by this CronJob |
 | cronSchedule | string | `"*/5 * * * *"` | the cron schedule at which the reporter is triggered to report to Kosli |
-| customCA | object | `{"enabled":false,"key":"ca.crt","secretName":""}` | convenience wrapper for mounting a corporate / custom CA bundle. See the "Running behind a TLS-inspecting proxy" section of the README for usage. |
+| customCA | object | `{"enabled":false,"key":"ca.crt","secretName":""}` | convenience wrapper for mounting a corporate / custom CA bundle. See [Running behind a TLS-inspecting proxy](https://docs.kosli.com/helm/k8s_reporter/tls-proxy) for usage. |
 | customCA.enabled | bool | `false` | enable mounting a corporate/custom CA bundle into the trust store |
 | customCA.key | string | `"ca.crt"` | key within the Secret that holds the PEM-formatted CA certificate (single cert or multi-cert PEM bundle) |
 | customCA.secretName | string | `""` | name of an existing Secret in the same namespace containing the CA bundle |
@@ -170,8 +220,10 @@ If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/t
 | kosliApiToken.secretKey | string | `"key"` | the name of the key in the secret data which contains the Kosli API token |
 | kosliApiToken.secretName | string | `"kosli-api-token"` | the name of the secret containing the kosli API token |
 | nameOverride | string | `""` | overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one |
-| podAnnotations | object | `{}` | any custom annotations to be added to the cronjob |
+| nodeSelector | object | `{}` | node labels for scheduling the reporter pod. On EKS with Karpenter, use this to pin the reporter to a stable managed node group (e.g. `eks.amazonaws.com/nodegroup: <name>`) so it does not interfere with node consolidation. See [Running on EKS with Karpenter](https://docs.kosli.com/helm/k8s_reporter/karpenter). |
+| podAnnotations | object | `{}` | annotations to add to the CronJob object itself. For pod-level annotations (added to each reporter pod), use `podTemplateAnnotations` instead. |
 | podLabels | object | `{}` | custom labels to add to pods |
+| podTemplateAnnotations | object | `{}` | annotations to add to the reporter pod template (applied to each Job pod that the CronJob creates) |
 | reporterConfig.dryRun | bool | `false` | whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli. |
 | reporterConfig.environments | list | `[]` | List of Kosli environments to report to. Each entry has required 'name' and optional namespace selectors. Use one entry to report a single environment; use multiple entries to report to multiple environments with different selectors. Per entry: name (required), namespaces, namespacesRegex, excludeNamespaces, excludeNamespacesRegex (optional). Leave namespace fields unset for an entry to report the entire cluster to that environment. |
 | reporterConfig.httpProxy | string | `""` | the http proxy url |
@@ -186,8 +238,9 @@ If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/t
 | serviceAccount.annotations | object | `{}` | annotations to add to the service account |
 | serviceAccount.create | bool | `true` | specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | the name of the service account to use. If not set and create is true, a name is generated using the fullname template |
-| serviceAccount.permissionScope | string | `"cluster"` | specifies whether to create a cluster-wide permissions for the service account or namespace-scoped permissions. allowed values are: [cluster, namespace] |
+| serviceAccount.permissionScope | string | `"cluster"` | specifies whether to create cluster-wide permissions for the service account or namespace-scoped permissions. Allowed values are: `cluster` or `namespace` |
 | successfulJobsHistoryLimit | int | `3` | specifies the number of successful finished jobs to keep |
+| tolerations | list | `[]` | tolerations for scheduling the reporter pod, e.g. to run on a dedicated or tainted node group. |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

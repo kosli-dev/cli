@@ -83,7 +83,7 @@ func printEnvironmentAsTable(raw string, out io.Writer, page int) error {
 	if env["state"] != nil && env["state"].(bool) {
 		state = "COMPLIANT"
 	} else if env["state"] != nil {
-		state = "INCOMPLIANT"
+		state = "NON-COMPLIANT"
 	}
 
 	tags := env["tags"].(map[string]interface{})

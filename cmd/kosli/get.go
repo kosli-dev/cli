@@ -18,6 +18,7 @@ func newGetCmd(out io.Writer) *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(
+		newGetApiKeyCmd(out),
 		newGetApprovalCmd(out),
 		newGetArtifactCmd(out),
 		newGetEnvironmentCmd(out),
@@ -26,8 +27,11 @@ func newGetCmd(out io.Writer) *cobra.Command {
 		newGetTrailCmd(out),
 		newGetPolicyCmd(out),
 		newGetAttestationTypeCmd(out),
+		newGetControlCmd(out),
 		newGetAttestationCmd(out),
 		newGetRepoCmd(out),
+		newGetServiceAccountCmd(out),
+		newGetDefaultOrgCmd(out),
 	)
 	return cmd
 }
