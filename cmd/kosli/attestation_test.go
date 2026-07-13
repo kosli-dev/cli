@@ -9,17 +9,18 @@ import (
 
 func TestMergeGitRepoInfo(t *testing.T) {
 	tests := []struct {
-		name         string
-		base         *gitview.GitRepoInfo
-		repoID       string
-		repoName     string
-		repoURL      string
-		repoProvider string
-		wantNil      bool
-		wantID       string
-		wantName     string
-		wantURL      string
-		wantProvider string
+		name             string
+		base             *gitview.GitRepoInfo
+		repoID           string
+		repoName         string
+		repoURL          string
+		repoProvider     string
+		repoNameExplicit bool
+		wantNil          bool
+		wantID           string
+		wantName         string
+		wantURL          string
+		wantProvider     string
 	}{
 		{
 			name:    "nil when both ID and Name are empty",
@@ -64,14 +65,50 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			wantProvider: "github",
 		},
 		{
-			name:     "flag values override base values",
-			base:     &gitview.GitRepoInfo{ID: "base-id", Name: "base-name", URL: "https://base.example.com"},
-			repoID:   "override-id",
-			repoName: "override-name",
-			wantNil:  false,
-			wantID:   "override-id",
-			wantName: "override-name",
-			wantURL:  "https://base.example.com",
+			name:             "explicit flag values override base values",
+			base:             &gitview.GitRepoInfo{ID: "base-id", Name: "base-name", URL: "https://base.example.com"},
+			repoID:           "override-id",
+			repoName:         "override-name",
+			repoNameExplicit: true,
+			wantNil:          false,
+			wantID:           "override-id",
+			wantName:         "override-name",
+			wantURL:          "https://base.example.com",
+		},
+		{
+			name:             "CI-detected full-path name is preserved when --repository is not set explicitly",
+			base:             &gitview.GitRepoInfo{ID: "53419335", Name: "cyber-dojo/creator", URL: "https://gitlab.com/cyber-dojo/creator"},
+			repoID:           "53419335",
+			repoName:         "creator", // short CI default from --repository (e.g. GitLab's CI_PROJECT_NAME)
+			repoURL:          "https://gitlab.com/cyber-dojo/creator",
+			repoNameExplicit: false,
+			wantNil:          false,
+			wantID:           "53419335",
+			wantName:         "cyber-dojo/creator", // full CI_PROJECT_PATH preserved
+			wantURL:          "https://gitlab.com/cyber-dojo/creator",
+		},
+		{
+			name:             "explicit --repository overrides CI-detected full-path name",
+			base:             &gitview.GitRepoInfo{ID: "53419335", Name: "cyber-dojo/creator", URL: "https://gitlab.com/cyber-dojo/creator"},
+			repoID:           "53419335",
+			repoName:         "my/custom-name",
+			repoURL:          "https://gitlab.com/cyber-dojo/creator",
+			repoNameExplicit: true,
+			wantNil:          false,
+			wantID:           "53419335",
+			wantName:         "my/custom-name",
+			wantURL:          "https://gitlab.com/cyber-dojo/creator",
+		},
+		{
+			name:             "flag name applied when base has no name even if not explicit",
+			repoID:           "flag-id",
+			repoName:         "flag-name",
+			repoURL:          "https://github.com/org/repo",
+			repoNameExplicit: false,
+			wantNil:          false,
+			wantID:           "flag-id",
+			wantName:         "flag-name",
+			wantURL:          "https://github.com/org/repo",
 		},
 		{
 			name:    "nil when base has ID but no Name and no flags",
@@ -103,7 +140,7 @@ func TestMergeGitRepoInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := mergeGitRepoInfo(tt.base, tt.repoID, tt.repoName, tt.repoURL, tt.repoProvider)
+			result := mergeGitRepoInfo(tt.base, tt.repoID, tt.repoName, tt.repoURL, tt.repoProvider, tt.repoNameExplicit)
 			if tt.wantNil {
 				assert.Nil(t, result)
 				return

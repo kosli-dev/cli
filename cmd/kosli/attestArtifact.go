@@ -27,6 +27,7 @@ type attestArtifactOptions struct {
 	repoName             string
 	repoURL              string
 	repoProvider         string
+	repoNameExplicit     bool
 }
 
 type AttestArtifactPayload struct {
@@ -133,6 +134,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.repoNameExplicit = cmd.Flags().Changed("repository")
 			return o.run(args)
 		},
 	}
@@ -210,7 +212,7 @@ func (o *attestArtifactOptions) run(args []string) error {
 	if err != nil {
 		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
-	o.payload.GitRepoInfo = mergeGitRepoInfo(o.payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider)
+	o.payload.GitRepoInfo = mergeGitRepoInfo(o.payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider, o.repoNameExplicit)
 	o.payload.GitCommit = commitInfo.Sha1
 	o.payload.GitCommitInfo = &commitInfo.BasicCommitInfo
 
