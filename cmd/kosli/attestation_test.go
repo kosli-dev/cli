@@ -76,6 +76,15 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			wantURL:          "https://base.example.com",
 		},
 		{
+			name:         "fully-populated base is returned unchanged when no flags are passed",
+			base:         &gitview.GitRepoInfo{ID: "53419335", Name: "cyber-dojo/creator", URL: "https://gitlab.com/cyber-dojo/creator", Provider: "gitlab"},
+			wantNil:      false,
+			wantID:       "53419335",
+			wantName:     "cyber-dojo/creator",
+			wantURL:      "https://gitlab.com/cyber-dojo/creator",
+			wantProvider: "gitlab",
+		},
+		{
 			name:             "CI-detected full-path name is preserved when --repository is not set explicitly",
 			base:             &gitview.GitRepoInfo{ID: "53419335", Name: "cyber-dojo/creator", URL: "https://gitlab.com/cyber-dojo/creator"},
 			repoID:           "53419335",
