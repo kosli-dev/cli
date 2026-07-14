@@ -170,6 +170,7 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 		systemTeamProject   string
 		buildRepositoryName string
 		wantName            string
+		wantProvider        string
 	}{
 		{
 			name:                "Azure DevOps Services composes Org/Project/repo",
@@ -177,6 +178,15 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			systemTeamProject:   "Payment",
 			buildRepositoryName: "my-repo",
 			wantName:            "MyOrg/Payment/my-repo",
+			wantProvider:        "azure_devops_services",
+		},
+		{
+			name:                "Azure DevOps Services on a *.visualstudio.com host",
+			systemCollectionURI: "https://fabrikam.visualstudio.com/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "fabrikam/Payment/my-repo",
+			wantProvider:        "azure_devops_services",
 		},
 		{
 			name:                "Azure DevOps Server (on-prem) composes Collection/Project/repo",
@@ -184,6 +194,7 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			systemTeamProject:   "Payment",
 			buildRepositoryName: "my-repo",
 			wantName:            "PRDCollection/Payment/my-repo",
+			wantProvider:        "azure_devops_server",
 		},
 		{
 			name:                "collection URI without trailing slash composes the same",
@@ -191,27 +202,31 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			systemTeamProject:   "Payment",
 			buildRepositoryName: "my-repo",
 			wantName:            "MyOrg/Payment/my-repo",
+			wantProvider:        "azure_devops_services",
 		},
 		{
-			name:                "missing SYSTEM_TEAMPROJECT falls back to bare repository name",
+			name:                "missing SYSTEM_TEAMPROJECT falls back to bare repository name but still refines provider",
 			systemCollectionURI: "https://dev.azure.com/MyOrg/",
 			systemTeamProject:   "",
 			buildRepositoryName: "my-repo",
 			wantName:            "my-repo",
+			wantProvider:        "azure_devops_services",
 		},
 		{
-			name:                "missing SYSTEM_COLLECTIONURI falls back to bare repository name",
+			name:                "missing SYSTEM_COLLECTIONURI falls back to bare repository name and coarse provider",
 			systemCollectionURI: "",
 			systemTeamProject:   "Payment",
 			buildRepositoryName: "my-repo",
 			wantName:            "my-repo",
+			wantProvider:        "azure-devops",
 		},
 		{
-			name:                "unparseable SYSTEM_COLLECTIONURI (no path segment) falls back to bare repository name",
+			name:                "unparseable SYSTEM_COLLECTIONURI (no path segment) falls back to bare name but still refines provider",
 			systemCollectionURI: "https://dev.azure.com/",
 			systemTeamProject:   "Payment",
 			buildRepositoryName: "my-repo",
 			wantName:            "my-repo",
+			wantProvider:        "azure_devops_services",
 		},
 	}
 
@@ -226,6 +241,47 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			result := getGitRepoInfoFromAzureDevops()
 
 			assert.Equal(t, tt.wantName, result.Name)
+			assert.Equal(t, tt.wantProvider, result.Provider)
+		})
+	}
+}
+
+func TestGetGitRepoInfoFromBitbucket(t *testing.T) {
+	t.Setenv("BITBUCKET_GIT_HTTP_ORIGIN", "https://bitbucket.org/myteam/my-repo.git")
+	t.Setenv("BITBUCKET_REPO_FULL_NAME", "myteam/my-repo")
+	t.Setenv("BITBUCKET_REPO_UUID", "repo-uuid")
+
+	result := getGitRepoInfoFromBitbucket()
+
+	assert.Equal(t, "bitbucket_cloud", result.Provider)
+}
+
+func TestValidateRepoFlags(t *testing.T) {
+	tests := []struct {
+		name         string
+		repoProvider string
+		wantError    bool
+	}{
+		{name: "empty provider is allowed", repoProvider: ""},
+		{name: "github is allowed", repoProvider: "github"},
+		{name: "gitlab is allowed", repoProvider: "gitlab"},
+		{name: "coarse bitbucket is allowed", repoProvider: "bitbucket"},
+		{name: "bitbucket_cloud is allowed", repoProvider: "bitbucket_cloud"},
+		{name: "bitbucket_dc is allowed", repoProvider: "bitbucket_dc"},
+		{name: "coarse azure-devops is allowed", repoProvider: "azure-devops"},
+		{name: "azure_devops_services is allowed", repoProvider: "azure_devops_services"},
+		{name: "azure_devops_server is allowed", repoProvider: "azure_devops_server"},
+		{name: "unrecognised provider is rejected", repoProvider: "made-up-provider", wantError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateRepoFlags("", tt.repoProvider, false)
+			if tt.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

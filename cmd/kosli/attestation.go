@@ -148,7 +148,9 @@ func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repo
 }
 
 var allowedRepoProviders = map[string]struct{}{
-	"github": {}, "gitlab": {}, "bitbucket": {}, "azure-devops": {},
+	"github": {}, "gitlab": {},
+	"bitbucket": {}, "bitbucket_cloud": {}, "bitbucket_dc": {},
+	"azure-devops": {}, "azure_devops_services": {}, "azure_devops_server": {},
 }
 
 func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
@@ -160,7 +162,8 @@ func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
 	}
 	if repoProvider != "" {
 		if _, ok := allowedRepoProviders[repoProvider]; !ok {
-			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops", repoProvider)
+			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, "+
+				"bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server", repoProvider)
 		}
 	}
 	return nil
@@ -290,10 +293,14 @@ func getGitRepoInfoFromGitLab() *gitview.GitRepoInfo {
 
 func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 	return &gitview.GitRepoInfo{
-		URL:      os.Getenv("BITBUCKET_GIT_HTTP_ORIGIN"),
-		Name:     os.Getenv("BITBUCKET_REPO_FULL_NAME"),
-		ID:       os.Getenv("BITBUCKET_REPO_UUID"),
-		Provider: "bitbucket",
+		URL:  os.Getenv("BITBUCKET_GIT_HTTP_ORIGIN"),
+		Name: os.Getenv("BITBUCKET_REPO_FULL_NAME"),
+		ID:   os.Getenv("BITBUCKET_REPO_UUID"),
+		// Bitbucket Pipelines (the only CI this WhichCI() branch detects, via
+		// BITBUCKET_BUILD_NUMBER) exists for Bitbucket Cloud only, so this is
+		// a known fact rather than a heuristic. Self-hosted Data Center users
+		// run a different CI and must pass --repo-provider bitbucket_dc themselves.
+		Provider: "bitbucket_cloud",
 	}
 }
 
@@ -302,8 +309,26 @@ func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
 		URL:      os.Getenv("BUILD_REPOSITORY_URI"),
 		Name:     azureFullPathRepoName(),
 		ID:       os.Getenv("BUILD_REPOSITORY_ID"),
-		Provider: "azure-devops",
+		Provider: azureDevopsProvider(),
 	}
+}
+
+// azureDevopsProvider refines the coarse "azure-devops" provider to
+// azure_devops_services or azure_devops_server based on SYSTEM_COLLECTIONURI's
+// host (dev.azure.com / *.visualstudio.com are cloud-hosted Services;
+// anything else is on-prem Server). Falls back to the coarse value when the
+// collection URI is missing or has no host, so the server's own URL-based
+// derivation fallback still applies.
+func azureDevopsProvider() string {
+	parsed, err := url.Parse(os.Getenv("SYSTEM_COLLECTIONURI"))
+	if err != nil || parsed.Host == "" {
+		return "azure-devops"
+	}
+	host := strings.ToLower(parsed.Host)
+	if host == "dev.azure.com" || strings.HasSuffix(host, ".visualstudio.com") {
+		return "azure_devops_services"
+	}
+	return "azure_devops_server"
 }
 
 // azureFullPathRepoName composes the full namespace path for an Azure DevOps
