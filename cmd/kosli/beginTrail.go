@@ -49,6 +49,7 @@ type beginTrailOptions struct {
 	repoName             string
 	repoURL              string
 	repoProvider         string
+	repoNameExplicit     bool
 }
 
 type TrailPayload struct {
@@ -83,6 +84,7 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 			return validateRepoFlags(o.repoURL, o.repoProvider, cmd.Flags().Changed("repo-url"))
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.repoNameExplicit = cmd.Flags().Changed("repository")
 			return o.run(args)
 		},
 	}
@@ -141,7 +143,7 @@ func (o *beginTrailOptions) run(args []string) error {
 	if err != nil {
 		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
-	o.payload.GitRepoInfo = mergeGitRepoInfo(base, o.repoID, o.repoName, o.repoURL, o.repoProvider)
+	o.payload.GitRepoInfo = mergeGitRepoInfo(base, o.repoID, o.repoName, o.repoURL, o.repoProvider, o.repoNameExplicit)
 
 	// process external urls
 	o.payload.ExternalURLs, err = processExternalURLs(o.externalURLs, o.externalFingerprints)

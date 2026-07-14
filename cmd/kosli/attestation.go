@@ -55,6 +55,7 @@ type CommonAttestationOptions struct {
 	repoURL                 string
 	repoProvider            string
 	repoURLExplicit         bool
+	repoNameExplicit        bool
 }
 
 func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestationPayload) error {
@@ -98,7 +99,7 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	if err := validateRepoFlags(o.repoURL, o.repoProvider, o.repoURLExplicit); err != nil {
 		return err
 	}
-	payload.GitRepoInfo = mergeGitRepoInfo(payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider)
+	payload.GitRepoInfo = mergeGitRepoInfo(payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider, o.repoNameExplicit)
 
 	payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
@@ -119,14 +120,18 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 // mergeGitRepoInfo applies flag overrides onto base (which may be nil) and
 // returns nil if ID, Name, or URL is still empty after merging, so that the
 // field is omitted from the JSON payload.
-func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repoProvider string) *gitview.GitRepoInfo {
+//
+// --repository only overrides the CI-detected name when set explicitly (or when
+// base has none), so its short default doesn't clobber the fuller CI value
+// (e.g. GitLab's CI_PROJECT_PATH).
+func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repoProvider string, repoNameExplicit bool) *gitview.GitRepoInfo {
 	if base == nil {
 		base = &gitview.GitRepoInfo{}
 	}
 	if repoID != "" {
 		base.ID = repoID
 	}
-	if repoName != "" {
+	if repoName != "" && (repoNameExplicit || base.Name == "") {
 		base.Name = repoName
 	}
 	if repoURL != "" {
