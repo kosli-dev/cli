@@ -300,10 +300,36 @@ func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
 	return &gitview.GitRepoInfo{
 		URL:      os.Getenv("BUILD_REPOSITORY_URI"),
-		Name:     os.Getenv("BUILD_REPOSITORY_NAME"),
+		Name:     azureFullPathRepoName(),
 		ID:       os.Getenv("BUILD_REPOSITORY_ID"),
 		Provider: "azure-devops",
 	}
+}
+
+// azureFullPathRepoName composes the full namespace path for an Azure DevOps
+// repo (`Collection/Project/repo` on-prem, `Org/Project/repo` in Services)
+// from SYSTEM_COLLECTIONURI and SYSTEM_TEAMPROJECT, since BUILD_REPOSITORY_NAME
+// alone is just the bare repo name. Falls back to the bare name if either
+// piece is unavailable, so unupgraded setups degrade gracefully.
+func azureFullPathRepoName() string {
+	repoName := os.Getenv("BUILD_REPOSITORY_NAME")
+	teamProject := os.Getenv("SYSTEM_TEAMPROJECT")
+	collectionURI := os.Getenv("SYSTEM_COLLECTIONURI")
+	if teamProject == "" || collectionURI == "" {
+		return repoName
+	}
+
+	parsed, err := url.Parse(collectionURI)
+	if err != nil {
+		return repoName
+	}
+	segments := strings.Split(strings.Trim(parsed.Path, "/"), "/")
+	collection := segments[len(segments)-1]
+	if collection == "" {
+		return repoName
+	}
+
+	return fmt.Sprintf("%s/%s/%s", collection, teamProject, repoName)
 }
 
 func getGitRepoInfoFromCircleci() *gitview.GitRepoInfo {

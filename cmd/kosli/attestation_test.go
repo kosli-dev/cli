@@ -163,6 +163,73 @@ func TestMergeGitRepoInfo(t *testing.T) {
 	}
 }
 
+func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
+	tests := []struct {
+		name                string
+		systemCollectionURI string
+		systemTeamProject   string
+		buildRepositoryName string
+		wantName            string
+	}{
+		{
+			name:                "Azure DevOps Services composes Org/Project/repo",
+			systemCollectionURI: "https://dev.azure.com/MyOrg/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "MyOrg/Payment/my-repo",
+		},
+		{
+			name:                "Azure DevOps Server (on-prem) composes Collection/Project/repo",
+			systemCollectionURI: "https://tfs.corp.local/tfs/PRDCollection/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "PRDCollection/Payment/my-repo",
+		},
+		{
+			name:                "collection URI without trailing slash composes the same",
+			systemCollectionURI: "https://dev.azure.com/MyOrg",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "MyOrg/Payment/my-repo",
+		},
+		{
+			name:                "missing SYSTEM_TEAMPROJECT falls back to bare repository name",
+			systemCollectionURI: "https://dev.azure.com/MyOrg/",
+			systemTeamProject:   "",
+			buildRepositoryName: "my-repo",
+			wantName:            "my-repo",
+		},
+		{
+			name:                "missing SYSTEM_COLLECTIONURI falls back to bare repository name",
+			systemCollectionURI: "",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "my-repo",
+		},
+		{
+			name:                "unparseable SYSTEM_COLLECTIONURI (no path segment) falls back to bare repository name",
+			systemCollectionURI: "https://dev.azure.com/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "my-repo",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("SYSTEM_COLLECTIONURI", tt.systemCollectionURI)
+			t.Setenv("SYSTEM_TEAMPROJECT", tt.systemTeamProject)
+			t.Setenv("BUILD_REPOSITORY_NAME", tt.buildRepositoryName)
+			t.Setenv("BUILD_REPOSITORY_URI", "https://dev.azure.com/MyOrg/Payment/_git/my-repo")
+			t.Setenv("BUILD_REPOSITORY_ID", "repo-id")
+
+			result := getGitRepoInfoFromAzureDevops()
+
+			assert.Equal(t, tt.wantName, result.Name)
+		})
+	}
+}
+
 func TestParseAttestationNameTemplate(t *testing.T) {
 	tests := []struct {
 		name      string
