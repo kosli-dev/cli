@@ -29,11 +29,13 @@ type CommitInfo struct {
 }
 
 type GitRepoInfo struct {
-	URL         string `json:"url,omitempty"`
-	Name        string `json:"name,omitempty"`
-	ID          string `json:"id,omitempty"`
-	Description string `json:"description,omitempty"`
-	Provider    string `json:"provider,omitempty"`
+	URL            string                 `json:"url,omitempty"`
+	Name           string                 `json:"name,omitempty"`
+	ID             string                 `json:"id,omitempty"`
+	Description    string                 `json:"description,omitempty"`
+	Provider       string                 `json:"provider,omitempty"`
+	NamespacePath  []string               `json:"namespace_path,omitempty"`
+	AdditionalInfo map[string]interface{} `json:"additional_info,omitempty"`
 }
 
 // GitView
