@@ -329,10 +329,15 @@ func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
 	// Path composition and provider refinement only make sense for genuine
 	// Azure Repos Git repos (TfsGit); for any other source (GitHub, Bitbucket,
 	// generic Git, TFVC, ...) they'd be wrong. Empty ⇒ older agent, assume TfsGit.
-	if provider := os.Getenv("BUILD_REPOSITORY_PROVIDER"); provider == "TfsGit" || provider == "" {
+	switch provider := os.Getenv("BUILD_REPOSITORY_PROVIDER"); provider {
+	case "TfsGit", "":
 		info.Name = azureFullPathRepoName()
 		info.Provider = azureDevopsProvider()
 		info.NamespacePath = azureNamespacePath()
+	case "GitHub":
+		info.Provider = "github"
+	case "Bitbucket":
+		info.Provider = "bitbucket_cloud"
 	}
 
 	return info
