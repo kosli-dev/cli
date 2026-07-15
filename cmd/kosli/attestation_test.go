@@ -165,13 +165,14 @@ func TestMergeGitRepoInfo(t *testing.T) {
 
 func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 	tests := []struct {
-		name                string
-		systemCollectionURI string
-		systemTeamProject   string
-		buildRepositoryName string
-		wantName            string
-		wantProvider        string
-		wantNamespacePath   []string
+		name                    string
+		systemCollectionURI     string
+		systemTeamProject       string
+		buildRepositoryName     string
+		buildRepositoryProvider string
+		wantName                string
+		wantProvider            string
+		wantNamespacePath       []string
 	}{
 		{
 			name:                "Azure DevOps Services composes Org/Project/repo",
@@ -181,6 +182,66 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			wantName:            "MyOrg/Payment/my-repo",
 			wantProvider:        "azure_devops_services",
 			wantNamespacePath:   []string{"MyOrg", "Payment"},
+		},
+		{
+			name:                    "TfsGit provider composes full path and refines provider (regression guard)",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "TfsGit",
+			wantName:                "MyOrg/Payment/my-repo",
+			wantProvider:            "azure_devops_services",
+			wantNamespacePath:       []string{"MyOrg", "Payment"},
+		},
+		{
+			name:                    "empty provider defaults to TfsGit behaviour (back-compat)",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "",
+			wantName:                "MyOrg/Payment/my-repo",
+			wantProvider:            "azure_devops_services",
+			wantNamespacePath:       []string{"MyOrg", "Payment"},
+		},
+		{
+			name:                    "GitHub-hosted repo built on Azure Pipelines: bare name, coarse provider, no namespace",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-org/my-repo",
+			buildRepositoryProvider: "GitHub",
+			wantName:                "my-org/my-repo",
+			wantProvider:            "azure-devops",
+			wantNamespacePath:       nil,
+		},
+		{
+			name:                    "Bitbucket-hosted repo built on Azure Pipelines: bare name, coarse provider, no namespace",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "Bitbucket",
+			wantName:                "my-repo",
+			wantProvider:            "azure-devops",
+			wantNamespacePath:       nil,
+		},
+		{
+			name:                    "generic external Git repo built on Azure Pipelines: bare name, coarse provider, no namespace",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "Git",
+			wantName:                "my-repo",
+			wantProvider:            "azure-devops",
+			wantNamespacePath:       nil,
+		},
+		{
+			name:                    "TFVC repo (not git-based): bare name, coarse provider, no namespace",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "TfsVersionControl",
+			wantName:                "my-repo",
+			wantProvider:            "azure-devops",
+			wantNamespacePath:       nil,
 		},
 		{
 			name:                "Azure DevOps Services on a *.visualstudio.com host",
@@ -243,6 +304,7 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			t.Setenv("SYSTEM_COLLECTIONURI", tt.systemCollectionURI)
 			t.Setenv("SYSTEM_TEAMPROJECT", tt.systemTeamProject)
 			t.Setenv("BUILD_REPOSITORY_NAME", tt.buildRepositoryName)
+			t.Setenv("BUILD_REPOSITORY_PROVIDER", tt.buildRepositoryProvider)
 			t.Setenv("BUILD_REPOSITORY_URI", "https://dev.azure.com/MyOrg/Payment/_git/my-repo")
 			t.Setenv("BUILD_REPOSITORY_ID", "repo-id")
 

@@ -319,13 +319,23 @@ func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 }
 
 func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
-	return &gitview.GitRepoInfo{
-		URL:           os.Getenv("BUILD_REPOSITORY_URI"),
-		Name:          azureFullPathRepoName(),
-		ID:            os.Getenv("BUILD_REPOSITORY_ID"),
-		Provider:      azureDevopsProvider(),
-		NamespacePath: azureNamespacePath(),
+	info := &gitview.GitRepoInfo{
+		URL:      os.Getenv("BUILD_REPOSITORY_URI"),
+		Name:     os.Getenv("BUILD_REPOSITORY_NAME"),
+		ID:       os.Getenv("BUILD_REPOSITORY_ID"),
+		Provider: "azure-devops",
 	}
+
+	// Path composition and provider refinement only make sense for genuine
+	// Azure Repos Git repos (TfsGit); for any other source (GitHub, Bitbucket,
+	// generic Git, TFVC, ...) they'd be wrong. Empty ⇒ older agent, assume TfsGit.
+	if provider := os.Getenv("BUILD_REPOSITORY_PROVIDER"); provider == "TfsGit" || provider == "" {
+		info.Name = azureFullPathRepoName()
+		info.Provider = azureDevopsProvider()
+		info.NamespacePath = azureNamespacePath()
+	}
+
+	return info
 }
 
 // splitNonEmpty splits s on "/", returning nil for an empty string so the
