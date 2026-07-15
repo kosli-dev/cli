@@ -5,7 +5,7 @@ type PREvidence struct {
 	URL         string   `json:"url"`
 	State       string   `json:"state"`
 	Approvers   []any    `json:"approvers"`
-	Author      string   `json:"author,omitempty"`
+	Author      string   `json:"author"`
 	CreatedAt   int64    `json:"created_at,omitempty"`
 	MergedAt    int64    `json:"merged_at,omitempty"`
 	Title       string   `json:"title,omitempty"`

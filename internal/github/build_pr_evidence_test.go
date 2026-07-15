@@ -152,11 +152,11 @@ func TestBuildPREvidence_RecordsCommitSignature(t *testing.T) {
 	require.Equal(t, "VALID", *c.SignatureState)
 }
 
-// TestBuildPREvidence_EmptyAuthorFallsBackToUnknown verifies that when the PR
-// creator's GitHub account has been deleted (Author.Login = ""), the author
-// field falls back to "unknown" so the server's required FoundPullRequestV2.author
-// field is satisfied and the attestation does not fail validation.
-func TestBuildPREvidence_EmptyAuthorFallsBackToUnknown(t *testing.T) {
+// TestBuildPREvidence_EmptyAuthorIsPreserved verifies that when the PR
+// creator's GitHub account has been deleted (Author.Login = ""), the empty
+// string is preserved and serialised as "" rather than omitted, allowing the
+// server to accept it directly.
+func TestBuildPREvidence_EmptyAuthorIsPreserved(t *testing.T) {
 	evidence, err := buildPREvidence(
 		"https://github.com/kosli-dev/cli/pull/671",
 		"0e723254516c841126e81f76100be57258ff1386",
@@ -170,8 +170,8 @@ func TestBuildPREvidence_EmptyAuthorFallsBackToUnknown(t *testing.T) {
 		nil, nil,
 	)
 	require.NoError(t, err)
-	require.Equal(t, "unknown", evidence.Author,
-		"empty PR author login must fall back to 'unknown' to satisfy FoundPullRequestV2.author required field")
+	require.Equal(t, "", evidence.Author,
+		"empty PR author login must be preserved so it is serialised as an empty string, not omitted")
 }
 
 // TestBuildPREvidence_UnsignedCommitHasNoSignatureFields verifies an unsigned

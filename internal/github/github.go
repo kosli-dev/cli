@@ -309,13 +309,6 @@ func buildPREvidence(
 		mergedAt = mergedAtTime.Unix()
 	}
 
-	// author is empty when the PR creator's GitHub account has been deleted.
-	// FoundPullRequestV2.author is a required field on the server; since
-	// PREvidence.Author has omitempty, sending "" would omit it and fail validation.
-	if author == "" {
-		author = "unknown"
-	}
-
 	evidence := &types.PREvidence{
 		URL:         url,
 		MergeCommit: mergeCommit,
