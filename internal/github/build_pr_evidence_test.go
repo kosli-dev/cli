@@ -1,6 +1,7 @@
 package github
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -172,6 +173,11 @@ func TestBuildPREvidence_EmptyAuthorIsPreserved(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "", evidence.Author,
 		"empty PR author login must be preserved so it is serialised as an empty string, not omitted")
+
+	b, err := json.Marshal(evidence)
+	require.NoError(t, err)
+	require.Contains(t, string(b), `"author":""`,
+		"empty author must be serialised, not omitted")
 }
 
 // TestBuildPREvidence_UnsignedCommitHasNoSignatureFields verifies an unsigned
