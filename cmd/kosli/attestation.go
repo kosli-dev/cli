@@ -151,6 +151,7 @@ var allowedRepoProviders = map[string]struct{}{
 	"github": {}, "gitlab": {},
 	"bitbucket": {}, "bitbucket_cloud": {}, "bitbucket_dc": {},
 	"azure-devops": {}, "azure_devops_services": {}, "azure_devops_server": {},
+	"generic_git": {}, "subversion": {},
 }
 
 func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
@@ -163,7 +164,8 @@ func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
 	if repoProvider != "" {
 		if _, ok := allowedRepoProviders[repoProvider]; !ok {
 			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, "+
-				"bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server", repoProvider)
+				"bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server, "+
+				"generic_git, subversion", repoProvider)
 		}
 	}
 	return nil
@@ -328,16 +330,23 @@ func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
 
 	// Path composition and provider refinement only make sense for genuine
 	// Azure Repos Git repos (TfsGit); for any other source (GitHub, Bitbucket,
-	// generic Git, TFVC, ...) they'd be wrong. Empty ⇒ older agent, assume TfsGit.
+	// generic Git, SVN, ...) they'd be wrong, so we only relabel the provider
+	// and leave the bare BUILD_REPOSITORY_* name/URL/ID as-is. Empty ⇒ older
+	// agent, assume TfsGit. TFVC (TfsVersionControl) has no matching provider
+	// label, so it keeps the coarse "azure-devops" default.
 	switch provider := os.Getenv("BUILD_REPOSITORY_PROVIDER"); provider {
 	case "TfsGit", "":
 		info.Name = azureFullPathRepoName()
 		info.Provider = azureDevopsProvider()
 		info.NamespacePath = azureNamespacePath()
-	case "GitHub":
+	case "GitHub", "GitHubEnterprise":
 		info.Provider = "github"
 	case "Bitbucket":
 		info.Provider = "bitbucket_cloud"
+	case "Git":
+		info.Provider = "generic_git"
+	case "Svn":
+		info.Provider = "subversion"
 	}
 
 	return info
