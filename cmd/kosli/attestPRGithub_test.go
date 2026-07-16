@@ -44,7 +44,13 @@ func (suite *AttestGithubPRCommandTestSuite) SetupTest() {
 					CreatedAt:   1234567890,
 					HeadRef:     "test-branch",
 					MergeCommit: suite.commitWithPR,
-					Commits:     []types.Commit{},
+					Commits: []types.Commit{{
+						SHA:       suite.commitWithPR,
+						Message:   "test commit",
+						Author:    "Test User <test@example.com>",
+						Timestamp: 1234567890,
+						Branch:    "test-branch",
+					}},
 				}},
 			},
 		}
