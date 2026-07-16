@@ -242,6 +242,44 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 			},
 			want: "https://bitbucket.org/example/foo/commits/8eb22db889202e4e23892665dbcc691217f500f8",
 		},
+		{
+			name: "Lookup repo-provider for Bitbucket always returns the cloud-specific value (Pipelines is cloud-only).",
+			args: args{
+				ci:               bitbucket,
+				flag:             "repo-provider",
+				unsetTestsEnvVar: true,
+			},
+			want: "bitbucket_cloud",
+		},
+		{
+			name: "Lookup repo-provider for Azure DevOps on dev.azure.com refines to the Services value.",
+			args: args{
+				ci:               azureDevops,
+				flag:             "repo-provider",
+				envVars:          map[string]string{"SYSTEM_COLLECTIONURI": "https://dev.azure.com/MyOrg/"},
+				unsetTestsEnvVar: true,
+			},
+			want: "azure_devops_services",
+		},
+		{
+			name: "Lookup repo-provider for Azure DevOps on an on-prem host refines to the Server value.",
+			args: args{
+				ci:               azureDevops,
+				flag:             "repo-provider",
+				envVars:          map[string]string{"SYSTEM_COLLECTIONURI": "https://tfs.corp.local/tfs/PRDCollection/"},
+				unsetTestsEnvVar: true,
+			},
+			want: "azure_devops_server",
+		},
+		{
+			name: "Lookup repo-provider for Azure DevOps without SYSTEM_COLLECTIONURI falls back to the coarse value.",
+			args: args{
+				ci:               azureDevops,
+				flag:             "repo-provider",
+				unsetTestsEnvVar: true,
+			},
+			want: "azure-devops",
+		},
 	} {
 		suite.Run(t.name, func() {
 			value, testMode := os.LookupEnv("KOSLI_TESTS")

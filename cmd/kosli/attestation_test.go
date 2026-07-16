@@ -163,6 +163,200 @@ func TestMergeGitRepoInfo(t *testing.T) {
 	}
 }
 
+func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
+	tests := []struct {
+		name                string
+		systemCollectionURI string
+		systemTeamProject   string
+		buildRepositoryName string
+		wantName            string
+		wantProvider        string
+		wantNamespacePath   []string
+	}{
+		{
+			name:                "Azure DevOps Services composes Org/Project/repo",
+			systemCollectionURI: "https://dev.azure.com/MyOrg/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "MyOrg/Payment/my-repo",
+			wantProvider:        "azure_devops_services",
+			wantNamespacePath:   []string{"MyOrg", "Payment"},
+		},
+		{
+			name:                "Azure DevOps Services on a *.visualstudio.com host",
+			systemCollectionURI: "https://fabrikam.visualstudio.com/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "fabrikam/Payment/my-repo",
+			wantProvider:        "azure_devops_services",
+			wantNamespacePath:   []string{"fabrikam", "Payment"},
+		},
+		{
+			name:                "Azure DevOps Server (on-prem) composes Collection/Project/repo",
+			systemCollectionURI: "https://tfs.corp.local/tfs/PRDCollection/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "PRDCollection/Payment/my-repo",
+			wantProvider:        "azure_devops_server",
+			wantNamespacePath:   []string{"PRDCollection", "Payment"},
+		},
+		{
+			name:                "collection URI without trailing slash composes the same",
+			systemCollectionURI: "https://dev.azure.com/MyOrg",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "MyOrg/Payment/my-repo",
+			wantProvider:        "azure_devops_services",
+			wantNamespacePath:   []string{"MyOrg", "Payment"},
+		},
+		{
+			name:                "missing SYSTEM_TEAMPROJECT falls back to bare repository name but still refines provider",
+			systemCollectionURI: "https://dev.azure.com/MyOrg/",
+			systemTeamProject:   "",
+			buildRepositoryName: "my-repo",
+			wantName:            "my-repo",
+			wantProvider:        "azure_devops_services",
+			wantNamespacePath:   nil,
+		},
+		{
+			name:                "missing SYSTEM_COLLECTIONURI falls back to bare repository name and coarse provider",
+			systemCollectionURI: "",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "my-repo",
+			wantProvider:        "azure-devops",
+			wantNamespacePath:   nil,
+		},
+		{
+			name:                "unparseable SYSTEM_COLLECTIONURI (no path segment) falls back to bare name but still refines provider",
+			systemCollectionURI: "https://dev.azure.com/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "my-repo",
+			wantProvider:        "azure_devops_services",
+			wantNamespacePath:   nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("SYSTEM_COLLECTIONURI", tt.systemCollectionURI)
+			t.Setenv("SYSTEM_TEAMPROJECT", tt.systemTeamProject)
+			t.Setenv("BUILD_REPOSITORY_NAME", tt.buildRepositoryName)
+			t.Setenv("BUILD_REPOSITORY_URI", "https://dev.azure.com/MyOrg/Payment/_git/my-repo")
+			t.Setenv("BUILD_REPOSITORY_ID", "repo-id")
+
+			result := getGitRepoInfoFromAzureDevops()
+
+			assert.Equal(t, tt.wantName, result.Name)
+			assert.Equal(t, tt.wantProvider, result.Provider)
+			assert.Equal(t, tt.wantNamespacePath, result.NamespacePath)
+		})
+	}
+}
+
+func TestGetGitRepoInfoFromBitbucket(t *testing.T) {
+	tests := []struct {
+		name                string
+		bitbucketProjectKey string
+		wantAdditionalInfo  map[string]interface{}
+	}{
+		{
+			name:                "with project key",
+			bitbucketProjectKey: "PROJ",
+			wantAdditionalInfo:  map[string]interface{}{"project_key": "PROJ"},
+		},
+		{
+			name:                "without project key",
+			bitbucketProjectKey: "",
+			wantAdditionalInfo:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("BITBUCKET_GIT_HTTP_ORIGIN", "https://bitbucket.org/myteam/my-repo.git")
+			t.Setenv("BITBUCKET_REPO_FULL_NAME", "myteam/my-repo")
+			t.Setenv("BITBUCKET_REPO_UUID", "repo-uuid")
+			t.Setenv("BITBUCKET_PROJECT_KEY", tt.bitbucketProjectKey)
+
+			result := getGitRepoInfoFromBitbucket()
+
+			assert.Equal(t, "bitbucket_cloud", result.Provider)
+			assert.Equal(t, []string{"myteam"}, result.NamespacePath)
+			assert.Equal(t, tt.wantAdditionalInfo, result.AdditionalInfo)
+		})
+	}
+}
+
+func TestGetGitRepoInfoFromGitLab(t *testing.T) {
+	tests := []struct {
+		name               string
+		ciProjectNamespace string
+		wantNamespacePath  []string
+	}{
+		{
+			name:               "top-level group",
+			ciProjectNamespace: "my-group",
+			wantNamespacePath:  []string{"my-group"},
+		},
+		{
+			name:               "nested subgroup",
+			ciProjectNamespace: "my-group/my-subgroup",
+			wantNamespacePath:  []string{"my-group", "my-subgroup"},
+		},
+		{
+			name:               "missing namespace",
+			ciProjectNamespace: "",
+			wantNamespacePath:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("CI_PROJECT_URL", "https://gitlab.com/my-group/my-repo")
+			t.Setenv("CI_PROJECT_PATH", "my-group/my-repo")
+			t.Setenv("CI_PROJECT_ID", "project-id")
+			t.Setenv("CI_PROJECT_NAMESPACE", tt.ciProjectNamespace)
+
+			result := getGitRepoInfoFromGitLab()
+
+			assert.Equal(t, "gitlab", result.Provider)
+			assert.Equal(t, tt.wantNamespacePath, result.NamespacePath)
+		})
+	}
+}
+
+func TestValidateRepoFlags(t *testing.T) {
+	tests := []struct {
+		name         string
+		repoProvider string
+		wantError    bool
+	}{
+		{name: "empty provider is allowed", repoProvider: ""},
+		{name: "github is allowed", repoProvider: "github"},
+		{name: "gitlab is allowed", repoProvider: "gitlab"},
+		{name: "coarse bitbucket is allowed", repoProvider: "bitbucket"},
+		{name: "bitbucket_cloud is allowed", repoProvider: "bitbucket_cloud"},
+		{name: "bitbucket_dc is allowed", repoProvider: "bitbucket_dc"},
+		{name: "coarse azure-devops is allowed", repoProvider: "azure-devops"},
+		{name: "azure_devops_services is allowed", repoProvider: "azure_devops_services"},
+		{name: "azure_devops_server is allowed", repoProvider: "azure_devops_server"},
+		{name: "unrecognised provider is rejected", repoProvider: "made-up-provider", wantError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateRepoFlags("", tt.repoProvider, false)
+			if tt.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestParseAttestationNameTemplate(t *testing.T) {
 	tests := []struct {
 		name      string

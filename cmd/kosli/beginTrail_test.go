@@ -106,7 +106,7 @@ func (suite *BeginTrailCommandTestSuite) TestBeginTrailCmd() {
 			wantError: true,
 			name:      "fails when --repo-provider is not an allowed value",
 			cmd:       fmt.Sprintf("begin trail test-123 --flow %s --repo-provider jenkins %s", suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops\n",
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server\n",
 		},
 	}
 

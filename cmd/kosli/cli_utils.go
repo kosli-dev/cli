@@ -99,14 +99,15 @@ var ciTemplates = map[string]map[string]string{
 		"repo-provider": "github",
 	},
 	bitbucket: {
-		"git-commit":    "${BITBUCKET_COMMIT}",
-		"repository":    "${BITBUCKET_REPO_SLUG}",
-		"workspace":     "${BITBUCKET_WORKSPACE}",
-		"commit-url":    "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/commits/${BITBUCKET_COMMIT}",
-		"build-url":     "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/addon/pipelines/home#!/results/${BITBUCKET_BUILD_NUMBER}",
-		"repo-id":       "${BITBUCKET_REPO_UUID}",
-		"repo-url":      "${BITBUCKET_GIT_HTTP_ORIGIN}",
-		"repo-provider": "bitbucket",
+		"git-commit": "${BITBUCKET_COMMIT}",
+		"repository": "${BITBUCKET_REPO_SLUG}",
+		"workspace":  "${BITBUCKET_WORKSPACE}",
+		"commit-url": "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/commits/${BITBUCKET_COMMIT}",
+		"build-url":  "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/addon/pipelines/home#!/results/${BITBUCKET_BUILD_NUMBER}",
+		"repo-id":    "${BITBUCKET_REPO_UUID}",
+		"repo-url":   "${BITBUCKET_GIT_HTTP_ORIGIN}",
+		// Bitbucket Pipelines is Cloud-only, so this is a known fact, not a heuristic.
+		"repo-provider": "bitbucket_cloud",
 	},
 	teamcity: {
 		"git-commit": "${BUILD_VCS_NUMBER}",
@@ -206,6 +207,12 @@ func DefaultValue(ci, flag string) string {
 	_, inDocs := os.LookupEnv("DOCS")
 	_, inTests := os.LookupEnv("KOSLI_TESTS")
 	if !inDocs && !inTests {
+		// Azure DevOps Services vs Server can't be captured as a static
+		// template like the other CI defaults: it depends on the
+		// SYSTEM_COLLECTIONURI host at runtime.
+		if ci == azureDevops && flag == "repo-provider" {
+			return azureDevopsProvider()
+		}
 		if v, ok := ciTemplates[ci][flag]; ok {
 			result := os.ExpandEnv(v)
 			// github and gitlab use ../commit/.. , bitbucket uses ../commits/..

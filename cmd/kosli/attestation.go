@@ -148,7 +148,9 @@ func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repo
 }
 
 var allowedRepoProviders = map[string]struct{}{
-	"github": {}, "gitlab": {}, "bitbucket": {}, "azure-devops": {},
+	"github": {}, "gitlab": {},
+	"bitbucket": {}, "bitbucket_cloud": {}, "bitbucket_dc": {},
+	"azure-devops": {}, "azure_devops_services": {}, "azure_devops_server": {},
 }
 
 func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
@@ -160,7 +162,8 @@ func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
 	}
 	if repoProvider != "" {
 		if _, ok := allowedRepoProviders[repoProvider]; !ok {
-			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops", repoProvider)
+			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, "+
+				"bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server", repoProvider)
 		}
 	}
 	return nil
@@ -280,30 +283,134 @@ func getGitRepoInfoFromGitHub() *gitview.GitRepoInfo {
 
 func getGitRepoInfoFromGitLab() *gitview.GitRepoInfo {
 	return &gitview.GitRepoInfo{
-		URL:         os.Getenv("CI_PROJECT_URL"),
-		Name:        os.Getenv("CI_PROJECT_PATH"),
-		ID:          os.Getenv("CI_PROJECT_ID"),
-		Description: os.Getenv("CI_PROJECT_DESCRIPTION"),
-		Provider:    "gitlab",
+		URL:           os.Getenv("CI_PROJECT_URL"),
+		Name:          os.Getenv("CI_PROJECT_PATH"),
+		ID:            os.Getenv("CI_PROJECT_ID"),
+		Description:   os.Getenv("CI_PROJECT_DESCRIPTION"),
+		Provider:      "gitlab",
+		NamespacePath: splitNonEmpty(os.Getenv("CI_PROJECT_NAMESPACE")),
 	}
 }
 
 func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
+	repoFullName := os.Getenv("BITBUCKET_REPO_FULL_NAME")
+	workspace, _, _ := strings.Cut(repoFullName, "/")
+
+	var additionalInfo map[string]interface{}
+	if projectKey := os.Getenv("BITBUCKET_PROJECT_KEY"); projectKey != "" {
+		additionalInfo = map[string]interface{}{"project_key": projectKey}
+	}
+
 	return &gitview.GitRepoInfo{
-		URL:      os.Getenv("BITBUCKET_GIT_HTTP_ORIGIN"),
-		Name:     os.Getenv("BITBUCKET_REPO_FULL_NAME"),
-		ID:       os.Getenv("BITBUCKET_REPO_UUID"),
-		Provider: "bitbucket",
+		URL:  os.Getenv("BITBUCKET_GIT_HTTP_ORIGIN"),
+		Name: repoFullName,
+		ID:   os.Getenv("BITBUCKET_REPO_UUID"),
+		// Bitbucket Pipelines (the only CI this WhichCI() branch detects, via
+		// BITBUCKET_BUILD_NUMBER) exists for Bitbucket Cloud only, so this is
+		// a known fact rather than a heuristic. Self-hosted Data Center users
+		// run a different CI and must pass --repo-provider bitbucket_dc themselves.
+		Provider: "bitbucket_cloud",
+		// Bitbucket's workspace is the only path segment ahead of the repo itself
+		// (the project key is a separate, non-hierarchical grouping within a
+		// workspace, so it goes in AdditionalInfo rather than NamespacePath).
+		NamespacePath:  splitNonEmpty(workspace),
+		AdditionalInfo: additionalInfo,
 	}
 }
 
 func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
 	return &gitview.GitRepoInfo{
-		URL:      os.Getenv("BUILD_REPOSITORY_URI"),
-		Name:     os.Getenv("BUILD_REPOSITORY_NAME"),
-		ID:       os.Getenv("BUILD_REPOSITORY_ID"),
-		Provider: "azure-devops",
+		URL:           os.Getenv("BUILD_REPOSITORY_URI"),
+		Name:          azureFullPathRepoName(),
+		ID:            os.Getenv("BUILD_REPOSITORY_ID"),
+		Provider:      azureDevopsProvider(),
+		NamespacePath: azureNamespacePath(),
 	}
+}
+
+// splitNonEmpty splits s on "/", returning nil for an empty string so the
+// NamespacePath field is omitted from the JSON payload rather than sent as [""].
+func splitNonEmpty(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return strings.Split(s, "/")
+}
+
+// azureDevopsProvider refines the coarse "azure-devops" provider to
+// azure_devops_services or azure_devops_server based on SYSTEM_COLLECTIONURI's
+// host (dev.azure.com / *.visualstudio.com are cloud-hosted Services;
+// anything else is on-prem Server). Falls back to the coarse value when the
+// collection URI is missing or has no host, so the server's own URL-based
+// derivation fallback still applies.
+func azureDevopsProvider() string {
+	parsed, err := url.Parse(os.Getenv("SYSTEM_COLLECTIONURI"))
+	if err != nil || parsed.Host == "" {
+		return "azure-devops"
+	}
+	host := strings.ToLower(parsed.Host)
+	if host == "dev.azure.com" || strings.HasSuffix(host, ".visualstudio.com") {
+		return "azure_devops_services"
+	}
+	return "azure_devops_server"
+}
+
+// azureFullPathRepoName composes the full namespace path for an Azure DevOps
+// repo (`Collection/Project/repo` on-prem, `Org/Project/repo` in Services)
+// from SYSTEM_COLLECTIONURI and SYSTEM_TEAMPROJECT, since BUILD_REPOSITORY_NAME
+// alone is just the bare repo name. Falls back to the bare name if either
+// piece is unavailable, so unupgraded setups degrade gracefully.
+func azureFullPathRepoName() string {
+	repoName := os.Getenv("BUILD_REPOSITORY_NAME")
+	collection, teamProject, ok := azureCollectionAndProject()
+	if !ok {
+		return repoName
+	}
+	return fmt.Sprintf("%s/%s/%s", collection, teamProject, repoName)
+}
+
+// azureNamespacePath returns the [collection, project] path ahead of the repo
+// name itself, or nil when either piece is unavailable.
+func azureNamespacePath() []string {
+	collection, teamProject, ok := azureCollectionAndProject()
+	if !ok {
+		return nil
+	}
+	return []string{collection, teamProject}
+}
+
+// azureCollectionAndProject extracts the collection/org name and
+// SYSTEM_TEAMPROJECT. ok is false if either piece is missing or
+// SYSTEM_COLLECTIONURI can't be parsed into a non-empty collection.
+//
+// On *.visualstudio.com hosts (the legacy Services URL format) the org name
+// is the subdomain, not a path segment - e.g. https://fabrikam.visualstudio.com/
+// has an empty path. Everywhere else (dev.azure.com/MyOrg, on-prem Server
+// collection URIs) the collection is the last path segment.
+func azureCollectionAndProject() (collection, teamProject string, ok bool) {
+	teamProject = os.Getenv("SYSTEM_TEAMPROJECT")
+	collectionURI := os.Getenv("SYSTEM_COLLECTIONURI")
+	if teamProject == "" || collectionURI == "" {
+		return "", "", false
+	}
+
+	parsed, err := url.Parse(collectionURI)
+	if err != nil || parsed.Host == "" {
+		return "", "", false
+	}
+
+	if host := strings.ToLower(parsed.Host); strings.HasSuffix(host, ".visualstudio.com") {
+		collection = strings.TrimSuffix(host, ".visualstudio.com")
+		return collection, teamProject, collection != ""
+	}
+
+	segments := strings.Split(strings.Trim(parsed.Path, "/"), "/")
+	collection = segments[len(segments)-1]
+	if collection == "" {
+		return "", "", false
+	}
+
+	return collection, teamProject, true
 }
 
 func getGitRepoInfoFromCircleci() *gitview.GitRepoInfo {
