@@ -234,13 +234,13 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			wantNamespacePath:       nil,
 		},
 		{
-			name:                    "generic external Git repo built on Azure Pipelines: bare name, relabeled to generic_git, no namespace",
+			name:                    "generic external Git repo built on Azure Pipelines: bare name, relabeled to git, no namespace",
 			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
 			systemTeamProject:       "Payment",
 			buildRepositoryName:     "my-repo",
 			buildRepositoryProvider: "Git",
 			wantName:                "my-repo",
-			wantProvider:            "generic_git",
+			wantProvider:            "git",
 			wantNamespacePath:       nil,
 		},
 		{
@@ -254,23 +254,23 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			wantNamespacePath:       nil,
 		},
 		{
-			name:                    "unrecognised provider falls through to the coarse azure-devops default, no path composition",
+			name:                    "unmapped provider is treated as an Azure DevOps-hosted repo (refined), no path composition",
 			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
 			systemTeamProject:       "Payment",
 			buildRepositoryName:     "my-repo",
 			buildRepositoryProvider: "SomeFutureProvider",
 			wantName:                "my-repo",
-			wantProvider:            "azure-devops",
+			wantProvider:            "azure_devops_services",
 			wantNamespacePath:       nil,
 		},
 		{
-			name:                    "TFVC repo (not git-based): bare name, coarse provider, no namespace",
+			name:                    "TFVC repo (not git-based): bare name, refined Azure provider, no namespace",
 			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
 			systemTeamProject:       "Payment",
 			buildRepositoryName:     "my-repo",
 			buildRepositoryProvider: "TfsVersionControl",
 			wantName:                "my-repo",
-			wantProvider:            "azure-devops",
+			wantProvider:            "azure_devops_services",
 			wantNamespacePath:       nil,
 		},
 		{
@@ -343,6 +343,39 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			assert.Equal(t, tt.wantName, result.Name)
 			assert.Equal(t, tt.wantProvider, result.Provider)
 			assert.Equal(t, tt.wantNamespacePath, result.NamespacePath)
+		})
+	}
+}
+
+// TestAzureRepoProvider guards the helper shared by getGitRepoInfoFromAzureDevops
+// and the --repo-provider flag default (DefaultValue): both resolve the provider
+// the same way, so the flag default can't clobber the CI-detected value in
+// mergeGitRepoInfo (the bug where an Azure-built GitHub repo was mislabelled
+// azure-devops).
+func TestAzureRepoProvider(t *testing.T) {
+	tests := []struct {
+		name                    string
+		buildRepositoryProvider string
+		systemCollectionURI     string
+		want                    string
+	}{
+		{name: "GitHub source maps to github", buildRepositoryProvider: "GitHub", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "github"},
+		{name: "GitHub Enterprise source maps to github", buildRepositoryProvider: "GitHubEnterprise", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "github"},
+		{name: "Bitbucket source maps to bitbucket_cloud", buildRepositoryProvider: "Bitbucket", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "bitbucket_cloud"},
+		{name: "generic Git source maps to git", buildRepositoryProvider: "Git", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "git"},
+		{name: "SVN source maps to subversion", buildRepositoryProvider: "Svn", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "subversion"},
+		{name: "TfsGit refines to services on dev.azure.com", buildRepositoryProvider: "TfsGit", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "azure_devops_services"},
+		{name: "empty provider refines to services on dev.azure.com", buildRepositoryProvider: "", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "azure_devops_services"},
+		{name: "TFVC is Azure-hosted and refines to services", buildRepositoryProvider: "TfsVersionControl", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "azure_devops_services"},
+		{name: "unmapped provider is Azure-hosted and refines to on-prem server", buildRepositoryProvider: "SomeFutureProvider", systemCollectionURI: "https://tfs.corp.local/tfs/PRDCollection/", want: "azure_devops_server"},
+		{name: "Azure-hosted degrades to coarse azure-devops without a collection URI", buildRepositoryProvider: "TfsGit", systemCollectionURI: "", want: "azure-devops"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("BUILD_REPOSITORY_PROVIDER", tt.buildRepositoryProvider)
+			t.Setenv("SYSTEM_COLLECTIONURI", tt.systemCollectionURI)
+			assert.Equal(t, tt.want, azureRepoProvider())
 		})
 	}
 }
@@ -434,7 +467,7 @@ func TestValidateRepoFlags(t *testing.T) {
 		{name: "coarse azure-devops is allowed", repoProvider: "azure-devops"},
 		{name: "azure_devops_services is allowed", repoProvider: "azure_devops_services"},
 		{name: "azure_devops_server is allowed", repoProvider: "azure_devops_server"},
-		{name: "generic_git is allowed", repoProvider: "generic_git"},
+		{name: "git is allowed", repoProvider: "git"},
 		{name: "subversion is allowed", repoProvider: "subversion"},
 		{name: "unrecognised provider is rejected", repoProvider: "made-up-provider", wantError: true},
 	}

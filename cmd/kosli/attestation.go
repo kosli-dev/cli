@@ -151,7 +151,7 @@ var allowedRepoProviders = map[string]struct{}{
 	"github": {}, "gitlab": {},
 	"bitbucket": {}, "bitbucket_cloud": {}, "bitbucket_dc": {},
 	"azure-devops": {}, "azure_devops_services": {}, "azure_devops_server": {},
-	"generic_git": {}, "subversion": {},
+	"git": {}, "subversion": {},
 }
 
 func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
@@ -165,7 +165,7 @@ func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
 		if _, ok := allowedRepoProviders[repoProvider]; !ok {
 			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, "+
 				"bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server, "+
-				"generic_git, subversion", repoProvider)
+				"git, subversion", repoProvider)
 		}
 	}
 	return nil
@@ -325,31 +325,37 @@ func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
 		URL:      os.Getenv("BUILD_REPOSITORY_URI"),
 		Name:     os.Getenv("BUILD_REPOSITORY_NAME"),
 		ID:       os.Getenv("BUILD_REPOSITORY_ID"),
-		Provider: "azure-devops",
+		Provider: azureRepoProvider(),
 	}
 
-	// Path composition and provider refinement only make sense for genuine
-	// Azure Repos Git repos (TfsGit); for any other source (GitHub, Bitbucket,
-	// generic Git, SVN, ...) they'd be wrong, so we only relabel the provider
-	// and leave the bare BUILD_REPOSITORY_* name/URL/ID as-is. Empty ⇒ older
-	// agent, assume TfsGit. TFVC (TfsVersionControl) has no matching provider
-	// label, so it keeps the coarse "azure-devops" default.
-	switch provider := os.Getenv("BUILD_REPOSITORY_PROVIDER"); provider {
+	// Only genuine Azure Repos Git repos (TfsGit) get a composed path; other
+	// sources keep the bare BUILD_REPOSITORY_NAME. Empty ⇒ older agent, assume TfsGit.
+	switch os.Getenv("BUILD_REPOSITORY_PROVIDER") {
 	case "TfsGit", "":
 		info.Name = azureFullPathRepoName()
-		info.Provider = azureDevopsProvider()
 		info.NamespacePath = azureNamespacePath()
-	case "GitHub", "GitHubEnterprise":
-		info.Provider = "github"
-	case "Bitbucket":
-		info.Provider = "bitbucket_cloud"
-	case "Git":
-		info.Provider = "generic_git"
-	case "Svn":
-		info.Provider = "subversion"
 	}
 
 	return info
+}
+
+// azureRepoProvider maps BUILD_REPOSITORY_PROVIDER to a Kosli repo provider.
+// Anything not recognised as an external source (including TFVC and unmapped
+// values) is treated as Azure DevOps-hosted and refined via azureDevopsProvider.
+// Shared with the --repo-provider flag default so the two can't disagree.
+func azureRepoProvider() string {
+	switch os.Getenv("BUILD_REPOSITORY_PROVIDER") {
+	case "GitHub", "GitHubEnterprise":
+		return "github"
+	case "Bitbucket":
+		return "bitbucket_cloud"
+	case "Git":
+		return "git"
+	case "Svn":
+		return "subversion"
+	default:
+		return azureDevopsProvider()
+	}
 }
 
 // splitNonEmpty splits s on "/", returning nil for an empty string so the
