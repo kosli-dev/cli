@@ -207,11 +207,10 @@ func DefaultValue(ci, flag string) string {
 	_, inDocs := os.LookupEnv("DOCS")
 	_, inTests := os.LookupEnv("KOSLI_TESTS")
 	if !inDocs && !inTests {
-		// Azure DevOps Services vs Server can't be captured as a static
-		// template like the other CI defaults: it depends on the
-		// SYSTEM_COLLECTIONURI host at runtime.
+		// Shares azureRepoProvider() with getGitRepoInfoFromAzureDevops so this
+		// default can't clobber the CI-detected provider in mergeGitRepoInfo.
 		if ci == azureDevops && flag == "repo-provider" {
-			return azureDevopsProvider()
+			return azureRepoProvider(os.Getenv("BUILD_REPOSITORY_PROVIDER"), parseAzureCollectionURI())
 		}
 		if v, ok := ciTemplates[ci][flag]; ok {
 			result := os.ExpandEnv(v)

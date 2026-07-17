@@ -73,6 +73,14 @@ func (suite *CliUtilsTestSuite) TestWhichCI() {
 		},
 	} {
 		suite.Run(t.name, func() {
+			// WhichCI() uses os.LookupEnv (presence, not value), so these must be
+			// unset outright rather than set to "" - clearing them before each case
+			// keeps the test deterministic even when the developer's shell has one
+			// exported ambiently (e.g. TF_BUILD, from manually simulating Azure
+			// Pipelines).
+			for _, envVar := range whichCIEnvVars {
+				require.NoError(suite.T(), os.Unsetenv(envVar))
+			}
 			suite.setEnvVars(t.envVars)
 			actual := WhichCI()
 			// clean up
@@ -80,6 +88,13 @@ func (suite *CliUtilsTestSuite) TestWhichCI() {
 			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestWhichCI: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
 	}
+}
+
+// whichCIEnvVars lists every env var WhichCI() checks, so tests can clear
+// ambient values from the developer's shell before asserting on its result.
+var whichCIEnvVars = []string{
+	"BITBUCKET_BUILD_NUMBER", "GITHUB_RUN_NUMBER", "TEAMCITY_VERSION",
+	"GITLAB_CI", "TF_BUILD", "CIRCLECI", "CODEBUILD_CI", "JENKINS_URL",
 }
 
 func (suite *CliUtilsTestSuite) TestDefaultValue() {
@@ -254,9 +269,12 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 		{
 			name: "Lookup repo-provider for Azure DevOps on dev.azure.com refines to the Services value.",
 			args: args{
-				ci:               azureDevops,
-				flag:             "repo-provider",
-				envVars:          map[string]string{"SYSTEM_COLLECTIONURI": "https://dev.azure.com/MyOrg/"},
+				ci:   azureDevops,
+				flag: "repo-provider",
+				// BUILD_REPOSITORY_PROVIDER is explicitly cleared (not just SYSTEM_COLLECTIONURI
+				// set) so this is deterministic even if the developer's shell has it exported
+				// ambiently, e.g. BUILD_REPOSITORY_PROVIDER=Svn from manual Azure Pipelines testing.
+				envVars:          map[string]string{"SYSTEM_COLLECTIONURI": "https://dev.azure.com/MyOrg/", "BUILD_REPOSITORY_PROVIDER": ""},
 				unsetTestsEnvVar: true,
 			},
 			want: "azure_devops_services",
@@ -266,7 +284,7 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 			args: args{
 				ci:               azureDevops,
 				flag:             "repo-provider",
-				envVars:          map[string]string{"SYSTEM_COLLECTIONURI": "https://tfs.corp.local/tfs/PRDCollection/"},
+				envVars:          map[string]string{"SYSTEM_COLLECTIONURI": "https://tfs.corp.local/tfs/PRDCollection/", "BUILD_REPOSITORY_PROVIDER": ""},
 				unsetTestsEnvVar: true,
 			},
 			want: "azure_devops_server",
@@ -276,6 +294,7 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 			args: args{
 				ci:               azureDevops,
 				flag:             "repo-provider",
+				envVars:          map[string]string{"BUILD_REPOSITORY_PROVIDER": "", "SYSTEM_COLLECTIONURI": ""},
 				unsetTestsEnvVar: true,
 			},
 			want: "azure-devops",

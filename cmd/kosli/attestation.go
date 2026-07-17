@@ -123,7 +123,9 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 //
 // --repository only overrides the CI-detected name when set explicitly (or when
 // base has none), so its short default doesn't clobber the fuller CI value
-// (e.g. GitLab's CI_PROJECT_PATH).
+// An explicit --repository points at a
+// (possibly different) repo, so any CI-detected NamespacePath/AdditionalInfo
+// is cleared along with it rather than left describing the old one.
 func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repoProvider string, repoNameExplicit bool) *gitview.GitRepoInfo {
 	if base == nil {
 		base = &gitview.GitRepoInfo{}
@@ -131,7 +133,11 @@ func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repo
 	if repoID != "" {
 		base.ID = repoID
 	}
-	if repoName != "" && (repoNameExplicit || base.Name == "") {
+	if repoName != "" && repoNameExplicit {
+		base.Name = repoName
+		base.NamespacePath = nil
+		base.AdditionalInfo = nil
+	} else if repoName != "" && base.Name == "" {
 		base.Name = repoName
 	}
 	if repoURL != "" {
@@ -147,11 +153,17 @@ func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repo
 	return base
 }
 
-var allowedRepoProviders = map[string]struct{}{
-	"github": {}, "gitlab": {},
-	"bitbucket": {}, "bitbucket_cloud": {}, "bitbucket_dc": {},
-	"azure-devops": {}, "azure_devops_services": {}, "azure_devops_server": {},
-}
+// repoProviderList is the single source of truth for the --repo-provider
+// allowed values
+const repoProviderList = "github, gitlab, bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server, git, subversion"
+
+var allowedRepoProviders = func() map[string]struct{} {
+	m := make(map[string]struct{})
+	for _, provider := range strings.Split(repoProviderList, ", ") {
+		m[provider] = struct{}{}
+	}
+	return m
+}()
 
 func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
 	if repoURL != "" && validateURL {
@@ -162,8 +174,7 @@ func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
 	}
 	if repoProvider != "" {
 		if _, ok := allowedRepoProviders[repoProvider]; !ok {
-			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, "+
-				"bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server", repoProvider)
+			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: %s", repoProvider, repoProviderList)
 		}
 	}
 	return nil
@@ -294,7 +305,10 @@ func getGitRepoInfoFromGitLab() *gitview.GitRepoInfo {
 
 func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 	repoFullName := os.Getenv("BITBUCKET_REPO_FULL_NAME")
-	workspace, _, _ := strings.Cut(repoFullName, "/")
+	workspace, _, hasWorkspace := strings.Cut(repoFullName, "/")
+	if !hasWorkspace {
+		workspace = ""
+	}
 
 	var additionalInfo map[string]interface{}
 	if projectKey := os.Getenv("BITBUCKET_PROJECT_KEY"); projectKey != "" {
@@ -305,8 +319,7 @@ func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 		URL:  os.Getenv("BITBUCKET_GIT_HTTP_ORIGIN"),
 		Name: repoFullName,
 		ID:   os.Getenv("BITBUCKET_REPO_UUID"),
-		// Bitbucket Pipelines (the only CI this WhichCI() branch detects, via
-		// BITBUCKET_BUILD_NUMBER) exists for Bitbucket Cloud only, so this is
+		// Bitbucket Pipelines exists for Bitbucket Cloud only, so this is
 		// a known fact rather than a heuristic. Self-hosted Data Center users
 		// run a different CI and must pass --repo-provider bitbucket_dc themselves.
 		Provider: "bitbucket_cloud",
@@ -319,12 +332,55 @@ func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 }
 
 func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
-	return &gitview.GitRepoInfo{
-		URL:           os.Getenv("BUILD_REPOSITORY_URI"),
-		Name:          azureFullPathRepoName(),
-		ID:            os.Getenv("BUILD_REPOSITORY_ID"),
-		Provider:      azureDevopsProvider(),
-		NamespacePath: azureNamespacePath(),
+	buildRepositoryProvider := os.Getenv("BUILD_REPOSITORY_PROVIDER")
+	repoName := os.Getenv("BUILD_REPOSITORY_NAME")
+	teamProject := os.Getenv("SYSTEM_TEAMPROJECT")
+	collectionURI := parseAzureCollectionURI()
+
+	info := &gitview.GitRepoInfo{
+		URL:      os.Getenv("BUILD_REPOSITORY_URI"),
+		Name:     repoName,
+		ID:       os.Getenv("BUILD_REPOSITORY_ID"),
+		Provider: azureRepoProvider(buildRepositoryProvider, collectionURI),
+	}
+
+	// Only genuine Azure Repos Git repos (TfsGit) get a composed path; other
+	// sources keep the bare BUILD_REPOSITORY_NAME. Empty ⇒ older agent, assume TfsGit.
+	// repoName == "" is left bare too (rather than composing a trailing-slash
+	// "collection/project/" name) so mergeGitRepoInfo's empty-Name guard applies.
+	switch buildRepositoryProvider {
+	case "TfsGit", "":
+		if repoName != "" && collectionURI.valid && collectionURI.collection != "" && teamProject != "" {
+			info.NamespacePath = []string{collectionURI.collection, teamProject}
+			info.Name = strings.Join(append(info.NamespacePath, repoName), "/")
+		}
+	}
+
+	return info
+}
+
+// azureRepoProvider maps BUILD_REPOSITORY_PROVIDER to a Kosli repo provider.
+// Anything not recognised as an external source (including TFVC and unmapped
+// values) is treated as Azure DevOps-hosted and refined via collectionURI.
+// Shared with the --repo-provider flag default so the two can't disagree.
+func azureRepoProvider(buildRepositoryProvider string, collectionURI azureCollectionURI) string {
+	switch buildRepositoryProvider {
+	case "GitHub", "GitHubEnterprise":
+		return "github"
+	case "Bitbucket":
+		return "bitbucket_cloud"
+	case "Git":
+		return "git"
+	case "Svn":
+		return "subversion"
+	default:
+		if !collectionURI.valid {
+			return "azure-devops"
+		}
+		if collectionURI.isServices {
+			return "azure_devops_services"
+		}
+		return "azure_devops_server"
 	}
 }
 
@@ -337,80 +393,42 @@ func splitNonEmpty(s string) []string {
 	return strings.Split(s, "/")
 }
 
-// azureDevopsProvider refines the coarse "azure-devops" provider to
-// azure_devops_services or azure_devops_server based on SYSTEM_COLLECTIONURI's
-// host (dev.azure.com / *.visualstudio.com are cloud-hosted Services;
-// anything else is on-prem Server). Falls back to the coarse value when the
-// collection URI is missing or has no host, so the server's own URL-based
-// derivation fallback still applies.
-func azureDevopsProvider() string {
+// azureCollectionURI holds the pieces derived from parsing SYSTEM_COLLECTIONURI
+// once, shared by provider refinement (services vs on-prem server) and
+// namespace/name composition so the two can't classify the same URI
+// differently.
+type azureCollectionURI struct {
+	valid      bool   // URI parsed and had a non-empty host
+	isServices bool   // cloud-hosted Services host, vs on-prem Server
+	collection string // org/collection name; empty if it couldn't be determined
+}
+
+// parseAzureCollectionURI classifies SYSTEM_COLLECTIONURI's host as
+// cloud-hosted Services (*.dev.azure.com or the legacy
+// *.visualstudio.com) vs on-prem Server, and extracts the collection/org name.
+//
+// On *.visualstudio.com hosts the org name is the first label of the
+// subdomain, not a path segment. Everywhere else (dev.azure.com/MyOrg, on-prem Server
+// collection URIs) the collection is the last path segment.
+func parseAzureCollectionURI() azureCollectionURI {
 	parsed, err := url.Parse(os.Getenv("SYSTEM_COLLECTIONURI"))
 	if err != nil || parsed.Host == "" {
-		return "azure-devops"
+		return azureCollectionURI{}
 	}
+
 	host := strings.ToLower(parsed.Host)
-	if host == "dev.azure.com" || strings.HasSuffix(host, ".visualstudio.com") {
-		return "azure_devops_services"
-	}
-	return "azure_devops_server"
-}
+	result := azureCollectionURI{valid: true}
 
-// azureFullPathRepoName composes the full namespace path for an Azure DevOps
-// repo (`Collection/Project/repo` on-prem, `Org/Project/repo` in Services)
-// from SYSTEM_COLLECTIONURI and SYSTEM_TEAMPROJECT, since BUILD_REPOSITORY_NAME
-// alone is just the bare repo name. Falls back to the bare name if either
-// piece is unavailable, so unupgraded setups degrade gracefully.
-func azureFullPathRepoName() string {
-	repoName := os.Getenv("BUILD_REPOSITORY_NAME")
-	collection, teamProject, ok := azureCollectionAndProject()
-	if !ok {
-		return repoName
-	}
-	return fmt.Sprintf("%s/%s/%s", collection, teamProject, repoName)
-}
-
-// azureNamespacePath returns the [collection, project] path ahead of the repo
-// name itself, or nil when either piece is unavailable.
-func azureNamespacePath() []string {
-	collection, teamProject, ok := azureCollectionAndProject()
-	if !ok {
-		return nil
-	}
-	return []string{collection, teamProject}
-}
-
-// azureCollectionAndProject extracts the collection/org name and
-// SYSTEM_TEAMPROJECT. ok is false if either piece is missing or
-// SYSTEM_COLLECTIONURI can't be parsed into a non-empty collection.
-//
-// On *.visualstudio.com hosts (the legacy Services URL format) the org name
-// is the subdomain, not a path segment - e.g. https://fabrikam.visualstudio.com/
-// has an empty path. Everywhere else (dev.azure.com/MyOrg, on-prem Server
-// collection URIs) the collection is the last path segment.
-func azureCollectionAndProject() (collection, teamProject string, ok bool) {
-	teamProject = os.Getenv("SYSTEM_TEAMPROJECT")
-	collectionURI := os.Getenv("SYSTEM_COLLECTIONURI")
-	if teamProject == "" || collectionURI == "" {
-		return "", "", false
+	if strings.HasSuffix(host, ".visualstudio.com") {
+		result.isServices = true
+		result.collection, _, _ = strings.Cut(host, ".")
+		return result
 	}
 
-	parsed, err := url.Parse(collectionURI)
-	if err != nil || parsed.Host == "" {
-		return "", "", false
-	}
-
-	if host := strings.ToLower(parsed.Host); strings.HasSuffix(host, ".visualstudio.com") {
-		collection = strings.TrimSuffix(host, ".visualstudio.com")
-		return collection, teamProject, collection != ""
-	}
-
+	result.isServices = host == "dev.azure.com" || strings.HasSuffix(host, ".dev.azure.com")
 	segments := strings.Split(strings.Trim(parsed.Path, "/"), "/")
-	collection = segments[len(segments)-1]
-	if collection == "" {
-		return "", "", false
-	}
-
-	return collection, teamProject, true
+	result.collection = segments[len(segments)-1]
+	return result
 }
 
 func getGitRepoInfoFromCircleci() *gitview.GitRepoInfo {
@@ -420,9 +438,3 @@ func getGitRepoInfoFromCircleci() *gitview.GitRepoInfo {
 		Provider: "circleci",
 	}
 }
-
-// func getGitRepoInfoFromCodeBuild() *gitview.GitRepoInfo {
-// 	return &gitview.GitRepoInfo{
-// 		URL: os.Getenv("CODEBUILD_SOURCE_REPO_URL"),
-// 	}
-// }

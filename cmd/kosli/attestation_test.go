@@ -5,22 +5,25 @@ import (
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMergeGitRepoInfo(t *testing.T) {
 	tests := []struct {
-		name             string
-		base             *gitview.GitRepoInfo
-		repoID           string
-		repoName         string
-		repoURL          string
-		repoProvider     string
-		repoNameExplicit bool
-		wantNil          bool
-		wantID           string
-		wantName         string
-		wantURL          string
-		wantProvider     string
+		name               string
+		base               *gitview.GitRepoInfo
+		repoID             string
+		repoName           string
+		repoURL            string
+		repoProvider       string
+		repoNameExplicit   bool
+		wantNil            bool
+		wantID             string
+		wantName           string
+		wantURL            string
+		wantProvider       string
+		wantNamespacePath  []string
+		wantAdditionalInfo map[string]interface{}
 	}{
 		{
 			name:    "nil when both ID and Name are empty",
@@ -109,6 +112,35 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			wantURL:          "https://gitlab.com/cyber-dojo/creator",
 		},
 		{
+			name: "explicit --repository override clears stale CI-detected NamespacePath/AdditionalInfo",
+			base: &gitview.GitRepoInfo{
+				ID: "repo-id", Name: "MyOrg/Payment/my-repo", URL: "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
+				NamespacePath: []string{"MyOrg", "Payment"}, AdditionalInfo: map[string]interface{}{"project_key": "PAY"},
+			},
+			repoName:         "my-fork/repo",
+			repoProvider:     "github",
+			repoNameExplicit: true,
+			wantNil:          false,
+			wantID:           "repo-id",
+			wantName:         "my-fork/repo",
+			wantURL:          "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
+			wantProvider:     "github",
+		},
+		{
+			name: "CI-detected NamespacePath/AdditionalInfo are preserved when --repository is not set explicitly",
+			base: &gitview.GitRepoInfo{
+				ID: "repo-id", Name: "MyOrg/Payment/my-repo", URL: "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
+				NamespacePath: []string{"MyOrg", "Payment"}, AdditionalInfo: map[string]interface{}{"project_key": "PAY"},
+			},
+			repoNameExplicit:   false,
+			wantNil:            false,
+			wantID:             "repo-id",
+			wantName:           "MyOrg/Payment/my-repo",
+			wantURL:            "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
+			wantNamespacePath:  []string{"MyOrg", "Payment"},
+			wantAdditionalInfo: map[string]interface{}{"project_key": "PAY"},
+		},
+		{
 			name:             "flag name applied when base has no name even if not explicit",
 			repoID:           "flag-id",
 			repoName:         "flag-name",
@@ -159,19 +191,22 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			assert.Equal(t, tt.wantName, result.Name)
 			assert.Equal(t, tt.wantURL, result.URL)
 			assert.Equal(t, tt.wantProvider, result.Provider)
+			assert.Equal(t, tt.wantNamespacePath, result.NamespacePath)
+			assert.Equal(t, tt.wantAdditionalInfo, result.AdditionalInfo)
 		})
 	}
 }
 
 func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 	tests := []struct {
-		name                string
-		systemCollectionURI string
-		systemTeamProject   string
-		buildRepositoryName string
-		wantName            string
-		wantProvider        string
-		wantNamespacePath   []string
+		name                    string
+		systemCollectionURI     string
+		systemTeamProject       string
+		buildRepositoryName     string
+		buildRepositoryProvider string
+		wantName                string
+		wantProvider            string
+		wantNamespacePath       []string
 	}{
 		{
 			name:                "Azure DevOps Services composes Org/Project/repo",
@@ -183,6 +218,96 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			wantNamespacePath:   []string{"MyOrg", "Payment"},
 		},
 		{
+			name:                    "TfsGit provider composes full path and refines provider (regression guard)",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "TfsGit",
+			wantName:                "MyOrg/Payment/my-repo",
+			wantProvider:            "azure_devops_services",
+			wantNamespacePath:       []string{"MyOrg", "Payment"},
+		},
+		{
+			name:                    "empty provider defaults to TfsGit behaviour (back-compat)",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "",
+			wantName:                "MyOrg/Payment/my-repo",
+			wantProvider:            "azure_devops_services",
+			wantNamespacePath:       []string{"MyOrg", "Payment"},
+		},
+		{
+			name:                    "GitHub-hosted repo built on Azure Pipelines: bare name, relabeled to github, no namespace",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-org/my-repo",
+			buildRepositoryProvider: "GitHub",
+			wantName:                "my-org/my-repo",
+			wantProvider:            "github",
+			wantNamespacePath:       nil,
+		},
+		{
+			name:                    "GitHub Enterprise-hosted repo built on Azure Pipelines: bare name, relabeled to github, no namespace",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-org/my-repo",
+			buildRepositoryProvider: "GitHubEnterprise",
+			wantName:                "my-org/my-repo",
+			wantProvider:            "github",
+			wantNamespacePath:       nil,
+		},
+		{
+			name:                    "Bitbucket-hosted repo built on Azure Pipelines: bare name, relabeled to bitbucket_cloud, no namespace",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "Bitbucket",
+			wantName:                "my-repo",
+			wantProvider:            "bitbucket_cloud",
+			wantNamespacePath:       nil,
+		},
+		{
+			name:                    "generic external Git repo built on Azure Pipelines: bare name, relabeled to git, no namespace",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "Git",
+			wantName:                "my-repo",
+			wantProvider:            "git",
+			wantNamespacePath:       nil,
+		},
+		{
+			name:                    "Subversion repo built on Azure Pipelines: bare name, relabeled to subversion, no namespace",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "Svn",
+			wantName:                "my-repo",
+			wantProvider:            "subversion",
+			wantNamespacePath:       nil,
+		},
+		{
+			name:                    "unmapped provider is treated as an Azure DevOps-hosted repo (refined), no path composition",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "SomeFutureProvider",
+			wantName:                "my-repo",
+			wantProvider:            "azure_devops_services",
+			wantNamespacePath:       nil,
+		},
+		{
+			name:                    "TFVC repo (not git-based): bare name, refined Azure provider, no namespace",
+			systemCollectionURI:     "https://dev.azure.com/MyOrg/",
+			systemTeamProject:       "Payment",
+			buildRepositoryName:     "my-repo",
+			buildRepositoryProvider: "TfsVersionControl",
+			wantName:                "my-repo",
+			wantProvider:            "azure_devops_services",
+			wantNamespacePath:       nil,
+		},
+		{
 			name:                "Azure DevOps Services on a *.visualstudio.com host",
 			systemCollectionURI: "https://fabrikam.visualstudio.com/",
 			systemTeamProject:   "Payment",
@@ -190,6 +315,24 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			wantName:            "fabrikam/Payment/my-repo",
 			wantProvider:        "azure_devops_services",
 			wantNamespacePath:   []string{"fabrikam", "Payment"},
+		},
+		{
+			name:                "Azure DevOps Services on a legacy *.vsrm.visualstudio.com release-pipeline host extracts the org, not org.vsrm",
+			systemCollectionURI: "https://fabrikam.vsrm.visualstudio.com/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "fabrikam/Payment/my-repo",
+			wantProvider:        "azure_devops_services",
+			wantNamespacePath:   []string{"fabrikam", "Payment"},
+		},
+		{
+			name:                "Azure DevOps Services on a vsrm.dev.azure.com release-pipeline host still composes and refines to services",
+			systemCollectionURI: "https://vsrm.dev.azure.com/MyOrg/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "MyOrg/Payment/my-repo",
+			wantProvider:        "azure_devops_services",
+			wantNamespacePath:   []string{"MyOrg", "Payment"},
 		},
 		{
 			name:                "Azure DevOps Server (on-prem) composes Collection/Project/repo",
@@ -243,6 +386,7 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			t.Setenv("SYSTEM_COLLECTIONURI", tt.systemCollectionURI)
 			t.Setenv("SYSTEM_TEAMPROJECT", tt.systemTeamProject)
 			t.Setenv("BUILD_REPOSITORY_NAME", tt.buildRepositoryName)
+			t.Setenv("BUILD_REPOSITORY_PROVIDER", tt.buildRepositoryProvider)
 			t.Setenv("BUILD_REPOSITORY_URI", "https://dev.azure.com/MyOrg/Payment/_git/my-repo")
 			t.Setenv("BUILD_REPOSITORY_ID", "repo-id")
 
@@ -255,35 +399,81 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 	}
 }
 
+// TestAzureRepoProvider guards the helper shared by getGitRepoInfoFromAzureDevops
+// and the --repo-provider flag default (DefaultValue): both resolve the provider
+// the same way, so the flag default can't clobber the CI-detected value in
+// mergeGitRepoInfo (the bug where an Azure-built GitHub repo was mislabelled
+// azure-devops).
+func TestAzureRepoProvider(t *testing.T) {
+	tests := []struct {
+		name                    string
+		buildRepositoryProvider string
+		systemCollectionURI     string
+		want                    string
+	}{
+		{name: "GitHub source maps to github", buildRepositoryProvider: "GitHub", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "github"},
+		{name: "GitHub Enterprise source maps to github", buildRepositoryProvider: "GitHubEnterprise", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "github"},
+		{name: "Bitbucket source maps to bitbucket_cloud", buildRepositoryProvider: "Bitbucket", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "bitbucket_cloud"},
+		{name: "generic Git source maps to git", buildRepositoryProvider: "Git", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "git"},
+		{name: "SVN source maps to subversion", buildRepositoryProvider: "Svn", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "subversion"},
+		{name: "TfsGit refines to services on dev.azure.com", buildRepositoryProvider: "TfsGit", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "azure_devops_services"},
+		{name: "empty provider refines to services on dev.azure.com", buildRepositoryProvider: "", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "azure_devops_services"},
+		{name: "TFVC is Azure-hosted and refines to services", buildRepositoryProvider: "TfsVersionControl", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "azure_devops_services"},
+		{name: "unmapped provider is Azure-hosted and refines to on-prem server", buildRepositoryProvider: "SomeFutureProvider", systemCollectionURI: "https://tfs.corp.local/tfs/PRDCollection/", want: "azure_devops_server"},
+		{name: "Azure-hosted degrades to coarse azure-devops without a collection URI", buildRepositoryProvider: "TfsGit", systemCollectionURI: "", want: "azure-devops"},
+		{name: "vsrm.dev.azure.com (classic release pipelines) is still Services", buildRepositoryProvider: "TfsGit", systemCollectionURI: "https://vsrm.dev.azure.com/MyOrg/", want: "azure_devops_services"},
+		{name: "legacy org.vsrm.visualstudio.com (classic release pipelines) is still Services", buildRepositoryProvider: "TfsGit", systemCollectionURI: "https://fabrikam.vsrm.visualstudio.com/", want: "azure_devops_services"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("BUILD_REPOSITORY_PROVIDER", tt.buildRepositoryProvider)
+			t.Setenv("SYSTEM_COLLECTIONURI", tt.systemCollectionURI)
+			assert.Equal(t, tt.want, azureRepoProvider(tt.buildRepositoryProvider, parseAzureCollectionURI()))
+		})
+	}
+}
+
 func TestGetGitRepoInfoFromBitbucket(t *testing.T) {
 	tests := []struct {
-		name                string
-		bitbucketProjectKey string
-		wantAdditionalInfo  map[string]interface{}
+		name                  string
+		bitbucketRepoFullName string
+		bitbucketProjectKey   string
+		wantNamespacePath     []string
+		wantAdditionalInfo    map[string]interface{}
 	}{
 		{
-			name:                "with project key",
-			bitbucketProjectKey: "PROJ",
-			wantAdditionalInfo:  map[string]interface{}{"project_key": "PROJ"},
+			name:                  "with project key",
+			bitbucketRepoFullName: "myteam/my-repo",
+			bitbucketProjectKey:   "PROJ",
+			wantNamespacePath:     []string{"myteam"},
+			wantAdditionalInfo:    map[string]interface{}{"project_key": "PROJ"},
 		},
 		{
-			name:                "without project key",
-			bitbucketProjectKey: "",
-			wantAdditionalInfo:  nil,
+			name:                  "without project key",
+			bitbucketRepoFullName: "myteam/my-repo",
+			bitbucketProjectKey:   "",
+			wantNamespacePath:     []string{"myteam"},
+			wantAdditionalInfo:    nil,
+		},
+		{
+			name:                  "BITBUCKET_REPO_FULL_NAME with no '/' (malformed/simulated env) has no namespace",
+			bitbucketRepoFullName: "my-repo",
+			wantNamespacePath:     nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv("BITBUCKET_GIT_HTTP_ORIGIN", "https://bitbucket.org/myteam/my-repo.git")
-			t.Setenv("BITBUCKET_REPO_FULL_NAME", "myteam/my-repo")
+			t.Setenv("BITBUCKET_REPO_FULL_NAME", tt.bitbucketRepoFullName)
 			t.Setenv("BITBUCKET_REPO_UUID", "repo-uuid")
 			t.Setenv("BITBUCKET_PROJECT_KEY", tt.bitbucketProjectKey)
 
 			result := getGitRepoInfoFromBitbucket()
 
 			assert.Equal(t, "bitbucket_cloud", result.Provider)
-			assert.Equal(t, []string{"myteam"}, result.NamespacePath)
+			assert.Equal(t, tt.wantNamespacePath, result.NamespacePath)
 			assert.Equal(t, tt.wantAdditionalInfo, result.AdditionalInfo)
 		})
 	}
@@ -342,6 +532,8 @@ func TestValidateRepoFlags(t *testing.T) {
 		{name: "coarse azure-devops is allowed", repoProvider: "azure-devops"},
 		{name: "azure_devops_services is allowed", repoProvider: "azure_devops_services"},
 		{name: "azure_devops_server is allowed", repoProvider: "azure_devops_server"},
+		{name: "git is allowed", repoProvider: "git"},
+		{name: "subversion is allowed", repoProvider: "subversion"},
 		{name: "unrecognised provider is rejected", repoProvider: "made-up-provider", wantError: true},
 	}
 
@@ -349,7 +541,8 @@ func TestValidateRepoFlags(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateRepoFlags("", tt.repoProvider, false)
 			if tt.wantError {
-				assert.Error(t, err)
+				require.Error(t, err)
+				assert.Equal(t, "--repo-provider 'made-up-provider' is not allowed. Must be one of: "+repoProviderList, err.Error())
 			} else {
 				assert.NoError(t, err)
 			}
