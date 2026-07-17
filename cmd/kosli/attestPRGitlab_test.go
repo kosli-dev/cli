@@ -161,7 +161,7 @@ func (suite *AttestGitlabPRCommandTestSuite) TestAttestGitlabPRCmd() {
 			wantError: true,
 			name:      "17 fails when --repo-provider is not an allowed value",
 			cmd:       fmt.Sprintf("attest pullrequest gitlab --name foo --commit %s --gitlab-token fake --gitlab-org myorg --repository myrepo --repo-provider jenkins %s", suite.commitWithPR, suite.defaultKosliArguments),
-			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server\n",
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server, git, subversion\n",
 		},
 		{
 			wantError: true,
