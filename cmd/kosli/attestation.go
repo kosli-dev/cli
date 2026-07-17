@@ -296,7 +296,10 @@ func getGitRepoInfoFromGitLab() *gitview.GitRepoInfo {
 
 func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 	repoFullName := os.Getenv("BITBUCKET_REPO_FULL_NAME")
-	workspace, _, _ := strings.Cut(repoFullName, "/")
+	workspace, _, hasWorkspace := strings.Cut(repoFullName, "/")
+	if !hasWorkspace {
+		workspace = ""
+	}
 
 	var additionalInfo map[string]interface{}
 	if projectKey := os.Getenv("BITBUCKET_PROJECT_KEY"); projectKey != "" {

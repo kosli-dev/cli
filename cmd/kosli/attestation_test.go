@@ -402,33 +402,44 @@ func TestAzureRepoProvider(t *testing.T) {
 
 func TestGetGitRepoInfoFromBitbucket(t *testing.T) {
 	tests := []struct {
-		name                string
-		bitbucketProjectKey string
-		wantAdditionalInfo  map[string]interface{}
+		name                  string
+		bitbucketRepoFullName string
+		bitbucketProjectKey   string
+		wantNamespacePath     []string
+		wantAdditionalInfo    map[string]interface{}
 	}{
 		{
-			name:                "with project key",
-			bitbucketProjectKey: "PROJ",
-			wantAdditionalInfo:  map[string]interface{}{"project_key": "PROJ"},
+			name:                  "with project key",
+			bitbucketRepoFullName: "myteam/my-repo",
+			bitbucketProjectKey:   "PROJ",
+			wantNamespacePath:     []string{"myteam"},
+			wantAdditionalInfo:    map[string]interface{}{"project_key": "PROJ"},
 		},
 		{
-			name:                "without project key",
-			bitbucketProjectKey: "",
-			wantAdditionalInfo:  nil,
+			name:                  "without project key",
+			bitbucketRepoFullName: "myteam/my-repo",
+			bitbucketProjectKey:   "",
+			wantNamespacePath:     []string{"myteam"},
+			wantAdditionalInfo:    nil,
+		},
+		{
+			name:                  "BITBUCKET_REPO_FULL_NAME with no '/' (malformed/simulated env) has no namespace",
+			bitbucketRepoFullName: "my-repo",
+			wantNamespacePath:     nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv("BITBUCKET_GIT_HTTP_ORIGIN", "https://bitbucket.org/myteam/my-repo.git")
-			t.Setenv("BITBUCKET_REPO_FULL_NAME", "myteam/my-repo")
+			t.Setenv("BITBUCKET_REPO_FULL_NAME", tt.bitbucketRepoFullName)
 			t.Setenv("BITBUCKET_REPO_UUID", "repo-uuid")
 			t.Setenv("BITBUCKET_PROJECT_KEY", tt.bitbucketProjectKey)
 
 			result := getGitRepoInfoFromBitbucket()
 
 			assert.Equal(t, "bitbucket_cloud", result.Provider)
-			assert.Equal(t, []string{"myteam"}, result.NamespacePath)
+			assert.Equal(t, tt.wantNamespacePath, result.NamespacePath)
 			assert.Equal(t, tt.wantAdditionalInfo, result.AdditionalInfo)
 		})
 	}
