@@ -123,7 +123,9 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 //
 // --repository only overrides the CI-detected name when set explicitly (or when
 // base has none), so its short default doesn't clobber the fuller CI value
-// (e.g. GitLab's CI_PROJECT_PATH).
+// (e.g. GitLab's CI_PROJECT_PATH). An explicit --repository points at a
+// (possibly different) repo, so any CI-detected NamespacePath/AdditionalInfo
+// is cleared along with it rather than left describing the old one.
 func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repoProvider string, repoNameExplicit bool) *gitview.GitRepoInfo {
 	if base == nil {
 		base = &gitview.GitRepoInfo{}
@@ -131,7 +133,11 @@ func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repo
 	if repoID != "" {
 		base.ID = repoID
 	}
-	if repoName != "" && (repoNameExplicit || base.Name == "") {
+	if repoName != "" && repoNameExplicit {
+		base.Name = repoName
+		base.NamespacePath = nil
+		base.AdditionalInfo = nil
+	} else if repoName != "" && base.Name == "" {
 		base.Name = repoName
 	}
 	if repoURL != "" {

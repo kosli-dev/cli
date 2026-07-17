@@ -9,18 +9,20 @@ import (
 
 func TestMergeGitRepoInfo(t *testing.T) {
 	tests := []struct {
-		name             string
-		base             *gitview.GitRepoInfo
-		repoID           string
-		repoName         string
-		repoURL          string
-		repoProvider     string
-		repoNameExplicit bool
-		wantNil          bool
-		wantID           string
-		wantName         string
-		wantURL          string
-		wantProvider     string
+		name               string
+		base               *gitview.GitRepoInfo
+		repoID             string
+		repoName           string
+		repoURL            string
+		repoProvider       string
+		repoNameExplicit   bool
+		wantNil            bool
+		wantID             string
+		wantName           string
+		wantURL            string
+		wantProvider       string
+		wantNamespacePath  []string
+		wantAdditionalInfo map[string]interface{}
 	}{
 		{
 			name:    "nil when both ID and Name are empty",
@@ -109,6 +111,35 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			wantURL:          "https://gitlab.com/cyber-dojo/creator",
 		},
 		{
+			name: "explicit --repository override clears stale CI-detected NamespacePath/AdditionalInfo",
+			base: &gitview.GitRepoInfo{
+				ID: "repo-id", Name: "MyOrg/Payment/my-repo", URL: "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
+				NamespacePath: []string{"MyOrg", "Payment"}, AdditionalInfo: map[string]interface{}{"project_key": "PAY"},
+			},
+			repoName:         "my-fork/repo",
+			repoProvider:     "github",
+			repoNameExplicit: true,
+			wantNil:          false,
+			wantID:           "repo-id",
+			wantName:         "my-fork/repo",
+			wantURL:          "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
+			wantProvider:     "github",
+		},
+		{
+			name: "CI-detected NamespacePath/AdditionalInfo are preserved when --repository is not set explicitly",
+			base: &gitview.GitRepoInfo{
+				ID: "repo-id", Name: "MyOrg/Payment/my-repo", URL: "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
+				NamespacePath: []string{"MyOrg", "Payment"}, AdditionalInfo: map[string]interface{}{"project_key": "PAY"},
+			},
+			repoNameExplicit:   false,
+			wantNil:            false,
+			wantID:             "repo-id",
+			wantName:           "MyOrg/Payment/my-repo",
+			wantURL:            "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
+			wantNamespacePath:  []string{"MyOrg", "Payment"},
+			wantAdditionalInfo: map[string]interface{}{"project_key": "PAY"},
+		},
+		{
 			name:             "flag name applied when base has no name even if not explicit",
 			repoID:           "flag-id",
 			repoName:         "flag-name",
@@ -159,6 +190,8 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			assert.Equal(t, tt.wantName, result.Name)
 			assert.Equal(t, tt.wantURL, result.URL)
 			assert.Equal(t, tt.wantProvider, result.Provider)
+			assert.Equal(t, tt.wantNamespacePath, result.NamespacePath)
+			assert.Equal(t, tt.wantAdditionalInfo, result.AdditionalInfo)
 		})
 	}
 }
