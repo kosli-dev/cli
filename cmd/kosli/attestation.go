@@ -153,12 +153,19 @@ func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repo
 	return base
 }
 
-var allowedRepoProviders = map[string]struct{}{
-	"github": {}, "gitlab": {},
-	"bitbucket": {}, "bitbucket_cloud": {}, "bitbucket_dc": {},
-	"azure-devops": {}, "azure_devops_services": {}, "azure_devops_server": {},
-	"git": {}, "subversion": {},
-}
+// repoProviderList is the single source of truth for the --repo-provider
+// allowed values, shared by the validation error message here and the flag
+// help text in root.go; the server is the authority on which values are
+// actually accepted.
+const repoProviderList = "github, gitlab, bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server, git, subversion"
+
+var allowedRepoProviders = func() map[string]struct{} {
+	m := make(map[string]struct{})
+	for _, provider := range strings.Split(repoProviderList, ", ") {
+		m[provider] = struct{}{}
+	}
+	return m
+}()
 
 func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
 	if repoURL != "" && validateURL {
@@ -169,9 +176,7 @@ func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
 	}
 	if repoProvider != "" {
 		if _, ok := allowedRepoProviders[repoProvider]; !ok {
-			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, "+
-				"bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server, "+
-				"git, subversion", repoProvider)
+			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: %s", repoProvider, repoProviderList)
 		}
 	}
 	return nil

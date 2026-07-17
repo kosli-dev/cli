@@ -5,6 +5,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMergeGitRepoInfo(t *testing.T) {
@@ -540,7 +541,8 @@ func TestValidateRepoFlags(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateRepoFlags("", tt.repoProvider, false)
 			if tt.wantError {
-				assert.Error(t, err)
+				require.Error(t, err)
+				assert.Equal(t, "--repo-provider 'made-up-provider' is not allowed. Must be one of: "+repoProviderList, err.Error())
 			} else {
 				assert.NoError(t, err)
 			}
