@@ -123,7 +123,7 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 //
 // --repository only overrides the CI-detected name when set explicitly (or when
 // base has none), so its short default doesn't clobber the fuller CI value
-// (e.g. GitLab's CI_PROJECT_PATH). An explicit --repository points at a
+// An explicit --repository points at a
 // (possibly different) repo, so any CI-detected NamespacePath/AdditionalInfo
 // is cleared along with it rather than left describing the old one.
 func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repoProvider string, repoNameExplicit bool) *gitview.GitRepoInfo {
@@ -154,9 +154,7 @@ func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repo
 }
 
 // repoProviderList is the single source of truth for the --repo-provider
-// allowed values, shared by the validation error message here and the flag
-// help text in root.go; the server is the authority on which values are
-// actually accepted.
+// allowed values
 const repoProviderList = "github, gitlab, bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server, git, subversion"
 
 var allowedRepoProviders = func() map[string]struct{} {
@@ -321,8 +319,7 @@ func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 		URL:  os.Getenv("BITBUCKET_GIT_HTTP_ORIGIN"),
 		Name: repoFullName,
 		ID:   os.Getenv("BITBUCKET_REPO_UUID"),
-		// Bitbucket Pipelines (the only CI this WhichCI() branch detects, via
-		// BITBUCKET_BUILD_NUMBER) exists for Bitbucket Cloud only, so this is
+		// Bitbucket Pipelines exists for Bitbucket Cloud only, so this is
 		// a known fact rather than a heuristic. Self-hosted Data Center users
 		// run a different CI and must pass --repo-provider bitbucket_dc themselves.
 		Provider: "bitbucket_cloud",
@@ -407,16 +404,11 @@ type azureCollectionURI struct {
 }
 
 // parseAzureCollectionURI classifies SYSTEM_COLLECTIONURI's host as
-// cloud-hosted Services (dev.azure.com, any *.dev.azure.com subdomain such as
-// the vsrm.dev.azure.com host classic release pipelines use, or the legacy
-// *.visualstudio.com form - including its own vsrm.* release-pipeline
-// subdomain) vs on-prem Server, and extracts the collection/org name.
+// cloud-hosted Services (*.dev.azure.com or the legacy
+// *.visualstudio.com) vs on-prem Server, and extracts the collection/org name.
 //
 // On *.visualstudio.com hosts the org name is the first label of the
-// subdomain, not a path segment - e.g. https://fabrikam.visualstudio.com/ has
-// an empty path, and the release-pipeline host
-// https://fabrikam.vsrm.visualstudio.com/ still has org "fabrikam", not
-// "fabrikam.vsrm". Everywhere else (dev.azure.com/MyOrg, on-prem Server
+// subdomain, not a path segment. Everywhere else (dev.azure.com/MyOrg, on-prem Server
 // collection URIs) the collection is the last path segment.
 func parseAzureCollectionURI() azureCollectionURI {
 	parsed, err := url.Parse(os.Getenv("SYSTEM_COLLECTIONURI"))
@@ -446,9 +438,3 @@ func getGitRepoInfoFromCircleci() *gitview.GitRepoInfo {
 		Provider: "circleci",
 	}
 }
-
-// func getGitRepoInfoFromCodeBuild() *gitview.GitRepoInfo {
-// 	return &gitview.GitRepoInfo{
-// 		URL: os.Getenv("CODEBUILD_SOURCE_REPO_URL"),
-// 	}
-// }
