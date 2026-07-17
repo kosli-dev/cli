@@ -321,19 +321,28 @@ func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 }
 
 func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
+	buildRepositoryProvider := os.Getenv("BUILD_REPOSITORY_PROVIDER")
+	repoName := os.Getenv("BUILD_REPOSITORY_NAME")
+	teamProject := os.Getenv("SYSTEM_TEAMPROJECT")
+	collectionURI := parseAzureCollectionURI()
+
 	info := &gitview.GitRepoInfo{
 		URL:      os.Getenv("BUILD_REPOSITORY_URI"),
-		Name:     os.Getenv("BUILD_REPOSITORY_NAME"),
+		Name:     repoName,
 		ID:       os.Getenv("BUILD_REPOSITORY_ID"),
-		Provider: azureRepoProvider(),
+		Provider: azureRepoProvider(buildRepositoryProvider, collectionURI),
 	}
 
 	// Only genuine Azure Repos Git repos (TfsGit) get a composed path; other
 	// sources keep the bare BUILD_REPOSITORY_NAME. Empty ⇒ older agent, assume TfsGit.
-	switch os.Getenv("BUILD_REPOSITORY_PROVIDER") {
+	// repoName == "" is left bare too (rather than composing a trailing-slash
+	// "collection/project/" name) so mergeGitRepoInfo's empty-Name guard applies.
+	switch buildRepositoryProvider {
 	case "TfsGit", "":
-		info.Name = azureFullPathRepoName()
-		info.NamespacePath = azureNamespacePath()
+		if repoName != "" && collectionURI.valid && collectionURI.collection != "" && teamProject != "" {
+			info.NamespacePath = []string{collectionURI.collection, teamProject}
+			info.Name = strings.Join(append(info.NamespacePath, repoName), "/")
+		}
 	}
 
 	return info
@@ -341,10 +350,10 @@ func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
 
 // azureRepoProvider maps BUILD_REPOSITORY_PROVIDER to a Kosli repo provider.
 // Anything not recognised as an external source (including TFVC and unmapped
-// values) is treated as Azure DevOps-hosted and refined via azureDevopsProvider.
+// values) is treated as Azure DevOps-hosted and refined via collectionURI.
 // Shared with the --repo-provider flag default so the two can't disagree.
-func azureRepoProvider() string {
-	switch os.Getenv("BUILD_REPOSITORY_PROVIDER") {
+func azureRepoProvider(buildRepositoryProvider string, collectionURI azureCollectionURI) string {
+	switch buildRepositoryProvider {
 	case "GitHub", "GitHubEnterprise":
 		return "github"
 	case "Bitbucket":
@@ -354,7 +363,13 @@ func azureRepoProvider() string {
 	case "Svn":
 		return "subversion"
 	default:
-		return azureDevopsProvider()
+		if !collectionURI.valid {
+			return "azure-devops"
+		}
+		if collectionURI.isServices {
+			return "azure_devops_services"
+		}
+		return "azure_devops_server"
 	}
 }
 
@@ -367,80 +382,47 @@ func splitNonEmpty(s string) []string {
 	return strings.Split(s, "/")
 }
 
-// azureDevopsProvider refines the coarse "azure-devops" provider to
-// azure_devops_services or azure_devops_server based on SYSTEM_COLLECTIONURI's
-// host (dev.azure.com / *.visualstudio.com are cloud-hosted Services;
-// anything else is on-prem Server). Falls back to the coarse value when the
-// collection URI is missing or has no host, so the server's own URL-based
-// derivation fallback still applies.
-func azureDevopsProvider() string {
+// azureCollectionURI holds the pieces derived from parsing SYSTEM_COLLECTIONURI
+// once, shared by provider refinement (services vs on-prem server) and
+// namespace/name composition so the two can't classify the same URI
+// differently.
+type azureCollectionURI struct {
+	valid      bool   // URI parsed and had a non-empty host
+	isServices bool   // cloud-hosted Services host, vs on-prem Server
+	collection string // org/collection name; empty if it couldn't be determined
+}
+
+// parseAzureCollectionURI classifies SYSTEM_COLLECTIONURI's host as
+// cloud-hosted Services (dev.azure.com, any *.dev.azure.com subdomain such as
+// the vsrm.dev.azure.com host classic release pipelines use, or the legacy
+// *.visualstudio.com form - including its own vsrm.* release-pipeline
+// subdomain) vs on-prem Server, and extracts the collection/org name.
+//
+// On *.visualstudio.com hosts the org name is the first label of the
+// subdomain, not a path segment - e.g. https://fabrikam.visualstudio.com/ has
+// an empty path, and the release-pipeline host
+// https://fabrikam.vsrm.visualstudio.com/ still has org "fabrikam", not
+// "fabrikam.vsrm". Everywhere else (dev.azure.com/MyOrg, on-prem Server
+// collection URIs) the collection is the last path segment.
+func parseAzureCollectionURI() azureCollectionURI {
 	parsed, err := url.Parse(os.Getenv("SYSTEM_COLLECTIONURI"))
 	if err != nil || parsed.Host == "" {
-		return "azure-devops"
+		return azureCollectionURI{}
 	}
+
 	host := strings.ToLower(parsed.Host)
-	if host == "dev.azure.com" || strings.HasSuffix(host, ".visualstudio.com") {
-		return "azure_devops_services"
-	}
-	return "azure_devops_server"
-}
+	result := azureCollectionURI{valid: true}
 
-// azureFullPathRepoName composes the full namespace path for an Azure DevOps
-// repo (`Collection/Project/repo` on-prem, `Org/Project/repo` in Services)
-// from SYSTEM_COLLECTIONURI and SYSTEM_TEAMPROJECT, since BUILD_REPOSITORY_NAME
-// alone is just the bare repo name. Falls back to the bare name if either
-// piece is unavailable, so unupgraded setups degrade gracefully.
-func azureFullPathRepoName() string {
-	repoName := os.Getenv("BUILD_REPOSITORY_NAME")
-	collection, teamProject, ok := azureCollectionAndProject()
-	if !ok {
-		return repoName
-	}
-	return fmt.Sprintf("%s/%s/%s", collection, teamProject, repoName)
-}
-
-// azureNamespacePath returns the [collection, project] path ahead of the repo
-// name itself, or nil when either piece is unavailable.
-func azureNamespacePath() []string {
-	collection, teamProject, ok := azureCollectionAndProject()
-	if !ok {
-		return nil
-	}
-	return []string{collection, teamProject}
-}
-
-// azureCollectionAndProject extracts the collection/org name and
-// SYSTEM_TEAMPROJECT. ok is false if either piece is missing or
-// SYSTEM_COLLECTIONURI can't be parsed into a non-empty collection.
-//
-// On *.visualstudio.com hosts (the legacy Services URL format) the org name
-// is the subdomain, not a path segment - e.g. https://fabrikam.visualstudio.com/
-// has an empty path. Everywhere else (dev.azure.com/MyOrg, on-prem Server
-// collection URIs) the collection is the last path segment.
-func azureCollectionAndProject() (collection, teamProject string, ok bool) {
-	teamProject = os.Getenv("SYSTEM_TEAMPROJECT")
-	collectionURI := os.Getenv("SYSTEM_COLLECTIONURI")
-	if teamProject == "" || collectionURI == "" {
-		return "", "", false
+	if strings.HasSuffix(host, ".visualstudio.com") {
+		result.isServices = true
+		result.collection, _, _ = strings.Cut(host, ".")
+		return result
 	}
 
-	parsed, err := url.Parse(collectionURI)
-	if err != nil || parsed.Host == "" {
-		return "", "", false
-	}
-
-	if host := strings.ToLower(parsed.Host); strings.HasSuffix(host, ".visualstudio.com") {
-		collection = strings.TrimSuffix(host, ".visualstudio.com")
-		return collection, teamProject, collection != ""
-	}
-
+	result.isServices = host == "dev.azure.com" || strings.HasSuffix(host, ".dev.azure.com")
 	segments := strings.Split(strings.Trim(parsed.Path, "/"), "/")
-	collection = segments[len(segments)-1]
-	if collection == "" {
-		return "", "", false
-	}
-
-	return collection, teamProject, true
+	result.collection = segments[len(segments)-1]
+	return result
 }
 
 func getGitRepoInfoFromCircleci() *gitview.GitRepoInfo {

@@ -283,6 +283,24 @@ func TestGetGitRepoInfoFromAzureDevops(t *testing.T) {
 			wantNamespacePath:   []string{"fabrikam", "Payment"},
 		},
 		{
+			name:                "Azure DevOps Services on a legacy *.vsrm.visualstudio.com release-pipeline host extracts the org, not org.vsrm",
+			systemCollectionURI: "https://fabrikam.vsrm.visualstudio.com/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "fabrikam/Payment/my-repo",
+			wantProvider:        "azure_devops_services",
+			wantNamespacePath:   []string{"fabrikam", "Payment"},
+		},
+		{
+			name:                "Azure DevOps Services on a vsrm.dev.azure.com release-pipeline host still composes and refines to services",
+			systemCollectionURI: "https://vsrm.dev.azure.com/MyOrg/",
+			systemTeamProject:   "Payment",
+			buildRepositoryName: "my-repo",
+			wantName:            "MyOrg/Payment/my-repo",
+			wantProvider:        "azure_devops_services",
+			wantNamespacePath:   []string{"MyOrg", "Payment"},
+		},
+		{
 			name:                "Azure DevOps Server (on-prem) composes Collection/Project/repo",
 			systemCollectionURI: "https://tfs.corp.local/tfs/PRDCollection/",
 			systemTeamProject:   "Payment",
@@ -369,13 +387,15 @@ func TestAzureRepoProvider(t *testing.T) {
 		{name: "TFVC is Azure-hosted and refines to services", buildRepositoryProvider: "TfsVersionControl", systemCollectionURI: "https://dev.azure.com/MyOrg/", want: "azure_devops_services"},
 		{name: "unmapped provider is Azure-hosted and refines to on-prem server", buildRepositoryProvider: "SomeFutureProvider", systemCollectionURI: "https://tfs.corp.local/tfs/PRDCollection/", want: "azure_devops_server"},
 		{name: "Azure-hosted degrades to coarse azure-devops without a collection URI", buildRepositoryProvider: "TfsGit", systemCollectionURI: "", want: "azure-devops"},
+		{name: "vsrm.dev.azure.com (classic release pipelines) is still Services", buildRepositoryProvider: "TfsGit", systemCollectionURI: "https://vsrm.dev.azure.com/MyOrg/", want: "azure_devops_services"},
+		{name: "legacy org.vsrm.visualstudio.com (classic release pipelines) is still Services", buildRepositoryProvider: "TfsGit", systemCollectionURI: "https://fabrikam.vsrm.visualstudio.com/", want: "azure_devops_services"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv("BUILD_REPOSITORY_PROVIDER", tt.buildRepositoryProvider)
 			t.Setenv("SYSTEM_COLLECTIONURI", tt.systemCollectionURI)
-			assert.Equal(t, tt.want, azureRepoProvider())
+			assert.Equal(t, tt.want, azureRepoProvider(tt.buildRepositoryProvider, parseAzureCollectionURI()))
 		})
 	}
 }

@@ -210,7 +210,7 @@ func DefaultValue(ci, flag string) string {
 		// Shares azureRepoProvider() with getGitRepoInfoFromAzureDevops so this
 		// default can't clobber the CI-detected provider in mergeGitRepoInfo.
 		if ci == azureDevops && flag == "repo-provider" {
-			return azureRepoProvider()
+			return azureRepoProvider(os.Getenv("BUILD_REPOSITORY_PROVIDER"), parseAzureCollectionURI())
 		}
 		if v, ok := ciTemplates[ci][flag]; ok {
 			result := os.ExpandEnv(v)
