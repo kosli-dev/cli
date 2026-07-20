@@ -17,7 +17,8 @@ const assertPRBitbucketShortDesc = `Assert a Bitbucket pull request for a git co
 
 const assertPRBitbucketLongDesc = assertPRBitbucketShortDesc + `
 The command exits with non-zero exit code if no pull requests were found for the commit.
-Authentication to Bitbucket can be done with access token (recommended) or app passwords. Credentials need to have read access for both repos and pull requests.`
+Authentication to Bitbucket can be done with an access token (recommended) or an Atlassian API token, passed via --bitbucket-username (your Atlassian account email) and --bitbucket-password.
+Bitbucket app passwords are no longer supported as of 28 July 2026; replace any app passwords with API tokens. Credentials need to have read access for both repos and pull requests.`
 
 const assertPRBitbucketExample = `
 kosli assert pullrequest bitbucket  \

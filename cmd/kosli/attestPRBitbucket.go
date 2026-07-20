@@ -12,7 +12,8 @@ const attestPRBitbucketShortDesc = `Report a Bitbucket pull request attestation 
 
 const attestPRBitbucketLongDesc = attestPRBitbucketShortDesc + `
 It checks if a pull request exists for a given merge commit and reports the pull-request attestation to Kosli.
-Authentication to Bitbucket can be done with access token (recommended) or app passwords. Credentials need to have read access for both repos and pull requests.
+Authentication to Bitbucket can be done with an access token (recommended) or an Atlassian API token, passed via --bitbucket-username (your Atlassian account email) and --bitbucket-password.
+Bitbucket app passwords are no longer supported as of 28 July 2026; replace any app passwords with API tokens. Credentials need to have read access for both repos and pull requests.
 ` + attestationBindingDesc
 
 const attestPRBitbucketExample = `
