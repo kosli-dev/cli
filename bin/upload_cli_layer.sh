@@ -5,7 +5,7 @@ AWS_REGIONS=("eu-central-1" "eu-west-1" "eu-west-2" "eu-west-3" "eu-north-1" "us
 S3_BUCKET="lambda-layer-mapping-ccc19615fd6c05ace42e71c551995458dbdb1be7"
 S3_KEY="lambda_layer_versions.json"
 LAYER_NAME="kosli-cli"
-RUNTIME="python3.12"
+RUNTIME="python3.14"
 TEMP_FILE="/tmp/lambda_layer_versions.json"
 DESCRIPTION="Kosli cli ${TAG}"
 ZIP_FILE="lambda_layer.zip"
@@ -22,7 +22,7 @@ declare -A REGION_LAYER_MAP
 # Iterate through regions
 for REGION in "${AWS_REGIONS[@]}"; do
   echo "Publishing Lambda layer to region: $REGION..."
-  
+
   # Publish the Layer
   LAYER_VERSION=$(aws lambda publish-layer-version \
       --region "$REGION" \
@@ -31,12 +31,12 @@ for REGION in "${AWS_REGIONS[@]}"; do
       --zip-file "fileb://$ZIP_FILE" \
       --compatible-runtimes "$RUNTIME" \
       --query "Version" --output text)
-  
+
   if [ -z "$LAYER_VERSION" ]; then
     echo "Failed to publish the Lambda layer in region $REGION."
     exit 1
   fi
-  
+
   echo "Lambda layer published in region $REGION! Version: $LAYER_VERSION"
 
   # Make the Layer Publicly Accessible
@@ -48,7 +48,7 @@ for REGION in "${AWS_REGIONS[@]}"; do
       --statement-id "public-access-$REGION" \
       --action "lambda:GetLayerVersion" \
       --principal "*"
-  
+
   LAYER_ARN="arn:aws:lambda:${REGION}:${AWS_ACCOUNT_ID}:layer:${LAYER_NAME}:${LAYER_VERSION}"
 
   echo "Lambda layer is now publicly accessible in region: $REGION!"
