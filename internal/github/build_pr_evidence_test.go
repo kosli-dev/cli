@@ -1,6 +1,7 @@
 package github
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -150,6 +151,33 @@ func TestBuildPREvidence_RecordsCommitSignature(t *testing.T) {
 	require.True(t, *c.Verified, "verified must be true for a valid signature")
 	require.NotNil(t, c.SignatureState)
 	require.Equal(t, "VALID", *c.SignatureState)
+}
+
+// TestBuildPREvidence_EmptyAuthorIsPreserved verifies that when the PR
+// creator's GitHub account has been deleted (Author.Login = ""), the empty
+// string is preserved and serialised as "" rather than omitted, allowing the
+// server to accept it directly.
+func TestBuildPREvidence_EmptyAuthorIsPreserved(t *testing.T) {
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED",
+		"", // empty author — PR creator account deleted
+		"2026-03-01T09:00:00Z",
+		"2026-03-01T12:00:00Z",
+		"Fix something",
+		"fix-branch",
+		"main",
+		nil, nil,
+	)
+	require.NoError(t, err)
+	require.Equal(t, "", evidence.Author,
+		"empty PR author login must be preserved so it is serialised as an empty string, not omitted")
+
+	b, err := json.Marshal(evidence)
+	require.NoError(t, err)
+	require.Contains(t, string(b), `"author":""`,
+		"empty author must be serialised, not omitted")
 }
 
 // TestBuildPREvidence_UnsignedCommitHasNoSignatureFields verifies an unsigned
