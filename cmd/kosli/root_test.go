@@ -2,11 +2,14 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/version"
+	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -45,6 +48,22 @@ func (suite *RootCommandTestSuite) TestDebugWinsOverQuiet() {
 		"--debug should override --quiet, expected warnings in stderr, got: %q", stderr)
 	suite.Contains(stderr, "[debug] --quiet is ignored because --debug is set",
 		"expected debug notice that --quiet was overridden, got: %q", stderr)
+}
+
+// TestInnerMainEnrichesError drives a failing command through innerMain (which
+// the golden-test harness bypasses) to lock in the wiring: that executedCmd
+// from ExecuteC() is the leaf command and that its --flow/--trail flags are
+// read into the enriched error. cmd.SetArgs is required because newRootCmd does
+// not set the command's args, so ExecuteC would otherwise fall back to os.Args.
+func (suite *RootCommandTestSuite) TestInnerMainEnrichesError() {
+	args := []string{"attest", "snyk", "--flow", "cyber-dojo", "--trail", "live-snyk-scan"}
+	cmd, err := newRootCmd(io.Discard, io.Discard, args)
+	suite.Require().NoError(err)
+	cmd.SetArgs(args)
+
+	err = innerMain(cmd, append([]string{"kosli"}, args...))
+	suite.Require().Error(err)
+	suite.ErrorContains(err, "[kosli attest snyk flow=cyber-dojo trail=live-snyk-scan]")
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -109,4 +128,61 @@ func (suite *UpdateNoticeTestSuite) TestVersionNoticeNotShownOnRegularCommands()
 
 func TestUpdateNoticeTestSuite(t *testing.T) {
 	suite.Run(t, new(UpdateNoticeTestSuite))
+}
+
+func TestEnrichError(t *testing.T) {
+	// leaf builds kosli -> attest -> snyk and returns the snyk leaf command,
+	// optionally defining and setting the flow/trail flags on it.
+	leaf := func(withFlags bool, flow, trail string) *cobra.Command {
+		root := &cobra.Command{Use: "kosli"}
+		attest := &cobra.Command{Use: "attest"}
+		snyk := &cobra.Command{Use: "snyk"}
+		root.AddCommand(attest)
+		attest.AddCommand(snyk)
+		if withFlags {
+			snyk.Flags().String("flow", "", "")
+			snyk.Flags().String("trail", "", "")
+			if flow != "" {
+				require.NoError(t, snyk.Flags().Set("flow", flow))
+			}
+			if trail != "" {
+				require.NoError(t, snyk.Flags().Set("trail", trail))
+			}
+		}
+		return snyk
+	}
+
+	t.Run("nil error passes through unchanged", func(t *testing.T) {
+		require.NoError(t, enrichError(leaf(false, "", ""), nil))
+	})
+
+	t.Run("nil cmd passes error through unchanged", func(t *testing.T) {
+		e := errors.New("boom")
+		require.Equal(t, e, enrichError(nil, e))
+	})
+
+	t.Run("command path only when no flow/trail flags exist", func(t *testing.T) {
+		got := enrichError(leaf(false, "", ""), errors.New("server returned 404"))
+		require.EqualError(t, got, `[kosli attest snyk] server returned 404`)
+	})
+
+	t.Run("includes flow and trail when set", func(t *testing.T) {
+		got := enrichError(leaf(true, "cyber-dojo", "live-snyk-scan"), errors.New("server returned 404"))
+		require.EqualError(t, got,
+			`[kosli attest snyk flow=cyber-dojo trail=live-snyk-scan] server returned 404`)
+	})
+
+	t.Run("empty flag values are omitted", func(t *testing.T) {
+		got := enrichError(leaf(true, "", ""), errors.New("boom"))
+		require.EqualError(t, got, `[kosli attest snyk] boom`)
+	})
+
+	t.Run("preserves the wrapped error for errors.Is", func(t *testing.T) {
+		// enrichError must wrap with %w so callers (and errors.Is/errors.As)
+		// can still unwrap the original error. This guards against an
+		// accidental switch to %v / %s.
+		sentinel := errors.New("server returned 404")
+		got := enrichError(leaf(true, "cyber-dojo", "live-snyk-scan"), sentinel)
+		require.ErrorIs(t, got, sentinel)
+	})
 }
