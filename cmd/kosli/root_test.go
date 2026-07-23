@@ -50,6 +50,22 @@ func (suite *RootCommandTestSuite) TestDebugWinsOverQuiet() {
 		"expected debug notice that --quiet was overridden, got: %q", stderr)
 }
 
+// TestInnerMainEnrichesError drives a failing command through innerMain (which
+// the golden-test harness bypasses) to lock in the wiring: that executedCmd
+// from ExecuteC() is the leaf command and that its --flow/--trail flags are
+// read into the enriched error. cmd.SetArgs is required because newRootCmd does
+// not set the command's args, so ExecuteC would otherwise fall back to os.Args.
+func (suite *RootCommandTestSuite) TestInnerMainEnrichesError() {
+	args := []string{"attest", "snyk", "--flow", "cyber-dojo", "--trail", "live-snyk-scan"}
+	cmd, err := newRootCmd(io.Discard, io.Discard, args)
+	suite.Require().NoError(err)
+	cmd.SetArgs(args)
+
+	err = innerMain(cmd, append([]string{"kosli"}, args...))
+	suite.Require().Error(err)
+	suite.ErrorContains(err, "[kosli attest snyk flow=cyber-dojo trail=live-snyk-scan]")
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestRootCommandTestSuite(t *testing.T) {
