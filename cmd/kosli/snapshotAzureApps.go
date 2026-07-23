@@ -109,6 +109,11 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotAzureAppsOptions) run(args []string) error {
 	envName := args[0]
+
+	if err := ensureEnvironment(envName, "azure-apps"); err != nil {
+		return err
+	}
+
 	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/azure-apps")
 	if err != nil {
 		return err

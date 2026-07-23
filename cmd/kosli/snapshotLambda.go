@@ -149,6 +149,10 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 func (o *snapshotLambdaOptions) run(args []string) error {
 	envName := args[0]
 
+	if err := ensureEnvironment(envName, "lambda"); err != nil {
+		return err
+	}
+
 	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/lambda")
 	if err != nil {
 		return err

@@ -194,6 +194,11 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
+
+	if err := ensureEnvironment(envName, "ECS"); err != nil {
+		return err
+	}
+
 	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/ECS")
 	if err != nil {
 		return err

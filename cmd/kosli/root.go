@@ -285,6 +285,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	excludeScalingFlag              = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag              = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."
 	includedEnvironments            = "[optional] Comma separated list of environments to include in logical environment"
+	autoEnvironmentFlag             = "[optional] Create the environment (with the type inferred from the snapshot subcommand) if it does not already exist, before reporting the snapshot."
 	requireProvenanceFlag           = "[defaulted] Require provenance for all artifacts running in environment snapshots."
 	setTagsFlag                     = "[optional] The key-value pairs to tag the resource with. The format is: key=value"
 	unsetTagsFlag                   = "[optional] The list of tag keys to remove from the resource."

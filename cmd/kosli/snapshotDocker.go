@@ -29,6 +29,13 @@ const snapshotDockerExample = `
 # report what is running in a docker host:
 kosli snapshot docker yourEnvironmentName \
 	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report a docker snapshot, creating the environment first if it does not exist:
+kosli snapshot docker yourEnvironmentName \
+	--auto-environment \
+	--environment-description "Production docker host" \
+	--api-token yourAPIToken \
 	--org yourOrgName`
 
 type snapshotDockerOptions struct{}
@@ -59,6 +66,10 @@ func newSnapshotDockerCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotDockerOptions) run(args []string) error {
 	envName := args[0]
+
+	if err := ensureEnvironment(envName, "docker"); err != nil {
+		return err
+	}
 
 	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/docker")
 	if err != nil {

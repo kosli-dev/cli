@@ -148,6 +148,11 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotCloudRunOptions) run(args []string) error {
 	envName := args[0]
+
+	if err := ensureEnvironment(envName, "cloud-run"); err != nil {
+		return err
+	}
+
 	reportURL, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/cloud-run")
 	if err != nil {
 		return err
