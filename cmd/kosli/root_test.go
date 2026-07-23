@@ -160,4 +160,13 @@ func TestEnrichError(t *testing.T) {
 		got := enrichError(leaf(true, "", ""), errors.New("boom"))
 		require.EqualError(t, got, `[kosli attest snyk] boom`)
 	})
+
+	t.Run("preserves the wrapped error for errors.Is", func(t *testing.T) {
+		// enrichError must wrap with %w so callers (and errors.Is/errors.As)
+		// can still unwrap the original error. This guards against an
+		// accidental switch to %v / %s.
+		sentinel := errors.New("server returned 404")
+		got := enrichError(leaf(true, "cyber-dojo", "live-snyk-scan"), sentinel)
+		require.ErrorIs(t, got, sentinel)
+	})
 }
