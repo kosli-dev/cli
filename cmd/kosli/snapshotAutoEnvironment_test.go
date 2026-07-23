@@ -21,8 +21,9 @@ type SnapshotAutoEnvironmentTestSuite struct {
 	existingDockerEnv string
 	logicalEnv        string
 	// unique per-process names for the auto-creation cases
-	newEnv   string
-	aliasEnv string
+	newEnv    string
+	aliasEnv  string
+	dryRunEnv string
 }
 
 func (suite *SnapshotAutoEnvironmentTestSuite) SetupSuite() {
@@ -42,6 +43,7 @@ func (suite *SnapshotAutoEnvironmentTestSuite) SetupSuite() {
 	suite.logicalEnv = fmt.Sprintf("autoenv-logical-%d", pid)
 	suite.newEnv = fmt.Sprintf("autoenv-new-%d", pid)
 	suite.aliasEnv = fmt.Sprintf("autoenv-alias-%d", pid)
+	suite.dryRunEnv = fmt.Sprintf("autoenv-dryrun-%d", pid)
 
 	CreateEnv(global.Org, suite.existingServerEnv, "server", suite.T())
 	CreateEnv(global.Org, suite.existingDockerEnv, "docker", suite.T())
@@ -92,14 +94,36 @@ func (suite *SnapshotAutoEnvironmentTestSuite) TestSnapshotAutoEnvironment() {
 		},
 		{
 			wantError: true,
+			name:      "infers the type from the subcommand (docker) for the mismatch check",
+			cmd:       fmt.Sprintf(`snapshot docker %s --auto-environment %s`, suite.existingServerEnv, suite.defaultKosliArguments),
+			golden:    fmt.Sprintf("Error: environment %s already exists with type server, which does not match the snapshot type docker\n", suite.existingServerEnv),
+		},
+		{
+			wantError: true,
 			name:      "errors when both scaling flags are set",
 			cmd:       fmt.Sprintf(`snapshot paths %s --auto-environment --include-scaling --exclude-scaling %s %s`, suite.newEnv, suite.pathsFileArg, suite.defaultKosliArguments),
+			golden:    "Error: only one of --include-scaling, --exclude-scaling is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "errors when both scaling flags are set even without --auto-environment",
+			cmd:       fmt.Sprintf(`snapshot paths %s --include-scaling --exclude-scaling %s %s`, suite.existingServerEnv, suite.pathsFileArg, suite.defaultKosliArguments),
 			golden:    "Error: only one of --include-scaling, --exclude-scaling is allowed\n",
 		},
 		{
 			name:   "warns and ignores optional flags when --auto-environment is not set",
 			cmd:    fmt.Sprintf(`snapshot paths %s --environment-description "ignored" %s %s`, suite.existingServerEnv, suite.pathsFileArg, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("[warning] --environment-description, --include-scaling and --exclude-scaling are ignored unless --auto-environment is set\n[1] artifacts were reported to environment %s\n", suite.existingServerEnv),
+		},
+		{
+			name:   "warns that optional flags are ignored when the environment already exists",
+			cmd:    fmt.Sprintf(`snapshot paths %s --auto-environment --environment-description "ignored" %s %s`, suite.existingServerEnv, suite.pathsFileArg, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("[warning] environment %s already exists; --environment-description, --include-scaling and --exclude-scaling are ignored\n[1] artifacts were reported to environment %s\n", suite.existingServerEnv, suite.existingServerEnv),
+		},
+		{
+			name:        "dry-run reports what would be created without creating anything",
+			cmd:         fmt.Sprintf(`snapshot paths %s --auto-environment --dry-run %s %s`, suite.dryRunEnv, suite.pathsFileArg, suite.defaultKosliArguments),
+			goldenRegex: fmt.Sprintf("dry-run: environment %s would be created with type server if it does not exist", suite.dryRunEnv),
 		},
 	}
 

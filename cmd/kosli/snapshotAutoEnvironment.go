@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -54,6 +55,14 @@ func addAutoEnvironmentFlags(cmd *cobra.Command) {
 // inferred from the snapshot subcommand (e.g. "docker", "K8S").
 func ensureEnvironment(envName, envType string) error {
 	o := snapshotAutoEnv
+
+	// Enforce the scaling-flag mutual exclusion unconditionally, mirroring
+	// `kosli create environment`, so the behaviour is consistent whether or not
+	// --auto-environment is set.
+	if o.includeScaling && o.excludeScaling {
+		return fmt.Errorf("only one of --include-scaling, --exclude-scaling is allowed")
+	}
+
 	optionalFlagsSet := o.description != "" || o.includeScaling || o.excludeScaling
 
 	if !o.autoEnvironment {
@@ -61,10 +70,6 @@ func ensureEnvironment(envName, envType string) error {
 			logger.Warn("--environment-description, --include-scaling and --exclude-scaling are ignored unless --auto-environment is set")
 		}
 		return nil
-	}
-
-	if o.includeScaling && o.excludeScaling {
-		return fmt.Errorf("only one of --include-scaling, --exclude-scaling is allowed")
 	}
 
 	if global.DryRun {
@@ -110,8 +115,16 @@ func getEnvironmentTypeIfExists(envName string) (bool, string, error) {
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {
-		logger.Debug("could not fetch environment %s, assuming it does not exist: %v", envName, err)
-		return false, "", nil
+		// Only a genuine 404 means the environment does not exist yet. Any other
+		// error (auth, network, 5xx after retries) is propagated so we never fall
+		// through to a create-or-update PUT that could overwrite an existing
+		// environment or bypass the type/logical safety checks.
+		var apiErr *requests.APIError
+		if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
+			logger.Debug("environment %s does not exist yet", envName)
+			return false, "", nil
+		}
+		return false, "", err
 	}
 
 	var env map[string]interface{}

@@ -32,6 +32,19 @@ type HTTPResponse struct {
 	Resp *http.Response
 }
 
+// APIError is returned by Do for a non-2xx HTTP response. It carries the HTTP
+// status code so callers can distinguish, for example, a 404 from an auth or
+// server failure. Its Error() preserves the cleaned server error message, so
+// callers that only print the error keep the same behaviour as before.
+type APIError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *APIError) Error() string {
+	return e.Message
+}
+
 type Client struct {
 	MaxAPIRetries int
 	Debug         bool
@@ -303,7 +316,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 					cleanedErrorMessage = fmt.Sprintf("%s", respBodyMap)
 				}
 			}
-			return nil, fmt.Errorf("%s", cleanedErrorMessage)
+			return nil, &APIError{StatusCode: resp.StatusCode, Message: cleanedErrorMessage}
 		}
 		return &HTTPResponse{string(body), resp}, nil
 	}
