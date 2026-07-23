@@ -294,7 +294,10 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			err := json.Unmarshal([]byte(body), &respBody)
 			if err != nil {
 				c.Logger.Debug("response body from %s (status %d):\n%s", req.URL, resp.StatusCode, string(body))
-				return &HTTPResponse{}, err
+				// Still carry the status code so callers can distinguish e.g. a 404
+				// with an empty or non-JSON body (a proxy/CDN page). Keep the
+				// (JSON parse) error text as the message.
+				return nil, &APIError{StatusCode: resp.StatusCode, Message: err.Error()}
 			}
 			cleanedErrorMessage := ""
 			if reflect.ValueOf(respBody).Kind() == reflect.String {

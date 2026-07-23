@@ -98,10 +98,10 @@ func ensureEnvironment(envName, envType string) error {
 }
 
 // getEnvironmentTypeIfExists fetches the environment's metadata and returns
-// whether it exists along with its type. A failed GET (most commonly a 404 for
-// an environment that has not been created yet) is treated as "does not exist";
-// any genuine error (auth, network) resurfaces from the subsequent create or
-// report request.
+// whether it exists along with its type. Only a genuine HTTP 404 is treated as
+// "does not exist" (exists=false, nil error); any other error (auth, network,
+// 5xx after retries) is returned to the caller so it is never mistaken for a
+// missing environment.
 func getEnvironmentTypeIfExists(envName string) (bool, string, error) {
 	reqURL, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName)
 	if err != nil {
