@@ -108,6 +108,12 @@ func innerMain(cmd *cobra.Command, args []string) error {
 				}
 			}
 			logger.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
+			// logger.Error terminates the process (os.Exit), so the line below is
+			// not reached today. We return explicitly to keep this branch
+			// self-contained: the unknown-subcommand case is already reported in a
+			// friendly form, so it must not also fall through to the generic
+			// enriched-error print below.
+			return nil
 		}
 	}
 	if global.DryRun {
