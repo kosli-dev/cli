@@ -266,6 +266,10 @@ func (o *snapshotK8SOptions) runMultiEnv() error {
 }
 
 func (o *snapshotK8SOptions) reportEnvironment(clientset *kube.K8SConnection, envName string, filter *filters.ResourceFilterOptions) error {
+	if err := ensureEnvironment(envName, "K8S"); err != nil {
+		return err
+	}
+
 	podsData, err := clientset.GetPodsData(filter, logger)
 	if err != nil {
 		return err

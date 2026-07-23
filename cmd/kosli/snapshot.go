@@ -15,6 +15,8 @@ func newSnapshotCmd(out io.Writer) *cobra.Command {
 		Long:  snapshotDesc,
 	}
 
+	addAutoEnvironmentFlags(cmd)
+
 	// Add subcommands
 	cmd.AddCommand(
 		newSnapshotDockerCmd(out),

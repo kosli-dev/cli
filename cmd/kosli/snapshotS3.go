@@ -131,6 +131,11 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotS3Options) run(args []string) error {
 	envName := args[0]
+
+	if err := ensureEnvironment(envName, "S3"); err != nil {
+		return err
+	}
+
 	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/S3")
 	if err != nil {
 		return err

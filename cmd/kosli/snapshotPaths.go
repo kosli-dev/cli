@@ -90,6 +90,10 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 func (o *snapshotPathsOptions) run(args []string) error {
 	envName := args[0]
 
+	if err := ensureEnvironment(envName, "server"); err != nil {
+		return err
+	}
+
 	// load path spec from file
 	ps, err := processPathSpecFile(o.pathSpecFile)
 	if err != nil {
