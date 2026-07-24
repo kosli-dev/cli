@@ -116,7 +116,7 @@ spec:
             - --environment-description
             - {{ .Values.reporterConfig.environmentDescription | quote }}
             {{- end }}
-            {{- if not (kindIs "invalid" .Values.reporterConfig.includeScaling) }}
+            {{- if kindIs "bool" .Values.reporterConfig.includeScaling }}
             {{- if .Values.reporterConfig.includeScaling }}
             - --include-scaling
             {{- else }}
