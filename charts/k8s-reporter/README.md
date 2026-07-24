@@ -224,9 +224,12 @@ cronSchedule: "*/15 * * * *"
 | podAnnotations | object | `{}` | annotations to add to the CronJob object itself. For pod-level annotations (added to each reporter pod), use `podTemplateAnnotations` instead. |
 | podLabels | object | `{}` | custom labels to add to pods |
 | podTemplateAnnotations | object | `{}` | annotations to add to the reporter pod template (applied to each Job pod that the CronJob creates) |
+| reporterConfig.autoEnvironment | bool | `false` | create each Kosli environment (type K8S) if it does not already exist, before reporting the snapshot |
 | reporterConfig.dryRun | bool | `false` | whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli. |
+| reporterConfig.environmentDescription | string | `""` | description applied to an environment when it is auto-created. Only used when `autoEnvironment` is true; ignored for environments that already exist. |
 | reporterConfig.environments | list | `[]` | List of Kosli environments to report to. Each entry has required 'name' and optional namespace selectors. Use one entry to report a single environment; use multiple entries to report to multiple environments with different selectors. Per entry: name (required), namespaces, namespacesRegex, excludeNamespaces, excludeNamespacesRegex (optional). Leave namespace fields unset for an entry to report the entire cluster to that environment. |
 | reporterConfig.httpProxy | string | `""` | the http proxy url |
+| reporterConfig.includeScaling | bool | `false` | whether to record scaling (replica count) changes for auto-created environments. When true the reporter passes `--include-scaling`; when false it passes `--exclude-scaling`. Only used when `autoEnvironment` is true. |
 | reporterConfig.kosliOrg | string | `""` | the name of the Kosli org |
 | reporterConfig.securityContext | object | `{"allowPrivilegeEscalation":false,"runAsNonRoot":true,"runAsUser":1000}` | the security context for the reporter cronjob. Set to null or {} to disable security context entirely (not recommended). For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift assign the UID from the allowed range. Simply omitting runAsUser from your values override will not work because Helm deep-merges with these defaults. Example OpenShift override:   securityContext:     allowPrivilegeEscalation: false     runAsNonRoot: true     runAsUser: null |
 | reporterConfig.securityContext.allowPrivilegeEscalation | bool | `false` | whether to allow privilege escalation |

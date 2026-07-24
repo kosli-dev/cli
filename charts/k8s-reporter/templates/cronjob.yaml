@@ -110,6 +110,18 @@ spec:
             - k8s
             - --config-file
             - /config/config.yaml
+            {{ if .Values.reporterConfig.autoEnvironment }}
+            - --auto-environment
+            {{ if .Values.reporterConfig.environmentDescription }}
+            - --environment-description
+            - {{ .Values.reporterConfig.environmentDescription }}
+            {{ end }}
+            {{ if .Values.reporterConfig.includeScaling }}
+            - --include-scaling
+            {{ else }}
+            - --exclude-scaling
+            {{ end }}
+            {{ end }}
             {{ if .Values.reporterConfig.dryRun }}
             - --dry-run
             {{ end }}
