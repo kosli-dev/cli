@@ -20,7 +20,7 @@ require (
 	github.com/aws/smithy-go v1.27.4
 	github.com/containerd/errdefs v1.0.0
 	github.com/containers/image/v5 v5.36.2
-	github.com/go-git/go-billy/v5 v5.9.0
+	github.com/go-git/go-billy/v5 v5.9.1
 	github.com/go-git/go-git/v5 v5.19.1
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/google/go-github/v42 v42.0.0
