@@ -110,14 +110,27 @@ spec:
             - k8s
             - --config-file
             - /config/config.yaml
-            {{ if .Values.reporterConfig.dryRun }}
+            {{- if .Values.reporterConfig.autoEnvironment }}
+            - --auto-environment
+            {{- if .Values.reporterConfig.environmentDescription }}
+            - --environment-description
+            - {{ .Values.reporterConfig.environmentDescription | quote }}
+            {{- end }}
+            {{- if kindIs "bool" .Values.reporterConfig.includeScaling }}
+            {{- if .Values.reporterConfig.includeScaling }}
+            - --include-scaling
+            {{- else }}
+            - --exclude-scaling
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.reporterConfig.dryRun }}
             - --dry-run
-            {{ end }}
-            {{ if .Values.reporterConfig.httpProxy }}
+            {{- end }}
+            {{- if .Values.reporterConfig.httpProxy }}
             - --http-proxy
             - {{ .Values.reporterConfig.httpProxy }}
-            {{ end }}
-
+            {{- end }}
             resources:
 {{ toYaml .Values.resources | indent 14 }}
           restartPolicy: Never
