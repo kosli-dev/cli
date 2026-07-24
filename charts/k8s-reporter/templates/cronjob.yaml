@@ -114,7 +114,7 @@ spec:
             - --auto-environment
             {{ if .Values.reporterConfig.environmentDescription }}
             - --environment-description
-            - {{ .Values.reporterConfig.environmentDescription }}
+            - {{ .Values.reporterConfig.environmentDescription | quote }}
             {{ end }}
             {{ if .Values.reporterConfig.includeScaling }}
             - --include-scaling
