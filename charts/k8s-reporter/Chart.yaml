@@ -20,4 +20,4 @@ version: 2.6.0
 # This is the version number of the (CLI) application being deployed. This version number should be
 # incremented each time you make changes to the application. They should reflect the version the
 # application is using. It is recommended to use it with quotes.
-appVersion: "v2.32.0"
+appVersion: "v2.33.3"
