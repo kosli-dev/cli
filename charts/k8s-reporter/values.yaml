@@ -69,8 +69,9 @@ reporterConfig:
   autoEnvironment: false
   # -- description applied to an environment when it is auto-created. Only used when `autoEnvironment` is true; ignored for environments that already exist.
   environmentDescription: ""
-  # -- whether to record scaling (replica count) changes for auto-created environments. When true the reporter passes `--include-scaling`; when false it passes `--exclude-scaling`. Only used when `autoEnvironment` is true.
-  includeScaling: false
+  # -- whether to record scaling (replica count) changes for auto-created environments. Leave unset to use the Kosli server default; set to `true` to pass `--include-scaling` or `false` to pass `--exclude-scaling`. Only used when `autoEnvironment` is true.
+  # @default -- `nil` (server default)
+  includeScaling: null
   # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli.
   dryRun: false
   # -- the http proxy url
