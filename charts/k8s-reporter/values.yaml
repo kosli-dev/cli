@@ -67,9 +67,9 @@ reporterConfig:
   #    excludeNamespaces: [prod-ns1, prod-ns2, default]
   # -- create each Kosli environment (type K8S) if it does not already exist, before reporting the snapshot
   autoEnvironment: false
-  # -- description applied to an environment when it is auto-created. Only used when `autoEnvironment` is true; ignored for environments that already exist.
+  # -- description applied to every environment auto-created in this run. Only used when `autoEnvironment` is true; existing environments are never modified. Note: a single value is shared by all environments created during the run.
   environmentDescription: ""
-  # -- whether to record scaling (replica count) changes for auto-created environments. Leave unset to use the Kosli server default; set to `true` to pass `--include-scaling` or `false` to pass `--exclude-scaling`. Only used when `autoEnvironment` is true.
+  # -- whether to record scaling (replica count) changes for every environment auto-created in this run. Leave unset to use the Kosli server default; set to `true` to pass `--include-scaling` or `false` to pass `--exclude-scaling`. Only used when `autoEnvironment` is true; existing environments are never modified.
   # @default -- `nil` (server default)
   includeScaling: null
   # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli.

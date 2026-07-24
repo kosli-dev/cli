@@ -124,14 +124,13 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
-            {{ if .Values.reporterConfig.dryRun }}
+            {{- if .Values.reporterConfig.dryRun }}
             - --dry-run
-            {{ end }}
-            {{ if .Values.reporterConfig.httpProxy }}
+            {{- end }}
+            {{- if .Values.reporterConfig.httpProxy }}
             - --http-proxy
             - {{ .Values.reporterConfig.httpProxy }}
-            {{ end }}
-
+            {{- end }}
             resources:
 {{ toYaml .Values.resources | indent 14 }}
           restartPolicy: Never
