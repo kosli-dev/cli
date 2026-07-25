@@ -1,4 +1,4 @@
-package snyk
+package sarif
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/owenrumney/go-sarif/v2/sarif"
 )
 
-type SnykTool struct {
+type SarifTool struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }
@@ -25,7 +25,7 @@ type Vulnerability struct {
 	PriorityScore float64    `json:"priority_score,omitempty"`
 }
 
-type SnykResult struct {
+type SarifResult struct {
 	HighCount   int             `json:"high_count"`
 	MediumCount int             `json:"medium_count"`
 	LowCount    int             `json:"low_count"`
@@ -34,15 +34,18 @@ type SnykResult struct {
 	Low         []Vulnerability `json:"low,omitempty"`
 }
 
-type SnykData struct {
-	SchemaVersion int          `json:"schema_version"`
-	Tool          SnykTool     `json:"tool"`
-	Results       []SnykResult `json:"results"`
+type SarifData struct {
+	SchemaVersion int           `json:"schema_version"`
+	Tool          SarifTool     `json:"tool"`
+	Results       []SarifResult `json:"results"`
 }
 
-// ProcessSnykResultFile takes a path to a Snyk scan results file
-// and returns a processed SnykData object from it
-func ProcessSnykResultFile(file string) (*SnykData, error) {
+// ProcessSarifResultFile takes a path to a SARIF scan results file
+// and returns a processed SarifData object from it. The parser is
+// generic over SARIF v2.1.0 producers (Snyk, Checkov, Trivy, Semgrep, etc.)
+// and uses Snyk-specific property fallbacks only when the standard SARIF
+// `level` field is absent.
+func ProcessSarifResultFile(file string) (*SarifData, error) {
 	report, err := sarif.Open(file)
 	if err != nil {
 		return nil, err
@@ -50,10 +53,10 @@ func ProcessSnykResultFile(file string) (*SnykData, error) {
 	if !strings.HasPrefix(report.Schema, "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/") && !strings.HasPrefix(report.Schema, "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-") && !strings.HasPrefix(report.Schema, "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json") {
 		return nil, fmt.Errorf("invalid sarif file")
 	}
-	data := &SnykData{
+	data := &SarifData{
 		SchemaVersion: 1,
-		Tool:          SnykTool{},
-		Results:       []SnykResult{},
+		Tool:          SarifTool{},
+		Results:       []SarifResult{},
 	}
 
 	if len(report.Runs) > 0 {
@@ -64,7 +67,7 @@ func ProcessSnykResultFile(file string) (*SnykData, error) {
 	}
 
 	for _, run := range report.Runs {
-		result := SnykResult{}
+		result := SarifResult{}
 		for _, r := range run.Results {
 			level := r.Level
 			vulnerability := createVulnerability(r)
