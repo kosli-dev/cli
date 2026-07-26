@@ -129,7 +129,7 @@ spec:
             {{- end }}
             {{- if .Values.reporterConfig.httpProxy }}
             - --http-proxy
-            - {{ .Values.reporterConfig.httpProxy }}
+            - {{ .Values.reporterConfig.httpProxy | quote }}
             {{- end }}
             resources:
 {{ toYaml .Values.resources | indent 14 }}
