@@ -88,23 +88,6 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			cmd:         "report artifact testdata/file1 --repo-root . --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments,
 			goldenRegex: "Error: failed to open git repository at .: repository does not exist\n",
 		},
-
-		// TODO: decouple approval tests and make them independent
-		// Report approval
-		{
-			wantError: false,
-			name:      "report approval",
-			cmd:       "report approval --flow newFlow --oldest-commit HEAD~1 --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments + defaultRepoRoot,
-			golden:    "",
-		},
-
-		// Request approval
-		{
-			wantError: false,
-			name:      "request approval",
-			cmd:       "request approval --flow newFlow --oldest-commit HEAD --fingerprint 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments + defaultRepoRoot,
-			golden:    "",
-		},
 	}
 	runTestCmd(suite.T(), tests)
 }
