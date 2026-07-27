@@ -9,6 +9,17 @@ import (
 // ("--compliant false") into the "=" form ("--compliant=false"), which is the
 // only form pflag accepts for an explicitly-valued boolean flag. All other
 // tokens are returned unchanged, as is everything following a "--" terminator.
+//
+// The rewrite is positional: it matches on the tokens themselves and does not
+// track which of them pflag will consume as the value of an earlier flag. Two
+// pathological inputs are therefore read differently from the way pflag reads
+// them, and both are accepted. A positional argument literally named "true" or
+// "false" directly after a bare boolean flag becomes that flag's value. And in
+// "--name --compliant false", where pflag gives --name the value "--compliant"
+// and leaves "false" positional, this rewrite instead produces
+// "--compliant=false". Kosli positionals are artifact names, fingerprints and
+// file paths, and flag values are not flag tokens, so both inputs are far
+// enough outside real usage to be worth the plain forms this rescues.
 func normalizeBoolFlagArgs(root *cobra.Command, args []string) []string {
 	cmd, _, err := root.Find(args)
 	if err != nil {

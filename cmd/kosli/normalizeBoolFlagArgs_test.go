@@ -106,6 +106,32 @@ func TestNormalizeBoolFlagArgsCapturesPositionalNamedTrue(t *testing.T) {
 	require.Equal(t, []string{"fingerprint", "--debug=true", "--artifact-type", "file"}, normalized)
 }
 
+// TestNormalizeBoolFlagArgsCapturesBoolFlagTokenUsedAsFlagValue pins the second
+// accepted ambiguity of the rewrite: a boolean flag token given as the value of
+// a preceding value-expecting flag is still rewritten. Here pflag would give
+// --name the value "--compliant" and leave "false" as a positional argument,
+// whereas the rewrite reads the same tokens as a space-form boolean. This is
+// deliberate: telling the two apart would mean tracking which tokens pflag
+// consumes as values, and a flag value that is itself a flag token is
+// pathological.
+func TestNormalizeBoolFlagArgsCapturesBoolFlagTokenUsedAsFlagValue(t *testing.T) {
+	args := []string{
+		"attest", "generic", "Dockerfile",
+		"--artifact-type", "file",
+		"--name", "--compliant", "false",
+	}
+	root, err := newRootCmd(io.Discard, io.Discard, args)
+	require.NoError(t, err)
+
+	normalized := normalizeBoolFlagArgs(root, args)
+
+	require.Equal(t, []string{
+		"attest", "generic", "Dockerfile",
+		"--artifact-type", "file",
+		"--name", "--compliant=false",
+	}, normalized)
+}
+
 // TestNormalizeBoolFlagArgsJoinsInheritedBoolFlag checks that a boolean flag
 // inherited from a parent command is rewritten too, not just one declared on
 // the subcommand itself.
