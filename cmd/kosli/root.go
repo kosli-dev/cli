@@ -146,7 +146,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	apiKeyGracePeriodHoursFlag      = "[optional] How many hours the old API key remains valid after rotation, to allow time to update dependent systems. Defaults to the server-side value when not set."
 	apiKeyAssumeYesFlag             = "[optional] Skip the confirmation prompt and delete the API key without asking. (alias: --yes)"
 	environmentNameFlag             = "The environment name."
-	approvalEnvironmentNameFlag     = "[defaulted] The environment the artifact is approved for. (defaults to all environments)"
 	pageNumberFlag                  = "[defaulted] The page number of a response."
 	pageLimitFlag                   = "[defaulted] The number of elements per page."
 	newEnvTypeFlag                  = "The type of environment. Valid types are: [" + validEnvTypesList + "]."
@@ -161,7 +160,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	oldestCommitFlag                = "[conditional] The source commit sha for the oldest change in the deployment. Can be any commit-ish. Only required if you don't specify '--environment'."
 	newestCommitFlag                = "[defaulted] The source commit sha for the newest change in the deployment. Can be any commit-ish."
 	repoRootFlag                    = "[defaulted] The directory where the source git repository is available."
-	approvalDescriptionFlag         = "[optional] The approval description."
 	jiraBaseUrlFlag                 = "The base url for the jira project, e.g. 'https://kosli.atlassian.net'"
 	jiraUsernameFlag                = "Jira username (for Jira Cloud)"
 	jiraAPITokenFlag                = "Jira API token (for Jira Cloud)"
@@ -178,7 +176,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	templateFileFlag                = "[optional] The path to a yaml template file. Cannot be used together with --use-empty-template"
 	templateFileSimpleFlag          = "[optional] The path to a yaml template file."
 	useEmptyTemplateFlag            = "Use an empty template for the flow creation without specifying a file. Cannot be used together with --template or --template-file"
-	approvalUserDataFlag            = "[optional] The path to a JSON file containing additional data you would like to attach to the approval."
 	attestationUserDataFlag         = "[optional] The path to a JSON file containing additional data you would like to attach to the attestation."
 	trailUserDataFlag               = "[optional] The path to a JSON file containing additional data you would like to attach to the flow trail."
 	gitCommitFlag                   = "[defaulted] The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/integrations/ci_cd, otherwise defaults to HEAD )."
@@ -259,7 +256,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	fingerprintFlag                 = "[conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'."
 	intervalFlag                    = "[optional] Expression to define specified snapshots range."
 	showUnchangedArtifactsFlag      = "[defaulted] Show the unchanged artifacts present in both snapshots within the diff output."
-	approverFlag                    = "[optional] The user approving an approval."
 	attestationFingerprintFlag      = "[conditional] The SHA256 fingerprint of the artifact to attach the attestation to. Only required if the attestation is for an artifact and --artifact-type and artifact name/path are not used."
 	attestationCommitFlag           = "[conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: https://docs.kosli.com/integrations/ci_cd )."
 	attestationRedactCommitInfoFlag = "[optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch]."
@@ -459,7 +455,6 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		newArchiveCmd(out),
 		newUnarchiveCmd(out),
 		newSnapshotCmd(out),
-		newRequestCmd(out),
 		newLogCmd(out),
 		newDisableCmd(out),
 		newEnableCmd(out),

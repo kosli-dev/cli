@@ -21,7 +21,6 @@ func newAssertCmd(out io.Writer) *cobra.Command {
 		newAssertStatusCmd(out),
 		newAssertArtifactCmd(out),
 		newAssertSnapshotCmd(out),
-		newAssertApprovalCmd(out),
 	)
 
 	return cmd

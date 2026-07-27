@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -22,13 +21,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
-
-// cmdDeprecationLine returns the line Cobra prints before running a command
-// whose Deprecated field is set. Used by tests to prepend the expected
-// deprecation notice to golden strings.
-func cmdDeprecationLine(cmd string) string {
-	return fmt.Sprintf("Command %q is deprecated, this command is deprecated and will be removed in a future release.\n", cmd)
-}
 
 type jsonCheck struct {
 	Path string
@@ -459,25 +451,6 @@ func CreateArtifactWithCommit(flowName, artifactFingerprint, artifactName string
 
 	err := o.run([]string{artifactName})
 	require.NoError(t, err, "artifact should be created without error")
-}
-
-// CreateApproval creates an approval for an artifact in a flow
-// If isRequest is true, this creates an approval request
-func CreateApproval(flowName, fingerprint string, isRequest bool, t *testing.T) {
-	t.Helper()
-	o := &reportApprovalOptions{
-		payload: ApprovalPayload{
-			ArtifactFingerprint: fingerprint,
-			Description:         "some description",
-		},
-		flowName:        flowName,
-		oldestSrcCommit: "75690c740e7b222a3948f4f7618262a5254044e2",
-		newestSrcCommit: "cfbdba789edd14e5970405896c637dbf073ef831",
-		srcRepoRoot:     "../..",
-	}
-
-	err := o.run([]string{"filename"}, isRequest)
-	require.NoError(t, err, "approval should be created without error")
 }
 
 // EnableBeta enables beta features for the org

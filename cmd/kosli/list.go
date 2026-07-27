@@ -34,7 +34,6 @@ func newListCmd(out io.Writer) *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(
-		newListApprovalsCmd(out),
 		newListArtifactsCmd(out),
 		newListEnvironmentsCmd(out),
 		newListFlowsCmd(out),

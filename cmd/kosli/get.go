@@ -19,7 +19,6 @@ func newGetCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newGetApiKeyCmd(out),
-		newGetApprovalCmd(out),
 		newGetArtifactCmd(out),
 		newGetEnvironmentCmd(out),
 		newGetFlowCmd(out),

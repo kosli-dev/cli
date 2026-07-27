@@ -108,9 +108,7 @@ func (MintlifyFormatter) ExampleUseCases(commandName, example string) string {
 	example = strings.TrimSpace(example)
 	lines := strings.Split(example, "\n")
 
-	if commandName == "kosli report approval" ||
-		commandName == "kosli request approval" ||
-		commandName == "kosli snapshot server" {
+	if commandName == "kosli snapshot server" {
 		fmt.Fprintf(&b, "```shell\n%s\n```\n\n", example)
 	} else if lines[0][0] != '#' {
 		fmt.Fprintf(&b, "```shell\n%s\n```\n\n", example)
