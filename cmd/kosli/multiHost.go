@@ -161,6 +161,13 @@ func getMultiOpts() MultiOpts {
 	cmd.SetOut(writer)
 	cmd.SetErr(writer)
 
+	// Parse the same normalized args innerMain will run with, so a boolean flag
+	// written in the space form (eg --debug false) does not leave a stray
+	// positional argument that fails arg validation and empties MultiOpts.
+	if len(os.Args) > 1 {
+		cmd.SetArgs(normalizeBoolFlagArgs(cmd, os.Args[1:]))
+	}
+
 	fakeError := errors.New("")
 
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
