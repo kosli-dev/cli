@@ -20,6 +20,37 @@ type RootCommandTestSuite struct {
 	suite.Suite
 }
 
+// TestFindUnknownCommand locks in the fix for issue #1043: an unrecognized
+// command token must be reported (so the process exits non-zero) while genuine
+// group commands invoked with no leftover positional keep resolving cleanly.
+func (suite *RootCommandTestSuite) TestFindUnknownCommand() {
+	cases := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{name: "unknown top-level command", args: []string{"garbage"}, wantErr: true},
+		{name: "unknown command with trailing args", args: []string{"garbage", "list", "flows"}, wantErr: true},
+		{name: "unknown subcommand of a group", args: []string{"list", "garbage"}, wantErr: true},
+		{name: "group command with no leftover is fine", args: []string{"list"}, wantErr: false},
+		{name: "runnable leaf command is fine", args: []string{"version"}, wantErr: false},
+		{name: "no args is fine", args: []string{}, wantErr: false},
+		{name: "unknown flag defers to cobra", args: []string{"--badflag", "list", "flows"}, wantErr: false},
+	}
+	for _, tc := range cases {
+		suite.Run(tc.name, func() {
+			err := findUnknownCommand(tc.args)
+			if tc.wantErr {
+				suite.Require().Error(err)
+				suite.Contains(err.Error(), "unknown command:")
+				suite.Contains(err.Error(), "available subcommands are:")
+			} else {
+				suite.Require().NoError(err)
+			}
+		})
+	}
+}
+
 func (suite *RootCommandTestSuite) TestConfigProcessing() {
 	tests := []cmdTestCase{
 		{
