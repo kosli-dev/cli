@@ -20,12 +20,28 @@ import (
 // "--compliant=false". Kosli positionals are artifact names, fingerprints and
 // file paths, and flag values are not flag tokens, so both inputs are far
 // enough outside real usage to be worth the plain forms this rescues.
+// The rewrite runs in two passes because the flags in scope depend on where a
+// token sits. A flag before the subcommand can only be one of root's own, and
+// root.Find cannot resolve the command while such a flag is still in the space
+// form: the value is left as a stray positional, which cobra reads as an unknown
+// subcommand. The first pass therefore works from root's flags alone, which is
+// what lets the second pass resolve the command and reach the flags declared on
+// it. Joining is idempotent, since a joined token no longer matches any flag
+// token, so the passes cannot rewrite the same token twice.
 func normalizeBoolFlagArgs(root *cobra.Command, args []string) []string {
+	args = joinBoolFlagValues(boolFlagTokens(root.LocalFlags()), args)
 	cmd, _, err := root.Find(args)
 	if err != nil {
 		return args
 	}
-	boolFlags := boolFlagTokens(cmd)
+	return joinBoolFlagValues(boolFlagTokens(cmd.Flags()), args)
+}
+
+// joinBoolFlagValues rewrites every "<flag> <literal>" pair in args, where flag
+// is a token in boolFlags and literal is a boolean literal, into the single
+// "<flag>=<literal>" token. All other tokens are returned unchanged, as is
+// everything following a "--" terminator.
+func joinBoolFlagValues(boolFlags map[string]bool, args []string) []string {
 	normalized := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		if args[i] == "--" {
@@ -45,7 +61,7 @@ func normalizeBoolFlagArgs(root *cobra.Command, args []string) []string {
 }
 
 // boolFlagTokens returns the command-line tokens ("--compliant", "-C") of every
-// boolean flag known to cmd.
+// boolean flag in flags.
 //
 // Shorthands are listed individually, so a grouped token such as "-qC" is not a
 // key here and "-qC false" is left alone: it keeps failing with the arg-count
@@ -54,9 +70,9 @@ func normalizeBoolFlagArgs(root *cobra.Command, args []string) []string {
 // member of the group the value belongs to and what to do when a group mixes
 // boolean and non-boolean shorthands. Rescuing the plain forms is worth a
 // low-level rewrite; guessing intent inside a grouped token is not.
-func boolFlagTokens(cmd *cobra.Command) map[string]bool {
+func boolFlagTokens(flags *pflag.FlagSet) map[string]bool {
 	tokens := map[string]bool{}
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+	flags.VisitAll(func(flag *pflag.Flag) {
 		if flag.Value.Type() != "bool" {
 			return
 		}

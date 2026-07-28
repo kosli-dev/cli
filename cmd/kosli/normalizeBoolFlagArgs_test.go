@@ -155,6 +155,21 @@ func TestNormalizeBoolFlagArgsJoinsInheritedBoolFlag(t *testing.T) {
 	}, normalized)
 }
 
+// TestNormalizeBoolFlagArgsJoinsGlobalBoolFlagBeforeSubcommand checks that a
+// global boolean flag written in the space form before the subcommand is
+// rewritten too. Left alone, the stray "false" stops cobra resolving `list
+// flows`, and the CLI prints the root help text and exits 0, so the command
+// silently never runs.
+func TestNormalizeBoolFlagArgsJoinsGlobalBoolFlagBeforeSubcommand(t *testing.T) {
+	args := []string{"--debug", "false", "list", "flows"}
+	root, err := newRootCmd(io.Discard, io.Discard, args)
+	require.NoError(t, err)
+
+	normalized := normalizeBoolFlagArgs(root, args)
+
+	require.Equal(t, []string{"--debug=false", "list", "flows"}, normalized)
+}
+
 // TestNormalizeBoolFlagArgsJoinsSpaceSeparatedBoolValue checks that a boolean
 // flag written in the space form is rewritten into the "=" form, so that
 // `--compliant false` stops leaving "false" behind as a positional argument.
