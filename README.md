@@ -56,6 +56,18 @@ docker run --rm ghcr.io/kosli-dev/cli:v<X.Y.Z> version
 
 Images are published to `ghcr.io/kosli-dev/cli` for each release tag.
 
+### Download a release binary
+
+Every release ships prebuilt archives, `.deb`/`.rpm` packages, and checksums on the [GitHub Releases](https://github.com/kosli-dev/cli/releases) page. Download the archive for your OS and architecture, extract it, and move the `kosli` binary onto your `PATH`. For example, on Linux amd64:
+
+```sh
+curl -L https://github.com/kosli-dev/cli/releases/download/v<X.Y.Z>/kosli_<X.Y.Z>_linux_amd64.tar.gz | tar xz
+sudo mv kosli /usr/local/bin/
+kosli version
+```
+
+Archive names follow `kosli_<X.Y.Z>_<os>_<arch>.tar.gz` for Linux and macOS, and `kosli_<X.Y.Z>_windows_<arch>.zip` for Windows.
+
 ### Build from source
 
 ```sh
@@ -65,7 +77,7 @@ make build      # produces ./kosli
 
 See the [developer guide](/dev-guide.md) for full build details, including Windows.
 
-`.deb` and `.rpm` packages are also published for each release. See the [install docs](https://docs.kosli.com/getting_started/install/) for the complete list of options.
+`.deb` and `.rpm` packages are attached to each [GitHub Release](https://github.com/kosli-dev/cli/releases). See the [install docs](https://docs.kosli.com/getting_started/install/) for the complete list of options.
 
 ## Documentation and links
 
