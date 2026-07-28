@@ -46,7 +46,7 @@ func TestMintlifyFrontMatterBetaTag(t *testing.T) {
 
 func TestMintlifyFrontMatterDeprecatedTag(t *testing.T) {
 	f := MintlifyFormatter{}
-	got := f.FrontMatter(CommandMeta{Name: "kosli report approval", Deprecated: true})
+	got := f.FrontMatter(CommandMeta{Name: "kosli report artifact", Deprecated: true})
 	if !strings.Contains(got, `tag: "DEPRECATED"`) {
 		t.Errorf("expected DEPRECATED tag, got:\n%s", got)
 	}
