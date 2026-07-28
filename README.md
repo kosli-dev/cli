@@ -51,7 +51,7 @@ npm install -g @kosli/cli
 ### Docker
 
 ```sh
-docker run --rm ghcr.io/kosli-dev/cli:v2.35.0 version
+docker run --rm ghcr.io/kosli-dev/cli:v<X.Y.Z> version
 ```
 
 Images are published to `ghcr.io/kosli-dev/cli` for each release tag.
