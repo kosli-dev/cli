@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Only v2 2of CLI is currently supported! Please try and use the latest release before reporting an issue.
+Only `v2` of the Kosli CLI is currently supported! Please try and use the latest release before reporting an issue.
 
 ## Reporting a Vulnerability
 
