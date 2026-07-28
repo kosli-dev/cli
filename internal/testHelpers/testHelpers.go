@@ -62,10 +62,19 @@ func CloneGitRepo(url, cloneTo string) (*git.Repository, error) {
 }
 
 func InitializeGitRepo(repoPath string) (*git.Repository, *git.Worktree, billy.Filesystem, error) {
+	// osfs resolves symlinks in a base dir that exists, but leaves a
+	// non-existent one raw. repoPath exists and its ".git" does not yet, so
+	// resolving here keeps the two roots consistent. Without it go-git sees a
+	// relative path other than ".git", concludes the git dir is elsewhere, and
+	// fails trying to create a "gitdir:" file where ".git" already exists.
+	resolvedRepoPath, err := filepath.EvalSymlinks(repoPath)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	// the repo worktree filesystem. It has to be osfs so that we can give it a path
-	fs := osfs.New(repoPath)
+	fs := osfs.New(resolvedRepoPath)
 	// the filesystem for git database
-	storerFS := osfs.New(filepath.Join(repoPath, ".git"))
+	storerFS := osfs.New(filepath.Join(resolvedRepoPath, ".git"))
 	storer := filesystem.NewStorage(storerFS, cache.NewObjectLRUDefault())
 	// initialize the git repo at the filesystem "fs" and using "storer" as the git database
 	repo, err := git.Init(storer, fs)
