@@ -66,7 +66,7 @@ sudo mv kosli /usr/local/bin/
 kosli version
 ```
 
-Archive names follow `kosli_<X.Y.Z>_<os>_<arch>.tar.gz` for Linux and macOS, and `kosli_<X.Y.Z>_windows_<arch>.zip` for Windows.
+Archive names follow `kosli_<X.Y.Z>_<os>_<arch>.tar.gz` for Linux and macOS, and `kosli_<X.Y.Z>_windows_<arch>.zip` for Windows. See the [install docs](https://docs.kosli.com/getting_started/install/) for the complete list of options.
 
 ### Build from source
 
@@ -76,8 +76,6 @@ make build      # produces ./kosli
 ```
 
 See the [developer guide](/dev-guide.md) for full build details, including Windows.
-
-`.deb` and `.rpm` packages are attached to each [GitHub Release](https://github.com/kosli-dev/cli/releases). See the [install docs](https://docs.kosli.com/getting_started/install/) for the complete list of options.
 
 ## Documentation and links
 
