@@ -52,6 +52,8 @@ if ! git status -uno | grep -q "Your branch is up to date"; then
   exit 1
 fi
 
-git tag -a "$VER" -F "$RELEASE_NOTES_FILE"
+# --cleanup=verbatim: git's default cleanup strips lines starting with '#' as
+# commentary, which would eat the markdown headings in the release notes.
+git tag -a "$VER" --cleanup=verbatim -F "$RELEASE_NOTES_FILE"
 git push origin "$VER"
 echo "Pushed tag $VER. Release workflow will run on GitHub."

@@ -218,6 +218,6 @@ release: ## Cut a new release and push next tag
 	else \
 	  git remote update; \
 	  git status -uno | grep --silent "Your branch is up to date" || (echo "ERROR: your branch is NOT up to date with remote" && exit 1); \
-	  ([ -f dist/release_notes.md ] && git tag -a $(tag) -F dist/release_notes.md) || git tag -a $(tag) -m"$(tag)"; \
+	  ([ -f dist/release_notes.md ] && git tag -a $(tag) --cleanup=verbatim -F dist/release_notes.md) || git tag -a $(tag) -m"$(tag)"; \
 	  git push origin $(tag); \
 	fi
