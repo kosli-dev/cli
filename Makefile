@@ -53,7 +53,8 @@ fmt: ## Reformat package sources
 	@go fmt ./...
 
 ensure_golangci-lint:
-	@$HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade golangci-lint
+	@HOMEBREW_NO_AUTO_UPDATE=1 brew list golangci-lint >/dev/null 2>&1 \
+	  || HOMEBREW_NO_AUTO_UPDATE=1 brew install golangci-lint
 
 lint: deps vet ensure_golangci-lint ## Run linting
 	@golangci-lint run --timeout=5m --color always  -v ./...
