@@ -25,7 +25,7 @@ restart_server()
 {
     echo restarting server ...
     # Only remote (digest-pinned) images need an AWS login and pull. The local-image
-    # flow uses the plain "merkely" tag, which is built locally — skip both.
+    # flow uses the plain "merkely-test" tag, which is built locally — skip both.
     if [[ "$KOSLI_SERVER_IMAGE" == *"@sha256:"* ]]; then
         ./bin/docker_login_aws.sh staging
         docker pull "${KOSLI_SERVER_IMAGE}" || true
