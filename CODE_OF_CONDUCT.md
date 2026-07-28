@@ -103,8 +103,6 @@ Violating these terms may lead to a permanent ban.
 
 ### 4. Permanent Ban
 
-**Community Impact**: Demonstrating a pattern of violation of community
-standards, including sustained inappropriate behaviour, harassment of an
 **Community Impact**: A serious violation of community standards for which a temporary ban is not deemed sufficient OR demonstrating a pattern of violation of community
 standards, including sustained inappropriate behaviour, harassment of an
 individual, or aggression toward or disparagement of classes of individuals.
