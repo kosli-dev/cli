@@ -20,6 +20,67 @@ type RootCommandTestSuite struct {
 	suite.Suite
 }
 
+// TestFindUnknownCommand locks in the fix for issue #1043: an unrecognized
+// command token must be reported (so the process exits non-zero) while genuine
+// group commands invoked with no leftover positional keep resolving cleanly.
+func (suite *RootCommandTestSuite) TestFindUnknownCommand() {
+	cases := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{name: "unknown top-level command", args: []string{"garbage"}, wantErr: true},
+		{name: "unknown command with trailing args", args: []string{"garbage", "list", "flows"}, wantErr: true},
+		{name: "unknown subcommand of a group", args: []string{"list", "garbage"}, wantErr: true},
+		{name: "group command with no leftover is fine", args: []string{"list"}, wantErr: false},
+		{name: "runnable leaf command is fine", args: []string{"version"}, wantErr: false},
+		{name: "no args is fine", args: []string{}, wantErr: false},
+		{name: "unknown flag defers to cobra", args: []string{"--badflag", "list", "flows"}, wantErr: false},
+		// A space-form bool flag on a group command must be normalized the same
+		// way innerMain normalizes it, otherwise its value ("false") is mistaken
+		// for a leftover positional and wrongly reported as an unknown command.
+		{name: "space-form bool flag on a group command is fine", args: []string{"list", "--debug", "false"}, wantErr: false},
+	}
+	for _, tc := range cases {
+		suite.Run(tc.name, func() {
+			err := findUnknownCommand(tc.args)
+			if tc.wantErr {
+				suite.Require().Error(err)
+				suite.Contains(err.Error(), "unknown command:")
+				suite.Contains(err.Error(), "available subcommands are:")
+			} else {
+				suite.Require().NoError(err)
+			}
+		})
+	}
+}
+
+// TestInnerMainPreservesGlobalAfterProbe guards the regression the unknown-command
+// probe could introduce: findUnknownCommand builds a throwaway command tree via
+// newRootCmd, which reassigns the package-level `global`. If it is not restored,
+// the real command's persistent-flag pointers are orphaned and every global.*
+// read (ApiToken, Host, ...) sees the throwaway struct's defaults instead of the
+// user's flag values. Drive a successful real command with global flags through
+// innerMain (which the golden harness bypasses) and assert the values survive.
+func (suite *RootCommandTestSuite) TestInnerMainPreservesGlobalAfterProbe() {
+	args := []string{
+		"fingerprint", "testdata/person-schema.json",
+		"--artifact-type", "file",
+		"--host", "https://example.kosli.com",
+		"--api-token", "DRY_RUN",
+	}
+	cmd, err := newRootCmd(io.Discard, io.Discard, args)
+	suite.Require().NoError(err)
+
+	err = innerMain(cmd, append([]string{"kosli"}, args...))
+
+	suite.Require().NoError(err)
+	suite.Equal("https://example.kosli.com", global.Host,
+		"global.Host must reflect --host, not the probe's throwaway struct default")
+	suite.Equal("DRY_RUN", global.ApiToken,
+		"global.ApiToken must reflect --api-token, not the probe's throwaway struct default")
+}
+
 func (suite *RootCommandTestSuite) TestConfigProcessing() {
 	tests := []cmdTestCase{
 		{

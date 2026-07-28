@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -61,12 +62,84 @@ func enrichError(cmd *cobra.Command, err error) error {
 	return fmt.Errorf("[%s] %w", strings.Join(parts, " "), err)
 }
 
+// findUnknownCommand detects the unknown-command case that cobra's
+// TraverseChildren routing swallows (issue #1043). It resolves args exactly as
+// cobra will — on a throwaway command tree, restoring the package-level `global`
+// afterwards so the real command's flag state is left untouched — and returns an
+// error when resolution lands on a command that only groups subcommands (is not
+// runnable) while an unconsumed non-flag token remains. It returns nil,
+// deferring to cobra/ExecuteC, when args reach a runnable command, when nothing
+// non-flag is left over (e.g. `kosli list` printing its own group help), or when
+// Traverse itself errors (an unknown flag, --help, etc. — those paths are
+// already handled downstream).
+func findUnknownCommand(args []string) error {
+	// newRootCmd reassigns the package-level `global` and binds the *real*
+	// command's persistent-flag pointers to it. Building a probe here would
+	// orphan those bindings (cobra would parse the user's flags into the old
+	// struct while every RunE/initialize reads the new one), so save and restore
+	// `global` around the probe.
+	saved := global
+	defer func() { global = saved }()
+
+	probe, err := newRootCmd(io.Discard, io.Discard, args)
+	if err != nil {
+		return nil
+	}
+	// Resolve against the same normalization innerMain applies before executing,
+	// so a space-form bool flag (e.g. `kosli list --debug false`) is not
+	// mistaken for a leftover positional and reported as an unknown command.
+	c, leftover, err := probe.Traverse(normalizeBoolFlagArgs(probe, args))
+	if err != nil || c.Runnable() {
+		return nil
+	}
+	token := ""
+	for _, a := range leftover {
+		if !strings.HasPrefix(a, "-") {
+			token = a
+			break
+		}
+	}
+	if token == "" {
+		return nil
+	}
+	// If the leftover token names a real subcommand, traversal stopped for some
+	// other reason (e.g. an unparseable flag ahead of it), not because the
+	// command is unknown. Defer to cobra/ExecuteC so the existing flag
+	// diagnostics still fire.
+	for _, sc := range c.Commands() {
+		if sc.Name() == token {
+			return nil
+		}
+		for _, alias := range sc.Aliases {
+			if alias == token {
+				return nil
+			}
+		}
+	}
+	availableSubcommands := []string{}
+	for _, sc := range c.Commands() {
+		if !sc.Hidden {
+			availableSubcommands = append(availableSubcommands, strings.Split(sc.Use, " ")[0])
+		}
+	}
+	return fmt.Errorf("unknown command: %s\navailable subcommands are: %s",
+		token, strings.Join(availableSubcommands, " | "))
+}
+
 // innerMain runs cmd against args (args[0] being the program name) and turns
 // the outcome into the process-level error, printing the update notice on the
 // --version path and reporting errors in the friendliest available form.
 func innerMain(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		cmd.SetArgs(normalizeBoolFlagArgs(cmd, args[1:]))
+		// cobra's TraverseChildren routing hands an unrecognized command token to
+		// the nearest group command with no error; that command then prints help
+		// and exits 0, so a typo'd command silently reports success (issue #1043).
+		// Catch it before executing so the process exits non-zero with a
+		// diagnostic instead.
+		if err := findUnknownCommand(args[1:]); err != nil {
+			return err
+		}
 	}
 	executedCmd, err := cmd.ExecuteC()
 	if err == nil {
