@@ -170,7 +170,15 @@ jobs:
         id: get-tag-notes
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          BODY=$(git tag -l --format='%(contents:body)' "$TAG")
+          # %(contents), not %(contents:body): the latter drops the tag message's
+          # first paragraph as a "subject", silently swallowing the first heading
+          # or bullet of the release notes.
+          BODY=$(git tag -l --format='%(contents)' "$TAG")
+          # `make release tag=vX.Y.Z` with no dist/release_notes.md tags with the
+          # version as the whole message; that is not release notes.
+          if [ "$(printf '%s' "$BODY" | tr -d '[:space:]')" = "$TAG" ]; then
+            BODY=""
+          fi
           if [ -n "$BODY" ]; then
             printf '%s' "$BODY" > release_notes.md
             echo "args=--release-notes=release_notes.md" >> $GITHUB_OUTPUT
