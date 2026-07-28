@@ -29,7 +29,7 @@ curl -sSL https://raw.githubusercontent.com/kosli-dev/cli/main/install-cli.sh | 
 The script detects your OS and architecture and installs the matching release binary into a directory on your `PATH`. To install a specific version, pass the tag as an argument:
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/kosli-dev/cli/main/install-cli.sh | sh -s -- v2.35.0
+curl -sSL https://raw.githubusercontent.com/kosli-dev/cli/main/install-cli.sh | sh -s -- v<X.Y.Z>
 ```
 
 ### Homebrew (macOS / Linux)
