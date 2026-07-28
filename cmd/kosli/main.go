@@ -61,7 +61,13 @@ func enrichError(cmd *cobra.Command, err error) error {
 	return fmt.Errorf("[%s] %w", strings.Join(parts, " "), err)
 }
 
+// innerMain runs cmd against args (args[0] being the program name) and turns
+// the outcome into the process-level error, printing the update notice on the
+// --version path and reporting errors in the friendliest available form.
 func innerMain(cmd *cobra.Command, args []string) error {
+	if len(args) > 1 {
+		cmd.SetArgs(normalizeBoolFlagArgs(cmd, args[1:]))
+	}
 	executedCmd, err := cmd.ExecuteC()
 	if err == nil {
 		// Cobra handles --version internally and bypasses all hooks, so we print

@@ -68,7 +68,7 @@ func executeCommandC(cmd string) (*cobra.Command, string, string, string, error)
 	root.SetOut(outWriter)
 	root.SetErr(errWriter)
 	root.SetIn(new(bytes.Buffer))
-	root.SetArgs(args)
+	root.SetArgs(normalizeBoolFlagArgs(root, args))
 
 	c, err := root.ExecuteC()
 

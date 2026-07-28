@@ -66,6 +66,42 @@ func (suite *RootCommandTestSuite) TestInnerMainEnrichesError() {
 	suite.ErrorContains(err, "[kosli attest snyk flow=cyber-dojo trail=live-snyk-scan]")
 }
 
+// TestExecuteCommandCNormalizesSpaceSeparatedBoolFlag checks that the golden
+// test harness normalizes args the same way innerMain does. Without this the
+// harness sets args on the command itself and bypasses normalization, so golden
+// tests would assert behaviour that real CLI users no longer get.
+func (suite *RootCommandTestSuite) TestExecuteCommandCNormalizesSpaceSeparatedBoolFlag() {
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:   "a bool flag written in the space form is accepted",
+			cmd:    "fingerprint testdata/person-schema.json --artifact-type file --debug false",
+			golden: "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\n",
+		},
+	})
+}
+
+// TestInnerMainAcceptsSpaceSeparatedBoolFlag drives a command whose bool flag
+// is written in the space form ("--debug false") through innerMain, which is
+// where the args are normalized. Without that normalization pflag leaves
+// "false" behind as a second positional argument and the command fails with
+// "accepts 1 arg(s), received 2". Note that this test deliberately does not
+// call cmd.SetArgs: setting the normalized args is innerMain's job.
+func (suite *RootCommandTestSuite) TestInnerMainAcceptsSpaceSeparatedBoolFlag() {
+	args := []string{
+		"fingerprint", "testdata/person-schema.json",
+		"--artifact-type", "file",
+		"--debug", "false",
+	}
+	out := new(bytes.Buffer)
+	cmd, err := newRootCmd(out, io.Discard, args)
+	suite.Require().NoError(err)
+
+	err = innerMain(cmd, append([]string{"kosli"}, args...))
+
+	suite.Require().NoError(err)
+	suite.Equal("1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\n", out.String())
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestRootCommandTestSuite(t *testing.T) {

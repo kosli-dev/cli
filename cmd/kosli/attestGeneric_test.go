@@ -42,10 +42,24 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			golden:    "Error: accepts at most 1 arg(s), received 2 [foo bar]\n",
 		},
 		{
-			wantError: true,
-			name:      "fails when artifact-name is provided and there is an --artifact-type flag and --compliant is not set with =",
-			cmd:       fmt.Sprintf("attest generic testdata/file1 %s --artifact-type file --compliant false", suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 1 arg(s), received 2 [testdata/file1 false]\nSee https://docs.kosli.com//faq/#boolean-flags\n",
+			name:   "reports a non-compliant attestation when --compliant is given with a space",
+			cmd:    fmt.Sprintf("attest generic testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url http://example.com --compliant false %s", suite.defaultKosliArguments),
+			golden: "generic attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
+			name:   "passes through a non-boolean flag whose value is the literal false",
+			cmd:    fmt.Sprintf("attest generic testdata/file1 --artifact-type file --name false --commit HEAD --origin-url http://example.com %s", suite.defaultKosliArguments),
+			golden: "generic attestation 'false' is reported to trail: test-123\n",
+		},
+		{
+			name:   "reports a non-compliant attestation when the -C shorthand is given with a space",
+			cmd:    fmt.Sprintf("attest generic testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url http://example.com -C false %s", suite.defaultKosliArguments),
+			golden: "generic attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
+			name:   "reports a non-compliant attestation when --compliant is given with =",
+			cmd:    fmt.Sprintf("attest generic testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url http://example.com --compliant=false %s", suite.defaultKosliArguments),
+			golden: "generic attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			wantError: true,
@@ -55,27 +69,15 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 		},
 		{
 			wantError: true,
-			name:      "fails when artifact-name is provided (as _unused_ boolean 'space' arg) and there is no --artifact-type and no --fingerprint",
-			cmd:       fmt.Sprintf("attest generic %s --compliant false", suite.defaultKosliArguments),
-			golden:    "Error: --artifact-type or --fingerprint must be specified when artifact name ('false') argument is supplied.\nSee https://docs.kosli.com//faq/#boolean-flags\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			name:      "links to the boolean flags FAQ when a stray true|false argument remains",
+			cmd:       fmt.Sprintf("attest generic foo false --artifact-type file --name bar %s", suite.defaultKosliArguments),
+			golden:    "Error: accepts at most 1 arg(s), received 2 [foo false]\nSee https://docs.kosli.com//faq/#boolean-flags\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when artifact-name is provided and there is no --artifact-type",
 			cmd:       fmt.Sprintf("attest generic wibble %s", suite.defaultKosliArguments),
 			golden:    "Error: --artifact-type or --fingerprint must be specified when artifact name ('wibble') argument is supplied.\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
-		},
-		{
-			wantError: true,
-			name:      "fails when there are extra args and gives custom help message when an argument is true|false",
-			cmd:       fmt.Sprintf("attest generic foo -t file %s --compliant false", suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 1 arg(s), received 2 [foo false]\nSee https://docs.kosli.com//faq/#boolean-flags\n",
-		},
-		{
-			wantError: true,
-			name:      "fails when there are extra args and gives custom help message when an argument is true|false",
-			cmd:       fmt.Sprintf("attest generic %s --compliant false", suite.defaultKosliArguments),
-			golden:    "Error: --artifact-type or --fingerprint must be specified when artifact name ('false') argument is supplied.\nSee https://docs.kosli.com//faq/#boolean-flags\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,

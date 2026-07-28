@@ -134,6 +134,30 @@ func (suite *MultiHostTestSuite) TestRunDoubledHost() {
 	}
 }
 
+// TestRunDoubledHostAcceptsSpaceSeparatedBoolFlag checks that a boolean flag
+// written in the space form is honoured on the multi-host path too. --debug is
+// false here, so the output must be the bare fingerprint: no per-host [debug]
+// prefix and no secondary-call output. fingerprint is used because it needs no
+// server, so the two hosts are never contacted.
+func (suite *MultiHostTestSuite) TestRunDoubledHostAcceptsSpaceSeparatedBoolFlag() {
+	args := []string{
+		"kosli", "fingerprint", "testdata/person-schema.json",
+		"--artifact-type", "file",
+		"--debug", "false",
+		fmt.Sprintf("--host=%s,%s", localHost, localHost),
+		fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken),
+		fmt.Sprintf("--org=%s", orgName),
+	}
+	want := []string{"1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01", ""}
+
+	defer func(original []string) { os.Args = original }(os.Args)
+	os.Args = args
+	output, err := runMultiHost(args)
+
+	assert.Equal(suite.T(), error(nil), err)
+	assert.Equal(suite.T(), "", diff(want, strings.Split(output, "\n")))
+}
+
 func (suite *MultiHostTestSuite) TestRunTripledHost() {
 
 	multiHost := fmt.Sprintf("--host=%s,%s,%s", localHost, localHost, localHost)
