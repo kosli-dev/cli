@@ -107,8 +107,8 @@ test_setup_restart_server: ensure_gotestsum
 	export KOSLI_SERVER_IMAGE=$$(cat /tmp/server-image.txt) && ./bin/reset-or-start-server.sh force
 
 setup_test_to_use_local_image:
-	@echo merkely > /tmp/server-image.txt
-	@KOSLI_SERVER_IMAGE=merkely docker compose down -v
+	@echo merkely-test > /tmp/server-image.txt
+	@KOSLI_SERVER_IMAGE=merkely-test docker compose down -v
 	@echo "Run make build in the server repo you want to use"
 	@echo "Then run make test_integration"
 	@echo "To look at the logs from local kosli server run: make follow_integration_test_server"
