@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a problem with the Kosli CLI
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to file a bug report!
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight
+      options:
+        - label: I searched existing issues and didn't find a duplicate.
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, including what you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The exact `kosli` command(s) you ran and any relevant flags or config. Redact any tokens or secrets.
+      placeholder: |
+        1. Run `kosli ...`
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: CLI version
+      description: Output of `kosli version`.
+      placeholder: v2.x.y
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, CI system, and how you installed the CLI (script, brew, Docker, etc.).
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / output
+      description: Relevant output, ideally with `--debug`. This will be rendered as code, so no need for backticks. Redact any tokens or secrets.
+      render: shell
+    validations:
+      required: false
