@@ -64,19 +64,31 @@ func enrichError(cmd *cobra.Command, err error) error {
 
 // findUnknownCommand detects the unknown-command case that cobra's
 // TraverseChildren routing swallows (issue #1043). It resolves args exactly as
-// cobra will — on a throwaway command tree, so the real command's flag state is
-// left untouched — and returns an error when resolution lands on a command that
-// only groups subcommands (is not runnable) while an unconsumed non-flag token
-// remains. It returns nil, deferring to cobra/ExecuteC, when args reach a
-// runnable command, when nothing non-flag is left over (e.g. `kosli list`
-// printing its own group help), or when Traverse itself errors (an unknown
-// flag, --help, etc. — those paths are already handled downstream).
+// cobra will — on a throwaway command tree, restoring the package-level `global`
+// afterwards so the real command's flag state is left untouched — and returns an
+// error when resolution lands on a command that only groups subcommands (is not
+// runnable) while an unconsumed non-flag token remains. It returns nil,
+// deferring to cobra/ExecuteC, when args reach a runnable command, when nothing
+// non-flag is left over (e.g. `kosli list` printing its own group help), or when
+// Traverse itself errors (an unknown flag, --help, etc. — those paths are
+// already handled downstream).
 func findUnknownCommand(args []string) error {
+	// newRootCmd reassigns the package-level `global` and binds the *real*
+	// command's persistent-flag pointers to it. Building a probe here would
+	// orphan those bindings (cobra would parse the user's flags into the old
+	// struct while every RunE/initialize reads the new one), so save and restore
+	// `global` around the probe.
+	saved := global
+	defer func() { global = saved }()
+
 	probe, err := newRootCmd(io.Discard, io.Discard, args)
 	if err != nil {
 		return nil
 	}
-	c, leftover, err := probe.Traverse(args)
+	// Resolve against the same normalization innerMain applies before executing,
+	// so a space-form bool flag (e.g. `kosli list --debug false`) is not
+	// mistaken for a leftover positional and reported as an unknown command.
+	c, leftover, err := probe.Traverse(normalizeBoolFlagArgs(probe, args))
 	if err != nil || c.Runnable() {
 		return nil
 	}

@@ -36,6 +36,10 @@ func (suite *RootCommandTestSuite) TestFindUnknownCommand() {
 		{name: "runnable leaf command is fine", args: []string{"version"}, wantErr: false},
 		{name: "no args is fine", args: []string{}, wantErr: false},
 		{name: "unknown flag defers to cobra", args: []string{"--badflag", "list", "flows"}, wantErr: false},
+		// A space-form bool flag on a group command must be normalized the same
+		// way innerMain normalizes it, otherwise its value ("false") is mistaken
+		// for a leftover positional and wrongly reported as an unknown command.
+		{name: "space-form bool flag on a group command is fine", args: []string{"list", "--debug", "false"}, wantErr: false},
 	}
 	for _, tc := range cases {
 		suite.Run(tc.name, func() {
@@ -49,6 +53,32 @@ func (suite *RootCommandTestSuite) TestFindUnknownCommand() {
 			}
 		})
 	}
+}
+
+// TestInnerMainPreservesGlobalAfterProbe guards the regression the unknown-command
+// probe could introduce: findUnknownCommand builds a throwaway command tree via
+// newRootCmd, which reassigns the package-level `global`. If it is not restored,
+// the real command's persistent-flag pointers are orphaned and every global.*
+// read (ApiToken, Host, ...) sees the throwaway struct's defaults instead of the
+// user's flag values. Drive a successful real command with global flags through
+// innerMain (which the golden harness bypasses) and assert the values survive.
+func (suite *RootCommandTestSuite) TestInnerMainPreservesGlobalAfterProbe() {
+	args := []string{
+		"fingerprint", "testdata/person-schema.json",
+		"--artifact-type", "file",
+		"--host", "https://example.kosli.com",
+		"--api-token", "DRY_RUN",
+	}
+	cmd, err := newRootCmd(io.Discard, io.Discard, args)
+	suite.Require().NoError(err)
+
+	err = innerMain(cmd, append([]string{"kosli"}, args...))
+
+	suite.Require().NoError(err)
+	suite.Equal("https://example.kosli.com", global.Host,
+		"global.Host must reflect --host, not the probe's throwaway struct default")
+	suite.Equal("DRY_RUN", global.ApiToken,
+		"global.ApiToken must reflect --api-token, not the probe's throwaway struct default")
 }
 
 func (suite *RootCommandTestSuite) TestConfigProcessing() {
