@@ -775,7 +775,7 @@ func CustomMaximumNArgs(max int, args []string) error {
 
 func BooleanArgsMessageLink(args []string) string {
 	if slices.Contains(args, "true") || slices.Contains(args, "false") {
-		return "\nSee https://docs.kosli.com//faq/#boolean-flags"
+		return "\nSee https://docs.kosli.com/faq/#boolean-flags"
 	} else {
 		return ""
 	}
