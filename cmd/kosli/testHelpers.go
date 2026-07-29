@@ -38,15 +38,25 @@ type cmdTestCase struct {
 	goldenJson       []jsonCheck // Use like this for array {"[0].compliant", false}
 	goldenStdout     string      // expected stdout only (exact match, ignored when empty)
 	goldenStderr     string      // expected stderr only (exact match, ignored when empty)
+	stdin            string      // fed to the command's stdin (empty means an immediate EOF)
 	wantError        bool
 	additionalConfig interface{}
 }
 
-// executeCommandC executes a command as a user would and returns the output
-// split into combined, stdout-only, and stderr-only streams.
+// executeCommandC executes a command as a user would, with an empty stdin (any
+// read hits EOF immediately, as it does in CI), and returns the output split
+// into combined, stdout-only, and stderr-only streams.
+func executeCommandC(cmd string) (*cobra.Command, string, string, string, error) {
+	return executeCommandStdinC(cmd, "")
+}
+
+// executeCommandStdinC executes a command as a user would with stdin as its
+// standard input, and returns the output split into combined, stdout-only, and
+// stderr-only streams. Use it for commands that read stdin, e.g. the delete
+// commands' confirmation prompt.
 // This creates a new kosli command that is run, but it cannot be used in other tests
 // because newRootCmd overwrites the global options.
-func executeCommandC(cmd string) (*cobra.Command, string, string, string, error) {
+func executeCommandStdinC(cmd string, stdin string) (*cobra.Command, string, string, string, error) {
 	args, err := shellwords.Parse(cmd)
 	if err != nil {
 		return nil, "", "", "", err
@@ -67,7 +77,7 @@ func executeCommandC(cmd string) (*cobra.Command, string, string, string, error)
 	root.SilenceErrors = false
 	root.SetOut(outWriter)
 	root.SetErr(errWriter)
-	root.SetIn(new(bytes.Buffer))
+	root.SetIn(strings.NewReader(stdin))
 	root.SetArgs(normalizeBoolFlagArgs(root, args))
 
 	c, err := root.ExecuteC()
@@ -89,7 +99,7 @@ func runTestCmd(t *testing.T, tests []cmdTestCase) {
 				t.Error("golden and goldenPath cannot be set together")
 			}
 			t.Logf("running cmd: %s", tt.cmd)
-			_, combined, stdout, stderr, err := executeCommandC(tt.cmd)
+			_, combined, stdout, stderr, err := executeCommandStdinC(tt.cmd, tt.stdin)
 			if (err != nil) != tt.wantError {
 				t.Errorf("error expectation not matched\n\n WANT error is: %t\n\n but GOT: '%v'", tt.wantError, err)
 			}

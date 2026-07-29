@@ -175,9 +175,17 @@ func (suite *ServiceAccountCommandTestSuite) TestUpdateServiceAccountCmd() {
 func (suite *ServiceAccountCommandTestSuite) TestDeleteServiceAccountCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError: false,
-			name:      "delete without confirmation (empty stdin) is cancelled and makes no call",
+			wantError: true,
+			name:      "an unanswerable prompt (empty stdin) fails instead of reporting success",
 			cmd:       "delete service-account ci-bot" + suite.defaultKosliArguments,
+			golden: "Are you sure you want to delete service account(s) ci-bot? [y/N] " +
+				"Error: cannot confirm deletion: stdin is not interactive, re-run with --assume-yes to delete without confirmation\n",
+		},
+		{
+			wantError: false,
+			name:      "a typed refusal is cancelled and makes no call",
+			cmd:       "delete service-account ci-bot" + suite.defaultKosliArguments,
+			stdin:     "n\n",
 			golden:    "Are you sure you want to delete service account(s) ci-bot? [y/N] Deletion of service account(s) ci-bot was cancelled.\n",
 		},
 		{
@@ -278,6 +286,15 @@ func (suite *ServiceAccountCommandTestSuite) TestServiceAccountDeleteSuccess() {
 			wantError:   false,
 			name:        "delete reports the deleted service account",
 			cmd:         "delete service-account ci-bot --assume-yes" + args,
+			goldenRegex: `service account ci-bot was deleted!`,
+		},
+		{
+			wantError: false,
+			// no trailing newline: ReadString returns the answer together with
+			// io.EOF, which must still be honoured as a confirmation
+			name:        "a typed y without a trailing newline confirms and deletes",
+			cmd:         "delete service-account ci-bot" + args,
+			stdin:       "y",
 			goldenRegex: `service account ci-bot was deleted!`,
 		},
 	}

@@ -234,9 +234,17 @@ func (suite *ApiKeyCommandTestSuite) TestRotateApiKeyCmd() {
 func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError: false,
-			name:      "delete without confirmation (empty stdin) is cancelled and makes no call",
+			wantError: true,
+			name:      "an unanswerable prompt (empty stdin) fails instead of reporting success",
 			cmd:       "delete api-key key-123 --service-account test-sa" + suite.defaultKosliArguments,
+			golden: "Are you sure you want to delete API key(s) key-123 for service account test-sa? [y/N] " +
+				"Error: cannot confirm deletion: stdin is not interactive, re-run with --assume-yes to delete without confirmation\n",
+		},
+		{
+			wantError: false,
+			name:      "a typed refusal is cancelled and makes no call",
+			cmd:       "delete api-key key-123 --service-account test-sa" + suite.defaultKosliArguments,
+			stdin:     "n\n",
 			golden:    "Are you sure you want to delete API key(s) key-123 for service account test-sa? [y/N] Deletion of API key(s) key-123 was cancelled.\n",
 		},
 		{
@@ -454,6 +462,32 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyNotFound() {
 			name:        "delete surfaces a 404 from the API as an error",
 			cmd:         "delete api-key missing-key --service-account test-sa --assume-yes" + args,
 			goldenRegex: `(?s)failed to delete API key: API key not found`,
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
+// TestDeleteApiKeyConfirmed stubs a successful delete to verify that an answer
+// typed at the confirmation prompt reaches the API.
+func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyConfirmed() {
+	fake := httpfake.New()
+	defer fake.Close()
+	fake.NewHandler().
+		Delete("/api/v2/service-accounts/docs-cmd-test-user/test-sa/api-keys/key-123").
+		Reply(200).
+		BodyString(apiKeyFixture(suite.T(), "revoke_success.json"))
+
+	args := fmt.Sprintf(" --host %s --org %s --api-token %s", fake.Server.URL, global.Org, global.ApiToken)
+	tests := []cmdTestCase{
+		{
+			wantError: false,
+			// no trailing newline: ReadString returns the answer together with
+			// io.EOF, which must still be honoured as a confirmation
+			name:        "a typed y without a trailing newline confirms and deletes",
+			cmd:         "delete api-key key-123 --service-account test-sa" + args,
+			stdin:       "y",
+			goldenRegex: `API key key-123 for service account test-sa was deleted!`,
 		},
 	}
 
