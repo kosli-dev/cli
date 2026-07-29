@@ -268,7 +268,10 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			c.Logger.Info("payload sent to: %s", req.URL)
 			err := c.PayloadOutput(req, jsonFields, "this is the payload being sent:")
 			if err != nil {
-				c.Logger.Error("failed to log payload: %v \nContinuing with the request...", err)
+				// Logger.Error is fatal (it exits), which would contradict the
+				// message and abort a request only because debug logging of its
+				// payload failed. Warn instead, as with the response body below.
+				c.Logger.Warn("failed to log payload: %v \nContinuing with the request...", err)
 			}
 		}
 		resp, err := c.HttpClient.Do(req)

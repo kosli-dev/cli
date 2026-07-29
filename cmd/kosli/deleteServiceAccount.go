@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,7 +18,10 @@ const deleteServiceAccountLongDesc = deleteServiceAccountShortDesc + `
 This permanently removes the service account(s) identified by SERVICE-ACCOUNT-NAME
 from the organization, along with their API keys. Deletion is immediate and
 cannot be undone. You are asked to confirm before deletion; use
-^--assume-yes^/^--yes^ to skip the confirmation prompt.`
+^--assume-yes^/^--yes^ to skip the confirmation prompt.
+
+When stdin is not interactive (e.g. in CI) the prompt cannot be answered and the
+command fails without deleting anything, so pass ^--assume-yes^ there.`
 
 const deleteServiceAccountExample = `
 # delete a service account (asks for confirmation):
@@ -130,17 +132,10 @@ func styleServiceAccountNames(names []string) []string {
 
 // confirmServiceAccountDeletion prompts the user to confirm deletion and
 // returns true only when the answer is an affirmative "y"/"yes"
-// (case-insensitive). The prompt has no trailing newline so the answer is
-// typed on the same line.
+// (case-insensitive). It errors when the prompt cannot be answered at all, see
+// confirmDeletion.
 func confirmServiceAccountDeletion(names []string, in io.Reader) (bool, error) {
-	logger.Print("Are you sure you want to delete service account(s) %s? [y/N] ",
+	prompt := fmt.Sprintf("Are you sure you want to delete service account(s) %s? [y/N] ",
 		strings.Join(styleServiceAccountNames(names), ", "))
-
-	answer, err := bufio.NewReader(in).ReadString('\n')
-	if err != nil && err != io.EOF {
-		return false, err
-	}
-
-	answer = strings.ToLower(strings.TrimSpace(answer))
-	return answer == "y" || answer == "yes", nil
+	return confirmDeletion(prompt, in)
 }

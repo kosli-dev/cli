@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -69,6 +70,38 @@ func style(out io.Writer, s string, codes ...string) string {
 		return s
 	}
 	return strings.Join(codes, "") + s + ansiReset
+}
+
+// confirmDeletion prints prompt (which carries no trailing newline, so the
+// answer is typed on the same line) and reports whether the answer is an
+// affirmative "y"/"yes" (case-insensitive). A typed "n", any other word, or a
+// bare Enter is a refusal and returns (false, nil).
+//
+// Reaching EOF with nothing read means there was nobody to ask — stdin is not
+// interactive — which is an error, not a refusal. Treating it as a refusal made
+// the delete commands exit 0 without deleting anything, so a pipeline could not
+// tell that the deletion had not happened (issue #1056).
+//
+// Blank-looking input therefore splits on whether an answer was submitted at
+// all, not on what it contains: a blank line terminated by a newline (`printf
+// ' \n'`) is a deliberate refusal and exits 0, while blank input terminated by
+// EOF (`printf ' '`) is no submission at all and errors.
+func confirmDeletion(prompt string, in io.Reader) (bool, error) {
+	logger.Print("%s", prompt)
+
+	answer, err := bufio.NewReader(in).ReadString('\n')
+	if err != nil && err != io.EOF {
+		return false, err
+	}
+	// ReadString returns io.EOF together with any bytes read before it, so a
+	// final line without a trailing newline (printf 'y' | kosli delete ...) is
+	// still a real answer; only an empty read means nobody answered.
+	if err == io.EOF && strings.TrimSpace(answer) == "" {
+		return false, fmt.Errorf("cannot confirm deletion: stdin is not interactive, re-run with --assume-yes to delete without confirmation")
+	}
+
+	answer = strings.ToLower(strings.TrimSpace(answer))
+	return answer == "y" || answer == "yes", nil
 }
 
 const (

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	log "github.com/kosli-dev/cli/internal/logger"
@@ -1109,6 +1110,92 @@ func (suite *CliUtilsTestSuite) TestHandleArtifactExpression() {
 			require.Equal(suite.T(), t.wantSep, sep)
 		})
 	}
+}
+
+// TestConfirmDeletion covers the confirmation prompt used by the delete
+// commands. The critical case is an unanswerable prompt (stdin at EOF with
+// nothing typed): it must be an error, not a refusal, so the command exits
+// non-zero instead of reporting success without deleting (issue #1056).
+func (suite *CliUtilsTestSuite) TestConfirmDeletion() {
+	for _, t := range []struct {
+		name          string
+		input         string
+		wantConfirmed bool
+		wantErr       bool
+	}{
+		{
+			name:    "EOF with nothing typed is not a refusal but an error",
+			input:   "",
+			wantErr: true,
+		},
+		{
+			// the two blank-looking inputs below split on whether an answer was
+			// submitted at all, not on what it contains
+			name:    "blank input ending at EOF was never submitted, so it errors",
+			input:   " ",
+			wantErr: true,
+		},
+		{
+			name:  "a blank line ending in a newline was submitted, so it refuses",
+			input: " \n",
+		},
+		{
+			name:          "an answer without a trailing newline is still honoured",
+			input:         "y",
+			wantConfirmed: true,
+		},
+		{
+			name:          "y confirms",
+			input:         "y\n",
+			wantConfirmed: true,
+		},
+		{
+			name:          "yes confirms",
+			input:         "yes\n",
+			wantConfirmed: true,
+		},
+		{
+			name:          "the answer is case-insensitive",
+			input:         "  YES  \n",
+			wantConfirmed: true,
+		},
+		{
+			name:  "n refuses",
+			input: "n\n",
+		},
+		{
+			name:  "a bare newline refuses",
+			input: "\n",
+		},
+		{
+			name:  "anything else refuses",
+			input: "maybe\n",
+		},
+	} {
+		suite.Run(t.name, func() {
+			infoBuf := new(bytes.Buffer)
+			defer restoreLogger(newTestLoggerWithInfo(infoBuf))()
+
+			confirmed, err := confirmDeletion("Are you sure? [y/N] ", strings.NewReader(t.input))
+
+			require.Equal(suite.T(), t.wantErr, err != nil, "unexpected error: %v", err)
+			if t.wantErr {
+				require.Contains(suite.T(), err.Error(), "--assume-yes",
+					"the error must tell the user how to delete non-interactively")
+			}
+			require.Equal(suite.T(), t.wantConfirmed, confirmed)
+			require.Equal(suite.T(), "Are you sure? [y/N] ", infoBuf.String(),
+				"the prompt is printed without a trailing newline")
+		})
+	}
+}
+
+// restoreLogger swaps the package-level logger for l and returns a function
+// that puts the original back.
+func restoreLogger(l *log.Logger) func() {
+	original := logger
+	logger = l
+	return func() { logger = original }
 }
 
 func Test_prefixEachLine(t *testing.T) {
