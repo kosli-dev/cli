@@ -172,8 +172,10 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}"
           # %(contents), not %(contents:body): the latter drops the tag message's
           # first paragraph as a "subject", silently swallowing the first heading
-          # or bullet of the release notes.
-          BODY=$(git tag -l --format='%(contents)' "$TAG")
+          # or bullet of the release notes. Unlike %(contents:body), %(contents)
+          # keeps the signature of a signed tag, so cut it off at its marker.
+          BODY=$(git tag -l --format='%(contents)' "$TAG" \
+            | sed '/^-----BEGIN [A-Z ]*SIGNATURE-----$/,$d')
           # `make release tag=vX.Y.Z` with no dist/release_notes.md tags with the
           # version as the whole message; that is not release notes.
           if [ "$(printf '%s' "$BODY" | tr -d '[:space:]')" = "$TAG" ]; then
