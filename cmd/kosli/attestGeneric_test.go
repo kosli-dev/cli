@@ -71,7 +71,7 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			wantError: true,
 			name:      "links to the boolean flags FAQ when a stray true|false argument remains",
 			cmd:       fmt.Sprintf("attest generic foo false --artifact-type file --name bar %s", suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 1 arg(s), received 2 [foo false]\nSee https://docs.kosli.com//faq/#boolean-flags\n",
+			golden:    "Error: accepts at most 1 arg(s), received 2 [foo false]\nSee https://docs.kosli.com/faq/#boolean-flags\n",
 		},
 		{
 			wantError: true,
