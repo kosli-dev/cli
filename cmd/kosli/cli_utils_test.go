@@ -1129,6 +1129,17 @@ func (suite *CliUtilsTestSuite) TestConfirmDeletion() {
 			wantErr: true,
 		},
 		{
+			// the two blank-looking inputs below split on whether an answer was
+			// submitted at all, not on what it contains
+			name:    "blank input ending at EOF was never submitted, so it errors",
+			input:   " ",
+			wantErr: true,
+		},
+		{
+			name:  "a blank line ending in a newline was submitted, so it refuses",
+			input: " \n",
+		},
+		{
 			name:          "an answer without a trailing newline is still honoured",
 			input:         "y",
 			wantConfirmed: true,

@@ -81,6 +81,11 @@ func style(out io.Writer, s string, codes ...string) string {
 // interactive — which is an error, not a refusal. Treating it as a refusal made
 // the delete commands exit 0 without deleting anything, so a pipeline could not
 // tell that the deletion had not happened (issue #1056).
+//
+// Blank-looking input therefore splits on whether an answer was submitted at
+// all, not on what it contains: a blank line terminated by a newline (`printf
+// ' \n'`) is a deliberate refusal and exits 0, while blank input terminated by
+// EOF (`printf ' '`) is no submission at all and errors.
 func confirmDeletion(prompt string, in io.Reader) (bool, error) {
 	logger.Print("%s", prompt)
 
