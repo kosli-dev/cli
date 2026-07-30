@@ -21,6 +21,12 @@ Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentNam
 * If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
 {{- end }}
 
+{{ define "body.deprecatedIncludeScaling" -}}
+`reporterConfig.includeScaling` no longer has any effect. Scaling events do not trigger new snapshots, and an environment can no longer have scaling capture turned on, so the `--include-scaling` / `--exclude-scaling` flags this value passed to the CLI had already stopped doing anything — they only produced a deprecation warning in the reporter's logs on every run.
+
+Version 2.7.0 stops passing them, which removes that warning. Nothing else changes: the reporter created environments with scaling off before this version and still does. The value is still accepted, but it does nothing and will be removed in a future major version. Remove it from your values.
+{{- end }}
+
 {{ define "body.upgradeCmd" -}}
 ```shell
 helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
@@ -116,6 +122,10 @@ helm install kosli-reporter kosli/k8s-reporter -f values.yaml
 If upgrading from v1.x to v2.0.0, migrate your values to the **environments** list format (see above). Then:
 
 {{ template "body.upgradeCmd" . }}
+
+### Deprecated and ignored in v2.7.0: `reporterConfig.includeScaling`
+
+{{ template "body.deprecatedIncludeScaling" . }}
 {{- end }}
 
 {{ define "extra.uninstall" -}}

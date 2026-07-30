@@ -107,6 +107,10 @@ To install this chart via the Helm chart repository:
 
 If upgrading from v1.x to v2.0.0, migrate your values to the **environments** list format (see [Installing the chart](/helm/k8s_reporter/installing)).
 
+## Deprecated and ignored in v2.7.0: `reporterConfig.includeScaling`
+
+{{ template "body.deprecatedIncludeScaling" . }}
+
 ## Upgrade command
 
 {{ template "body.upgradeCmd" . }}

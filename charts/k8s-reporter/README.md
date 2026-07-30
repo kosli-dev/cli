@@ -4,7 +4,7 @@ title: Kubernetes Reporter Helm Chart
 
 # k8s-reporter
 
-![Version: 2.6.0](https://img.shields.io/badge/Version-2.6.0-informational?style=flat-square)
+![Version: 2.7.0](https://img.shields.io/badge/Version-2.7.0-informational?style=flat-square)
 
 A Helm chart for installing the Kosli K8s reporter as a CronJob.
 The chart allows you to create a Kubernetes CronJob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
@@ -89,6 +89,12 @@ If upgrading from v1.x to v2.0.0, migrate your values to the **environments** li
 ```shell
 helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
 ```
+
+### Deprecated and ignored in v2.7.0: `reporterConfig.includeScaling`
+
+`reporterConfig.includeScaling` no longer has any effect. Scaling events do not trigger new snapshots, and an environment can no longer have scaling capture turned on, so the `--include-scaling` / `--exclude-scaling` flags this value passed to the CLI had already stopped doing anything — they only produced a deprecation warning in the reporter's logs on every run.
+
+Version 2.7.0 stops passing them, which removes that warning. Nothing else changes: the reporter created environments with scaling off before this version and still does. The value is still accepted, but it does nothing and will be removed in a future major version. Remove it from your values.
 
 ## Uninstalling chart
 
@@ -229,7 +235,7 @@ cronSchedule: "*/15 * * * *"
 | reporterConfig.environmentDescription | string | `""` | description applied to every environment auto-created in this run. Only used when `autoEnvironment` is true; existing environments are never modified. Note: a single value is shared by all environments created during the run. |
 | reporterConfig.environments | list | `[]` | List of Kosli environments to report to. Each entry has required 'name' and optional namespace selectors. Use one entry to report a single environment; use multiple entries to report to multiple environments with different selectors. Per entry: name (required), namespaces, namespacesRegex, excludeNamespaces, excludeNamespacesRegex (optional). Leave namespace fields unset for an entry to report the entire cluster to that environment. |
 | reporterConfig.httpProxy | string | `""` | the http proxy url |
-| reporterConfig.includeScaling | boolean | `null` (server default) | whether to record scaling (replica count) changes for every environment auto-created in this run. Leave unset to use the Kosli server default; set to `true` to pass `--include-scaling` or `false` to pass `--exclude-scaling`. Only used when `autoEnvironment` is true; existing environments are never modified. |
+| reporterConfig.includeScaling | boolean | `null` | **Deprecated and ignored** — used to control whether scaling (replica count) changes were recorded for environments auto-created in this run. Scaling events no longer trigger new snapshots and an environment can no longer have scaling capture turned on, so the `--include-scaling` / `--exclude-scaling` flags this passed to the CLI had stopped having any effect. As of chart version 2.7.0 the flags are no longer passed. Setting this value does nothing; remove it from your values. |
 | reporterConfig.kosliOrg | string | `""` | the name of the Kosli org |
 | reporterConfig.securityContext | object | `{"allowPrivilegeEscalation":false,"runAsNonRoot":true,"runAsUser":1000}` | the security context for the reporter cronjob. Set to null or {} to disable security context entirely (not recommended). For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift assign the UID from the allowed range. Simply omitting runAsUser from your values override will not work because Helm deep-merges with these defaults. Example OpenShift override:   securityContext:     allowPrivilegeEscalation: false     runAsNonRoot: true     runAsUser: null |
 | reporterConfig.securityContext.allowPrivilegeEscalation | bool | `false` | whether to allow privilege escalation |

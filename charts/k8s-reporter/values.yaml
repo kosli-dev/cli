@@ -69,8 +69,8 @@ reporterConfig:
   autoEnvironment: false
   # -- description applied to every environment auto-created in this run. Only used when `autoEnvironment` is true; existing environments are never modified. Note: a single value is shared by all environments created during the run.
   environmentDescription: ""
-  # -- (boolean) whether to record scaling (replica count) changes for every environment auto-created in this run. Leave unset to use the Kosli server default; set to `true` to pass `--include-scaling` or `false` to pass `--exclude-scaling`. Only used when `autoEnvironment` is true; existing environments are never modified.
-  # @default -- `null` (server default)
+  # -- (boolean) **Deprecated and ignored** — used to control whether scaling (replica count) changes were recorded for environments auto-created in this run. Scaling events no longer trigger new snapshots and an environment can no longer have scaling capture turned on, so the `--include-scaling` / `--exclude-scaling` flags this passed to the CLI had stopped having any effect. As of chart version 2.7.0 the flags are no longer passed. Setting this value does nothing; remove it from your values.
+  # @default -- `null`
   includeScaling: null
   # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli.
   dryRun: false
