@@ -97,7 +97,7 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().BoolVar(&o.requireProvenance, "require-provenance", false, requireProvenanceFlag)
 	cmd.Flags().StringSliceVar(&o.payload.IncludedEnvironments, "included-environments", []string{}, includedEnvironments)
 
-	scalingDeprecationMsg := "this flag is deprecated and will be removed in a future version. Scaling events no longer create environment snapshots."
+	scalingDeprecationMsg := "this flag is deprecated and will be removed in a future version. Scaling events do not trigger new snapshots."
 	err := DeprecateFlags(cmd, map[string]string{
 		"require-provenance": "this flag is deprecated and will be removed in a future version. Use policies instead.",
 		"include-scaling":    scalingDeprecationMsg,
