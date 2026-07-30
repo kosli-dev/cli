@@ -24,9 +24,6 @@ The following types are supported:
   - server     - Generic type
   - logical    - Logical grouping of real environments
 
-kosli does not make new snapshots for scaling events (change in number of instances running).
-For large clusters the scaling events will often outnumber the actual change of SW.
-
 Logical environments are used for grouping of physical environments. For instance **prod-aws** and **prod-s3** can
 be grouped into logical environment **prod**. Logical environments are view-only, you can not report snapshots
 to them.
