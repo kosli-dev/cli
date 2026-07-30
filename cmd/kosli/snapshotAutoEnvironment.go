@@ -39,6 +39,13 @@ func addAutoEnvironmentFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(&snapshotAutoEnv.includeScaling, "include-scaling", false, includeScalingFlag)
 	cmd.PersistentFlags().BoolVar(&snapshotAutoEnv.excludeScaling, "exclude-scaling", false, excludeScalingFlag)
 
+	scalingDeprecationMsg := "this flag is deprecated and will be removed in a future version. Scaling events do not trigger new snapshots."
+	for _, name := range []string{"include-scaling", "exclude-scaling"} {
+		if err := cmd.PersistentFlags().MarkDeprecated(name, scalingDeprecationMsg); err != nil {
+			logger.Error("failed to mark %s as deprecated: %v", name, err)
+		}
+	}
+
 	// Accept --auto-env as an alias for --auto-environment. SetGlobalNormalizationFunc
 	// propagates to all subcommands of the snapshot group.
 	cmd.SetGlobalNormalizationFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {

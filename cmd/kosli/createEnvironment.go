@@ -24,12 +24,6 @@ The following types are supported:
   - server     - Generic type
   - logical    - Logical grouping of real environments
 
-By default, kosli will not make new snapshots for scaling events (change in number of instances running).
-For large clusters the scaling events will often outnumber the actual change of SW.
-
-It is possible to enable new snapshots for scaling events with the --include-scaling flag, or turn
-it off again with the --exclude-scaling.
-
 Logical environments are used for grouping of physical environments. For instance **prod-aws** and **prod-s3** can
 be grouped into logical environment **prod**. Logical environments are view-only, you can not report snapshots
 to them.
@@ -103,9 +97,14 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().BoolVar(&o.requireProvenance, "require-provenance", false, requireProvenanceFlag)
 	cmd.Flags().StringSliceVar(&o.payload.IncludedEnvironments, "included-environments", []string{}, includedEnvironments)
 
-	err := cmd.Flags().MarkDeprecated("require-provenance", "this flag is deprecated and will be removed in a future version. Use policies instead.")
+	scalingDeprecationMsg := "this flag is deprecated and will be removed in a future version. Scaling events do not trigger new snapshots."
+	err := DeprecateFlags(cmd, map[string]string{
+		"require-provenance": "this flag is deprecated and will be removed in a future version. Use policies instead.",
+		"include-scaling":    scalingDeprecationMsg,
+		"exclude-scaling":    scalingDeprecationMsg,
+	})
 	if err != nil {
-		logger.Error("failed to mark require-provenance as deprecated: %v", err)
+		logger.Error("failed to configure deprecated flags: %v", err)
 	}
 
 	addDryRunFlag(cmd)
