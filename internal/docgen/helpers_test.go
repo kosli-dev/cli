@@ -27,6 +27,9 @@ func TestCommandsInTable(t *testing.T) {
 	}
 }
 
+// TestCommandsInTableHiddenFlags and TestCommandsInTableDeprecatedFlags are a
+// pair: a flag hidden via MarkHidden stays out of the docs, while a flag hidden
+// as a side effect of MarkDeprecated is documented with its migration message.
 func TestCommandsInTableHiddenFlags(t *testing.T) {
 	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	fs.String("visible", "", "Visible flag")
@@ -39,6 +42,25 @@ func TestCommandsInTableHiddenFlags(t *testing.T) {
 	}
 	if strings.Contains(got, "--hidden") {
 		t.Error("should not contain hidden flag")
+	}
+}
+
+func TestCommandsInTableDeprecatedFlags(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs.String("new", "", "The replacement flag")
+	fs.String("old", "", "The superseded flag")
+	// MarkDeprecated also sets Hidden, which used to keep the flag out of the docs.
+	_ = fs.MarkDeprecated("old", "use --new instead")
+
+	got := CommandsInTable(fs)
+	if !strings.Contains(got, "--old") {
+		t.Errorf("expected deprecated flag to be documented, got:\n%s", got)
+	}
+	if !strings.Contains(got, "(DEPRECATED: use --new instead)") {
+		t.Errorf("expected deprecation message, got:\n%s", got)
+	}
+	if !strings.Contains(got, "--new") {
+		t.Errorf("expected replacement flag, got:\n%s", got)
 	}
 }
 
