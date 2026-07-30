@@ -280,7 +280,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	attestationDecisionControlFlag  = "The control identifier being evaluated (e.g. RCTL-043)."
 	excludeScalingFlag              = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag              = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."
-	scalingFlagDeprecationMsg       = "this flag is deprecated and will be removed in a future version. Scaling events no longer create environment snapshots."
 	includedEnvironments            = "[optional] Comma separated list of environments to include in logical environment"
 	autoEnvironmentFlag             = "[optional] Create the environment (with the type inferred from the snapshot subcommand) if it does not already exist, before reporting the snapshot."
 	requireProvenanceFlag           = "[defaulted] Require provenance for all artifacts running in environment snapshots."
