@@ -152,6 +152,29 @@ func TestS3Contract_Fake(t *testing.T) {
 		})
 		require.Error(t, err)
 	})
+
+	// The fake rejects listing inputs outside the contract. Real S3 accepts
+	// these without erroring, so they cannot live in runS3ContractTests — they
+	// exist so a future caller fails loudly instead of hanging or panicking.
+	t.Run("ListObjectsV2 rejects MaxKeys below 1", func(t *testing.T) {
+		// MaxKeys 0 would otherwise yield empty-but-truncated pages, spinning
+		// s3.ListObjectsV2Paginator forever.
+		_, err := client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+			Bucket:  aws.String(bucket),
+			MaxKeys: aws.Int32(0),
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("ListObjectsV2 rejects a negative continuation token", func(t *testing.T) {
+		// A negative token parses as a number but would index the key slice
+		// out of range.
+		_, err := client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+			Bucket:            aws.String(bucket),
+			ContinuationToken: aws.String("-1"),
+		})
+		require.Error(t, err)
+	})
 }
 
 func TestS3Contract_RealAWS(t *testing.T) {

@@ -78,17 +78,29 @@ func (f *FakeS3Client) ListObjectsV2(_ context.Context, params *s3.ListObjectsV2
 		return nil, f.ListObjectsV2Err
 	}
 
+	// Listing inputs outside the contract are rejected rather than guessed at.
+	// Nothing in this package sets MaxKeys (only the contract test does, with
+	// 1), so real S3's behaviour below 1 has never been verified — and silently
+	// substituting a different page size is the kind of fake/real divergence
+	// contract tests exist to catch. Rejecting also stops a MaxKeys of 0 from
+	// producing empty-but-truncated pages, which would spin
+	// s3.ListObjectsV2Paginator forever.
 	pageSize := f.pageSize()
 	if params.MaxKeys != nil {
-		if maxKeys := int(*params.MaxKeys); maxKeys < pageSize {
+		maxKeys := int(*params.MaxKeys)
+		if maxKeys < 1 {
+			return nil, fmt.Errorf("MaxKeys must be at least 1, got %d", maxKeys)
+		}
+		if maxKeys < pageSize {
 			pageSize = maxKeys
 		}
 	}
 
 	start := 0
 	if params.ContinuationToken != nil {
+		// A negative token parses as a number but would index keys out of range.
 		parsed, err := strconv.Atoi(*params.ContinuationToken)
-		if err != nil {
+		if err != nil || parsed < 0 {
 			return nil, fmt.Errorf("invalid continuation token: %s", *params.ContinuationToken)
 		}
 		start = parsed
