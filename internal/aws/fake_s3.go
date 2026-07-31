@@ -68,7 +68,7 @@ func (f *FakeS3Client) lastModified(key string) time.Time {
 
 func (f *FakeS3Client) ListObjectsV2(_ context.Context, params *s3.ListObjectsV2Input, _ ...func(*s3.Options)) (*s3.ListObjectsV2Output, error) {
 	if params.Bucket == nil {
-		return nil, fmt.Errorf("Bucket is required")
+		return nil, fmt.Errorf("missing required field: Bucket")
 	}
 	if *params.Bucket != f.Bucket {
 		// Real S3 returns *types.NoSuchBucket.
@@ -125,7 +125,7 @@ func (f *FakeS3Client) ListObjectsV2(_ context.Context, params *s3.ListObjectsV2
 
 func (f *FakeS3Client) DownloadObject(_ context.Context, params *transfermanager.DownloadObjectInput, _ ...func(*transfermanager.Options)) (*transfermanager.DownloadObjectOutput, error) {
 	if params.Bucket == nil || params.Key == nil {
-		return nil, fmt.Errorf("Bucket and Key are required")
+		return nil, fmt.Errorf("missing required fields: Bucket and Key")
 	}
 	if *params.Bucket != f.Bucket {
 		// Real S3 returns *types.NoSuchBucket.
@@ -140,7 +140,7 @@ func (f *FakeS3Client) DownloadObject(_ context.Context, params *transfermanager
 		return nil, fmt.Errorf("object not found: %s", *params.Key)
 	}
 	if params.WriterAt == nil {
-		return nil, fmt.Errorf("WriterAt is required")
+		return nil, fmt.Errorf("missing required field: WriterAt")
 	}
 	written, err := params.WriterAt.WriteAt(content, 0)
 	if err != nil {
