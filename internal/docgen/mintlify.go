@@ -84,15 +84,15 @@ func (MintlifyFormatter) FlagsSection(flags, inherited string) string {
 	var b strings.Builder
 	if flags != "" {
 		b.WriteString("## Flags\n")
-		b.WriteString("| Flag | Description |\n")
-		b.WriteString("| :--- | :--- |\n")
+		b.WriteString("| Flag | Type | Description |\n")
+		b.WriteString("| :--- | :--- | :--- |\n")
 		b.WriteString(flags)
 		b.WriteString("\n\n")
 	}
 	if inherited != "" {
 		b.WriteString("## Flags inherited from parent commands\n")
-		b.WriteString("| Flag | Description |\n")
-		b.WriteString("| :--- | :--- |\n")
+		b.WriteString("| Flag | Type | Description |\n")
+		b.WriteString("| :--- | :--- | :--- |\n")
 		b.WriteString(inherited)
 		b.WriteString("\n\n")
 	}
