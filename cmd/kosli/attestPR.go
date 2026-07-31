@@ -11,7 +11,7 @@ const attestPRDesc = `All Kosli commands to attest pull/merge request.`
 func newAttestPRCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "pullrequest",
-		Aliases: []string{"pr", "mr", "mergerequest"},
+		Aliases: []string{"pr", "pull_request", "mr", "mergerequest", "merge_request"},
 		Short:   attestPRDesc,
 		Long:    attestPRDesc,
 	}
