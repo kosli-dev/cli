@@ -139,6 +139,9 @@ func (f *FakeS3Client) DownloadObject(_ context.Context, params *transfermanager
 	if params.Bucket == nil || params.Key == nil {
 		return nil, fmt.Errorf("missing required fields: Bucket and Key")
 	}
+	if params.WriterAt == nil {
+		return nil, fmt.Errorf("missing required field: WriterAt")
+	}
 	if *params.Bucket != f.Bucket {
 		// Real S3 returns *types.NoSuchBucket.
 		return nil, fmt.Errorf("bucket not found: %s", *params.Bucket)
@@ -150,9 +153,6 @@ func (f *FakeS3Client) DownloadObject(_ context.Context, params *transfermanager
 	if !ok {
 		// Real S3 returns *types.NoSuchKey.
 		return nil, fmt.Errorf("object not found: %s", *params.Key)
-	}
-	if params.WriterAt == nil {
-		return nil, fmt.Errorf("missing required field: WriterAt")
 	}
 	written, err := params.WriterAt.WriteAt(content, 0)
 	if err != nil {
