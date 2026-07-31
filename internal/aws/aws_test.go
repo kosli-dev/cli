@@ -934,6 +934,335 @@ func (suite *AWSTestSuite) TestGetLambdaPackageDataFromClient() {
 	}
 }
 
+// Fixture object bodies for the fake-backed S3 tests, with the SHA-256 of each
+// body. digest.FileSha256 is a plain SHA-256 of the file content, so a
+// single-object bucket fingerprints to the digest of its body.
+const (
+	fakeReadmeBody       = "# readme\n"
+	fakeReadmeSha256     = "4b2b418bbeeb44157535c731f489f6e1dc506a2acd39171ca9afef9f5d17aa7d"
+	fakeTemplateBody     = "key: value\n"
+	fakeTemplateSha256   = "0ddd3d77338ca222ab064e214bbec3a4547e9d33801912eaacc7b4b4e27e1a91"
+	fakeNotesBody        = "some notes\n"
+	fakeS3TestBucketName = "test-bucket"
+)
+
+func (suite *AWSTestSuite) TestGetS3DataFromClient() {
+	earlier := time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)
+	later := time.Date(2024, 3, 20, 8, 0, 0, 0, time.UTC)
+	muchLater := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	for _, t := range []struct {
+		name             string
+		objects          map[string][]byte
+		lastModified     map[string]time.Time
+		pageSize         int
+		includePaths     []string
+		includeRegex     []string
+		excludePaths     []string
+		excludeRegex     []string
+		listErr          error
+		downloadErr      error
+		wantArtifactName string // defaults to the bucket name
+		wantFingerprint  string // only asserted when set
+		wantLastModified int64  // only asserted when non-zero
+		wantErr          bool
+		wantErrMsg       string
+	}{
+		{
+			name: "a single object is fingerprinted as a file and named after it",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+			},
+			wantArtifactName: "README.md",
+			wantFingerprint:  fakeReadmeSha256,
+		},
+		{
+			name: "a single nested object is still fingerprinted as a file",
+			objects: map[string][]byte{
+				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
+			},
+			wantArtifactName: "template.yml",
+			wantFingerprint:  fakeTemplateSha256,
+		},
+		{
+			name: "multiple objects are fingerprinted as a directory named after the bucket",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+				"a/b/c.yml": []byte(fakeTemplateBody),
+			},
+		},
+		{
+			name: "folder markers are skipped, leaving a single file",
+			objects: map[string][]byte{
+				"dummy/":          nil,
+				"dummy/dummy_2/":  nil,
+				"dummy/README.md": []byte(fakeReadmeBody),
+			},
+			wantArtifactName: "README.md",
+			wantFingerprint:  fakeReadmeSha256,
+		},
+		{
+			name: "objects spread over several pages are all downloaded",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+				"other.yml": []byte(fakeTemplateBody),
+			},
+			pageSize: 1,
+		},
+		{
+			name: "includePaths selects a single object",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+			},
+			includePaths:     []string{"README.md"},
+			wantArtifactName: "README.md",
+			wantFingerprint:  fakeReadmeSha256,
+		},
+		{
+			name: "includePaths matches a nested path by prefix",
+			objects: map[string][]byte{
+				"README.md":                  []byte(fakeReadmeBody),
+				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
+			},
+			includePaths:     []string{"dummy/dummy_2"},
+			wantArtifactName: "template.yml",
+			wantFingerprint:  fakeTemplateSha256,
+		},
+		{
+			name: "a leading slash in includePaths is ignored",
+			objects: map[string][]byte{
+				"README.md":                  []byte(fakeReadmeBody),
+				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
+			},
+			includePaths:     []string{"/dummy/dummy_2"},
+			wantArtifactName: "template.yml",
+			wantFingerprint:  fakeTemplateSha256,
+		},
+		{
+			name: "includeRegex selects matching objects",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+			},
+			includeRegex:     []string{`.*\.md$`},
+			wantArtifactName: "README.md",
+			wantFingerprint:  fakeReadmeSha256,
+		},
+		{
+			name: "excludePaths removes matching objects",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+			},
+			excludePaths:     []string{"notes.txt"},
+			wantArtifactName: "README.md",
+			wantFingerprint:  fakeReadmeSha256,
+		},
+		{
+			name: "excludeRegex removes matching objects",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+			},
+			excludeRegex:     []string{`.*\.txt$`},
+			wantArtifactName: "README.md",
+			wantFingerprint:  fakeReadmeSha256,
+		},
+		{
+			name: "the reported timestamp is the newest matched object",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+			},
+			lastModified: map[string]time.Time{
+				"README.md": earlier,
+				"notes.txt": later,
+			},
+			wantLastModified: later.Unix(),
+		},
+		{
+			name: "objects filtered out do not affect the reported timestamp",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+				"skip.txt":  []byte(fakeNotesBody),
+			},
+			lastModified: map[string]time.Time{
+				"README.md": earlier,
+				"notes.txt": later,
+				"skip.txt":  muchLater,
+			},
+			excludePaths:     []string{"skip.txt"},
+			wantLastModified: later.Unix(),
+		},
+		{
+			name: "an empty bucket is an error",
+			objects: map[string][]byte{
+				"dummy/": nil,
+			},
+			wantErr:    true,
+			wantErrMsg: "no matching file or dirs in bucket: [" + fakeS3TestBucketName + "]",
+		},
+		{
+			name: "filtering everything out is an error",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+			},
+			includePaths: []string{"non-existing.md"},
+			wantErr:      true,
+			wantErrMsg:   "no matching file or dirs in bucket: [" + fakeS3TestBucketName + "]",
+		},
+		{
+			name: "an invalid include regex is an error",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+			},
+			includeRegex: []string{"invalid["},
+			wantErr:      true,
+			wantErrMsg:   "invalid path regex pattern",
+		},
+		{
+			name: "an invalid exclude regex is an error",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+			},
+			excludeRegex: []string{"invalid["},
+			wantErr:      true,
+			wantErrMsg:   "invalid path regex pattern",
+		},
+		{
+			name: "a listing error propagates",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+			},
+			listErr: fmt.Errorf("simulated AWS listing error"),
+			wantErr: true,
+		},
+		{
+			name: "a download error propagates",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+			},
+			downloadErr: fmt.Errorf("simulated AWS download error"),
+			wantErr:     true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			client := &FakeS3Client{
+				Bucket:            fakeS3TestBucketName,
+				Objects:           t.objects,
+				LastModified:      t.lastModified,
+				PageSize:          t.pageSize,
+				ListObjectsV2Err:  t.listErr,
+				DownloadObjectErr: t.downloadErr,
+			}
+
+			data, err := getS3DataFromClient(client, fakeS3TestBucketName, t.includePaths,
+				t.includeRegex, t.excludePaths, t.excludeRegex, logger.NewStandardLogger())
+
+			if t.wantErr {
+				require.Error(suite.T(), err)
+				if t.wantErrMsg != "" {
+					require.Contains(suite.T(), err.Error(), t.wantErrMsg)
+				}
+				return
+			}
+			require.NoError(suite.T(), err)
+			require.Len(suite.T(), data, 1)
+
+			wantArtifactName := t.wantArtifactName
+			if wantArtifactName == "" {
+				wantArtifactName = fakeS3TestBucketName
+			}
+			require.Contains(suite.T(), data[0].Digests, wantArtifactName)
+			require.NotEmpty(suite.T(), data[0].Digests[wantArtifactName])
+			if t.wantFingerprint != "" {
+				require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[wantArtifactName])
+			}
+			if t.wantLastModified != 0 {
+				require.Equal(suite.T(), t.wantLastModified, data[0].LastModifiedTimestamp)
+			}
+		})
+	}
+}
+
+// TestGetS3DataFromClientFilterEquivalence asserts that filtering a bucket down
+// to a subset produces the same fingerprint as a bucket that only ever held
+// that subset. This pins down what the filters select without hardcoding
+// directory digests, which the include/exclude cases in TestGetS3DataFromClient
+// cannot do once more than one object survives filtering.
+func (suite *AWSTestSuite) TestGetS3DataFromClientFilterEquivalence() {
+	allObjects := map[string][]byte{
+		"README.md":                  []byte(fakeReadmeBody),
+		"notes.txt":                  []byte(fakeNotesBody),
+		"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
+	}
+
+	fingerprint := func(objects map[string][]byte, includePaths, includeRegex, excludePaths, excludeRegex []string) string {
+		client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects}
+		data, err := getS3DataFromClient(client, fakeS3TestBucketName, includePaths,
+			includeRegex, excludePaths, excludeRegex, logger.NewStandardLogger())
+		require.NoError(suite.T(), err)
+		require.Len(suite.T(), data, 1)
+		require.Len(suite.T(), data[0].Digests, 1)
+		for _, digest := range data[0].Digests {
+			return digest
+		}
+		return ""
+	}
+
+	for _, t := range []struct {
+		name           string
+		includePaths   []string
+		includeRegex   []string
+		excludePaths   []string
+		excludeRegex   []string
+		expectedSubset map[string][]byte
+	}{
+		{
+			name:         "includePaths keeps only the named prefix",
+			includePaths: []string{"dummy"},
+			expectedSubset: map[string][]byte{
+				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
+			},
+		},
+		{
+			name:         "excludePaths drops only the named prefix",
+			excludePaths: []string{"dummy"},
+			expectedSubset: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+			},
+		},
+		{
+			name:         "includeRegex keeps every matching key",
+			includeRegex: []string{`.*\.(md|txt)$`},
+			expectedSubset: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+			},
+		},
+		{
+			name:         "excludeRegex drops every matching key",
+			excludeRegex: []string{`^dummy/.*`},
+			expectedSubset: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+			},
+		},
+	} {
+		suite.Run(t.name, func() {
+			filtered := fingerprint(allObjects, t.includePaths, t.includeRegex, t.excludePaths, t.excludeRegex)
+			unfiltered := fingerprint(t.expectedSubset, nil, nil, nil, nil)
+			require.Equal(suite.T(), unfiltered, filtered,
+				"filtering the full bucket should fingerprint identically to a bucket holding only the expected subset")
+		})
+	}
+}
+
 func skipIfCredsUnset(T *testing.T, requireEnvVars bool, creds *AWSStaticCreds) {
 	if requireEnvVars {
 		// skips the test case if it requires env vars and they are not set
