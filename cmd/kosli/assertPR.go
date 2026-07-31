@@ -11,7 +11,7 @@ const assertPRDesc = `All Kosli pullrequests assertion commands. Return non-zero
 func newAssertPRCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "pullrequest",
-		Aliases: []string{"pr", "mergerequest", "mr"},
+		Aliases: []string{"pr", "pull_request", "mr", "mergerequest", "merge_request"},
 		Short:   assertPRDesc,
 		Long:    assertPRDesc,
 	}
