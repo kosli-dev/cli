@@ -19,7 +19,12 @@ func CommandsInTable(f *pflag.FlagSet) string {
 
 	maxlen := 0
 	f.VisitAll(func(flag *pflag.Flag) {
-		if flag.Hidden {
+		// pflag.MarkDeprecated sets Hidden as a side effect, which would keep
+		// deprecated-but-working flags out of the reference docs along with
+		// their migration message. Only flags hidden on purpose (MarkHidden,
+		// e.g. internal aliases) are skipped; deprecated ones are documented
+		// below with a (DEPRECATED: ...) suffix.
+		if flag.Hidden && flag.Deprecated == "" {
 			return
 		}
 
