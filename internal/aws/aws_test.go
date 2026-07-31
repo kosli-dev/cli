@@ -322,6 +322,11 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 	}
 }
 
+// TestGetS3Data is a smoke test for the real AWS integration.
+// Path and regex filtering, fingerprinting and naming, pagination and error
+// propagation are covered by fake-backed tests (TestGetS3DataFromClient,
+// TestGetS3DataFromClientFilterEquivalence). These cases prove the real SDK
+// wiring works.
 func (suite *AWSTestSuite) TestGetS3Data() {
 	for _, t := range []struct {
 		name             string
@@ -362,75 +367,12 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			requireEnvVars: true,
 		},
 		{
-			name: "can get S3 bucket data. includePaths is a sub-directory",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			bucketName:      "kosli-cli-public",
-			includePaths:    []string{"dummy"},
-			requireEnvVars:  true,
-			wantFingerprint: "1b7888b437ba378a9884a937552cb1f945f420c3f4201437b42e690f102ff698",
-		},
-		{
-			name: "when includePaths is not an absolute or relative paths",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			bucketName:     "kosli-cli-public",
-			includePaths:   []string{"dummy_2"},
-			requireEnvVars: true,
-			wantErr:        true,
-		},
-		{
-			name: "can get S3 bucket data. includePaths is a nested sub-directory",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			bucketName:       "kosli-cli-public",
-			includePaths:     []string{"dummy/dummy_2"},
-			requireEnvVars:   true,
-			wantFingerprint:  "02eb06f5778c69431b4b00489074b76f05814d8170949f965ebe13a211bf682a",
-			wantArtifactName: "template.yml",
-		},
-		{
-			name: "includePaths is a nested sub-directory starting with slash",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			bucketName:       "kosli-cli-public",
-			includePaths:     []string{"/dummy/dummy_2"},
-			requireEnvVars:   true,
-			wantFingerprint:  "02eb06f5778c69431b4b00489074b76f05814d8170949f965ebe13a211bf682a",
-			wantArtifactName: "template.yml",
-		},
-		{
 			name: "can get S3 bucket data. includePaths is a file",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
 			bucketName:       "kosli-cli-public",
 			includePaths:     []string{"README.md"},
-			requireEnvVars:   true,
-			wantFingerprint:  "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
-			wantArtifactName: "README.md",
-		},
-		{
-			name: "can get S3 bucket data. excludePaths is a file",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			bucketName:      "kosli-cli-public",
-			excludePaths:    []string{"README.md"},
-			requireEnvVars:  true,
-			wantFingerprint: "1b7888b437ba378a9884a937552cb1f945f420c3f4201437b42e690f102ff698",
-		},
-		{
-			name: "can get S3 bucket data. excludePaths is a dir",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			bucketName:       "kosli-cli-public",
-			excludePaths:     []string{"dummy"},
 			requireEnvVars:   true,
 			wantFingerprint:  "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
 			wantArtifactName: "README.md",
