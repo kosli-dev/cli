@@ -21,7 +21,7 @@ This created three problems:
 2. **Test suite speed and scope**: Tests that depend on real external state can only verify a narrow set of scenarios. It is impractical to test error paths or edge cases against live services.
 3. **Who can run the tests**: Developers without credentials for a given external service could not run the tests for commands that depend on it. This limited who could contribute to those areas of the codebase.
 
-The pattern was first introduced for AWS Lambda (#763) and then extended to GitHub (#807).
+The pattern was first introduced for AWS Lambda (#763), then extended to GitHub (#807) and AWS S3 (#758).
 
 ## Decision
 
@@ -39,9 +39,15 @@ For each external service integration, we:
 
 ## The interface abstraction level
 
-We chose to fake at the **operation level** rather than the **SDK client level**. This means the interface speaks in domain terms (e.g. "get PR evidence for this commit") rather than SDK terms (individual HTTP, GraphQL, or SDK calls).
+An interface can sit at the **SDK client level** (individual SDK calls, e.g. `ListObjectsV2`) or the **operation level** (domain terms, e.g. "get PR evidence for this commit"). We use both, and pick per integration:
 
-This keeps fakes simple and free of SDK types, and the interface boundary is stable even if the underlying SDK or transport changes. In some cases (e.g. GraphQL clients that use Go reflection internally) SDK-level faking is impractical without reimplementing SDK machinery, which makes operation-level faking the only viable option.
+- **Prefer SDK-level** when the SDK client is an ordinary Go type whose methods a fake can implement directly, as with the AWS SDK v2 service clients. The real client then satisfies the interface implicitly, so there is no adapter to write and no adapter to keep correct. It also keeps behaviour like pagination in our own code, where a contract test can verify it against the real API rather than hiding it behind a wrapper we cannot exercise.
+
+- **Fall back to operation-level** when SDK-level faking would mean reimplementing SDK machinery. GitHub's GraphQL client uses Go reflection internally, so a fake at that level is impractical. The same applies to SDK helpers with substantial internals of their own — the S3 transfer manager's `DownloadObject` drives ranged `GetObject`/`HeadObject` calls, so a fake stands in for the download *operation* and writes bytes straight to the destination.
+
+Either way the interface stays **narrow**: only the operations this codebase actually calls. That is what bounds the contract test surface — we are testing our expectations of the dependency, not the dependency itself.
+
+A single seam may mix the two levels. AWS S3 does: `S3ListAPI` is SDK-level (`ListObjectsV2`, so the SDK paginator still runs against our interface and the continuation-token contract is verified against real S3), while `S3DownloadAPI` is operation-level (the transfer manager's `DownloadObject`).
 
 ## Contract tests vs the main integration suite
 
