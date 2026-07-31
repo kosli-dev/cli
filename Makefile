@@ -147,7 +147,7 @@ test_integration_single: test_setup
 test_contract_aws: ensure_gotestsum ## Run AWS contract tests against real AWS (requires AWS creds)
 	@echo "Running AWS contract tests against real AWS..."
 	@echo "Requires AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to be set"
-	@$(GOTESTSUM) -- -v -p=1 -run "LambdaContract_RealAWS|AWSTestSuite/TestGetLambdaPackageData|AWSTestSuite/TestGetEcsTasksData|AWSTestSuite/TestGetS3Data" ./internal/aws/
+	@$(GOTESTSUM) -- -v -p=1 -run "LambdaContract_RealAWS|S3Contract_RealAWS|AWSTestSuite/TestGetLambdaPackageData|AWSTestSuite/TestGetEcsTasksData|AWSTestSuite/TestGetS3Data" ./internal/aws/
 
 test_contract_github: ensure_gotestsum ## Run GitHub contract tests against real GitHub API (requires KOSLI_GITHUB_TOKEN)
 	@echo "Running GitHub contract tests against real GitHub API..."

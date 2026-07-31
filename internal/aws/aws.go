@@ -131,6 +131,55 @@ func (staticCreds *AWSStaticCreds) NewS3Client() (*s3.Client, error) {
 	return s3.NewFromConfig(cfg), nil
 }
 
+// S3ListAPI is the S3 listing operation used by this package. The real
+// *s3.Client satisfies this implicitly, and the interface also satisfies
+// s3.ListObjectsV2APIClient so it can drive the SDK paginator.
+type S3ListAPI interface {
+	ListObjectsV2(ctx context.Context, params *s3.ListObjectsV2Input, optFns ...func(*s3.Options)) (*s3.ListObjectsV2Output, error)
+}
+
+// S3DownloadAPI downloads a single object from a bucket. The real
+// *transfermanager.Client satisfies this implicitly.
+//
+// This is the transfer manager's own operation rather than a raw S3 API call.
+// Faking at this level means a fake writes object bytes straight to the
+// WriterAt instead of having to reimplement the transfer manager's ranged
+// GetObject/HeadObject machinery.
+type S3DownloadAPI interface {
+	DownloadObject(ctx context.Context, params *transfermanager.DownloadObjectInput, optFns ...func(*transfermanager.Options)) (*transfermanager.DownloadObjectOutput, error)
+}
+
+// S3API is the combined S3 surface that GetS3Data depends on.
+type S3API interface {
+	S3ListAPI
+	S3DownloadAPI
+}
+
+// s3Client combines the two real AWS clients that back S3API: *s3.Client for
+// listing and *transfermanager.Client for downloading.
+type s3Client struct {
+	S3ListAPI
+	S3DownloadAPI
+}
+
+// defaultNewS3Client creates a real S3 client from credentials.
+func defaultNewS3Client(creds *AWSStaticCreds) (S3API, error) {
+	client, err := creds.NewS3Client()
+	if err != nil {
+		return nil, err
+	}
+	return &s3Client{S3ListAPI: client, S3DownloadAPI: transfermanager.New(client)}, nil
+}
+
+// NewS3ClientFunc is the factory used by GetS3Data to create an S3API client.
+// Tests can replace this to inject a FakeS3Client.
+var NewS3ClientFunc = defaultNewS3Client
+
+// ResetS3ClientFactory restores the default (real AWS) client factory.
+func ResetS3ClientFactory() {
+	NewS3ClientFunc = defaultNewS3Client
+}
+
 // NewLambdaClient returns a new Lambda API client
 func (staticCreds *AWSStaticCreds) NewLambdaClient() (*lambda.Client, error) {
 	cfg, err := staticCreds.NewAWSConfigFromEnvOrFlags()
@@ -413,6 +462,15 @@ func objectMatchesFilter(key string, paths []string, patterns []*regexp.Regexp) 
 // includeRegex / excludeRegex match object keys by Go regular expression.
 // Include and exclude filters are mutually exclusive (callers enforce this).
 func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, logger *logger.Logger) ([]*S3Data, error) {
+	client, err := NewS3ClientFunc(staticCreds)
+	if err != nil {
+		return []*S3Data{}, err
+	}
+	return getS3DataFromClient(client, bucket, includePaths, includeRegex, excludePaths, excludeRegex, logger)
+}
+
+// getS3DataFromClient harvests bucket content using the provided S3API client.
+func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, logger *logger.Logger) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
 
 	includeRegexCompiled, err := compilePathRegex(includeRegex)
@@ -434,16 +492,9 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includ
 		}
 	}()
 
-	client, err := staticCreds.NewS3Client()
-	if err != nil {
-		return s3Data, err
-	}
-
 	params := &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
 	}
-
-	downloader := transfermanager.New(client)
 
 	var lastModifiedTime *time.Time
 	paginator := s3.NewListObjectsV2Paginator(client, params)
@@ -460,7 +511,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includ
 			if shouldExcludePath(*object.Key, includePaths, includeRegexCompiled, excludePaths, excludeRegexCompiled) {
 				continue
 			}
-			err := downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket, logger)
+			err := downloadFileFromBucket(client, tempDirName, *object.Key, bucket, logger)
 			if err != nil {
 				return s3Data, err
 			}
@@ -499,7 +550,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includ
 	return s3Data, nil
 }
 
-func downloadFileFromBucket(downloader *transfermanager.Client, dirName, key, bucket string, logger *logger.Logger) error {
+func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket string, logger *logger.Logger) error {
 	file, err := utils.CreateFile(filepath.Join(dirName, key))
 	if err != nil {
 		return err
