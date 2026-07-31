@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kosli-dev/cli/internal/testHelpers"
+	"github.com/kosli-dev/cli/internal/aws"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -18,10 +18,6 @@ type SnapshotS3TestSuite struct {
 	bucketName            string
 }
 
-type snapshotS3TestConfig struct {
-	requireAuthToBeSet bool
-}
-
 func (suite *SnapshotS3TestSuite) SetupTest() {
 	suite.envName = "snapshot-s3-env"
 	suite.bucketName = "kosli-cli-public"
@@ -33,26 +29,37 @@ func (suite *SnapshotS3TestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	CreateEnv(global.Org, suite.envName, "S3", suite.T())
+
+	// Inject a fake S3 client so tests run without AWS credentials.
+	// The fake is seeded with the objects the test cases filter on.
+	bucketName := suite.bucketName
+	aws.NewS3ClientFunc = func(_ *aws.AWSStaticCreds) (aws.S3API, error) {
+		return &aws.FakeS3Client{
+			Bucket: bucketName,
+			Objects: map[string][]byte{
+				"README.md":                  []byte("# kosli cli public\n"),
+				"dummy/dummy_2/template.yml": []byte("key: value\n"),
+			},
+		}, nil
+	}
+}
+
+func (suite *SnapshotS3TestSuite) TearDownTest() {
+	aws.ResetS3ClientFactory()
 }
 
 func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 	tests := []cmdTestCase{
 		{
-			name: "snapshot s3 works with --bucket",
-			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
-			additionalConfig: snapshotS3TestConfig{
-				requireAuthToBeSet: true,
-			},
+			name:   "snapshot s3 works with --bucket",
+			cmd:    fmt.Sprintf(`snapshot s3 %s %s --bucket %s`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
 			golden: "bucket " + suite.bucketName + " was reported to environment " + suite.envName + "\n",
 		},
 		{
 			wantError: true,
 			name:      "snapshot s3 fails without --bucket",
 			cmd:       fmt.Sprintf(`snapshot s3 %s %s`, suite.envName, suite.defaultKosliArguments),
-			additionalConfig: snapshotS3TestConfig{
-				requireAuthToBeSet: true,
-			},
-			golden: "Error: required flag(s) \"bucket\" not set\n",
+			golden:    "Error: required flag(s) \"bucket\" not set\n",
 		},
 		{
 			wantError: true,
@@ -109,9 +116,6 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 	}
 
 	for _, t := range tests {
-		if t.additionalConfig != nil && t.additionalConfig.(snapshotS3TestConfig).requireAuthToBeSet {
-			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})
-		}
 		runTestCmd(suite.T(), []cmdTestCase{t})
 	}
 }
