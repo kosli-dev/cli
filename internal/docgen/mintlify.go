@@ -175,6 +175,12 @@ func linkifyKosliDocsURLs(s string) string {
 //     stop matching and a raw <...> would reach the MDX build
 //   - lowercase placeholders like <fingerprint>, <commit_sha>
 //
+// The character class is deliberately permissive rather than a precise grammar
+// for "token, optionally pipe-separated": anything this does not match is left
+// as a raw <...> for the MDX build to choke on, so a loose class fails safe
+// while a strict one fails the build. That is why the backslash is allowed
+// anywhere and not just as part of an escaped pipe.
+//
 // Standard HTML tags like <a>, <br/>, <pre>, <code> are filtered out in escapeProseFragment.
 var angleBracketPattern = regexp.MustCompile(`<([a-zA-Z][a-zA-Z0-9_|\\-]*)>`)
 

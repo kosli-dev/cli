@@ -265,6 +265,16 @@ func TestEscapeMintlifyProse(t *testing.T) {
 			want:  "Use `hours\\|days\\|weeks\\|months` for time",
 		},
 		{
+			// angleBracketPattern is deliberately permissive: a placeholder it
+			// fails to match is left as a raw <...> for the MDX build to choke
+			// on, so malformed ones must still be escaped. Tightening the
+			// pattern to describe only well-formed placeholders would trade a
+			// cosmetically loose regex for a broken docs build.
+			name:  "malformed placeholder still escaped",
+			input: "Use <hours||days> and <hours|> here",
+			want:  "Use `hours||days` and `hours|` here",
+		},
+		{
 			name:  "lowercase single-word placeholders converted",
 			input: "flowName@<fingerprint> or flowName:<commit_sha>",
 			want:  "flowName@`fingerprint` or flowName:`commit_sha`",
