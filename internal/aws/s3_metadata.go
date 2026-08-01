@@ -235,9 +235,11 @@ func rejectKosliIgnore(objects []s3Object, bucket string) error {
 		}
 		return fmt.Errorf("bucket [%s] has a %s object at its root, and its exclusion rules change the "+
 			"fingerprint. Fingerprinting from S3 metadata cannot apply them, because reading the file "+
-			"would mean downloading it. Fingerprint by downloading the objects instead. Excluding the "+
-			"file with --exclude would not help: the fingerprint would still differ, because the rules "+
-			"inside it would go unapplied", bucket, kosliIgnoreFile)
+			"would mean downloading it. To apply them, fingerprint by downloading the objects instead. "+
+			"Excluding the file with --exclude %s is also consistent -- neither source then applies its "+
+			"rules, so both produce the same fingerprint -- but that fingerprint covers the unfiltered "+
+			"bucket content, not the content the rules were written to select",
+			bucket, kosliIgnoreFile, kosliIgnoreFile)
 	}
 	return nil
 }

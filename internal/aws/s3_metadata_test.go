@@ -168,6 +168,26 @@ func (suite *S3MetadataTestSuite) TestGetS3DataFromMetadataClient() {
 			wantErrMsg: "both a file and a directory",
 		},
 		{
+			// S3 allows these keys, but they cannot be mapped onto a directory
+			// tree unambiguously: content mode silently collapses "a//b" onto
+			// "a/b" via filepath.Join, which can even collide with a real
+			// "a/b" object. Refusing beats a quietly wrong fingerprint, and
+			// the help text says so.
+			name:      "an object key with an empty path segment is an error",
+			objects:   map[string][]byte{"a//b": readme, "c.txt": []byte(fakeNotesBody)},
+			checksums: fullObjectChecksums(map[string][]byte{"a//b": readme, "c.txt": []byte(fakeNotesBody)}),
+			wantErr:   true,
+			// The wrapper must name the bucket and keep the underlying reason.
+			wantErrMsg: "not a clean relative path",
+		},
+		{
+			name:       "an absolute object key is an error",
+			objects:    map[string][]byte{"/foo": readme, "c.txt": []byte(fakeNotesBody)},
+			checksums:  fullObjectChecksums(map[string][]byte{"/foo": readme, "c.txt": []byte(fakeNotesBody)}),
+			wantErr:    true,
+			wantErrMsg: "not a clean relative path",
+		},
+		{
 			name:       "an empty bucket is an error",
 			objects:    map[string][]byte{"dummy/": nil},
 			wantErr:    true,
@@ -242,8 +262,9 @@ func (suite *S3MetadataTestSuite) TestGetS3DataFromMetadataClient() {
 // matching the artifact that was attested.
 func (suite *S3MetadataTestSuite) TestMetadataMatchesDownloadFingerprint() {
 	for _, t := range []struct {
-		name    string
-		objects map[string][]byte
+		name         string
+		objects      map[string][]byte
+		excludePaths []string
 	}{
 		{
 			name:    "a single object",
@@ -286,6 +307,20 @@ func (suite *S3MetadataTestSuite) TestMetadataMatchesDownloadFingerprint() {
 				"b.txt":   []byte(fakeTemplateBody),
 			},
 		},
+		{
+			// Excluding a root .kosli_ignore makes the two sources agree again:
+			// content mode never downloads it, so DirSha256 finds no ignore file
+			// and applies no rules, which is what metadata mode does too. The
+			// error message for an un-excluded .kosli_ignore says as much, so
+			// pin it here rather than leaving the claim untested.
+			name: "an excluded root .kosli_ignore",
+			objects: map[string][]byte{
+				".kosli_ignore": []byte("notes.txt\n"),
+				"README.md":     []byte(fakeReadmeBody),
+				"notes.txt":     []byte(fakeNotesBody),
+			},
+			excludePaths: []string{".kosli_ignore"},
+		},
 	} {
 		suite.Run(t.name, func() {
 			newClient := func() *FakeS3Client {
@@ -297,11 +332,11 @@ func (suite *S3MetadataTestSuite) TestMetadataMatchesDownloadFingerprint() {
 			}
 
 			downloaded, err := getS3DataFromClient(newClient(), fakeS3TestBucketName,
-				nil, nil, nil, nil, logger.NewStandardLogger())
+				nil, nil, t.excludePaths, nil, logger.NewStandardLogger())
 			require.NoError(suite.T(), err)
 
 			fromMetadata, err := getS3DataFromMetadataClient(newClient(), fakeS3TestBucketName,
-				nil, nil, nil, nil, logger.NewStandardLogger())
+				nil, nil, t.excludePaths, nil, logger.NewStandardLogger())
 			require.NoError(suite.T(), err)
 
 			require.Equal(suite.T(), downloaded, fromMetadata,
