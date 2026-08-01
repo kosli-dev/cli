@@ -149,17 +149,37 @@ type S3DownloadAPI interface {
 	DownloadObject(ctx context.Context, params *transfermanager.DownloadObjectInput, optFns ...func(*transfermanager.Options)) (*transfermanager.DownloadObjectOutput, error)
 }
 
+// S3HeadAPI reads an object's metadata without reading the object itself,
+// including the checksum S3 stores for it. The real *s3.Client satisfies this
+// implicitly.
+//
+// The stored checksum is only returned when the request sets ChecksumMode to
+// ChecksumModeEnabled.
+type S3HeadAPI interface {
+	HeadObject(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
+}
+
 // S3API is the combined S3 surface that GetS3Data depends on.
 type S3API interface {
 	S3ListAPI
 	S3DownloadAPI
+	S3HeadAPI
 }
 
-// s3Client combines the two real AWS clients that back S3API: *s3.Client for
-// listing and *transfermanager.Client for downloading.
+// S3MetadataAPI is the narrower surface needed to fingerprint a bucket from the
+// checksums S3 already stores. It deliberately excludes S3DownloadAPI, so the
+// type signature alone shows that no object content is read.
+type S3MetadataAPI interface {
+	S3ListAPI
+	S3HeadAPI
+}
+
+// s3Client combines the real AWS clients that back S3API: *s3.Client for
+// listing and metadata, and *transfermanager.Client for downloading.
 type s3Client struct {
 	S3ListAPI
 	S3DownloadAPI
+	S3HeadAPI
 }
 
 // defaultNewS3Client creates a real S3 client from credentials.
@@ -168,7 +188,11 @@ func defaultNewS3Client(creds *AWSStaticCreds) (S3API, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &s3Client{S3ListAPI: client, S3DownloadAPI: transfermanager.New(client)}, nil
+	return &s3Client{
+		S3ListAPI:     client,
+		S3DownloadAPI: transfermanager.New(client),
+		S3HeadAPI:     client,
+	}, nil
 }
 
 // NewS3ClientFunc is the factory used by GetS3Data to create an S3API client.
