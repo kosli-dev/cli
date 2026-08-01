@@ -16,8 +16,26 @@ func TestCommandsInTable(t *testing.T) {
 	if !strings.Contains(got, "| -n, --name | string | The name |") {
 		t.Errorf("expected string type in its own column, got:\n%s", got)
 	}
-	if !strings.Contains(got, "| --verbose |  | Enable verbose |") {
-		t.Errorf("expected empty type column for bool flag, got:\n%s", got)
+	// pflag leaves the type empty for booleans; the table names it anyway so a
+	// blank cell never leaves the reader guessing what the flag takes.
+	if !strings.Contains(got, "| --verbose | bool | Enable verbose |") {
+		t.Errorf("expected bool type column for bool flag, got:\n%s", got)
+	}
+	if strings.Contains(got, "|  |") {
+		t.Errorf("expected no empty type cell, got:\n%s", got)
+	}
+}
+
+// TestCommandsInTableBoolOptionalValue checks the bool naming lands before the
+// optional-value suffix, so it reads like the string case (string[="x"]).
+func TestCommandsInTableBoolOptionalValue(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs.Bool("verbose", false, "Enable verbose")
+	fs.Lookup("verbose").NoOptDefVal = "maybe"
+
+	got := CommandsInTable(fs)
+	if !strings.Contains(got, `| --verbose | bool[=maybe] | Enable verbose |`) {
+		t.Errorf("expected bool[=maybe] in the type column, got:\n%s", got)
 	}
 }
 

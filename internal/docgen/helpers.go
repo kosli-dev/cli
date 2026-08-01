@@ -53,10 +53,15 @@ func CommandsInTable(f *pflag.FlagSet) string {
 			flagName = "--" + flag.Name
 		}
 
-		// varname is the value type ("string", "strings", ...) and is empty for
-		// booleans. NoOptDefVal describes the optional-value syntax, so it is
-		// appended here rather than to the description.
+		// varname is the value type ("string", "strings", ...). pflag leaves it
+		// empty for booleans, which reads as missing data in a column headed
+		// "Type" and leaves the reader to infer that the flag takes no value, so
+		// fall back to the underlying type name. Done before the NoOptDefVal
+		// block so an optional value reads as bool[=x], matching string[="x"].
 		varname, usage := pflag.UnquoteUsage(flag)
+		if varname == "" {
+			varname = flag.Value.Type()
+		}
 		if flag.NoOptDefVal != "" {
 			switch flag.Value.Type() {
 			case "string":
