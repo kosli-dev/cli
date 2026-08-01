@@ -1,8 +1,12 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"testing"
+
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/kosli-dev/cli/internal/aws"
 	"github.com/stretchr/testify/suite"
@@ -33,12 +37,22 @@ func (suite *SnapshotS3TestSuite) SetupTest() {
 	// Inject a fake S3 client so tests run without AWS credentials.
 	// The fake is seeded with the objects the test cases filter on.
 	bucketName := suite.bucketName
+	objects := map[string][]byte{
+		"README.md":                  []byte("# kosli cli public\n"),
+		"dummy/dummy_2/template.yml": []byte("key: value\n"),
+	}
+	// Only README.md carries a stored checksum, so the metadata cases cover both
+	// an object that can be fingerprinted from metadata and one that cannot.
+	readmeSum := sha256.Sum256(objects["README.md"])
 	aws.NewS3ClientFunc = func(_ *aws.AWSStaticCreds) (aws.S3API, error) {
 		return &aws.FakeS3Client{
-			Bucket: bucketName,
-			Objects: map[string][]byte{
-				"README.md":                  []byte("# kosli cli public\n"),
-				"dummy/dummy_2/template.yml": []byte("key: value\n"),
+			Bucket:  bucketName,
+			Objects: objects,
+			Checksums: map[string]aws.FakeS3Checksum{
+				"README.md": {
+					SHA256: base64.StdEncoding.EncodeToString(readmeSum[:]),
+					Type:   s3Types.ChecksumTypeFullObject,
+				},
 			},
 		}, nil
 	}
@@ -112,6 +126,28 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 			name:   "can snapshot entire bucket except a subset of files/dirs using --exclude",
 			cmd:    fmt.Sprintf(`snapshot s3 %s %s --bucket %s --exclude dummy`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
 			golden: "bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
+		},
+		{
+			name:   "--fingerprint-source metadata fingerprints from the stored checksum",
+			cmd:    fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include README.md --fingerprint-source metadata`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
+		},
+		{
+			name:   "--fingerprint-source content is the default behaviour",
+			cmd:    fmt.Sprintf(`snapshot s3 %s %s --bucket %s --fingerprint-source content`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
+		},
+		{
+			wantError: true,
+			name:      "--fingerprint-source rejects an unknown value",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --fingerprint-source etag`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: etag is not a valid fingerprint source. Valid sources are: [content, metadata]\nUsage: kosli snapshot s3 ENVIRONMENT-NAME [flags]\n",
+		},
+		{
+			wantError: true,
+			name:      "--fingerprint-source metadata fails on an object with no stored checksum",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include dummy --fingerprint-source metadata`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: object \"dummy/dummy_2/template.yml\" in bucket [kosli-cli-public] has no SHA256 checksum, so its fingerprint cannot be derived from S3 metadata. Re-upload it with a checksum: aws s3api put-object --bucket kosli-cli-public --key dummy/dummy_2/template.yml --body <file> --checksum-algorithm SHA256. Or fingerprint by downloading the objects instead\n",
 		},
 	}
 

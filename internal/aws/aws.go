@@ -384,7 +384,7 @@ func processOneLambdaFunc(lastModified, codeSha256, functionName, packageType st
 	lambdaData.Digests = map[string]string{functionName: codeSha256}
 
 	if packageType == "Zip" {
-		lambdaData.Digests[functionName], err = decodeLambdaFingerprint(codeSha256)
+		lambdaData.Digests[functionName], err = decodeBase64Sha256(codeSha256)
 		if err != nil {
 			return lambdaData, err
 		}
@@ -399,8 +399,10 @@ func formatLambdaLastModified(lastModified string) (time.Time, error) {
 	return time.Parse(layout, lastModified)
 }
 
-// decodeLambdaFingerprint decodes a base64 lambda function fingerprint
-func decodeLambdaFingerprint(fingerprint string) (string, error) {
+// decodeBase64Sha256 converts a Base64-encoded SHA256 digest into the hex form
+// Kosli fingerprints use. AWS reports stored digests in Base64: Lambda's
+// CodeSha256 and an S3 object's checksum both arrive this way.
+func decodeBase64Sha256(fingerprint string) (string, error) {
 	sha256base64, err := base64.StdEncoding.DecodeString(fingerprint)
 	if err != nil {
 		return "", err
@@ -516,38 +518,20 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 		}
 	}()
 
-	params := &s3.ListObjectsV2Input{
-		Bucket: aws.String(bucket),
+	objects, err := listMatchingS3Objects(client, bucket, includePaths, includeRegexCompiled,
+		excludePaths, excludeRegexCompiled)
+	if err != nil {
+		return s3Data, err
 	}
 
 	var lastModifiedTime *time.Time
-	paginator := s3.NewListObjectsV2Paginator(client, params)
-	for paginator.HasMorePages() {
-		objects, err := paginator.NextPage(context.TODO())
-		if err != nil {
+	for _, object := range objects {
+		if err := downloadFileFromBucket(client, tempDirName, object.key, bucket, logger); err != nil {
 			return s3Data, err
 		}
-
-		for _, object := range objects.Contents {
-			if strings.HasSuffix(*object.Key, "/") { // skip folders
-				continue
-			}
-			if shouldExcludePath(*object.Key, includePaths, includeRegexCompiled, excludePaths, excludeRegexCompiled) {
-				continue
-			}
-			err := downloadFileFromBucket(client, tempDirName, *object.Key, bucket, logger)
-			if err != nil {
-				return s3Data, err
-			}
-
-			if lastModifiedTime == nil || object.LastModified.After(*lastModifiedTime) {
-				lastModifiedTime = object.LastModified
-			}
+		if lastModifiedTime == nil || object.lastModified.After(*lastModifiedTime) {
+			lastModifiedTime = &object.lastModified
 		}
-	}
-
-	if lastModifiedTime == nil {
-		return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
 	}
 
 	fileSnapshot, artifactPath, err := containsSingleFile(tempDirName)
@@ -572,6 +556,48 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 	s3Data = append(s3Data, &S3Data{Digests: map[string]string{artifactName: sha256}, LastModifiedTimestamp: lastModifiedTime.Unix()})
 
 	return s3Data, nil
+}
+
+// s3Object is a bucket object that passed the include/exclude filters.
+type s3Object struct {
+	key          string
+	lastModified time.Time
+}
+
+// listMatchingS3Objects paginates the bucket and returns the objects that pass
+// the filters, skipping the folder markers S3 returns for explicitly created
+// folders. It errors when nothing matches, because a snapshot of nothing cannot
+// be fingerprinted.
+//
+// Both fingerprint modes list through here, so what a filter selects cannot
+// drift between them.
+func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []string,
+	includeRegex []*regexp.Regexp, excludePaths []string, excludeRegex []*regexp.Regexp) ([]s3Object, error) {
+	matched := []s3Object{}
+
+	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return nil, err
+		}
+		for _, object := range page.Contents {
+			if strings.HasSuffix(*object.Key, "/") { // skip folders
+				continue
+			}
+			if shouldExcludePath(*object.Key, includePaths, includeRegex, excludePaths, excludeRegex) {
+				continue
+			}
+			matched = append(matched, s3Object{key: *object.Key, lastModified: *object.LastModified})
+		}
+	}
+
+	if len(matched) == 0 {
+		return nil, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
+	}
+	return matched, nil
 }
 
 func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket string, logger *logger.Logger) error {

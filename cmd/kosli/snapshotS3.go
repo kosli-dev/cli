@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -68,13 +69,20 @@ kosli snapshot s3 yourEnvironmentName \
 	--org yourOrgName
 `
 
+// fingerprint sources accepted by --fingerprint-source
+const (
+	fingerprintSourceContent  = "content"
+	fingerprintSourceMetadata = "metadata"
+)
+
 type snapshotS3Options struct {
-	bucket         string
-	includePaths   []string
-	includeRegex   []string
-	excludePaths   []string
-	excludeRegex   []string
-	awsStaticCreds *aws.AWSStaticCreds
+	bucket            string
+	includePaths      []string
+	includeRegex      []string
+	excludePaths      []string
+	excludeRegex      []string
+	fingerprintSource string
+	awsStaticCreds    *aws.AWSStaticCreds
 }
 
 func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
@@ -106,6 +114,12 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 				}
 			}
 
+			if o.fingerprintSource != fingerprintSourceContent && o.fingerprintSource != fingerprintSourceMetadata {
+				return ErrorBeforePrintingUsage(cmd, fmt.Sprintf(
+					"%s is not a valid fingerprint source. Valid sources are: [%s]",
+					o.fingerprintSource, validS3FingerprintSources))
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -118,6 +132,7 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVar(&o.includeRegex, "include-regex", []string{}, bucketPathsRegexFlag)
 	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludeBucketPathsFlag)
 	cmd.Flags().StringSliceVar(&o.excludeRegex, "exclude-regex", []string{}, excludeBucketPathsRegexFlag)
+	cmd.Flags().StringVar(&o.fingerprintSource, "fingerprint-source", fingerprintSourceContent, s3FingerprintSourceFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
 
@@ -141,7 +156,12 @@ func (o *snapshotS3Options) run(args []string) error {
 		return err
 	}
 
-	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, logger)
+	harvest := o.awsStaticCreds.GetS3Data
+	if o.fingerprintSource == fingerprintSourceMetadata {
+		harvest = o.awsStaticCreds.GetS3DataFromMetadata
+	}
+
+	s3Data, err := harvest(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, logger)
 	if err != nil {
 		return err
 	}
