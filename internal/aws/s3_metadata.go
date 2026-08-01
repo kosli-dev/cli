@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 )
 
@@ -53,33 +54,73 @@ func getS3DataFromMetadataClient(client S3MetadataAPI, bucket string, includePat
 		return s3Data, err
 	}
 
-	// Fingerprinting a whole bucket from metadata needs the digests combined the
-	// way a directory fingerprint combines them, which is the next slice.
-	if len(objects) > 1 {
-		return s3Data, fmt.Errorf(
-			"fingerprinting %d objects from S3 metadata is not supported yet: narrow the selection to a "+
-				"single object with --include or --include-regex, or fingerprint by downloading the objects",
-			len(objects))
-	}
-
-	object := objects[0]
-	sha256, err := objectSha256FromMetadata(client, bucket, object.key, logger)
-	if err != nil {
+	if err := rejectKosliIgnore(objects, bucket); err != nil {
 		return s3Data, err
 	}
 
-	// A one-object snapshot is named after the object, matching what
-	// containsSingleFile + FileSha256 produce when the objects are downloaded.
-	artifactName := object.key
-	if index := strings.LastIndex(artifactName, "/"); index >= 0 {
-		artifactName = artifactName[index+1:]
+	files := make([]digest.VirtualFile, 0, len(objects))
+	newest := objects[0].lastModified
+	for _, object := range objects {
+		sha256, err := objectSha256FromMetadata(client, bucket, object.key, logger)
+		if err != nil {
+			return s3Data, err
+		}
+		files = append(files, digest.VirtualFile{Path: object.key, Sha256: sha256})
+		if object.lastModified.After(newest) {
+			newest = object.lastModified
+		}
+	}
+
+	// One object is fingerprinted as that file and named after it; several are
+	// fingerprinted as a directory named after the bucket. This mirrors what
+	// containsSingleFile decides once the objects are on disk.
+	artifactName := bucket
+	var sha256 string
+	if file, ok := digest.SingleVirtualFile(files); ok {
+		artifactName = file.Name()
+		sha256 = file.Sha256
+	} else {
+		sha256, err = digest.VirtualDirSha256(files, logger)
+		if err != nil {
+			return s3Data, fmt.Errorf("failed to fingerprint bucket [%s] from object metadata: %w", bucket, err)
+		}
 	}
 
 	s3Data = append(s3Data, &S3Data{
 		Digests:               map[string]string{artifactName: sha256},
-		LastModifiedTimestamp: object.lastModified.Unix(),
+		LastModifiedTimestamp: newest.Unix(),
 	})
 	return s3Data, nil
+}
+
+// kosliIgnoreFile is read from the root of a directory artifact by
+// digest.DirSha256, and its rules change the fingerprint.
+const kosliIgnoreFile = ".kosli_ignore"
+
+// rejectKosliIgnore fails when the selection contains a bucket-root
+// .kosli_ignore. Applying its rules needs the object's content, which metadata
+// mode does not read, and ignoring them would silently produce a fingerprint
+// that differs from the downloaded one.
+//
+// Only a root .kosli_ignore matters: DirSha256 reads exactly one, at the root of
+// the artifact, and treats any nested one as an ordinary file.
+func rejectKosliIgnore(objects []s3Object, bucket string) error {
+	for _, object := range objects {
+		if object.key != kosliIgnoreFile {
+			continue
+		}
+		if len(objects) == 1 {
+			// The only object: it is fingerprinted as a file, and DirSha256's
+			// ignore handling never comes into play.
+			return nil
+		}
+		return fmt.Errorf("bucket [%s] has a %s object at its root, and its exclusion rules change the "+
+			"fingerprint. Fingerprinting from S3 metadata cannot apply them, because reading the file "+
+			"would mean downloading it. Fingerprint by downloading the objects instead. Excluding the "+
+			"file with --exclude would not help: the fingerprint would still differ, because the rules "+
+			"inside it would go unapplied", bucket, kosliIgnoreFile)
+	}
+	return nil
 }
 
 // objectSha256FromMetadata reads one object's stored SHA256 and returns it as hex.

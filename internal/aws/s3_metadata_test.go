@@ -123,14 +123,49 @@ func (suite *S3MetadataTestSuite) TestGetS3DataFromMetadataClient() {
 			wantErrMsg: "README.md",
 		},
 		{
-			// Combining several objects into one directory fingerprint is the
-			// next slice; until then the limit is explicit rather than silent.
-			name:      "more than one object is not supported yet",
-			objects:   map[string][]byte{"README.md": readme, "notes.txt": []byte(fakeNotesBody)},
-			checksums: fullObjectChecksums(map[string][]byte{"README.md": readme, "notes.txt": []byte(fakeNotesBody)}),
+			name:             "several objects are fingerprinted as a directory named after the bucket",
+			objects:          map[string][]byte{"README.md": readme, "notes.txt": []byte(fakeNotesBody)},
+			checksums:        fullObjectChecksums(map[string][]byte{"README.md": readme, "notes.txt": []byte(fakeNotesBody)}),
+			lastModified:     map[string]time.Time{"README.md": earlier, "notes.txt": later},
+			wantArtifactName: fakeS3TestBucketName,
+			wantLastModified: later.Unix(),
+		},
+		{
+			// Reading it would need the object's content, so metadata mode
+			// cannot apply its rules and must not silently ignore them.
+			name: "a root .kosli_ignore is an error",
+			objects: map[string][]byte{
+				"README.md":     readme,
+				".kosli_ignore": []byte("notes.txt\n"),
+				"notes.txt":     []byte(fakeNotesBody),
+			},
+			checksums: fullObjectChecksums(map[string][]byte{
+				"README.md":     readme,
+				".kosli_ignore": []byte("notes.txt\n"),
+				"notes.txt":     []byte(fakeNotesBody),
+			}),
+			wantErr:    true,
+			wantErrMsg: ".kosli_ignore",
+		},
+		{
+			name: "a nested .kosli_ignore is an ordinary object",
+			objects: map[string][]byte{
+				"README.md":           readme,
+				"dummy/.kosli_ignore": []byte("README.md\n"),
+			},
+			checksums: fullObjectChecksums(map[string][]byte{
+				"README.md":           readme,
+				"dummy/.kosli_ignore": []byte("README.md\n"),
+			}),
+			wantArtifactName: fakeS3TestBucketName,
+		},
+		{
+			name:      "an object key that is also a directory prefix is an error",
+			objects:   map[string][]byte{"a": readme, "a/b": []byte(fakeNotesBody)},
+			checksums: fullObjectChecksums(map[string][]byte{"a": readme, "a/b": []byte(fakeNotesBody)}),
 			wantErr:   true,
-			// The message must tell the user how to get a working snapshot.
-			wantErrMsg: "not supported yet",
+			// digest rejects it; the message must name the clashing path.
+			wantErrMsg: "both a file and a directory",
 		},
 		{
 			name:       "an empty bucket is an error",
@@ -218,6 +253,37 @@ func (suite *S3MetadataTestSuite) TestMetadataMatchesDownloadFingerprint() {
 			name: "a single nested object",
 			objects: map[string][]byte{
 				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
+			},
+		},
+		{
+			name: "two objects at the bucket root",
+			objects: map[string][]byte{
+				"README.md": []byte(fakeReadmeBody),
+				"notes.txt": []byte(fakeNotesBody),
+			},
+		},
+		{
+			name: "objects nested under prefixes",
+			objects: map[string][]byte{
+				"README.md":                  []byte(fakeReadmeBody),
+				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
+				"dummy/notes.txt":            []byte(fakeNotesBody),
+			},
+		},
+		{
+			// A lone .kosli_ignore is fingerprinted as a file, so its rules
+			// never apply and metadata mode can handle it like any object.
+			name:    "a lone .kosli_ignore object",
+			objects: map[string][]byte{".kosli_ignore": []byte("notes.txt\n")},
+		},
+		{
+			// '.' sorts before '/', so a flat key sort would order these
+			// differently from the directory walk the download path uses.
+			name: "a prefix sharing a name prefix with a sibling object",
+			objects: map[string][]byte{
+				"a.txt":   []byte(fakeReadmeBody),
+				"a/z.txt": []byte(fakeNotesBody),
+				"b.txt":   []byte(fakeTemplateBody),
 			},
 		},
 	} {
