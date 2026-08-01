@@ -13,17 +13,97 @@ func TestCommandsInTable(t *testing.T) {
 	fs.Bool("verbose", false, "Enable verbose")
 
 	got := CommandsInTable(fs)
-	if !strings.Contains(got, "--name") {
-		t.Error("expected --name flag")
+	if !strings.Contains(got, "| -n, --name | string | The name |") {
+		t.Errorf("expected string type in its own column, got:\n%s", got)
 	}
-	if !strings.Contains(got, "-n") {
-		t.Error("expected shorthand -n")
+	// pflag leaves the type empty for booleans; the table names it anyway so a
+	// blank cell never leaves the reader guessing what the flag takes.
+	if !strings.Contains(got, "| --verbose | bool | Enable verbose |") {
+		t.Errorf("expected bool type column for bool flag, got:\n%s", got)
 	}
-	if !strings.Contains(got, "--verbose") {
-		t.Error("expected --verbose flag")
+	if strings.Contains(got, "|  |") {
+		t.Errorf("expected no empty type cell, got:\n%s", got)
 	}
-	if !strings.Contains(got, "|") {
-		t.Error("expected table formatting")
+}
+
+// TestCommandsInTableBoolOptionalValue checks the bool naming lands before the
+// optional-value suffix, so it reads like the string case (string[="x"]).
+func TestCommandsInTableBoolOptionalValue(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs.Bool("verbose", false, "Enable verbose")
+	fs.Lookup("verbose").NoOptDefVal = "maybe"
+
+	got := CommandsInTable(fs)
+	if !strings.Contains(got, `| --verbose | bool[=maybe] | Enable verbose |`) {
+		t.Errorf("expected bool[=maybe] in the type column, got:\n%s", got)
+	}
+}
+
+// unescapedPipes counts only the pipes markdown reads as column separators,
+// i.e. those not escaped as \|.
+func unescapedPipes(s string) int {
+	n := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == '|' && (i == 0 || s[i-1] != '\\') {
+			n++
+		}
+	}
+	return n
+}
+
+// TestCommandsInTableColumnCount guards the contract between the rows rendered
+// here and the header in FlagTableHeader: both must have three columns. The
+// pipe-carrying flags matter most — an unescaped pipe in a description or a
+// default would silently split the row into extra columns.
+func TestCommandsInTableColumnCount(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs.StringP("name", "n", "", "The name")
+	fs.Bool("verbose", false, "Enable verbose")
+	fs.Int("count", 0, "How many")
+	fs.String("age", "", "One of <hours|days|weeks|months>")
+	fs.String("sep", "a|b", "The separator")
+
+	wantCells := unescapedPipes(strings.SplitN(FlagTableHeader, "\n", 2)[0])
+	rows := strings.Split(strings.TrimSpace(CommandsInTable(fs)), "\n")
+	if len(rows) != 5 {
+		t.Fatalf("expected 5 rows, got %d:\n%s", len(rows), strings.Join(rows, "\n"))
+	}
+	for _, row := range rows {
+		if got := unescapedPipes(row); got != wantCells {
+			t.Errorf("row %q has %d separators, header has %d", row, got, wantCells)
+		}
+	}
+}
+
+// TestCommandsInTableEscapesPipes covers where the pipes can come from: the
+// description itself and a default value. No Kosli flag help contains a pipe
+// today, so this is the guard that keeps it that way.
+func TestCommandsInTableEscapesPipes(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs.String("age", "", "One of <hours|days|weeks|months>")
+	fs.String("sep", "a|b", "The separator")
+
+	got := CommandsInTable(fs)
+	if !strings.Contains(got, `| --age | string | One of <hours\|days\|weeks\|months> |`) {
+		t.Errorf("expected pipes in the description to be escaped, got:\n%s", got)
+	}
+	if !strings.Contains(got, `| --sep | string | The separator (default "a\|b") |`) {
+		t.Errorf("expected pipes in the default to be escaped, got:\n%s", got)
+	}
+}
+
+// TestCommandsInTableOptionalValue documents where the optional-value syntax
+// from NoOptDefVal lands: in the type column, next to the type it modifies.
+// No Kosli flag uses a non-bool NoOptDefVal today, so this pins the behaviour
+// before something starts relying on it.
+func TestCommandsInTableOptionalValue(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs.String("colour", "", "When to colourise")
+	fs.Lookup("colour").NoOptDefVal = "always"
+
+	got := CommandsInTable(fs)
+	if !strings.Contains(got, `| --colour | string[="always"] | When to colourise |`) {
+		t.Errorf("expected optional-value syntax in the type column, got:\n%s", got)
 	}
 }
 
@@ -53,11 +133,10 @@ func TestCommandsInTableDeprecatedFlags(t *testing.T) {
 	_ = fs.MarkDeprecated("old", "use --new instead")
 
 	got := CommandsInTable(fs)
-	if !strings.Contains(got, "--old") {
-		t.Errorf("expected deprecated flag to be documented, got:\n%s", got)
-	}
-	if !strings.Contains(got, "(DEPRECATED: use --new instead)") {
-		t.Errorf("expected deprecation message, got:\n%s", got)
+	// Asserted as a whole row: the deprecation notice belongs in the
+	// description, not in the type column.
+	if !strings.Contains(got, "| --old | string | The superseded flag (DEPRECATED: use --new instead) |") {
+		t.Errorf("expected deprecation message in the description, got:\n%s", got)
 	}
 	if !strings.Contains(got, "--new") {
 		t.Errorf("expected replacement flag, got:\n%s", got)
@@ -69,8 +148,10 @@ func TestCommandsInTableDefaultValues(t *testing.T) {
 	fs.String("dir", "/tmp", "The directory")
 
 	got := CommandsInTable(fs)
-	if !strings.Contains(got, `(default "/tmp")`) {
-		t.Errorf("expected default value, got:\n%s", got)
+	// Asserted as a whole row: the default belongs in the description, not in
+	// the type column.
+	if !strings.Contains(got, `| --dir | string | The directory (default "/tmp") |`) {
+		t.Errorf("expected default value in the description, got:\n%s", got)
 	}
 }
 

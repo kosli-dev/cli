@@ -84,15 +84,13 @@ func (MintlifyFormatter) FlagsSection(flags, inherited string) string {
 	var b strings.Builder
 	if flags != "" {
 		b.WriteString("## Flags\n")
-		b.WriteString("| Flag | Description |\n")
-		b.WriteString("| :--- | :--- |\n")
+		b.WriteString(FlagTableHeader)
 		b.WriteString(flags)
 		b.WriteString("\n\n")
 	}
 	if inherited != "" {
 		b.WriteString("## Flags inherited from parent commands\n")
-		b.WriteString("| Flag | Description |\n")
-		b.WriteString("| :--- | :--- |\n")
+		b.WriteString(FlagTableHeader)
 		b.WriteString(inherited)
 		b.WriteString("\n\n")
 	}
@@ -172,10 +170,19 @@ func linkifyKosliDocsURLs(s string) string {
 // would interpret as JSX tags. Matches:
 //   - uppercase placeholders like <IMAGE-NAME>
 //   - patterns with pipes like <hours|days|weeks|months> or <COMMIT_SHA1|FINGERPRINT>
+//   - the same with the pipes escaped as \| , which is how they arrive from a
+//     flag table cell (see escapeTableCell); without this the placeholder would
+//     stop matching and a raw <...> would reach the MDX build
 //   - lowercase placeholders like <fingerprint>, <commit_sha>
 //
+// The character class is deliberately permissive rather than a precise grammar
+// for "token, optionally pipe-separated": anything this does not match is left
+// as a raw <...> for the MDX build to choke on, so a loose class fails safe
+// while a strict one fails the build. That is why the backslash is allowed
+// anywhere and not just as part of an escaped pipe.
+//
 // Standard HTML tags like <a>, <br/>, <pre>, <code> are filtered out in escapeProseFragment.
-var angleBracketPattern = regexp.MustCompile(`<([a-zA-Z][a-zA-Z0-9_|-]*)>`)
+var angleBracketPattern = regexp.MustCompile(`<([a-zA-Z][a-zA-Z0-9_|\\-]*)>`)
 
 var htmlTags = map[string]bool{
 	"a": true, "br": true, "pre": true, "code": true, "em": true,

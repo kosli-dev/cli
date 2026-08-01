@@ -1,7 +1,6 @@
 package docgen
 
 import (
-	"bytes"
 	"fmt"
 	"slices"
 	"strings"
@@ -11,13 +10,30 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// CommandsInTable renders a pflag.FlagSet as markdown table rows.
+// FlagTableHeader is the markdown header row (plus alignment row) for the table
+// whose body CommandsInTable renders. It lives next to the row builder so the
+// column count cannot drift between the header and the rows.
+const FlagTableHeader = "| Flag | Type | Description |\n| :--- | :--- | :--- |\n"
+
+// escapeTableCell escapes the pipes in a cell's content so markdown cannot read
+// them as column separators. GFM unescapes \| in a table cell before inline
+// parsing, so this survives even inside a code span — which matters because
+// MintlifyFormatter later turns placeholders like <hours|days> into `hours|days`.
+// It is deliberately applied here rather than in escapeMintlifyProse: that
+// escaper also runs over prose, where a table row's \| would render as a
+// literal backslash.
+func escapeTableCell(s string) string {
+	return strings.ReplaceAll(s, "|", "\\|")
+}
+
+// CommandsInTable renders a pflag.FlagSet as the body of the table headed by
+// FlagTableHeader: one row per flag, with the flag name(s), the value type
+// (empty for booleans, which pflag leaves unnamed), and the description.
+// Defaults and deprecation notices are appended to the description. Every cell
+// is pipe-escaped, so each row has exactly as many separators as the header.
 func CommandsInTable(f *pflag.FlagSet) string {
-	buf := new(bytes.Buffer)
+	var b strings.Builder
 
-	lines := make([]string, 0, 100)
-
-	maxlen := 0
 	f.VisitAll(func(flag *pflag.Flag) {
 		// pflag.MarkDeprecated sets Hidden as a side effect, which would keep
 		// deprecated-but-working flags out of the reference docs along with
@@ -28,62 +44,58 @@ func CommandsInTable(f *pflag.FlagSet) string {
 			return
 		}
 
-		line := ""
+		// No alignment padding: markdown strips leading whitespace inside a
+		// table cell, so it would only add noise to the generated MDX.
+		var flagName string
 		if flag.Shorthand != "" && flag.ShorthandDeprecated == "" {
-			line = fmt.Sprintf("  -%s, --%s", flag.Shorthand, flag.Name)
+			flagName = fmt.Sprintf("-%s, --%s", flag.Shorthand, flag.Name)
 		} else {
-			line = fmt.Sprintf("      --%s", flag.Name)
+			flagName = "--" + flag.Name
 		}
 
+		// varname is the value type ("string", "strings", ...). pflag leaves it
+		// empty for booleans, which reads as missing data in a column headed
+		// "Type" and leaves the reader to infer that the flag takes no value, so
+		// fall back to the underlying type name. Done before the NoOptDefVal
+		// block so an optional value reads as bool[=x], matching string[="x"].
 		varname, usage := pflag.UnquoteUsage(flag)
-		if varname != "" {
-			line += " " + varname
+		if varname == "" {
+			varname = flag.Value.Type()
 		}
 		if flag.NoOptDefVal != "" {
 			switch flag.Value.Type() {
 			case "string":
-				line += fmt.Sprintf("[=\"%s\"]", flag.NoOptDefVal)
+				varname += fmt.Sprintf("[=\"%s\"]", flag.NoOptDefVal)
 			case "bool":
 				if flag.NoOptDefVal != "true" {
-					line += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
+					varname += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
 				}
 			case "count":
 				if flag.NoOptDefVal != "+1" {
-					line += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
+					varname += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
 				}
 			default:
-				line += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
+				varname += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
 			}
 		}
-
-		line += "\x00"
-		if len(line) > maxlen {
-			maxlen = len(line)
-		}
-
-		line += usage
 		defaultZero := []string{"", "0", "[]", "<nil>", "0s", "false"}
 
 		if !slices.Contains(defaultZero, flag.DefValue) {
 			if flag.Value.Type() == "string" {
-				line += fmt.Sprintf(" (default %q)", flag.DefValue)
+				usage += fmt.Sprintf(" (default %q)", flag.DefValue)
 			} else {
-				line += fmt.Sprintf(" (default %s)", flag.DefValue)
+				usage += fmt.Sprintf(" (default %s)", flag.DefValue)
 			}
 		}
 		if len(flag.Deprecated) != 0 {
-			line += fmt.Sprintf(" (DEPRECATED: %s)", flag.Deprecated)
+			usage += fmt.Sprintf(" (DEPRECATED: %s)", flag.Deprecated)
 		}
 
-		lines = append(lines, line)
+		fmt.Fprintf(&b, "| %s | %s | %s |\n",
+			escapeTableCell(flagName), escapeTableCell(varname), escapeTableCell(usage))
 	})
 
-	for _, line := range lines {
-		sidx := strings.Index(line, "\x00")
-		fmt.Fprintln(buf, "| ", line[:sidx], " | ", line[sidx+1:], " |")
-	}
-
-	return buf.String()
+	return b.String()
 }
 
 // RenderFlagsTables returns the rendered flag tables for a command's own flags

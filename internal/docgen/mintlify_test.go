@@ -257,6 +257,24 @@ func TestEscapeMintlifyProse(t *testing.T) {
 			want:  "Format: `COMMIT_SHA1|ARTIFACT_FINGERPRINT`",
 		},
 		{
+			// A flag table cell arrives pipe-escaped (see escapeTableCell), and
+			// the placeholder must still be recognised: leaving a raw <...> here
+			// would reach the MDX build as a JSX tag.
+			name:  "angle brackets with escaped pipes converted",
+			input: `Use <hours\|days\|weeks\|months> for time`,
+			want:  "Use `hours\\|days\\|weeks\\|months` for time",
+		},
+		{
+			// angleBracketPattern is deliberately permissive: a placeholder it
+			// fails to match is left as a raw <...> for the MDX build to choke
+			// on, so malformed ones must still be escaped. Tightening the
+			// pattern to describe only well-formed placeholders would trade a
+			// cosmetically loose regex for a broken docs build.
+			name:  "malformed placeholder still escaped",
+			input: "Use <hours||days> and <hours|> here",
+			want:  "Use `hours||days` and `hours|` here",
+		},
+		{
 			name:  "lowercase single-word placeholders converted",
 			input: "flowName@<fingerprint> or flowName:<commit_sha>",
 			want:  "flowName@`fingerprint` or flowName:`commit_sha`",
@@ -386,12 +404,15 @@ func TestBacktickFlags(t *testing.T) {
 
 func TestMintlifyFlagsSectionBackticksFlags(t *testing.T) {
 	f := MintlifyFormatter{}
-	flags := "| --api-token string | required (default $KOSLI_API_TOKEN) |\n"
+	flags := "| --api-token | string | required (default $KOSLI_API_TOKEN) |\n"
 	got := f.FlagsSection(flags, "")
+	if !strings.Contains(got, "| Flag | Type | Description |") {
+		t.Errorf("expected type column header, got:\n%s", got)
+	}
 	if !strings.Contains(got, "`--api-token`") {
 		t.Errorf("expected --api-token to be backticked, got:\n%s", got)
 	}
-	if strings.Contains(got, "| --api-token string |") {
+	if strings.Contains(got, "| --api-token |") {
 		t.Errorf("expected bare --api-token to be replaced, got:\n%s", got)
 	}
 }
