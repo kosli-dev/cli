@@ -17,6 +17,15 @@ const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc + `
 You can report the entire bucket content, or filter some of the content using ^--include^ / ^--exclude^ (literal prefix match) or ^--include-regex^ / ^--exclude-regex^ (Go regular expressions matched against the full object key).
 In all cases, the content is reported as one artifact. If you wish to report separate files/dirs within the same bucket as separate artifacts, you need to run the command twice.
 
+By default the bucket content is fingerprinted by downloading every matching object and hashing it. ^--fingerprint-source metadata^ reads the SHA256 checksum S3 stores for each object instead, which avoids the download, the temporary disk space and the local hashing. Both sources produce the same fingerprint, so a snapshot matches the artifact you attested either way.
+
+Fingerprinting from metadata comes with three conditions:
+- Every matching object must carry a full-object SHA256 checksum. S3 only stores one when the upload asked for it, for example ^aws s3api put-object --checksum-algorithm SHA256^. Objects uploaded without one are reported, and cannot be fingerprinted this way.
+- A multipart upload gets a composite SHA256, which hashes the checksums of the individual parts rather than the object content, so it cannot be used as the object's fingerprint. Such an object can be collapsed into a single part in place with ^aws s3api copy-object --checksum-algorithm SHA256 --copy-source yourBucket/yourKey --bucket yourBucket --key yourKey^.
+- ^.kosli_ignore^ is not applied, because reading it would mean downloading it. A bucket with a ^.kosli_ignore^ at its root is reported rather than fingerprinted without its rules.
+
+It does not reduce the permissions the command needs: AWS requires ^s3:GetObject^ to read an object's checksum, the same permission that downloading it needs. Reading the checksum of an SSE-KMS encrypted object additionally needs ^kms:GenerateDataKey^ and ^kms:Decrypt^.
+
 ` + kosliIgnoreDesc
 
 const snapshotS3Example = `
@@ -65,6 +74,14 @@ kosli snapshot s3 yourEnvironmentName \
 kosli snapshot s3 yourEnvironmentName \
 	--bucket yourBucketName \
 	--exclude-regex '.*\.png$' \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report contents of an AWS S3 bucket without downloading the objects,
+# using the SHA256 checksums S3 stores for them:
+kosli snapshot s3 yourEnvironmentName \
+	--bucket yourBucketName \
+	--fingerprint-source metadata \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
