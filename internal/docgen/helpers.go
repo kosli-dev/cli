@@ -15,10 +15,6 @@ import (
 // column count cannot drift between the header and the rows.
 const FlagTableHeader = "| Flag | Type | Description |\n| :--- | :--- | :--- |\n"
 
-// flagDefaultZeroValues are DefValue strings that represent "no default worth
-// documenting", so they are omitted from the description.
-var flagDefaultZeroValues = []string{"", "0", "[]", "<nil>", "0s", "false"}
-
 // escapeTableCell escapes the pipes in a cell's content so markdown cannot read
 // them as column separators. GFM unescapes \| in a table cell before inline
 // parsing, so this survives even inside a code span — which matters because
@@ -77,7 +73,9 @@ func CommandsInTable(f *pflag.FlagSet) string {
 				varname += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
 			}
 		}
-		if !slices.Contains(flagDefaultZeroValues, flag.DefValue) {
+		defaultZero := []string{"", "0", "[]", "<nil>", "0s", "false"}
+
+		if !slices.Contains(defaultZero, flag.DefValue) {
 			if flag.Value.Type() == "string" {
 				usage += fmt.Sprintf(" (default %q)", flag.DefValue)
 			} else {
