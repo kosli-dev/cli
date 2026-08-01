@@ -21,19 +21,56 @@ func TestCommandsInTable(t *testing.T) {
 	}
 }
 
+// unescapedPipes counts only the pipes markdown reads as column separators,
+// i.e. those not escaped as \|.
+func unescapedPipes(s string) int {
+	n := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == '|' && (i == 0 || s[i-1] != '\\') {
+			n++
+		}
+	}
+	return n
+}
+
 // TestCommandsInTableColumnCount guards the contract between the rows rendered
-// here and the header in FlagTableHeader: both must have three columns.
+// here and the header in FlagTableHeader: both must have three columns. The
+// pipe-carrying flags matter most — an unescaped pipe in a description or a
+// default would silently split the row into extra columns.
 func TestCommandsInTableColumnCount(t *testing.T) {
 	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	fs.StringP("name", "n", "", "The name")
 	fs.Bool("verbose", false, "Enable verbose")
 	fs.Int("count", 0, "How many")
+	fs.String("age", "", "One of <hours|days|weeks|months>")
+	fs.String("sep", "a|b", "The separator")
 
-	wantCells := strings.Count(strings.SplitN(FlagTableHeader, "\n", 2)[0], "|")
-	for _, row := range strings.Split(strings.TrimSpace(CommandsInTable(fs)), "\n") {
-		if got := strings.Count(row, "|"); got != wantCells {
-			t.Errorf("row %q has %d pipes, header has %d", row, got, wantCells)
+	wantCells := unescapedPipes(strings.SplitN(FlagTableHeader, "\n", 2)[0])
+	rows := strings.Split(strings.TrimSpace(CommandsInTable(fs)), "\n")
+	if len(rows) != 5 {
+		t.Fatalf("expected 5 rows, got %d:\n%s", len(rows), strings.Join(rows, "\n"))
+	}
+	for _, row := range rows {
+		if got := unescapedPipes(row); got != wantCells {
+			t.Errorf("row %q has %d separators, header has %d", row, got, wantCells)
 		}
+	}
+}
+
+// TestCommandsInTableEscapesPipes covers where the pipes can come from: the
+// description itself and a default value. No Kosli flag help contains a pipe
+// today, so this is the guard that keeps it that way.
+func TestCommandsInTableEscapesPipes(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs.String("age", "", "One of <hours|days|weeks|months>")
+	fs.String("sep", "a|b", "The separator")
+
+	got := CommandsInTable(fs)
+	if !strings.Contains(got, `| --age | string | One of <hours\|days\|weeks\|months> |`) {
+		t.Errorf("expected pipes in the description to be escaped, got:\n%s", got)
+	}
+	if !strings.Contains(got, `| --sep | string | The separator (default "a\|b") |`) {
+		t.Errorf("expected pipes in the default to be escaped, got:\n%s", got)
 	}
 }
 

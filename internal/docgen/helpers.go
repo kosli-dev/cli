@@ -19,10 +19,22 @@ const FlagTableHeader = "| Flag | Type | Description |\n| :--- | :--- | :--- |\n
 // documenting", so they are omitted from the description.
 var flagDefaultZeroValues = []string{"", "0", "[]", "<nil>", "0s", "false"}
 
+// escapeTableCell escapes the pipes in a cell's content so markdown cannot read
+// them as column separators. GFM unescapes \| in a table cell before inline
+// parsing, so this survives even inside a code span — which matters because
+// MintlifyFormatter later turns placeholders like <hours|days> into `hours|days`.
+// It is deliberately applied here rather than in escapeMintlifyProse: that
+// escaper also runs over prose, where a table row's \| would render as a
+// literal backslash.
+func escapeTableCell(s string) string {
+	return strings.ReplaceAll(s, "|", "\\|")
+}
+
 // CommandsInTable renders a pflag.FlagSet as the body of the table headed by
 // FlagTableHeader: one row per flag, with the flag name(s), the value type
 // (empty for booleans, which pflag leaves unnamed), and the description.
-// Defaults and deprecation notices are appended to the description.
+// Defaults and deprecation notices are appended to the description. Every cell
+// is pipe-escaped, so each row has exactly as many separators as the header.
 func CommandsInTable(f *pflag.FlagSet) string {
 	var b strings.Builder
 
@@ -76,7 +88,8 @@ func CommandsInTable(f *pflag.FlagSet) string {
 			usage += fmt.Sprintf(" (DEPRECATED: %s)", flag.Deprecated)
 		}
 
-		fmt.Fprintf(&b, "| %s | %s | %s |\n", flagName, varname, usage)
+		fmt.Fprintf(&b, "| %s | %s | %s |\n",
+			escapeTableCell(flagName), escapeTableCell(varname), escapeTableCell(usage))
 	})
 
 	return b.String()

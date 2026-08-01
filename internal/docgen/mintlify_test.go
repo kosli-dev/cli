@@ -257,6 +257,14 @@ func TestEscapeMintlifyProse(t *testing.T) {
 			want:  "Format: `COMMIT_SHA1|ARTIFACT_FINGERPRINT`",
 		},
 		{
+			// A flag table cell arrives pipe-escaped (see escapeTableCell), and
+			// the placeholder must still be recognised: leaving a raw <...> here
+			// would reach the MDX build as a JSX tag.
+			name:  "angle brackets with escaped pipes converted",
+			input: `Use <hours\|days\|weeks\|months> for time`,
+			want:  "Use `hours\\|days\\|weeks\\|months` for time",
+		},
+		{
 			name:  "lowercase single-word placeholders converted",
 			input: "flowName@<fingerprint> or flowName:<commit_sha>",
 			want:  "flowName@`fingerprint` or flowName:`commit_sha`",

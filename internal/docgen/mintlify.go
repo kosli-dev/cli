@@ -170,10 +170,13 @@ func linkifyKosliDocsURLs(s string) string {
 // would interpret as JSX tags. Matches:
 //   - uppercase placeholders like <IMAGE-NAME>
 //   - patterns with pipes like <hours|days|weeks|months> or <COMMIT_SHA1|FINGERPRINT>
+//   - the same with the pipes escaped as \| , which is how they arrive from a
+//     flag table cell (see escapeTableCell); without this the placeholder would
+//     stop matching and a raw <...> would reach the MDX build
 //   - lowercase placeholders like <fingerprint>, <commit_sha>
 //
 // Standard HTML tags like <a>, <br/>, <pre>, <code> are filtered out in escapeProseFragment.
-var angleBracketPattern = regexp.MustCompile(`<([a-zA-Z][a-zA-Z0-9_|-]*)>`)
+var angleBracketPattern = regexp.MustCompile(`<([a-zA-Z][a-zA-Z0-9_|\\-]*)>`)
 
 var htmlTags = map[string]bool{
 	"a": true, "br": true, "pre": true, "code": true, "em": true,
