@@ -386,12 +386,15 @@ func TestBacktickFlags(t *testing.T) {
 
 func TestMintlifyFlagsSectionBackticksFlags(t *testing.T) {
 	f := MintlifyFormatter{}
-	flags := "| --api-token string | required (default $KOSLI_API_TOKEN) |\n"
+	flags := "| --api-token | string | required (default $KOSLI_API_TOKEN) |\n"
 	got := f.FlagsSection(flags, "")
+	if !strings.Contains(got, "| Flag | Type | Description |") {
+		t.Errorf("expected type column header, got:\n%s", got)
+	}
 	if !strings.Contains(got, "`--api-token`") {
 		t.Errorf("expected --api-token to be backticked, got:\n%s", got)
 	}
-	if strings.Contains(got, "| --api-token string |") {
+	if strings.Contains(got, "| --api-token |") {
 		t.Errorf("expected bare --api-token to be replaced, got:\n%s", got)
 	}
 }

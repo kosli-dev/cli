@@ -13,17 +13,11 @@ func TestCommandsInTable(t *testing.T) {
 	fs.Bool("verbose", false, "Enable verbose")
 
 	got := CommandsInTable(fs)
-	if !strings.Contains(got, "--name") {
-		t.Error("expected --name flag")
+	if !strings.Contains(got, "|   -n, --name | string | The name |") {
+		t.Errorf("expected string type in its own column, got:\n%s", got)
 	}
-	if !strings.Contains(got, "-n") {
-		t.Error("expected shorthand -n")
-	}
-	if !strings.Contains(got, "--verbose") {
-		t.Error("expected --verbose flag")
-	}
-	if !strings.Contains(got, "|") {
-		t.Error("expected table formatting")
+	if !strings.Contains(got, "|       --verbose |  | Enable verbose |") {
+		t.Errorf("expected empty type column for bool flag, got:\n%s", got)
 	}
 }
 
