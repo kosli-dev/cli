@@ -2,8 +2,11 @@ package aws
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sort"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -58,14 +61,14 @@ func getS3DataFromMetadataClient(client S3MetadataAPI, bucket string, includePat
 		return s3Data, err
 	}
 
-	files := make([]digest.VirtualFile, 0, len(objects))
+	logger.Debug("reading checksum metadata for %d objects in bucket [%s]", len(objects), bucket)
+	files, err := fetchObjectChecksums(client, bucket, objects, logger)
+	if err != nil {
+		return s3Data, err
+	}
+
 	newest := objects[0].lastModified
 	for _, object := range objects {
-		sha256, err := objectSha256FromMetadata(client, bucket, object.key, logger)
-		if err != nil {
-			return s3Data, err
-		}
-		files = append(files, digest.VirtualFile{Path: object.key, Sha256: sha256})
 		if object.lastModified.After(newest) {
 			newest = object.lastModified
 		}
@@ -93,9 +96,125 @@ func getS3DataFromMetadataClient(client S3MetadataAPI, bucket string, includePat
 	return s3Data, nil
 }
 
-// kosliIgnoreFile is read from the root of a directory artifact by
-// digest.DirSha256, and its rules change the fingerprint.
-const kosliIgnoreFile = ".kosli_ignore"
+const (
+	// kosliIgnoreFile is read from the root of a directory artifact by
+	// digest.DirSha256, and its rules change the fingerprint.
+	kosliIgnoreFile = ".kosli_ignore"
+
+	// defaultS3MetadataConcurrency bounds the in-flight metadata requests. A
+	// bucket can hold far more objects than a Lambda account holds functions,
+	// so unlike GetLambdaPackageData this cannot spawn one goroutine per item.
+	// 16 stays well under S3's per-prefix request ceiling, and the adaptive
+	// retryer in NewAWSConfigFromEnvOrFlags already spreads throttling across
+	// the whole batch.
+	defaultS3MetadataConcurrency = 16
+
+	// maxReportedUnusableObjects caps how many keys an error lists before
+	// summarising the rest, so a bucket-wide problem stays readable.
+	maxReportedUnusableObjects = 10
+)
+
+// fetchObjectChecksums reads every object's stored SHA256 concurrently.
+//
+// Errors are split in two. A transport or permission failure aborts the run at
+// once, because every remaining request would fail the same way. An object
+// whose checksum cannot be used is collected instead, so one run tells the user
+// about every object they need to fix rather than one per attempt.
+func fetchObjectChecksums(client S3HeadAPI, bucket string, objects []s3Object,
+	logger *logger.Logger) ([]digest.VirtualFile, error) {
+	var (
+		wg        sync.WaitGroup
+		mutex     sync.Mutex
+		unusable  []error
+		semaphore = make(chan struct{}, defaultS3MetadataConcurrency)
+	)
+
+	// Writing into a preallocated slot keeps the result in listing order
+	// however the requests interleave, so the same bucket always fingerprints
+	// the same way and a failure is reproducible.
+	files := make([]digest.VirtualFile, len(objects))
+
+	apiErrs := make(chan error, 1) // buffered for the first error only
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	for i, object := range objects {
+		wg.Add(1)
+		go func(index int, key string) {
+			defer wg.Done()
+			select {
+			case <-ctx.Done():
+				return // another goroutine hit an API error
+			default:
+			}
+
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			out, err := client.HeadObject(ctx, &s3.HeadObjectInput{
+				Bucket: aws.String(bucket),
+				Key:    aws.String(key),
+				// S3 only returns a stored checksum when the request asks.
+				ChecksumMode: s3Types.ChecksumModeEnabled,
+			})
+			if err != nil {
+				select {
+				case apiErrs <- fmt.Errorf("failed to read checksum metadata for object %q in bucket "+
+					"[%s]: %w. This requires the s3:GetObject permission (the same permission needed to "+
+					"fingerprint by downloading); an SSE-KMS object also needs kms:GenerateDataKey and "+
+					"kms:Decrypt", key, bucket, err):
+					cancel()
+				default: // an error is already recorded
+				}
+				return
+			}
+
+			sha256, err := objectChecksumSha256(bucket, key, out)
+			if err != nil {
+				mutex.Lock()
+				unusable = append(unusable, err)
+				mutex.Unlock()
+				return
+			}
+			logger.Debug("object %s -- checksum digest: %s", key, sha256)
+			files[index] = digest.VirtualFile{Path: key, Sha256: sha256}
+		}(i, object.key)
+	}
+
+	wg.Wait()
+	close(apiErrs)
+	if err := <-apiErrs; err != nil {
+		return nil, err
+	}
+	if len(unusable) > 0 {
+		return nil, combineUnusableObjectErrors(unusable)
+	}
+	return files, nil
+}
+
+// combineUnusableObjectErrors reports every object that cannot be fingerprinted,
+// capped so a whole-bucket problem stays readable.
+func combineUnusableObjectErrors(errs []error) error {
+	// The goroutines finish in any order; sorting keeps the message stable.
+	messages := make([]string, 0, len(errs))
+	for _, err := range errs {
+		messages = append(messages, err.Error())
+	}
+	sort.Strings(messages)
+
+	if len(messages) == 1 {
+		return errors.New(messages[0])
+	}
+
+	shown := messages
+	suffix := ""
+	if len(shown) > maxReportedUnusableObjects {
+		shown = shown[:maxReportedUnusableObjects]
+		suffix = fmt.Sprintf("\n(and %d more)", len(messages)-maxReportedUnusableObjects)
+	}
+	return fmt.Errorf("%d objects cannot be fingerprinted from S3 metadata:\n%s%s",
+		len(messages), strings.Join(shown, "\n"), suffix)
+}
 
 // rejectKosliIgnore fails when the selection contains a bucket-root
 // .kosli_ignore. Applying its rules needs the object's content, which metadata
@@ -121,28 +240,6 @@ func rejectKosliIgnore(objects []s3Object, bucket string) error {
 			"inside it would go unapplied", bucket, kosliIgnoreFile)
 	}
 	return nil
-}
-
-// objectSha256FromMetadata reads one object's stored SHA256 and returns it as hex.
-func objectSha256FromMetadata(client S3HeadAPI, bucket, key string, logger *logger.Logger) (string, error) {
-	// S3 only returns a stored checksum when the request asks for it.
-	out, err := client.HeadObject(context.TODO(), &s3.HeadObjectInput{
-		Bucket:       aws.String(bucket),
-		Key:          aws.String(key),
-		ChecksumMode: s3Types.ChecksumModeEnabled,
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to read checksum metadata for object %q in bucket [%s]: %w. "+
-			"This requires the s3:GetObject permission (the same permission needed to fingerprint by "+
-			"downloading); an SSE-KMS object also needs kms:GenerateDataKey and kms:Decrypt", key, bucket, err)
-	}
-
-	sha256, err := objectChecksumSha256(bucket, key, out)
-	if err != nil {
-		return "", err
-	}
-	logger.Debug("object %s -- checksum digest: %s", key, sha256)
-	return sha256, nil
 }
 
 // objectChecksumSha256 converts one HeadObject result into a hex SHA256 of the
