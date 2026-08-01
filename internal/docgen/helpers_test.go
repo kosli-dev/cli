@@ -13,11 +13,42 @@ func TestCommandsInTable(t *testing.T) {
 	fs.Bool("verbose", false, "Enable verbose")
 
 	got := CommandsInTable(fs)
-	if !strings.Contains(got, "|   -n, --name | string | The name |") {
+	if !strings.Contains(got, "| -n, --name | string | The name |") {
 		t.Errorf("expected string type in its own column, got:\n%s", got)
 	}
-	if !strings.Contains(got, "|       --verbose |  | Enable verbose |") {
+	if !strings.Contains(got, "| --verbose |  | Enable verbose |") {
 		t.Errorf("expected empty type column for bool flag, got:\n%s", got)
+	}
+}
+
+// TestCommandsInTableColumnCount guards the contract between the rows rendered
+// here and the header in FlagTableHeader: both must have three columns.
+func TestCommandsInTableColumnCount(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs.StringP("name", "n", "", "The name")
+	fs.Bool("verbose", false, "Enable verbose")
+	fs.Int("count", 0, "How many")
+
+	wantCells := strings.Count(strings.SplitN(FlagTableHeader, "\n", 2)[0], "|")
+	for _, row := range strings.Split(strings.TrimSpace(CommandsInTable(fs)), "\n") {
+		if got := strings.Count(row, "|"); got != wantCells {
+			t.Errorf("row %q has %d pipes, header has %d", row, got, wantCells)
+		}
+	}
+}
+
+// TestCommandsInTableOptionalValue documents where the optional-value syntax
+// from NoOptDefVal lands: in the type column, next to the type it modifies.
+// No Kosli flag uses a non-bool NoOptDefVal today, so this pins the behaviour
+// before something starts relying on it.
+func TestCommandsInTableOptionalValue(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs.String("colour", "", "When to colourise")
+	fs.Lookup("colour").NoOptDefVal = "always"
+
+	got := CommandsInTable(fs)
+	if !strings.Contains(got, `| --colour | string[="always"] | When to colourise |`) {
+		t.Errorf("expected optional-value syntax in the type column, got:\n%s", got)
 	}
 }
 
@@ -47,11 +78,10 @@ func TestCommandsInTableDeprecatedFlags(t *testing.T) {
 	_ = fs.MarkDeprecated("old", "use --new instead")
 
 	got := CommandsInTable(fs)
-	if !strings.Contains(got, "--old") {
-		t.Errorf("expected deprecated flag to be documented, got:\n%s", got)
-	}
-	if !strings.Contains(got, "(DEPRECATED: use --new instead)") {
-		t.Errorf("expected deprecation message, got:\n%s", got)
+	// Asserted as a whole row: the deprecation notice belongs in the
+	// description, not in the type column.
+	if !strings.Contains(got, "| --old | string | The superseded flag (DEPRECATED: use --new instead) |") {
+		t.Errorf("expected deprecation message in the description, got:\n%s", got)
 	}
 	if !strings.Contains(got, "--new") {
 		t.Errorf("expected replacement flag, got:\n%s", got)
@@ -63,8 +93,10 @@ func TestCommandsInTableDefaultValues(t *testing.T) {
 	fs.String("dir", "/tmp", "The directory")
 
 	got := CommandsInTable(fs)
-	if !strings.Contains(got, `(default "/tmp")`) {
-		t.Errorf("expected default value, got:\n%s", got)
+	// Asserted as a whole row: the default belongs in the description, not in
+	// the type column.
+	if !strings.Contains(got, `| --dir | string | The directory (default "/tmp") |`) {
+		t.Errorf("expected default value in the description, got:\n%s", got)
 	}
 }
 

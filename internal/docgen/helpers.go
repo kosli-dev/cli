@@ -1,7 +1,6 @@
 package docgen
 
 import (
-	"bytes"
 	"fmt"
 	"slices"
 	"strings"
@@ -11,11 +10,21 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// CommandsInTable renders a pflag.FlagSet as markdown table rows.
-func CommandsInTable(f *pflag.FlagSet) string {
-	buf := new(bytes.Buffer)
+// FlagTableHeader is the markdown header row (plus alignment row) for the table
+// whose body CommandsInTable renders. It lives next to the row builder so the
+// column count cannot drift between the header and the rows.
+const FlagTableHeader = "| Flag | Type | Description |\n| :--- | :--- | :--- |\n"
 
-	lines := make([]string, 0, 100)
+// flagDefaultZeroValues are DefValue strings that represent "no default worth
+// documenting", so they are omitted from the description.
+var flagDefaultZeroValues = []string{"", "0", "[]", "<nil>", "0s", "false"}
+
+// CommandsInTable renders a pflag.FlagSet as the body of the table headed by
+// FlagTableHeader: one row per flag, with the flag name(s), the value type
+// (empty for booleans, which pflag leaves unnamed), and the description.
+// Defaults and deprecation notices are appended to the description.
+func CommandsInTable(f *pflag.FlagSet) string {
+	var b strings.Builder
 
 	f.VisitAll(func(flag *pflag.Flag) {
 		// pflag.MarkDeprecated sets Hidden as a side effect, which would keep
@@ -27,13 +36,18 @@ func CommandsInTable(f *pflag.FlagSet) string {
 			return
 		}
 
-		flagName := ""
+		// No alignment padding: markdown strips leading whitespace inside a
+		// table cell, so it would only add noise to the generated MDX.
+		var flagName string
 		if flag.Shorthand != "" && flag.ShorthandDeprecated == "" {
-			flagName = fmt.Sprintf("  -%s, --%s", flag.Shorthand, flag.Name)
+			flagName = fmt.Sprintf("-%s, --%s", flag.Shorthand, flag.Name)
 		} else {
-			flagName = fmt.Sprintf("      --%s", flag.Name)
+			flagName = "--" + flag.Name
 		}
 
+		// varname is the value type ("string", "strings", ...) and is empty for
+		// booleans. NoOptDefVal describes the optional-value syntax, so it is
+		// appended here rather than to the description.
 		varname, usage := pflag.UnquoteUsage(flag)
 		if flag.NoOptDefVal != "" {
 			switch flag.Value.Type() {
@@ -51,9 +65,7 @@ func CommandsInTable(f *pflag.FlagSet) string {
 				varname += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
 			}
 		}
-		defaultZero := []string{"", "0", "[]", "<nil>", "0s", "false"}
-
-		if !slices.Contains(defaultZero, flag.DefValue) {
+		if !slices.Contains(flagDefaultZeroValues, flag.DefValue) {
 			if flag.Value.Type() == "string" {
 				usage += fmt.Sprintf(" (default %q)", flag.DefValue)
 			} else {
@@ -64,14 +76,10 @@ func CommandsInTable(f *pflag.FlagSet) string {
 			usage += fmt.Sprintf(" (DEPRECATED: %s)", flag.Deprecated)
 		}
 
-		lines = append(lines, fmt.Sprintf("| %s | %s | %s |", flagName, varname, usage))
+		fmt.Fprintf(&b, "| %s | %s | %s |\n", flagName, varname, usage)
 	})
 
-	for _, line := range lines {
-		fmt.Fprintln(buf, line)
-	}
-
-	return buf.String()
+	return b.String()
 }
 
 // RenderFlagsTables returns the rendered flag tables for a command's own flags
