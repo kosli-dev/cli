@@ -176,14 +176,18 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmdOPAContract() {
 			goldenRegex: `\AError: policy evaluation failed`,
 		},
 		{
+			// The policy lives in internal/evaluate's testdata, which owns it:
+			// its tests embed the same file, so the two layers cannot drift.
+			// Reaching across is with the grain of the dependency direction —
+			// cmd/kosli already imports internal/evaluate in production.
 			name:        "realistic compliance policy allows when default requirements are met",
-			cmd:         "evaluate input --input-file testdata/evaluate/compliant-trail-input.json --policy testdata/policies/realistic-compliance.rego",
+			cmd:         "evaluate input --input-file testdata/evaluate/compliant-trail-input.json --policy ../../internal/evaluate/testdata/policies/realistic-compliance.rego",
 			goldenRegex: `RESULT:\s+ALLOWED`,
 		},
 		{
 			wantError: true,
 			name:      "realistic compliance policy denies and names every violation",
-			cmd:       "evaluate input --input-file testdata/evaluate/compliant-trail-input.json --policy testdata/policies/realistic-compliance.rego --params @testdata/evaluate/params-required-attestations.json",
+			cmd:       "evaluate input --input-file testdata/evaluate/compliant-trail-input.json --policy ../../internal/evaluate/testdata/policies/realistic-compliance.rego --params @testdata/evaluate/params-required-attestations.json",
 			// Rego sets are unordered, so accept either order — but require
 			// both reasons to be rendered.
 			goldenRegex: `RESULT:\s+DENIED[\s\S]*(snyk-scan[\s\S]*sbom|sbom[\s\S]*snyk-scan)`,
@@ -202,6 +206,15 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmdOPAContract() {
 // bump: every policy fixture we ship (bar the deliberately broken ones) must
 // still compile under the embedded OPA. It catches Rego-language regressions
 // across the whole corpus without a test case per fixture.
+//
+// Be careful what you read into a green run. This parses and compiles each
+// module standalone, whereas production Evaluate never compiles standalone —
+// it hands the module to rego.Eval, which compiles it with input and store
+// bound. Parser options and capabilities match today, so a fixture compiling
+// here compiles there, but "still compiles" is not "still produces the same
+// verdict". The cmdTestCase assertions above are what cover behaviour.
+//
+// internal/evaluate has the mirror of this test for its own testdata.
 func TestPolicyFixturesStillCompile(t *testing.T) {
 	// Fixtures that are invalid on purpose and are asserted on elsewhere.
 	// undefined-allow.rego is not among them: it compiles fine and is only

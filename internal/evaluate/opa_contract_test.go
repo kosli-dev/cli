@@ -1,11 +1,15 @@
 package evaluate
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/stretchr/testify/require"
 )
 
@@ -64,32 +68,14 @@ func realisticTrailInput() map[string]interface{} {
 // It uses the default-plus-override idiom for params rather than
 // object.get(data.params, ...) — see
 // TestOPAContract_ObjectGetOnParamsIsUndefinedWithoutParamsFlag for why.
-const realisticPolicy = `package policy
-
-default allow := false
-
-default required := ["pull-request", "unit-tests"]
-
-required := data.params.required_attestations if { data.params.required_attestations }
-
-attestations := input.trail.compliance_status.attestations_statuses
-
-allow if {
-	count(violations) == 0
-}
-
-violations contains msg if {
-	some name in required
-	not attestations[name]
-	msg := sprintf("required attestation %q is missing", [name])
-}
-
-violations contains msg if {
-	some name in required
-	attestations[name].compliant == false
-	msg := sprintf("attestation %q is not compliant", [name])
-}
-`
+//
+// This is the single source for that policy: cmd/kosli's CLI tests point
+// --policy at the same file rather than keeping a second copy, so a fix to one
+// layer cannot silently miss the other. Embedding (rather than reading at run
+// time) means a rename or deletion breaks the build instead of one test.
+//
+//go:embed testdata/policies/realistic-compliance.rego
+var realisticPolicy string
 
 func TestOPAContract_RealisticPolicyAllows(t *testing.T) {
 	result, err := Evaluate(realisticPolicy, realisticTrailInput(), nil)
@@ -368,8 +354,9 @@ violations contains msg if {
 // the policy input (trail and attestation data) can be exfiltrated, and the
 // CLI's exit code can be made to depend on a remote host.
 //
-// This test asserts today's behaviour, not a desired one. If we adopt an
-// ast.Capabilities allowlist, invert this assertion.
+// This test asserts today's behaviour, not a desired one. The fix would be to
+// build rego.New with an ast.Capabilities allowlist that drops http.send,
+// net.*, and opa.runtime; when we do, invert this assertion. Tracked in #1074.
 func TestOPAContract_PolicyCanReachTheNetwork(t *testing.T) {
 	var reachedServer bool
 	var receivedBody string
@@ -453,4 +440,35 @@ allow if {
 	require.NoError(t, err)
 	require.False(t, withoutParams.Allow,
 		"without --params, data.params is undefined so object.get yields undefined, not the fallback")
+}
+
+// TestPolicyFixturesStillCompile is the canary for this package's shared
+// fixtures — the mirror of the one in cmd/kosli, each covering its own
+// testdata. Both check that the fixture corpus survives an OPA bump.
+//
+// Note what this proves and what it does not: it parses and compiles each
+// module standalone, whereas production Evaluate never compiles standalone —
+// it hands the module to rego.Eval, which compiles it with input and store
+// bound. The parser options and capabilities match today, so a fixture that
+// compiles here compiles there, but "still compiles" is not "still evaluates
+// to the same verdict". The behavioural assertions above cover that.
+func TestPolicyFixturesStillCompile(t *testing.T) {
+	paths, err := filepath.Glob("testdata/policies/*.rego")
+	require.NoError(t, err)
+	require.NotEmpty(t, paths, "expected policy fixtures to exist")
+
+	for _, path := range paths {
+		name := filepath.Base(path)
+		t.Run(name, func(t *testing.T) {
+			source, err := os.ReadFile(path)
+			require.NoError(t, err)
+
+			module, err := ast.ParseModuleWithOpts(name, string(source), ast.ParserOptions{})
+			require.NoError(t, err, "fixture no longer parses")
+
+			compiler := ast.NewCompiler()
+			compiler.Compile(map[string]*ast.Module{name: module})
+			require.False(t, compiler.Failed(), "fixture no longer compiles: %v", compiler.Errors)
+		})
+	}
 }
