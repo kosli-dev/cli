@@ -1,8 +1,11 @@
 package main
 
 import (
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1188,6 +1191,119 @@ func (suite *CliUtilsTestSuite) TestConfirmDeletion() {
 				"the prompt is printed without a trailing newline")
 		})
 	}
+}
+
+// evidenceFixture builds a temp tree containing a directory with two files plus
+// a standalone file, and returns the root, the directory path and the file path.
+func evidenceFixture(t require.TestingT, root string) (dir string, file string) {
+	dir = filepath.Join(root, "results")
+	require.NoError(t, os.MkdirAll(dir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "junit.xml"), []byte("<testsuite/>"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "coverage.txt"), []byte("100%"), 0644))
+
+	file = filepath.Join(root, "extra.txt")
+	require.NoError(t, os.WriteFile(file, []byte("hello"), 0644))
+
+	return dir, file
+}
+
+// readTarHeaders opens the gzipped tarball at path and returns every header in it.
+func readTarHeaders(t require.TestingT, path string) []*tar.Header {
+	f, err := os.Open(path)
+	require.NoError(t, err)
+	defer f.Close()
+
+	gzr, err := gzip.NewReader(f)
+	require.NoError(t, err)
+	defer gzr.Close()
+
+	headers := []*tar.Header{}
+	tr := tar.NewReader(gzr)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		require.NoError(t, err)
+		headers = append(headers, header)
+	}
+	return headers
+}
+
+// TestGetPathOfEvidenceFileToUploadMultiplePaths checks that every file under
+// every provided path ends up in the tarball that gets uploaded.
+func (suite *CliUtilsTestSuite) TestGetPathOfEvidenceFileToUploadMultiplePaths() {
+	defer restoreLogger(newTestLoggerWithInfo(new(bytes.Buffer)))()
+
+	root := suite.T().TempDir()
+	dir, file := evidenceFixture(suite.T(), root)
+
+	tarPath, cleanupNeeded, err := getPathOfEvidenceFileToUpload([]string{dir, file})
+	require.NoError(suite.T(), err)
+	require.True(suite.T(), cleanupNeeded, "a generated tarball must be cleaned up by the caller")
+	defer os.RemoveAll(filepath.Dir(tarPath))
+
+	names := []string{}
+	for _, header := range readTarHeaders(suite.T(), tarPath) {
+		names = append(names, filepath.Base(header.Name))
+	}
+	require.ElementsMatch(suite.T(), []string{"junit.xml", "coverage.txt", "extra.txt"}, names,
+		"the tarball must contain the files from all provided evidence paths")
+}
+
+// TestGetPathOfEvidenceFileToUploadDoesNotPreserveOwnership guards against the
+// regression in https://github.com/kosli-dev/cli/issues/1075: packaging multiple
+// evidence paths used to ask github.com/otiai10/copy to preserve uid/gid, which
+// it implements with Lchown. A non-root process cannot chown a file to a foreign
+// uid, so `kosli attest` aborted with "operation not permitted" whenever any
+// attachment was written by a docker container rather than by the CLI user.
+//
+// The failure cannot be reproduced head-on: only root can create a
+// foreign-owned fixture, and only non-root gets the EPERM. So the assertion is
+// inverted - as root, own a fixture file to a foreign uid and require that the
+// packaged copy is owned by us, proving no chown to a foreign uid is attempted.
+func (suite *CliUtilsTestSuite) TestGetPathOfEvidenceFileToUploadDoesNotPreserveOwnership() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("needs root to create a fixture owned by a foreign uid")
+	}
+	defer restoreLogger(newTestLoggerWithInfo(new(bytes.Buffer)))()
+
+	const foreignUID, foreignGID = 12345, 12345
+
+	root := suite.T().TempDir()
+	dir, file := evidenceFixture(suite.T(), root)
+	require.NoError(suite.T(), os.Chown(filepath.Join(dir, "junit.xml"), foreignUID, foreignGID),
+		"the fixture stands in for evidence written by a docker container")
+
+	tarPath, _, err := getPathOfEvidenceFileToUpload([]string{dir, file})
+	require.NoError(suite.T(), err,
+		"evidence owned by another user must still be packaged")
+	defer os.RemoveAll(filepath.Dir(tarPath))
+
+	for _, header := range readTarHeaders(suite.T(), tarPath) {
+		require.Equal(suite.T(), os.Getuid(), header.Uid,
+			"%s must be owned by the packaging user, not by the source file's owner", header.Name)
+	}
+}
+
+// TestGetPathOfEvidenceFileToUploadNamesTheFailingPath checks that when staging
+// an evidence path fails, the error names the path the user actually passed.
+// The raw copy error talks about a temp directory the user never created, which
+// gives them nothing to act on.
+func (suite *CliUtilsTestSuite) TestGetPathOfEvidenceFileToUploadNamesTheFailingPath() {
+	defer restoreLogger(newTestLoggerWithInfo(new(bytes.Buffer)))()
+
+	root := suite.T().TempDir()
+	_, file := evidenceFixture(suite.T(), root)
+	missing := filepath.Join(root, "does-not-exist")
+
+	_, _, err := getPathOfEvidenceFileToUpload([]string{file, missing})
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), missing,
+		"the error must name the evidence path the user provided")
+	require.Contains(suite.T(), err.Error(), "failed to package attachment",
+		"the error must say which step failed, not just surface a bare syscall error")
 }
 
 // restoreLogger swaps the package-level logger for l and returns a function

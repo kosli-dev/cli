@@ -660,12 +660,15 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 			pathWithoutVolume := path[len(volume):]
 			pathWithoutColon := volumeWithoutColon + pathWithoutVolume
 
+			// this copy is only a staging area for the tarball built below, and
+			// nothing downstream reads uid/gid. Preserving ownership would Lchown
+			// to a foreign uid, which fails for any non-root process handed
+			// evidence written by a docker container.
 			err := cp.Copy(path, filepath.Join(tmpDir, pathWithoutColon), cp.Options{
 				PreserveTimes: true,
-				PreserveOwner: true,
 			})
 			if err != nil {
-				return "", cleanupNeeded, err
+				return "", cleanupNeeded, fmt.Errorf("failed to package attachment %s: %v", path, err)
 			}
 		}
 		dirToTar = tmpDir
