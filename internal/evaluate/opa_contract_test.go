@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/version"
 	"github.com/stretchr/testify/require"
 )
 
@@ -474,11 +475,12 @@ func TestPolicyFixturesStillCompile(t *testing.T) {
 			require.NoError(t, err)
 
 			module, err := ast.ParseModuleWithOpts(name, string(source), ast.ParserOptions{})
-			require.NoError(t, err, "fixture no longer parses")
+			require.NoError(t, err, "fixture no longer parses under OPA %s", version.Version)
 
 			compiler := ast.NewCompiler()
 			compiler.Compile(map[string]*ast.Module{name: module})
-			require.False(t, compiler.Failed(), "fixture no longer compiles: %v", compiler.Errors)
+			require.False(t, compiler.Failed(),
+				"fixture no longer compiles under OPA %s: %v", version.Version, compiler.Errors)
 		})
 	}
 }
