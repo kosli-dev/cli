@@ -1193,8 +1193,8 @@ func (suite *CliUtilsTestSuite) TestConfirmDeletion() {
 	}
 }
 
-// evidenceFixture builds a temp tree containing a directory with two files plus
-// a standalone file, and returns the root, the directory path and the file path.
+// evidenceFixture builds a temp tree under root containing a directory with two
+// files plus a standalone file, and returns the directory path and the file path.
 func evidenceFixture(t require.TestingT, root string) (dir string, file string) {
 	dir = filepath.Join(root, "results")
 	require.NoError(t, os.MkdirAll(dir, 0755))
