@@ -6,8 +6,9 @@
 export CGO_ENABLED=0
 export GO111MODULE=on
 
-LDFLAGS	:= -w -s
-BIN	:= kosli
+LDFLAGS    := -w -s
+BIN        := kosli
+GO_VERSION := $(shell awk '/^go /{print $$2}' go.mod)
 
 GIT_COMMIT = $(shell git rev-parse HEAD)
 GIT_SHA    = $(shell git rev-parse --short HEAD)
@@ -53,7 +54,16 @@ fmt: ## Reformat package sources
 	@go fmt ./...
 
 ensure_golangci-lint:
-	@HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade golangci-lint
+	@if command -v brew >/dev/null 2>&1; then \
+		HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade golangci-lint; \
+	elif command -v golangci-lint >/dev/null 2>&1; then \
+		echo "Homebrew not found; using the golangci-lint already on PATH."; \
+	else \
+		echo "golangci-lint not found, and Homebrew is unavailable to install it."; \
+		echo "Install a build that matches this repo's Go version with:"; \
+		echo "  GOTOOLCHAIN=go$(GO_VERSION) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest"; \
+		exit 1; \
+	fi
 
 lint: deps vet ensure_golangci-lint ## Run linting
 	@golangci-lint run --timeout=5m --color always  -v ./...
