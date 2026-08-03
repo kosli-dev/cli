@@ -356,7 +356,7 @@ violations contains msg if {
 //
 // This test asserts today's behaviour, not a desired one. The fix would be to
 // build rego.New with an ast.Capabilities allowlist that drops http.send,
-// net.*, and opa.runtime; when we do, invert this assertion. Tracked in #1074.
+// net.*, and opa.runtime; when we do, invert this assertion.
 func TestOPAContract_PolicyCanReachTheNetwork(t *testing.T) {
 	var reachedServer bool
 	var receivedBody string
@@ -453,12 +453,22 @@ allow if {
 // compiles here compiles there, but "still compiles" is not "still evaluates
 // to the same verdict". The behavioural assertions above cover that.
 func TestPolicyFixturesStillCompile(t *testing.T) {
+	// Mirrors the skip-set in cmd/kosli's copy of this canary. Empty today —
+	// this package's testdata holds only valid fixtures — but kept so that an
+	// intentionally uncompilable fixture added here (an unsafe-var
+	// characterisation, say) has an obvious home instead of turning the canary
+	// red spuriously. The two mirrors are meant to behave identically.
+	deliberatelyBroken := map[string]bool{}
+
 	paths, err := filepath.Glob("testdata/policies/*.rego")
 	require.NoError(t, err)
 	require.NotEmpty(t, paths, "expected policy fixtures to exist")
 
 	for _, path := range paths {
 		name := filepath.Base(path)
+		if deliberatelyBroken[name] {
+			continue
+		}
 		t.Run(name, func(t *testing.T) {
 			source, err := os.ReadFile(path)
 			require.NoError(t, err)
