@@ -1211,11 +1211,11 @@ func evidenceFixture(t require.TestingT, root string) (dir string, file string) 
 func readTarHeaders(t require.TestingT, path string) []*tar.Header {
 	f, err := os.Open(path)
 	require.NoError(t, err)
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gzr, err := gzip.NewReader(f)
 	require.NoError(t, err)
-	defer gzr.Close()
+	defer func() { _ = gzr.Close() }()
 
 	headers := []*tar.Header{}
 	tr := tar.NewReader(gzr)
@@ -1241,7 +1241,7 @@ func (suite *CliUtilsTestSuite) TestGetPathOfEvidenceFileToUploadMultiplePaths()
 	tarPath, cleanupNeeded, err := getPathOfEvidenceFileToUpload([]string{dir, file})
 	require.NoError(suite.T(), err)
 	require.True(suite.T(), cleanupNeeded, "a generated tarball must be cleaned up by the caller")
-	defer os.RemoveAll(filepath.Dir(tarPath))
+	defer func() { _ = os.RemoveAll(filepath.Dir(tarPath)) }()
 
 	names := []string{}
 	for _, header := range readTarHeaders(suite.T(), tarPath) {
@@ -1278,7 +1278,7 @@ func (suite *CliUtilsTestSuite) TestGetPathOfEvidenceFileToUploadDoesNotPreserve
 	tarPath, _, err := getPathOfEvidenceFileToUpload([]string{dir, file})
 	require.NoError(suite.T(), err,
 		"evidence owned by another user must still be packaged")
-	defer os.RemoveAll(filepath.Dir(tarPath))
+	defer func() { _ = os.RemoveAll(filepath.Dir(tarPath)) }()
 
 	for _, header := range readTarHeaders(suite.T(), tarPath) {
 		require.Equal(suite.T(), os.Getuid(), header.Uid,
@@ -1304,6 +1304,8 @@ func (suite *CliUtilsTestSuite) TestGetPathOfEvidenceFileToUploadNamesTheFailing
 		"the error must name the evidence path the user provided")
 	require.Contains(suite.T(), err.Error(), "failed to package attachment",
 		"the error must say which step failed, not just surface a bare syscall error")
+	require.ErrorIs(suite.T(), err, os.ErrNotExist,
+		"the underlying error must stay wrapped with %w so callers can still inspect it")
 }
 
 // restoreLogger swaps the package-level logger for l and returns a function

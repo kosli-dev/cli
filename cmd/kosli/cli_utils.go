@@ -668,7 +668,7 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 				PreserveTimes: true,
 			})
 			if err != nil {
-				return "", cleanupNeeded, fmt.Errorf("failed to package attachment %s: %v", path, err)
+				return "", cleanupNeeded, fmt.Errorf("failed to package attachment %s: %w", path, err)
 			}
 		}
 		dirToTar = tmpDir
