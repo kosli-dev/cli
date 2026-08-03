@@ -55,7 +55,11 @@ fmt: ## Reformat package sources
 
 ensure_golangci-lint:
 	@if command -v brew >/dev/null 2>&1; then \
-		HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade golangci-lint; \
+		if brew ls --versions golangci-lint >/dev/null 2>&1; then \
+			HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade golangci-lint; \
+		else \
+			HOMEBREW_NO_AUTO_UPDATE=1 brew install golangci-lint; \
+		fi; \
 	elif command -v golangci-lint >/dev/null 2>&1; then \
 		echo "Homebrew not found; using the golangci-lint already on PATH."; \
 	else \
