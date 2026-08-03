@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/version"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -142,6 +146,93 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 		},
 	}
 	runTestCmd(suite.T(), tests)
+}
+
+// TestEvaluateInputCmdOPAContract covers the OPA/Rego boundary as the user
+// meets it. The Rego semantics themselves are pinned in
+// internal/evaluate/opa_contract_test.go — the cases here exist only to prove
+// the plumbing: that a compiler diagnostic reaches the terminal intact, and
+// that a real policy's verdict and reasons are rendered. Output formats,
+// --params sources and the --assert pair are already covered by
+// TestEvaluateInputCmd and are deliberately not re-tested per policy.
+func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmdOPAContract() {
+	tests := []cmdTestCase{
+		{
+			wantError: true,
+			name:      "policy with an unsafe variable reports the rego error with line number",
+			cmd:       "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/unsafe-var.rego",
+			// Note the reported file is always "policy.rego" — the name we pass
+			// to rego.Module — not the user's --policy path. The line number is
+			// what makes this actionable, so pin it.
+			goldenRegex: `policy\.rego:9: rego_unsafe_var_error`,
+		},
+		{
+			wantError: true,
+			name:      "a policy that fails to compile errors out even under --no-assert",
+			cmd:       "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/unsafe-var.rego --no-assert",
+			// Anchored at the start of the combined output: --no-assert
+			// suppresses a deny, not a broken policy, and nothing — least of
+			// all a RESULT line — precedes the error.
+			goldenRegex: `\AError: policy evaluation failed`,
+		},
+		{
+			name:        "realistic compliance policy allows when default requirements are met",
+			cmd:         "evaluate input --input-file testdata/evaluate/compliant-trail-input.json --policy testdata/policies/realistic-compliance.rego",
+			goldenRegex: `RESULT:\s+ALLOWED`,
+		},
+		{
+			wantError: true,
+			name:      "realistic compliance policy denies and names every violation",
+			cmd:       "evaluate input --input-file testdata/evaluate/compliant-trail-input.json --policy testdata/policies/realistic-compliance.rego --params @testdata/evaluate/params-required-attestations.json",
+			// Rego sets are unordered, so accept either order — but require
+			// both reasons to be rendered.
+			goldenRegex: `RESULT:\s+DENIED[\s\S]*(snyk-scan[\s\S]*sbom|sbom[\s\S]*snyk-scan)`,
+		},
+		{
+			wantError:   true,
+			name:        "policy whose allow rule is undefined errors rather than denying",
+			cmd:         "evaluate input --input-file testdata/evaluate/low-score-input.json --policy testdata/policies/undefined-allow.rego",
+			goldenRegex: `policy did not return a result for 'data\.policy\.allow'`,
+		},
+	}
+	runTestCmd(suite.T(), tests)
+}
+
+// TestPolicyFixturesStillCompile is the cheap canary for every future OPA
+// bump: every policy fixture we ship (bar the deliberately broken ones) must
+// still compile under the embedded OPA. It catches Rego-language regressions
+// across the whole corpus without a test case per fixture.
+func TestPolicyFixturesStillCompile(t *testing.T) {
+	// Fixtures that are invalid on purpose and are asserted on elsewhere.
+	// undefined-allow.rego is not among them: it compiles fine and is only
+	// undefined at evaluation time.
+	deliberatelyBroken := map[string]bool{
+		"invalid.rego":    true,
+		"unsafe-var.rego": true,
+	}
+
+	paths, err := filepath.Glob("testdata/policies/*.rego")
+	require.NoError(t, err)
+	require.NotEmpty(t, paths, "expected policy fixtures to exist")
+
+	for _, path := range paths {
+		name := filepath.Base(path)
+		if deliberatelyBroken[name] {
+			continue
+		}
+		t.Run(name, func(t *testing.T) {
+			source, err := os.ReadFile(path)
+			require.NoError(t, err)
+
+			module, err := ast.ParseModuleWithOpts(name, string(source), ast.ParserOptions{})
+			require.NoError(t, err, "fixture no longer parses under OPA %s", version.Version)
+
+			compiler := ast.NewCompiler()
+			compiler.Compile(map[string]*ast.Module{name: module})
+			require.False(t, compiler.Failed(),
+				"fixture no longer compiles under OPA %s: %v", version.Version, compiler.Errors)
+		})
+	}
 }
 
 func TestLoadInput(t *testing.T) {
