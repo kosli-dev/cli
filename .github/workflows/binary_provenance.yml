@@ -59,7 +59,7 @@ jobs:
 
         - name: Attest Build Provenance
           id: artifact-gh-attest
-          uses: actions/attest@v4.2.0
+          uses: actions/attest@v4.2.1
           with:
             subject-name: ${{matrix.artifact.template_name}}
             subject-digest: sha256:${{ env.FINGERPRINT }}
@@ -94,7 +94,7 @@ jobs:
 
         - name: Attest SBOM to Github
           id: sbom-gh-attest
-          uses: actions/attest@v4.2.0
+          uses: actions/attest@v4.2.1
           with:
             sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
             subject-name: ${{matrix.artifact.template_name}}
