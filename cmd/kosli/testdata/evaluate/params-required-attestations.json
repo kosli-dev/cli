@@ -1,0 +1,1 @@
+{"required_attestations": ["pull-request", "snyk-scan", "sbom"]}
