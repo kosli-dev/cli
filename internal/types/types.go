@@ -1,5 +1,7 @@
 package types
 
+import "encoding/json"
+
 type PREvidence struct {
 	MergeCommit string   `json:"merge_commit"`
 	URL         string   `json:"url"`
@@ -11,7 +13,20 @@ type PREvidence struct {
 	Title       string   `json:"title,omitempty"`
 	HeadRef     string   `json:"head_ref,omitempty"`
 	BaseRef     string   `json:"base_ref,omitempty"`
-	Commits     []Commit `json:"commits,omitempty"`
+	Commits     []Commit `json:"commits"`
+}
+
+// MarshalJSON keeps "commits" in the payload even when a provider returns no
+// commits. The API requires the field on FoundPullRequestV2, so omitting it —
+// or sending null for a nil slice — produces a payload matching neither
+// attestation schema (#1081).
+func (e PREvidence) MarshalJSON() ([]byte, error) {
+	type prEvidence PREvidence // sheds the method set, so this does not recurse
+	out := prEvidence(e)
+	if out.Commits == nil {
+		out.Commits = []Commit{}
+	}
+	return json.Marshal(out)
 }
 
 type PRApprovals struct {
