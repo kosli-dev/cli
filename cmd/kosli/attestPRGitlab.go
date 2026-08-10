@@ -100,8 +100,8 @@ func newAttestGitlabPRCmd(out io.Writer) *cobra.Command {
 		payload: PRAttestationPayload{
 			CommonAttestationPayload: &CommonAttestationPayload{},
 		},
-		retriever: new(gitlabUtils.GitlabConfig),
 	}
+	gitlabFlagsValues := new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
 		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		Use:         "gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH]",
@@ -146,14 +146,15 @@ func newAttestGitlabPRCmd(out io.Writer) *cobra.Command {
 			// GitlabConfig.Repository is the short project name (CI_PROJECT_NAME);
 			// combined with Org (CI_PROJECT_NAMESPACE) it forms the API ProjectID.
 			// This is separate from repo_info.name, which uses the full CI_PROJECT_PATH.
-			o.getRetriever().(*gitlabUtils.GitlabConfig).Repository = o.repoName
+			o.retriever = gitlabUtils.NewGitlabRetrieverFunc(gitlabFlagsValues.Token,
+				gitlabFlagsValues.BaseURL, gitlabFlagsValues.Org, o.repoName)
 			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	addGitlabFlags(cmd, o.getRetriever().(*gitlabUtils.GitlabConfig), ci)
+	addGitlabFlags(cmd, gitlabFlagsValues, ci)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name",

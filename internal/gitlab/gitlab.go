@@ -43,6 +43,24 @@ func (c *GitlabConfig) ProviderAndLabel() (string, string) {
 	return "gitlab", "merge request"
 }
 
+// NewGitlabRetrieverFunc creates a types.PRRetriever from GitLab config
+// parameters. It can be replaced in tests to inject a FakeGitlabClient.
+var NewGitlabRetrieverFunc = defaultNewGitlabRetriever
+
+func defaultNewGitlabRetriever(token, baseURL, org, repository string) types.PRRetriever {
+	return &GitlabConfig{
+		Token:      token,
+		BaseURL:    baseURL,
+		Org:        org,
+		Repository: repository,
+	}
+}
+
+// ResetGitlabRetrieverFunc restores NewGitlabRetrieverFunc to its default.
+func ResetGitlabRetrieverFunc() {
+	NewGitlabRetrieverFunc = defaultNewGitlabRetriever
+}
+
 // This is the old implementation, it will be removed after the PR payload is enhanced for all VCS providers
 func (c *GitlabConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}
