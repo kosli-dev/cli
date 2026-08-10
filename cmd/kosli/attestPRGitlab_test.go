@@ -5,7 +5,9 @@ import (
 	"os"
 	"testing"
 
+	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/kosli-dev/cli/internal/testHelpers"
+	"github.com/kosli-dev/cli/internal/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -25,8 +27,6 @@ type AttestGitlabPRCommandTestSuite struct {
 }
 
 func (suite *AttestGitlabPRCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
-
 	suite.flowName = "attest-gitlab-pr"
 	suite.trailName = "test-123"
 	suite.commitWithPR = "f6d2c1a288f2c400c04e8451f4fdddb1f3b4ce01"
@@ -44,10 +44,44 @@ func (suite *AttestGitlabPRCommandTestSuite) SetupTest() {
 	_, err = testHelpers.CloneGitRepo("https://gitlab.com/kosli-dev/merkely-gitlab-demo.git", suite.tmpDir)
 	require.NoError(suite.T(), err)
 
-	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root %s --host %s --org %s --api-token %s", suite.flowName, suite.trailName, suite.tmpDir, global.Host, global.Org, global.ApiToken)
+	// The merge request API is faked: GitLab stopped returning commits for
+	// merge requests whose diff predates ~2025-11-26, which silently broke this
+	// suite against the live API (#1081). The git repo above is still cloned for
+	// real, so commit resolution stays honest.
+	gitlabUtils.NewGitlabRetrieverFunc = func(token, baseURL, org, repository string) types.PRRetriever {
+		return &gitlabUtils.FakeGitlabClient{
+			MRsByCommit: map[string][]*types.PREvidence{
+				suite.commitWithPR: {{
+					URL:         "https://gitlab.com/kosli-dev/merkely-gitlab-demo/-/merge_requests/1",
+					State:       "merged",
+					Author:      "Test User (@test-user)",
+					Title:       "Changed readme to kosli-dev",
+					CreatedAt:   1728562890,
+					MergedAt:    1728563001,
+					HeadRef:     "update-readme",
+					BaseRef:     "main",
+					MergeCommit: suite.commitWithPR,
+					Approvers:   []any{},
+					Commits: []types.Commit{{
+						SHA:       "77fe4082df8549385462cbed0d28610f3cb59eec",
+						Message:   "Changed readme to kosli-dev",
+						Author:    "Tore Martin Hagen <tore@kosli.com>",
+						Timestamp: 1728562776,
+						Branch:    "update-readme",
+					}},
+				}},
+			},
+		}
+	}
+
+	suite.defaultKosliArguments = fmt.Sprintf(" --gitlab-token fake --flow %s --trail %s --repo-root %s --host %s --org %s --api-token %s", suite.flowName, suite.trailName, suite.tmpDir, global.Host, global.Org, global.ApiToken)
 	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
 	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
+}
+
+func (suite *AttestGitlabPRCommandTestSuite) TearDownTest() {
+	gitlabUtils.ResetGitlabRetrieverFunc()
 }
 
 func (suite *AttestGitlabPRCommandTestSuite) TearDownSuite() {
