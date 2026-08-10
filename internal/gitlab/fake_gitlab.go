@@ -22,11 +22,18 @@ func (f *FakeGitlabClient) ProviderAndLabel() (string, string) {
 // PREvidenceForCommitV2 mirrors the real client: a commit with no merge
 // requests yields an empty result and no error, because GitLab's
 // ListMergeRequestsByCommit returns an empty list rather than an error.
+//
+// The result is always non-nil. The real client builds its slice up front, and
+// a nil slice would serialise as null, which the API rejects for pull_requests.
 func (f *FakeGitlabClient) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
 	if f.Err != nil {
 		return nil, f.Err
 	}
-	return f.MRsByCommit[commit], nil
+	mrs := f.MRsByCommit[commit]
+	if mrs == nil {
+		return []*types.PREvidence{}, nil
+	}
+	return mrs, nil
 }
 
 // PREvidenceForCommitV1 mirrors the real client, which serves V1 from the same
