@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/testHelpers"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -126,6 +128,18 @@ func (suite *SnapshotECSTestSuite) TestSnapshotECSCmd() {
 			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})
 		}
 		runTestCmd(suite.T(), []cmdTestCase{t})
+	}
+}
+
+// the --*-regex flags compile their values as Go regexes, so every regex
+// pattern shown in the help examples must actually compile
+func TestSnapshotECSExampleRegexesAreValid(t *testing.T) {
+	patterns := regexp.MustCompile(`--[a-z-]*regex "([^"]*)"`).FindAllStringSubmatch(snapshotECSExample, -1)
+	require.NotEmpty(t, patterns, "expected the examples to contain regex patterns")
+
+	for _, p := range patterns {
+		_, err := regexp.Compile(p[1])
+		require.NoError(t, err, "example regex %q does not compile", p[1])
 	}
 }
 
