@@ -130,6 +130,25 @@ func TestCreateFlowRejectsEmptyTemplateElement(t *testing.T) {
 	require.ErrorContains(t, err, "template")
 }
 
+// TestCreateFlowRejectsEmptyTemplateElementFromEnv pins the refusal on the
+// environment path as well as argv. An environment variable cannot be repeated,
+// so a comma list is the only way to name several required attestations that
+// way, and `KOSLI_TEMPLATE="$COVERAGE,unit-test"` with COVERAGE unset is the
+// shape that drops one.
+//
+// --template and --attachments share the type, so this holds transitively from
+// the attachments env test. It is here so that createFlow says so itself,
+// rather than leaving a reader to find the guarantee in another command's test.
+func TestCreateFlowRejectsEmptyTemplateElementFromEnv(t *testing.T) {
+	t.Setenv("KOSLI_TEMPLATE", ",unit-test")
+
+	_, _, _, _, err := executeCommandC(
+		`create flow myflow --org demo --api-token DRY_RUN --dry-run`)
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "template")
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestCreateFlowCommandTestSuite(t *testing.T) {
