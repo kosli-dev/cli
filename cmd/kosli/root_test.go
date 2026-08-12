@@ -134,6 +134,20 @@ func (suite *RootCommandTestSuite) TestEmptyConfigFileEnvVarFallsBackToDefault()
 		"an empty KOSLI_CONFIG_FILE must leave the default config path in place")
 }
 
+// TestConfigValueThatCannotBeAppliedIsReported pins that a config file value
+// the CLI cannot apply to its flag produces an error naming the flag, rather
+// than a bare exit 1 with no output at all. bindFlags reports the failure with
+// logger.Error, which is Fatalf, and its error stream is not wired up at that
+// point (root.go:557-559), so the message goes nowhere and the process dies
+// silently.
+func (suite *RootCommandTestSuite) TestConfigValueThatCannotBeAppliedIsReported() {
+	_, _, _, _, err := executeCommandC(
+		"update control ctl1 --config-file testdata/config/invalid-flag-value.yaml")
+
+	suite.Require().Error(err)
+	suite.ErrorContains(err, "link")
+}
+
 func (suite *RootCommandTestSuite) TestQuietFlagSuppressesWarnings() {
 	_, _, _, stderr, err := executeCommandC(
 		"version --config-file testdata/config/plain-text-token.yaml --quiet")

@@ -535,7 +535,9 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	v.AutomaticEnv()
 
 	// Bind the current command's flags to viper
-	bindFlags(cmd, v)
+	if err := bindFlags(cmd, v); err != nil {
+		return err
+	}
 
 	// re-assign debug after binding flags to config or env vars as it may have
 	// a different value now
@@ -556,10 +558,14 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 
 // Bind each cobra flag to its associated viper configuration
 // (coming either from environment variables or config file)
-func bindFlags(cmd *cobra.Command, v *viper.Viper) {
-	// for some reason, logger does not print errors at the point
-	// of calling this function, so we ensure to point errors to stderr
-	// logger.SetErrOut(errOut)
+func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
+	// A value that cannot be applied to its flag is user input, so it is
+	// returned as an error rather than reported from inside the VisitAll
+	// closure. Reporting it here would reach nobody: the logger's error stream
+	// is not wired up at this point, and logger.Error is Fatalf, so the process
+	// would exit 1 with no output at all.
+	var bindErr error
+
 	// api token in config file is encrypted, so we have to decrypt it
 	// but if it is set via env variables, it is not encrypted
 	// A variable set to the empty string reports as present, but it carries no
@@ -606,10 +612,12 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 			}
 
 			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
-				logger.Error("failed to set flag: %v", err)
+				bindErr = fmt.Errorf("failed to set flag '--%s' from [%s]: %v", f.Name, global.ConfigFile, err)
 			}
 		}
 	})
+
+	return bindErr
 }
 
 func isBeta(cmd *cobra.Command) bool {
