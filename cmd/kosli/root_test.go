@@ -170,6 +170,7 @@ func (suite *RootCommandTestSuite) TestInnerMainRejectsEmptyValueAfterBoolFlag()
 
 	suite.Require().Error(err)
 	suite.ErrorContains(err, "--new-compliance-status")
+}
 // TestConfigValueThatCannotBeAppliedIsReported pins that a config file value
 // the CLI cannot apply to its flag produces an error naming the flag, rather
 // than a bare exit 1 with no output at all (the previous behavior, where the
