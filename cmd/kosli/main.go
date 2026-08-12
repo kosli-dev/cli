@@ -131,13 +131,17 @@ func findUnknownCommand(args []string) error {
 // --version path and reporting errors in the friendliest available form.
 func innerMain(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
-		cmd.SetArgs(normalizeBoolFlagArgs(cmd, args[1:]))
+		normalized := normalizeBoolFlagArgs(cmd, args[1:])
+		cmd.SetArgs(normalized)
 		// cobra's TraverseChildren routing hands an unrecognized command token to
 		// the nearest group command with no error; that command then prints help
 		// and exits 0, so a typo'd command silently reports success (issue #1043).
 		// Catch it before executing so the process exits non-zero with a
 		// diagnostic instead.
 		if err := findUnknownCommand(args[1:]); err != nil {
+			return err
+		}
+		if err := rejectEmptyBoolFlagValues(cmd, normalized); err != nil {
 			return err
 		}
 	}

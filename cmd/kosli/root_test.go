@@ -134,6 +134,44 @@ func (suite *RootCommandTestSuite) TestEmptyConfigFileEnvVarFallsBackToDefault()
 		"an empty KOSLI_CONFIG_FILE must leave the default config path in place")
 }
 
+// TestEmptyValueAfterBoolFlagIsRejected pins that the rejection reaches a real
+// command run, not only the token scanner that implements it. attest override
+// is used because --new-compliance-status is declared false, so an empty value
+// is the case where the recorded verdict is the opposite of the one asked for.
+func (suite *RootCommandTestSuite) TestEmptyValueAfterBoolFlagIsRejected() {
+	_, _, _, _, err := executeCommandC(
+		`attest override --new-compliance-status "" ` +
+			`--fingerprint 0000000000000000000000000000000000000000000000000000000000000001 ` +
+			`--name foo --reason audit --original-attestation-type generic ` +
+			`--flow f --trail t --org demo --api-token DRY_RUN --dry-run`)
+
+	suite.Require().Error(err)
+	suite.ErrorContains(err, "--new-compliance-status")
+}
+
+// TestInnerMainRejectsEmptyValueAfterBoolFlag drives the empty boolean value
+// through innerMain, which is the path a real CLI user takes and which the
+// golden test harness bypasses. Without the check there, the rejection would
+// hold only in tests.
+func (suite *RootCommandTestSuite) TestInnerMainRejectsEmptyValueAfterBoolFlag() {
+	args := []string{
+		"attest", "override",
+		"--new-compliance-status", "",
+		"--fingerprint", "0000000000000000000000000000000000000000000000000000000000000001",
+		"--name", "foo", "--reason", "audit",
+		"--original-attestation-type", "generic",
+		"--flow", "f", "--trail", "t",
+		"--org", "demo", "--api-token", "DRY_RUN",
+	}
+	cmd, err := newRootCmd(io.Discard, io.Discard, args)
+	suite.Require().NoError(err)
+
+	err = innerMain(cmd, append([]string{"kosli"}, args...))
+
+	suite.Require().Error(err)
+	suite.ErrorContains(err, "--new-compliance-status")
+}
+
 func (suite *RootCommandTestSuite) TestQuietFlagSuppressesWarnings() {
 	_, _, _, stderr, err := executeCommandC(
 		"version --config-file testdata/config/plain-text-token.yaml --quiet")

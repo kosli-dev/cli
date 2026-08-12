@@ -78,7 +78,11 @@ func executeCommandStdinC(cmd string, stdin string) (*cobra.Command, string, str
 	root.SetOut(outWriter)
 	root.SetErr(errWriter)
 	root.SetIn(strings.NewReader(stdin))
-	root.SetArgs(normalizeBoolFlagArgs(root, args))
+	normalized := normalizeBoolFlagArgs(root, args)
+	if err := rejectEmptyBoolFlagValues(root, normalized); err != nil {
+		return nil, "", "", "", err
+	}
+	root.SetArgs(normalized)
 
 	c, err := root.ExecuteC()
 
