@@ -8,12 +8,20 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// SliceValue is satisfied by type assertion at the point of use: bindFlags
-// applies a config file list through Replace, and a post-parse check reads
-// GetSlice. Nothing enforces it, so a drifting signature would silently fall
-// back to the string path instead of failing. This assertion makes that a
-// compile error. pflag.Value needs no such assertion - the Flags().VarP call
-// registering the flag already requires it.
+// pflag.SliceValue is the interface anything working with a flag's elements
+// rather than its rendered string asserts to - reading them with GetSlice, or
+// applying a list with Replace. Nothing in this CLI does so today, so these
+// three methods and this assertion are future-proofing: a caller reaches the
+// type by assertion, which fails silently into the string path rather than
+// failing to compile, and the assertion turns that into a build error.
+//
+// Values from a config file or the environment do not arrive that way. bindFlags
+// applies them through Set, stringified with %v, so the refusal covers them by
+// the same path as the command line, and a refused value fails the command
+// rather than being logged and skipped.
+//
+// pflag.Value needs no such assertion - the Flags().Var call registering the
+// flag already requires it.
 var _ pflag.SliceValue = (*nonEmptyStringSlice)(nil)
 
 // nonEmptyStringSlice holds the values of a multi-value flag and refuses an
@@ -51,9 +59,9 @@ func (s *nonEmptyStringSlice) Append(value string) error {
 }
 
 // Replace overwrites every value, refusing an empty one. It is part of
-// pflag.SliceValue, and it is the path a config file list arrives by, so the
-// refusal has to hold here as well as in Set. Checking only Set would leave the
-// config file as a way in for the values the flag refuses on the command line.
+// pflag.SliceValue. The refusal holds here as well as in Set so that a caller
+// applying a list this way cannot put in values the flag refuses on the command
+// line.
 func (s *nonEmptyStringSlice) Replace(values []string) error {
 	for _, value := range values {
 		if value == "" {

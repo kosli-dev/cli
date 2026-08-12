@@ -226,6 +226,28 @@ func TestAttestGenericRejectsEmptyAttachment(t *testing.T) {
 	require.ErrorContains(t, err, "attachments")
 }
 
+// TestAttestGenericRejectsEmptyAttachmentFromEnv pins that the refusal reaches
+// values arriving from the environment, not only from argv. An environment
+// variable cannot be repeated, so a comma list is the only way to give several
+// attachments that way, and `KOSLI_ATTACHMENTS="$A,$B"` with A unset is the
+// shape that loses one.
+//
+// bindFlags applies the value through Set, so the same refusal applies, and a
+// refused value fails the command rather than being logged and skipped. This
+// test states that guarantee rather than leaving it to be inferred from the two
+// mechanisms lining up.
+func TestAttestGenericRejectsEmptyAttachmentFromEnv(t *testing.T) {
+	t.Setenv("KOSLI_ATTACHMENTS", "testdata/file1,,testdata/file1")
+
+	_, _, _, _, err := executeCommandC(
+		`attest generic ` +
+			`--fingerprint 0000000000000000000000000000000000000000000000000000000000000001 ` +
+			`--name foo --flow f --trail t --org demo --api-token DRY_RUN --dry-run`)
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "attachments")
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestAttestGenericCommandTestSuite(t *testing.T) {

@@ -36,10 +36,10 @@ func TestNonEmptyStringSliceKeepsCommaSplitting(t *testing.T) {
 }
 
 // TestNonEmptyStringSliceReplaceRejectsAnEmptyElement pins that the refusal
-// covers the pflag.SliceValue path as well as Set. bindFlags applies a config
-// file list through Replace, so a type that checked only Set would leave the
-// config file as a way in for exactly the values the flag refuses on the
-// command line.
+// covers the pflag.SliceValue path as well as Set, so that a caller applying a
+// list that way cannot put in values the flag refuses on the command line.
+// Nothing calls Replace today; this is what makes the first caller safe rather
+// than a way round the check.
 func TestNonEmptyStringSliceReplaceRejectsAnEmptyElement(t *testing.T) {
 	var values []string
 	slice := newNonEmptyStringSlice(&values)
