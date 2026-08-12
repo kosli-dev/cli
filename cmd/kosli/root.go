@@ -533,6 +533,11 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	// Bind viper config to environment variables
 	// Works great for simple config names, but needs help for names
 	// like --kube-config which we fix in the bindFlags function
+	//
+	// configValueSource derives the same variable names and the same precedence
+	// when it reports which source a value came from. Anything changed here -
+	// the prefix, a key replacer, AllowEmptyEnv - has to be changed there too,
+	// because nothing fails if the two drift apart.
 	v.AutomaticEnv()
 
 	// Bind the current command's flags to viper
