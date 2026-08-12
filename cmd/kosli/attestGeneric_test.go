@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -201,6 +202,28 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+// TestAttestGenericRejectsEmptyAttachment pins the case this issue was filed
+// for. `--attachments "$FILE" --attachments provenance.json` with FILE unset
+// attaches only provenance.json: the empty element is discarded while the flag
+// still counts as set, so the attestation is recorded without evidence its
+// author believed was on it, and nothing in the output says so.
+//
+// The surviving attachment is a real file, so that before the refusal exists
+// the command succeeds rather than failing to stat a missing path - otherwise
+// this test would pass for the wrong reason.
+//
+// This is deliberately not part of AttestGenericCommandTestSuite: the refusal
+// happens while flags are parsed, before any request, so it needs no server.
+func TestAttestGenericRejectsEmptyAttachment(t *testing.T) {
+	_, _, _, _, err := executeCommandC(
+		`attest generic --attachments "" --attachments testdata/file1 ` +
+			`--fingerprint 0000000000000000000000000000000000000000000000000000000000000001 ` +
+			`--name foo --flow f --trail t --org demo --api-token DRY_RUN --dry-run`)
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "attachments")
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -110,6 +111,23 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+// TestCreateFlowRejectsEmptyTemplateElement pins that an empty --template
+// element is refused rather than dropped. --template names the attestations a
+// flow requires, so an element lost on the way in weakens the flow's template
+// for every artifact that passes through it afterwards, long after the run that
+// caused it. `-t "$COVERAGE" -t unit-test` with COVERAGE unset is the shape
+// that does it.
+//
+// This is deliberately not part of CreateFlowCommandTestSuite: the rejection
+// happens while flags are parsed, before any request, so it needs no server.
+func TestCreateFlowRejectsEmptyTemplateElement(t *testing.T) {
+	_, _, _, _, err := executeCommandC(
+		`create flow myflow -t "" -t unit-test --org demo --api-token DRY_RUN --dry-run`)
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "template")
 }
 
 // In order for 'go test' to run this suite, we need to create
