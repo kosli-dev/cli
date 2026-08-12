@@ -144,7 +144,10 @@ func (suite *RootCommandTestSuite) TestConfigValueThatCannotBeAppliedIsReported(
 		"update control ctl1 --config-file testdata/config/invalid-flag-value.yaml")
 
 	suite.Require().Error(err)
+	suite.Require().Error(err)
 	suite.ErrorContains(err, "link")
+	suite.ErrorContains(err, "invalid-flag-value.yaml",
+		"a value taken from the config file must name the config file")
 }
 
 // TestAllConfigValuesThatCannotBeAppliedAreReported pins that every flag whose
