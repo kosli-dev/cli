@@ -1,9 +1,50 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
+
+// rejectEmptyBoolFlagValues reports an empty token written after a boolean
+// flag, naming the flag.
+//
+// A boolean flag takes a value only in the "--flag=value" form, so the space
+// form survives only because normalizeBoolFlagArgs rewrites it, and that
+// rewrite needs a boolean literal. An empty token is not one, so pflag sets the
+// flag to true from its presence and leaves the "" as a positional argument.
+// Rejecting it is what keeps a flag that carries a compliance verdict from
+// being set to the opposite of what the user wrote.
+//
+// This runs on the already-normalized args so root.Find can resolve the
+// subcommand, which is the same reason normalizeBoolFlagArgs needs its second
+// pass. It stops at a "--" terminator, as that rewrite does.
+func rejectEmptyBoolFlagValues(root *cobra.Command, args []string) error {
+	cmd, _, err := root.Find(args)
+	if err != nil {
+		cmd = root
+	}
+	boolFlags := boolFlagTokens(cmd.Flags())
+
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--" {
+			break
+		}
+		if boolFlags[args[i]] && i+1 < len(args) && args[i+1] == "" {
+			return fmt.Errorf("flag '%s' was given an empty value", args[i])
+		}
+		// The "=" spelling of the same mistake. pflag refuses it too, but with a
+		// message naming strconv.ParseBool, which describes the parser rather
+		// than what the user got wrong.
+		if name, value, found := strings.Cut(args[i], "="); found && value == "" && boolFlags[name] {
+			return fmt.Errorf("flag '%s' was given an empty value", name)
+		}
+	}
+
+	return nil
+}
 
 // normalizeBoolFlagArgs rewrites boolean flags written in the space form
 // ("--compliant false") into the "=" form ("--compliant=false"), which is the
