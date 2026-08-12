@@ -139,7 +139,6 @@ func (suite *RootCommandTestSuite) TestEmptyConfigFileEnvVarFallsBackToDefault()
 // than a bare exit 1 with no output at all (the previous behavior, where the
 // failure was logged via logger.Error/Fatalf to an error stream that is not
 // wired up at that point, so the message reached nobody).
-// Fatalf, so logging it would end the process with nothing on stdout or stderr.
 func (suite *RootCommandTestSuite) TestConfigValueThatCannotBeAppliedIsReported() {
 	_, _, _, _, err := executeCommandC(
 		"update control ctl1 --config-file testdata/config/invalid-flag-value.yaml")
