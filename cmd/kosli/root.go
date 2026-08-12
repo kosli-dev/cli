@@ -562,6 +562,14 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 // the environment when the bound variable holds one, and from the config file
 // otherwise, so naming the config file unconditionally sends the user hunting
 // through a file that does not contain the offending value.
+//
+// viper exposes no query for which source a value came from - InConfig reports
+// only that a key exists in the file, not that the file won - so this mirrors
+// viper's precedence rather than asking it. Two things keep the mirror honest:
+// an environment variable is only consulted when it holds a value, matching
+// viper's default AllowEmptyEnv(false), and the caller only reaches here when
+// viper supplied the value at all. Enabling AllowEmptyEnv would let an empty
+// variable win over the config file and this must gain the same rule.
 func configValueSource(flagName string) string {
 	envVar := fmt.Sprintf("%s_%s", envPrefix, strings.ToUpper(strings.ReplaceAll(flagName, "-", "_")))
 	if value, exists := os.LookupEnv(envVar); exists && value != "" {
