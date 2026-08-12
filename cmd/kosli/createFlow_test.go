@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -110,6 +111,42 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+// TestCreateFlowRejectsEmptyTemplateElement pins that an empty --template
+// element is refused rather than dropped. --template names the attestations a
+// flow requires, so an element lost on the way in weakens the flow's template
+// for every artifact that passes through it afterwards, long after the run that
+// caused it. `-t "$COVERAGE" -t unit-test` with COVERAGE unset is the shape
+// that does it.
+//
+// This is deliberately not part of CreateFlowCommandTestSuite: the rejection
+// happens while flags are parsed, before any request, so it needs no server.
+func TestCreateFlowRejectsEmptyTemplateElement(t *testing.T) {
+	_, _, _, _, err := executeCommandC(
+		`create flow myflow -t "" -t unit-test --org demo --api-token DRY_RUN --dry-run`)
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "template")
+}
+
+// TestCreateFlowRejectsEmptyTemplateElementFromEnv pins the refusal on the
+// environment path as well as argv. An environment variable cannot be repeated,
+// so a comma list is the only way to name several required attestations that
+// way, and `KOSLI_TEMPLATE="$COVERAGE,unit-test"` with COVERAGE unset is the
+// shape that drops one.
+//
+// --template and --attachments share the type, so this holds transitively from
+// the attachments env test. It is here so that createFlow says so itself,
+// rather than leaving a reader to find the guarantee in another command's test.
+func TestCreateFlowRejectsEmptyTemplateElementFromEnv(t *testing.T) {
+	t.Setenv("KOSLI_TEMPLATE", ",unit-test")
+
+	_, _, _, _, err := executeCommandC(
+		`create flow myflow --org demo --api-token DRY_RUN --dry-run`)
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "template")
 }
 
 // In order for 'go test' to run this suite, we need to create
