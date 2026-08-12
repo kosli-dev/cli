@@ -195,72 +195,40 @@ func TestNormalizeBoolFlagArgsJoinsSpaceSeparatedBoolValue(t *testing.T) {
 	}, normalized)
 }
 
-// TestRejectEmptyBoolFlagValueNamesTheFlag pins that an empty token following a
-// boolean flag is an error naming that flag.
+// TestRejectEmptyBoolFlagValuesRefusesEveryEmptyForm is the counterpart to
+// TestRejectEmptyBoolFlagValuesAcceptsEveryLegitimateForm: every spelling of an
+// empty value for a boolean flag, and the flag each message must name.
 //
 // A boolean flag takes a value only in the "--flag=value" form; it never
 // consumes the following token. "--compliant false" works in this CLI solely
 // because normalizeBoolFlagArgs rewrites it to "--compliant=false" before pflag
 // sees it, and that rewrite requires a boolean literal. An empty token is not
-// one, so it is left alone: pflag then sets the flag to true from its presence
-// and treats the "" as a positional argument. Without this rejection
-// `--compliant "$UNSET"` would record a compliant attestation, and
-// `--new-compliance-status "$UNSET"` would override an artifact to compliant
-// even though that flag is declared false.
-func TestRejectEmptyBoolFlagValueNamesTheFlag(t *testing.T) {
-	args := []string{
-		"attest", "generic", "Dockerfile",
-		"--artifact-type", "file",
-		"--compliant", "",
-		"--flow", "my-flow",
+// one, so pflag sets the flag to true from its presence and treats the "" as a
+// positional argument. Refusing that is what keeps `--compliant "$UNSET"` from
+// recording a compliant attestation, and `--new-compliance-status "$UNSET"`
+// from overriding an artifact to compliant even though that flag is declared
+// false.
+//
+// The "=" spellings pflag refuses on its own, but with a message naming
+// strconv.ParseBool, which describes the parser rather than what the user got
+// wrong. The shorthands are refused because boolFlagTokens emits them alongside
+// long forms; they are here so that narrowing that set cannot pass unnoticed,
+// -C being the shorthand for --compliant.
+func TestRejectEmptyBoolFlagValuesRefusesEveryEmptyForm(t *testing.T) {
+	cases := []struct {
+		name     string
+		tokens   []string
+		wantFlag string
+	}{
+		{name: "space form", tokens: []string{"--compliant", ""}, wantFlag: "--compliant"},
+		{name: "equals form", tokens: []string{"--compliant="}, wantFlag: "--compliant"},
+		{name: "shorthand space form", tokens: []string{"-C", ""}, wantFlag: "-C"},
+		{name: "shorthand equals form", tokens: []string{"-C="}, wantFlag: "-C"},
 	}
-	root, err := newRootCmd(io.Discard, io.Discard, args)
-	require.NoError(t, err)
-
-	err = rejectEmptyBoolFlagValues(root, args)
-
-	require.Error(t, err)
-	require.ErrorContains(t, err, "--compliant")
-}
-
-// TestRejectEmptyBoolFlagValueInEqualsForm pins that "--flag=" is refused the
-// same way as "--flag \"\"". pflag refuses it either way, but with a message
-// naming strconv.ParseBool, which describes the parser rather than what the
-// user got wrong. Both spellings of an empty boolean value are the same
-// mistake, so both get the same message.
-func TestRejectEmptyBoolFlagValueInEqualsForm(t *testing.T) {
-	args := []string{
-		"attest", "generic", "Dockerfile",
-		"--artifact-type", "file",
-		"--compliant=",
-		"--flow", "my-flow",
-	}
-	root, err := newRootCmd(io.Discard, io.Discard, args)
-	require.NoError(t, err)
-
-	err = rejectEmptyBoolFlagValues(root, args)
-
-	require.Error(t, err)
-	require.ErrorContains(t, err, "--compliant")
-	require.ErrorContains(t, err, "empty value")
-}
-
-// TestRejectEmptyBoolFlagValueCoversShorthands pins that a shorthand is refused
-// the same way as its long form. boolFlagTokens emits both, so this holds
-// already; the cases are here so that a change narrowing the token set to long
-// forms cannot pass unnoticed. -C is the shorthand for --compliant, which
-// carries a compliance verdict.
-func TestRejectEmptyBoolFlagValueCoversShorthands(t *testing.T) {
-	for _, shorthand := range []string{"-C", "-C="} {
-		t.Run(shorthand, func(t *testing.T) {
-			args := []string{
-				"attest", "generic", "Dockerfile",
-				"--artifact-type", "file",
-				shorthand,
-			}
-			if shorthand == "-C" {
-				args = append(args, "")
-			}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			args := []string{"attest", "generic", "Dockerfile", "--artifact-type", "file"}
+			args = append(args, tc.tokens...)
 			args = append(args, "--flow", "my-flow")
 
 			root, err := newRootCmd(io.Discard, io.Discard, args)
@@ -269,7 +237,7 @@ func TestRejectEmptyBoolFlagValueCoversShorthands(t *testing.T) {
 			err = rejectEmptyBoolFlagValues(root, args)
 
 			require.Error(t, err)
-			require.ErrorContains(t, err, "-C")
+			require.ErrorContains(t, err, tc.wantFlag)
 			require.ErrorContains(t, err, "empty value")
 		})
 	}
