@@ -136,10 +136,11 @@ func (suite *RootCommandTestSuite) TestEmptyConfigFileEnvVarFallsBackToDefault()
 
 // TestConfigValueThatCannotBeAppliedIsReported pins that a config file value
 // the CLI cannot apply to its flag produces an error naming the flag, rather
-// than a bare exit 1 with no output at all. bindFlags reports the failure with
-// logger.Error, which is Fatalf, and its error stream is not wired up at that
-// point (root.go:557-559), so the message goes nowhere and the process dies
-// silently.
+// than a bare exit 1 with no output at all.
+//
+// The failure has to be returned from bindFlags rather than logged there: the
+// logger's error stream is not wired up at that point, and logger.Error is
+// Fatalf, so logging it would end the process with nothing on stdout or stderr.
 func (suite *RootCommandTestSuite) TestConfigValueThatCannotBeAppliedIsReported() {
 	_, _, _, _, err := executeCommandC(
 		"update control ctl1 --config-file testdata/config/invalid-flag-value.yaml")
