@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -556,6 +557,19 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	return nil
 }
 
+// configValueSource names where a flag's value came from, so that a failure to
+// apply it points at the thing the user has to edit. viper reads a value from
+// the environment when the bound variable holds one, and from the config file
+// otherwise, so naming the config file unconditionally sends the user hunting
+// through a file that does not contain the offending value.
+func configValueSource(flagName string) string {
+	envVar := fmt.Sprintf("%s_%s", envPrefix, strings.ToUpper(strings.ReplaceAll(flagName, "-", "_")))
+	if value, exists := os.LookupEnv(envVar); exists && value != "" {
+		return envVar
+	}
+	return fmt.Sprintf("[%s]", global.ConfigFile)
+}
+
 // Bind each cobra flag to its associated viper configuration
 // (coming either from environment variables or config file)
 func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
@@ -612,7 +626,7 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
 			}
 
 			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
-				bindErr = fmt.Errorf("failed to set flag '--%s' from [%s]: %v", f.Name, global.ConfigFile, err)
+				bindErr = errors.Join(bindErr, fmt.Errorf("failed to set flag '--%s' from %s: %v", f.Name, configValueSource(f.Name), err))
 			}
 		}
 	})

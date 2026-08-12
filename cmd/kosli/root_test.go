@@ -148,6 +148,36 @@ func (suite *RootCommandTestSuite) TestConfigValueThatCannotBeAppliedIsReported(
 	suite.ErrorContains(err, "link")
 }
 
+// TestAllConfigValuesThatCannotBeAppliedAreReported pins that every flag whose
+// value cannot be applied is named, not just the last one. bindFlags applies
+// values inside a VisitAll closure, which cannot short-circuit, so the failures
+// have to be collected rather than overwritten - otherwise a user who fixes the
+// one reported key just meets the next one on the following run.
+func (suite *RootCommandTestSuite) TestAllConfigValuesThatCannotBeAppliedAreReported() {
+	_, _, _, _, err := executeCommandC(
+		"update control ctl1 --config-file testdata/config/two-invalid-flag-values.yaml")
+
+	suite.Require().Error(err)
+	suite.ErrorContains(err, "link")
+	suite.ErrorContains(err, "max-api-retries")
+}
+
+// TestUnappliableValueFromEnvNamesTheEnvVar pins that the failure message
+// points at the source the value actually came from. viper reads a flag's value
+// from the config file or from the environment, so a message that always names
+// the config file sends a user hunting through a file that does not contain the
+// offending value.
+func (suite *RootCommandTestSuite) TestUnappliableValueFromEnvNamesTheEnvVar() {
+	suite.T().Setenv("KOSLI_LINK", "notkeyvalue")
+
+	_, _, _, _, err := executeCommandC(
+		"update control ctl1 --org demo --api-token DRY_RUN")
+
+	suite.Require().Error(err)
+	suite.ErrorContains(err, "KOSLI_LINK",
+		"a value taken from the environment must name the environment variable")
+}
+
 func (suite *RootCommandTestSuite) TestQuietFlagSuppressesWarnings() {
 	_, _, _, stderr, err := executeCommandC(
 		"version --config-file testdata/config/plain-text-token.yaml --quiet")
