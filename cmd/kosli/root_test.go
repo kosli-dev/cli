@@ -136,10 +136,9 @@ func (suite *RootCommandTestSuite) TestEmptyConfigFileEnvVarFallsBackToDefault()
 
 // TestConfigValueThatCannotBeAppliedIsReported pins that a config file value
 // the CLI cannot apply to its flag produces an error naming the flag, rather
-// than a bare exit 1 with no output at all.
-//
-// The failure has to be returned from bindFlags rather than logged there: the
-// logger's error stream is not wired up at that point, and logger.Error is
+// than a bare exit 1 with no output at all (the previous behavior, where the
+// failure was logged via logger.Error/Fatalf to an error stream that is not
+// wired up at that point, so the message reached nobody).
 // Fatalf, so logging it would end the process with nothing on stdout or stderr.
 func (suite *RootCommandTestSuite) TestConfigValueThatCannotBeAppliedIsReported() {
 	_, _, _, _, err := executeCommandC(
