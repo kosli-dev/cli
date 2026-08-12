@@ -491,7 +491,10 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	// so we check for the config file env var separately here
 	configFlag := cmd.Flags().Lookup("config-file")
 	if !configFlag.Changed {
-		if path, exists := os.LookupEnv("KOSLI_CONFIG_FILE"); exists {
+		// A variable set to the empty string reports as present, but it names no
+		// file. Overriding the default with it loads no config file at all,
+		// silently dropping org, api-token and every other configured default.
+		if path, exists := os.LookupEnv("KOSLI_CONFIG_FILE"); exists && path != "" {
 			global.ConfigFile = path
 		}
 	}
@@ -559,7 +562,13 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	// logger.SetErrOut(errOut)
 	// api token in config file is encrypted, so we have to decrypt it
 	// but if it is set via env variables, it is not encrypted
-	_, apiTokenSetInEnv := os.LookupEnv("KOSLI_API_TOKEN")
+	// A variable set to the empty string reports as present, but it carries no
+	// token, so it must not be taken as evidence that the token came from the
+	// environment. Treating it that way skips decryption and applies the config
+	// file value verbatim, sending ciphertext for anyone whose token was stored
+	// by `kosli config --api-token`.
+	apiTokenFromEnv, apiTokenPresentInEnv := os.LookupEnv("KOSLI_API_TOKEN")
+	apiTokenSetInEnv := apiTokenPresentInEnv && apiTokenFromEnv != ""
 
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		// Environment variables can't have dashes in them, so bind them to their equivalent

@@ -93,6 +93,47 @@ func (suite *RootCommandTestSuite) TestConfigProcessing() {
 	runTestCmd(suite.T(), tests)
 }
 
+// TestEmptyApiTokenEnvVarStillDecryptsConfigToken pins that KOSLI_API_TOKEN set
+// to an empty string does not suppress decryption of a config-file token.
+// bindFlags decides the token came from the environment with os.LookupEnv, where
+// a variable set to "" reports as present, so it skips decryption and applies
+// the config value verbatim - which sends ciphertext for anyone who stored their
+// token with `kosli config --api-token`.
+//
+// The fixture's token is not valid ciphertext, so decryption fails and falls
+// through to the plain-text warning whether or not an encryption key exists in
+// the credentials store. That makes the warning a stable marker for "the
+// decryption branch was entered".
+func (suite *RootCommandTestSuite) TestEmptyApiTokenEnvVarStillDecryptsConfigToken() {
+	suite.T().Setenv("KOSLI_API_TOKEN", "")
+
+	_, _, _, stderr, err := executeCommandC(
+		"version --config-file testdata/config/plain-text-token.yaml")
+
+	suite.Require().NoError(err)
+	suite.Contains(stderr, "as plain text",
+		"decryption must be attempted even when KOSLI_API_TOKEN is set but empty")
+}
+
+// TestEmptyConfigFileEnvVarFallsBackToDefault pins that KOSLI_CONFIG_FILE set
+// to an empty string does not discard the config file. initialize reads it with
+// os.LookupEnv, where a variable set to "" reports as present, so the config
+// path becomes "" and no config file is loaded at all - taking org, api-token
+// and every other configured default with it.
+//
+// Treating the empty value as unset is deliberate here. Making an empty KOSLI_*
+// variable an outright error is the wider change tracked in
+// kosli-dev/server#6070.
+func (suite *RootCommandTestSuite) TestEmptyConfigFileEnvVarFallsBackToDefault() {
+	suite.T().Setenv("KOSLI_CONFIG_FILE", "")
+
+	_, _, _, _, err := executeCommandC("version")
+
+	suite.Require().NoError(err)
+	suite.Equal(getConfigFileFlagDefault(), global.ConfigFile,
+		"an empty KOSLI_CONFIG_FILE must leave the default config path in place")
+}
+
 func (suite *RootCommandTestSuite) TestQuietFlagSuppressesWarnings() {
 	_, _, _, stderr, err := executeCommandC(
 		"version --config-file testdata/config/plain-text-token.yaml --quiet")
