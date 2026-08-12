@@ -223,6 +223,58 @@ func TestRejectEmptyBoolFlagValueNamesTheFlag(t *testing.T) {
 	require.ErrorContains(t, err, "--compliant")
 }
 
+// TestRejectEmptyBoolFlagValueInEqualsForm pins that "--flag=" is refused the
+// same way as "--flag \"\"". pflag refuses it either way, but with a message
+// naming strconv.ParseBool, which describes the parser rather than what the
+// user got wrong. Both spellings of an empty boolean value are the same
+// mistake, so both get the same message.
+func TestRejectEmptyBoolFlagValueInEqualsForm(t *testing.T) {
+	args := []string{
+		"attest", "generic", "Dockerfile",
+		"--artifact-type", "file",
+		"--compliant=",
+		"--flow", "my-flow",
+	}
+	root, err := newRootCmd(io.Discard, io.Discard, args)
+	require.NoError(t, err)
+
+	err = rejectEmptyBoolFlagValues(root, args)
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "--compliant")
+	require.ErrorContains(t, err, "empty value")
+}
+
+// TestRejectEmptyBoolFlagValueCoversShorthands pins that a shorthand is refused
+// the same way as its long form. boolFlagTokens emits both, so this holds
+// already; the cases are here so that a change narrowing the token set to long
+// forms cannot pass unnoticed. -C is the shorthand for --compliant, which
+// carries a compliance verdict.
+func TestRejectEmptyBoolFlagValueCoversShorthands(t *testing.T) {
+	for _, shorthand := range []string{"-C", "-C="} {
+		t.Run(shorthand, func(t *testing.T) {
+			args := []string{
+				"attest", "generic", "Dockerfile",
+				"--artifact-type", "file",
+				shorthand,
+			}
+			if shorthand == "-C" {
+				args = append(args, "")
+			}
+			args = append(args, "--flow", "my-flow")
+
+			root, err := newRootCmd(io.Discard, io.Discard, args)
+			require.NoError(t, err)
+
+			err = rejectEmptyBoolFlagValues(root, args)
+
+			require.Error(t, err)
+			require.ErrorContains(t, err, "-C")
+			require.ErrorContains(t, err, "empty value")
+		})
+	}
+}
+
 // TestRejectEmptyBoolFlagValuesAcceptsEveryLegitimateForm draws the boundary of
 // the rejection: only an empty token is refused, and every way of writing a
 // boolean flag that pflag or normalizeBoolFlagArgs accepts still passes. It

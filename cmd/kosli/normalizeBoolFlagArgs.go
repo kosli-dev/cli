@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -33,6 +34,12 @@ func rejectEmptyBoolFlagValues(root *cobra.Command, args []string) error {
 		}
 		if boolFlags[args[i]] && i+1 < len(args) && args[i+1] == "" {
 			return fmt.Errorf("flag '%s' was given an empty value", args[i])
+		}
+		// The "=" spelling of the same mistake. pflag refuses it too, but with a
+		// message naming strconv.ParseBool, which describes the parser rather
+		// than what the user got wrong.
+		if name, value, found := strings.Cut(args[i], "="); found && value == "" && boolFlags[name] {
+			return fmt.Errorf("flag '%s' was given an empty value", name)
 		}
 	}
 
