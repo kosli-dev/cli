@@ -1,0 +1,654 @@
+command	flag	empty_exit	omitted_exit	set_exit	refused_by	vs_omitted	vs_set	message
+allow artifact	--artifact-type	0	0	0		same	same	artifact aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa was allow listed in environment: probe-allow-artifact-artifact-type-en
+allow artifact	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+allow artifact	--environment	1	1	0	cli	differs	differs	Error: [kosli allow artifact] flag '--environment' is required, but empty string was provided
+allow artifact	--exclude	0	0	0		same	same	artifact aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa was allow listed in environment: probe-allow-artifact-exclude-en
+allow artifact	--fingerprint	1	1	0	cli	same	differs	Error: [kosli allow artifact] either --artifact-type or --fingerprint must be specified
+allow artifact	--reason	1	1	0	cli	differs	differs	Error: [kosli allow artifact] flag '--reason' is required, but empty string was provided
+allow artifact	--registry-password	0	0	1		same	differs	artifact aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa was allow listed in environment: probe-allow-artifact-registry-password-en
+allow artifact	--registry-username	0	0	1		same	differs	artifact aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa was allow listed in environment: probe-allow-artifact-registry-username-en
+archive attestation-type	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+archive control	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+archive environment	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+archive flow	--api-token	1	0	1	cli	differs	differs	Error: [kosli archive flow] --api-token is not set
+archive flow	--config-file	0	0	0		same	same	flow probe-archive-flow-config-file-fl was archived
+archive flow	--debug	1	0	0	cli	differs	differs	Error: flag '--debug' was given an empty value
+archive flow	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+archive flow	--host	1	0	1	cli	differs	differs	Error: [kosli archive flow] Put "api/v2/flows/docs-cmd-test-user-shared/probe-archive-flow-host-fl/archive": PUT api/v2/flows/docs-cmd-test-user-shared/probe-ar
+archive flow	--http-proxy	0	0	1		same	differs	flow probe-archive-flow-http-proxy-fl was archived
+archive flow	--max-api-retries	1	0	1	cli	differs	differs	Error: [kosli archive flow] invalid argument "" for "-r, --max-api-retries" flag: strconv.ParseInt: parsing "": invalid syntax
+archive flow	--org	1	0	1	cli	differs	differs	Error: [kosli archive flow] --org is not set
+archive flow	--quiet	1	0	0	cli	differs	differs	Error: flag '--quiet' was given an empty value
+assert artifact	--artifact-type	0	0	0		same	same	COMPLIANT
+assert artifact	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+assert artifact	--environment	0	0	1		same	differs	COMPLIANT
+assert artifact	--exclude	0	0	0		same	same	COMPLIANT
+assert artifact	--fingerprint	1	1	0	cli	same	differs	Error: [kosli assert artifact] either --artifact-type or --fingerprint must be specified
+assert artifact	--flow	0	0	0		same	differs	COMPLIANT
+assert artifact	--output	1	0	0	cli	differs	differs	Error: [kosli assert artifact] unsupported output format:
+assert artifact	--policy	0	0	1		same	differs	COMPLIANT
+assert artifact	--registry-password	0	0	1		same	differs	COMPLIANT
+assert artifact	--registry-username	0	0	1		same	differs	COMPLIANT
+assert pullrequest azure	--azure-org-url					not tested	not tested	needs azure devops
+assert pullrequest azure	--azure-token					not tested	not tested	needs azure devops
+assert pullrequest azure	--commit					not tested	not tested	needs azure devops
+assert pullrequest azure	--dry-run					not tested	not tested	needs azure devops
+assert pullrequest azure	--project					not tested	not tested	needs azure devops
+assert pullrequest azure	--repository					not tested	not tested	needs azure devops
+assert pullrequest bitbucket	--bitbucket-access-token					not tested	not tested	needs bitbucket
+assert pullrequest bitbucket	--bitbucket-password					not tested	not tested	needs bitbucket
+assert pullrequest bitbucket	--bitbucket-username					not tested	not tested	needs bitbucket
+assert pullrequest bitbucket	--bitbucket-workspace					not tested	not tested	needs bitbucket
+assert pullrequest bitbucket	--commit					not tested	not tested	needs bitbucket
+assert pullrequest bitbucket	--dry-run					not tested	not tested	needs bitbucket
+assert pullrequest bitbucket	--repository					not tested	not tested	needs bitbucket
+assert pullrequest github	--commit					not tested	not tested	needs github
+assert pullrequest github	--dry-run					not tested	not tested	needs github
+assert pullrequest github	--github-base-url					not tested	not tested	needs github
+assert pullrequest github	--github-org					not tested	not tested	needs github
+assert pullrequest github	--github-token					not tested	not tested	needs github
+assert pullrequest github	--repository					not tested	not tested	needs github
+assert pullrequest gitlab	--commit					not tested	not tested	needs gitlab
+assert pullrequest gitlab	--dry-run					not tested	not tested	needs gitlab
+assert pullrequest gitlab	--gitlab-base-url					not tested	not tested	needs gitlab
+assert pullrequest gitlab	--gitlab-org					not tested	not tested	needs gitlab
+assert pullrequest gitlab	--gitlab-token					not tested	not tested	needs gitlab
+assert pullrequest gitlab	--repository					not tested	not tested	needs gitlab
+assert snapshot	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attach-policy	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attach-policy	--environment	0	1	0		differs	differs	policy 'probe-attach-policy-environment-po' is attached to environments: []
+attest artifact	--annotate	1	0	1	cli	differs	differs	Error: [kosli attest artifact flow=probe-attest-artifact-annotate-fl trail=probe-attest-artifact-annotate-tr] invalid argument "" for "--annotate" flag:  must b
+attest artifact	--artifact-type	0	0	0		same	differs	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--build-url	1	1	0	cli	differs	differs	Error: [kosli attest artifact flow=probe-attest-artifact-build-url-fl trail=probe-attest-artifact-build-url-tr] flag '--build-url' is required, but empty string
+attest artifact	--commit	1	0	0	cli	differs	differs	Error: [kosli attest artifact flow=probe-attest-artifact-commit-fl trail=probe-attest-artifact-commit-tr] failed to resolve git reference : reference not found
+attest artifact	--commit-url	1	1	0	cli	differs	differs	Error: [kosli attest artifact flow=probe-attest-artifact-commit-url-fl trail=probe-attest-artifact-commit-url-tr] flag '--commit-url' is required, but empty str
+attest artifact	--display-name	0	0	0		same	differs	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest artifact	--exclude	0	0	0		same	same	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--external-fingerprint	1	0	1	cli	differs	differs	Error: [kosli attest artifact flow=probe-attest-artifact-external-fingerprint-fl trail=probe-attest-artifact-external-fingerprint-tr] invalid argument "" for "-
+attest artifact	--external-url	1	0	1	cli	differs	differs	Error: [kosli attest artifact flow=probe-attest-artifact-external-url-fl trail=probe-attest-artifact-external-url-tr] invalid argument "" for "--external-url" f
+attest artifact	--fingerprint	1	1	0	cli	same	differs	Error: [kosli attest artifact flow=probe-attest-artifact-fingerprint-fl trail=probe-attest-artifact-fingerprint-tr] either --artifact-type or --fingerprint must
+attest artifact	--flow	1	1	0	cli	differs	differs	Error: [kosli attest artifact trail=probe-attest-artifact-flow-tr] flag '--flow' is required, but empty string was provided
+attest artifact	--name	1	1	0	cli	differs	differs	Error: [kosli attest artifact flow=probe-attest-artifact-name-fl trail=probe-attest-artifact-name-tr] flag '--name' is required, but empty string was provided
+attest artifact	--redact-commit-info	0	0	1		same	differs	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--registry-password	0	0	1		same	differs	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--registry-username	0	0	1		same	differs	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--repo-id	0	0	0		same	same	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--repo-provider	0	0	1		same	differs	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--repo-root	0	0	0		same	same	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--repo-url	0	0	1		same	differs	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--repository	0	0	0		same	same	artifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+attest artifact	--trail	1	1	0	cli	differs	differs	Error: [kosli attest artifact flow=probe-attest-artifact-trail-fl] flag '--trail' is required, but empty string was provided
+attest custom	--annotate	1	0	1	cli	differs	differs	Error: [kosli attest custom flow=probe-attest-custom-annotate-fl trail=probe-attest-custom-annotate-tr] invalid argument "" for "--annotate" flag:  must be form
+attest custom	--artifact-type	0	0	1		same	differs	custom:probe-attest-custom-artifact-type-nm attestation 'probe-attest-custom-artifact-type-nm' is reported to trail: probe-attest-custom-artifact-type-tr
+attest custom	--attachments	1	0	1	cli	differs	differs	Error: [kosli attest custom flow=probe-attest-custom-attachments-fl trail=probe-attest-custom-attachments-tr] invalid argument "" for "--attachments" flag: empt
+attest custom	--attestation-data	1	1	0	cli	differs	differs	Error: [kosli attest custom flow=probe-attest-custom-attestation-data-fl trail=probe-attest-custom-attestation-data-tr] flag '--attestation-data' is required, b
+attest custom	--commit	0	0	0		same	differs	custom:probe-attest-custom-commit-nm attestation 'probe-attest-custom-commit-nm' is reported to trail: probe-attest-custom-commit-tr
+attest custom	--description	0	0	0		same	same	custom:probe-attest-custom-description-nm attestation 'probe-attest-custom-description-nm' is reported to trail: probe-attest-custom-description-tr
+attest custom	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest custom	--exclude	0	0	0		same	same	custom:probe-attest-custom-exclude-nm attestation 'probe-attest-custom-exclude-nm' is reported to trail: probe-attest-custom-exclude-tr
+attest custom	--external-fingerprint	1	0	1	cli	differs	differs	Error: [kosli attest custom flow=probe-attest-custom-external-fingerprint-fl trail=probe-attest-custom-external-fingerprint-tr] invalid argument "" for "--exter
+attest custom	--external-url	1	0	1	cli	differs	differs	Error: [kosli attest custom flow=probe-attest-custom-external-url-fl trail=probe-attest-custom-external-url-tr] invalid argument "" for "--external-url" flag:  
+attest custom	--fingerprint	0	0	1		same	differs	custom:probe-attest-custom-fingerprint-nm attestation 'probe-attest-custom-fingerprint-nm' is reported to trail: probe-attest-custom-fingerprint-tr
+attest custom	--flow	1	1	0	cli	differs	differs	Error: [kosli attest custom trail=probe-attest-custom-flow-tr] flag '--flow' is required, but empty string was provided
+attest custom	--name	1	1	0	cli	differs	differs	Error: [kosli attest custom flow=probe-attest-custom-name-fl trail=probe-attest-custom-name-tr] flag '--name' is required, but empty string was provided
+attest custom	--origin-url	0	0	0		same	same	custom:probe-attest-custom-origin-url-nm attestation 'probe-attest-custom-origin-url-nm' is reported to trail: probe-attest-custom-origin-url-tr
+attest custom	--redact-commit-info	0	0	1		same	differs	custom:probe-attest-custom-redact-commit-info-nm attestation 'probe-attest-custom-redact-commit-info-nm' is reported to trail: probe-attest-custom-redact-commit
+attest custom	--registry-password	0	0	1		same	differs	custom:probe-attest-custom-registry-password-nm attestation 'probe-attest-custom-registry-password-nm' is reported to trail: probe-attest-custom-registry-passwo
+attest custom	--registry-username	0	0	1		same	differs	custom:probe-attest-custom-registry-username-nm attestation 'probe-attest-custom-registry-username-nm' is reported to trail: probe-attest-custom-registry-userna
+attest custom	--repo-id	0	0	0		same	same	custom:probe-attest-custom-repo-id-nm attestation 'probe-attest-custom-repo-id-nm' is reported to trail: probe-attest-custom-repo-id-tr
+attest custom	--repo-provider	0	0	1		same	differs	custom:probe-attest-custom-repo-provider-nm attestation 'probe-attest-custom-repo-provider-nm' is reported to trail: probe-attest-custom-repo-provider-tr
+attest custom	--repo-root	0	0	0		same	same	custom:probe-attest-custom-repo-root-nm attestation 'probe-attest-custom-repo-root-nm' is reported to trail: probe-attest-custom-repo-root-tr
+attest custom	--repo-url	0	0	1		same	differs	custom:probe-attest-custom-repo-url-nm attestation 'probe-attest-custom-repo-url-nm' is reported to trail: probe-attest-custom-repo-url-tr
+attest custom	--repository	0	0	0		same	same	custom:probe-attest-custom-repository-nm attestation 'probe-attest-custom-repository-nm' is reported to trail: probe-attest-custom-repository-tr
+attest custom	--trail	1	1	0	cli	differs	differs	Error: [kosli attest custom flow=probe-attest-custom-trail-fl] flag '--trail' is required, but empty string was provided
+attest custom	--type	1	1	0	cli	differs	differs	Error: [kosli attest custom flow=probe-attest-custom-type-fl trail=probe-attest-custom-type-tr] flag '--type' is required, but empty string was provided
+attest custom	--user-data	0	0	0		same	same	custom:probe-attest-custom-user-data-nm attestation 'probe-attest-custom-user-data-nm' is reported to trail: probe-attest-custom-user-data-tr
+attest decision	--annotate	1	0	1	cli	differs	differs	Error: [kosli attest decision flow=probe-attest-decision-annotate-fl trail=probe-attest-decision-annotate-tr] invalid argument "" for "--annotate" flag:  must b
+attest decision	--artifact-type	0	0	1		same	differs	decision attestation 'probe-attest-decision-artifact-type-nm' is reported to trail: probe-attest-decision-artifact-type-tr
+attest decision	--attachments	1	0	1	cli	differs	differs	Error: [kosli attest decision flow=probe-attest-decision-attachments-fl trail=probe-attest-decision-attachments-tr] invalid argument "" for "--attachments" flag
+attest decision	--commit	0	0	0		same	differs	decision attestation 'probe-attest-decision-commit-nm' is reported to trail: probe-attest-decision-commit-tr
+attest decision	--compliant	1	1	0	cli	differs	differs	Error: flag '--compliant' was given an empty value
+attest decision	--control	1	1	0	cli	differs	differs	Error: [kosli attest decision flow=probe-attest-decision-control-fl trail=probe-attest-decision-control-tr] flag '--control' is required, but empty string was p
+attest decision	--description	0	0	0		same	same	decision attestation 'probe-attest-decision-description-nm' is reported to trail: probe-attest-decision-description-tr
+attest decision	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest decision	--exclude	0	0	0		same	same	decision attestation 'probe-attest-decision-exclude-nm' is reported to trail: probe-attest-decision-exclude-tr
+attest decision	--external-fingerprint	1	0	1	cli	differs	differs	Error: [kosli attest decision flow=probe-attest-decision-external-fingerprint-fl trail=probe-attest-decision-external-fingerprint-tr] invalid argument "" for "-
+attest decision	--external-url	1	0	1	cli	differs	differs	Error: [kosli attest decision flow=probe-attest-decision-external-url-fl trail=probe-attest-decision-external-url-tr] invalid argument "" for "--external-url" f
+attest decision	--fingerprint	0	0	1		same	differs	decision attestation 'probe-attest-decision-fingerprint-nm' is reported to trail: probe-attest-decision-fingerprint-tr
+attest decision	--flow	1	1	0	cli	differs	differs	Error: [kosli attest decision trail=probe-attest-decision-flow-tr] flag '--flow' is required, but empty string was provided
+attest decision	--name	1	1	0	cli	differs	differs	Error: [kosli attest decision flow=probe-attest-decision-name-fl trail=probe-attest-decision-name-tr] flag '--name' is required, but empty string was provided
+attest decision	--origin-url	0	0	0		same	same	decision attestation 'probe-attest-decision-origin-url-nm' is reported to trail: probe-attest-decision-origin-url-tr
+attest decision	--redact-commit-info	0	0	1		same	differs	decision attestation 'probe-attest-decision-redact-commit-info-nm' is reported to trail: probe-attest-decision-redact-commit-info-tr
+attest decision	--registry-password	0	0	1		same	differs	decision attestation 'probe-attest-decision-registry-password-nm' is reported to trail: probe-attest-decision-registry-password-tr
+attest decision	--registry-username	0	0	1		same	differs	decision attestation 'probe-attest-decision-registry-username-nm' is reported to trail: probe-attest-decision-registry-username-tr
+attest decision	--repo-id	0	0	0		same	same	decision attestation 'probe-attest-decision-repo-id-nm' is reported to trail: probe-attest-decision-repo-id-tr
+attest decision	--repo-provider	0	0	1		same	differs	decision attestation 'probe-attest-decision-repo-provider-nm' is reported to trail: probe-attest-decision-repo-provider-tr
+attest decision	--repo-root	0	0	0		same	same	decision attestation 'probe-attest-decision-repo-root-nm' is reported to trail: probe-attest-decision-repo-root-tr
+attest decision	--repo-url	0	0	1		same	differs	decision attestation 'probe-attest-decision-repo-url-nm' is reported to trail: probe-attest-decision-repo-url-tr
+attest decision	--repository	0	0	0		same	same	decision attestation 'probe-attest-decision-repository-nm' is reported to trail: probe-attest-decision-repository-tr
+attest decision	--trail	1	1	0	cli	differs	differs	Error: [kosli attest decision flow=probe-attest-decision-trail-fl] flag '--trail' is required, but empty string was provided
+attest decision	--user-data	0	0	0		same	same	decision attestation 'probe-attest-decision-user-data-nm' is reported to trail: probe-attest-decision-user-data-tr
+attest generic	--annotate	1	0	1	cli	differs	differs	Error: [kosli attest generic flow=probe-attest-generic-annotate-fl trail=probe-attest-generic-annotate-tr] invalid argument "" for "--annotate" flag:  must be f
+attest generic	--artifact-type	0	0	1		same	differs	generic attestation 'probe-attest-generic-artifact-type-nm' is reported to trail: probe-attest-generic-artifact-type-tr
+attest generic	--attachments	1	0	1	cli	differs	differs	Error: [kosli attest generic flow=probe-attest-generic-attachments-fl trail=probe-attest-generic-attachments-tr] invalid argument "" for "--attachments" flag: e
+attest generic	--commit	0	0	0		same	differs	generic attestation 'probe-attest-generic-commit-nm' is reported to trail: probe-attest-generic-commit-tr
+attest generic	--compliant	1	0	0	cli	differs	differs	Error: flag '--compliant' was given an empty value
+attest generic	--description	0	0	0		same	same	generic attestation 'probe-attest-generic-description-nm' is reported to trail: probe-attest-generic-description-tr
+attest generic	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest generic	--exclude	0	0	0		same	same	generic attestation 'probe-attest-generic-exclude-nm' is reported to trail: probe-attest-generic-exclude-tr
+attest generic	--external-fingerprint	1	0	1	cli	differs	differs	Error: [kosli attest generic flow=probe-attest-generic-external-fingerprint-fl trail=probe-attest-generic-external-fingerprint-tr] invalid argument "" for "--ex
+attest generic	--external-url	1	0	1	cli	differs	differs	Error: [kosli attest generic flow=probe-attest-generic-external-url-fl trail=probe-attest-generic-external-url-tr] invalid argument "" for "--external-url" flag
+attest generic	--fingerprint	0	0	1		same	differs	generic attestation 'probe-attest-generic-fingerprint-nm' is reported to trail: probe-attest-generic-fingerprint-tr
+attest generic	--flow	1	1	0	cli	differs	differs	Error: [kosli attest generic trail=probe-attest-generic-flow-tr] flag '--flow' is required, but empty string was provided
+attest generic	--name	1	1	0	cli	differs	differs	Error: [kosli attest generic flow=probe-attest-generic-name-fl trail=probe-attest-generic-name-tr] flag '--name' is required, but empty string was provided
+attest generic	--origin-url	0	0	0		same	same	generic attestation 'probe-attest-generic-origin-url-nm' is reported to trail: probe-attest-generic-origin-url-tr
+attest generic	--redact-commit-info	0	0	1		same	differs	generic attestation 'probe-attest-generic-redact-commit-info-nm' is reported to trail: probe-attest-generic-redact-commit-info-tr
+attest generic	--registry-password	0	0	1		same	differs	generic attestation 'probe-attest-generic-registry-password-nm' is reported to trail: probe-attest-generic-registry-password-tr
+attest generic	--registry-username	0	0	1		same	differs	generic attestation 'probe-attest-generic-registry-username-nm' is reported to trail: probe-attest-generic-registry-username-tr
+attest generic	--repo-id	0	0	0		same	same	generic attestation 'probe-attest-generic-repo-id-nm' is reported to trail: probe-attest-generic-repo-id-tr
+attest generic	--repo-provider	0	0	1		same	differs	generic attestation 'probe-attest-generic-repo-provider-nm' is reported to trail: probe-attest-generic-repo-provider-tr
+attest generic	--repo-root	0	0	0		same	same	generic attestation 'probe-attest-generic-repo-root-nm' is reported to trail: probe-attest-generic-repo-root-tr
+attest generic	--repo-url	0	0	1		same	differs	generic attestation 'probe-attest-generic-repo-url-nm' is reported to trail: probe-attest-generic-repo-url-tr
+attest generic	--repository	0	0	0		same	same	generic attestation 'probe-attest-generic-repository-nm' is reported to trail: probe-attest-generic-repository-tr
+attest generic	--trail	1	1	0	cli	differs	differs	Error: [kosli attest generic flow=probe-attest-generic-trail-fl] flag '--trail' is required, but empty string was provided
+attest generic	--user-data	0	0	0		same	same	generic attestation 'probe-attest-generic-user-data-nm' is reported to trail: probe-attest-generic-user-data-tr
+attest jira	--annotate					not tested	not tested	needs jira
+attest jira	--artifact-type					not tested	not tested	needs jira
+attest jira	--assert					not tested	not tested	needs jira
+attest jira	--attachments					not tested	not tested	needs jira
+attest jira	--commit					not tested	not tested	needs jira
+attest jira	--description					not tested	not tested	needs jira
+attest jira	--dry-run					not tested	not tested	needs jira
+attest jira	--exclude					not tested	not tested	needs jira
+attest jira	--external-fingerprint					not tested	not tested	needs jira
+attest jira	--external-url					not tested	not tested	needs jira
+attest jira	--fingerprint					not tested	not tested	needs jira
+attest jira	--flow					not tested	not tested	needs jira
+attest jira	--ignore-branch-match					not tested	not tested	needs jira
+attest jira	--jira-api-token					not tested	not tested	needs jira
+attest jira	--jira-base-url					not tested	not tested	needs jira
+attest jira	--jira-issue-fields					not tested	not tested	needs jira
+attest jira	--jira-pat					not tested	not tested	needs jira
+attest jira	--jira-project-key					not tested	not tested	needs jira
+attest jira	--jira-secondary-source					not tested	not tested	needs jira
+attest jira	--jira-username					not tested	not tested	needs jira
+attest jira	--name					not tested	not tested	needs jira
+attest jira	--origin-url					not tested	not tested	needs jira
+attest jira	--redact-commit-info					not tested	not tested	needs jira
+attest jira	--registry-password					not tested	not tested	needs jira
+attest jira	--registry-username					not tested	not tested	needs jira
+attest jira	--repo-id					not tested	not tested	needs jira
+attest jira	--repo-provider					not tested	not tested	needs jira
+attest jira	--repo-root					not tested	not tested	needs jira
+attest jira	--repo-url					not tested	not tested	needs jira
+attest jira	--repository					not tested	not tested	needs jira
+attest jira	--trail					not tested	not tested	needs jira
+attest jira	--user-data					not tested	not tested	needs jira
+attest junit	--annotate	1	0	1	cli	differs	differs	Error: [kosli attest junit flow=probe-attest-junit-annotate-fl trail=probe-attest-junit-annotate-tr] invalid argument "" for "--annotate" flag:  must be formatt
+attest junit	--artifact-type	0	0	1		same	differs	junit attestation 'probe-attest-junit-artifact-type-nm' is reported to trail: probe-attest-junit-artifact-type-tr
+attest junit	--attachments	1	0	1	cli	differs	differs	Error: [kosli attest junit flow=probe-attest-junit-attachments-fl trail=probe-attest-junit-attachments-tr] invalid argument "" for "--attachments" flag: empty v
+attest junit	--commit	0	0	0		same	differs	junit attestation 'probe-attest-junit-commit-nm' is reported to trail: probe-attest-junit-commit-tr
+attest junit	--description	0	0	0		same	same	junit attestation 'probe-attest-junit-description-nm' is reported to trail: probe-attest-junit-description-tr
+attest junit	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest junit	--exclude	0	0	0		same	same	junit attestation 'probe-attest-junit-exclude-nm' is reported to trail: probe-attest-junit-exclude-tr
+attest junit	--external-fingerprint	1	0	1	cli	differs	differs	Error: [kosli attest junit flow=probe-attest-junit-external-fingerprint-fl trail=probe-attest-junit-external-fingerprint-tr] invalid argument "" for "--external
+attest junit	--external-url	1	0	1	cli	differs	differs	Error: [kosli attest junit flow=probe-attest-junit-external-url-fl trail=probe-attest-junit-external-url-tr] invalid argument "" for "--external-url" flag:  mus
+attest junit	--fingerprint	0	0	1		same	differs	junit attestation 'probe-attest-junit-fingerprint-nm' is reported to trail: probe-attest-junit-fingerprint-tr
+attest junit	--flow	1	1	0	cli	differs	differs	Error: [kosli attest junit trail=probe-attest-junit-flow-tr] flag '--flow' is required, but empty string was provided
+attest junit	--name	1	1	0	cli	differs	differs	Error: [kosli attest junit flow=probe-attest-junit-name-fl trail=probe-attest-junit-name-tr] flag '--name' is required, but empty string was provided
+attest junit	--origin-url	0	0	0		same	same	junit attestation 'probe-attest-junit-origin-url-nm' is reported to trail: probe-attest-junit-origin-url-tr
+attest junit	--redact-commit-info	0	0	1		same	differs	junit attestation 'probe-attest-junit-redact-commit-info-nm' is reported to trail: probe-attest-junit-redact-commit-info-tr
+attest junit	--registry-password	0	0	1		same	differs	junit attestation 'probe-attest-junit-registry-password-nm' is reported to trail: probe-attest-junit-registry-password-tr
+attest junit	--registry-username	0	0	1		same	differs	junit attestation 'probe-attest-junit-registry-username-nm' is reported to trail: probe-attest-junit-registry-username-tr
+attest junit	--repo-id	0	0	0		same	same	junit attestation 'probe-attest-junit-repo-id-nm' is reported to trail: probe-attest-junit-repo-id-tr
+attest junit	--repo-provider	0	0	1		same	differs	junit attestation 'probe-attest-junit-repo-provider-nm' is reported to trail: probe-attest-junit-repo-provider-tr
+attest junit	--repo-root	0	0	0		same	same	junit attestation 'probe-attest-junit-repo-root-nm' is reported to trail: probe-attest-junit-repo-root-tr
+attest junit	--repo-url	0	0	1		same	differs	junit attestation 'probe-attest-junit-repo-url-nm' is reported to trail: probe-attest-junit-repo-url-tr
+attest junit	--repository	0	0	0		same	same	junit attestation 'probe-attest-junit-repository-nm' is reported to trail: probe-attest-junit-repository-tr
+attest junit	--results-dir	1	1	0	cli	differs	differs	Error: [kosli attest junit flow=probe-attest-junit-results-dir-fl trail=probe-attest-junit-results-dir-tr] lstat : no such file or directory
+attest junit	--trail	1	1	0	cli	differs	differs	Error: [kosli attest junit flow=probe-attest-junit-trail-fl] flag '--trail' is required, but empty string was provided
+attest junit	--upload-results	1	0	0	cli	differs	differs	Error: flag '--upload-results' was given an empty value
+attest junit	--user-data	0	0	0		same	same	junit attestation 'probe-attest-junit-user-data-nm' is reported to trail: probe-attest-junit-user-data-tr
+attest override	--annotate	1	0	1	cli	differs	differs	Error: [kosli attest override flow=probe-attest-override-annotate-fl trail=probe-attest-override-annotate-tr] invalid argument "" for "--annotate" flag:  must b
+attest override	--artifact-type	0	0	1		same	differs	attestation 'probe-attest-override-artifact-type-nm' has been overridden in trail: probe-attest-override-artifact-type-tr
+attest override	--commit	0	0	1		same	differs	attestation 'probe-attest-override-commit-nm' has been overridden in trail: probe-attest-override-commit-tr
+attest override	--description	0	0	0		same	same	attestation 'probe-attest-override-description-nm' has been overridden in trail: probe-attest-override-description-tr
+attest override	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest override	--exclude	0	0	0		same	same	attestation 'probe-attest-override-exclude-nm' has been overridden in trail: probe-attest-override-exclude-tr
+attest override	--external-fingerprint	1	0	1	cli	differs	differs	Error: [kosli attest override flow=probe-attest-override-external-fingerprint-fl trail=probe-attest-override-external-fingerprint-tr] invalid argument "" for "-
+attest override	--external-url	1	0	1	cli	differs	differs	Error: [kosli attest override flow=probe-attest-override-external-url-fl trail=probe-attest-override-external-url-tr] invalid argument "" for "--external-url" f
+attest override	--fingerprint	0	0	1		same	differs	attestation 'probe-attest-override-fingerprint-nm' has been overridden in trail: probe-attest-override-fingerprint-tr
+attest override	--flow	1	1	0	cli	differs	differs	Error: [kosli attest override trail=probe-attest-override-flow-tr] flag '--flow' is required, but empty string was provided
+attest override	--name	1	1	0	cli	differs	differs	Error: [kosli attest override flow=probe-attest-override-name-fl trail=probe-attest-override-name-tr] flag '--name' is required, but empty string was provided
+attest override	--new-compliance-status	1	1	0	cli	differs	differs	Error: flag '--new-compliance-status' was given an empty value
+attest override	--origin-url	0	0	0		same	same	attestation 'probe-attest-override-origin-url-nm' has been overridden in trail: probe-attest-override-origin-url-tr
+attest override	--original-attestation-type	1	1	0	cli	differs	differs	Error: [kosli attest override flow=probe-attest-override-original-attestation-type-fl trail=probe-attest-override-original-attestation-type-tr] flag '--original
+attest override	--reason	1	1	0	cli	differs	differs	Error: [kosli attest override flow=probe-attest-override-reason-fl trail=probe-attest-override-reason-tr] flag '--reason' is required, but empty string was prov
+attest override	--redact-commit-info	0	0	1		same	differs	attestation 'probe-attest-override-redact-commit-info-nm' has been overridden in trail: probe-attest-override-redact-commit-info-tr
+attest override	--registry-password	0	0	1		same	differs	attestation 'probe-attest-override-registry-password-nm' has been overridden in trail: probe-attest-override-registry-password-tr
+attest override	--registry-username	0	0	1		same	differs	attestation 'probe-attest-override-registry-username-nm' has been overridden in trail: probe-attest-override-registry-username-tr
+attest override	--repo-id	0	0	0		same	same	attestation 'probe-attest-override-repo-id-nm' has been overridden in trail: probe-attest-override-repo-id-tr
+attest override	--repo-provider	0	0	1		same	differs	attestation 'probe-attest-override-repo-provider-nm' has been overridden in trail: probe-attest-override-repo-provider-tr
+attest override	--repo-root	0	0	0		same	same	attestation 'probe-attest-override-repo-root-nm' has been overridden in trail: probe-attest-override-repo-root-tr
+attest override	--repo-url	0	0	1		same	differs	attestation 'probe-attest-override-repo-url-nm' has been overridden in trail: probe-attest-override-repo-url-tr
+attest override	--repository	0	0	0		same	same	attestation 'probe-attest-override-repository-nm' has been overridden in trail: probe-attest-override-repository-tr
+attest override	--trail	1	1	0	cli	differs	differs	Error: [kosli attest override flow=probe-attest-override-trail-fl] flag '--trail' is required, but empty string was provided
+attest override	--user-data	0	0	0		same	same	attestation 'probe-attest-override-user-data-nm' has been overridden in trail: probe-attest-override-user-data-tr
+attest pullrequest azure	--annotate					not tested	not tested	needs azure devops
+attest pullrequest azure	--artifact-type					not tested	not tested	needs azure devops
+attest pullrequest azure	--assert					not tested	not tested	needs azure devops
+attest pullrequest azure	--attachments					not tested	not tested	needs azure devops
+attest pullrequest azure	--azure-org-url					not tested	not tested	needs azure devops
+attest pullrequest azure	--azure-token					not tested	not tested	needs azure devops
+attest pullrequest azure	--commit					not tested	not tested	needs azure devops
+attest pullrequest azure	--description					not tested	not tested	needs azure devops
+attest pullrequest azure	--dry-run					not tested	not tested	needs azure devops
+attest pullrequest azure	--exclude					not tested	not tested	needs azure devops
+attest pullrequest azure	--external-fingerprint					not tested	not tested	needs azure devops
+attest pullrequest azure	--external-url					not tested	not tested	needs azure devops
+attest pullrequest azure	--fingerprint					not tested	not tested	needs azure devops
+attest pullrequest azure	--flow					not tested	not tested	needs azure devops
+attest pullrequest azure	--name					not tested	not tested	needs azure devops
+attest pullrequest azure	--origin-url					not tested	not tested	needs azure devops
+attest pullrequest azure	--project					not tested	not tested	needs azure devops
+attest pullrequest azure	--redact-commit-info					not tested	not tested	needs azure devops
+attest pullrequest azure	--registry-password					not tested	not tested	needs azure devops
+attest pullrequest azure	--registry-username					not tested	not tested	needs azure devops
+attest pullrequest azure	--repo-id					not tested	not tested	needs azure devops
+attest pullrequest azure	--repo-provider					not tested	not tested	needs azure devops
+attest pullrequest azure	--repo-root					not tested	not tested	needs azure devops
+attest pullrequest azure	--repo-url					not tested	not tested	needs azure devops
+attest pullrequest azure	--repository					not tested	not tested	needs azure devops
+attest pullrequest azure	--trail					not tested	not tested	needs azure devops
+attest pullrequest azure	--user-data					not tested	not tested	needs azure devops
+attest pullrequest bitbucket	--annotate					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--artifact-type					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--assert					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--attachments					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--bitbucket-access-token					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--bitbucket-password					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--bitbucket-username					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--bitbucket-workspace					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--commit					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--description					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--dry-run					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--exclude					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--external-fingerprint					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--external-url					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--fingerprint					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--flow					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--name					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--origin-url					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--redact-commit-info					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--registry-password					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--registry-username					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--repo-id					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--repo-provider					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--repo-root					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--repo-url					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--repository					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--trail					not tested	not tested	needs bitbucket
+attest pullrequest bitbucket	--user-data					not tested	not tested	needs bitbucket
+attest pullrequest github	--annotate					not tested	not tested	needs github
+attest pullrequest github	--artifact-type					not tested	not tested	needs github
+attest pullrequest github	--assert					not tested	not tested	needs github
+attest pullrequest github	--attachments					not tested	not tested	needs github
+attest pullrequest github	--commit					not tested	not tested	needs github
+attest pullrequest github	--description					not tested	not tested	needs github
+attest pullrequest github	--dry-run					not tested	not tested	needs github
+attest pullrequest github	--exclude					not tested	not tested	needs github
+attest pullrequest github	--external-fingerprint					not tested	not tested	needs github
+attest pullrequest github	--external-url					not tested	not tested	needs github
+attest pullrequest github	--fingerprint					not tested	not tested	needs github
+attest pullrequest github	--flow					not tested	not tested	needs github
+attest pullrequest github	--github-base-url					not tested	not tested	needs github
+attest pullrequest github	--github-org					not tested	not tested	needs github
+attest pullrequest github	--github-token					not tested	not tested	needs github
+attest pullrequest github	--name					not tested	not tested	needs github
+attest pullrequest github	--origin-url					not tested	not tested	needs github
+attest pullrequest github	--redact-commit-info					not tested	not tested	needs github
+attest pullrequest github	--registry-password					not tested	not tested	needs github
+attest pullrequest github	--registry-username					not tested	not tested	needs github
+attest pullrequest github	--repo-id					not tested	not tested	needs github
+attest pullrequest github	--repo-provider					not tested	not tested	needs github
+attest pullrequest github	--repo-root					not tested	not tested	needs github
+attest pullrequest github	--repo-url					not tested	not tested	needs github
+attest pullrequest github	--repository					not tested	not tested	needs github
+attest pullrequest github	--trail					not tested	not tested	needs github
+attest pullrequest github	--user-data					not tested	not tested	needs github
+attest pullrequest gitlab	--annotate					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--artifact-type					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--assert					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--attachments					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--commit					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--description					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--dry-run					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--exclude					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--external-fingerprint					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--external-url					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--fingerprint					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--flow					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--gitlab-base-url					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--gitlab-org					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--gitlab-token					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--name					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--origin-url					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--redact-commit-info					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--registry-password					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--registry-username					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--repo-id					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--repo-provider					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--repo-root					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--repo-url					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--repository					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--trail					not tested	not tested	needs gitlab
+attest pullrequest gitlab	--user-data					not tested	not tested	needs gitlab
+attest snyk	--annotate					not tested	not tested	needs snyk
+attest snyk	--artifact-type					not tested	not tested	needs snyk
+attest snyk	--attachments					not tested	not tested	needs snyk
+attest snyk	--commit					not tested	not tested	needs snyk
+attest snyk	--description					not tested	not tested	needs snyk
+attest snyk	--dry-run					not tested	not tested	needs snyk
+attest snyk	--exclude					not tested	not tested	needs snyk
+attest snyk	--external-fingerprint					not tested	not tested	needs snyk
+attest snyk	--external-url					not tested	not tested	needs snyk
+attest snyk	--fingerprint					not tested	not tested	needs snyk
+attest snyk	--flow					not tested	not tested	needs snyk
+attest snyk	--name					not tested	not tested	needs snyk
+attest snyk	--origin-url					not tested	not tested	needs snyk
+attest snyk	--redact-commit-info					not tested	not tested	needs snyk
+attest snyk	--registry-password					not tested	not tested	needs snyk
+attest snyk	--registry-username					not tested	not tested	needs snyk
+attest snyk	--repo-id					not tested	not tested	needs snyk
+attest snyk	--repo-provider					not tested	not tested	needs snyk
+attest snyk	--repo-root					not tested	not tested	needs snyk
+attest snyk	--repo-url					not tested	not tested	needs snyk
+attest snyk	--repository					not tested	not tested	needs snyk
+attest snyk	--scan-results					not tested	not tested	needs snyk
+attest snyk	--trail					not tested	not tested	needs snyk
+attest snyk	--upload-results					not tested	not tested	needs snyk
+attest snyk	--user-data					not tested	not tested	needs snyk
+attest sonar	--annotate					not tested	not tested	needs sonarqube
+attest sonar	--artifact-type					not tested	not tested	needs sonarqube
+attest sonar	--attachments					not tested	not tested	needs sonarqube
+attest sonar	--commit					not tested	not tested	needs sonarqube
+attest sonar	--description					not tested	not tested	needs sonarqube
+attest sonar	--dry-run					not tested	not tested	needs sonarqube
+attest sonar	--exclude					not tested	not tested	needs sonarqube
+attest sonar	--external-fingerprint					not tested	not tested	needs sonarqube
+attest sonar	--external-url					not tested	not tested	needs sonarqube
+attest sonar	--fingerprint					not tested	not tested	needs sonarqube
+attest sonar	--flow					not tested	not tested	needs sonarqube
+attest sonar	--max-wait					not tested	not tested	needs sonarqube
+attest sonar	--name					not tested	not tested	needs sonarqube
+attest sonar	--origin-url					not tested	not tested	needs sonarqube
+attest sonar	--pull-request					not tested	not tested	needs sonarqube
+attest sonar	--redact-commit-info					not tested	not tested	needs sonarqube
+attest sonar	--registry-password					not tested	not tested	needs sonarqube
+attest sonar	--registry-username					not tested	not tested	needs sonarqube
+attest sonar	--repo-id					not tested	not tested	needs sonarqube
+attest sonar	--repo-provider					not tested	not tested	needs sonarqube
+attest sonar	--repo-root					not tested	not tested	needs sonarqube
+attest sonar	--repo-url					not tested	not tested	needs sonarqube
+attest sonar	--repository					not tested	not tested	needs sonarqube
+attest sonar	--sonar-api-token					not tested	not tested	needs sonarqube
+attest sonar	--sonar-ce-task-url					not tested	not tested	needs sonarqube
+attest sonar	--sonar-project-key					not tested	not tested	needs sonarqube
+attest sonar	--sonar-revision					not tested	not tested	needs sonarqube
+attest sonar	--sonar-server-url					not tested	not tested	needs sonarqube
+attest sonar	--sonar-working-dir					not tested	not tested	needs sonarqube
+attest sonar	--trail					not tested	not tested	needs sonarqube
+attest sonar	--user-data					not tested	not tested	needs sonarqube
+begin trail	--commit	0	0	0		same	differs	trail 'probe-begin-trail-commit-tr' was begun
+begin trail	--description	0	0	0		same	differs	trail 'probe-begin-trail-description-tr' was begun
+begin trail	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+begin trail	--external-fingerprint	1	0	1	cli	differs	differs	Error: [kosli begin trail flow=probe-begin-trail-external-fingerprint-fl] invalid argument "" for "--external-fingerprint" flag:  must be formatted as key=value
+begin trail	--external-url	1	0	1	cli	differs	differs	Error: [kosli begin trail flow=probe-begin-trail-external-url-fl] invalid argument "" for "--external-url" flag:  must be formatted as key=value
+begin trail	--flow	1	1	0	cli	differs	differs	Error: [kosli begin trail] flag '--flow' is required, but empty string was provided
+begin trail	--origin-url	0	0	0		same	differs	trail 'probe-begin-trail-origin-url-tr' was begun
+begin trail	--redact-commit-info	0	0	1		same	differs	trail 'probe-begin-trail-redact-commit-info-tr' was begun
+begin trail	--repo-id	0	0	0		same	same	trail 'probe-begin-trail-repo-id-tr' was begun
+begin trail	--repo-provider	0	0	1		same	differs	trail 'probe-begin-trail-repo-provider-tr' was begun
+begin trail	--repo-root	0	0	0		same	same	trail 'probe-begin-trail-repo-root-tr' was begun
+begin trail	--repo-url	0	0	1		same	differs	trail 'probe-begin-trail-repo-url-tr' was begun
+begin trail	--repository	0	0	0		same	same	trail 'probe-begin-trail-repository-tr' was begun
+begin trail	--template-file	0	0	0		same	differs	trail 'probe-begin-trail-template-file-tr' was begun
+begin trail	--user-data	0	0	0		same	differs	trail 'probe-begin-trail-user-data-tr' was begun
+config	--set					not tested	not tested	needs a credentials store
+config	--unset					not tested	not tested	needs a credentials store
+create api-key	--description	1	1	0	cli	differs	differs	Error: [kosli create api-key] flag '--description' is required, but empty string was provided
+create api-key	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+create api-key	--expires-at	0	0	1		same	differs	ID:           ce696f51-5674-4256-89f1-946c02b6
+create api-key	--output	1	0	0	cli	differs	differs	Error: [kosli create api-key] unsupported output format:
+create api-key	--service-account	1	1	0	cli	differs	differs	Error: [kosli create api-key] flag '--service-account' is required, but empty string was provided
+create attestation-type	--description	0	0	0		same	same	attestation-type probe-create-attestation-type-description-nm was created
+create attestation-type	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+create attestation-type	--jq	1	0	1	downstream	differs	differs	Error: [kosli create attestation-type] Input payload validation failed: map[data_json.evaluator.DefaultEvaluator.content_type:Input should be 'default' [input: 
+create attestation-type	--schema	0	0	1		same	differs	attestation-type probe-create-attestation-type-schema-nm was created
+create control	--description	0	0	0		same	differs	control probe-create-control-description-co was created
+create control	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+create control	--name	1	1	0	cli	differs	differs	Error: [kosli create control] flag '--name' is required, but empty string was provided
+create environment	--description	0	0	0		same	differs	environment probe-create-environment-description-en was created
+create environment	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+create environment	--included-environments	0	0	1		same	differs	environment probe-create-environment-included-environments-en was created
+create environment	--type	1	1	0	cli	differs	differs	Error: [kosli create environment] flag '--type' is required, but empty string was provided
+create flow	--description	0	0	0		same	differs	flow 'probe-create-flow-description-fl' was created
+create flow	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+create flow	--template	1	0	0	cli	differs	differs	Error: [kosli create flow] invalid argument "" for "-t, --template" flag: empty values are not allowed
+create flow	--template-file	0	0	0		same	differs	flow 'probe-create-flow-template-file-fl' was created
+create flow	--use-empty-template	1	0	0	cli	differs	differs	Error: flag '--use-empty-template' was given an empty value
+create policy	--comment	0	0	0		same	same	policy 'probe-create-policy-comment-po' was created
+create policy	--description	0	0	0		same	differs	policy 'probe-create-policy-description-po' was created
+create policy	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+create policy	--type	1	0	0	downstream	differs	differs	Error: [kosli create policy] Input payload validation failed: map[payload.type:Input should be 'env' [input: ]]
+create service-account	--description	0	0	0		same	differs	service account probe-create-service-account-description-sa was created
+create service-account	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+create service-account	--privilege	1	1	0	cli	differs	differs	Error: [kosli create service-account] flag '--privilege' is required, but empty string was provided
+delete api-key	--assume-yes	1	1	0	cli	differs	differs	Error: flag '--assume-yes' was given an empty value
+delete api-key	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+delete api-key	--service-account	1	1	0	cli	differs	differs	Error: [kosli delete api-key] flag '--service-account' is required, but empty string was provided
+delete service-account	--assume-yes	1	1	0	cli	differs	differs	Error: flag '--assume-yes' was given an empty value
+delete service-account	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+detach-policy	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+detach-policy	--environment	0	1	0		differs	differs	policy 'probe-detach-policy-environment-po' is detached from environments: []
+diff snapshots	--output	1	0	0	cli	differs	differs	Error: [kosli diff snapshots] unsupported output format:
+diff snapshots	--show-unchanged	1	0	0	cli	differs	differs	Error: flag '--show-unchanged' was given an empty value
+evaluate input	--assert	1	1	1	cli	differs	differs	Error: flag '--assert' was given an empty value
+evaluate input	--input-file	1	1	1	cli	same	differs	Error: [kosli evaluate input] failed to parse input: EOF
+evaluate input	--no-assert	1	1	0	cli	differs	differs	Error: flag '--no-assert' was given an empty value
+evaluate input	--output	1	1	1	cli	differs	differs	Error: [kosli evaluate input] unsupported output format:
+evaluate input	--params	1	1	1	cli	same	differs	Error: [kosli evaluate input] policy denied
+evaluate input	--policy	1	1	1	cli	differs	differs	Error: [kosli evaluate input] flag '--policy' is required, but empty string was provided
+evaluate input	--show-input	1	1	1	cli	differs	differs	Error: flag '--show-input' was given an empty value
+evaluate trail	--assert	1	1	1	cli	differs	differs	Error: flag '--assert' was given an empty value
+evaluate trail	--attestations	1	1	1	cli	same	same	Error: [kosli evaluate trail flow=probe-evaluate-trail-attestations-fl] policy denied
+evaluate trail	--flow	1	1	1	cli	differs	differs	Error: [kosli evaluate trail] flag '--flow' is required, but empty string was provided
+evaluate trail	--no-assert	1	1	0	cli	differs	differs	Error: flag '--no-assert' was given an empty value
+evaluate trail	--output	1	1	1	cli	differs	differs	Error: [kosli evaluate trail flow=probe-evaluate-trail-output-fl] unsupported output format:
+evaluate trail	--params	1	1	1	cli	same	differs	Error: [kosli evaluate trail flow=probe-evaluate-trail-params-fl] policy denied
+evaluate trail	--policy	1	1	1	cli	differs	differs	Error: [kosli evaluate trail flow=probe-evaluate-trail-policy-fl] flag '--policy' is required, but empty string was provided
+evaluate trail	--show-input	1	1	1	cli	differs	differs	Error: flag '--show-input' was given an empty value
+evaluate trails	--assert	1	1	1	cli	differs	differs	Error: flag '--assert' was given an empty value
+evaluate trails	--attestations	1	1	1	cli	same	same	Error: [kosli evaluate trails flow=probe-evaluate-trails-attestations-fl] policy denied
+evaluate trails	--flow	1	1	1	cli	differs	differs	Error: [kosli evaluate trails] flag '--flow' is required, but empty string was provided
+evaluate trails	--no-assert	1	1	0	cli	differs	differs	Error: flag '--no-assert' was given an empty value
+evaluate trails	--output	1	1	1	cli	differs	differs	Error: [kosli evaluate trails flow=probe-evaluate-trails-output-fl] unsupported output format:
+evaluate trails	--params	1	1	1	cli	same	differs	Error: [kosli evaluate trails flow=probe-evaluate-trails-params-fl] policy denied
+evaluate trails	--policy	1	1	1	cli	differs	differs	Error: [kosli evaluate trails flow=probe-evaluate-trails-policy-fl] flag '--policy' is required, but empty string was provided
+evaluate trails	--show-input	1	1	1	cli	differs	differs	Error: flag '--show-input' was given an empty value
+fingerprint	--artifact-type	1	1	0	cli	differs	differs	Error: [kosli fingerprint] flag '--artifact-type' is required, but empty string was provided
+fingerprint	--exclude	0	0	0		same	same	1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01
+fingerprint	--registry-password	0	0	1		same	differs	1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01
+fingerprint	--registry-username	0	0	1		same	differs	1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01
+get api-key	--output	1	0	0	cli	differs	differs	Error: [kosli get api-key] unsupported output format:
+get api-key	--service-account	1	1	0	cli	differs	differs	Error: [kosli get api-key] flag '--service-account' is required, but empty string was provided
+get artifact	--output	1	0	0	cli	differs	differs	Error: [kosli get artifact] unsupported output format:
+get artifact	--trail	0	0	0		same	same	Name:              cmd/kosli/testdata/person-schema.json
+get attestation	--attestation-id	0	0	1		same	differs	Name:             probe-attestation
+get attestation	--fingerprint	1	0	1	cli	differs	same	Error: [kosli get attestation flow=probe-get-attestation-fingerprint-fl trail=probe-get-attestation-fingerprint-tr] only one of --trail, --fingerprint is allowe
+get attestation	--flow	1	1	0	cli	same	differs	Error: [kosli get attestation trail=probe-get-attestation-flow-tr] --flow is required when using ATTESTATION-NAME
+get attestation	--output	1	0	0	cli	differs	differs	Error: [kosli get attestation flow=probe-get-attestation-output-fl trail=probe-get-attestation-output-tr] unsupported output format:
+get attestation	--trail	1	1	0	cli	differs	differs	Error: [kosli get attestation flow=probe-get-attestation-trail-fl] Get "": GET  giving up after 1 attempt(s): Get "": unsupported protocol scheme ""
+get attestation-type	--output	1	0	0	cli	differs	differs	Error: [kosli get attestation-type] unsupported output format:
+get control	--output	1	0	0	cli	differs	differs	Error: [kosli get control] unsupported output format:
+get default-org	--output	1	0	0	cli	differs	differs	Error: [kosli get default-org] unsupported output format:
+get environment	--output	1	0	0	cli	differs	differs	Error: [kosli get environment] unsupported output format:
+get flow	--output	1	0	0	cli	differs	differs	Error: [kosli get flow] unsupported output format:
+get policy	--output	1	0	0	cli	differs	differs	Error: [kosli get policy] unsupported output format:
+get repo	--output					not tested	not tested	needs a connected git provider
+get repo	--provider					not tested	not tested	needs a connected git provider
+get repo	--repo-id					not tested	not tested	needs a connected git provider
+get service-account	--output	1	0	0	cli	differs	differs	Error: [kosli get service-account] unsupported output format:
+get snapshot	--output	1	0	0	cli	differs	differs	Error: [kosli get snapshot] unsupported output format:
+get trail	--flow	1	1	0	cli	differs	differs	Error: [kosli get trail] flag '--flow' is required, but empty string was provided
+get trail	--output	1	0	0	cli	differs	differs	Error: [kosli get trail flow=probe-get-trail-output-fl] unsupported output format:
+join environment	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+join environment	--logical	1	1	0	cli	differs	differs	Error: [kosli join environment] flag '--logical' is required, but empty string was provided
+join environment	--physical	1	1	0	cli	differs	differs	Error: [kosli join environment] flag '--physical' is required, but empty string was provided
+list api-keys	--output	1	0	0	cli	differs	differs	Error: [kosli list api-keys] unsupported output format:
+list api-keys	--service-account	1	1	0	cli	differs	differs	Error: [kosli list api-keys] flag '--service-account' is required, but empty string was provided
+list artifacts	--flow	0	0	0		same	differs	COMMIT   ARTIFACT                                                                       STATE      CREATED_AT
+list artifacts	--output	1	0	0	cli	differs	differs	Error: [kosli list artifacts] unsupported output format:
+list artifacts	--page	1	0	0	cli	differs	differs	Error: [kosli list artifacts] invalid argument "" for "--page" flag: strconv.ParseInt: parsing "": invalid syntax
+list artifacts	--page-limit	1	0	0	cli	differs	differs	Error: [kosli list artifacts] invalid argument "" for "-n, --page-limit" flag: strconv.ParseInt: parsing "": invalid syntax
+list artifacts	--repo	0	0	1		same	differs	COMMIT   ARTIFACT                                                                       STATE      CREATED_AT
+list attestation-types	--output	1	0	0	cli	differs	differs	Error: [kosli list attestation-types] unsupported output format:
+list controls	--archived	1	0	0	cli	differs	differs	Error: flag '--archived' was given an empty value
+list controls	--output	1	0	0	cli	differs	differs	Error: [kosli list controls] unsupported output format:
+list controls	--page	1	0	0	cli	differs	differs	Error: [kosli list controls] invalid argument "" for "--page" flag: strconv.ParseInt: parsing "": invalid syntax
+list controls	--page-limit	1	0	0	cli	differs	differs	Error: [kosli list controls] invalid argument "" for "-n, --page-limit" flag: strconv.ParseInt: parsing "": invalid syntax
+list controls	--search	0	0	0		same	differs	IDENTIFIER                                   NAME                                         DESCRIPTION        CREATED AT
+list controls	--sort-direction	0	0	1		same	differs	IDENTIFIER                                   NAME                                         DESCRIPTION        CREATED AT
+list controls	--tag	0	0	0		same	differs	IDENTIFIER                                   NAME                                         DESCRIPTION        CREATED AT
+list environments	--name	1	1	0	cli	same	differs	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
+list environments	--output	1	1	1	cli	same	same	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
+list environments	--page	1	1	0	cli	differs	differs	Error: [kosli list environments] invalid argument "" for "--page" flag: strconv.ParseInt: parsing "": invalid syntax
+list environments	--page-limit	1	1	0	cli	differs	differs	Error: [kosli list environments] invalid argument "" for "-n, --page-limit" flag: strconv.ParseInt: parsing "": invalid syntax
+list environments	--sort	1	1	1	cli	same	differs	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
+list environments	--sort-direction	1	1	1	cli	same	differs	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
+list environments	--space-id	1	1	0	cli	same	differs	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
+list environments	--tag	0	1	0		differs	same	No environments were found.
+list environments	--type	1	1	0	cli	same	differs	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
+list flows	--ignore-case	1	0	0	cli	differs	differs	Error: flag '--ignore-case' was given an empty value
+list flows	--name	0	0	0		same	differs	NAME                                                     DESCRIPTION        VISIBILITY  TAGS
+list flows	--output	1	0	0	cli	differs	differs	Error: [kosli list flows] unsupported output format:
+list flows	--page	1	0	0	cli	differs	differs	Error: [kosli list flows] invalid argument "" for "--page" flag: strconv.ParseInt: parsing "": invalid syntax
+list flows	--page-limit	1	0	0	cli	differs	differs	Error: [kosli list flows] invalid argument "" for "-n, --page-limit" flag: strconv.ParseInt: parsing "": invalid syntax
+list policies	--output	1	0	0	cli	differs	differs	Error: [kosli list policies] unsupported output format:
+list repos	--name	0	0	0		same	same	No repos were found.
+list repos	--output	1	0	0	cli	differs	differs	Error: [kosli list repos] unsupported output format:
+list repos	--page	1	0	0	cli	differs	differs	Error: [kosli list repos] invalid argument "" for "--page" flag: strconv.ParseInt: parsing "": invalid syntax
+list repos	--page-limit	1	0	0	cli	differs	differs	Error: [kosli list repos] invalid argument "" for "-n, --page-limit" flag: strconv.ParseInt: parsing "": invalid syntax
+list repos	--provider	0	0	1		same	differs	No repos were found.
+list repos	--repo-id	0	0	0		same	same	No repos were found.
+list repos	--search	0	0	0		same	same	No repos were found.
+list repos	--sort-direction	0	0	1		same	differs	No repos were found.
+list repos	--tag	0	0	0		same	same	No repos were found.
+list service-accounts	--output	1	0	0	cli	differs	differs	Error: [kosli list service-accounts] unsupported output format:
+list snapshots	--interval	0	0	1		same	differs	SNAPSHOT  FROM                           TO   DURATION        COMPLIANT
+list snapshots	--output	1	0	0	cli	differs	differs	Error: [kosli list snapshots] unsupported output format:
+list snapshots	--page	1	0	0	cli	differs	differs	Error: [kosli list snapshots] invalid argument "" for "--page" flag: strconv.ParseInt: parsing "": invalid syntax
+list snapshots	--page-limit	1	0	0	cli	differs	differs	Error: [kosli list snapshots] invalid argument "" for "-n, --page-limit" flag: strconv.ParseInt: parsing "": invalid syntax
+list snapshots	--reverse	1	0	0	cli	differs	differs	Error: flag '--reverse' was given an empty value
+list trails	--fingerprint	0	0	0		same	differs	NAME                                            DESCRIPTION  COMPLIANCE
+list trails	--flow	0	0	0		same	differs	NAME                                            DESCRIPTION  COMPLIANCE
+list trails	--flow-tag	0	0	1		same	differs	NAME                                            DESCRIPTION  COMPLIANCE
+list trails	--output	1	0	0	cli	differs	differs	Error: [kosli list trails] unsupported output format:
+list trails	--page	1	0	0	cli	differs	differs	Error: [kosli list trails] invalid argument "" for "--page" flag: strconv.ParseInt: parsing "": invalid syntax
+list trails	--page-limit	1	0	0	cli	differs	differs	Error: [kosli list trails] invalid argument "" for "-n, --page-limit" flag: strconv.ParseInt: parsing "": invalid syntax
+log environment	--end	0	0	1		same	differs	SNAPSHOT  EVENT                                                                          FLOW
+log environment	--end-ts	1	0	1	cli	differs	differs	Error: [kosli log environment] invalid argument "" for "--end-ts" flag: strconv.ParseFloat: parsing "": invalid syntax
+log environment	--interval	0	0	1		same	differs	SNAPSHOT  EVENT                                                                          FLOW
+log environment	--output	1	0	0	cli	differs	differs	Error: [kosli log environment] unsupported output format:
+log environment	--page	1	0	0	cli	differs	differs	Error: [kosli log environment] invalid argument "" for "--page" flag: strconv.ParseInt: parsing "": invalid syntax
+log environment	--page-limit	1	0	0	cli	differs	differs	Error: [kosli log environment] invalid argument "" for "-n, --page-limit" flag: strconv.ParseInt: parsing "": invalid syntax
+log environment	--repo	0	0	1		same	differs	SNAPSHOT  EVENT                                                                          FLOW
+log environment	--reverse	1	0	0	cli	differs	differs	Error: flag '--reverse' was given an empty value
+log environment	--start	0	0	1		same	differs	SNAPSHOT  EVENT                                                                          FLOW
+log environment	--start-ts	1	0	1	cli	differs	differs	Error: [kosli log environment] invalid argument "" for "--start-ts" flag: strconv.ParseFloat: parsing "": invalid syntax
+rename environment	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+rename flow	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+rotate api-key	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+rotate api-key	--expires-at	0	0	1		same	differs	ID:                   d3f3da24-9367-4242-9402-4eff5077
+rotate api-key	--grace-period-hours	1	0	1	cli	differs	differs	Error: [kosli rotate api-key] invalid argument "" for "-g, --grace-period-hours" flag: strconv.ParseInt: parsing "": invalid syntax
+rotate api-key	--output	1	0	0	downstream	differs	differs	Error: [kosli rotate api-key] unsupported output format:
+rotate api-key	--service-account	1	1	0	cli	differs	differs	Error: [kosli rotate api-key] flag '--service-account' is required, but empty string was provided
+search	--output	1	0	0	cli	differs	differs	Error: [kosli search] unsupported output format:
+snapshot azure	--azure-client-id					not tested	not tested	needs azure
+snapshot azure	--azure-client-secret					not tested	not tested	needs azure
+snapshot azure	--azure-resource-group-name					not tested	not tested	needs azure
+snapshot azure	--azure-subscription-id					not tested	not tested	needs azure
+snapshot azure	--azure-tenant-id					not tested	not tested	needs azure
+snapshot azure	--digests-source					not tested	not tested	needs azure
+snapshot azure	--dry-run					not tested	not tested	needs azure
+snapshot azure	--zip					not tested	not tested	needs azure
+snapshot cloud-run	--dry-run					not tested	not tested	needs google cloud
+snapshot cloud-run	--exclude					not tested	not tested	needs google cloud
+snapshot cloud-run	--exclude-regex					not tested	not tested	needs google cloud
+snapshot cloud-run	--include					not tested	not tested	needs google cloud
+snapshot cloud-run	--include-regex					not tested	not tested	needs google cloud
+snapshot cloud-run	--project					not tested	not tested	needs google cloud
+snapshot cloud-run	--region					not tested	not tested	needs google cloud
+snapshot cloud-run	--resolve-names					not tested	not tested	needs google cloud
+snapshot docker	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+snapshot ecs	--aws-key-id					not tested	not tested	needs aws
+snapshot ecs	--aws-region					not tested	not tested	needs aws
+snapshot ecs	--aws-secret-key					not tested	not tested	needs aws
+snapshot ecs	--clusters					not tested	not tested	needs aws
+snapshot ecs	--clusters-regex					not tested	not tested	needs aws
+snapshot ecs	--dry-run					not tested	not tested	needs aws
+snapshot ecs	--exclude					not tested	not tested	needs aws
+snapshot ecs	--exclude-regex					not tested	not tested	needs aws
+snapshot ecs	--exclude-services					not tested	not tested	needs aws
+snapshot ecs	--exclude-services-regex					not tested	not tested	needs aws
+snapshot ecs	--services					not tested	not tested	needs aws
+snapshot ecs	--services-regex					not tested	not tested	needs aws
+snapshot k8s	--config-file					not tested	not tested	needs kubernetes
+snapshot k8s	--dry-run					not tested	not tested	needs kubernetes
+snapshot k8s	--exclude-namespaces					not tested	not tested	needs kubernetes
+snapshot k8s	--exclude-namespaces-regex					not tested	not tested	needs kubernetes
+snapshot k8s	--kubeconfig					not tested	not tested	needs kubernetes
+snapshot k8s	--namespaces					not tested	not tested	needs kubernetes
+snapshot k8s	--namespaces-regex					not tested	not tested	needs kubernetes
+snapshot lambda	--aws-key-id					not tested	not tested	needs aws
+snapshot lambda	--aws-region					not tested	not tested	needs aws
+snapshot lambda	--aws-secret-key					not tested	not tested	needs aws
+snapshot lambda	--dry-run					not tested	not tested	needs aws
+snapshot lambda	--exclude					not tested	not tested	needs aws
+snapshot lambda	--exclude-regex					not tested	not tested	needs aws
+snapshot lambda	--function-names					not tested	not tested	needs aws
+snapshot lambda	--function-names-regex					not tested	not tested	needs aws
+snapshot path	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+snapshot path	--exclude	0	0	0		same	same	[1] artifacts were reported to environment probe-snapshot-path-exclude-en
+snapshot path	--name	1	1	0	cli	differs	differs	Error: [kosli snapshot path] flag '--name' is required, but empty string was provided
+snapshot path	--path	1	1	0	cli	differs	differs	Error: [kosli snapshot path] flag '--path' is required, but empty string was provided
+snapshot path	--watch	1	0	0	cli	differs	differs	Error: flag '--watch' was given an empty value
+snapshot paths	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+snapshot paths	--paths-file	1	1	0	cli	differs	differs	Error: [kosli snapshot paths] flag '--paths-file' is required, but empty string was provided
+snapshot paths	--watch	1	0	0	cli	differs	differs	Error: flag '--watch' was given an empty value
+snapshot s3	--aws-key-id					not tested	not tested	needs aws
+snapshot s3	--aws-region					not tested	not tested	needs aws
+snapshot s3	--aws-secret-key					not tested	not tested	needs aws
+snapshot s3	--bucket					not tested	not tested	needs aws
+snapshot s3	--dry-run					not tested	not tested	needs aws
+snapshot s3	--exclude					not tested	not tested	needs aws
+snapshot s3	--exclude-regex					not tested	not tested	needs aws
+snapshot s3	--include					not tested	not tested	needs aws
+snapshot s3	--include-regex					not tested	not tested	needs aws
+status	--assert	1	0	0	cli	differs	differs	Error: flag '--assert' was given an empty value
+tag	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+tag	--provider	0	0	1		same	differs	No tags were applied for flow 'probe-tag-provider-fl'
+tag	--repo-id	0	0	1		same	differs	No tags were applied for flow 'probe-tag-repo-id-fl'
+tag	--set	1	0	1	cli	differs	differs	Error: [kosli tag] invalid argument "" for "-s, --set" flag:  must be formatted as key=value
+tag	--unset	0	0	0		same	differs	No tags were applied for flow 'probe-tag-unset-fl'
+unarchive control	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+update control	--description	0	0	0		same	differs	control probe-update-control-description-co was updated
+update control	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+update control	--link	1	0	1	cli	differs	differs	Error: [kosli update control] invalid argument "" for "--link" flag:  must be formatted as key=value
+update control	--name	1	1	0	downstream	differs	differs	Error: [kosli update control] name cannot be empty
+update default-org	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+update service-account	--description	0	1	0		differs	differs	service account probe-update-service-account-description-sa was updated
+update service-account	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+update service-account	--privilege	1	0	0	downstream	differs	differs	Error: [kosli update service-account] Input payload validation failed: map[privilege:Input should be <Role.ADMIN: 'admin'>, <Role.MEMBER: 'member'>, <Role.SNAPS
+version	--short	1	0	0	cli	differs	differs	Error: flag '--short' was given an empty value

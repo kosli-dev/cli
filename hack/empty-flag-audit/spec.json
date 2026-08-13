@@ -1,0 +1,3405 @@
+{
+ "attest generic": {
+  "args": [],
+  "flags": {
+   "flow": "{flow}",
+   "name": "{name}",
+   "trail": "{trail}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\ngeneric attestation '{name}' is reported to trail: {trail}",
+  "flags_to_test": [
+   "annotate",
+   "artifact-type",
+   "attachments",
+   "commit",
+   "compliant",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "name",
+   "origin-url",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "trail",
+   "user-data"
+  ],
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "attachments": "probe-attachments",
+   "commit": "HEAD",
+   "compliant": "true",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "trail": "{trail}",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "allow artifact": {
+  "args": [
+   "{name}"
+  ],
+  "flags": {
+   "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "environment": "{env}",
+   "reason": "probe"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "artifact aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa was allow listed in environment: {env}",
+  "flags_to_test": [
+   "artifact-type",
+   "dry-run",
+   "environment",
+   "exclude",
+   "fingerprint",
+   "reason",
+   "registry-password",
+   "registry-username"
+  ],
+  "flag_values": {
+   "artifact-type": "file",
+   "dry-run": "true",
+   "environment": "{env}",
+   "exclude": "probe-exclude",
+   "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "reason": "probe",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "server"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "archive control": {
+  "args": [
+   "{control}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "control {control} was archived",
+  "flags_to_test": [
+   "dry-run"
+  ],
+  "flag_values": {
+   "dry-run": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "control",
+     "{control}",
+     "--name",
+     "{control}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "control",
+    "{control}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "archive environment": {
+  "args": [
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "environment {env} was archived",
+  "flags_to_test": [
+   "dry-run"
+  ],
+  "flag_values": {
+   "dry-run": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "archive flow": {
+  "args": [
+   "{flow}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "flow {flow} was archived",
+  "flags_to_test": [
+   "api-token",
+   "config-file",
+   "debug",
+   "dry-run",
+   "host",
+   "http-proxy",
+   "max-api-retries",
+   "org",
+   "quiet"
+  ],
+  "flag_values": {
+   "api-token": "probe-api-token",
+   "config-file": "probe-config-file",
+   "debug": "true",
+   "dry-run": "true",
+   "host": "probe-host",
+   "http-proxy": "probe-http-proxy",
+   "max-api-retries": "probe-max-api-retries",
+   "org": "probe-org",
+   "quiet": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "assert artifact": {
+  "args": [
+   "cmd/kosli/testdata/person-schema.json"
+  ],
+  "flags": {
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "COMPLIANT\nFlow: {flow}\n  Trail: {trail}\n  Attestation-name                 type                           status          compliant \n  See more details at http://localhost/docs-cmd-test-user-shared/flows/{flow}/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+  "flags_to_test": [
+   "artifact-type",
+   "dry-run",
+   "environment",
+   "exclude",
+   "fingerprint",
+   "flow",
+   "output",
+   "policy",
+   "registry-password",
+   "registry-username"
+  ],
+  "flag_values": {
+   "artifact-type": "file",
+   "dry-run": "true",
+   "environment": "{env}",
+   "exclude": "probe-exclude",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "output": "json",
+   "policy": "{policy}",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   },
+   {
+    "argv": [
+     "attest",
+     "artifact",
+     "cmd/kosli/testdata/person-schema.json",
+     "--name",
+     "probe-artifact",
+     "--fingerprint",
+     "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}",
+     "--build-url",
+     "http://example.com",
+     "--commit-url",
+     "http://example.com"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "assert snapshot": {
+  "args": [
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 1,
+  "baseline_output": "Error: [kosli assert snapshot] NON-COMPLIANT",
+  "flags_to_test": [
+   "dry-run"
+  ],
+  "flag_values": {
+   "dry-run": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "server"
+    ]
+   },
+   {
+    "argv": [
+     "snapshot",
+     "path",
+     "{env}",
+     "--path",
+     "cmd/kosli/testdata/person-schema.json",
+     "--name",
+     "probe-artifact"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "assert status": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "OK",
+  "flags_to_test": [],
+  "flag_values": {},
+  "setup": [],
+  "verify": []
+ },
+ "attest artifact": {
+  "args": [
+   "cmd/kosli/testdata/person-schema.json"
+  ],
+  "flags": {
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "build-url": "http://example.com",
+   "commit-url": "http://example.com",
+   "flow": "{flow}",
+   "name": "{name}",
+   "trail": "{trail}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\nartifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+  "flags_to_test": [
+   "annotate",
+   "artifact-type",
+   "build-url",
+   "commit",
+   "commit-url",
+   "display-name",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "name",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "trail"
+  ],
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "build-url": "http://example.com",
+   "commit": "HEAD",
+   "commit-url": "http://example.com",
+   "display-name": "probe-display-name",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "name": "{name}",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "trail": "{trail}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "attest custom": {
+  "args": [],
+  "flags": {
+   "attestation-data": "cmd/kosli/testdata/person-schema.json",
+   "flow": "{flow}",
+   "name": "{name}",
+   "trail": "{trail}",
+   "type": "{name}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\ncustom:{name} attestation '{name}' is reported to trail: {trail}",
+  "flags_to_test": [
+   "annotate",
+   "artifact-type",
+   "attachments",
+   "attestation-data",
+   "commit",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "name",
+   "origin-url",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "trail",
+   "type",
+   "user-data"
+  ],
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "attachments": "probe-attachments",
+   "attestation-data": "cmd/kosli/testdata/person-schema.json",
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "trail": "{trail}",
+   "type": "{name}",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "attestation-type",
+     "{name}",
+     "--schema",
+     "cmd/kosli/testdata/person-schema.json"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "attest decision": {
+  "args": [],
+  "flags": {
+   "compliant": "true",
+   "control": "{control}",
+   "flow": "{flow}",
+   "name": "{name}",
+   "trail": "{trail}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\ndecision attestation '{name}' is reported to trail: {trail}",
+  "flags_to_test": [
+   "annotate",
+   "artifact-type",
+   "attachments",
+   "commit",
+   "compliant",
+   "control",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "name",
+   "origin-url",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "trail",
+   "user-data"
+  ],
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "attachments": "probe-attachments",
+   "commit": "HEAD",
+   "compliant": "true",
+   "control": "{control}",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "trail": "{trail}",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "attest jira": {
+  "flags": [
+   "annotate",
+   "artifact-type",
+   "assert",
+   "attachments",
+   "commit",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "ignore-branch-match",
+   "jira-api-token",
+   "jira-base-url",
+   "jira-issue-fields",
+   "jira-pat",
+   "jira-project-key",
+   "jira-secondary-source",
+   "jira-username",
+   "name",
+   "origin-url",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "trail",
+   "user-data"
+  ],
+  "skip": "needs jira"
+ },
+ "attest junit": {
+  "args": [],
+  "flags": {
+   "results-dir": "cmd/kosli/testdata/junit",
+   "flow": "{flow}",
+   "name": "{name}",
+   "trail": "{trail}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\njunit attestation '{name}' is reported to trail: {trail}",
+  "flags_to_test": [
+   "annotate",
+   "artifact-type",
+   "attachments",
+   "commit",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "name",
+   "origin-url",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "results-dir",
+   "trail",
+   "upload-results",
+   "user-data"
+  ],
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "attachments": "probe-attachments",
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "results-dir": "cmd/kosli/testdata/junit",
+   "trail": "{trail}",
+   "upload-results": "true",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "attest snyk": {
+  "flags": [
+   "annotate",
+   "artifact-type",
+   "attachments",
+   "commit",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "name",
+   "origin-url",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "scan-results",
+   "trail",
+   "upload-results",
+   "user-data"
+  ],
+  "skip": "needs snyk"
+ },
+ "attest sonar": {
+  "flags": [
+   "annotate",
+   "artifact-type",
+   "attachments",
+   "commit",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "max-wait",
+   "name",
+   "origin-url",
+   "pull-request",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "sonar-api-token",
+   "sonar-ce-task-url",
+   "sonar-project-key",
+   "sonar-revision",
+   "sonar-server-url",
+   "sonar-working-dir",
+   "trail",
+   "user-data"
+  ],
+  "skip": "needs sonarqube"
+ },
+ "begin trail": {
+  "args": [
+   "{trail}"
+  ],
+  "flags": {
+   "flow": "{flow}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\ntrail '{trail}' was begun",
+  "flags_to_test": [
+   "commit",
+   "description",
+   "dry-run",
+   "external-fingerprint",
+   "external-url",
+   "flow",
+   "origin-url",
+   "redact-commit-info",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "template-file",
+   "user-data"
+  ],
+  "flag_values": {
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "flow": "{flow}",
+   "origin-url": "http://example.com",
+   "redact-commit-info": "probe-redact-commit-info",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "template-file": "cmd/kosli/testdata/valid_template.yml",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "config": {
+  "flags": [
+   "set",
+   "unset"
+  ],
+  "skip": "needs a credentials store"
+ },
+ "create api-key": {
+  "args": [],
+  "flags": {
+   "description": "probe-description",
+   "service-account": "{account}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "ID:           {uuid}\nKey:          {secret}\nDescription:  probe-description\nCreated At:   {timestamp} \u2022 {ago}\nExpires At:   N/A",
+  "flags_to_test": [
+   "description",
+   "dry-run",
+   "expires-at",
+   "output",
+   "service-account"
+  ],
+  "flag_values": {
+   "description": "probe-description",
+   "dry-run": "true",
+   "expires-at": "probe-expires-at",
+   "output": "json",
+   "service-account": "{account}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "service-account",
+     "{account}",
+     "--privilege",
+     "reader"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "create control": {
+  "args": [
+   "{control}"
+  ],
+  "flags": {
+   "name": "{name}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "control {control} was created",
+  "flags_to_test": [
+   "description",
+   "dry-run",
+   "name"
+  ],
+  "flag_values": {
+   "description": "probe-description",
+   "dry-run": "true",
+   "name": "{name}"
+  },
+  "setup": [],
+  "verify": [
+   [
+    "get",
+    "control",
+    "{control}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "create environment": {
+  "args": [
+   "{env}"
+  ],
+  "flags": {
+   "type": "K8S"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "environment {env} was created",
+  "flags_to_test": [
+   "description",
+   "dry-run",
+   "included-environments",
+   "type"
+  ],
+  "flag_values": {
+   "description": "probe-description",
+   "dry-run": "true",
+   "included-environments": "probe-included-environments",
+   "type": "K8S"
+  },
+  "setup": [],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "create flow": {
+  "args": [
+   "{flow}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[warning] creating a flow without --template-file or --use-empty-template uses a deprecated API endpoint and will stop working in a future release; please provide a template\nflow '{flow}' was created",
+  "flags_to_test": [
+   "description",
+   "dry-run",
+   "template",
+   "template-file",
+   "use-empty-template"
+  ],
+  "flag_values": {
+   "description": "probe-description",
+   "dry-run": "true",
+   "template": "probe-template",
+   "template-file": "cmd/kosli/testdata/valid_template.yml",
+   "use-empty-template": "true"
+  },
+  "setup": [],
+  "verify": [
+   [
+    "get",
+    "flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "create policy": {
+  "args": [
+   "{policy}",
+   "cmd/kosli/testdata/policy-files/test-policy.yml"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "policy '{policy}' was created",
+  "flags_to_test": [
+   "comment",
+   "description",
+   "dry-run",
+   "type"
+  ],
+  "flag_values": {
+   "comment": "probe-comment",
+   "description": "probe-description",
+   "dry-run": "true",
+   "type": "env"
+  },
+  "setup": [],
+  "verify": [
+   [
+    "get",
+    "policy",
+    "{policy}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "create service-account": {
+  "args": [
+   "{account}"
+  ],
+  "flags": {
+   "privilege": "reader"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "service account {account} was created",
+  "flags_to_test": [
+   "description",
+   "dry-run",
+   "privilege"
+  ],
+  "flag_values": {
+   "description": "probe-description",
+   "dry-run": "true",
+   "privilege": "reader"
+  },
+  "setup": [],
+  "verify": [
+   [
+    "get",
+    "service-account",
+    "{account}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "delete api-key": {
+  "args": [
+   "{apikey}"
+  ],
+  "flags": {
+   "service-account": "{account}",
+   "assume-yes": "true"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "API key {apikey} for service account {account} was deleted!",
+  "flags_to_test": [
+   "assume-yes",
+   "dry-run",
+   "service-account"
+  ],
+  "flag_values": {
+   "assume-yes": "true",
+   "dry-run": "true",
+   "service-account": "{account}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "service-account",
+     "{account}",
+     "--privilege",
+     "reader"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "api-key",
+     "--service-account",
+     "{account}",
+     "--description",
+     "probe"
+    ],
+    "capture": [
+     "apikey",
+     "ID:\\s+(\\S+)"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "diff snapshots": {
+  "args": [
+   "{env}",
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "",
+  "flags_to_test": [
+   "output",
+   "show-unchanged"
+  ],
+  "flag_values": {
+   "output": "json",
+   "show-unchanged": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "server"
+    ]
+   },
+   {
+    "argv": [
+     "snapshot",
+     "path",
+     "{env}",
+     "--path",
+     "cmd/kosli/testdata/person-schema.json",
+     "--name",
+     "probe-artifact"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "disable beta": {
+  "flags": [],
+  "skip": "needs a server that implements it"
+ },
+ "enable beta": {
+  "flags": [],
+  "skip": "needs a server that implements it"
+ },
+ "evaluate input": {
+  "args": [],
+  "flags": {
+   "input-file": "cmd/kosli/testdata/person-schema.json",
+   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 1,
+  "baseline_output": "Error: [kosli evaluate input] policy denied\nRESULT:  DENIED",
+  "flags_to_test": [
+   "assert",
+   "input-file",
+   "no-assert",
+   "output",
+   "params",
+   "policy",
+   "show-input"
+  ],
+  "flag_values": {
+   "assert": "true",
+   "input-file": "cmd/kosli/testdata/person-schema.json",
+   "no-assert": "true",
+   "output": "json",
+   "params": "probe-params",
+   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego",
+   "show-input": "true"
+  },
+  "setup": [],
+  "verify": []
+ },
+ "evaluate trail": {
+  "args": [
+   "{trail}"
+  ],
+  "flags": {
+   "flow": "{flow}",
+   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 1,
+  "baseline_output": "Error: [kosli evaluate trail flow={flow}] policy denied\nRESULT:  DENIED",
+  "flags_to_test": [
+   "assert",
+   "attestations",
+   "flow",
+   "no-assert",
+   "output",
+   "params",
+   "policy",
+   "show-input"
+  ],
+  "flag_values": {
+   "assert": "true",
+   "attestations": "probe-attestations",
+   "flow": "{flow}",
+   "no-assert": "true",
+   "output": "json",
+   "params": "probe-params",
+   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego",
+   "show-input": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "evaluate trails": {
+  "args": [
+   "{trail}"
+  ],
+  "flags": {
+   "flow": "{flow}",
+   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 1,
+  "baseline_output": "Error: [kosli evaluate trails flow={flow}] policy denied\nRESULT:  DENIED",
+  "flags_to_test": [
+   "assert",
+   "attestations",
+   "flow",
+   "no-assert",
+   "output",
+   "params",
+   "policy",
+   "show-input"
+  ],
+  "flag_values": {
+   "assert": "true",
+   "attestations": "probe-attestations",
+   "flow": "{flow}",
+   "no-assert": "true",
+   "output": "json",
+   "params": "probe-params",
+   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego",
+   "show-input": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "fingerprint": {
+  "args": [
+   "cmd/kosli/testdata/person-schema.json"
+  ],
+  "flags": {
+   "artifact-type": "file"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+  "flags_to_test": [
+   "artifact-type",
+   "exclude",
+   "registry-password",
+   "registry-username"
+  ],
+  "flag_values": {
+   "artifact-type": "file",
+   "exclude": "probe-exclude",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username"
+  },
+  "setup": [],
+  "verify": []
+ },
+ "get api-key": {
+  "args": [
+   "{apikey}"
+  ],
+  "flags": {
+   "service-account": "{account}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "ID:           {apikey}\nDescription:  probe\nCreated At:   {timestamp} \u2022 {ago}\nExpires At:   N/A\nLast Used:    N/A",
+  "flags_to_test": [
+   "output",
+   "service-account"
+  ],
+  "flag_values": {
+   "output": "json",
+   "service-account": "{account}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "service-account",
+     "{account}",
+     "--privilege",
+     "reader"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "api-key",
+     "--service-account",
+     "{account}",
+     "--description",
+     "probe"
+    ],
+    "capture": [
+     "apikey",
+     "ID:\\s+(\\S+)"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "get artifact": {
+  "args": [
+   "{flow}@7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Name:              cmd/kosli/testdata/person-schema.json\nFlow:              {flow}\nTrail:             {trail}\nName in template:  probe-artifact\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCreated on:        {timestamp} \u2022 {ago}\nGit commit:        4ecc6213bb1c24ad0b35a3dfceaba323b13b998b\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/{flow}/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9?artifact_id={uuid}\nState:             COMPLIANT\nHistory:\n    probe-artifact reported  {timestamp}",
+  "flags_to_test": [
+   "output",
+   "trail"
+  ],
+  "flag_values": {
+   "output": "json",
+   "trail": "{trail}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   },
+   {
+    "argv": [
+     "attest",
+     "artifact",
+     "cmd/kosli/testdata/person-schema.json",
+     "--name",
+     "probe-artifact",
+     "--fingerprint",
+     "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}",
+     "--build-url",
+     "http://example.com",
+     "--commit-url",
+     "http://example.com"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "get attestation": {
+  "args": [
+   "probe-attestation"
+  ],
+  "flags": {
+   "flow": "{flow}",
+   "trail": "{trail}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Name:             probe-attestation\nType:             generic\nCompliance:       true\nCreated at:       {timestamp} \u2022 {ago}\nAttestation URL:  http://localhost/docs-cmd-test-user-shared/flows/{flow}/trails/{trail}?attestation_id={uuid}",
+  "flags_to_test": [
+   "attestation-id",
+   "fingerprint",
+   "flow",
+   "output",
+   "trail"
+  ],
+  "flag_values": {
+   "attestation-id": "probe-attestation-id",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "output": "json",
+   "trail": "{trail}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   },
+   {
+    "argv": [
+     "attest",
+     "artifact",
+     "cmd/kosli/testdata/person-schema.json",
+     "--name",
+     "probe-artifact",
+     "--fingerprint",
+     "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}",
+     "--build-url",
+     "http://example.com",
+     "--commit-url",
+     "http://example.com"
+    ]
+   },
+   {
+    "argv": [
+     "attest",
+     "generic",
+     "--name",
+     "probe-attestation",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "get control": {
+  "args": [
+   "{control}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Identifier:  {control}\nName:        {control}\nVersion:     1\nArchived:    false\nCreated by:  docs-cmd-test-user\nCreated at:  {timestamp} \u2022 {ago}",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "control",
+     "{control}",
+     "--name",
+     "{control}"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "get default-org": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Default user organization: docs-cmd-test-user-shared",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [],
+  "verify": []
+ },
+ "get environment": {
+  "args": [
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Name:              {env}\nType:              K8S\nDescription:       \nState:             N/A\nLast Reported At:  N/A\nTags:              None\nPolicies:          []",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "get flow": {
+  "args": [
+   "{flow}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Name:                {flow}\nDescription:         \nVisibility:          private\nTemplate:            \n                     version: 1\nLast Deployment At:  N/A\nTags:                None",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "get policy": {
+  "args": [
+   "{policy}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Name:                      {policy}\nDescription:               \nCreated At:                {timestamp} \u2022 {ago}\nVersions:                  1\nAttached to environments:  []\nPolicy content:\n     _schema: https://kosli.com/schemas/policy/environment/v1\n     \n     artifacts:\n       provenance:\n         required: true\n     \n       trail-compliance:\n         required: true",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "policy",
+     "{policy}",
+     "cmd/kosli/testdata/policy-files/test-policy.yml"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "get repo": {
+  "flags": [
+   "output",
+   "provider",
+   "repo-id"
+  ],
+  "skip": "needs a connected git provider"
+ },
+ "get service-account": {
+  "args": [
+   "{account}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Name:         {account}\nDescription:  N/A\nPrivilege:    reader\nCreated At:   {timestamp} \u2022 {ago}",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "service-account",
+     "{account}",
+     "--privilege",
+     "reader"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "get snapshot": {
+  "args": [
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "COMMIT  ARTIFACT                                                                       FLOW  COMPLIANCE     RUNNING_SINCE  REPLICAS\nN/A     Name: probe-artifact                                                           N/A   NON-COMPLIANT  {ago}   1\n        Fingerprint: 1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "server"
+    ]
+   },
+   {
+    "argv": [
+     "snapshot",
+     "path",
+     "{env}",
+     "--path",
+     "cmd/kosli/testdata/person-schema.json",
+     "--name",
+     "probe-artifact"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "get trail": {
+  "args": [
+   "{trail}"
+  ],
+  "flags": {
+   "flow": "{flow}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Name:              {trail}\nDescription:       \nCompliance:        COMPLIANT\nLast modified at:  {timestamp} \u2022 {ago}\nEvents:\n\n     TIME                           DESCRIPTION    GIT-COMMIT  COMPLIANCE\n     {timestamp}  trail started",
+  "flags_to_test": [
+   "flow",
+   "output"
+  ],
+  "flag_values": {
+   "flow": "{flow}",
+   "output": "json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "list api-keys": {
+  "args": [],
+  "flags": {
+   "service-account": "{account}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "ID                                DESCRIPTION  CREATED                                             EXPIRES  LAST USED\n{apikey}  probe        {timestamp} \u2022 {ago}  N/A      N/A",
+  "flags_to_test": [
+   "output",
+   "service-account"
+  ],
+  "flag_values": {
+   "output": "json",
+   "service-account": "{account}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "service-account",
+     "{account}",
+     "--privilege",
+     "reader"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "api-key",
+     "--service-account",
+     "{account}",
+     "--description",
+     "probe"
+    ],
+    "capture": [
+     "apikey",
+     "ID:\\s+(\\S+)"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "list artifacts": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "COMMIT   ARTIFACT                                                                       STATE      CREATED_AT\n4ecc621  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n4ecc621  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n4ecc621  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n4ecc621  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+  "flags_to_test": [
+   "flow",
+   "output",
+   "page",
+   "page-limit",
+   "repo"
+  ],
+  "flag_values": {
+   "flow": "{flow}",
+   "output": "json",
+   "page": "1",
+   "page-limit": "5",
+   "repo": "probe-repo"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "list controls": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "IDENTIFIER                        NAME                              DESCRIPTION  CREATED AT\nprobe-create-control-baseline-co  probe-create-control-baseline-nm               {timestamp}\nprobe-get-control-baseline-co     probe-get-control-baseline-co                  {timestamp}\n{control}   {control}                {timestamp}\n\nShowing page 1 of 1, total 3 controls",
+  "flags_to_test": [
+   "archived",
+   "output",
+   "page",
+   "page-limit",
+   "search",
+   "sort-direction",
+   "tag"
+  ],
+  "flag_values": {
+   "archived": "true",
+   "output": "json",
+   "page": "1",
+   "page-limit": "5",
+   "search": "probe-search",
+   "sort-direction": "probe-sort-direction",
+   "tag": "probe-tag"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "control",
+     "{control}",
+     "--name",
+     "{control}"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "list environments": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "NAME                                  TYPE     LAST REPORT                LAST MODIFIED              TAGS  POLICIES\nprobe-allow-artifact-baseline-en      server                              {timestamp}        []\nprobe-assert-snapshot-baseline-en     server   {timestamp}  {timestamp}        []\nprobe-create-environment-baseline-en  K8S                                 {timestamp}        []\nprobe-diff-snapshots-baseline-en      server   {timestamp}  {timestamp}        []\nprobe-get-environment-baseline-en     K8S                                 {timestamp}        []\nprobe-get-snapshot-baseline-en        server   {timestamp}  {timestamp}        []\nprobe-join-environment-baseline-en    K8S                                 {timestamp}        []\nprobe-join-environment-baseline-lg    logical                             {timestamp}        []\n{env}   K8S                                 {timestamp}        []",
+  "flags_to_test": [
+   "name",
+   "output",
+   "page",
+   "page-limit",
+   "sort",
+   "sort-direction",
+   "space-id",
+   "tag",
+   "type"
+  ],
+  "flag_values": {
+   "name": "{name}",
+   "output": "json",
+   "page": "1",
+   "page-limit": "5",
+   "sort": "probe-sort",
+   "sort-direction": "probe-sort-direction",
+   "space-id": "probe-space-id",
+   "tag": "probe-tag",
+   "type": "K8S"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "list flows": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "NAME                                        DESCRIPTION  VISIBILITY  TAGS\nprobe-allow-artifact-baseline-fl                         private     \nprobe-archive-attestation-type-baseline-fl               private     \nprobe-assert-artifact-baseline-fl                        private     \nprobe-attest-artifact-baseline-fl                        private     \nprobe-attest-custom-baseline-fl                          private     \nprobe-attest-decision-baseline-fl                        private     \nprobe-attest-generic-baseline-fl                         private     \nprobe-attest-junit-baseline-fl                           private     \nprobe-attest-override-baseline-fl                        private     \nprobe-begin-trail-baseline-fl                            private     \nprobe-create-attestation-type-baseline-fl                private     \nprobe-create-flow-baseline-fl                            private     \nprobe-evaluate-trail-baseline-fl                         private     \nprobe-evaluate-trails-baseline-fl                        private     \nprobe-get-artifact-baseline-fl                           private     \nprobe-get-attestation-baseline-fl                        private     \nprobe-get-attestation-type-baseline-fl                   private     \nprobe-get-flow-baseline-fl                               private     \nprobe-get-trail-baseline-fl                              private     \nprobe-list-artifacts-baseline-fl                         private     \nprobe-list-attestation-types-baseline-fl                 private     \n{flow}                             private",
+  "flags_to_test": [
+   "ignore-case",
+   "name",
+   "output",
+   "page",
+   "page-limit"
+  ],
+  "flag_values": {
+   "ignore-case": "true",
+   "name": "{name}",
+   "output": "json",
+   "page": "1",
+   "page-limit": "5"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "list policies": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "NAME                             DESCRIPTION  CREATED AT                                     LAST VERSION  USED BY ENVS\nprobe-attach-policy-baseline-po               {timestamp} \u2022 {ago}  1             []\nprobe-create-policy-baseline-po               {timestamp} \u2022 {ago}  1             []\nprobe-detach-policy-baseline-po               {timestamp} \u2022 {ago}  1             []\nprobe-get-policy-baseline-po                  {timestamp} \u2022 {ago}  1             []",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [],
+  "verify": []
+ },
+ "list repos": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "No repos were found.",
+  "flags_to_test": [
+   "name",
+   "output",
+   "page",
+   "page-limit",
+   "provider",
+   "repo-id",
+   "search",
+   "sort-direction",
+   "tag"
+  ],
+  "flag_values": {
+   "name": "{name}",
+   "output": "json",
+   "page": "1",
+   "page-limit": "5",
+   "provider": "probe-provider",
+   "repo-id": "probe-repo-id",
+   "search": "probe-search",
+   "sort-direction": "probe-sort-direction",
+   "tag": "probe-tag"
+  },
+  "setup": [],
+  "verify": []
+ },
+ "list service-accounts": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "NAME                                      DESCRIPTION  PRIVILEGE  CREATED\nprobe-create-api-key-baseline-sa          N/A          reader     {timestamp} \u2022 {ago}\nprobe-create-service-account-baseline-sa  N/A          reader     {timestamp} \u2022 {ago}\nprobe-delete-api-key-baseline-sa          N/A          reader     {timestamp} \u2022 {ago}\nprobe-get-api-key-baseline-sa             N/A          reader     {timestamp} \u2022 {ago}\nprobe-get-service-account-baseline-sa     N/A          reader     {timestamp} \u2022 {ago}\nprobe-list-api-keys-baseline-sa           N/A          reader     {timestamp} \u2022 {ago}\n{account}   N/A          reader     {timestamp} \u2022 {ago}",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "service-account",
+     "{account}",
+     "--privilege",
+     "reader"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "list snapshots": {
+  "args": [
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "SNAPSHOT  FROM                           TO   DURATION        COMPLIANT\n1         {timestamp}  now  about a second  false",
+  "flags_to_test": [
+   "interval",
+   "output",
+   "page",
+   "page-limit",
+   "reverse"
+  ],
+  "flag_values": {
+   "interval": "probe-interval",
+   "output": "json",
+   "page": "1",
+   "page-limit": "5",
+   "reverse": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "server"
+    ]
+   },
+   {
+    "argv": [
+     "snapshot",
+     "path",
+     "{env}",
+     "--path",
+     "cmd/kosli/testdata/person-schema.json",
+     "--name",
+     "probe-artifact"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "list trails": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "NAME                                        DESCRIPTION  COMPLIANCE\n{trail}                            COMPLIANT\nprobe-list-attestation-types-baseline-tr                 COMPLIANT\nprobe-list-artifacts-baseline-tr                         COMPLIANT\nprobe-get-trail-baseline-tr                              COMPLIANT\nprobe-get-attestation-type-baseline-tr                   COMPLIANT\nprobe-get-attestation-baseline-tr                        COMPLIANT\nprobe-get-artifact-baseline-tr                           COMPLIANT\nprobe-evaluate-trails-baseline-tr                        COMPLIANT\nprobe-evaluate-trail-baseline-tr                         COMPLIANT\nprobe-create-attestation-type-baseline-tr                COMPLIANT\nprobe-begin-trail-baseline-tr                            COMPLIANT\nprobe-attest-override-baseline-tr                        COMPLIANT\nprobe-attest-junit-baseline-tr                           COMPLIANT\nprobe-attest-generic-baseline-tr                         COMPLIANT\nprobe-attest-decision-baseline-tr                        COMPLIANT\nprobe-attest-custom-baseline-tr                          COMPLIANT\nprobe-attest-artifact-baseline-tr                        COMPLIANT\nprobe-assert-artifact-baseline-tr                        COMPLIANT\nprobe-archive-attestation-type-baseline-tr               COMPLIANT\nprobe-allow-artifact-baseline-tr                         COMPLIANT\n\nShowing page 1 of 1, total 20 items",
+  "flags_to_test": [
+   "fingerprint",
+   "flow",
+   "flow-tag",
+   "output",
+   "page",
+   "page-limit"
+  ],
+  "flag_values": {
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "flow-tag": "probe-flow-tag",
+   "output": "json",
+   "page": "1",
+   "page-limit": "5"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "rename flow": {
+  "args": [
+   "{flow}",
+   "{name}-1"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "flow {flow} was renamed to {name}-1",
+  "flags_to_test": [
+   "dry-run"
+  ],
+  "flag_values": {
+   "dry-run": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "rotate api-key": {
+  "args": [
+   "{apikey}"
+  ],
+  "flags": {
+   "service-account": "{account}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "ID:                   {apikey}\nKey:                  {secret}\nDescription:          probe\nCreated At:           {timestamp} \u2022 {ago}\nExpires At:           N/A\nOld Key Valid Until:  {timestamp} \u2022 in one day",
+  "flags_to_test": [
+   "dry-run",
+   "expires-at",
+   "grace-period-hours",
+   "output",
+   "service-account"
+  ],
+  "flag_values": {
+   "dry-run": "true",
+   "expires-at": "probe-expires-at",
+   "grace-period-hours": "probe-grace-period-hours",
+   "output": "json",
+   "service-account": "{account}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "service-account",
+     "{account}",
+     "--privilege",
+     "reader"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "api-key",
+     "--service-account",
+     "{account}",
+     "--description",
+     "probe"
+    ],
+    "capture": [
+     "apikey",
+     "ID:\\s+(\\S+)"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "search": {
+  "args": [
+   "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Search result resolved to artifact with fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-assert-artifact-baseline-fl\nGit commit:        4ecc6213bb1c24ad0b35a3dfceaba323b13b998b\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-assert-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 4ecc621    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-attest-artifact-baseline-fl\nGit commit:        4ecc6213bb1c24ad0b35a3dfceaba323b13b998b\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-attest-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 4ecc621    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-get-artifact-baseline-fl\nGit commit:        4ecc6213bb1c24ad0b35a3dfceaba323b13b998b\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-get-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 4ecc621    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-get-attestation-baseline-fl\nGit commit:        4ecc6213bb1c24ad0b35a3dfceaba323b13b998b\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-get-attestation-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 4ecc621    {timestamp}\n    Artifact created  {timestamp}",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [],
+  "verify": []
+ },
+ "snapshot azure": {
+  "flags": [
+   "azure-client-id",
+   "azure-client-secret",
+   "azure-resource-group-name",
+   "azure-subscription-id",
+   "azure-tenant-id",
+   "digests-source",
+   "dry-run",
+   "zip"
+  ],
+  "skip": "needs azure"
+ },
+ "snapshot cloud-run": {
+  "flags": [
+   "dry-run",
+   "exclude",
+   "exclude-regex",
+   "include",
+   "include-regex",
+   "project",
+   "region",
+   "resolve-names"
+  ],
+  "skip": "needs google cloud"
+ },
+ "snapshot docker": {
+  "args": [
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[15] containers were reported to environment {env}",
+  "flags_to_test": [
+   "dry-run"
+  ],
+  "flag_values": {
+   "dry-run": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "docker"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "snapshot ecs": {
+  "flags": [
+   "aws-key-id",
+   "aws-region",
+   "aws-secret-key",
+   "clusters",
+   "clusters-regex",
+   "dry-run",
+   "exclude",
+   "exclude-regex",
+   "exclude-services",
+   "exclude-services-regex",
+   "services",
+   "services-regex"
+  ],
+  "skip": "needs aws"
+ },
+ "snapshot k8s": {
+  "flags": [
+   "config-file",
+   "dry-run",
+   "exclude-namespaces",
+   "exclude-namespaces-regex",
+   "kubeconfig",
+   "namespaces",
+   "namespaces-regex"
+  ],
+  "skip": "needs kubernetes"
+ },
+ "snapshot lambda": {
+  "flags": [
+   "aws-key-id",
+   "aws-region",
+   "aws-secret-key",
+   "dry-run",
+   "exclude",
+   "exclude-regex",
+   "function-names",
+   "function-names-regex"
+  ],
+  "skip": "needs aws"
+ },
+ "snapshot path": {
+  "args": [
+   "{env}"
+  ],
+  "flags": {
+   "name": "{name}",
+   "path": "cmd/kosli/testdata/person-schema.json"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[1] artifacts were reported to environment {env}",
+  "flags_to_test": [
+   "dry-run",
+   "exclude",
+   "name",
+   "path",
+   "watch"
+  ],
+  "flag_values": {
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "name": "{name}",
+   "path": "cmd/kosli/testdata/person-schema.json",
+   "watch": "false"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "server"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "snapshot paths": {
+  "args": [
+   "{env}"
+  ],
+  "flags": {
+   "paths-file": "hack/empty-flag-audit/paths.yml"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[1] artifacts were reported to environment {env}",
+  "flags_to_test": [
+   "dry-run",
+   "paths-file",
+   "watch"
+  ],
+  "flag_values": {
+   "dry-run": "true",
+   "paths-file": "hack/empty-flag-audit/paths.yml",
+   "watch": "false"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "server"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "snapshot s3": {
+  "flags": [
+   "aws-key-id",
+   "aws-region",
+   "aws-secret-key",
+   "bucket",
+   "dry-run",
+   "exclude",
+   "exclude-regex",
+   "include",
+   "include-regex"
+  ],
+  "skip": "needs aws"
+ },
+ "status": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "OK",
+  "flags_to_test": [
+   "assert"
+  ],
+  "flag_values": {
+   "assert": "true"
+  },
+  "setup": [],
+  "verify": []
+ },
+ "tag": {
+  "args": [
+   "flow",
+   "{flow}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "No tags were applied for flow '{flow}'",
+  "flags_to_test": [
+   "dry-run",
+   "provider",
+   "repo-id",
+   "set",
+   "unset"
+  ],
+  "flag_values": {
+   "dry-run": "true",
+   "provider": "probe-provider",
+   "repo-id": "probe-repo-id",
+   "set": "probe-set",
+   "unset": "probe-unset"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "unarchive control": {
+  "args": [
+   "{control}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "control {control} was unarchived",
+  "flags_to_test": [
+   "dry-run"
+  ],
+  "flag_values": {
+   "dry-run": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "control",
+     "{control}",
+     "--name",
+     "{control}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "control",
+    "{control}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "update control": {
+  "args": [
+   "{control}"
+  ],
+  "flags": {
+   "name": "{name}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "control {control} was updated",
+  "flags_to_test": [
+   "description",
+   "dry-run",
+   "link",
+   "name"
+  ],
+  "flag_values": {
+   "description": "probe-description",
+   "dry-run": "true",
+   "link": "probe-link",
+   "name": "{name}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "control",
+     "{control}",
+     "--name",
+     "{control}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "control",
+    "{control}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "update default-org": {
+  "args": [
+   "docs-cmd-test-user-shared"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "default organization is set to: docs-cmd-test-user-shared",
+  "flags_to_test": [
+   "dry-run"
+  ],
+  "flag_values": {
+   "dry-run": "true"
+  },
+  "setup": [],
+  "verify": []
+ },
+ "version": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "version.BuildInfo{Version:\"dev\", GitCommit:\"\", GitTreeState:\"\", GoVersion:\"go1.26.5\"}",
+  "flags_to_test": [
+   "short"
+  ],
+  "flag_values": {
+   "short": "true"
+  },
+  "setup": [],
+  "verify": []
+ },
+ "attest override": {
+  "args": [],
+  "flags": {
+   "new-compliance-status": "true",
+   "flow": "{flow}",
+   "name": "{name}",
+   "original-attestation-type": "generic",
+   "reason": "probe",
+   "trail": "{trail}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\nattestation '{name}' has been overridden in trail: {trail}",
+  "flags_to_test": [
+   "annotate",
+   "artifact-type",
+   "commit",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "name",
+   "new-compliance-status",
+   "origin-url",
+   "original-attestation-type",
+   "reason",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "trail",
+   "user-data"
+  ],
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "name": "{name}",
+   "new-compliance-status": "true",
+   "origin-url": "http://example.com",
+   "original-attestation-type": "generic",
+   "reason": "probe",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "trail": "{trail}",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   },
+   {
+    "argv": [
+     "attest",
+     "generic",
+     "--name",
+     "{name}",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "archive attestation-type": {
+  "args": [
+   "{name}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Custom attestation type {name} was archived",
+  "flags_to_test": [
+   "dry-run"
+  ],
+  "flag_values": {
+   "dry-run": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "attestation-type",
+     "{name}",
+     "--schema",
+     "cmd/kosli/testdata/person-schema.json"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "assert pullrequest azure": {
+  "flags": [
+   "azure-org-url",
+   "azure-token",
+   "commit",
+   "dry-run",
+   "project",
+   "repository"
+  ],
+  "skip": "needs azure devops"
+ },
+ "assert pullrequest bitbucket": {
+  "flags": [
+   "bitbucket-access-token",
+   "bitbucket-password",
+   "bitbucket-username",
+   "bitbucket-workspace",
+   "commit",
+   "dry-run",
+   "repository"
+  ],
+  "skip": "needs bitbucket"
+ },
+ "assert pullrequest github": {
+  "flags": [
+   "commit",
+   "dry-run",
+   "github-base-url",
+   "github-org",
+   "github-token",
+   "repository"
+  ],
+  "skip": "needs github"
+ },
+ "assert pullrequest gitlab": {
+  "flags": [
+   "commit",
+   "dry-run",
+   "gitlab-base-url",
+   "gitlab-org",
+   "gitlab-token",
+   "repository"
+  ],
+  "skip": "needs gitlab"
+ },
+ "attach-policy": {
+  "args": [
+   "{policy}"
+  ],
+  "flags": {
+   "environment": "{env}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "policy '{policy}' is attached to environments: [{env}]",
+  "flags_to_test": [
+   "dry-run",
+   "environment"
+  ],
+  "flag_values": {
+   "dry-run": "true",
+   "environment": "{env}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "policy",
+     "{policy}",
+     "cmd/kosli/testdata/policy-files/test-policy.yml"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "policy",
+    "{policy}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "attest pullrequest azure": {
+  "flags": [
+   "annotate",
+   "artifact-type",
+   "assert",
+   "attachments",
+   "azure-org-url",
+   "azure-token",
+   "commit",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "name",
+   "origin-url",
+   "project",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "trail",
+   "user-data"
+  ],
+  "skip": "needs azure devops"
+ },
+ "attest pullrequest bitbucket": {
+  "flags": [
+   "annotate",
+   "artifact-type",
+   "assert",
+   "attachments",
+   "bitbucket-access-token",
+   "bitbucket-password",
+   "bitbucket-username",
+   "bitbucket-workspace",
+   "commit",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "name",
+   "origin-url",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "trail",
+   "user-data"
+  ],
+  "skip": "needs bitbucket"
+ },
+ "attest pullrequest github": {
+  "flags": [
+   "annotate",
+   "artifact-type",
+   "assert",
+   "attachments",
+   "commit",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "github-base-url",
+   "github-org",
+   "github-token",
+   "name",
+   "origin-url",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "trail",
+   "user-data"
+  ],
+  "skip": "needs github"
+ },
+ "attest pullrequest gitlab": {
+  "flags": [
+   "annotate",
+   "artifact-type",
+   "assert",
+   "attachments",
+   "commit",
+   "description",
+   "dry-run",
+   "exclude",
+   "external-fingerprint",
+   "external-url",
+   "fingerprint",
+   "flow",
+   "gitlab-base-url",
+   "gitlab-org",
+   "gitlab-token",
+   "name",
+   "origin-url",
+   "redact-commit-info",
+   "registry-password",
+   "registry-username",
+   "repo-id",
+   "repo-provider",
+   "repo-root",
+   "repo-url",
+   "repository",
+   "trail",
+   "user-data"
+  ],
+  "skip": "needs gitlab"
+ },
+ "create attestation-type": {
+  "args": [
+   "{name}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "attestation-type {name} was created",
+  "flags_to_test": [
+   "description",
+   "dry-run",
+   "jq",
+   "schema"
+  ],
+  "flag_values": {
+   "description": "probe-description",
+   "dry-run": "true",
+   "jq": "probe-jq",
+   "schema": "probe-schema"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "delete service-account": {
+  "args": [
+   "{account}"
+  ],
+  "flags": {
+   "assume-yes": "true"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "service account {account} was deleted!",
+  "flags_to_test": [
+   "assume-yes",
+   "dry-run"
+  ],
+  "flag_values": {
+   "assume-yes": "true",
+   "dry-run": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "service-account",
+     "{account}",
+     "--privilege",
+     "reader"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "service-account",
+    "{account}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "detach-policy": {
+  "args": [
+   "{policy}"
+  ],
+  "flags": {
+   "environment": "{env}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "policy '{policy}' is detached from environments: [{env}]",
+  "flags_to_test": [
+   "dry-run",
+   "environment"
+  ],
+  "flag_values": {
+   "dry-run": "true",
+   "environment": "{env}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "policy",
+     "{policy}",
+     "cmd/kosli/testdata/policy-files/test-policy.yml"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "policy",
+    "{policy}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "get attestation-type": {
+  "args": [
+   "{name}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "Name:              {name}\nOrganization:      docs-cmd-test-user-shared\nArchived:          false\nCreated By:        docs-cmd-test-user\nCreated at:        {timestamp} \u2022 {ago}\nLast modified at:  {timestamp} \u2022 {ago}\nVersions:          \n                   Version:      1\n                   Timestamp:    {timestamp} \u2022 {ago}\n                   Created By:   docs-cmd-test-user\n                   Type schema:  {\"additionalProperties\":true,\"properties\":{\"age\":{\"type\":\"integer\"},\"name\":{\"type\":\"string\"}},\"type\":\"object\"}\n                   Evaluator:    \n                                 Content Type:  default",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "attestation-type",
+     "{name}",
+     "--schema",
+     "cmd/kosli/testdata/person-schema.json"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "join environment": {
+  "args": [],
+  "flags": {
+   "logical": "{logical}",
+   "physical": "{env}"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "environment '{env}' was joined to '{logical}'",
+  "flags_to_test": [
+   "dry-run",
+   "logical",
+   "physical"
+  ],
+  "flag_values": {
+   "dry-run": "true",
+   "logical": "{logical}",
+   "physical": "{env}"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{logical}",
+     "--type",
+     "logical"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "list attestation-types": {
+  "args": [],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "NAME                                       DESCRIPTION  LATEST VERSION\n{name}                1\nprobe-get-attestation-type-baseline-nm                  1\nprobe-create-attestation-type-baseline-nm               1\nprobe-attest-custom-baseline-nm                         1",
+  "flags_to_test": [
+   "output"
+  ],
+  "flag_values": {
+   "output": "json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "attestation-type",
+     "{name}",
+     "--schema",
+     "cmd/kosli/testdata/person-schema.json"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "log environment": {
+  "args": [
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "SNAPSHOT  EVENT                                                                          FLOW\n#1        Artifact: probe-artifact                                                       \n          Fingerprint: 1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01       \n          Description: 1 instance started running (from 0 to 1)                               \n          Reported at: {timestamp}",
+  "flags_to_test": [
+   "end",
+   "end-ts",
+   "interval",
+   "output",
+   "page",
+   "page-limit",
+   "repo",
+   "reverse",
+   "start",
+   "start-ts"
+  ],
+  "flag_values": {
+   "end": "probe-end",
+   "end-ts": "probe-end-ts",
+   "interval": "probe-interval",
+   "output": "json",
+   "page": "1",
+   "page-limit": "5",
+   "repo": "probe-repo",
+   "reverse": "true",
+   "start": "probe-start",
+   "start-ts": "probe-start-ts"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "server"
+    ]
+   },
+   {
+    "argv": [
+     "snapshot",
+     "path",
+     "{env}",
+     "--path",
+     "cmd/kosli/testdata/person-schema.json",
+     "--name",
+     "probe-artifact"
+    ]
+   }
+  ],
+  "verify": []
+ },
+ "rename environment": {
+  "args": [
+   "{env}",
+   "{name}-1"
+  ],
+  "flags": {},
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "environment {env} was renamed to {name}-1",
+  "flags_to_test": [
+   "dry-run"
+  ],
+  "flag_values": {
+   "dry-run": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
+ },
+ "update service-account": {
+  "args": [
+   "{account}"
+  ],
+  "flags": {
+   "description": "probe-description"
+  },
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "service account {account} was updated",
+  "flags_to_test": [
+   "description",
+   "dry-run",
+   "privilege"
+  ],
+  "flag_values": {
+   "description": "probe-description",
+   "dry-run": "true",
+   "privilege": "reader"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "service-account",
+     "{account}",
+     "--privilege",
+     "reader"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "service-account",
+    "{account}",
+    "--output",
+    "json"
+   ]
+  ]
+ }
+}
