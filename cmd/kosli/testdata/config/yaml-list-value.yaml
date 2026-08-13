@@ -1,0 +1,5 @@
+org: demo
+api-token: DRY_RUN
+environment:
+  - prod
+  - staging

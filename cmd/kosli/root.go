@@ -562,6 +562,97 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	return nil
 }
 
+// scalarString renders one decoded config value as the text a flag would have
+// been given on the command line, and refuses a value that is itself a
+// structure. A flag holds values, so a nested sequence or mapping has nowhere to
+// go; rendering it would produce a plausible-looking string rather than an
+// error.
+func scalarString(value any) (string, error) {
+	switch value.(type) {
+	case []interface{}:
+		return "", fmt.Errorf("expects values, but one of them is a list")
+	case map[string]interface{}:
+		return "", fmt.Errorf("expects values, but one of them is a set of key/value pairs")
+	default:
+		return fmt.Sprintf("%v", value), nil
+	}
+}
+
+// scalarStrings renders every element of a decoded sequence, refusing the whole
+// sequence if any element is itself a structure.
+func scalarStrings(values []interface{}) ([]string, error) {
+	rendered := make([]string, len(values))
+	for i, value := range values {
+		element, err := scalarString(value)
+		if err != nil {
+			return nil, err
+		}
+		rendered[i] = element
+	}
+	return rendered, nil
+}
+
+// applyConfigValue writes a value taken from the config file or the environment
+// onto its flag, and refuses one whose shape the flag cannot hold.
+//
+// A decoded YAML value is one of three things: a sequence, a mapping, or a
+// scalar. A flag holds values, not structures, so only two of those shapes have
+// anywhere to go - a sequence onto a multi-value flag, a mapping onto a
+// key=value flag - and only when their contents are scalars.
+//
+// Anything else is refused rather than rendered. Rendering is what makes this
+// worth stating: %v turns any shape into a plausible-looking string, so a list
+// of mappings would become the attestation name "map[name:coverage]" instead of
+// an error. The shapes someone can write are unbounded, so the check is on what
+// fits rather than on a list of known mistakes: the four ways to arrive here
+// without a home are a sequence on a flag that holds one value, a sequence whose
+// elements are not scalars, a mapping on a flag that is not key=value, and a
+// mapping whose values are not scalars.
+func applyConfigValue(flags *pflag.FlagSet, flag *pflag.Flag, value any) error {
+	switch shaped := value.(type) {
+	case []interface{}:
+		sliceValue, isSlice := flag.Value.(pflag.SliceValue)
+		if !isSlice {
+			return fmt.Errorf("expects a single value, but a list was given")
+		}
+		elements, err := scalarStrings(shaped)
+		if err != nil {
+			return err
+		}
+		if err := sliceValue.Replace(elements); err != nil {
+			return err
+		}
+
+	case map[string]interface{}:
+		// The pairs are applied one at a time, in the form the flag accepts,
+		// exactly as repeating the flag on the command line would. The first Set
+		// replaces whatever the flag held and later ones merge, so the random
+		// order of a Go map range does not affect the result.
+		if flag.Value.Type() != "stringToString" {
+			return fmt.Errorf("expects a single value, but a set of key/value pairs was given")
+		}
+		for key, item := range shaped {
+			if _, err := scalarString(item); err != nil {
+				return err
+			}
+			if err := flags.Set(flag.Name, fmt.Sprintf("%v=%v", key, item)); err != nil {
+				return err
+			}
+		}
+		return nil
+
+	default:
+		return flags.Set(flag.Name, fmt.Sprintf("%v", value))
+	}
+
+	// Replace writes the value directly, bypassing FlagSet.Set, so the flag must
+	// be marked as set here. Required-flag validation and every Changed() check
+	// read this field.
+	flag.Changed = true
+
+	return nil
+}
+
 // configValueSource names where a flag's value came from, so that a failure to
 // apply it points at the thing the user has to edit. viper reads a value from
 // the environment when the bound variable holds one, and from the config file
@@ -638,7 +729,7 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
 				}
 			}
 
-			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
+			if err := applyConfigValue(cmd.Flags(), f, val); err != nil {
 				bindErr = errors.Join(bindErr, fmt.Errorf("failed to set flag '--%s' from %s: %v", f.Name, configValueSource(f.Name), err))
 			}
 		}

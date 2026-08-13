@@ -1,5 +1,4 @@
 org: demo
 api-token: DRY_RUN
-link:
-  docs: https://example.com/docs
+link: notkeyvalue
 max-api-retries: not-a-number
