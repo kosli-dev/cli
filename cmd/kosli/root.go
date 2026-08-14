@@ -106,6 +106,8 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 
 	// single source of truth for the env type lists shown in flag help texts;
 	// the server is the authority on which types are actually accepted
+	validS3FingerprintSources = "content, metadata"
+
 	validEnvTypesList = "K8S, ECS, S3, lambda, server, docker, azure-apps, cloud-run, logical"
 
 	// single source of truth for the service account privilege list shown in
@@ -249,6 +251,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	bucketPathsRegexFlag            = "[optional] The comma separated list of Go regular expressions matched against object keys in the S3 bucket to include when fingerprinting. Cannot be used together with --exclude or --exclude-regex."
 	excludeBucketPathsFlag          = "[optional] The comma separated list of file and/or directory paths in the S3 bucket to exclude when fingerprinting. Paths match by literal prefix. Cannot be used together with --include or --include-regex."
 	excludeBucketPathsRegexFlag     = "[optional] The comma separated list of Go regular expressions matched against object keys in the S3 bucket to exclude when fingerprinting. Cannot be used together with --include or --include-regex."
+	s3FingerprintSourceFlag         = "[defaulted] How to fingerprint the bucket content. Valid sources are: [" + validS3FingerprintSources + "]. 'content' downloads every matching object and hashes it. 'metadata' reads the SHA256 checksum S3 stores for each object instead, which requires every matching object to have been uploaded with a full-object SHA256 checksum. Both produce the same fingerprint and need the same permissions."
 	pathsFlag                       = "The comma separated list of absolute or relative paths of artifact directories or files. Can take glob patterns, but be aware that each matching path will be reported as an artifact."
 	excludePathsFlag                = "[optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir."
 	serverExcludePathsFlag          = "[optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns."
