@@ -100,7 +100,7 @@ which is all it takes.
 | `kosli attach-policy P --environment "$VAR"` | the policy is attached to no environment. Anything deployed there is judged without it | changes compliance |
 | `kosli detach-policy P --environment "$VAR"` | the policy is detached from no environment, so it stays in force | changes compliance |
 | `kosli create environment E --type logical --included-environments "$VAR"` | the record cannot be read back, and `list environments` returns HTTP 500 for every environment in the org until it is removed | **outright bug**, written up in `2026-08-13-included-environments-500.md` |
-| `kosli create flow F` with no `--description` at all | overwrites the description the flow already had with an empty one. Ten combinations across eight commands do this, to `--description`, `--comment` or `--user-data` | **outright bug**, no empty value needed, written up in `2026-08-13-upsert-overwrites-unmentioned-fields.md` |
+| `kosli begin trail T --flow F` with no `--description` at all | the description the trail already had is replaced by an empty one, even though the server's update is written to leave an absent field alone | **an inconsistency**, not an empty value at all, written up in `2026-08-13-upsert-overwrites-unmentioned-fields.md` |
 | `kosli list environments --tag "$VAR"` | answers "No environments were found", identical to a real no-match, exit 0 | wrong answer |
 
 Ten findings, from one slice of one CLI, all of them silent. What the rest of the
@@ -109,11 +109,17 @@ these one at a time, and a rule that refuses an empty value everywhere removes
 the whole class rather than the ten instances of it we happened to reach.
 
 Two of them are worth filing on their own account, whatever is decided here, and
-each has its own write-up alongside this one. The description wiping matters to
-this decision as well: those commands send the field whether or not you passed
-the flag, which is why an empty `--description` and an absent one are
-indistinguishable. Fixing that is a precondition for refusing an empty value on
-those flags.
+each has its own write-up alongside this one.
+
+The last of those needs a word, because it is not what it first looked like.
+`kosli create flow` is a create-or-update, and it reads its flags the way
+`kubectl apply` reads a manifest: what you pass is what the flow becomes, so an
+absent `--description` meaning "no description" is that model working, not a bug.
+`begin trail` describes itself the same way, but its server side is written to
+leave an absent description alone. Two commands of the same shape, two answers.
+The bug is the disagreement, and it is worth settling on its own account: until
+the CLI and server agree on what an absent flag means, "empty" and "absent"
+cannot be given consistent meanings either.
 
 ## What this proposal cannot fix
 
@@ -149,13 +155,19 @@ One of each, read with `--debug`:
 |---|---|---|
 | `kosli attest generic --fingerprint ""` | no fingerprint at all, sent to the trail-scoped endpoint `/attestations/{org}/{flow}/trail/{trail}/generic` | the CLI's. It picked that endpoint. Someone calling the API chooses the artifact endpoint or the trail endpoint deliberately, and is not misled. The rule settles this one |
 | `kosli create environment --included-environments ""` | a logical environment with **no** `included_environments` field, which the server accepts with a 201 and then cannot read back. Omitting the flag sends the same thing | neither's, for this decision. It is a plain defect, being fixed on its own account |
-| `kosli create environment` | `"description": ""`, whether or not `--description` was passed | the server's. By the time it arrives this is not about empty values at all: it is a request meaning "nothing was specified", treated as an instruction to erase. A direct caller sends the same thing and gets the same result |
+| `kosli begin trail` | `"description": ""`, whether or not `--description` was passed | shared. The server's update is written to leave an absent description alone, and the CLI defeats that by always sending one. A direct caller that sends `""` gets the same result, so the CLI fix alone does not settle it |
 
-So the server's half of this is one rule, and not a mirror of ours: **an absent
-or empty field is not an instruction to erase what is stored.** That covers every
-client, including the ones the warnings cannot see, which makes the server work in
-step 2 more than a precondition for the CLI change - it is the part that closes
-the hole for everyone.
+So the server's half of this is not a mirror of ours. It is: **each command must
+say whether an absent field means "leave it alone" or "set it to nothing", and
+the CLI and the server must agree.** `create flow` reads its flags the way
+`kubectl apply` reads a manifest, where replacing is right. `begin trail`
+describes itself the same way but its server side leaves an absent description
+alone, and the CLI sends one anyway. Neither model is wrong; having both, one per
+layer, is.
+
+Settling that covers every client, including the ones the warnings cannot see,
+which makes the server work in step 2 more than a precondition for the CLI
+change - it is the part that closes the hole for everyone.
 
 ## What refusing an empty value would cost
 
@@ -247,7 +259,7 @@ per org to see them.
 
 #### Step 2: the CLI warns, in a 2.x release, breaking nothing
 
-Fix the two outright bugs - the description wiping and the
+Fix the two bugs above - the absent-flag disagreement and the
 `--included-environments` 500 - and make every empty value print a warning naming
 the flag, and report it. Nothing starts failing, and anyone whose pipeline has an
 unset variable can see it and fix it before it costs them anything.

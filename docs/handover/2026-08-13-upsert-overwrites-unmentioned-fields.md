@@ -1,35 +1,32 @@
-# Bug: an upsert overwrites fields the command never mentioned
+# Bug: the CLI and the server disagree about what an absent flag means
 
-Several commands are upserts. Running one a second time without `--description`
-replaces the description the object already had with an empty one. No empty value
-is involved and no variable needs to be unset: omitting the flag is enough. The
-same happens to `--user-data`, and to `create policy --comment`.
+`kosli create flow` and `kosli begin trail` are both create-or-update, and both
+describe themselves that way. They do not agree on what happens to a field you
+did not mention.
 
-Anyone driving these from CI, passing the flag on some runs and not others, has
-objects whose description or user data no longer says what they set it to.
+- **`create flow` uses the apply model.** "Create or update a Kosli flow. You can
+  specify flow parameters in flags." What you pass is what the flow becomes, so
+  an absent `--description` meaning "no description" is that model working. There
+  is nothing to fix in it.
+- **`begin trail` says the same thing and behaves differently.** Its update on
+  the server is guarded by `if "description" in payload`, so an absent
+  description leaves the stored one alone - the patch model. The CLI never lets
+  that guard fire, because it puts `description` in the payload whether or not
+  the flag was passed.
 
-## Reproducing it
+So a trail's description is replaced by an empty one by a command that never
+mentioned it, and the server was written to prevent exactly that.
 
-Against a freshly reset local server:
+(The guard was read in the server repo earlier in this work. It cannot be checked
+from this repo, and it cannot be checked through the CLI either, because the CLI
+always sends the field.)
 
-```
-$ kosli create flow wf --use-empty-template --description "the payments flow"
-$ kosli get flow wf --output json | jq .description
-"the payments flow"
+## The fields it applies to
 
-$ kosli create flow wf --use-empty-template          # no --description
-$ kosli get flow wf --output json | jq .description
-""
-```
-
-Everything found so far, by running each command twice and reading the object
-back:
+Running each command twice and reading the object back afterwards:
 
 | Command and flag | after the first run | after a second run without the flag |
 |---|---|---|
-| `create flow --description` | `the payments flow` | `""` |
-| `create policy --description` | `the env policy` | `""` |
-| `create policy --comment` | `the review note` | `""` |
 | `begin trail --description` | `the release trail` | `""` |
 | `begin trail --user-data` | the document | `{}` |
 | `attest generic --user-data` | the document | `{}` |
@@ -37,66 +34,59 @@ back:
 | `attest junit --user-data` | the document | `{}` |
 | `attest decision --user-data` | the document | `{}` |
 | `attest override --user-data` | the document | `{}` |
+| `create flow --description` | `the payments flow` | `""` |
+| `create policy --description` | `the env policy` | `""` |
+| `create policy --comment` | `the review note` | `""` |
 
-Every run exits 0 and prints what success prints.
+The last three are the apply model doing its job, and are listed only so the set
+is complete. The rest are the disagreement.
 
-`create environment` sends `"description": ""` in the same way but the
-description survives, so sending an empty field is not on its own enough - the
-server decides. Only running each one settles it, which is why the list above is
-what was observed rather than what the payloads suggest.
+`create environment` sends `"description": ""` in the same way and the
+description survives, so what the CLI sends does not settle it on its own - the
+server decides. Only running each one shows which is which.
 
-## What is happening
+## How much is at stake
 
-The CLI puts `description` in the payload whether or not the flag was passed, so
-an absent flag arrives at the server as an empty string, and the server writes
-it. That also means `--description ""` and no `--description` produce the same
-request: there is currently no way to say "leave the description alone".
+Less than "data loss" would suggest. A trail keeps its earlier value in its
+`events[]`, each carrying the `trail_data_json` that was reported, and an
+attestation's earlier value stays on the attestation event that carried it. What
+changes is the current view, not the record of what was reported.
 
-## The fix, and the order it has to happen in
+Nor does it reach backwards. A trail snapshots the flow state it was created
+with: changing a flow's template afterwards leaves existing trails requiring
+exactly what they always did. State is snapshotted, not shared.
 
-The CLI must send `description` only when the flag was actually passed. That is
-one change in the CLI and a different amount of work per command on the server:
+One thing is unmeasured. A policy can read `user_data`, so a trail or attestation
+whose `user_data` has become `{}` may evaluate differently from one that still
+carries it. Whether any policy does read it in practice has not been tested here.
 
-| Command | What the server needs | If the CLI stopped sending it today |
-|---|---|---|
-| `begin trail` | nothing - the update is already guarded by `if "description" in payload` | already correct |
-| `create policy` | make `description` optional, and skip it when absent | accepted, but the description is still cleared |
-| `create flow` | make `description` optional, and skip it when absent | rejected with a 422 - the field is required |
+## The fix
 
-**The server change has to land before the CLI stops sending the field**, or
-every `kosli create flow` fails with a 422. `begin trail` is the pattern the
-other two need, already written.
+Decide, per command, which model it uses, and make both layers say the same
+thing:
 
-## How much is actually lost
+- **apply** - the CLI sends every field, and the server writes what arrives.
+  `create flow` is already this, on both sides.
+- **patch** - the CLI sends a field only when its flag was passed, and the server
+  leaves absent fields alone. `begin trail`'s server side is already this; the
+  CLI is not.
 
-Less than "wipes" suggests, and it differs by object. Worth being accurate about,
-because it decides how urgent this is.
+Whichever is chosen for `begin trail`, the two sides have to be changed together.
+If the CLI stops sending `description` while the server still requires it,
+`kosli create flow` fails with a 422; if the server starts ignoring an absent
+description while the CLI still sends `""`, nothing changes at all.
 
-| Object | What keeps the earlier value | Recoverable? |
-|---|---|---|
-| trail | `events[]`, each carrying the `trail_data_json` that was reported | yes |
-| attestation | the earlier attestation event on its trail | yes |
-| flow | nothing on the flow record itself, but every trail created from it snapshots the flow state it used | the flow's own description, no |
-| policy | `events[]`, but each entry records only that a `metadata_update` happened, with `data: {}` | no |
+## Why it belongs with the empty-value work
 
-So on trails and attestations the current view stops matching what was reported,
-while the report itself is still there. On flows and policies the previous text is
-gone.
-
-None of it changes a compliance verdict. A trail keeps the template it was created
-with, so editing a flow afterwards does not reach back into trails already
-created: state is snapshotted, not shared. What is lost is what someone wrote to
-explain the thing, not what any policy evaluates.
-
-The reason it belongs with the empty-value work is narrower than the data: these
-commands have no way to say "leave this alone", which is exactly why an empty
-`--description` and an absent one are indistinguishable. Fixing that is a
-precondition for refusing empty values on those flags - see
+Until a command says what an absent flag means, it cannot say what an empty one
+means either: today `--description ""` and no `--description` produce the same
+request, so the two cannot be told apart. See
 `2026-08-13-empty-value-decision.md`.
 
 ## How it was found
 
 While auditing what the CLI does with empty flag values
-(`hack/empty-flag-audit`). This one turned up because an empty `--description`
-and an absent `--description` produced identical results, which is only possible
-if the absent case is also sending something.
+(`hack/empty-flag-audit`). An empty `--description` and an absent `--description`
+produced identical results, which is only possible if the absent case is sending
+something too. Running every write command with `--debug` and none of its
+optional flags showed which fields arrive empty when nobody asked for them.
