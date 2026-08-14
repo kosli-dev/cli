@@ -137,31 +137,25 @@ Not every request arrives through the CLI. A customer calling the API directly
 keeps all of this, and the warnings in steps 1 and 2 will never see them, so the
 measurement they produce covers CLI traffic only.
 
-The findings split by where the behaviour actually lives. Reading the payloads
-the CLI sends with `--debug` says which is which.
+The server cannot close that gap by copying the rule, because it mostly never
+sees an empty value. When an empty value produces the same request as omitting
+the flag - which is 162 of the 166 - the server receives an identical payload
+either way, and there is nothing empty in it to reject.
 
-Some are the CLI's own doing, and a CLI rule genuinely settles them:
+Those 162 fall into three kinds, by whose problem the payload turns out to be.
+One of each, read with `--debug`:
 
-- `kosli attest generic --fingerprint ""` sends no fingerprint, to the
-  trail-scoped endpoint `/attestations/{org}/{flow}/trail/{trail}/generic`. The
-  CLI picked that endpoint. Someone calling the API chooses the artifact endpoint
-  or the trail endpoint deliberately, and is not misled.
-- `--template-file ""` reading as "no template given" is the CLI's file handling.
+| Command | What reaches the server | Whose problem |
+|---|---|---|
+| `kosli attest generic --fingerprint ""` | no fingerprint at all, sent to the trail-scoped endpoint `/attestations/{org}/{flow}/trail/{trail}/generic` | the CLI's. It picked that endpoint. Someone calling the API chooses the artifact endpoint or the trail endpoint deliberately, and is not misled. The rule settles this one |
+| `kosli create environment --included-environments ""` | a logical environment with **no** `included_environments` field, which the server accepts with a 201 and then cannot read back. Omitting the flag sends the same thing | neither's, for this decision. It is a plain defect, being fixed on its own account |
+| `kosli create environment` | `"description": ""`, whether or not `--description` was passed | the server's. By the time it arrives this is not about empty values at all: it is a request meaning "nothing was specified", treated as an instruction to erase. A direct caller sends the same thing and gets the same result |
 
-Others are the server accepting something it should not, and a direct caller
-reaches them just as easily:
-
-- `--included-environments ""` sends a logical environment with **no**
-  `included_environments` field at all. The server returns 201 and then cannot
-  read the record back. Any client can send that payload.
-- `create environment` sends `"description": ""` when no `--description` was
-  passed, and the server writes it over whatever was there. The CLI should not
-  send it, and the server should not treat an empty string as "erase this".
-
-So the two halves want different fixes, and the server half is the one that
-covers every client. That makes the server work in step 2 more than a
-precondition for the CLI change: it is the part that closes the hole for
-everyone.
+So the server's half of this is one rule, and not a mirror of ours: **an absent
+or empty field is not an instruction to erase what is stored.** That covers every
+client, including the ones the warnings cannot see, which makes the server work in
+step 2 more than a precondition for the CLI change - it is the part that closes
+the hole for everyone.
 
 ## What refusing an empty value would cost
 
