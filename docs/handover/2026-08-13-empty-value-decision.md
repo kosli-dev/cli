@@ -100,7 +100,7 @@ which is all it takes.
 | `kosli attach-policy P --environment "$VAR"` | the policy is attached to no environment. Anything deployed there is judged without it | changes compliance |
 | `kosli detach-policy P --environment "$VAR"` | the policy is detached from no environment, so it stays in force | changes compliance |
 | `kosli create environment E --type logical --included-environments "$VAR"` | the record cannot be read back, and `list environments` returns HTTP 500 for every environment in the org until it is removed | **outright bug**, written up in `2026-08-13-included-environments-500.md` |
-| `kosli create flow F` with no `--description` at all | wipes the description the flow already had. Same for `begin trail` and `create policy` | **outright bug**, no empty value needed, written up in `2026-08-13-description-wiped-on-upsert.md` |
+| `kosli create flow F` with no `--description` at all | overwrites the description the flow already had with an empty one. Ten combinations across eight commands do this, to `--description`, `--comment` or `--user-data` | **outright bug**, no empty value needed, written up in `2026-08-13-upsert-overwrites-unmentioned-fields.md` |
 | `kosli list environments --tag "$VAR"` | answers "No environments were found", identical to a real no-match, exit 0 | wrong answer |
 
 Ten findings, from one slice of one CLI, all of them silent. What the rest of the
