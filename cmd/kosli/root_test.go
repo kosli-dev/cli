@@ -93,6 +93,95 @@ func (suite *RootCommandTestSuite) TestConfigProcessing() {
 	runTestCmd(suite.T(), tests)
 }
 
+// TestConfigFileYamlListReachesSliceFlagAsElements pins that a list written the
+// YAML way reaches a multi-value flag as separate elements, which is the
+// spelling anyone writing a YAML config file reaches for first.
+//
+// attach-policy is used because it reads --environment without mutating it, so
+// the assertion sees only what parsing produced.
+func (suite *RootCommandTestSuite) TestConfigFileYamlListReachesSliceFlagAsElements() {
+	c, _, _, _, err := executeCommandC(
+		"attach-policy mypolicy --config-file testdata/config/yaml-list-value.yaml --dry-run")
+	suite.Require().NoError(err)
+
+	environments, err := c.Flags().GetStringSlice("environment")
+	suite.Require().NoError(err)
+	suite.Equal([]string{"prod", "staging"}, environments)
+}
+
+// TestConfigFileYamlMapReachesMapFlagAsPairs pins that a mapping written the
+// YAML way reaches a map-valued flag as its pairs, the counterpart of the list
+// case and the other spelling a YAML config file invites.
+func (suite *RootCommandTestSuite) TestConfigFileYamlMapReachesMapFlagAsPairs() {
+	c, _, _, _, err := executeCommandC(
+		"attest generic --config-file testdata/config/yaml-map-value.yaml " +
+			"--fingerprint 0000000000000000000000000000000000000000000000000000000000000001 " +
+			"--name foo --flow f --trail t --dry-run")
+	suite.Require().NoError(err)
+
+	externalURLs, err := c.Flags().GetStringToString("external-url")
+	suite.Require().NoError(err)
+	suite.Equal(map[string]string{"docs": "https://example.com/docs"}, externalURLs)
+}
+
+// TestConfigFileYamlListWithEmptyElementIsRejected pins that reading a YAML list
+// does not become a way past the refusal of empty elements. The flag types that
+// refuse an empty element do so in Set and in Replace, and a config file list
+// arrives through Replace, so the two have to meet here rather than each being
+// correct alone.
+func (suite *RootCommandTestSuite) TestConfigFileYamlListWithEmptyElementIsRejected() {
+	_, _, _, _, err := executeCommandC(
+		"attest generic --config-file testdata/config/yaml-list-with-empty-element.yaml " +
+			"--fingerprint 0000000000000000000000000000000000000000000000000000000000000001 " +
+			"--name foo --flow f --trail t --dry-run")
+
+	suite.Require().Error(err)
+	suite.ErrorContains(err, "attachments")
+	suite.ErrorContains(err, "empty values are not allowed")
+}
+
+// TestConfigFileValueThatDoesNotFitItsFlagIsRejected is the counterpart to the
+// two tests above: the shapes a flag has nowhere to put, and the flag each
+// message must name.
+//
+// A flag holds values, not structures, so a value fits only when it is a scalar,
+// a list of scalars on a multi-value flag, or a mapping of scalars on a
+// key=value flag. Everything else is refused rather than rendered, which is the
+// point: rendering turns any shape into a plausible-looking string, so a list of
+// mappings would become the attestation name "map[name:coverage]" and a list on
+// --description would become the literal "[a b]" - both the kind of thing
+// noticed long after the run that produced it.
+//
+// The shapes someone can write are unbounded, so the rule is what fits rather
+// than a list of known mistakes. New shapes belong here as rows.
+func (suite *RootCommandTestSuite) TestConfigFileValueThatDoesNotFitItsFlagIsRejected() {
+	cases := []struct {
+		name     string
+		file     string
+		wantFlag string
+	}{
+		{
+			name:     "list on a flag that holds one value",
+			file:     "yaml-list-on-scalar-flag.yaml",
+			wantFlag: "description",
+		},
+		{
+			name:     "list whose elements are mappings",
+			file:     "yaml-list-of-mappings.yaml",
+			wantFlag: "template",
+		},
+	}
+	for _, tc := range cases {
+		suite.Run(tc.name, func() {
+			_, _, _, _, err := executeCommandC(
+				"create flow myflow --config-file testdata/config/" + tc.file + " --dry-run")
+
+			suite.Require().Error(err)
+			suite.ErrorContains(err, tc.wantFlag)
+		})
+	}
+}
+
 // TestEmptyApiTokenEnvVarStillDecryptsConfigToken pins that KOSLI_API_TOKEN set
 // to an empty string does not suppress decryption of a config-file token.
 // bindFlags decides the token came from the environment with os.LookupEnv, where
