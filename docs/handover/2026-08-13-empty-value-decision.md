@@ -36,8 +36,10 @@ rather than the ceiling:
   required, and that marking is skipped when the flag's default comes from a CI
   environment variable. Two combinations we know of stop being checked by the CLI
   inside GitHub Actions. Appendix 1 shows this happening.
-- **Flags interact.** What `--fingerprint ""` does depends on whether
-  `--artifact-type` is set, so the real space is much larger than 653.
+- **Flags interact.** `kosli attest generic --fingerprint ""` silently attests to
+  the trail; add `--artifact-type file` and the same empty value is refused with
+  `only one of --fingerprint, --artifact-type is allowed`. One flag decides
+  whether another is checked, so the real space is much larger than 653.
 - **Some commands need what we do not have.** 279 of the 653 combinations are on
   19 commands needing AWS, Azure, Google Cloud, Kubernetes, a connected git
   provider, Jira, SonarQube, Snyk, or a credentials store.
@@ -63,9 +65,10 @@ It measured 374 of the 653 combinations. Of those:
 | the CLI accepts it and the server refuses it | 5 | 7 |
 | nothing refuses it | 166 | 166 |
 
-Of the 166 that nothing refuses, 162 do exactly what omitting the flag does, so
-an empty value there is merely useless. The rest of this document is about the
-ones where it is not.
+Of the 166 that nothing refuses, 162 do exactly what omitting the flag does. That
+is not the same as doing nothing: omitting a flag has a meaning of its own, and it
+is rarely the meaning someone had in mind when they wrote that flag with a
+variable after it.
 
 Appendix 2 groups the 152 flag names by what they are for and says how many of
 each kind the CLI already refuses. Appendix 3 is the same thing flag by flag.
@@ -128,6 +131,38 @@ It matters most on the flags carrying a verdict - `--compliant`,
 bare form on those flags, requiring `--compliant=true`, which is a separate
 decision.
 
+## What a CLI rule cannot reach
+
+Not every request arrives through the CLI. A customer calling the API directly
+keeps all of this, and the warnings in steps 1 and 2 will never see them, so the
+measurement they produce covers CLI traffic only.
+
+The findings split by where the behaviour actually lives. Reading the payloads
+the CLI sends with `--debug` says which is which.
+
+Some are the CLI's own doing, and a CLI rule genuinely settles them:
+
+- `kosli attest generic --fingerprint ""` sends no fingerprint, to the
+  trail-scoped endpoint `/attestations/{org}/{flow}/trail/{trail}/generic`. The
+  CLI picked that endpoint. Someone calling the API chooses the artifact endpoint
+  or the trail endpoint deliberately, and is not misled.
+- `--template-file ""` reading as "no template given" is the CLI's file handling.
+
+Others are the server accepting something it should not, and a direct caller
+reaches them just as easily:
+
+- `--included-environments ""` sends a logical environment with **no**
+  `included_environments` field at all. The server returns 201 and then cannot
+  read the record back. Any client can send that payload.
+- `create environment` sends `"description": ""` when no `--description` was
+  passed, and the server writes it over whatever was there. The CLI should not
+  send it, and the server should not treat an empty string as "erase this".
+
+So the two halves want different fixes, and the server half is the one that
+covers every client. That makes the server work in step 2 more than a
+precondition for the CLI change: it is the part that closes the hole for
+everyone.
+
 ## What refusing an empty value would cost
 
 Two flags, and only two, use an empty value to mean something you cannot say any
@@ -165,9 +200,9 @@ Commands that succeed today will eventually start failing, so the error itself
 is a breaking change and cannot go out in a 2.x release. Two things make that
 sharper than usual:
 
-- Most of the breakage lands on flags where an empty value was merely useless,
-  simply because those are most of the flags. They need no decision, but they do
-  need a release note.
+- Most of the breakage lands on flags where an empty value changed nothing worth
+  noticing, simply because those are most of the flags. They need no decision,
+  but they do need a release note.
 - Anyone tracking the latest CLI gets the new behaviour without editing
   anything, so "breaking" here means pipelines failing with no change on their
   side.
@@ -194,8 +229,9 @@ comes back, and that part stops being breaking at all.
 
 ### Proposed: four steps
 
-166 combinations changing at once is a lot to ask of customers in one upgrade,
-so the rule arrives in stages.
+At least 166 combinations changing at once is a lot to ask of customers in one
+upgrade - at least, because it is 166 of the ones we could measure and an unknown
+number of the 279 we could not. So the rule arrives in stages.
 
 #### Step 1: somewhere to put a warning, in app.kosli.com
 
@@ -221,6 +257,10 @@ Fix the two outright bugs - the description wiping and the
 `--included-environments` 500 - and make every empty value print a warning naming
 the flag, and report it. Nothing starts failing, and anyone whose pipeline has an
 unset variable can see it and fix it before it costs them anything.
+
+The description fix has an order to it: the server must accept a payload with no
+`description` before the CLI stops sending one, or every `kosli create flow`
+fails. Its write-up has the detail.
 
 #### Step 3: the warning becomes the error, in a major release of its own
 
