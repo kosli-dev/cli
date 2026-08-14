@@ -26,7 +26,7 @@ rather than the ceiling:
   rule, by the server, or by a third party - or not refused at all. `--page` is
   refused everywhere and `--fingerprint` is accepted on some commands, and no one
   decided either; it fell out of how each was declared.
-- **The same flag name behaves differently on different commands.** Ten of the
+- **The same flag name behaves differently on different commands.** 21 of the
   152 are refused on some commands and accepted on others.
 - **Some differences never reach the output.** `kosli attest generic` prints
   `generic attestation 'unit-test' is reported to trail: my-trail` and exits 0
@@ -41,15 +41,18 @@ rather than the ceiling:
   `only one of --fingerprint, --artifact-type is allowed`. One flag decides
   whether another is checked, so the real space is much larger than 653.
 - **Some commands need what we do not have.** 279 of the 653 combinations are on
-  19 commands needing AWS, Azure, Google Cloud, Kubernetes, a connected git
-  provider, Jira, SonarQube, Snyk, or a credentials store.
+  21 commands needing AWS, Azure, Google Cloud, Kubernetes, a connected git
+  provider, Jira, SonarQube, Snyk, or a credentials store. What the CLI does
+  with them can still be seen; what the service does cannot.
 
 ## What was measured instead
 
 One slice of that space, taken by running the CLI rather than reasoning about it.
 The audit is in `hack/empty-flag-audit`. The slice is: one flag emptied at a
-time, every other flag held at a value that works, against a local server, with
-no attempt at the combinations that need a service we cannot reach.
+time, every other flag held at a value that works, against a local server. The
+commands needing a service we cannot reach are run too - they fail, but their own
+checks run before they get that far, so what the CLI does with an empty value is
+still visible.
 
 Within that slice it is thorough. Each command is run three times - with the flag
 left out, with a real value, and with an empty value - and the exit codes, the
@@ -57,7 +60,8 @@ output, and the state left on the server afterwards are compared. The whole set
 runs twice, once as on a laptop and once with the environment variables GitHub
 Actions sets.
 
-It measured 374 of the 653 combinations. Of those:
+It ran all 653. For 374 of them the command works here, so the whole story is
+visible:
 
 | What happens to an empty value | On a laptop | Inside GitHub Actions |
 |---|---|---|
@@ -73,9 +77,31 @@ variable after it.
 Appendix 2 groups the 152 flag names by what they are for and says how many of
 each kind the CLI already refuses. Appendix 3 is the same thing flag by flag.
 
-The 279 unmeasured combinations are not a permanent hole. Customers run those
-commands with the credentials we lack, and the release plan below is what turns
-their runs into the measurement we cannot make here.
+The other 279 are on commands needing AWS, Azure, a git provider and the rest,
+which cannot succeed here. Their own checks still run first, though, so the half
+this decision is about is visible even without the credentials:
+
+| What the CLI does with an empty value | On a laptop | Inside GitHub Actions |
+|---|---|---|
+| refuses it | 173 | 172 |
+| does not react, so it reaches the service | 88 | 89 |
+| lets it through, exit 0 | 18 | 18 |
+
+The middle row is the one to look at. Those 88 are empty values that survive every
+check the CLI has and are handed to someone else. Among them are the credentials:
+`--aws-key-id` and `--aws-secret-key` are refused on none of their three commands,
+`--jira-pat` on neither of its, and `--registry-password` and
+`--registry-username` on 6 of their 16 - so the same registry credential is
+checked on six commands and not on the other ten.
+
+Most credential flags are refused, though. `--github-token`, `--gitlab-token`,
+the `--bitbucket-*` and `--azure-*` pair, `--jira-api-token`, `--sonar-api-token`
+and `--kubeconfig` are all refused everywhere they appear. Which are and which
+are not follows no pattern anyone chose.
+
+What those services then do with the empty values they are handed is the only
+thing here that stays unknown, and no amount of work on this machine will show it
+- the release plan below is what turns customers' runs into that measurement.
 
 ## What it found
 
@@ -248,9 +274,10 @@ comes back, and that part stops being breaking at all.
 
 ### Proposed: four steps
 
-At least 166 combinations changing at once is a lot to ask of customers in one
-upgrade - at least, because it is 166 of the ones we could measure and an unknown
-number of the 279 we could not. So the rule arrives in stages.
+At least 184 combinations changing at once is a lot to ask of customers in one
+upgrade - 166 on the commands that work here, and 18 more on the ones needing a
+service, where the CLI lets an empty value through before the service is even
+reached. So the rule arrives in stages.
 
 #### Step 1: somewhere to put a warning, in app.kosli.com
 
@@ -305,10 +332,11 @@ release note cannot: how much would step 3 actually break? Today that is an
 argument. With this it becomes a number, per org, and we can tell the customers
 who are affected before it lands rather than after.
 
-It also reaches where this audit could not. The 279 combinations on commands
-needing AWS, Azure, a git provider and the rest are unmeasured here for want of
-credentials, and customers have those credentials. Their warnings say what those
-commands do with an empty value, in the only place it can be found out.
+It also reaches where this audit could not. For the 279 combinations on commands
+needing AWS, Azure, a git provider and the rest, we can see what the CLI does but
+not what the service does with the 88 empty values the CLI hands over. Customers
+have the credentials we lack, so their warnings are the only place that half can
+be found out.
 
 Three conditions on the reporting. Sending a warning must never fail the command
 that produced it: this is a report, not a check. It has to stay rare enough to be
@@ -354,33 +382,36 @@ The question worth asking of each flag is what it means to the person running th
 command, and whether an empty value means anything for that. Grouped that way,
 the 152 names are:
 
-| What the flag is for, with a few examples | Names | Does an empty value mean anything? | CLI always refuses | Only the server refuses | Refuses on some commands | Never refuses | Not measured |
-|---|---|---|---|---|---|---|---|
-| identity and selection - `--flow`, `--trail`, `--fingerprint`, `--name` | 46 | no. There is no artifact called "" | 12 | 1 | 9 | 11 | 13 |
-| location and input - `--template-file`, `--results-dir`, `--paths` | 26 | no. There is no file called "" | 7 | 1 | 0 | 6 | 12 |
-| filters - `--exclude`, `--namespaces`, `--services`, `--attestations` | 22 | no. Filtering on "" filters on nothing | 1 | 0 | 0 | 6 | 15 |
-| credentials - `--github-token`, `--aws-secret-key`, `--registry-password` | 17 | no. There is no token "" | 0 | 0 | 0 | 2 | 15 |
-| output and paging - `--output`, `--sort`, `--page`, `--reverse` | 14 | no | 7 | 1 | 0 | 4 | 2 |
-| behaviour switches - `--dry-run`, `--assert`, `--compliant` | 11 | no | 9 | 0 | 0 | 0 | 2 |
-| free-text metadata - `--description`, `--comment`, `--reason`, `--tag` | 9 | **sometimes** | 4 | 0 | 1 | 4 | 0 |
-| the global flags - `--org`, `--api-token`, `--host`, `--debug` | 7 | no | 6 | 0 | 0 | 1 | 0 |
-| **total** | **152** | | **46** | **3** | **10** | **34** | **59** |
+| What the flag is for, with a few examples | Names | Does an empty value mean anything? | CLI always refuses | Only the server refuses | Refuses on some commands | Never refuses |
+|---|---|---|---|---|---|---|
+| identity and selection - `--flow`, `--trail`, `--fingerprint`, `--name` | 46 | no. There is no artifact called "" | 19 | 1 | 14 | 12 |
+| location and input - `--template-file`, `--results-dir`, `--paths` | 26 | no. There is no file called "" | 17 | 1 | 3 | 5 |
+| filters - `--exclude`, `--namespaces`, `--services`, `--attestations` | 22 | no. Filtering on "" filters on nothing | 1 | 0 | 0 | 21 |
+| credentials - `--github-token`, `--aws-secret-key`, `--registry-password` | 17 | no. There is no token "" | 12 | 0 | 2 | 3 |
+| output and paging - `--output`, `--sort`, `--page`, `--reverse` | 14 | no | 9 | 0 | 1 | 4 |
+| behaviour switches - `--dry-run`, `--assert`, `--compliant` | 11 | no | 11 | 0 | 0 | 0 |
+| free-text metadata - `--description`, `--comment`, `--reason`, `--tag` | 9 | **sometimes** | 4 | 0 | 1 | 4 |
+| the global flags - `--org`, `--api-token`, `--host`, `--debug` | 7 | no | 6 | 0 | 0 | 1 |
+| **total** | **152** | | **79** | **2** | **21** | **50** |
 
-The credentials row is the one to look at twice, and it is mostly unmeasured: 9
-of its 11 names appear only on commands needing a service this audit cannot
-reach. Those flags authenticate to someone else - GitHub, GitLab, Azure, Jira,
-SonarQube, a container registry - so whether an empty one is caught depends on
-that service and not on us. Kosli's own `--api-token` is not among them: it is a
-global flag, and it already refuses an empty value with `--api-token is not set`.
+The credentials row is the one to look at twice. Twelve of its seventeen names
+are refused by the CLI everywhere they appear. Three never are - `--aws-key-id`,
+`--aws-secret-key` and `--jira-pat` - so an empty one is handed to AWS or to Jira,
+and whether it is caught then depends on that service and not on us. The last two,
+`--registry-password` and `--registry-username`, are refused on six commands and
+not on the other ten. Kosli's own
+`--api-token` is not among them: it is a global flag, and it already refuses an
+empty value with `--api-token is not set`.
 
 ---
 
 ## Appendix 3: every flag in the CLI
 
-All 152 flag names, what each is for, on how many of its commands an empty
-value could be measured, and what happened. Measured means the command could be
-run against a local server; the rest need AWS, Azure, Google Cloud, Kubernetes, a
-connected git provider, Jira, SonarQube, Snyk, or a credentials store.
+All 152 flag names, what each is for, how many of its commands were run, and what
+happened. Commands needing AWS, Azure, Google Cloud, Kubernetes, a connected git
+provider, Jira, SonarQube, Snyk or a credentials store are included: they cannot
+succeed here, but their own checks run first, so whether the CLI refuses an empty
+value is still visible.
 
 "Always" means every measured command refused it. "Some commands" means it was
 refused on some commands and not on others. "Only the server" means the CLI sent
@@ -398,100 +429,100 @@ listed once.
 
 | Flag | What it is for | Commands measured | Refuses an empty value |
 |---|---|---|---|
-| `--annotate` | metadata | 6 of 13 | always |
+| `--annotate` | metadata | 13 of 13 | always |
 | `--api-token` | global | 1 of 1 | always |
 | `--archived` | filter | 1 of 1 | always |
-| `--artifact-type` | identity | 9 of 16 | some commands |
-| `--assert` | switch | 4 of 9 | always |
+| `--artifact-type` | identity | 16 of 16 | some commands |
+| `--assert` | switch | 9 of 9 | always |
 | `--assume-yes` | switch | 2 of 2 | always |
-| `--attachments` | identity | 4 of 11 | always |
+| `--attachments` | identity | 11 of 11 | always |
 | `--attestation-data` | identity | 1 of 1 | always |
 | `--attestation-id` | identity | 1 of 1 | never |
 | `--attestations` | filter | 2 of 2 | never |
-| `--aws-key-id` | credentials | 0 of 3 | not measured |
-| `--aws-region` | location | 0 of 3 | not measured |
-| `--aws-secret-key` | credentials | 0 of 3 | not measured |
-| `--azure-client-id` | credentials | 0 of 1 | not measured |
-| `--azure-client-secret` | credentials | 0 of 1 | not measured |
-| `--azure-org-url` | location | 0 of 2 | not measured |
-| `--azure-resource-group-name` | identity | 0 of 1 | not measured |
-| `--azure-subscription-id` | identity | 0 of 1 | not measured |
-| `--azure-tenant-id` | identity | 0 of 1 | not measured |
-| `--azure-token` | credentials | 0 of 2 | not measured |
-| `--bitbucket-access-token` | credentials | 0 of 2 | not measured |
-| `--bitbucket-password` | credentials | 0 of 2 | not measured |
-| `--bitbucket-username` | credentials | 0 of 2 | not measured |
-| `--bitbucket-workspace` | location | 0 of 2 | not measured |
-| `--bucket` | location | 0 of 1 | not measured |
+| `--aws-key-id` | credentials | 3 of 3 | never |
+| `--aws-region` | location | 3 of 3 | some commands |
+| `--aws-secret-key` | credentials | 3 of 3 | never |
+| `--azure-client-id` | credentials | 1 of 1 | always |
+| `--azure-client-secret` | credentials | 1 of 1 | always |
+| `--azure-org-url` | location | 2 of 2 | always |
+| `--azure-resource-group-name` | identity | 1 of 1 | always |
+| `--azure-subscription-id` | identity | 1 of 1 | always |
+| `--azure-tenant-id` | identity | 1 of 1 | always |
+| `--azure-token` | credentials | 2 of 2 | always |
+| `--bitbucket-access-token` | credentials | 2 of 2 | always |
+| `--bitbucket-password` | credentials | 2 of 2 | always |
+| `--bitbucket-username` | credentials | 2 of 2 | always |
+| `--bitbucket-workspace` | location | 2 of 2 | always |
+| `--bucket` | location | 1 of 1 | always |
 | `--build-url` | location | 1 of 1 | always, but in CI only the server does |
-| `--clusters` | filter | 0 of 1 | not measured |
-| `--clusters-regex` | filter | 0 of 1 | not measured |
+| `--clusters` | filter | 1 of 1 | never |
+| `--clusters-regex` | filter | 1 of 1 | never |
 | `--comment` | metadata | 1 of 1 | never |
-| `--commit` | identity | 7 of 18 | some commands |
+| `--commit` | identity | 18 of 18 | some commands |
 | `--commit-url` | location | 1 of 1 | always, but in CI only the server does |
 | `--compliant` | switch | 2 of 2 | always |
-| `--config-file` | location | 1 of 2 | never |
+| `--config-file` | location | 2 of 2 | some commands |
 | `--control` | identity | 1 of 1 | always |
 | `--debug` | global | 1 of 1 | always |
-| `--description` | metadata | 15 of 22 | some commands |
-| `--digests-source` | identity | 0 of 1 | not measured |
+| `--description` | metadata | 22 of 22 | some commands |
+| `--digests-source` | identity | 1 of 1 | always |
 | `--display-name` | metadata | 1 of 1 | never |
-| `--dry-run` | switch | 37 of 54 | always |
+| `--dry-run` | switch | 54 of 54 | always |
 | `--end` | identity | 1 of 1 | never |
 | `--end-ts` | identity | 1 of 1 | always |
 | `--environment` | identity | 4 of 4 | some commands |
-| `--exclude` | filter | 10 of 21 | never |
-| `--exclude-namespaces` | filter | 0 of 1 | not measured |
-| `--exclude-namespaces-regex` | filter | 0 of 1 | not measured |
-| `--exclude-regex` | filter | 0 of 4 | not measured |
-| `--exclude-services` | filter | 0 of 1 | not measured |
-| `--exclude-services-regex` | filter | 0 of 1 | not measured |
+| `--exclude` | filter | 21 of 21 | never |
+| `--exclude-namespaces` | filter | 1 of 1 | never |
+| `--exclude-namespaces-regex` | filter | 1 of 1 | never |
+| `--exclude-regex` | filter | 4 of 4 | never |
+| `--exclude-services` | filter | 1 of 1 | never |
+| `--exclude-services-regex` | filter | 1 of 1 | never |
 | `--expires-at` | identity | 2 of 2 | never |
-| `--external-fingerprint` | identity | 7 of 14 | always |
-| `--external-url` | location | 7 of 14 | always |
-| `--fingerprint` | identity | 10 of 17 | some commands |
-| `--flow` | identity | 14 of 21 | some commands |
+| `--external-fingerprint` | identity | 14 of 14 | always |
+| `--external-url` | location | 14 of 14 | always |
+| `--fingerprint` | identity | 17 of 17 | some commands |
+| `--flow` | identity | 21 of 21 | some commands |
 | `--flow-tag` | filter | 1 of 1 | never |
-| `--function-names` | filter | 0 of 1 | not measured |
-| `--function-names-regex` | filter | 0 of 1 | not measured |
-| `--github-base-url` | location | 0 of 2 | not measured |
-| `--github-org` | identity | 0 of 2 | not measured |
-| `--github-token` | credentials | 0 of 2 | not measured |
-| `--gitlab-base-url` | location | 0 of 2 | not measured |
-| `--gitlab-org` | identity | 0 of 2 | not measured |
-| `--gitlab-token` | credentials | 0 of 2 | not measured |
+| `--function-names` | filter | 1 of 1 | never |
+| `--function-names-regex` | filter | 1 of 1 | never |
+| `--github-base-url` | location | 2 of 2 | always |
+| `--github-org` | identity | 2 of 2 | always, and not at all in CI |
+| `--github-token` | credentials | 2 of 2 | always |
+| `--gitlab-base-url` | location | 2 of 2 | always |
+| `--gitlab-org` | identity | 2 of 2 | always |
+| `--gitlab-token` | credentials | 2 of 2 | always |
 | `--grace-period-hours` | identity | 1 of 1 | always |
 | `--host` | global | 1 of 1 | always |
 | `--http-proxy` | global | 1 of 1 | never |
-| `--ignore-branch-match` | switch | 0 of 1 | not measured |
+| `--ignore-branch-match` | switch | 1 of 1 | always |
 | `--ignore-case` | switch | 1 of 1 | always |
-| `--include` | filter | 0 of 2 | not measured |
-| `--include-regex` | filter | 0 of 2 | not measured |
+| `--include` | filter | 2 of 2 | never |
+| `--include-regex` | filter | 2 of 2 | never |
 | `--included-environments` | filter | 1 of 1 | never |
 | `--input-file` | location | 1 of 1 | always |
 | `--interval` | output | 2 of 2 | never |
-| `--jira-api-token` | credentials | 0 of 1 | not measured |
-| `--jira-base-url` | location | 0 of 1 | not measured |
-| `--jira-issue-fields` | identity | 0 of 1 | not measured |
-| `--jira-pat` | credentials | 0 of 1 | not measured |
-| `--jira-project-key` | identity | 0 of 1 | not measured |
-| `--jira-secondary-source` | identity | 0 of 1 | not measured |
-| `--jira-username` | credentials | 0 of 1 | not measured |
+| `--jira-api-token` | credentials | 1 of 1 | always |
+| `--jira-base-url` | location | 1 of 1 | always |
+| `--jira-issue-fields` | identity | 1 of 1 | never |
+| `--jira-pat` | credentials | 1 of 1 | never |
+| `--jira-project-key` | identity | 1 of 1 | never |
+| `--jira-secondary-source` | identity | 1 of 1 | never |
+| `--jira-username` | credentials | 1 of 1 | always |
 | `--jq` | location | 1 of 1 | always, some only by the server |
-| `--kubeconfig` | credentials | 0 of 1 | not measured |
+| `--kubeconfig` | credentials | 1 of 1 | always |
 | `--link` | metadata | 1 of 1 | always |
 | `--logical` | identity | 1 of 1 | always |
 | `--max-api-retries` | global | 1 of 1 | always |
-| `--max-wait` | output | 0 of 1 | not measured |
-| `--name` | identity | 12 of 19 | some commands |
-| `--namespaces` | filter | 0 of 1 | not measured |
-| `--namespaces-regex` | filter | 0 of 1 | not measured |
+| `--max-wait` | output | 1 of 1 | always |
+| `--name` | identity | 19 of 19 | some commands |
+| `--namespaces` | filter | 1 of 1 | never |
+| `--namespaces-regex` | filter | 1 of 1 | never |
 | `--new-compliance-status` | switch | 1 of 1 | always |
 | `--no-assert` | switch | 3 of 3 | always |
 | `--org` | global | 1 of 1 | always |
-| `--origin-url` | location | 6 of 13 | never |
+| `--origin-url` | location | 13 of 13 | never |
 | `--original-attestation-type` | identity | 1 of 1 | always |
-| `--output` | output | 32 of 33 | always, some only by the server |
+| `--output` | output | 33 of 33 | some commands |
 | `--page` | output | 8 of 8 | always |
 | `--page-limit` | output | 8 of 8 | always |
 | `--params` | location | 3 of 3 | never |
@@ -500,40 +531,40 @@ listed once.
 | `--physical` | identity | 1 of 1 | always |
 | `--policy` | identity | 4 of 4 | some commands |
 | `--privilege` | identity | 2 of 2 | always, some only by the server |
-| `--project` | identity | 0 of 3 | not measured |
-| `--provider` | identity | 2 of 3 | never |
-| `--pull-request` | identity | 0 of 1 | not measured |
+| `--project` | identity | 3 of 3 | always |
+| `--provider` | identity | 3 of 3 | some commands |
+| `--pull-request` | identity | 1 of 1 | never |
 | `--quiet` | global | 1 of 1 | always |
 | `--reason` | metadata | 2 of 2 | always |
-| `--redact-commit-info` | identity | 7 of 14 | never |
-| `--region` | location | 0 of 1 | not measured |
-| `--registry-password` | credentials | 9 of 16 | never |
-| `--registry-username` | credentials | 9 of 16 | never |
+| `--redact-commit-info` | identity | 14 of 14 | some commands |
+| `--region` | location | 1 of 1 | always |
+| `--registry-password` | credentials | 16 of 16 | some commands |
+| `--registry-username` | credentials | 16 of 16 | some commands |
 | `--repo` | identity | 2 of 2 | never |
-| `--repo-id` | identity | 9 of 17 | never |
-| `--repo-provider` | identity | 7 of 14 | never |
-| `--repo-root` | location | 7 of 14 | never |
-| `--repo-url` | location | 7 of 14 | never |
-| `--repository` | identity | 7 of 18 | never |
-| `--resolve-names` | switch | 0 of 1 | not measured |
+| `--repo-id` | identity | 17 of 17 | some commands |
+| `--repo-provider` | identity | 14 of 14 | some commands |
+| `--repo-root` | location | 14 of 14 | never |
+| `--repo-url` | location | 14 of 14 | some commands |
+| `--repository` | identity | 18 of 18 | some commands, and not at all in CI |
+| `--resolve-names` | switch | 1 of 1 | always |
 | `--results-dir` | location | 1 of 1 | always |
 | `--reverse` | output | 2 of 2 | always |
-| `--scan-results` | location | 0 of 1 | not measured |
+| `--scan-results` | location | 1 of 1 | always |
 | `--schema` | output | 1 of 1 | never |
 | `--search` | filter | 2 of 2 | never |
 | `--service-account` | identity | 5 of 5 | always |
-| `--services` | filter | 0 of 1 | not measured |
-| `--services-regex` | filter | 0 of 1 | not measured |
-| `--set` | metadata | 1 of 2 | always |
+| `--services` | filter | 1 of 1 | never |
+| `--services-regex` | filter | 1 of 1 | never |
+| `--set` | metadata | 2 of 2 | always |
 | `--short` | output | 1 of 1 | always |
 | `--show-input` | output | 3 of 3 | always |
 | `--show-unchanged` | output | 1 of 1 | always |
-| `--sonar-api-token` | credentials | 0 of 1 | not measured |
-| `--sonar-ce-task-url` | location | 0 of 1 | not measured |
-| `--sonar-project-key` | identity | 0 of 1 | not measured |
-| `--sonar-revision` | identity | 0 of 1 | not measured |
-| `--sonar-server-url` | location | 0 of 1 | not measured |
-| `--sonar-working-dir` | location | 0 of 1 | not measured |
+| `--sonar-api-token` | credentials | 1 of 1 | always |
+| `--sonar-ce-task-url` | location | 1 of 1 | always |
+| `--sonar-project-key` | identity | 1 of 1 | never |
+| `--sonar-revision` | identity | 1 of 1 | never |
+| `--sonar-server-url` | location | 1 of 1 | never |
+| `--sonar-working-dir` | location | 1 of 1 | always |
 | `--sort` | output | 1 of 1 | never |
 | `--sort-direction` | output | 3 of 3 | never |
 | `--space-id` | filter | 1 of 1 | never |
@@ -542,11 +573,11 @@ listed once.
 | `--tag` | metadata | 3 of 3 | never |
 | `--template` | identity | 1 of 1 | always |
 | `--template-file` | location | 2 of 2 | never |
-| `--trail` | identity | 8 of 15 | some commands |
+| `--trail` | identity | 15 of 15 | some commands |
 | `--type` | identity | 4 of 4 | some commands |
-| `--unset` | metadata | 1 of 2 | never |
-| `--upload-results` | switch | 1 of 2 | always |
+| `--unset` | metadata | 2 of 2 | never |
+| `--upload-results` | switch | 2 of 2 | always |
 | `--use-empty-template` | switch | 1 of 1 | always |
-| `--user-data` | identity | 6 of 13 | never |
+| `--user-data` | identity | 13 of 13 | never |
 | `--watch` | output | 2 of 2 | always |
-| `--zip` | output | 0 of 1 | not measured |
+| `--zip` | output | 1 of 1 | always |

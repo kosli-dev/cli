@@ -356,11 +356,11 @@ def audit(binary, spec, only, only_flag, as_ci, home):
         entry = spec[command]
         if only and only not in command:
             continue
-        if entry.get("skip"):
-            for flag in entry["flags"]:
-                rows.append(f"{command}\t--{flag}\t\t\t\t\tnot tested"
-                            f"\tnot tested\t{entry['skip']}")
-            continue
+        # A command needing a service we cannot reach is still run. Its own
+        # checks happen before it gets that far, so an empty value can be seen
+        # being refused, or seen surviving every check the CLI has and failing
+        # at the service instead. Only what the service would have done stays
+        # unknown.
         for flag in entry["flags_to_test"]:
             if only_flag and only_flag != flag:
                 continue

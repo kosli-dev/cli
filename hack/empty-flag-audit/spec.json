@@ -695,7 +695,20 @@
   ]
  },
  "attest jira": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "jira-pat": "probe-jira-pat",
+   "commit": "HEAD",
+   "flow": "{flow}",
+   "jira-base-url": "probe-jira-base-url",
+   "name": "{name}",
+   "trail": "{trail}"
+  },
+  "baseline_ok": false,
+  "baseline_exit": 0,
+  "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\njira attestation '{name}' is reported to trail: {trail}",
+  "needs": "jira",
+  "flags_to_test": [
    "annotate",
    "artifact-type",
    "assert",
@@ -729,7 +742,70 @@
    "trail",
    "user-data"
   ],
-  "skip": "needs jira"
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "assert": "true",
+   "attachments": "probe-attachments",
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "ignore-branch-match": "true",
+   "jira-api-token": "probe-jira-api-token",
+   "jira-base-url": "probe-jira-base-url",
+   "jira-issue-fields": "probe-jira-issue-fields",
+   "jira-pat": "probe-jira-pat",
+   "jira-project-key": "probe-jira-project-key",
+   "jira-secondary-source": "probe-jira-secondary-source",
+   "jira-username": "probe-jira-username",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "trail": "{trail}",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "attest junit": {
   "args": [],
@@ -828,7 +904,17 @@
   ]
  },
  "attest snyk": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "flow": "{flow}",
+   "name": "{name}",
+   "scan-results": "cmd/kosli/testdata/snyk_scan_example.json",
+   "trail": "{trail}"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli attest snyk flow=probe-attest-snyk-baseline-fl trail=probe-attest-snyk-baseline-tr] failed to parse Snyk sarif results file [cmd/kosli/testdata/snyk_scan_example.json]: invalid sarif file",
+  "needs": "snyk",
+  "flags_to_test": [
    "annotate",
    "artifact-type",
    "attachments",
@@ -855,10 +941,76 @@
    "upload-results",
    "user-data"
   ],
-  "skip": "needs snyk"
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "attachments": "probe-attachments",
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "scan-results": "cmd/kosli/testdata/snyk_scan_example.json",
+   "trail": "{trail}",
+   "upload-results": "true",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "attest sonar": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "flow": "{flow}",
+   "name": "{name}",
+   "sonar-api-token": "probe-sonar-api-token",
+   "trail": "{trail}"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli attest sonar flow=probe-attest-sonar-baseline-fl trail=probe-attest-sonar-baseline-tr] open .scannerwork/report-task.txt: no such file or directory. Check your working directory is set correctly. Alternatively provide the project key and either revision or pull-request ID for the scan to attest",
+  "needs": "sonarqube",
+  "flags_to_test": [
    "annotate",
    "artifact-type",
    "attachments",
@@ -891,7 +1043,69 @@
    "trail",
    "user-data"
   ],
-  "skip": "needs sonarqube"
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "attachments": "probe-attachments",
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "max-wait": "probe-max-wait",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "pull-request": "probe-pull-request",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "sonar-api-token": "probe-sonar-api-token",
+   "sonar-ce-task-url": "probe-sonar-ce-task-url",
+   "sonar-project-key": "probe-sonar-project-key",
+   "sonar-revision": "probe-sonar-revision",
+   "sonar-server-url": "probe-sonar-server-url",
+   "sonar-working-dir": "probe-sonar-working-dir",
+   "trail": "{trail}",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "begin trail": {
   "args": [
@@ -960,11 +1174,21 @@
   ]
  },
  "config": {
-  "flags": [
+  "args": [],
+  "flags": {},
+  "baseline_ok": false,
+  "error": "Error: [kosli config] failed to save AES encryption key in credentials store: exit status 154",
+  "needs": "a credentials store",
+  "flags_to_test": [
    "set",
    "unset"
   ],
-  "skip": "needs a credentials store"
+  "flag_values": {
+   "set": "probe-set",
+   "unset": "probe-unset"
+  },
+  "setup": [],
+  "verify": []
  },
  "create api-key": {
   "args": [],
@@ -1252,12 +1476,26 @@
   "verify": []
  },
  "disable beta": {
-  "flags": [],
-  "skip": "needs a server that implements it"
+  "args": [],
+  "flags": {},
+  "baseline_ok": false,
+  "error": "Error: [kosli disable beta] Not Found",
+  "needs": "a server that implements it",
+  "flags_to_test": [],
+  "flag_values": {},
+  "setup": [],
+  "verify": []
  },
  "enable beta": {
-  "flags": [],
-  "skip": "needs a server that implements it"
+  "args": [],
+  "flags": {},
+  "baseline_ok": false,
+  "error": "Error: [kosli enable beta] Not Found",
+  "needs": "a server that implements it",
+  "flags_to_test": [],
+  "flag_values": {},
+  "setup": [],
+  "verify": []
  },
  "evaluate input": {
   "args": [],
@@ -1470,7 +1708,7 @@
   "flags": {},
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "Name:              cmd/kosli/testdata/person-schema.json\nFlow:              {flow}\nTrail:             {trail}\nName in template:  probe-artifact\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCreated on:        {timestamp} \u2022 {ago}\nGit commit:        4ecc6213bb1c24ad0b35a3dfceaba323b13b998b\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/{flow}/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9?artifact_id={uuid}\nState:             COMPLIANT\nHistory:\n    probe-artifact reported  {timestamp}",
+  "baseline_output": "Name:              cmd/kosli/testdata/person-schema.json\nFlow:              {flow}\nTrail:             {trail}\nName in template:  probe-artifact\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCreated on:        {timestamp} \u2022 {ago}\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/{flow}/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9?artifact_id={uuid}\nState:             COMPLIANT\nHistory:\n    probe-artifact reported  {timestamp}",
   "flags_to_test": [
    "output",
    "trail"
@@ -1718,12 +1956,25 @@
   "verify": []
  },
  "get repo": {
-  "flags": [
+  "args": [
+   "{name}"
+  ],
+  "flags": {},
+  "baseline_ok": false,
+  "error": "Error: [kosli get repo] Repo 'probe-get-repo-baseline-nm' not found",
+  "needs": "a connected git provider",
+  "flags_to_test": [
    "output",
    "provider",
    "repo-id"
   ],
-  "skip": "needs a connected git provider"
+  "flag_values": {
+   "output": "json",
+   "provider": "probe-provider",
+   "repo-id": "probe-repo-id"
+  },
+  "setup": [],
+  "verify": []
  },
  "get service-account": {
   "args": [
@@ -1877,7 +2128,7 @@
   "flags": {},
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "COMMIT   ARTIFACT                                                                       STATE      CREATED_AT\n4ecc621  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n4ecc621  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n4ecc621  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n4ecc621  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+  "baseline_output": "COMMIT   ARTIFACT                                                                       STATE      CREATED_AT\n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
   "flags_to_test": [
    "flow",
    "output",
@@ -1957,7 +2208,7 @@
   },
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "NAME                                 TYPE  LAST REPORT  LAST MODIFIED              TAGS  POLICIES\n{env}  K8S                {timestamp}        []\n\nShowing page 1 of 1, total 1 items",
+  "baseline_output": "NAME                                  TYPE    LAST REPORT                LAST MODIFIED              TAGS  POLICIES\nprobe-allow-artifact-baseline-en      server                             {timestamp}        []\nprobe-assert-snapshot-baseline-en     server  {timestamp}  {timestamp}        []\nprobe-create-environment-baseline-en  K8S                                {timestamp}        []\nprobe-diff-snapshots-baseline-en      server  {timestamp}  {timestamp}        []\nprobe-get-environment-baseline-en     K8S                                {timestamp}        []\n\nShowing page 1 of 2, total 9 items",
   "flags_to_test": [
    "name",
    "output",
@@ -1998,7 +2249,7 @@
   "flags": {},
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "NAME                                        DESCRIPTION  VISIBILITY  TAGS\nprobe-allow-artifact-baseline-fl                         private     \nprobe-archive-attestation-type-baseline-fl               private     \nprobe-assert-artifact-baseline-fl                        private     \nprobe-attest-artifact-baseline-fl                        private     \nprobe-attest-custom-baseline-fl                          private     \nprobe-attest-decision-baseline-fl                        private     \nprobe-attest-generic-baseline-fl                         private     \nprobe-attest-junit-baseline-fl                           private     \nprobe-attest-override-baseline-fl                        private     \nprobe-begin-trail-baseline-fl                            private     \nprobe-create-attestation-type-baseline-fl                private     \nprobe-create-flow-baseline-fl                            private     \nprobe-evaluate-trail-baseline-fl                         private     \nprobe-evaluate-trails-baseline-fl                        private     \nprobe-get-artifact-baseline-fl                           private     \nprobe-get-attestation-baseline-fl                        private     \nprobe-get-attestation-type-baseline-fl                   private     \nprobe-get-flow-baseline-fl                               private     \nprobe-get-trail-baseline-fl                              private     \nprobe-list-artifacts-baseline-fl                         private     \nprobe-list-attestation-types-baseline-fl                 private     \n{flow}                             private",
+  "baseline_output": "NAME                                            DESCRIPTION  VISIBILITY  TAGS\nprobe-allow-artifact-baseline-fl                             private     \nprobe-archive-attestation-type-baseline-fl                   private     \nprobe-assert-artifact-baseline-fl                            private     \nprobe-attest-artifact-baseline-fl                            private     \nprobe-attest-custom-baseline-fl                              private     \nprobe-attest-decision-baseline-fl                            private     \nprobe-attest-generic-baseline-fl                             private     \nprobe-attest-jira-baseline-fl                                private     \nprobe-attest-junit-baseline-fl                               private     \nprobe-attest-override-baseline-fl                            private     \nprobe-attest-pullrequest-azure-baseline-fl                   private     \nprobe-attest-pullrequest-bitbucket-baseline-fl               private     \nprobe-attest-pullrequest-github-baseline-fl                  private     \nprobe-attest-pullrequest-gitlab-baseline-fl                  private     \nprobe-attest-snyk-baseline-fl                                private     \nprobe-attest-sonar-baseline-fl                               private     \nprobe-begin-trail-baseline-fl                                private     \nprobe-create-attestation-type-baseline-fl                    private     \nprobe-create-flow-baseline-fl                                private     \nprobe-evaluate-trail-baseline-fl                             private     \nprobe-evaluate-trails-baseline-fl                            private     \nprobe-get-artifact-baseline-fl                               private     \nprobe-get-attestation-baseline-fl                            private     \nprobe-get-attestation-type-baseline-fl                       private     \nprobe-get-flow-baseline-fl                                   private     \nprobe-get-trail-baseline-fl                                  private     \nprobe-list-artifacts-baseline-fl                             private     \nprobe-list-attestation-types-baseline-fl                     private     \n{flow}                                 private",
   "flags_to_test": [
    "ignore-case",
    "name",
@@ -2030,7 +2281,7 @@
   "flags": {},
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "NAME                             DESCRIPTION  CREATED AT                                     LAST VERSION  USED BY ENVS\nprobe-attach-policy-baseline-po               {timestamp} \u2022 {ago}  1             []\nprobe-create-policy-baseline-po               {timestamp} \u2022 {ago}  1             []\nprobe-detach-policy-baseline-po               {timestamp} \u2022 {ago}  1             []\nprobe-get-policy-baseline-po                  {timestamp} \u2022 {ago}  1             []",
+  "baseline_output": "NAME                             DESCRIPTION  CREATED AT                                          LAST VERSION  USED BY ENVS\nprobe-attach-policy-baseline-po               {timestamp} \u2022 {ago}       1             []\nprobe-create-policy-baseline-po               {timestamp} \u2022 {ago}       1             []\nprobe-detach-policy-baseline-po               {timestamp} \u2022 {ago}       1             []\nprobe-get-policy-baseline-po                  {timestamp} \u2022 {ago}  1             []",
   "flags_to_test": [
    "output"
   ],
@@ -2147,7 +2398,7 @@
   "flags": {},
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "NAME                                        DESCRIPTION  COMPLIANCE\n{trail}                            COMPLIANT\nprobe-list-attestation-types-baseline-tr                 COMPLIANT\nprobe-list-artifacts-baseline-tr                         COMPLIANT\nprobe-get-trail-baseline-tr                              COMPLIANT\nprobe-get-attestation-type-baseline-tr                   COMPLIANT\nprobe-get-attestation-baseline-tr                        COMPLIANT\nprobe-get-artifact-baseline-tr                           COMPLIANT\nprobe-evaluate-trails-baseline-tr                        COMPLIANT\nprobe-evaluate-trail-baseline-tr                         COMPLIANT\nprobe-create-attestation-type-baseline-tr                COMPLIANT\nprobe-begin-trail-baseline-tr                            COMPLIANT\nprobe-attest-override-baseline-tr                        COMPLIANT\nprobe-attest-junit-baseline-tr                           COMPLIANT\nprobe-attest-generic-baseline-tr                         COMPLIANT\nprobe-attest-decision-baseline-tr                        COMPLIANT\nprobe-attest-custom-baseline-tr                          COMPLIANT\nprobe-attest-artifact-baseline-tr                        COMPLIANT\nprobe-assert-artifact-baseline-tr                        COMPLIANT\nprobe-archive-attestation-type-baseline-tr               COMPLIANT\nprobe-allow-artifact-baseline-tr                         COMPLIANT\n\nShowing page 1 of 1, total 20 items",
+  "baseline_output": "NAME                                            DESCRIPTION  COMPLIANCE\n{trail}                                COMPLIANT\nprobe-list-attestation-types-baseline-tr                     COMPLIANT\nprobe-list-artifacts-baseline-tr                             COMPLIANT\nprobe-get-trail-baseline-tr                                  COMPLIANT\nprobe-get-attestation-type-baseline-tr                       COMPLIANT\nprobe-get-attestation-baseline-tr                            COMPLIANT\nprobe-get-artifact-baseline-tr                               COMPLIANT\nprobe-evaluate-trails-baseline-tr                            COMPLIANT\nprobe-evaluate-trail-baseline-tr                             COMPLIANT\nprobe-create-attestation-type-baseline-tr                    COMPLIANT\nprobe-begin-trail-baseline-tr                                COMPLIANT\nprobe-attest-sonar-baseline-tr                               COMPLIANT\nprobe-attest-snyk-baseline-tr                                COMPLIANT\nprobe-attest-pullrequest-gitlab-baseline-tr                  COMPLIANT\nprobe-attest-pullrequest-github-baseline-tr                  COMPLIANT\nprobe-attest-pullrequest-bitbucket-baseline-tr               COMPLIANT\nprobe-attest-pullrequest-azure-baseline-tr                   COMPLIANT\nprobe-attest-override-baseline-tr                            COMPLIANT\nprobe-attest-junit-baseline-tr                               COMPLIANT\nprobe-attest-jira-baseline-tr                                NON-COMPLIANT\n\nShowing page 1 of 2, total 27 items",
   "flags_to_test": [
    "fingerprint",
    "flow",
@@ -2278,7 +2529,7 @@
   "flags": {},
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "Search result resolved to artifact with fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-assert-artifact-baseline-fl\nGit commit:        4ecc6213bb1c24ad0b35a3dfceaba323b13b998b\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-assert-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 4ecc621    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-attest-artifact-baseline-fl\nGit commit:        4ecc6213bb1c24ad0b35a3dfceaba323b13b998b\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-attest-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 4ecc621    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-get-artifact-baseline-fl\nGit commit:        4ecc6213bb1c24ad0b35a3dfceaba323b13b998b\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-get-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 4ecc621    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-get-attestation-baseline-fl\nGit commit:        4ecc6213bb1c24ad0b35a3dfceaba323b13b998b\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-get-attestation-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 4ecc621    {timestamp}\n    Artifact created  {timestamp}",
+  "baseline_output": "Search result resolved to artifact with fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-assert-artifact-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-assert-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-attest-artifact-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-attest-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-get-artifact-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-get-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-get-attestation-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-get-attestation-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}",
   "flags_to_test": [
    "output"
   ],
@@ -2289,7 +2540,20 @@
   "verify": []
  },
  "snapshot azure": {
-  "flags": [
+  "args": [
+   "{env}"
+  ],
+  "flags": {
+   "azure-client-id": "probe-azure-client-id",
+   "azure-client-secret": "probe-azure-client-secret",
+   "azure-resource-group-name": "probe-azure-resource-group-name",
+   "azure-subscription-id": "probe-azure-subscription-id",
+   "azure-tenant-id": "probe-azure-tenant-id"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli snapshot azure] ClientSecretCredential authentication failed. ",
+  "needs": "azure",
+  "flags_to_test": [
    "azure-client-id",
    "azure-client-secret",
    "azure-resource-group-name",
@@ -2299,10 +2563,49 @@
    "dry-run",
    "zip"
   ],
-  "skip": "needs azure"
+  "flag_values": {
+   "azure-client-id": "probe-azure-client-id",
+   "azure-client-secret": "probe-azure-client-secret",
+   "azure-resource-group-name": "probe-azure-resource-group-name",
+   "azure-subscription-id": "probe-azure-subscription-id",
+   "azure-tenant-id": "probe-azure-tenant-id",
+   "digests-source": "logs",
+   "dry-run": "true",
+   "zip": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "snapshot cloud-run": {
-  "flags": [
+  "args": [
+   "{env}"
+  ],
+  "flags": {
+   "project": "probe-project",
+   "region": "probe-region"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli snapshot cloud-run] GCP client setup failed: credentials: could not find default credentials. See https://cloud.google.com/docs/authentication/external/set-up-adc for more information",
+  "needs": "google cloud",
+  "flags_to_test": [
    "dry-run",
    "exclude",
    "exclude-regex",
@@ -2312,7 +2615,36 @@
    "region",
    "resolve-names"
   ],
-  "skip": "needs google cloud"
+  "flag_values": {
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "exclude-regex": "probe-exclude-regex",
+   "include": "probe-include",
+   "include-regex": "probe-include-regex",
+   "project": "probe-project",
+   "region": "probe-region",
+   "resolve-names": "true"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "snapshot docker": {
   "args": [
@@ -2350,7 +2682,14 @@
   ]
  },
  "snapshot ecs": {
-  "flags": [
+  "args": [
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": false,
+  "error": "Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role found, operation error ec2imds: GetMetadata, canceled, context deadline exceeded",
+  "needs": "aws",
+  "flags_to_test": [
    "aws-key-id",
    "aws-region",
    "aws-secret-key",
@@ -2364,10 +2703,50 @@
    "services",
    "services-regex"
   ],
-  "skip": "needs aws"
+  "flag_values": {
+   "aws-key-id": "probe-aws-key-id",
+   "aws-region": "probe-aws-region",
+   "aws-secret-key": "probe-aws-secret-key",
+   "clusters": "probe-clusters",
+   "clusters-regex": "probe-clusters-regex",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "exclude-regex": "probe-exclude-regex",
+   "exclude-services": "probe-exclude-services",
+   "exclude-services-regex": "probe-exclude-services-regex",
+   "services": "probe-services",
+   "services-regex": "probe-services-regex"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "snapshot k8s": {
-  "flags": [
+  "args": [
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": false,
+  "error": "Error: [kosli snapshot k8s] could not build config from inside the cluster: unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined",
+  "needs": "kubernetes",
+  "flags_to_test": [
    "config-file",
    "dry-run",
    "exclude-namespaces",
@@ -2376,10 +2755,45 @@
    "namespaces",
    "namespaces-regex"
   ],
-  "skip": "needs kubernetes"
+  "flag_values": {
+   "config-file": "probe-config-file",
+   "dry-run": "true",
+   "exclude-namespaces": "probe-exclude-namespaces",
+   "exclude-namespaces-regex": "probe-exclude-namespaces-regex",
+   "kubeconfig": "probe-kubeconfig",
+   "namespaces": "probe-namespaces",
+   "namespaces-regex": "probe-namespaces-regex"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "snapshot lambda": {
-  "flags": [
+  "args": [
+   "{env}"
+  ],
+  "flags": {},
+  "baseline_ok": false,
+  "error": "Error: [kosli snapshot lambda] operation error Lambda: ListFunctions, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role found, operation error ec2imds: GetMetadata, canceled, context deadline exceeded",
+  "needs": "aws",
+  "flags_to_test": [
    "aws-key-id",
    "aws-region",
    "aws-secret-key",
@@ -2389,7 +2803,36 @@
    "function-names",
    "function-names-regex"
   ],
-  "skip": "needs aws"
+  "flag_values": {
+   "aws-key-id": "probe-aws-key-id",
+   "aws-region": "probe-aws-region",
+   "aws-secret-key": "probe-aws-secret-key",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "exclude-regex": "probe-exclude-regex",
+   "function-names": "probe-function-names",
+   "function-names-regex": "probe-function-names-regex"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "snapshot path": {
   "args": [
@@ -2479,7 +2922,16 @@
   ]
  },
  "snapshot s3": {
-  "flags": [
+  "args": [
+   "{env}"
+  ],
+  "flags": {
+   "bucket": "probe-bucket"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli snapshot s3] operation error S3: ListObjectsV2, resolve auth scheme: resolve endpoint: endpoint rule error, Invalid region: region was not a valid DNS name.",
+  "needs": "aws",
+  "flags_to_test": [
    "aws-key-id",
    "aws-region",
    "aws-secret-key",
@@ -2490,7 +2942,37 @@
    "include",
    "include-regex"
   ],
-  "skip": "needs aws"
+  "flag_values": {
+   "aws-key-id": "probe-aws-key-id",
+   "aws-region": "probe-aws-region",
+   "aws-secret-key": "probe-aws-secret-key",
+   "bucket": "probe-bucket",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "exclude-regex": "probe-exclude-regex",
+   "include": "probe-include",
+   "include-regex": "probe-include-regex"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "environment",
+    "{env}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "status": {
   "args": [],
@@ -2807,7 +3289,17 @@
   "verify": []
  },
  "assert pullrequest azure": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "azure-org-url": "probe-azure-org-url",
+   "azure-token": "probe-azure-token",
+   "project": "probe-project",
+   "repository": "probe-repository"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli assert pullrequest azure] Options \"probe-azure-org-url/_apis\": unsupported protocol scheme \"\"",
+  "needs": "azure devops",
+  "flags_to_test": [
    "azure-org-url",
    "azure-token",
    "commit",
@@ -2815,10 +3307,29 @@
    "project",
    "repository"
   ],
-  "skip": "needs azure devops"
+  "flag_values": {
+   "azure-org-url": "probe-azure-org-url",
+   "azure-token": "probe-azure-token",
+   "commit": "HEAD",
+   "dry-run": "true",
+   "project": "probe-project",
+   "repository": "probe-repository"
+  },
+  "setup": [],
+  "verify": []
  },
  "assert pullrequest bitbucket": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "bitbucket-username": "probe-bitbucket-username",
+   "bitbucket-password": "probe-bitbucket-password",
+   "bitbucket-workspace": "probe-bitbucket-workspace",
+   "repository": "probe-repository"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli assert pullrequest bitbucket] unexpected end of JSON input",
+  "needs": "bitbucket",
+  "flags_to_test": [
    "bitbucket-access-token",
    "bitbucket-password",
    "bitbucket-username",
@@ -2827,10 +3338,29 @@
    "dry-run",
    "repository"
   ],
-  "skip": "needs bitbucket"
+  "flag_values": {
+   "bitbucket-access-token": "probe-bitbucket-access-token",
+   "bitbucket-password": "probe-bitbucket-password",
+   "bitbucket-username": "probe-bitbucket-username",
+   "bitbucket-workspace": "probe-bitbucket-workspace",
+   "commit": "HEAD",
+   "dry-run": "true",
+   "repository": "probe-repository"
+  },
+  "setup": [],
+  "verify": []
  },
  "assert pullrequest github": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "github-org": "probe-github-org",
+   "github-token": "probe-github-token",
+   "repository": "probe-repository"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli assert pullrequest github] non-200 OK status code: 401 Unauthorized body: \"{\\r\\n  \\\"message\\\": \\\"Bad credentials\\\",\\r\\n  \\\"documentation_url\\\": \\\"https://docs.github.com/rest\\\",\\r\\n  \\\"status\\\": \\\"401\\\"\\r\\n}\"",
+  "needs": "github",
+  "flags_to_test": [
    "commit",
    "dry-run",
    "github-base-url",
@@ -2838,10 +3368,28 @@
    "github-token",
    "repository"
   ],
-  "skip": "needs github"
+  "flag_values": {
+   "commit": "HEAD",
+   "dry-run": "true",
+   "github-base-url": "probe-github-base-url",
+   "github-org": "probe-github-org",
+   "github-token": "probe-github-token",
+   "repository": "probe-repository"
+  },
+  "setup": [],
+  "verify": []
  },
  "assert pullrequest gitlab": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "gitlab-org": "probe-gitlab-org",
+   "gitlab-token": "probe-gitlab-token",
+   "repository": "probe-repository"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli assert pullrequest gitlab] failed to list merge requests for commit HEAD: GET https://gitlab.com/api/v4/projects/probe-gitlab-org%!F(MISSING)probe-repository/repository/commits/HEAD/merge_requests: 401 {message: 401 Unauthorized}",
+  "needs": "gitlab",
+  "flags_to_test": [
    "commit",
    "dry-run",
    "gitlab-base-url",
@@ -2849,7 +3397,16 @@
    "gitlab-token",
    "repository"
   ],
-  "skip": "needs gitlab"
+  "flag_values": {
+   "commit": "HEAD",
+   "dry-run": "true",
+   "gitlab-base-url": "probe-gitlab-base-url",
+   "gitlab-org": "probe-gitlab-org",
+   "gitlab-token": "probe-gitlab-token",
+   "repository": "probe-repository"
+  },
+  "setup": [],
+  "verify": []
  },
  "attach-policy": {
   "args": [
@@ -2890,7 +3447,21 @@
   ]
  },
  "attest pullrequest azure": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "azure-org-url": "probe-azure-org-url",
+   "azure-token": "probe-azure-token",
+   "commit": "HEAD",
+   "flow": "{flow}",
+   "name": "{name}",
+   "project": "probe-project",
+   "repository": "probe-repository",
+   "trail": "{trail}"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-baseline-fl trail=probe-attest-pullrequest-azure-baseline-tr] Options \"probe-azure-org-url/_apis\": unsupported protocol scheme \"\"",
+  "needs": "azure devops",
+  "flags_to_test": [
    "annotate",
    "artifact-type",
    "assert",
@@ -2919,10 +3490,82 @@
    "trail",
    "user-data"
   ],
-  "skip": "needs azure devops"
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "assert": "true",
+   "attachments": "probe-attachments",
+   "azure-org-url": "probe-azure-org-url",
+   "azure-token": "probe-azure-token",
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "project": "probe-project",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "trail": "{trail}",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "attest pullrequest bitbucket": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "bitbucket-username": "probe-bitbucket-username",
+   "bitbucket-password": "probe-bitbucket-password",
+   "bitbucket-workspace": "probe-bitbucket-workspace",
+   "commit": "HEAD",
+   "flow": "{flow}",
+   "name": "{name}",
+   "repository": "probe-repository",
+   "trail": "{trail}"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-baseline-fl trail=probe-attest-pullrequest-bitbucket-baseline-tr] unexpected end of JSON input",
+  "needs": "bitbucket",
+  "flags_to_test": [
    "annotate",
    "artifact-type",
    "assert",
@@ -2952,10 +3595,82 @@
    "trail",
    "user-data"
   ],
-  "skip": "needs bitbucket"
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "assert": "true",
+   "attachments": "probe-attachments",
+   "bitbucket-access-token": "probe-bitbucket-access-token",
+   "bitbucket-password": "probe-bitbucket-password",
+   "bitbucket-username": "probe-bitbucket-username",
+   "bitbucket-workspace": "probe-bitbucket-workspace",
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "trail": "{trail}",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "attest pullrequest github": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "commit": "HEAD",
+   "flow": "{flow}",
+   "github-org": "probe-github-org",
+   "github-token": "probe-github-token",
+   "name": "{name}",
+   "repository": "probe-repository",
+   "trail": "{trail}"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-baseline-fl trail=probe-attest-pullrequest-github-baseline-tr] non-200 OK status code: 401 Unauthorized body: \"{\\r\\n  \\\"message\\\": \\\"Bad credentials\\\",\\r\\n  \\\"documentation_url\\\": \\\"https://docs.github.com/rest\\\",\\r\\n  \\\"status\\\": \\\"401\\\"\\r\\n}\"",
+  "needs": "github",
+  "flags_to_test": [
    "annotate",
    "artifact-type",
    "assert",
@@ -2984,10 +3699,81 @@
    "trail",
    "user-data"
   ],
-  "skip": "needs github"
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "assert": "true",
+   "attachments": "probe-attachments",
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "github-base-url": "probe-github-base-url",
+   "github-org": "probe-github-org",
+   "github-token": "probe-github-token",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "trail": "{trail}",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "attest pullrequest gitlab": {
-  "flags": [
+  "args": [],
+  "flags": {
+   "commit": "HEAD",
+   "flow": "{flow}",
+   "gitlab-org": "probe-gitlab-org",
+   "gitlab-token": "probe-gitlab-token",
+   "name": "{name}",
+   "repository": "probe-repository",
+   "trail": "{trail}"
+  },
+  "baseline_ok": false,
+  "error": "Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-baseline-fl trail=probe-attest-pullrequest-gitlab-baseline-tr] failed to list merge requests for commit 1ade42f39dd06d36aa603b9524a1b3eeaba9b796: GET https://gitlab.com/api/v4/projects/probe-gitlab-org%!F(MISSING)probe-repository/repository/commits/1ade42f39dd06d36aa603b9524a1b3eeaba9b796/merge_requests: 401 {message: 401 Unauthorized}",
+  "needs": "gitlab",
+  "flags_to_test": [
    "annotate",
    "artifact-type",
    "assert",
@@ -3016,7 +3802,65 @@
    "trail",
    "user-data"
   ],
-  "skip": "needs gitlab"
+  "flag_values": {
+   "annotate": "probe-annotate",
+   "artifact-type": "file",
+   "assert": "true",
+   "attachments": "probe-attachments",
+   "commit": "HEAD",
+   "description": "probe-description",
+   "dry-run": "true",
+   "exclude": "probe-exclude",
+   "external-fingerprint": "probe-external-fingerprint",
+   "external-url": "probe-external-url",
+   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "flow": "{flow}",
+   "gitlab-base-url": "probe-gitlab-base-url",
+   "gitlab-org": "probe-gitlab-org",
+   "gitlab-token": "probe-gitlab-token",
+   "name": "{name}",
+   "origin-url": "http://example.com",
+   "redact-commit-info": "probe-redact-commit-info",
+   "registry-password": "probe-registry-password",
+   "registry-username": "probe-registry-username",
+   "repo-id": "probe-repo-id",
+   "repo-provider": "probe-repo-provider",
+   "repo-root": ".",
+   "repo-url": "probe-repo-url",
+   "repository": "probe-repository",
+   "trail": "{trail}",
+   "user-data": "cmd/kosli/testdata/person-schema.json"
+  },
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   }
+  ],
+  "verify": [
+   [
+    "get",
+    "trail",
+    "{trail}",
+    "--flow",
+    "{flow}",
+    "--output",
+    "json"
+   ]
+  ]
  },
  "create attestation-type": {
   "args": [

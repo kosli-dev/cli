@@ -29,31 +29,31 @@ assert artifact	--output	1	0	0	cli	differs	differs	Error: [kosli assert artifact
 assert artifact	--policy	0	0	1		same	differs	COMPLIANT
 assert artifact	--registry-password	0	0	1		same	differs	COMPLIANT
 assert artifact	--registry-username	0	0	1		same	differs	COMPLIANT
-assert pullrequest azure	--azure-org-url					not tested	not tested	needs azure devops
-assert pullrequest azure	--azure-token					not tested	not tested	needs azure devops
-assert pullrequest azure	--commit					not tested	not tested	needs azure devops
-assert pullrequest azure	--dry-run					not tested	not tested	needs azure devops
-assert pullrequest azure	--project					not tested	not tested	needs azure devops
-assert pullrequest azure	--repository					not tested	not tested	needs azure devops
-assert pullrequest bitbucket	--bitbucket-access-token					not tested	not tested	needs bitbucket
-assert pullrequest bitbucket	--bitbucket-password					not tested	not tested	needs bitbucket
-assert pullrequest bitbucket	--bitbucket-username					not tested	not tested	needs bitbucket
-assert pullrequest bitbucket	--bitbucket-workspace					not tested	not tested	needs bitbucket
-assert pullrequest bitbucket	--commit					not tested	not tested	needs bitbucket
-assert pullrequest bitbucket	--dry-run					not tested	not tested	needs bitbucket
-assert pullrequest bitbucket	--repository					not tested	not tested	needs bitbucket
-assert pullrequest github	--commit					not tested	not tested	needs github
-assert pullrequest github	--dry-run					not tested	not tested	needs github
-assert pullrequest github	--github-base-url					not tested	not tested	needs github
-assert pullrequest github	--github-org					not tested	not tested	needs github
-assert pullrequest github	--github-token					not tested	not tested	needs github
-assert pullrequest github	--repository					not tested	not tested	needs github
-assert pullrequest gitlab	--commit					not tested	not tested	needs gitlab
-assert pullrequest gitlab	--dry-run					not tested	not tested	needs gitlab
-assert pullrequest gitlab	--gitlab-base-url					not tested	not tested	needs gitlab
-assert pullrequest gitlab	--gitlab-org					not tested	not tested	needs gitlab
-assert pullrequest gitlab	--gitlab-token					not tested	not tested	needs gitlab
-assert pullrequest gitlab	--repository					not tested	not tested	needs gitlab
+assert pullrequest azure	--azure-org-url	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest azure] flag '--azure-org-url' is required, but empty string was provided
+assert pullrequest azure	--azure-token	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest azure] flag '--azure-token' is required, but empty string was provided
+assert pullrequest azure	--commit	1	1	1	cli	same	same	Error: [kosli assert pullrequest azure] Options "probe-azure-org-url/_apis": unsupported protocol scheme ""
+assert pullrequest azure	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+assert pullrequest azure	--project	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest azure] flag '--project' is required, but empty string was provided
+assert pullrequest azure	--repository	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest azure] flag '--repository' is required, but empty string was provided
+assert pullrequest bitbucket	--bitbucket-access-token	1	1	1	cli	differs	same	Error: [kosli assert pullrequest bitbucket] only one of --bitbucket-username, --bitbucket-access-token is allowed
+assert pullrequest bitbucket	--bitbucket-password	1	1	1	cli	differs	same	Error: [kosli assert pullrequest bitbucket] unexpected end of JSON input
+assert pullrequest bitbucket	--bitbucket-username	1	1	1	cli	differs	same	Error: [kosli assert pullrequest bitbucket] unexpected end of JSON input
+assert pullrequest bitbucket	--bitbucket-workspace	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest bitbucket] flag '--bitbucket-workspace' is required, but empty string was provided
+assert pullrequest bitbucket	--commit	1	1	1	cli	same	same	Error: [kosli assert pullrequest bitbucket] unexpected end of JSON input
+assert pullrequest bitbucket	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+assert pullrequest bitbucket	--repository	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest bitbucket] flag '--repository' is required, but empty string was provided
+assert pullrequest github	--commit	1	1	1	cli	same	same	Error: [kosli assert pullrequest github] non-200 OK status code: 401 Unauthorized body: "{\r\n  \"message\": \"Bad credentials\",\r\n  \"documentation_url\": \"
+assert pullrequest github	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+assert pullrequest github	--github-base-url	1	1	1	cli	same	differs	Error: [kosli assert pullrequest github] non-200 OK status code: 401 Unauthorized body: "{\r\n  \"message\": \"Bad credentials\",\r\n  \"documentation_url\": \"
+assert pullrequest github	--github-org	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest github] flag '--github-org' is required, but empty string was provided
+assert pullrequest github	--github-token	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest github] flag '--github-token' is required, but empty string was provided
+assert pullrequest github	--repository	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest github] flag '--repository' is required, but empty string was provided
+assert pullrequest gitlab	--commit	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest gitlab] failed to list merge requests for commit : GET https://gitlab.com/api/v4/projects/probe-gitlab-org%!F(MISSING)probe-rep
+assert pullrequest gitlab	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+assert pullrequest gitlab	--gitlab-base-url	1	1	1	cli	same	differs	Error: [kosli assert pullrequest gitlab] failed to list merge requests for commit HEAD: GET https://gitlab.com/api/v4/projects/probe-gitlab-org%!F(MISSING)probe
+assert pullrequest gitlab	--gitlab-org	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest gitlab] flag '--gitlab-org' is required, but empty string was provided
+assert pullrequest gitlab	--gitlab-token	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest gitlab] flag '--gitlab-token' is required, but empty string was provided
+assert pullrequest gitlab	--repository	1	1	1	cli	differs	differs	Error: [kosli assert pullrequest gitlab] flag '--repository' is required, but empty string was provided
 assert snapshot	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
 attach-policy	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
 attach-policy	--environment	0	1	0		differs	differs	policy 'probe-attach-policy-environment-po' is attached to environments: []
@@ -153,38 +153,38 @@ attest generic	--repo-url	0	0	1		same	differs	generic attestation 'probe-attest-
 attest generic	--repository	0	0	0		same	same	generic attestation 'probe-attest-generic-repository-nm' is reported to trail: probe-attest-generic-repository-tr
 attest generic	--trail	1	1	0	cli	differs	differs	Error: [kosli attest generic flow=probe-attest-generic-trail-fl] flag '--trail' is required, but empty string was provided
 attest generic	--user-data	0	0	0		same	same	generic attestation 'probe-attest-generic-user-data-nm' is reported to trail: probe-attest-generic-user-data-tr
-attest jira	--annotate					not tested	not tested	needs jira
-attest jira	--artifact-type					not tested	not tested	needs jira
-attest jira	--assert					not tested	not tested	needs jira
-attest jira	--attachments					not tested	not tested	needs jira
-attest jira	--commit					not tested	not tested	needs jira
-attest jira	--description					not tested	not tested	needs jira
-attest jira	--dry-run					not tested	not tested	needs jira
-attest jira	--exclude					not tested	not tested	needs jira
-attest jira	--external-fingerprint					not tested	not tested	needs jira
-attest jira	--external-url					not tested	not tested	needs jira
-attest jira	--fingerprint					not tested	not tested	needs jira
-attest jira	--flow					not tested	not tested	needs jira
-attest jira	--ignore-branch-match					not tested	not tested	needs jira
-attest jira	--jira-api-token					not tested	not tested	needs jira
-attest jira	--jira-base-url					not tested	not tested	needs jira
-attest jira	--jira-issue-fields					not tested	not tested	needs jira
-attest jira	--jira-pat					not tested	not tested	needs jira
-attest jira	--jira-project-key					not tested	not tested	needs jira
-attest jira	--jira-secondary-source					not tested	not tested	needs jira
-attest jira	--jira-username					not tested	not tested	needs jira
-attest jira	--name					not tested	not tested	needs jira
-attest jira	--origin-url					not tested	not tested	needs jira
-attest jira	--redact-commit-info					not tested	not tested	needs jira
-attest jira	--registry-password					not tested	not tested	needs jira
-attest jira	--registry-username					not tested	not tested	needs jira
-attest jira	--repo-id					not tested	not tested	needs jira
-attest jira	--repo-provider					not tested	not tested	needs jira
-attest jira	--repo-root					not tested	not tested	needs jira
-attest jira	--repo-url					not tested	not tested	needs jira
-attest jira	--repository					not tested	not tested	needs jira
-attest jira	--trail					not tested	not tested	needs jira
-attest jira	--user-data					not tested	not tested	needs jira
+attest jira	--annotate	1	0	1	cli	differs	differs	Error: [kosli attest jira flow=probe-attest-jira-annotate-fl trail=probe-attest-jira-annotate-tr] invalid argument "" for "--annotate" flag:  must be formatted 
+attest jira	--artifact-type	0	0	1		same	differs	jira attestation 'probe-attest-jira-artifact-type-nm' is reported to trail: probe-attest-jira-artifact-type-tr
+attest jira	--assert	1	0	1	cli	differs	differs	Error: flag '--assert' was given an empty value
+attest jira	--attachments	1	0	1	cli	differs	differs	Error: [kosli attest jira flow=probe-attest-jira-attachments-fl trail=probe-attest-jira-attachments-tr] invalid argument "" for "--attachments" flag: empty valu
+attest jira	--commit	1	1	0	cli	differs	differs	Error: [kosli attest jira flow=probe-attest-jira-commit-fl trail=probe-attest-jira-commit-tr] flag '--commit' is required, but empty string was provided
+attest jira	--description	0	0	0		same	same	jira attestation 'probe-attest-jira-description-nm' is reported to trail: probe-attest-jira-description-tr
+attest jira	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest jira	--exclude	0	0	0		same	same	jira attestation 'probe-attest-jira-exclude-nm' is reported to trail: probe-attest-jira-exclude-tr
+attest jira	--external-fingerprint	1	0	1	cli	differs	differs	Error: [kosli attest jira flow=probe-attest-jira-external-fingerprint-fl trail=probe-attest-jira-external-fingerprint-tr] invalid argument "" for "--external-fi
+attest jira	--external-url	1	0	1	cli	differs	differs	Error: [kosli attest jira flow=probe-attest-jira-external-url-fl trail=probe-attest-jira-external-url-tr] invalid argument "" for "--external-url" flag:  must b
+attest jira	--fingerprint	0	0	1		same	differs	jira attestation 'probe-attest-jira-fingerprint-nm' is reported to trail: probe-attest-jira-fingerprint-tr
+attest jira	--flow	1	1	0	cli	differs	differs	Error: [kosli attest jira trail=probe-attest-jira-flow-tr] flag '--flow' is required, but empty string was provided
+attest jira	--ignore-branch-match	1	0	0	cli	differs	differs	Error: flag '--ignore-branch-match' was given an empty value
+attest jira	--jira-api-token	1	0	1	cli	differs	same	Error: [kosli attest jira flow=probe-attest-jira-jira-api-token-fl trail=probe-attest-jira-jira-api-token-tr] only one of --jira-pat, --jira-api-token is allowe
+attest jira	--jira-base-url	1	1	0	cli	differs	differs	Error: [kosli attest jira flow=probe-attest-jira-jira-base-url-fl trail=probe-attest-jira-jira-base-url-tr] flag '--jira-base-url' is required, but empty string
+attest jira	--jira-issue-fields	0	0	0		same	same	jira attestation 'probe-attest-jira-jira-issue-fields-nm' is reported to trail: probe-attest-jira-jira-issue-fields-tr
+attest jira	--jira-pat	0	1	0		differs	same	jira attestation 'probe-attest-jira-jira-pat-nm' is reported to trail: probe-attest-jira-jira-pat-tr
+attest jira	--jira-project-key	0	0	1		same	differs	jira attestation 'probe-attest-jira-jira-project-key-nm' is reported to trail: probe-attest-jira-jira-project-key-tr
+attest jira	--jira-secondary-source	0	0	0		same	same	jira attestation 'probe-attest-jira-jira-secondary-source-nm' is reported to trail: probe-attest-jira-jira-secondary-source-tr
+attest jira	--jira-username	1	0	1	cli	differs	same	Error: [kosli attest jira flow=probe-attest-jira-jira-username-fl trail=probe-attest-jira-jira-username-tr] only one of --jira-pat, --jira-username is allowed
+attest jira	--name	1	1	0	cli	differs	differs	Error: [kosli attest jira flow=probe-attest-jira-name-fl trail=probe-attest-jira-name-tr] flag '--name' is required, but empty string was provided
+attest jira	--origin-url	0	0	0		same	same	jira attestation 'probe-attest-jira-origin-url-nm' is reported to trail: probe-attest-jira-origin-url-tr
+attest jira	--redact-commit-info	0	0	1		same	differs	jira attestation 'probe-attest-jira-redact-commit-info-nm' is reported to trail: probe-attest-jira-redact-commit-info-tr
+attest jira	--registry-password	0	0	1		same	differs	jira attestation 'probe-attest-jira-registry-password-nm' is reported to trail: probe-attest-jira-registry-password-tr
+attest jira	--registry-username	0	0	1		same	differs	jira attestation 'probe-attest-jira-registry-username-nm' is reported to trail: probe-attest-jira-registry-username-tr
+attest jira	--repo-id	0	0	0		same	same	jira attestation 'probe-attest-jira-repo-id-nm' is reported to trail: probe-attest-jira-repo-id-tr
+attest jira	--repo-provider	0	0	1		same	differs	jira attestation 'probe-attest-jira-repo-provider-nm' is reported to trail: probe-attest-jira-repo-provider-tr
+attest jira	--repo-root	0	0	0		same	same	jira attestation 'probe-attest-jira-repo-root-nm' is reported to trail: probe-attest-jira-repo-root-tr
+attest jira	--repo-url	0	0	1		same	differs	jira attestation 'probe-attest-jira-repo-url-nm' is reported to trail: probe-attest-jira-repo-url-tr
+attest jira	--repository	0	0	0		same	same	jira attestation 'probe-attest-jira-repository-nm' is reported to trail: probe-attest-jira-repository-tr
+attest jira	--trail	1	1	0	cli	differs	differs	Error: [kosli attest jira flow=probe-attest-jira-trail-fl] flag '--trail' is required, but empty string was provided
+attest jira	--user-data	0	0	0		same	same	jira attestation 'probe-attest-jira-user-data-nm' is reported to trail: probe-attest-jira-user-data-tr
 attest junit	--annotate	1	0	1	cli	differs	differs	Error: [kosli attest junit flow=probe-attest-junit-annotate-fl trail=probe-attest-junit-annotate-tr] invalid argument "" for "--annotate" flag:  must be formatt
 attest junit	--artifact-type	0	0	1		same	differs	junit attestation 'probe-attest-junit-artifact-type-nm' is reported to trail: probe-attest-junit-artifact-type-tr
 attest junit	--attachments	1	0	1	cli	differs	differs	Error: [kosli attest junit flow=probe-attest-junit-attachments-fl trail=probe-attest-junit-attachments-tr] invalid argument "" for "--attachments" flag: empty v
@@ -235,171 +235,171 @@ attest override	--repo-url	0	0	1		same	differs	attestation 'probe-attest-overrid
 attest override	--repository	0	0	0		same	same	attestation 'probe-attest-override-repository-nm' has been overridden in trail: probe-attest-override-repository-tr
 attest override	--trail	1	1	0	cli	differs	differs	Error: [kosli attest override flow=probe-attest-override-trail-fl] flag '--trail' is required, but empty string was provided
 attest override	--user-data	0	0	0		same	same	attestation 'probe-attest-override-user-data-nm' has been overridden in trail: probe-attest-override-user-data-tr
-attest pullrequest azure	--annotate					not tested	not tested	needs azure devops
-attest pullrequest azure	--artifact-type					not tested	not tested	needs azure devops
-attest pullrequest azure	--assert					not tested	not tested	needs azure devops
-attest pullrequest azure	--attachments					not tested	not tested	needs azure devops
-attest pullrequest azure	--azure-org-url					not tested	not tested	needs azure devops
-attest pullrequest azure	--azure-token					not tested	not tested	needs azure devops
-attest pullrequest azure	--commit					not tested	not tested	needs azure devops
-attest pullrequest azure	--description					not tested	not tested	needs azure devops
-attest pullrequest azure	--dry-run					not tested	not tested	needs azure devops
-attest pullrequest azure	--exclude					not tested	not tested	needs azure devops
-attest pullrequest azure	--external-fingerprint					not tested	not tested	needs azure devops
-attest pullrequest azure	--external-url					not tested	not tested	needs azure devops
-attest pullrequest azure	--fingerprint					not tested	not tested	needs azure devops
-attest pullrequest azure	--flow					not tested	not tested	needs azure devops
-attest pullrequest azure	--name					not tested	not tested	needs azure devops
-attest pullrequest azure	--origin-url					not tested	not tested	needs azure devops
-attest pullrequest azure	--project					not tested	not tested	needs azure devops
-attest pullrequest azure	--redact-commit-info					not tested	not tested	needs azure devops
-attest pullrequest azure	--registry-password					not tested	not tested	needs azure devops
-attest pullrequest azure	--registry-username					not tested	not tested	needs azure devops
-attest pullrequest azure	--repo-id					not tested	not tested	needs azure devops
-attest pullrequest azure	--repo-provider					not tested	not tested	needs azure devops
-attest pullrequest azure	--repo-root					not tested	not tested	needs azure devops
-attest pullrequest azure	--repo-url					not tested	not tested	needs azure devops
-attest pullrequest azure	--repository					not tested	not tested	needs azure devops
-attest pullrequest azure	--trail					not tested	not tested	needs azure devops
-attest pullrequest azure	--user-data					not tested	not tested	needs azure devops
-attest pullrequest bitbucket	--annotate					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--artifact-type					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--assert					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--attachments					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--bitbucket-access-token					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--bitbucket-password					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--bitbucket-username					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--bitbucket-workspace					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--commit					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--description					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--dry-run					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--exclude					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--external-fingerprint					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--external-url					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--fingerprint					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--flow					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--name					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--origin-url					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--redact-commit-info					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--registry-password					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--registry-username					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--repo-id					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--repo-provider					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--repo-root					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--repo-url					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--repository					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--trail					not tested	not tested	needs bitbucket
-attest pullrequest bitbucket	--user-data					not tested	not tested	needs bitbucket
-attest pullrequest github	--annotate					not tested	not tested	needs github
-attest pullrequest github	--artifact-type					not tested	not tested	needs github
-attest pullrequest github	--assert					not tested	not tested	needs github
-attest pullrequest github	--attachments					not tested	not tested	needs github
-attest pullrequest github	--commit					not tested	not tested	needs github
-attest pullrequest github	--description					not tested	not tested	needs github
-attest pullrequest github	--dry-run					not tested	not tested	needs github
-attest pullrequest github	--exclude					not tested	not tested	needs github
-attest pullrequest github	--external-fingerprint					not tested	not tested	needs github
-attest pullrequest github	--external-url					not tested	not tested	needs github
-attest pullrequest github	--fingerprint					not tested	not tested	needs github
-attest pullrequest github	--flow					not tested	not tested	needs github
-attest pullrequest github	--github-base-url					not tested	not tested	needs github
-attest pullrequest github	--github-org					not tested	not tested	needs github
-attest pullrequest github	--github-token					not tested	not tested	needs github
-attest pullrequest github	--name					not tested	not tested	needs github
-attest pullrequest github	--origin-url					not tested	not tested	needs github
-attest pullrequest github	--redact-commit-info					not tested	not tested	needs github
-attest pullrequest github	--registry-password					not tested	not tested	needs github
-attest pullrequest github	--registry-username					not tested	not tested	needs github
-attest pullrequest github	--repo-id					not tested	not tested	needs github
-attest pullrequest github	--repo-provider					not tested	not tested	needs github
-attest pullrequest github	--repo-root					not tested	not tested	needs github
-attest pullrequest github	--repo-url					not tested	not tested	needs github
-attest pullrequest github	--repository					not tested	not tested	needs github
-attest pullrequest github	--trail					not tested	not tested	needs github
-attest pullrequest github	--user-data					not tested	not tested	needs github
-attest pullrequest gitlab	--annotate					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--artifact-type					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--assert					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--attachments					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--commit					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--description					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--dry-run					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--exclude					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--external-fingerprint					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--external-url					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--fingerprint					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--flow					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--gitlab-base-url					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--gitlab-org					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--gitlab-token					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--name					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--origin-url					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--redact-commit-info					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--registry-password					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--registry-username					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--repo-id					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--repo-provider					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--repo-root					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--repo-url					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--repository					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--trail					not tested	not tested	needs gitlab
-attest pullrequest gitlab	--user-data					not tested	not tested	needs gitlab
-attest snyk	--annotate					not tested	not tested	needs snyk
-attest snyk	--artifact-type					not tested	not tested	needs snyk
-attest snyk	--attachments					not tested	not tested	needs snyk
-attest snyk	--commit					not tested	not tested	needs snyk
-attest snyk	--description					not tested	not tested	needs snyk
-attest snyk	--dry-run					not tested	not tested	needs snyk
-attest snyk	--exclude					not tested	not tested	needs snyk
-attest snyk	--external-fingerprint					not tested	not tested	needs snyk
-attest snyk	--external-url					not tested	not tested	needs snyk
-attest snyk	--fingerprint					not tested	not tested	needs snyk
-attest snyk	--flow					not tested	not tested	needs snyk
-attest snyk	--name					not tested	not tested	needs snyk
-attest snyk	--origin-url					not tested	not tested	needs snyk
-attest snyk	--redact-commit-info					not tested	not tested	needs snyk
-attest snyk	--registry-password					not tested	not tested	needs snyk
-attest snyk	--registry-username					not tested	not tested	needs snyk
-attest snyk	--repo-id					not tested	not tested	needs snyk
-attest snyk	--repo-provider					not tested	not tested	needs snyk
-attest snyk	--repo-root					not tested	not tested	needs snyk
-attest snyk	--repo-url					not tested	not tested	needs snyk
-attest snyk	--repository					not tested	not tested	needs snyk
-attest snyk	--scan-results					not tested	not tested	needs snyk
-attest snyk	--trail					not tested	not tested	needs snyk
-attest snyk	--upload-results					not tested	not tested	needs snyk
-attest snyk	--user-data					not tested	not tested	needs snyk
-attest sonar	--annotate					not tested	not tested	needs sonarqube
-attest sonar	--artifact-type					not tested	not tested	needs sonarqube
-attest sonar	--attachments					not tested	not tested	needs sonarqube
-attest sonar	--commit					not tested	not tested	needs sonarqube
-attest sonar	--description					not tested	not tested	needs sonarqube
-attest sonar	--dry-run					not tested	not tested	needs sonarqube
-attest sonar	--exclude					not tested	not tested	needs sonarqube
-attest sonar	--external-fingerprint					not tested	not tested	needs sonarqube
-attest sonar	--external-url					not tested	not tested	needs sonarqube
-attest sonar	--fingerprint					not tested	not tested	needs sonarqube
-attest sonar	--flow					not tested	not tested	needs sonarqube
-attest sonar	--max-wait					not tested	not tested	needs sonarqube
-attest sonar	--name					not tested	not tested	needs sonarqube
-attest sonar	--origin-url					not tested	not tested	needs sonarqube
-attest sonar	--pull-request					not tested	not tested	needs sonarqube
-attest sonar	--redact-commit-info					not tested	not tested	needs sonarqube
-attest sonar	--registry-password					not tested	not tested	needs sonarqube
-attest sonar	--registry-username					not tested	not tested	needs sonarqube
-attest sonar	--repo-id					not tested	not tested	needs sonarqube
-attest sonar	--repo-provider					not tested	not tested	needs sonarqube
-attest sonar	--repo-root					not tested	not tested	needs sonarqube
-attest sonar	--repo-url					not tested	not tested	needs sonarqube
-attest sonar	--repository					not tested	not tested	needs sonarqube
-attest sonar	--sonar-api-token					not tested	not tested	needs sonarqube
-attest sonar	--sonar-ce-task-url					not tested	not tested	needs sonarqube
-attest sonar	--sonar-project-key					not tested	not tested	needs sonarqube
-attest sonar	--sonar-revision					not tested	not tested	needs sonarqube
-attest sonar	--sonar-server-url					not tested	not tested	needs sonarqube
-attest sonar	--sonar-working-dir					not tested	not tested	needs sonarqube
-attest sonar	--trail					not tested	not tested	needs sonarqube
-attest sonar	--user-data					not tested	not tested	needs sonarqube
+attest pullrequest azure	--annotate	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-annotate-fl trail=probe-attest-pullrequest-azure-annotate-tr] invalid argument "" for
+attest pullrequest azure	--artifact-type	1	1	1	cli	same	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-artifact-type-fl trail=probe-attest-pullrequest-azure-artifact-type-tr] Options "prob
+attest pullrequest azure	--assert	1	1	1	cli	differs	differs	Error: flag '--assert' was given an empty value
+attest pullrequest azure	--attachments	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-attachments-fl trail=probe-attest-pullrequest-azure-attachments-tr] invalid argument 
+attest pullrequest azure	--azure-org-url	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-azure-org-url-fl trail=probe-attest-pullrequest-azure-azure-org-url-tr] flag '--azure
+attest pullrequest azure	--azure-token	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-azure-token-fl trail=probe-attest-pullrequest-azure-azure-token-tr] flag '--azure-tok
+attest pullrequest azure	--commit	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-commit-fl trail=probe-attest-pullrequest-azure-commit-tr] flag '--commit' is required
+attest pullrequest azure	--description	1	1	1	cli	same	same	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-description-fl trail=probe-attest-pullrequest-azure-description-tr] Options "probe-az
+attest pullrequest azure	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest pullrequest azure	--exclude	1	1	1	cli	same	same	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-exclude-fl trail=probe-attest-pullrequest-azure-exclude-tr] Options "probe-azure-org-
+attest pullrequest azure	--external-fingerprint	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-external-fingerprint-fl trail=probe-attest-pullrequest-azure-external-fingerprint-tr]
+attest pullrequest azure	--external-url	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-external-url-fl trail=probe-attest-pullrequest-azure-external-url-tr] invalid argumen
+attest pullrequest azure	--fingerprint	1	1	1	cli	same	same	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-fingerprint-fl trail=probe-attest-pullrequest-azure-fingerprint-tr] Options "probe-az
+attest pullrequest azure	--flow	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure trail=probe-attest-pullrequest-azure-flow-tr] flag '--flow' is required, but empty string was provided
+attest pullrequest azure	--name	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-name-fl trail=probe-attest-pullrequest-azure-name-tr] flag '--name' is required, but 
+attest pullrequest azure	--origin-url	1	1	1	cli	same	same	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-origin-url-fl trail=probe-attest-pullrequest-azure-origin-url-tr] Options "probe-azur
+attest pullrequest azure	--project	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-project-fl trail=probe-attest-pullrequest-azure-project-tr] flag '--project' is requi
+attest pullrequest azure	--redact-commit-info	1	1	1	cli	same	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-redact-commit-info-fl trail=probe-attest-pullrequest-azure-redact-commit-info-tr] Opt
+attest pullrequest azure	--registry-password	1	1	1	cli	same	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-registry-password-fl trail=probe-attest-pullrequest-azure-registry-password-tr] Optio
+attest pullrequest azure	--registry-username	1	1	1	cli	same	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-registry-username-fl trail=probe-attest-pullrequest-azure-registry-username-tr] Optio
+attest pullrequest azure	--repo-id	1	1	1	cli	same	same	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-repo-id-fl trail=probe-attest-pullrequest-azure-repo-id-tr] Options "probe-azure-org-
+attest pullrequest azure	--repo-provider	1	1	1	cli	same	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-repo-provider-fl trail=probe-attest-pullrequest-azure-repo-provider-tr] Options "prob
+attest pullrequest azure	--repo-root	1	1	1	cli	same	same	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-repo-root-fl trail=probe-attest-pullrequest-azure-repo-root-tr] Options "probe-azure-
+attest pullrequest azure	--repo-url	1	1	1	cli	same	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-repo-url-fl trail=probe-attest-pullrequest-azure-repo-url-tr] Options "probe-azure-or
+attest pullrequest azure	--repository	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-repository-fl trail=probe-attest-pullrequest-azure-repository-tr] flag '--repository'
+attest pullrequest azure	--trail	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-trail-fl] flag '--trail' is required, but empty string was provided
+attest pullrequest azure	--user-data	1	1	1	cli	same	same	Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-user-data-fl trail=probe-attest-pullrequest-azure-user-data-tr] Options "probe-azure-
+attest pullrequest bitbucket	--annotate	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-annotate-fl trail=probe-attest-pullrequest-bitbucket-annotate-tr] invalid arg
+attest pullrequest bitbucket	--artifact-type	1	1	1	cli	same	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-artifact-type-fl trail=probe-attest-pullrequest-bitbucket-artifact-type-tr] u
+attest pullrequest bitbucket	--assert	1	1	1	cli	differs	differs	Error: flag '--assert' was given an empty value
+attest pullrequest bitbucket	--attachments	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-attachments-fl trail=probe-attest-pullrequest-bitbucket-attachments-tr] inval
+attest pullrequest bitbucket	--bitbucket-access-token	1	1	1	cli	differs	same	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-bitbucket-access-fl trail=probe-attest-pullrequest-bitbucket-bitbucket-access
+attest pullrequest bitbucket	--bitbucket-password	1	1	1	cli	differs	same	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-bitbucket-passwor-fl trail=probe-attest-pullrequest-bitbucket-bitbucket-passw
+attest pullrequest bitbucket	--bitbucket-username	1	1	1	cli	differs	same	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-bitbucket-usernam-fl trail=probe-attest-pullrequest-bitbucket-bitbucket-usern
+attest pullrequest bitbucket	--bitbucket-workspace	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-bitbucket-workspa-fl trail=probe-attest-pullrequest-bitbucket-bitbucket-works
+attest pullrequest bitbucket	--commit	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-commit-fl trail=probe-attest-pullrequest-bitbucket-commit-tr] flag '--commit'
+attest pullrequest bitbucket	--description	1	1	1	cli	same	same	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-description-fl trail=probe-attest-pullrequest-bitbucket-description-tr] unexp
+attest pullrequest bitbucket	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest pullrequest bitbucket	--exclude	1	1	1	cli	same	same	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-exclude-fl trail=probe-attest-pullrequest-bitbucket-exclude-tr] unexpected en
+attest pullrequest bitbucket	--external-fingerprint	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-external-fingerpr-fl trail=probe-attest-pullrequest-bitbucket-external-finger
+attest pullrequest bitbucket	--external-url	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-external-url-fl trail=probe-attest-pullrequest-bitbucket-external-url-tr] inv
+attest pullrequest bitbucket	--fingerprint	1	1	1	cli	same	same	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-fingerprint-fl trail=probe-attest-pullrequest-bitbucket-fingerprint-tr] unexp
+attest pullrequest bitbucket	--flow	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest bitbucket trail=probe-attest-pullrequest-bitbucket-flow-tr] flag '--flow' is required, but empty string was provided
+attest pullrequest bitbucket	--name	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-name-fl trail=probe-attest-pullrequest-bitbucket-name-tr] flag '--name' is re
+attest pullrequest bitbucket	--origin-url	1	1	1	cli	same	same	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-origin-url-fl trail=probe-attest-pullrequest-bitbucket-origin-url-tr] unexpec
+attest pullrequest bitbucket	--redact-commit-info	1	1	1	cli	same	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-redact-commit-inf-fl trail=probe-attest-pullrequest-bitbucket-redact-commit-i
+attest pullrequest bitbucket	--registry-password	1	1	1	cli	same	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-registry-password-fl trail=probe-attest-pullrequest-bitbucket-registry-passwo
+attest pullrequest bitbucket	--registry-username	1	1	1	cli	same	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-registry-username-fl trail=probe-attest-pullrequest-bitbucket-registry-userna
+attest pullrequest bitbucket	--repo-id	1	1	1	cli	same	same	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repo-id-fl trail=probe-attest-pullrequest-bitbucket-repo-id-tr] unexpected en
+attest pullrequest bitbucket	--repo-provider	1	1	1	cli	same	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repo-provider-fl trail=probe-attest-pullrequest-bitbucket-repo-provider-tr] u
+attest pullrequest bitbucket	--repo-root	1	1	1	cli	same	same	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repo-root-fl trail=probe-attest-pullrequest-bitbucket-repo-root-tr] unexpecte
+attest pullrequest bitbucket	--repo-url	1	1	1	cli	same	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repo-url-fl trail=probe-attest-pullrequest-bitbucket-repo-url-tr] unexpected 
+attest pullrequest bitbucket	--repository	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repository-fl trail=probe-attest-pullrequest-bitbucket-repository-tr] flag '-
+attest pullrequest bitbucket	--trail	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-trail-fl] flag '--trail' is required, but empty string was provided
+attest pullrequest bitbucket	--user-data	1	1	1	cli	same	same	Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-user-data-fl trail=probe-attest-pullrequest-bitbucket-user-data-tr] unexpecte
+attest pullrequest github	--annotate	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-annotate-fl trail=probe-attest-pullrequest-github-annotate-tr] invalid argument "" 
+attest pullrequest github	--artifact-type	1	1	1	cli	same	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-artifact-type-fl trail=probe-attest-pullrequest-github-artifact-type-tr] non-200 OK
+attest pullrequest github	--assert	1	1	1	cli	differs	differs	Error: flag '--assert' was given an empty value
+attest pullrequest github	--attachments	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-attachments-fl trail=probe-attest-pullrequest-github-attachments-tr] invalid argume
+attest pullrequest github	--commit	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-commit-fl trail=probe-attest-pullrequest-github-commit-tr] flag '--commit' is requi
+attest pullrequest github	--description	1	1	1	cli	same	same	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-description-fl trail=probe-attest-pullrequest-github-description-tr] non-200 OK sta
+attest pullrequest github	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest pullrequest github	--exclude	1	1	1	cli	same	same	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-exclude-fl trail=probe-attest-pullrequest-github-exclude-tr] non-200 OK status code
+attest pullrequest github	--external-fingerprint	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-external-fingerprint-fl trail=probe-attest-pullrequest-github-external-fingerprint-
+attest pullrequest github	--external-url	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-external-url-fl trail=probe-attest-pullrequest-github-external-url-tr] invalid argu
+attest pullrequest github	--fingerprint	1	1	1	cli	same	same	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-fingerprint-fl trail=probe-attest-pullrequest-github-fingerprint-tr] non-200 OK sta
+attest pullrequest github	--flow	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github trail=probe-attest-pullrequest-github-flow-tr] flag '--flow' is required, but empty string was provided
+attest pullrequest github	--github-base-url	1	1	1	cli	same	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-github-base-url-fl trail=probe-attest-pullrequest-github-github-base-url-tr] non-20
+attest pullrequest github	--github-org	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-github-org-fl trail=probe-attest-pullrequest-github-github-org-tr] flag '--github-o
+attest pullrequest github	--github-token	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-github-token-fl trail=probe-attest-pullrequest-github-github-token-tr] flag '--gith
+attest pullrequest github	--name	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-name-fl trail=probe-attest-pullrequest-github-name-tr] flag '--name' is required, b
+attest pullrequest github	--origin-url	1	1	1	cli	same	same	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-origin-url-fl trail=probe-attest-pullrequest-github-origin-url-tr] non-200 OK statu
+attest pullrequest github	--redact-commit-info	1	1	1	cli	same	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-redact-commit-info-fl trail=probe-attest-pullrequest-github-redact-commit-info-tr] 
+attest pullrequest github	--registry-password	1	1	1	cli	same	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-registry-password-fl trail=probe-attest-pullrequest-github-registry-password-tr] no
+attest pullrequest github	--registry-username	1	1	1	cli	same	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-registry-username-fl trail=probe-attest-pullrequest-github-registry-username-tr] no
+attest pullrequest github	--repo-id	1	1	1	cli	same	same	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repo-id-fl trail=probe-attest-pullrequest-github-repo-id-tr] non-200 OK status code
+attest pullrequest github	--repo-provider	1	1	1	cli	same	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repo-provider-fl trail=probe-attest-pullrequest-github-repo-provider-tr] non-200 OK
+attest pullrequest github	--repo-root	1	1	1	cli	same	same	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repo-root-fl trail=probe-attest-pullrequest-github-repo-root-tr] non-200 OK status 
+attest pullrequest github	--repo-url	1	1	1	cli	same	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repo-url-fl trail=probe-attest-pullrequest-github-repo-url-tr] non-200 OK status co
+attest pullrequest github	--repository	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repository-fl trail=probe-attest-pullrequest-github-repository-tr] flag '--reposito
+attest pullrequest github	--trail	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-trail-fl] flag '--trail' is required, but empty string was provided
+attest pullrequest github	--user-data	1	1	1	cli	same	same	Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-user-data-fl trail=probe-attest-pullrequest-github-user-data-tr] non-200 OK status 
+attest pullrequest gitlab	--annotate	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-annotate-fl trail=probe-attest-pullrequest-gitlab-annotate-tr] invalid argument "" 
+attest pullrequest gitlab	--artifact-type	1	1	1	cli	same	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-artifact-type-fl trail=probe-attest-pullrequest-gitlab-artifact-type-tr] failed to 
+attest pullrequest gitlab	--assert	1	1	1	cli	differs	differs	Error: flag '--assert' was given an empty value
+attest pullrequest gitlab	--attachments	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-attachments-fl trail=probe-attest-pullrequest-gitlab-attachments-tr] invalid argume
+attest pullrequest gitlab	--commit	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-commit-fl trail=probe-attest-pullrequest-gitlab-commit-tr] flag '--commit' is requi
+attest pullrequest gitlab	--description	1	1	1	cli	same	same	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-description-fl trail=probe-attest-pullrequest-gitlab-description-tr] failed to list
+attest pullrequest gitlab	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest pullrequest gitlab	--exclude	1	1	1	cli	same	same	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-exclude-fl trail=probe-attest-pullrequest-gitlab-exclude-tr] failed to list merge r
+attest pullrequest gitlab	--external-fingerprint	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-external-fingerprint-fl trail=probe-attest-pullrequest-gitlab-external-fingerprint-
+attest pullrequest gitlab	--external-url	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-external-url-fl trail=probe-attest-pullrequest-gitlab-external-url-tr] invalid argu
+attest pullrequest gitlab	--fingerprint	1	1	1	cli	same	same	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-fingerprint-fl trail=probe-attest-pullrequest-gitlab-fingerprint-tr] failed to list
+attest pullrequest gitlab	--flow	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab trail=probe-attest-pullrequest-gitlab-flow-tr] flag '--flow' is required, but empty string was provided
+attest pullrequest gitlab	--gitlab-base-url	1	1	1	cli	same	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-gitlab-base-url-fl trail=probe-attest-pullrequest-gitlab-gitlab-base-url-tr] failed
+attest pullrequest gitlab	--gitlab-org	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-gitlab-org-fl trail=probe-attest-pullrequest-gitlab-gitlab-org-tr] flag '--gitlab-o
+attest pullrequest gitlab	--gitlab-token	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-gitlab-token-fl trail=probe-attest-pullrequest-gitlab-gitlab-token-tr] flag '--gitl
+attest pullrequest gitlab	--name	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-name-fl trail=probe-attest-pullrequest-gitlab-name-tr] flag '--name' is required, b
+attest pullrequest gitlab	--origin-url	1	1	1	cli	same	same	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-origin-url-fl trail=probe-attest-pullrequest-gitlab-origin-url-tr] failed to list m
+attest pullrequest gitlab	--redact-commit-info	1	1	1	cli	same	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-redact-commit-info-fl trail=probe-attest-pullrequest-gitlab-redact-commit-info-tr] 
+attest pullrequest gitlab	--registry-password	1	1	1	cli	same	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-registry-password-fl trail=probe-attest-pullrequest-gitlab-registry-password-tr] fa
+attest pullrequest gitlab	--registry-username	1	1	1	cli	same	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-registry-username-fl trail=probe-attest-pullrequest-gitlab-registry-username-tr] fa
+attest pullrequest gitlab	--repo-id	1	1	1	cli	same	same	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repo-id-fl trail=probe-attest-pullrequest-gitlab-repo-id-tr] failed to list merge r
+attest pullrequest gitlab	--repo-provider	1	1	1	cli	same	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repo-provider-fl trail=probe-attest-pullrequest-gitlab-repo-provider-tr] failed to 
+attest pullrequest gitlab	--repo-root	1	1	1	cli	same	same	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repo-root-fl trail=probe-attest-pullrequest-gitlab-repo-root-tr] failed to list mer
+attest pullrequest gitlab	--repo-url	1	1	1	cli	same	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repo-url-fl trail=probe-attest-pullrequest-gitlab-repo-url-tr] failed to list merge
+attest pullrequest gitlab	--repository	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repository-fl trail=probe-attest-pullrequest-gitlab-repository-tr] flag '--reposito
+attest pullrequest gitlab	--trail	1	1	1	cli	differs	differs	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-trail-fl] flag '--trail' is required, but empty string was provided
+attest pullrequest gitlab	--user-data	1	1	1	cli	same	same	Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-user-data-fl trail=probe-attest-pullrequest-gitlab-user-data-tr] failed to list mer
+attest snyk	--annotate	1	1	1	cli	differs	differs	Error: [kosli attest snyk flow=probe-attest-snyk-annotate-fl trail=probe-attest-snyk-annotate-tr] invalid argument "" for "--annotate" flag:  must be formatted 
+attest snyk	--artifact-type	1	1	1	cli	same	differs	Error: [kosli attest snyk flow=probe-attest-snyk-artifact-type-fl trail=probe-attest-snyk-artifact-type-tr] failed to parse Snyk sarif results file [cmd/kosli/t
+attest snyk	--attachments	1	1	1	cli	differs	differs	Error: [kosli attest snyk flow=probe-attest-snyk-attachments-fl trail=probe-attest-snyk-attachments-tr] invalid argument "" for "--attachments" flag: empty valu
+attest snyk	--commit	1	1	1	cli	same	same	Error: [kosli attest snyk flow=probe-attest-snyk-commit-fl trail=probe-attest-snyk-commit-tr] failed to parse Snyk sarif results file [cmd/kosli/testdata/snyk_s
+attest snyk	--description	1	1	1	cli	same	same	Error: [kosli attest snyk flow=probe-attest-snyk-description-fl trail=probe-attest-snyk-description-tr] failed to parse Snyk sarif results file [cmd/kosli/testd
+attest snyk	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest snyk	--exclude	1	1	1	cli	same	same	Error: [kosli attest snyk flow=probe-attest-snyk-exclude-fl trail=probe-attest-snyk-exclude-tr] failed to parse Snyk sarif results file [cmd/kosli/testdata/snyk
+attest snyk	--external-fingerprint	1	1	1	cli	differs	differs	Error: [kosli attest snyk flow=probe-attest-snyk-external-fingerprint-fl trail=probe-attest-snyk-external-fingerprint-tr] invalid argument "" for "--external-fi
+attest snyk	--external-url	1	1	1	cli	differs	differs	Error: [kosli attest snyk flow=probe-attest-snyk-external-url-fl trail=probe-attest-snyk-external-url-tr] invalid argument "" for "--external-url" flag:  must b
+attest snyk	--fingerprint	1	1	1	cli	same	same	Error: [kosli attest snyk flow=probe-attest-snyk-fingerprint-fl trail=probe-attest-snyk-fingerprint-tr] failed to parse Snyk sarif results file [cmd/kosli/testd
+attest snyk	--flow	1	1	1	cli	differs	differs	Error: [kosli attest snyk trail=probe-attest-snyk-flow-tr] flag '--flow' is required, but empty string was provided
+attest snyk	--name	1	1	1	cli	differs	differs	Error: [kosli attest snyk flow=probe-attest-snyk-name-fl trail=probe-attest-snyk-name-tr] flag '--name' is required, but empty string was provided
+attest snyk	--origin-url	1	1	1	cli	same	same	Error: [kosli attest snyk flow=probe-attest-snyk-origin-url-fl trail=probe-attest-snyk-origin-url-tr] failed to parse Snyk sarif results file [cmd/kosli/testdat
+attest snyk	--redact-commit-info	1	1	1	cli	same	differs	Error: [kosli attest snyk flow=probe-attest-snyk-redact-commit-info-fl trail=probe-attest-snyk-redact-commit-info-tr] failed to parse Snyk sarif results file [c
+attest snyk	--registry-password	1	1	1	cli	same	differs	Error: [kosli attest snyk flow=probe-attest-snyk-registry-password-fl trail=probe-attest-snyk-registry-password-tr] failed to parse Snyk sarif results file [cmd
+attest snyk	--registry-username	1	1	1	cli	same	differs	Error: [kosli attest snyk flow=probe-attest-snyk-registry-username-fl trail=probe-attest-snyk-registry-username-tr] failed to parse Snyk sarif results file [cmd
+attest snyk	--repo-id	1	1	1	cli	same	same	Error: [kosli attest snyk flow=probe-attest-snyk-repo-id-fl trail=probe-attest-snyk-repo-id-tr] failed to parse Snyk sarif results file [cmd/kosli/testdata/snyk
+attest snyk	--repo-provider	1	1	1	cli	same	differs	Error: [kosli attest snyk flow=probe-attest-snyk-repo-provider-fl trail=probe-attest-snyk-repo-provider-tr] failed to parse Snyk sarif results file [cmd/kosli/t
+attest snyk	--repo-root	1	1	1	cli	same	same	Error: [kosli attest snyk flow=probe-attest-snyk-repo-root-fl trail=probe-attest-snyk-repo-root-tr] failed to parse Snyk sarif results file [cmd/kosli/testdata/
+attest snyk	--repo-url	1	1	1	cli	same	differs	Error: [kosli attest snyk flow=probe-attest-snyk-repo-url-fl trail=probe-attest-snyk-repo-url-tr] failed to parse Snyk sarif results file [cmd/kosli/testdata/sn
+attest snyk	--repository	1	1	1	cli	same	same	Error: [kosli attest snyk flow=probe-attest-snyk-repository-fl trail=probe-attest-snyk-repository-tr] failed to parse Snyk sarif results file [cmd/kosli/testdat
+attest snyk	--scan-results	1	1	1	cli	differs	differs	Error: [kosli attest snyk flow=probe-attest-snyk-scan-results-fl trail=probe-attest-snyk-scan-results-tr] flag '--scan-results' is required, but empty string wa
+attest snyk	--trail	1	1	1	cli	differs	differs	Error: [kosli attest snyk flow=probe-attest-snyk-trail-fl] flag '--trail' is required, but empty string was provided
+attest snyk	--upload-results	1	1	1	cli	differs	differs	Error: flag '--upload-results' was given an empty value
+attest snyk	--user-data	1	1	1	cli	same	same	Error: [kosli attest snyk flow=probe-attest-snyk-user-data-fl trail=probe-attest-snyk-user-data-tr] failed to parse Snyk sarif results file [cmd/kosli/testdata/
+attest sonar	--annotate	1	1	1	cli	differs	differs	Error: [kosli attest sonar flow=probe-attest-sonar-annotate-fl trail=probe-attest-sonar-annotate-tr] invalid argument "" for "--annotate" flag:  must be formatt
+attest sonar	--artifact-type	1	1	1	cli	same	differs	Error: [kosli attest sonar flow=probe-attest-sonar-artifact-type-fl trail=probe-attest-sonar-artifact-type-tr] open .scannerwork/report-task.txt: no such file o
+attest sonar	--attachments	1	1	1	cli	differs	differs	Error: [kosli attest sonar flow=probe-attest-sonar-attachments-fl trail=probe-attest-sonar-attachments-tr] invalid argument "" for "--attachments" flag: empty v
+attest sonar	--commit	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-commit-fl trail=probe-attest-sonar-commit-tr] open .scannerwork/report-task.txt: no such file or directory. C
+attest sonar	--description	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-description-fl trail=probe-attest-sonar-description-tr] open .scannerwork/report-task.txt: no such file or di
+attest sonar	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+attest sonar	--exclude	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-exclude-fl trail=probe-attest-sonar-exclude-tr] open .scannerwork/report-task.txt: no such file or directory.
+attest sonar	--external-fingerprint	1	1	1	cli	differs	differs	Error: [kosli attest sonar flow=probe-attest-sonar-external-fingerprint-fl trail=probe-attest-sonar-external-fingerprint-tr] invalid argument "" for "--external
+attest sonar	--external-url	1	1	1	cli	differs	differs	Error: [kosli attest sonar flow=probe-attest-sonar-external-url-fl trail=probe-attest-sonar-external-url-tr] invalid argument "" for "--external-url" flag:  mus
+attest sonar	--fingerprint	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-fingerprint-fl trail=probe-attest-sonar-fingerprint-tr] open .scannerwork/report-task.txt: no such file or di
+attest sonar	--flow	1	1	1	cli	differs	differs	Error: [kosli attest sonar trail=probe-attest-sonar-flow-tr] flag '--flow' is required, but empty string was provided
+attest sonar	--max-wait	1	1	1	cli	differs	differs	Error: [kosli attest sonar flow=probe-attest-sonar-max-wait-fl trail=probe-attest-sonar-max-wait-tr] invalid argument "" for "--max-wait" flag: strconv.ParseInt
+attest sonar	--name	1	1	1	cli	differs	differs	Error: [kosli attest sonar flow=probe-attest-sonar-name-fl trail=probe-attest-sonar-name-tr] flag '--name' is required, but empty string was provided
+attest sonar	--origin-url	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-origin-url-fl trail=probe-attest-sonar-origin-url-tr] open .scannerwork/report-task.txt: no such file or dire
+attest sonar	--pull-request	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-pull-request-fl trail=probe-attest-sonar-pull-request-tr] open .scannerwork/report-task.txt: no such file or 
+attest sonar	--redact-commit-info	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-redact-commit-info-fl trail=probe-attest-sonar-redact-commit-info-tr] open .scannerwork/report-task.txt: no s
+attest sonar	--registry-password	1	1	1	cli	same	differs	Error: [kosli attest sonar flow=probe-attest-sonar-registry-password-fl trail=probe-attest-sonar-registry-password-tr] open .scannerwork/report-task.txt: no suc
+attest sonar	--registry-username	1	1	1	cli	same	differs	Error: [kosli attest sonar flow=probe-attest-sonar-registry-username-fl trail=probe-attest-sonar-registry-username-tr] open .scannerwork/report-task.txt: no suc
+attest sonar	--repo-id	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-repo-id-fl trail=probe-attest-sonar-repo-id-tr] open .scannerwork/report-task.txt: no such file or directory.
+attest sonar	--repo-provider	1	1	1	cli	same	differs	Error: [kosli attest sonar flow=probe-attest-sonar-repo-provider-fl trail=probe-attest-sonar-repo-provider-tr] open .scannerwork/report-task.txt: no such file o
+attest sonar	--repo-root	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-repo-root-fl trail=probe-attest-sonar-repo-root-tr] open .scannerwork/report-task.txt: no such file or direct
+attest sonar	--repo-url	1	1	1	cli	same	differs	Error: [kosli attest sonar flow=probe-attest-sonar-repo-url-fl trail=probe-attest-sonar-repo-url-tr] open .scannerwork/report-task.txt: no such file or director
+attest sonar	--repository	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-repository-fl trail=probe-attest-sonar-repository-tr] open .scannerwork/report-task.txt: no such file or dire
+attest sonar	--sonar-api-token	1	1	1	cli	differs	differs	Error: [kosli attest sonar flow=probe-attest-sonar-sonar-api-token-fl trail=probe-attest-sonar-sonar-api-token-tr] flag '--sonar-api-token' is required, but emp
+attest sonar	--sonar-ce-task-url	1	1	1	cli	same	differs	Error: [kosli attest sonar flow=probe-attest-sonar-sonar-ce-task-url-fl trail=probe-attest-sonar-sonar-ce-task-url-tr] open .scannerwork/report-task.txt: no suc
+attest sonar	--sonar-project-key	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-sonar-project-key-fl trail=probe-attest-sonar-sonar-project-key-tr] open .scannerwork/report-task.txt: no suc
+attest sonar	--sonar-revision	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-sonar-revision-fl trail=probe-attest-sonar-sonar-revision-tr] open .scannerwork/report-task.txt: no such file
+attest sonar	--sonar-server-url	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-sonar-server-url-fl trail=probe-attest-sonar-sonar-server-url-tr] open .scannerwork/report-task.txt: no such 
+attest sonar	--sonar-working-dir	1	1	1	cli	differs	differs	Error: [kosli attest sonar flow=probe-attest-sonar-sonar-working-dir-fl trail=probe-attest-sonar-sonar-working-dir-tr] open report-task.txt: no such file or dir
+attest sonar	--trail	1	1	1	cli	differs	differs	Error: [kosli attest sonar flow=probe-attest-sonar-trail-fl] flag '--trail' is required, but empty string was provided
+attest sonar	--user-data	1	1	1	cli	same	same	Error: [kosli attest sonar flow=probe-attest-sonar-user-data-fl trail=probe-attest-sonar-user-data-tr] open .scannerwork/report-task.txt: no such file or direct
 begin trail	--commit	0	0	0		same	differs	trail 'probe-begin-trail-commit-tr' was begun
 begin trail	--description	0	0	0		same	differs	trail 'probe-begin-trail-description-tr' was begun
 begin trail	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
@@ -415,11 +415,11 @@ begin trail	--repo-url	0	0	1		same	differs	trail 'probe-begin-trail-repo-url-tr'
 begin trail	--repository	0	0	0		same	same	trail 'probe-begin-trail-repository-tr' was begun
 begin trail	--template-file	0	0	0		same	differs	trail 'probe-begin-trail-template-file-tr' was begun
 begin trail	--user-data	0	0	0		same	differs	trail 'probe-begin-trail-user-data-tr' was begun
-config	--set					not tested	not tested	needs a credentials store
-config	--unset					not tested	not tested	needs a credentials store
+config	--set	1	1	1	cli	differs	differs	Error: [kosli config] invalid argument "" for "--set" flag:  must be formatted as key=value
+config	--unset	1	1	1	cli	same	same	Error: [kosli config] failed to save AES encryption key in credentials store: exit status 154
 create api-key	--description	1	1	0	cli	differs	differs	Error: [kosli create api-key] flag '--description' is required, but empty string was provided
 create api-key	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
-create api-key	--expires-at	0	0	1		same	differs	ID:           a1087bad-2dd4-4f07-9218-84a776bd
+create api-key	--expires-at	0	0	1		same	differs	ID:           5e7ce6b8-2a10-4eca-a6e1-47a618b4
 create api-key	--output	1	0	0	cli	differs	differs	Error: [kosli create api-key] unsupported output format:
 create api-key	--service-account	1	1	0	cli	differs	differs	Error: [kosli create api-key] flag '--service-account' is required, but empty string was provided
 create attestation-type	--description	0	0	0		same	same	attestation-type probe-create-attestation-type-description-nm was created
@@ -496,9 +496,9 @@ get default-org	--output	1	0	0	cli	differs	differs	Error: [kosli get default-org
 get environment	--output	1	0	0	cli	differs	differs	Error: [kosli get environment] unsupported output format:
 get flow	--output	1	0	0	cli	differs	differs	Error: [kosli get flow] unsupported output format:
 get policy	--output	1	0	0	cli	differs	differs	Error: [kosli get policy] unsupported output format:
-get repo	--output					not tested	not tested	needs a connected git provider
-get repo	--provider					not tested	not tested	needs a connected git provider
-get repo	--repo-id					not tested	not tested	needs a connected git provider
+get repo	--output	1	1	1	downstream	same	same	Error: [kosli get repo] Repo 'probe-get-repo-output-nm' not found
+get repo	--provider	1	1	1	downstream	same	differs	Error: [kosli get repo] Repo 'probe-get-repo-provider-nm' not found
+get repo	--repo-id	1	1	1	downstream	same	differs	Error: [kosli get repo] Repo 'probe-get-repo-repo-id-nm' not found
 get service-account	--output	1	0	0	cli	differs	differs	Error: [kosli get service-account] unsupported output format:
 get snapshot	--output	1	0	0	cli	differs	differs	Error: [kosli get snapshot] unsupported output format:
 get trail	--flow	1	1	0	cli	differs	differs	Error: [kosli get trail] flag '--flow' is required, but empty string was provided
@@ -570,55 +570,55 @@ log environment	--start-ts	1	0	1	cli	differs	differs	Error: [kosli log environme
 rename environment	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
 rename flow	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
 rotate api-key	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
-rotate api-key	--expires-at	0	0	1		same	differs	ID:                   b96117b1-ada6-4876-a671-100fb770
+rotate api-key	--expires-at	0	0	1		same	differs	ID:                   07c87ab6-d31c-4362-a4a4-d48cffee
 rotate api-key	--grace-period-hours	1	0	1	cli	differs	differs	Error: [kosli rotate api-key] invalid argument "" for "-g, --grace-period-hours" flag: strconv.ParseInt: parsing "": invalid syntax
 rotate api-key	--output	1	0	0	downstream	differs	differs	Error: [kosli rotate api-key] unsupported output format:
 rotate api-key	--service-account	1	1	0	cli	differs	differs	Error: [kosli rotate api-key] flag '--service-account' is required, but empty string was provided
 search	--output	1	0	0	cli	differs	differs	Error: [kosli search] unsupported output format:
-snapshot azure	--azure-client-id					not tested	not tested	needs azure
-snapshot azure	--azure-client-secret					not tested	not tested	needs azure
-snapshot azure	--azure-resource-group-name					not tested	not tested	needs azure
-snapshot azure	--azure-subscription-id					not tested	not tested	needs azure
-snapshot azure	--azure-tenant-id					not tested	not tested	needs azure
-snapshot azure	--digests-source					not tested	not tested	needs azure
-snapshot azure	--dry-run					not tested	not tested	needs azure
-snapshot azure	--zip					not tested	not tested	needs azure
-snapshot cloud-run	--dry-run					not tested	not tested	needs google cloud
-snapshot cloud-run	--exclude					not tested	not tested	needs google cloud
-snapshot cloud-run	--exclude-regex					not tested	not tested	needs google cloud
-snapshot cloud-run	--include					not tested	not tested	needs google cloud
-snapshot cloud-run	--include-regex					not tested	not tested	needs google cloud
-snapshot cloud-run	--project					not tested	not tested	needs google cloud
-snapshot cloud-run	--region					not tested	not tested	needs google cloud
-snapshot cloud-run	--resolve-names					not tested	not tested	needs google cloud
+snapshot azure	--azure-client-id	1	1	1	cli	differs	differs	Error: [kosli snapshot azure] flag '--azure-client-id' is required, but empty string was provided
+snapshot azure	--azure-client-secret	1	1	1	cli	differs	differs	Error: [kosli snapshot azure] flag '--azure-client-secret' is required, but empty string was provided
+snapshot azure	--azure-resource-group-name	1	1	1	cli	differs	differs	Error: [kosli snapshot azure] flag '--azure-resource-group-name' is required, but empty string was provided
+snapshot azure	--azure-subscription-id	1	1	1	cli	differs	differs	Error: [kosli snapshot azure] flag '--azure-subscription-id' is required, but empty string was provided
+snapshot azure	--azure-tenant-id	1	1	1	cli	differs	differs	Error: [kosli snapshot azure] flag '--azure-tenant-id' is required, but empty string was provided
+snapshot azure	--digests-source	1	1	1	cli	differs	differs	Error: [kosli snapshot azure] invalid value for --digests-source flag. Valid values are 'acr' and 'logs'
+snapshot azure	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+snapshot azure	--zip	1	1	1	cli	differs	differs	Error: flag '--zip' was given an empty value
+snapshot cloud-run	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+snapshot cloud-run	--exclude	1	1	1	cli	same	same	Error: [kosli snapshot cloud-run] GCP client setup failed: credentials: could not find default credentials. See https://cloud.google.com/docs/authentication/ext
+snapshot cloud-run	--exclude-regex	1	1	1	cli	same	same	Error: [kosli snapshot cloud-run] GCP client setup failed: credentials: could not find default credentials. See https://cloud.google.com/docs/authentication/ext
+snapshot cloud-run	--include	1	1	1	cli	same	same	Error: [kosli snapshot cloud-run] GCP client setup failed: credentials: could not find default credentials. See https://cloud.google.com/docs/authentication/ext
+snapshot cloud-run	--include-regex	1	1	1	cli	same	same	Error: [kosli snapshot cloud-run] GCP client setup failed: credentials: could not find default credentials. See https://cloud.google.com/docs/authentication/ext
+snapshot cloud-run	--project	1	1	1	cli	differs	differs	Error: [kosli snapshot cloud-run] flag '--project' is required, but empty string was provided
+snapshot cloud-run	--region	1	1	1	cli	differs	differs	Error: [kosli snapshot cloud-run] flag '--region' is required, but empty string was provided
+snapshot cloud-run	--resolve-names	1	1	1	cli	differs	differs	Error: flag '--resolve-names' was given an empty value
 snapshot docker	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
-snapshot ecs	--aws-key-id					not tested	not tested	needs aws
-snapshot ecs	--aws-region					not tested	not tested	needs aws
-snapshot ecs	--aws-secret-key					not tested	not tested	needs aws
-snapshot ecs	--clusters					not tested	not tested	needs aws
-snapshot ecs	--clusters-regex					not tested	not tested	needs aws
-snapshot ecs	--dry-run					not tested	not tested	needs aws
-snapshot ecs	--exclude					not tested	not tested	needs aws
-snapshot ecs	--exclude-regex					not tested	not tested	needs aws
-snapshot ecs	--exclude-services					not tested	not tested	needs aws
-snapshot ecs	--exclude-services-regex					not tested	not tested	needs aws
-snapshot ecs	--services					not tested	not tested	needs aws
-snapshot ecs	--services-regex					not tested	not tested	needs aws
-snapshot k8s	--config-file					not tested	not tested	needs kubernetes
-snapshot k8s	--dry-run					not tested	not tested	needs kubernetes
-snapshot k8s	--exclude-namespaces					not tested	not tested	needs kubernetes
-snapshot k8s	--exclude-namespaces-regex					not tested	not tested	needs kubernetes
-snapshot k8s	--kubeconfig					not tested	not tested	needs kubernetes
-snapshot k8s	--namespaces					not tested	not tested	needs kubernetes
-snapshot k8s	--namespaces-regex					not tested	not tested	needs kubernetes
-snapshot lambda	--aws-key-id					not tested	not tested	needs aws
-snapshot lambda	--aws-region					not tested	not tested	needs aws
-snapshot lambda	--aws-secret-key					not tested	not tested	needs aws
-snapshot lambda	--dry-run					not tested	not tested	needs aws
-snapshot lambda	--exclude					not tested	not tested	needs aws
-snapshot lambda	--exclude-regex					not tested	not tested	needs aws
-snapshot lambda	--function-names					not tested	not tested	needs aws
-snapshot lambda	--function-names-regex					not tested	not tested	needs aws
+snapshot ecs	--aws-key-id	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot ecs	--aws-region	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot ecs	--aws-secret-key	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot ecs	--clusters	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot ecs	--clusters-regex	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot ecs	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+snapshot ecs	--exclude	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot ecs	--exclude-regex	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot ecs	--exclude-services	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot ecs	--exclude-services-regex	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot ecs	--services	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot ecs	--services-regex	1	1	1	cli	same	same	Error: [kosli snapshot ecs] failed to filter ECS clusters: operation error ECS: ListClusters, get identity: get credentials: failed to refresh cached credential
+snapshot k8s	--config-file	1	1	1	cli	differs	differs	Error: [kosli snapshot k8s] cannot use '--config-file' with an empty value
+snapshot k8s	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+snapshot k8s	--exclude-namespaces	1	1	1	cli	same	same	Error: [kosli snapshot k8s] could not build config from inside the cluster: unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERV
+snapshot k8s	--exclude-namespaces-regex	1	1	1	cli	same	same	Error: [kosli snapshot k8s] could not build config from inside the cluster: unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERV
+snapshot k8s	--kubeconfig	1	1	1	cli	same	differs	Error: [kosli snapshot k8s] could not build config from inside the cluster: unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERV
+snapshot k8s	--namespaces	1	1	1	cli	same	same	Error: [kosli snapshot k8s] could not build config from inside the cluster: unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERV
+snapshot k8s	--namespaces-regex	1	1	1	cli	same	same	Error: [kosli snapshot k8s] could not build config from inside the cluster: unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERV
+snapshot lambda	--aws-key-id	1	1	1	cli	same	same	Error: [kosli snapshot lambda] operation error Lambda: ListFunctions, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role foun
+snapshot lambda	--aws-region	1	1	1	cli	same	same	Error: [kosli snapshot lambda] operation error Lambda: ListFunctions, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role foun
+snapshot lambda	--aws-secret-key	1	1	1	cli	same	same	Error: [kosli snapshot lambda] operation error Lambda: ListFunctions, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role foun
+snapshot lambda	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+snapshot lambda	--exclude	1	1	1	cli	same	same	Error: [kosli snapshot lambda] operation error Lambda: ListFunctions, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role foun
+snapshot lambda	--exclude-regex	1	1	1	cli	same	same	Error: [kosli snapshot lambda] operation error Lambda: ListFunctions, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role foun
+snapshot lambda	--function-names	1	1	1	cli	same	same	Error: [kosli snapshot lambda] operation error Lambda: ListFunctions, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role foun
+snapshot lambda	--function-names-regex	1	1	1	cli	same	same	Error: [kosli snapshot lambda] operation error Lambda: ListFunctions, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role foun
 snapshot path	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
 snapshot path	--exclude	0	0	0		same	same	[1] artifacts were reported to environment probe-snapshot-path-exclude-en
 snapshot path	--name	1	1	0	cli	differs	differs	Error: [kosli snapshot path] flag '--name' is required, but empty string was provided
@@ -627,15 +627,15 @@ snapshot path	--watch	1	0	0	cli	differs	differs	Error: flag '--watch' was given 
 snapshot paths	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
 snapshot paths	--paths-file	1	1	0	cli	differs	differs	Error: [kosli snapshot paths] flag '--paths-file' is required, but empty string was provided
 snapshot paths	--watch	1	0	0	cli	differs	differs	Error: flag '--watch' was given an empty value
-snapshot s3	--aws-key-id					not tested	not tested	needs aws
-snapshot s3	--aws-region					not tested	not tested	needs aws
-snapshot s3	--aws-secret-key					not tested	not tested	needs aws
-snapshot s3	--bucket					not tested	not tested	needs aws
-snapshot s3	--dry-run					not tested	not tested	needs aws
-snapshot s3	--exclude					not tested	not tested	needs aws
-snapshot s3	--exclude-regex					not tested	not tested	needs aws
-snapshot s3	--include					not tested	not tested	needs aws
-snapshot s3	--include-regex					not tested	not tested	needs aws
+snapshot s3	--aws-key-id	1	1	1	cli	same	same	Error: [kosli snapshot s3] operation error S3: ListObjectsV2, resolve auth scheme: resolve endpoint: endpoint rule error, Invalid region: region was not a valid
+snapshot s3	--aws-region	1	1	1	cli	same	differs	Error: [kosli snapshot s3] operation error S3: ListObjectsV2, resolve auth scheme: resolve endpoint: endpoint rule error, Invalid region: region was not a valid
+snapshot s3	--aws-secret-key	1	1	1	cli	same	same	Error: [kosli snapshot s3] operation error S3: ListObjectsV2, resolve auth scheme: resolve endpoint: endpoint rule error, Invalid region: region was not a valid
+snapshot s3	--bucket	1	1	1	cli	differs	differs	Error: [kosli snapshot s3] flag '--bucket' is required, but empty string was provided
+snapshot s3	--dry-run	1	1	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
+snapshot s3	--exclude	1	1	1	cli	same	same	Error: [kosli snapshot s3] operation error S3: ListObjectsV2, resolve auth scheme: resolve endpoint: endpoint rule error, Invalid region: region was not a valid
+snapshot s3	--exclude-regex	1	1	1	cli	same	same	Error: [kosli snapshot s3] operation error S3: ListObjectsV2, resolve auth scheme: resolve endpoint: endpoint rule error, Invalid region: region was not a valid
+snapshot s3	--include	1	1	1	cli	same	same	Error: [kosli snapshot s3] operation error S3: ListObjectsV2, resolve auth scheme: resolve endpoint: endpoint rule error, Invalid region: region was not a valid
+snapshot s3	--include-regex	1	1	1	cli	same	same	Error: [kosli snapshot s3] operation error S3: ListObjectsV2, resolve auth scheme: resolve endpoint: endpoint rule error, Invalid region: region was not a valid
 status	--assert	1	0	0	cli	differs	differs	Error: flag '--assert' was given an empty value
 tag	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
 tag	--provider	0	0	1		same	differs	No tags were applied for flow 'probe-tag-provider-fl'

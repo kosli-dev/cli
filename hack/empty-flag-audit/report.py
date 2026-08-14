@@ -44,13 +44,15 @@ def measured(row):
 def refused(row):
     """Say whether the empty value was refused.
 
-    It counts as refused when it failed and another run of the same command
-    worked. Without that second condition a command that was broken anyway -
-    because the audit could not give it a value it liked - would look as though
-    it were refusing something.
+    It counts as refused when it failed and either another run of the same
+    command worked, or the empty run failed differently from both of them. The
+    first covers commands that work here. The second covers commands that cannot
+    work here at all - a check in the CLI still caught the empty value, and
+    without this they would look as though they refused nothing.
     """
     works = row["omitted_exit"] == "0" or row["set_exit"] == "0"
-    return row["empty_exit"] != "0" and works
+    differs = row["vs_omitted"] == "differs" or row["vs_set"] == "differs"
+    return row["empty_exit"] != "0" and (works or differs)
 
 
 def verdict(counts):
@@ -94,37 +96,44 @@ def per_flag(laptop, ci):
     return counts
 
 
-def figures(laptop, ci):
+def reacted(row):
+    """Say whether anything in the CLI responded to the empty value.
+
+    For a command that cannot succeed here this is all that can be seen. If the
+    empty run failed differently from the other two, a check in the CLI caught
+    it. If all three failed the same way, the empty value passed every check the
+    CLI has and died at the service instead.
+    """
+    return row["empty_exit"] != "0" and (row["vs_omitted"] == "differs"
+                                         or row["vs_set"] == "differs")
+
+
+def figures(laptop, ci, needs):
     """Print every number the document states."""
     print(f"combinations         {len(laptop)}")
     print(f"commands with flags  {len({r['command'] for r in laptop})}")
     print(f"distinct flag names  {len({r['flag'] for r in laptop})}")
-    skipped = [r for r in laptop if r["vs_omitted"] == "not tested"]
-    print(f"skipped              {len(skipped)} combinations on "
-          f"{len({r['command'] for r in skipped})} commands")
+    print(f"of those, on commands needing a service we cannot reach: "
+          f"{sum(1 for r in laptop if r['command'] in needs)}")
 
     for name, rows in (("laptop", laptop), ("CI", ci)):
-        seen = [r for r in rows if measured(r)]
-        ref = [r for r in seen if refused(r)]
-        through = [r for r in seen if r["empty_exit"] == "0"]
-        stuck = [r for r in seen if r not in ref and r not in through]
-        by = Counter(r["refused_by"] for r in ref)
-        print(f"\n{name}: measured {len(seen)}")
-        print(f"   refused by the CLI              {by['cli']}")
-        print(f"   accepted, refused by the server {by['downstream']}")
-        print(f"   nothing refuses it              {len(through)}")
-        print(f"   nothing can be said             {len(stuck)}")
-        print(f"   of those let through: same as omitting "
+        here = [r for r in rows if r["command"] not in needs]
+        away = [r for r in rows if r["command"] in needs]
+        by = Counter(r["refused_by"] for r in here if refused(r))
+        through = [r for r in here if r["empty_exit"] == "0"]
+        print(f"\n{name}, the {len(here)} commands that work here:")
+        print(f"   refused by the CLI                {by['cli']}")
+        print(f"   accepted, refused by the server   {by['downstream']}")
+        print(f"   nothing refuses it                {len(through)}")
+        print(f"   of those, same as omitting        "
               f"{sum(1 for r in through if r['vs_omitted'] == 'same')}")
-
-    through = [r for r in laptop if measured(r) and r["empty_exit"] == "0"]
-    print("\nlet through, by command:")
-    for command, n in Counter(r["command"] for r in through).most_common():
-        print(f"  {n:4}  {command}")
-    print("\nlet through but NOT the same as omitting the flag:")
-    for r in through:
-        if r["vs_omitted"] != "same":
-            print(f"  {r['command']} {r['flag']}")
+        print(f"{name}, the {len(away)} needing a service:")
+        print(f"   refused by the CLI                "
+              f"{sum(1 for r in away if reacted(r))}")
+        print(f"   no CLI check reacted, so it reached the service   "
+              f"{sum(1 for r in away if r['empty_exit'] != '0' and not reacted(r))}")
+        print(f"   let through, exit 0               "
+              f"{sum(1 for r in away if r['empty_exit'] == '0')}")
 
 
 def appendices(laptop, ci):
@@ -157,7 +166,9 @@ def main():
     args = parser.parse_args()
 
     laptop, ci = load(HERE / "results.tsv"), load(HERE / "results-ci.tsv")
-    figures(laptop, ci)
+    spec = json.loads((HERE / "spec.json").read_text())
+    needs = {c for c, e in spec.items() if e.get("needs")}
+    figures(laptop, ci, needs)
 
     rows, grouped = appendices(laptop, ci)
     order = ["identity", "location", "filter", "credentials", "output",

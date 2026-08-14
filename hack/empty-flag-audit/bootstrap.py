@@ -525,11 +525,14 @@ def main():
         if args.only and args.only not in command:
             continue
         reason = next((w for c, w in skip.items() if command.startswith(c)), None)
-        if reason:
-            spec[command] = {"flags": sorted(flags), "skip": f"needs {reason}"}
-            print(f"skip  {command}  (needs {reason})")
-            continue
         entry = find_invocation(args.binary, command, flags, args.ci, home)
+        if reason:
+            # Recorded, not abandoned. The command cannot succeed here, but its
+            # own checks run before it reaches the service it needs, so an empty
+            # value can still be seen being refused - or getting past everything
+            # the CLI has and dying at the service instead.
+            entry["needs"] = reason
+            entry["baseline_ok"] = False
         entry["flags_to_test"] = sorted(flags)
         # A real value for each flag, so an empty value can be compared with a
         # set variable as well as with an absent one.
@@ -545,7 +548,7 @@ def main():
         ]
         entry["verify"] = verify_commands(command)
         spec[command] = entry
-        state = "ok  " if entry["baseline_ok"] else "FAIL"
+        state = "ok  " if entry["baseline_ok"] else ("needs" if reason else "FAIL")
         print(f"{state}  {command}"
               + ("" if entry["baseline_ok"] else f"  {entry.get('error','')[:90]}"))
     SPEC.write_text(json.dumps(spec, indent=1))
