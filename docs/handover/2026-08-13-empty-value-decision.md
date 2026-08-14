@@ -6,9 +6,11 @@ that an unset shell variable cannot quietly change what a command does.
 ## TL;DR
 
 - An unset shell variable can silently change what a Kosli command does.
-- An audit found ten cases, all exiting 0 and printing what success prints.
-- Seven of them change a compliance answer. 
-- One 500s an org's environment listing.
+- An audit easily found sixteen cases so far, all exiting 0 and printing what success prints.
+- Eleven of them change a compliance answer.
+- One 500s an org's environment listing. 
+- One sends commit author and message to Kosli after being told to redact them.
+- Sixteen is a floor, not a total. Every round of looking so far has found more.
 - The space is too large to check case by case.
 - Proposal: an empty value is always an error, rolled out in four steps.
 - The first roll out step is logging warnings to app.kosli.com.
@@ -106,15 +108,16 @@ thing here that stays unknown, and no amount of work on this machine will show i
 ## What it found
 
 That one slice was enough. In it, a single unset variable can make a flow require
-none of the attestations it was meant to, put an attestation on the wrong thing,
-answer a compliance question about the wrong flow, leave a policy governing
-nothing, and take out an organization's environment listing with a 500. It also
-turned up a bug that needs no empty value at all.
+none of the attestations it was meant to, fingerprint an artifact that was never
+built, put an attestation on the wrong thing, answer a compliance question about
+the wrong flow, leave a policy governing nothing, and take out an organization's
+environment listing with a 500. It also turned up a bug that needs no empty value
+at all.
 
-Ten of them, below. Each was re-run on its own, outside the audit, and its result
-read from the server - not taken from the audit's classification, and not read
-off the code. Every one exits 0 and prints what success prints. `$VAR` means a variable that is unset,
-which is all it takes.
+Sixteen of them, below. Each was re-run on its own, outside the audit, and its
+result read from the server - not taken from the audit's classification, and not
+read off the code. Every one exits 0 and prints what success prints. `$VAR` means
+a variable that is unset, which is all it takes.
 
 | Command | With the variable unset | |
 |---|---|---|
@@ -123,16 +126,29 @@ which is all it takes.
 | `kosli attest generic --fingerprint "$VAR"` (and `custom`, `decision`, `junit`) | the attestation is recorded against the trail instead of the artifact. The artifact you meant to attest has no such attestation | changes compliance |
 | `kosli attest override --fingerprint "$VAR"` | the override is recorded against the trail. The artifact keeps the compliance status you meant to override | changes compliance |
 | `kosli assert artifact --fingerprint "$F" --flow "$VAR"` | the verdict is about whichever flow the fingerprint is found in, not the flow you asked about | changes compliance |
+| `kosli fingerprint D --artifact-type dir --exclude "$VAR"` | nothing is excluded, so the fingerprint is a different one. Everything attested, allowlisted or asserted with it then refers to an artifact that was never built. Ten combinations, including `snapshot path` and the attest commands | changes compliance |
+| `kosli attest generic --commit "$VAR"` | no git provenance is recorded against the attestation - `git_commit_info` is null where a commit would have been | changes compliance |
+| `kosli evaluate input --params "$VAR"` | the policy falls back to its own defaults instead of the parameters you passed. A score of 5 is ALLOWED at `threshold:3` and denied at the default of 10 | changes compliance |
+| `kosli evaluate trails T --attestations "$VAR"` | every attestation is evaluated instead of the ones named, so a policy written against a particular set sees a different input | changes compliance |
 | `kosli attach-policy P --environment "$VAR"` | the policy is attached to no environment. Anything deployed there is judged without it | changes compliance |
 | `kosli detach-policy P --environment "$VAR"` | the policy is detached from no environment, so it stays in force | changes compliance |
+| `kosli attest generic --repo-id "$VAR" --repo-url "$VAR" --repository "$VAR"` | `repo_info` is not recorded at all, so the attestation carries no repository provenance | records less than it was told to |
+| `kosli attest generic --redact-commit-info "$VAR"` | the commit author and message are sent in the clear - the very data the flag exists to withhold | sends data meant to be withheld |
 | `kosli create environment E --type logical --included-environments "$VAR"` | the record cannot be read back, and `list environments` returns HTTP 500 for every environment in the org until it is removed | **outright bug**, written up in `2026-08-13-included-environments-500.md` |
 | `kosli begin trail T --flow F` with no `--description` at all | the description the trail already had is replaced by an empty one, even though the server's update is written to leave an absent field alone | **an inconsistency**, not an empty value at all, written up in `2026-08-13-upsert-overwrites-unmentioned-fields.md` |
 | `kosli list environments --tag "$VAR"` | answers "No environments were found", identical to a real no-match, exit 0 | wrong answer |
 
-Ten findings, from one slice of one CLI, all of them silent. What the rest of the
-space holds we do not know - and that is the argument. We cannot keep finding
-these one at a time, and a rule that refuses an empty value everywhere removes
-the whole class rather than the ten instances of it we happened to reach.
+Sixteen findings, from one slice of one CLI, all of them silent. And sixteen is
+where the looking stopped, not where the findings did: 136 of the combinations
+that accept an empty value are on commands that record or judge compliance, and
+most have never been examined one at a time. Three rounds of examining them have
+each produced more - two, then three, then one - and the last round also turned
+up the redaction case, which is not about compliance data at all and which
+nobody was looking for.
+
+That is the argument. We cannot keep finding these one at a time, and a rule that
+refuses an empty value everywhere removes the whole class rather than the
+instances of it we happen to reach.
 
 Two of them are worth filing on their own account, whatever is decided here, and
 each has its own write-up alongside this one.
