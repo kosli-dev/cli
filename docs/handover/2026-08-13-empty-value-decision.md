@@ -157,17 +157,30 @@ One of each, read with `--debug`:
 | `kosli create environment --included-environments ""` | a logical environment with **no** `included_environments` field, which the server accepts with a 201 and then cannot read back. Omitting the flag sends the same thing | neither's, for this decision. It is a plain defect, being fixed on its own account |
 | `kosli begin trail` | `"description": ""`, whether or not `--description` was passed | shared. The server's update is written to leave an absent description alone, and the CLI defeats that by always sending one. A direct caller that sends `""` gets the same result, so the CLI fix alone does not settle it |
 
-So the server's half of this is not a mirror of ours. It is: **each command must
-say whether an absent field means "leave it alone" or "set it to nothing", and
-the CLI and the server must agree.** `create flow` reads its flags the way
-`kubectl apply` reads a manifest, where replacing is right. `begin trail`
-describes itself the same way but its server side leaves an absent description
-alone, and the CLI sends one anyway. Neither model is wrong; having both, one per
-layer, is.
+So the server's half of this is not the CLI rule repeated. The CLI rule is
+"refuse an empty value". The server's is: **an absent field means what the
+command's verb says it means, and the CLI and the server must agree about that.** Deciding it command by command would be ninety-one decisions
+nobody will remember, which is how the CLI got inconsistent in the first place.
+The verbs already promise it:
+
+| Verb | What an absent field means | What the CLI does today |
+|---|---|---|
+| `create`, `begin` | apply - what you pass is what the object becomes | `create flow` replaces the description, as it should |
+| `update` | patch - the fields you name change, the rest are left alone | `update control --name` leaves the description, and the record's `version` goes 1 to 2 |
+
+`begin trail` is the one that does not fit. It is a `begin`, so apply, but its
+server side leaves an absent description alone while the CLI sends one anyway.
+Neither model is wrong; having both, one per layer, is.
 
 Settling that covers every client, including the ones the warnings cannot see,
 which makes the server work in step 2 more than a precondition for the CLI
 change - it is the part that closes the hole for everyone.
+
+It also explains the two flags this proposal costs. `update control
+--description` and `update service-account --description` clear on purpose
+because `update` is patch: omitting the flag cannot clear anything there, so an
+empty value is the only way to say it. That is why those two need
+`--clear-description` and nothing else does.
 
 ## What refusing an empty value would cost
 

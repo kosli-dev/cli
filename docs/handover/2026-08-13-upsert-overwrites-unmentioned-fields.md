@@ -17,13 +17,19 @@ did not mention.
 So a trail's description is replaced by an empty one by a command that never
 mentioned it, and the server was written to prevent exactly that.
 
+Which of the two is right is the decision here, and it is worth making
+deliberately rather than leaving one layer to win by accident. What is not in
+doubt is that both layers should not be answering it differently.
+
 (The guard was read in the server repo earlier in this work. It cannot be checked
 from this repo, and it cannot be checked through the CLI either, because the CLI
 always sends the field.)
 
-## The fields it applies to
+## What the CLI does today
 
-Running each command twice and reading the object back afterwards:
+Running each command twice and reading the object back afterwards. This is the
+current behaviour, not a list of ten defects - under the apply model most of it
+is correct, and the point of the table is to show how much rides on the choice:
 
 | Command and flag | after the first run | after a second run without the flag |
 |---|---|---|
@@ -38,8 +44,9 @@ Running each command twice and reading the object back afterwards:
 | `create policy --description` | `the env policy` | `""` |
 | `create policy --comment` | `the review note` | `""` |
 
-The last three are the apply model doing its job, and are listed only so the set
-is complete. The rest are the disagreement.
+The `create` rows are the apply model doing its job. The `begin trail` and
+`attest` rows are the ones the choice decides: keep apply and they are correct
+too, adopt patch and every one of them is wrong today.
 
 `create environment` sends `"description": ""` in the same way and the
 description survives, so what the CLI sends does not settle it on its own - the
@@ -62,19 +69,30 @@ carries it. Whether any policy does read it in practice has not been tested here
 
 ## The fix
 
-Decide, per command, which model it uses, and make both layers say the same
-thing:
+Not a decision per command - that is ninety-one decisions nobody will remember,
+and it is how this happened. The verbs already say it, and the rest of the CLI
+already follows them:
 
-- **apply** - the CLI sends every field, and the server writes what arrives.
-  `create flow` is already this, on both sides.
-- **patch** - the CLI sends a field only when its flag was passed, and the server
-  leaves absent fields alone. `begin trail`'s server side is already this; the
-  CLI is not.
+| Verb | What an absent field means | Evidence it is already so |
+|---|---|---|
+| `create`, `begin` | apply - the CLI sends every field, the server writes what arrives | `create flow` replaces the description on both sides |
+| `update` | patch - the CLI sends a field only when its flag was passed, the server leaves absent fields alone | `kosli update control vc --name "second name"` leaves the description untouched and takes the record's `version` from 1 to 2 |
 
-Whichever is chosen for `begin trail`, the two sides have to be changed together.
-If the CLI stops sending `description` while the server still requires it,
-`kosli create flow` fails with a 422; if the server starts ignoring an absent
-description while the CLI still sends `""`, nothing changes at all.
+By that rule `begin trail` is apply, so the CLI is already right and the server's
+guard is the part out of step. Nothing else moves.
+
+The one thing to weigh before agreeing to it: re-running a workflow re-runs
+`begin trail`, and under apply a re-run that does not pass `--user-data` leaves
+the trail with none. The earlier value is still in the trail's events, so nothing
+is lost, but the current view stops showing it. If that is unwanted, the answer
+is that trails are patch after all - and then `begin` and `create` mean different
+things, and the CLI needs to stop sending unmentioned fields for trails and
+attestations.
+
+Whichever way it is settled, the two sides have to change together. If the CLI
+stops sending `description` while the server still requires it, `kosli create
+flow` fails with a 422; if the server starts ignoring an absent description while
+the CLI still sends `""`, nothing changes at all.
 
 ## Why it belongs with the empty-value work
 
