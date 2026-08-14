@@ -59,12 +59,11 @@ It measured 374 of the 653 combinations. Of those:
 
 | What happens to an empty value | On a laptop | Inside GitHub Actions |
 |---|---|---|
-| the CLI refuses it | 190 | 188 |
+| the CLI refuses it | 203 | 201 |
 | the CLI accepts it and the server refuses it | 5 | 7 |
-| nothing refuses it | 156 | 156 |
-| the command did not work with any value, so nothing can be said | 23 | 23 |
+| nothing refuses it | 166 | 166 |
 
-Of the 156 that nothing refuses, 152 do exactly what omitting the flag does, so
+Of the 166 that nothing refuses, 162 do exactly what omitting the flag does, so
 an empty value there is merely useless. The rest of this document is about the
 ones where it is not.
 
@@ -98,8 +97,8 @@ which is all it takes.
 | `kosli attach-policy P --environment "$VAR"` | the policy is attached to no environment. Anything deployed there is judged without it | changes compliance |
 | `kosli detach-policy P --environment "$VAR"` | the policy is detached from no environment, so it stays in force | changes compliance |
 | `kosli create environment E --type logical --included-environments "$VAR"` | the record cannot be read back, and `list environments` returns HTTP 500 for every environment in the org until it is removed | **outright bug**, written up in `2026-08-13-included-environments-500.md` |
-| `kosli list environments --tag "$VAR"` | answers "No environments were found", identical to a real no-match, exit 0 | wrong answer |
 | `kosli create flow F` with no `--description` at all | wipes the description the flow already had. Same for `begin trail` and `create policy` | **outright bug**, no empty value needed, written up in `2026-08-13-description-wiped-on-upsert.md` |
+| `kosli list environments --tag "$VAR"` | answers "No environments were found", identical to a real no-match, exit 0 | wrong answer |
 
 Ten findings, from one slice of one CLI, all of them silent. What the rest of the
 space holds we do not know - and that is the argument. We cannot keep finding
@@ -173,19 +172,35 @@ sharper than usual:
   anything, so "breaking" here means pipelines failing with no change on their
   side.
 
-We are on v2.36.5, and #1059 already collects breaking changes for v3, which is
-where this belongs - unless we add `--clear-description` at the same time, which
-would keep the one capability this removes and make that part non-breaking.
+We are on v2.36.5, and #1059 collects breaking changes for v3. This does not have
+to join that batch, and I do not think it should:
+
+- **A customer whose pipeline breaks should be able to read one release note and
+  know why.** A major version carrying ten unrelated breaks cannot tell them
+  that.
+- **The v3 batch has been accumulating for a long time.** Tying this to it means
+  the compliance holes above stay open until everything else in it is ready.
+- **The right moment for this one is knowable on its own.** Step 2 reports how
+  often empty values actually occur, so we can see when the impact has fallen
+  far enough to flip the switch. That signal says nothing about whatever else is
+  queued for v3.
+
+So: this becomes its own major release, and the changes currently queued for v3
+become the one after. Major versions are cheap; a release note nobody can act on
+is not.
+
+If we add `--clear-description` at the same time, the one capability this removes
+comes back, and that part stops being breaking at all.
 
 ### Proposed: four steps
 
-156 combinations changing at once is a lot to ask of customers in one upgrade,
+166 combinations changing at once is a lot to ask of customers in one upgrade,
 so the rule arrives in stages.
 
 #### Step 1: somewhere to put a warning, in app.kosli.com
 
 Nobody reads warnings in a CI workflow run. A step that only prints one is not a
-migration, it is a delay, and we would arrive at v3 knowing no more than we do
+migration, it is a delay, and we would reach step 3 knowing no more than we do
 now. So before the CLI warns about anything, there has to be somewhere for the
 warning to go.
 
@@ -194,7 +209,7 @@ A warning goes to two places, and no more than two:
 1. **The workflow run**, printed as now.
 2. **app.kosli.com, at the org level.** A command that has `--org` and
    `--api-token` can send the warning whatever else it was doing, so this covers
-   153 of the 156. The exception is `kosli fingerprint`, which is entirely local
+   163 of the 166. The exception is `kosli fingerprint`, which is entirely local
    and needs no credentials.
 
 This is work in app.kosli.com: somewhere to receive the warnings, and one place
@@ -207,12 +222,15 @@ Fix the two outright bugs - the description wiping and the
 the flag, and report it. Nothing starts failing, and anyone whose pipeline has an
 unset variable can see it and fix it before it costs them anything.
 
-#### Step 3: the warning becomes the error, in v3
+#### Step 3: the warning becomes the error, in a major release of its own
 
-One guard, one migration, one release note. Ship
-`KOSLI_ALLOW_EMPTY_FLAG_VALUES=true` alongside it as an escape hatch, so anyone
-caught out has a one-line unblock while they fix the pipeline, and remove it in
-v4.
+One guard, one migration, one release note, and nothing else breaking in the same
+version. Ship `KOSLI_ALLOW_EMPTY_FLAG_VALUES=true` alongside it as an escape
+hatch, so anyone caught out has a one-line unblock while they fix the pipeline,
+and remove it in the next major release.
+
+When to ship it is a question step 2 answers: when the reported warnings have
+fallen far enough that the remaining breakage is small and known.
 
 #### Step 4: delete what the guard replaced
 
@@ -221,12 +239,12 @@ one rule covers every flag. This is the step that is easiest to skip and the
 reason the CLI is inconsistent today, so it belongs in the plan rather than in
 someone's memory.
 
-### Why steps 1 and 2 come before v3
+### Why steps 1 and 2 come first
 
 Reporting warnings is not only a kindness to customers. It answers the question a
-v3 release note cannot: how much would v3 actually break? Today that is an
-argument. With this, by the time v3 is due, it is a number, per org, and we can
-tell the customers who are affected before it lands rather than after.
+release note cannot: how much would step 3 actually break? Today that is an
+argument. With this it becomes a number, per org, and we can tell the customers
+who are affected before it lands rather than after.
 
 It also reaches where this audit could not. The 279 combinations on commands
 needing AWS, Azure, a git provider and the rest are unmeasured here for want of
@@ -279,15 +297,15 @@ the 152 names are:
 
 | What the flag is for, with a few examples | Names | Does an empty value mean anything? | CLI always refuses | Only the server refuses | Refuses on some commands | Never refuses | Not measured |
 |---|---|---|---|---|---|---|---|
-| identity and selection - `--flow`, `--trail`, `--fingerprint`, `--name` | 46 | no. There is no artifact called "" | 12 | 2 | 7 | 12 | 13 |
-| location and input - `--template-file`, `--results-dir`, `--paths` | 26 | no. There is no file called "" | 6 | 1 | 0 | 7 | 12 |
-| filters - `--exclude`, `--namespaces`, `--services`, `--attestations` | 22 | no. Filtering on "" filters on nothing | 2 | 0 | 0 | 5 | 15 |
+| identity and selection - `--flow`, `--trail`, `--fingerprint`, `--name` | 46 | no. There is no artifact called "" | 12 | 1 | 9 | 11 | 13 |
+| location and input - `--template-file`, `--results-dir`, `--paths` | 26 | no. There is no file called "" | 7 | 1 | 0 | 6 | 12 |
+| filters - `--exclude`, `--namespaces`, `--services`, `--attestations` | 22 | no. Filtering on "" filters on nothing | 1 | 0 | 0 | 6 | 15 |
 | credentials - `--github-token`, `--aws-secret-key`, `--registry-password` | 17 | no. There is no token "" | 0 | 0 | 0 | 2 | 15 |
-| output and paging - `--output`, `--sort`, `--page`, `--reverse` | 14 | no | 6 | 0 | 1 | 5 | 2 |
-| behaviour switches - `--dry-run`, `--assert`, `--compliant` | 11 | no | 8 | 0 | 1 | 0 | 2 |
+| output and paging - `--output`, `--sort`, `--page`, `--reverse` | 14 | no | 7 | 1 | 0 | 4 | 2 |
+| behaviour switches - `--dry-run`, `--assert`, `--compliant` | 11 | no | 9 | 0 | 0 | 0 | 2 |
 | free-text metadata - `--description`, `--comment`, `--reason`, `--tag` | 9 | **sometimes** | 4 | 0 | 1 | 4 | 0 |
 | the global flags - `--org`, `--api-token`, `--host`, `--debug` | 7 | no | 6 | 0 | 0 | 1 | 0 |
-| **total** | **152** | | **44** | **3** | **10** | **36** | **59** |
+| **total** | **152** | | **46** | **3** | **10** | **34** | **59** |
 
 The credentials row is the one to look at twice, and it is mostly unmeasured: 9
 of its 11 names appear only on commands needing a service this audit cannot
@@ -325,7 +343,7 @@ listed once.
 | `--api-token` | global | 1 of 1 | always |
 | `--archived` | filter | 1 of 1 | always |
 | `--artifact-type` | identity | 9 of 16 | some commands |
-| `--assert` | switch | 4 of 9 | some commands |
+| `--assert` | switch | 4 of 9 | always |
 | `--assume-yes` | switch | 2 of 2 | always |
 | `--attachments` | identity | 4 of 11 | always |
 | `--attestation-data` | identity | 1 of 1 | always |
@@ -391,7 +409,7 @@ listed once.
 | `--include` | filter | 0 of 2 | not measured |
 | `--include-regex` | filter | 0 of 2 | not measured |
 | `--included-environments` | filter | 1 of 1 | never |
-| `--input-file` | location | 1 of 1 | never |
+| `--input-file` | location | 1 of 1 | always |
 | `--interval` | output | 2 of 2 | never |
 | `--jira-api-token` | credentials | 0 of 1 | not measured |
 | `--jira-base-url` | location | 0 of 1 | not measured |
@@ -414,14 +432,14 @@ listed once.
 | `--org` | global | 1 of 1 | always |
 | `--origin-url` | location | 6 of 13 | never |
 | `--original-attestation-type` | identity | 1 of 1 | always |
-| `--output` | output | 32 of 33 | some commands |
+| `--output` | output | 32 of 33 | always, some only by the server |
 | `--page` | output | 8 of 8 | always |
 | `--page-limit` | output | 8 of 8 | always |
 | `--params` | location | 3 of 3 | never |
 | `--path` | location | 1 of 1 | always |
 | `--paths-file` | location | 1 of 1 | always |
 | `--physical` | identity | 1 of 1 | always |
-| `--policy` | identity | 4 of 4 | never |
+| `--policy` | identity | 4 of 4 | some commands |
 | `--privilege` | identity | 2 of 2 | always, some only by the server |
 | `--project` | identity | 0 of 3 | not measured |
 | `--provider` | identity | 2 of 3 | never |
@@ -449,7 +467,7 @@ listed once.
 | `--services-regex` | filter | 0 of 1 | not measured |
 | `--set` | metadata | 1 of 2 | always |
 | `--short` | output | 1 of 1 | always |
-| `--show-input` | output | 3 of 3 | never |
+| `--show-input` | output | 3 of 3 | always |
 | `--show-unchanged` | output | 1 of 1 | always |
 | `--sonar-api-token` | credentials | 0 of 1 | not measured |
 | `--sonar-ce-task-url` | location | 0 of 1 | not measured |
@@ -459,14 +477,14 @@ listed once.
 | `--sonar-working-dir` | location | 0 of 1 | not measured |
 | `--sort` | output | 1 of 1 | never |
 | `--sort-direction` | output | 3 of 3 | never |
-| `--space-id` | filter | 1 of 1 | always |
+| `--space-id` | filter | 1 of 1 | never |
 | `--start` | identity | 1 of 1 | never |
 | `--start-ts` | identity | 1 of 1 | always |
 | `--tag` | metadata | 3 of 3 | never |
 | `--template` | identity | 1 of 1 | always |
 | `--template-file` | location | 2 of 2 | never |
 | `--trail` | identity | 8 of 15 | some commands |
-| `--type` | identity | 4 of 4 | always, some only by the server |
+| `--type` | identity | 4 of 4 | some commands |
 | `--unset` | metadata | 1 of 2 | never |
 | `--upload-results` | switch | 1 of 2 | always |
 | `--use-empty-template` | switch | 1 of 1 | always |

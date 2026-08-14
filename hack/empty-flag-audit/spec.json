@@ -1263,11 +1263,11 @@
   "args": [],
   "flags": {
    "input-file": "cmd/kosli/testdata/person-schema.json",
-   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego"
+   "policy": "cmd/kosli/testdata/policies/allow-all.rego"
   },
   "baseline_ok": true,
-  "baseline_exit": 1,
-  "baseline_output": "Error: [kosli evaluate input] policy denied\nRESULT:  DENIED",
+  "baseline_exit": 0,
+  "baseline_output": "RESULT:  ALLOWED",
   "flags_to_test": [
    "assert",
    "input-file",
@@ -1283,7 +1283,7 @@
    "no-assert": "true",
    "output": "json",
    "params": "probe-params",
-   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego",
+   "policy": "cmd/kosli/testdata/policies/allow-all.rego",
    "show-input": "true"
   },
   "setup": [],
@@ -1295,11 +1295,11 @@
   ],
   "flags": {
    "flow": "{flow}",
-   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego"
+   "policy": "cmd/kosli/testdata/policies/allow-all.rego"
   },
   "baseline_ok": true,
-  "baseline_exit": 1,
-  "baseline_output": "Error: [kosli evaluate trail flow={flow}] policy denied\nRESULT:  DENIED",
+  "baseline_exit": 0,
+  "baseline_output": "RESULT:  ALLOWED",
   "flags_to_test": [
    "assert",
    "attestations",
@@ -1317,7 +1317,7 @@
    "no-assert": "true",
    "output": "json",
    "params": "probe-params",
-   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego",
+   "policy": "cmd/kosli/testdata/policies/allow-all.rego",
    "show-input": "true"
   },
   "setup": [
@@ -1347,11 +1347,11 @@
   ],
   "flags": {
    "flow": "{flow}",
-   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego"
+   "policy": "cmd/kosli/testdata/policies/allow-all.rego"
   },
   "baseline_ok": true,
-  "baseline_exit": 1,
-  "baseline_output": "Error: [kosli evaluate trails flow={flow}] policy denied\nRESULT:  DENIED",
+  "baseline_exit": 0,
+  "baseline_output": "RESULT:  ALLOWED",
   "flags_to_test": [
    "assert",
    "attestations",
@@ -1369,7 +1369,7 @@
    "no-assert": "true",
    "output": "json",
    "params": "probe-params",
-   "policy": "cmd/kosli/testdata/policies/deny-no-violations.rego",
+   "policy": "cmd/kosli/testdata/policies/allow-all.rego",
    "show-input": "true"
   },
   "setup": [
@@ -1952,10 +1952,12 @@
  },
  "list environments": {
   "args": [],
-  "flags": {},
+  "flags": {
+   "page-limit": "5"
+  },
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "NAME                                  TYPE     LAST REPORT                LAST MODIFIED              TAGS  POLICIES\nprobe-allow-artifact-baseline-en      server                              {timestamp}        []\nprobe-assert-snapshot-baseline-en     server   {timestamp}  {timestamp}        []\nprobe-create-environment-baseline-en  K8S                                 {timestamp}        []\nprobe-diff-snapshots-baseline-en      server   {timestamp}  {timestamp}        []\nprobe-get-environment-baseline-en     K8S                                 {timestamp}        []\nprobe-get-snapshot-baseline-en        server   {timestamp}  {timestamp}        []\nprobe-join-environment-baseline-en    K8S                                 {timestamp}        []\nprobe-join-environment-baseline-lg    logical                             {timestamp}        []\n{env}   K8S                                 {timestamp}        []",
+  "baseline_output": "NAME                                 TYPE  LAST REPORT  LAST MODIFIED              TAGS  POLICIES\n{env}  K8S                {timestamp}        []\n\nShowing page 1 of 1, total 1 items",
   "flags_to_test": [
    "name",
    "output",

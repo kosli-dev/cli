@@ -25,7 +25,9 @@ FINGERPRINT = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 POLICY_FILE = "cmd/kosli/testdata/policy-files/test-policy.yml"
 ARTIFACT_PATH = "cmd/kosli/testdata/person-schema.json"
 ATTESTATION_SCHEMA = "cmd/kosli/testdata/person-schema.json"
-REGO_POLICY = "cmd/kosli/testdata/policies/deny-no-violations.rego"
+# A policy that passes. A denying policy would make every `evaluate` run exit
+# non-zero whatever its flags held, leaving nothing to compare an empty value to.
+REGO_POLICY = "cmd/kosli/testdata/policies/allow-all.rego"
 
 # The global flags are declared once on the root command and behave the same
 # wherever they appear, so they are audited on this command alone rather than
@@ -130,6 +132,10 @@ COMMAND_EXTRA_FLAGS = {
     # Without --input-file the command reads stdin, which the audit does not
     # feed, and it fails on end-of-file before reaching its own flags.
     "evaluate input": ["input-file", "policy"],
+    # By the time this runs, the audit has created hundreds of environments, and
+    # asking for all of them times out. A page limit keeps the request small
+    # enough to answer, which is all these flags need.
+    "list environments": ["page-limit"],
 }
 
 # The environment a command reports to must be of the type it reports. An

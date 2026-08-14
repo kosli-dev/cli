@@ -419,7 +419,7 @@ config	--set					not tested	not tested	needs a credentials store
 config	--unset					not tested	not tested	needs a credentials store
 create api-key	--description	1	1	0	cli	differs	differs	Error: [kosli create api-key] flag '--description' is required, but empty string was provided
 create api-key	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
-create api-key	--expires-at	0	0	1		same	differs	ID:           ce696f51-5674-4256-89f1-946c02b6
+create api-key	--expires-at	0	0	1		same	differs	ID:           a1087bad-2dd4-4f07-9218-84a776bd
 create api-key	--output	1	0	0	cli	differs	differs	Error: [kosli create api-key] unsupported output format:
 create api-key	--service-account	1	1	0	cli	differs	differs	Error: [kosli create api-key] flag '--service-account' is required, but empty string was provided
 create attestation-type	--description	0	0	0		same	same	attestation-type probe-create-attestation-type-description-nm was created
@@ -454,29 +454,29 @@ detach-policy	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was gi
 detach-policy	--environment	0	1	0		differs	differs	policy 'probe-detach-policy-environment-po' is detached from environments: []
 diff snapshots	--output	1	0	0	cli	differs	differs	Error: [kosli diff snapshots] unsupported output format:
 diff snapshots	--show-unchanged	1	0	0	cli	differs	differs	Error: flag '--show-unchanged' was given an empty value
-evaluate input	--assert	1	1	1	cli	differs	differs	Error: flag '--assert' was given an empty value
-evaluate input	--input-file	1	1	1	cli	same	differs	Error: [kosli evaluate input] failed to parse input: EOF
-evaluate input	--no-assert	1	1	0	cli	differs	differs	Error: flag '--no-assert' was given an empty value
-evaluate input	--output	1	1	1	cli	differs	differs	Error: [kosli evaluate input] unsupported output format:
-evaluate input	--params	1	1	1	cli	same	differs	Error: [kosli evaluate input] policy denied
-evaluate input	--policy	1	1	1	cli	differs	differs	Error: [kosli evaluate input] flag '--policy' is required, but empty string was provided
-evaluate input	--show-input	1	1	1	cli	differs	differs	Error: flag '--show-input' was given an empty value
-evaluate trail	--assert	1	1	1	cli	differs	differs	Error: flag '--assert' was given an empty value
-evaluate trail	--attestations	1	1	1	cli	same	same	Error: [kosli evaluate trail flow=probe-evaluate-trail-attestations-fl] policy denied
-evaluate trail	--flow	1	1	1	cli	differs	differs	Error: [kosli evaluate trail] flag '--flow' is required, but empty string was provided
-evaluate trail	--no-assert	1	1	0	cli	differs	differs	Error: flag '--no-assert' was given an empty value
-evaluate trail	--output	1	1	1	cli	differs	differs	Error: [kosli evaluate trail flow=probe-evaluate-trail-output-fl] unsupported output format:
-evaluate trail	--params	1	1	1	cli	same	differs	Error: [kosli evaluate trail flow=probe-evaluate-trail-params-fl] policy denied
-evaluate trail	--policy	1	1	1	cli	differs	differs	Error: [kosli evaluate trail flow=probe-evaluate-trail-policy-fl] flag '--policy' is required, but empty string was provided
-evaluate trail	--show-input	1	1	1	cli	differs	differs	Error: flag '--show-input' was given an empty value
-evaluate trails	--assert	1	1	1	cli	differs	differs	Error: flag '--assert' was given an empty value
-evaluate trails	--attestations	1	1	1	cli	same	same	Error: [kosli evaluate trails flow=probe-evaluate-trails-attestations-fl] policy denied
-evaluate trails	--flow	1	1	1	cli	differs	differs	Error: [kosli evaluate trails] flag '--flow' is required, but empty string was provided
-evaluate trails	--no-assert	1	1	0	cli	differs	differs	Error: flag '--no-assert' was given an empty value
-evaluate trails	--output	1	1	1	cli	differs	differs	Error: [kosli evaluate trails flow=probe-evaluate-trails-output-fl] unsupported output format:
-evaluate trails	--params	1	1	1	cli	same	differs	Error: [kosli evaluate trails flow=probe-evaluate-trails-params-fl] policy denied
-evaluate trails	--policy	1	1	1	cli	differs	differs	Error: [kosli evaluate trails flow=probe-evaluate-trails-policy-fl] flag '--policy' is required, but empty string was provided
-evaluate trails	--show-input	1	1	1	cli	differs	differs	Error: flag '--show-input' was given an empty value
+evaluate input	--assert	1	0	0	cli	differs	differs	Error: flag '--assert' was given an empty value
+evaluate input	--input-file	1	1	0	cli	same	differs	Error: [kosli evaluate input] failed to parse input: EOF
+evaluate input	--no-assert	1	0	0	cli	differs	differs	Error: flag '--no-assert' was given an empty value
+evaluate input	--output	1	0	0	cli	differs	differs	Error: [kosli evaluate input] unsupported output format:
+evaluate input	--params	0	0	1		same	differs	RESULT:  ALLOWED
+evaluate input	--policy	1	1	0	cli	differs	differs	Error: [kosli evaluate input] flag '--policy' is required, but empty string was provided
+evaluate input	--show-input	1	0	0	cli	differs	differs	Error: flag '--show-input' was given an empty value
+evaluate trail	--assert	1	0	0	cli	differs	differs	Error: flag '--assert' was given an empty value
+evaluate trail	--attestations	0	0	0		same	same	RESULT:  ALLOWED
+evaluate trail	--flow	1	1	0	cli	differs	differs	Error: [kosli evaluate trail] flag '--flow' is required, but empty string was provided
+evaluate trail	--no-assert	1	0	0	cli	differs	differs	Error: flag '--no-assert' was given an empty value
+evaluate trail	--output	1	0	0	cli	differs	differs	Error: [kosli evaluate trail flow=probe-evaluate-trail-output-fl] unsupported output format:
+evaluate trail	--params	0	0	1		same	differs	RESULT:  ALLOWED
+evaluate trail	--policy	1	1	0	cli	differs	differs	Error: [kosli evaluate trail flow=probe-evaluate-trail-policy-fl] flag '--policy' is required, but empty string was provided
+evaluate trail	--show-input	1	0	0	cli	differs	differs	Error: flag '--show-input' was given an empty value
+evaluate trails	--assert	1	0	0	cli	differs	differs	Error: flag '--assert' was given an empty value
+evaluate trails	--attestations	0	0	0		same	same	RESULT:  ALLOWED
+evaluate trails	--flow	1	1	0	cli	differs	differs	Error: [kosli evaluate trails] flag '--flow' is required, but empty string was provided
+evaluate trails	--no-assert	1	0	0	cli	differs	differs	Error: flag '--no-assert' was given an empty value
+evaluate trails	--output	1	0	0	cli	differs	differs	Error: [kosli evaluate trails flow=probe-evaluate-trails-output-fl] unsupported output format:
+evaluate trails	--params	0	0	1		same	differs	RESULT:  ALLOWED
+evaluate trails	--policy	1	1	0	cli	differs	differs	Error: [kosli evaluate trails flow=probe-evaluate-trails-policy-fl] flag '--policy' is required, but empty string was provided
+evaluate trails	--show-input	1	0	0	cli	differs	differs	Error: flag '--show-input' was given an empty value
 fingerprint	--artifact-type	1	1	0	cli	differs	differs	Error: [kosli fingerprint] flag '--artifact-type' is required, but empty string was provided
 fingerprint	--exclude	0	0	0		same	same	1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01
 fingerprint	--registry-password	0	0	1		same	differs	1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01
@@ -521,15 +521,15 @@ list controls	--page-limit	1	0	0	cli	differs	differs	Error: [kosli list controls
 list controls	--search	0	0	0		same	differs	IDENTIFIER                                   NAME                                         DESCRIPTION        CREATED AT
 list controls	--sort-direction	0	0	1		same	differs	IDENTIFIER                                   NAME                                         DESCRIPTION        CREATED AT
 list controls	--tag	0	0	0		same	differs	IDENTIFIER                                   NAME                                         DESCRIPTION        CREATED AT
-list environments	--name	1	1	0	cli	same	differs	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
-list environments	--output	1	1	1	cli	same	same	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
-list environments	--page	1	1	0	cli	differs	differs	Error: [kosli list environments] invalid argument "" for "--page" flag: strconv.ParseInt: parsing "": invalid syntax
+list environments	--name	0	0	0		same	differs	NAME                                           TYPE    LAST REPORT  LAST MODIFIED              TAGS  POLICIES
+list environments	--output	1	0	0	cli	differs	differs	Error: [kosli list environments] unsupported output format:
+list environments	--page	1	0	0	cli	differs	differs	Error: [kosli list environments] invalid argument "" for "--page" flag: strconv.ParseInt: parsing "": invalid syntax
 list environments	--page-limit	1	1	0	cli	differs	differs	Error: [kosli list environments] invalid argument "" for "-n, --page-limit" flag: strconv.ParseInt: parsing "": invalid syntax
-list environments	--sort	1	1	1	cli	same	differs	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
-list environments	--sort-direction	1	1	1	cli	same	differs	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
-list environments	--space-id	1	1	0	cli	same	differs	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
-list environments	--tag	0	1	0		differs	same	No environments were found.
-list environments	--type	1	1	0	cli	same	differs	Error: [kosli list environments] Get "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared": GET http://localhost:8001/api/v2/environments/docs-c
+list environments	--sort	0	0	1		same	differs	NAME                                           TYPE    LAST REPORT  LAST MODIFIED              TAGS  POLICIES
+list environments	--sort-direction	0	0	1		same	differs	NAME                                           TYPE    LAST REPORT  LAST MODIFIED              TAGS  POLICIES
+list environments	--space-id	0	0	0		same	differs	NAME                                           TYPE    LAST REPORT  LAST MODIFIED              TAGS  POLICIES
+list environments	--tag	0	0	0		differs	same	No environments were found.
+list environments	--type	0	0	0		same	differs	NAME                                           TYPE    LAST REPORT  LAST MODIFIED              TAGS  POLICIES
 list flows	--ignore-case	1	0	0	cli	differs	differs	Error: flag '--ignore-case' was given an empty value
 list flows	--name	0	0	0		same	differs	NAME                                                     DESCRIPTION        VISIBILITY  TAGS
 list flows	--output	1	0	0	cli	differs	differs	Error: [kosli list flows] unsupported output format:
@@ -570,7 +570,7 @@ log environment	--start-ts	1	0	1	cli	differs	differs	Error: [kosli log environme
 rename environment	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
 rename flow	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
 rotate api-key	--dry-run	1	0	0	cli	differs	differs	Error: flag '--dry-run' was given an empty value
-rotate api-key	--expires-at	0	0	1		same	differs	ID:                   d3f3da24-9367-4242-9402-4eff5077
+rotate api-key	--expires-at	0	0	1		same	differs	ID:                   b96117b1-ada6-4876-a671-100fb770
 rotate api-key	--grace-period-hours	1	0	1	cli	differs	differs	Error: [kosli rotate api-key] invalid argument "" for "-g, --grace-period-hours" flag: strconv.ParseInt: parsing "": invalid syntax
 rotate api-key	--output	1	0	0	downstream	differs	differs	Error: [kosli rotate api-key] unsupported output format:
 rotate api-key	--service-account	1	1	0	cli	differs	differs	Error: [kosli rotate api-key] flag '--service-account' is required, but empty string was provided

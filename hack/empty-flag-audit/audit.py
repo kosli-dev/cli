@@ -303,6 +303,38 @@ def reset_server():
             )
 
 
+# Commands whose own results are fine but which leave the server unable to
+# answer something else. `create environment --included-environments ""` writes a
+# record that makes `list environments` return 500 for the whole org, so it is
+# measured after everything that needs the server intact. Remove an entry here
+# once the bug behind it is fixed.
+MEASURE_LAST = ["create environment"]
+
+
+def in_order(spec):
+    """Return the commands to measure, poisoners last."""
+    names = sorted(spec)
+    deferred = [c for c in names if c in MEASURE_LAST]
+    return [c for c in names if c not in deferred] + deferred
+
+
+def merged(path, rows):
+    """Fold new rows into whatever the file already holds.
+
+    A run limited with --only or --flag measures a handful of combinations.
+    Writing just those would throw away every other result in the file, so the
+    rows it did measure replace their old selves and the rest are left alone.
+    """
+    header, fresh = rows[0], rows[1:]
+    kept = {}
+    if path.exists():
+        for line in path.read_text().splitlines()[1:]:
+            kept[tuple(line.split("\t")[:2])] = line
+    for line in fresh:
+        kept[tuple(line.split("\t")[:2])] = line
+    return [header] + sorted(kept.values())
+
+
 def wanted(spec, only, only_flag):
     """Return the command-and-flag pairs this run will actually measure."""
     pairs = []
@@ -320,7 +352,8 @@ def audit(binary, spec, only, only_flag, as_ci, home):
     rows = ["command\tflag\tempty_exit\tomitted_exit\tset_exit\trefused_by"
             "\tvs_omitted\tvs_set\tmessage"]
     total, done = len(wanted(spec, only, only_flag)), 0
-    for command, entry in sorted(spec.items()):
+    for command in in_order(spec):
+        entry = spec[command]
         if only and only not in command:
             continue
         if entry.get("skip"):
@@ -398,7 +431,7 @@ def main():
     spec = json.loads(SPEC.read_text())
     rows = audit(args.binary, spec, args.only, args.flag, args.ci, home)
     out = RESULTS_CI if args.ci else RESULTS
-    out.write_text("\n".join(rows) + "\n")
+    out.write_text("\n".join(merged(out, rows)) + "\n")
     print(f"\nwrote {out}")
 
 
