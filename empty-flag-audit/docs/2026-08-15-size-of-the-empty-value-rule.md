@@ -62,8 +62,10 @@ a different subset. The work is picking one layer and covering everything.
 `stringSliceValue.String()` returns `"[" + csv + "]"`, so `--exclude ""`
 stringifies to `[]` and never compares equal to `""`. The post-parse check as
 written is structurally unable to catch a slice flag. That matters because slice
-flags are where most of the gap is: Appendix 2's filters row is 22 names, 21 of
-which are never refused.
+flags are where most of the gap is. 34 of the 165 flag names are slice-valued,
+and 25 of them are refused on none of their commands. Six are refused everywhere,
+and two of those six are `--attachments` and `--template`, the two
+`nonEmptyStringSlice` already covers.
 
 The fix is not a new type. `nonEmptyStringSlice` implements `pflag.SliceValue`,
 and its `GetSlice` docstring already says it exists so that "a post-parse check
@@ -87,7 +89,7 @@ one rule instead of two.
 and `update service-account --description ""` clear a description on purpose,
 which the decision document already identifies as the whole cost of the proposal.
 Whatever shape the rule takes, it needs either an opt-out for those two or
-`--clear-description` alongside.
+`--unset description` alongside, in the shape `kosli tag --unset` already uses.
 
 ## Where the rule could live
 
@@ -108,7 +110,7 @@ loop is worth keeping as a backstop for anything the wrapping cannot reach.
 |---|---|
 | the rule itself | one small type plus a registration walk, or four lines if the existing loop is extended |
 | removing the required-only gate | 4 lines, and Appendix 1's CI blind spot goes with it |
-| the two deliberate-clear flags | an opt-out, or `--clear-description`, which the decision document already scopes |
+| the two deliberate-clear flags | an opt-out, or `--unset description`, which the decision document already scopes |
 | warning instead of erroring, for step 2 | the same call site, returning a warning rather than an error |
 | tests for the rule | new, and worth writing per flag category rather than per flag |
 | existing test fallout | small: five test files mention the current message, so keeping its wording costs almost nothing |

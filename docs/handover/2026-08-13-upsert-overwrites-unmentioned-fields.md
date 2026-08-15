@@ -5,9 +5,10 @@ describe themselves that way. They do not agree on what happens to a field you
 did not mention.
 
 - **`create flow` uses the apply model.** "Create or update a Kosli flow. You can
-  specify flow parameters in flags." What you pass is what the flow becomes, so
-  an absent `--description` meaning "no description" is that model working. There
-  is nothing to fix in it.
+  specify flow parameters in flags." It reads its flags the way `kubectl apply`
+  reads a manifest: what you pass is what the flow becomes, so an absent
+  `--description` meaning "no description" is that model working. There is
+  nothing to fix in it.
 - **`begin trail` says the same thing and behaves differently.** Its update on
   the server is guarded by `if "description" in payload`, so an absent
   description leaves the stored one alone - the patch model. The CLI never lets
@@ -100,6 +101,12 @@ Until a command says what an absent flag means, it cannot say what an empty one
 means either: today `--description ""` and no `--description` produce the same
 request, so the two cannot be told apart. See
 `../../empty-flag-audit/docs/2026-08-13-empty-value-decision.md`.
+
+That document proposes refusing an empty flag value, and it does not reach this.
+`kosli begin trail` sends `"description": ""` whether or not `--description` was
+passed, so there is no empty value given for such a rule to refuse. This one is
+settled by deciding what an absent flag means, not by policing what a present
+one carries.
 
 ## How it was found
 
