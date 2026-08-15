@@ -50,7 +50,7 @@ rather than the ceiling:
 ## What was measured instead
 
 One slice of that space, taken by running the CLI rather than reasoning about it.
-The audit is in `hack/empty-flag-audit`. The slice is: one flag emptied at a
+The audit is in `empty-flag-audit`. The slice is: one flag emptied at a
 time, every other flag held at a value that works, against a local server. The
 commands needing a service we cannot reach are run too - they fail, but their own
 checks run before they get that far, so what the CLI does with an empty value is
@@ -134,8 +134,8 @@ a variable that is unset, which is all it takes.
 | `kosli detach-policy P --environment "$VAR"` | the policy is detached from no environment, so it stays in force | changes compliance |
 | `kosli attest generic --repo-id "$VAR" --repo-url "$VAR" --repository "$VAR"` | `repo_info` is not recorded at all, so the attestation carries no repository provenance | records less than it was told to |
 | `kosli attest generic --redact-commit-info "$VAR"` | the commit author and message are sent in the clear - the very data the flag exists to withhold | sends data meant to be withheld |
-| `kosli create environment E --type logical --included-environments "$VAR"` | the record cannot be read back, and `list environments` returns HTTP 500 for every environment in the org until it is removed | **outright bug**, written up in `2026-08-13-included-environments-500.md` |
-| `kosli begin trail T --flow F` with no `--description` at all | the description the trail already had is replaced by an empty one, even though the server's update is written to leave an absent field alone | **an inconsistency**, not an empty value at all, written up in `2026-08-13-upsert-overwrites-unmentioned-fields.md` |
+| `kosli create environment E --type logical --included-environments "$VAR"` | the record cannot be read back, and `list environments` returns HTTP 500 for every environment in the org until it is removed | **outright bug**, written up in `../../docs/handover/2026-08-13-included-environments-500.md` |
+| `kosli begin trail T --flow F` with no `--description` at all | the description the trail already had is replaced by an empty one, even though the server's update is written to leave an absent field alone | **an inconsistency**, not an empty value at all, written up in `../../docs/handover/2026-08-13-upsert-overwrites-unmentioned-fields.md` |
 | `kosli list environments --tag "$VAR"` | answers "No environments were found", identical to a real no-match, exit 0 | wrong answer |
 
 Sixteen findings, from one slice of one CLI, all of them silent. And sixteen is

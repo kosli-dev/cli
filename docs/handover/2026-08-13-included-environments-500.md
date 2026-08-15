@@ -62,14 +62,14 @@ That is a guess from the outside; the server logs will say.
 Any one of these stops the org-wide failure; the first two are worth having anyway.
 
 1. The CLI refuses an empty `--included-environments`. This is the general rule
-   proposed in `2026-08-13-empty-value-decision.md`, and this bug is one case of it.
+   proposed in `../../empty-flag-audit/docs/2026-08-13-empty-value-decision.md`, and this bug is one case of it.
 2. The server rejects an included-environment name that is empty, at write time.
 3. Reading an environment tolerates a name that does not resolve, so one bad
    record cannot take out the listing for everyone.
 
 ## How it was found
 
-By the empty-flag audit in `hack/empty-flag-audit`, which runs every
+By the empty-flag audit in `empty-flag-audit`, which runs every
 command-and-flag combination with an empty value. This one stood out because it
 was the only case where an empty value broke a command other than the one being
 run.

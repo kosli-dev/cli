@@ -14,8 +14,7 @@ import re
 from collections import Counter, defaultdict
 
 HERE = pathlib.Path(__file__).parent
-REPO = HERE.parent.parent
-DOC = REPO / "docs/handover/2026-08-13-empty-value-decision.md"
+DOC = HERE / "docs/2026-08-13-empty-value-decision.md"
 CATEGORIES = HERE / "categories.json"
 
 # The seven flags the root command declares. They behave the same wherever they

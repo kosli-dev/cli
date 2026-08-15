@@ -13,20 +13,20 @@ all. Only running it settles which.
 
 ```bash
 make test_setup                       # a local server on localhost:8001
-./hack/empty-flag-audit/audit.py      # produces results.tsv
-./hack/empty-flag-audit/audit.py --ci # produces results-ci.tsv
-./hack/empty-flag-audit/report.py     # the figures the decision document quotes
+./empty-flag-audit/audit.py      # produces results.tsv
+./empty-flag-audit/audit.py --ci # produces results-ci.tsv
+./empty-flag-audit/report.py     # the figures the decision document quotes
 ```
 
 Narrower runs, for working on one entry:
 
 ```bash
-./hack/empty-flag-audit/audit.py --only "attest generic" --flag fingerprint
+./empty-flag-audit/audit.py --only "attest generic" --flag fingerprint
 ```
 
 Both passes are needed before `report.py`, which compares them to find the flags
 the CLI stops checking inside CI. `report.py --write-appendices` rewrites the
-flag-by-flag table in `docs/handover/2026-08-13-empty-value-decision.md`; the
+flag-by-flag table in `docs/2026-08-13-empty-value-decision.md`; the
 figures in that document's prose are printed but have to be copied in by hand.
 Re-running the audit without re-running the report leaves the two disagreeing.
 

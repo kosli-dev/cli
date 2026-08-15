@@ -1,0 +1,886 @@
+{
+ "allow artifact": [
+  "artifact-type",
+  "dry-run",
+  "environment",
+  "exclude",
+  "fingerprint",
+  "reason",
+  "registry-password",
+  "registry-provider",
+  "registry-username"
+ ],
+ "archive attestation-type": [
+  "dry-run"
+ ],
+ "archive control": [
+  "dry-run"
+ ],
+ "archive environment": [
+  "dry-run"
+ ],
+ "archive flow": [
+  "api-token",
+  "config-file",
+  "debug",
+  "dry-run",
+  "host",
+  "http-proxy",
+  "max-api-retries",
+  "org",
+  "quiet"
+ ],
+ "assert artifact": [
+  "artifact-type",
+  "dry-run",
+  "environment",
+  "exclude",
+  "fingerprint",
+  "flow",
+  "output",
+  "policy",
+  "registry-password",
+  "registry-provider",
+  "registry-username"
+ ],
+ "assert pullrequest azure": [
+  "azure-org-url",
+  "azure-token",
+  "commit",
+  "dry-run",
+  "project",
+  "repository"
+ ],
+ "assert pullrequest bitbucket": [
+  "bitbucket-access-token",
+  "bitbucket-password",
+  "bitbucket-username",
+  "bitbucket-workspace",
+  "commit",
+  "dry-run",
+  "repository"
+ ],
+ "assert pullrequest github": [
+  "commit",
+  "dry-run",
+  "github-base-url",
+  "github-org",
+  "github-token",
+  "repository"
+ ],
+ "assert pullrequest gitlab": [
+  "commit",
+  "dry-run",
+  "gitlab-base-url",
+  "gitlab-org",
+  "gitlab-token",
+  "repository"
+ ],
+ "assert snapshot": [
+  "dry-run"
+ ],
+ "assert status": [],
+ "attach-policy": [
+  "dry-run",
+  "environment"
+ ],
+ "attest artifact": [
+  "annotate",
+  "artifact-type",
+  "build-url",
+  "commit",
+  "commit-url",
+  "display-name",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "name",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "trail"
+ ],
+ "attest custom": [
+  "annotate",
+  "artifact-type",
+  "attachments",
+  "attestation-data",
+  "commit",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "name",
+  "origin-url",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "trail",
+  "type",
+  "user-data"
+ ],
+ "attest decision": [
+  "annotate",
+  "artifact-type",
+  "attachments",
+  "commit",
+  "compliant",
+  "control",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "name",
+  "origin-url",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "trail",
+  "user-data"
+ ],
+ "attest generic": [
+  "annotate",
+  "artifact-type",
+  "attachments",
+  "commit",
+  "compliant",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "name",
+  "origin-url",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "trail",
+  "user-data"
+ ],
+ "attest jira": [
+  "annotate",
+  "artifact-type",
+  "assert",
+  "attachments",
+  "commit",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "ignore-branch-match",
+  "jira-api-token",
+  "jira-base-url",
+  "jira-issue-fields",
+  "jira-pat",
+  "jira-project-key",
+  "jira-secondary-source",
+  "jira-username",
+  "name",
+  "origin-url",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "trail",
+  "user-data"
+ ],
+ "attest junit": [
+  "annotate",
+  "artifact-type",
+  "attachments",
+  "commit",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "name",
+  "origin-url",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "results-dir",
+  "trail",
+  "upload-results",
+  "user-data"
+ ],
+ "attest override": [
+  "annotate",
+  "artifact-type",
+  "attachments",
+  "commit",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "name",
+  "new-compliance-status",
+  "origin-url",
+  "original-attestation-type",
+  "reason",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "trail",
+  "user-data"
+ ],
+ "attest pullrequest azure": [
+  "annotate",
+  "artifact-type",
+  "assert",
+  "attachments",
+  "azure-org-url",
+  "azure-token",
+  "commit",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "name",
+  "origin-url",
+  "project",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "trail",
+  "user-data"
+ ],
+ "attest pullrequest bitbucket": [
+  "annotate",
+  "artifact-type",
+  "assert",
+  "attachments",
+  "bitbucket-access-token",
+  "bitbucket-password",
+  "bitbucket-username",
+  "bitbucket-workspace",
+  "commit",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "name",
+  "origin-url",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "trail",
+  "user-data"
+ ],
+ "attest pullrequest github": [
+  "annotate",
+  "artifact-type",
+  "assert",
+  "attachments",
+  "commit",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "github-base-url",
+  "github-org",
+  "github-token",
+  "name",
+  "origin-url",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "trail",
+  "user-data"
+ ],
+ "attest pullrequest gitlab": [
+  "annotate",
+  "artifact-type",
+  "assert",
+  "attachments",
+  "commit",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "gitlab-base-url",
+  "gitlab-org",
+  "gitlab-token",
+  "name",
+  "origin-url",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "trail",
+  "user-data"
+ ],
+ "attest snyk": [
+  "annotate",
+  "artifact-type",
+  "attachments",
+  "commit",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "name",
+  "origin-url",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "scan-results",
+  "trail",
+  "upload-results",
+  "user-data"
+ ],
+ "attest sonar": [
+  "annotate",
+  "artifact-type",
+  "attachments",
+  "commit",
+  "description",
+  "dry-run",
+  "exclude",
+  "external-fingerprint",
+  "external-url",
+  "fingerprint",
+  "flow",
+  "max-wait",
+  "name",
+  "origin-url",
+  "pull-request",
+  "redact-commit-info",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "sonar-api-token",
+  "sonar-ce-task-url",
+  "sonar-project-key",
+  "sonar-revision",
+  "sonar-server-url",
+  "sonar-working-dir",
+  "trail",
+  "user-data"
+ ],
+ "begin trail": [
+  "commit",
+  "description",
+  "dry-run",
+  "external-fingerprint",
+  "external-url",
+  "flow",
+  "origin-url",
+  "redact-commit-info",
+  "repo-id",
+  "repo-provider",
+  "repo-root",
+  "repo-url",
+  "repository",
+  "template-file",
+  "user-data"
+ ],
+ "completion": [],
+ "config": [
+  "set",
+  "unset"
+ ],
+ "create api-key": [
+  "description",
+  "dry-run",
+  "expires-at",
+  "output",
+  "service-account"
+ ],
+ "create attestation-type": [
+  "description",
+  "dry-run",
+  "jq",
+  "schema"
+ ],
+ "create control": [
+  "description",
+  "dry-run",
+  "name"
+ ],
+ "create environment": [
+  "description",
+  "dry-run",
+  "exclude-scaling",
+  "include-scaling",
+  "included-environments",
+  "require-provenance",
+  "type"
+ ],
+ "create flow": [
+  "description",
+  "dry-run",
+  "template",
+  "template-file",
+  "use-empty-template",
+  "visibility"
+ ],
+ "create policy": [
+  "comment",
+  "description",
+  "dry-run",
+  "type"
+ ],
+ "create service-account": [
+  "description",
+  "dry-run",
+  "privilege"
+ ],
+ "delete api-key": [
+  "assume-yes",
+  "dry-run",
+  "service-account",
+  "yes"
+ ],
+ "delete service-account": [
+  "assume-yes",
+  "dry-run",
+  "yes"
+ ],
+ "detach-policy": [
+  "dry-run",
+  "environment"
+ ],
+ "diff snapshots": [
+  "output",
+  "show-unchanged"
+ ],
+ "disable beta": [],
+ "enable beta": [],
+ "evaluate input": [
+  "assert",
+  "attestations",
+  "flow",
+  "input-file",
+  "no-assert",
+  "output",
+  "params",
+  "policy",
+  "show-input"
+ ],
+ "evaluate trail": [
+  "assert",
+  "attestations",
+  "flow",
+  "no-assert",
+  "output",
+  "params",
+  "policy",
+  "show-input"
+ ],
+ "evaluate trails": [
+  "assert",
+  "attestations",
+  "flow",
+  "no-assert",
+  "output",
+  "params",
+  "policy",
+  "show-input"
+ ],
+ "fingerprint": [
+  "artifact-type",
+  "e",
+  "exclude",
+  "registry-password",
+  "registry-provider",
+  "registry-username"
+ ],
+ "get api-key": [
+  "output",
+  "service-account"
+ ],
+ "get artifact": [
+  "output",
+  "trail"
+ ],
+ "get attestation": [
+  "attestation-id",
+  "fingerprint",
+  "flow",
+  "output",
+  "trail"
+ ],
+ "get attestation-type": [
+  "output"
+ ],
+ "get control": [
+  "output"
+ ],
+ "get default-org": [
+  "output"
+ ],
+ "get environment": [
+  "output"
+ ],
+ "get flow": [
+  "output"
+ ],
+ "get policy": [
+  "output"
+ ],
+ "get repo": [
+  "output",
+  "provider",
+  "repo-id"
+ ],
+ "get service-account": [
+  "output"
+ ],
+ "get snapshot": [
+  "output"
+ ],
+ "get trail": [
+  "flow",
+  "output"
+ ],
+ "join environment": [
+  "dry-run",
+  "logical",
+  "physical"
+ ],
+ "list api-keys": [
+  "output",
+  "service-account"
+ ],
+ "list artifacts": [
+  "flow",
+  "output",
+  "page",
+  "page-limit",
+  "repo"
+ ],
+ "list attestation-types": [
+  "output"
+ ],
+ "list controls": [
+  "archived",
+  "output",
+  "page",
+  "page-limit",
+  "search",
+  "sort-direction",
+  "tag"
+ ],
+ "list environments": [
+  "name",
+  "output",
+  "page",
+  "page-limit",
+  "sort",
+  "sort-direction",
+  "space-id",
+  "tag",
+  "type"
+ ],
+ "list flows": [
+  "ignore-case",
+  "name",
+  "output",
+  "page",
+  "page-limit"
+ ],
+ "list policies": [
+  "output"
+ ],
+ "list repos": [
+  "name",
+  "output",
+  "page",
+  "page-limit",
+  "provider",
+  "repo-id",
+  "search",
+  "sort-direction",
+  "tag"
+ ],
+ "list service-accounts": [
+  "output"
+ ],
+ "list snapshots": [
+  "interval",
+  "output",
+  "page",
+  "page-limit",
+  "reverse"
+ ],
+ "list trails": [
+  "fingerprint",
+  "flow",
+  "flow-tag",
+  "output",
+  "page",
+  "page-limit"
+ ],
+ "log environment": [
+  "end",
+  "end-ts",
+  "interval",
+  "output",
+  "page",
+  "page-limit",
+  "repo",
+  "reverse",
+  "start",
+  "start-ts"
+ ],
+ "rename environment": [
+  "dry-run"
+ ],
+ "rename flow": [
+  "dry-run"
+ ],
+ "report artifact": [
+  "artifact-type",
+  "build-url",
+  "commit-url",
+  "dry-run",
+  "exclude",
+  "fingerprint",
+  "flow",
+  "git-commit",
+  "name",
+  "registry-password",
+  "registry-provider",
+  "registry-username",
+  "repo-root"
+ ],
+ "rotate api-key": [
+  "dry-run",
+  "expires-at",
+  "grace-period-hours",
+  "output",
+  "service-account"
+ ],
+ "search": [
+  "output"
+ ],
+ "snapshot azure": [
+  "azure-client-id",
+  "azure-client-secret",
+  "azure-resource-group-name",
+  "azure-subscription-id",
+  "azure-tenant-id",
+  "digests-source",
+  "dry-run",
+  "zip"
+ ],
+ "snapshot cloud-run": [
+  "dry-run",
+  "exclude",
+  "exclude-regex",
+  "include",
+  "include-regex",
+  "project",
+  "region",
+  "resolve-names"
+ ],
+ "snapshot docker": [
+  "dry-run"
+ ],
+ "snapshot ecs": [
+  "aws-key-id",
+  "aws-region",
+  "aws-secret-key",
+  "cluster",
+  "clusters",
+  "clusters-regex",
+  "dry-run",
+  "exclude",
+  "exclude-regex",
+  "exclude-services",
+  "exclude-services-regex",
+  "service-name",
+  "services",
+  "services-regex"
+ ],
+ "snapshot k8s": [
+  "config-file",
+  "dry-run",
+  "exclude-namespaces",
+  "exclude-namespaces-regex",
+  "kubeconfig",
+  "namespaces",
+  "namespaces-regex"
+ ],
+ "snapshot lambda": [
+  "aws-key-id",
+  "aws-region",
+  "aws-secret-key",
+  "dry-run",
+  "exclude",
+  "exclude-regex",
+  "function-name",
+  "function-names",
+  "function-names-regex",
+  "function-version"
+ ],
+ "snapshot path": [
+  "dry-run",
+  "exclude",
+  "name",
+  "path",
+  "watch"
+ ],
+ "snapshot paths": [
+  "dry-run",
+  "paths-file",
+  "watch"
+ ],
+ "snapshot s3": [
+  "aws-key-id",
+  "aws-region",
+  "aws-secret-key",
+  "bucket",
+  "dry-run",
+  "exclude",
+  "exclude-regex",
+  "include",
+  "include-regex"
+ ],
+ "snapshot server": [
+  "dry-run",
+  "e",
+  "exclude",
+  "paths"
+ ],
+ "status": [
+  "assert"
+ ],
+ "tag": [
+  "dry-run",
+  "provider",
+  "repo-id",
+  "set",
+  "unset"
+ ],
+ "unarchive control": [
+  "dry-run"
+ ],
+ "update control": [
+  "description",
+  "dry-run",
+  "link",
+  "name"
+ ],
+ "update default-org": [
+  "dry-run"
+ ],
+ "update service-account": [
+  "description",
+  "dry-run",
+  "privilege"
+ ],
+ "version": [
+  "short"
+ ]
+}

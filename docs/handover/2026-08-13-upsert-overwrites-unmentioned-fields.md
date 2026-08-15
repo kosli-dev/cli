@@ -99,12 +99,12 @@ the CLI still sends `""`, nothing changes at all.
 Until a command says what an absent flag means, it cannot say what an empty one
 means either: today `--description ""` and no `--description` produce the same
 request, so the two cannot be told apart. See
-`2026-08-13-empty-value-decision.md`.
+`../../empty-flag-audit/docs/2026-08-13-empty-value-decision.md`.
 
 ## How it was found
 
 While auditing what the CLI does with empty flag values
-(`hack/empty-flag-audit`). An empty `--description` and an absent `--description`
+(`empty-flag-audit`). An empty `--description` and an absent `--description`
 produced identical results, which is only possible if the absent case is sending
 something too. Running every write command with `--debug` and none of its
 optional flags showed which fields arrive empty when nobody asked for them.

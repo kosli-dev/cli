@@ -2885,7 +2885,7 @@
    "{env}"
   ],
   "flags": {
-   "paths-file": "hack/empty-flag-audit/paths.yml"
+   "paths-file": "empty-flag-audit/paths.yml"
   },
   "baseline_ok": true,
   "baseline_exit": 0,
@@ -2897,7 +2897,7 @@
   ],
   "flag_values": {
    "dry-run": "true",
-   "paths-file": "hack/empty-flag-audit/paths.yml",
+   "paths-file": "empty-flag-audit/paths.yml",
    "watch": "false"
   },
   "setup": [

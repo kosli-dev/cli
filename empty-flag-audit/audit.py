@@ -19,8 +19,14 @@ import subprocess
 import tempfile
 
 HERE = pathlib.Path(__file__).parent
-REPO = HERE.parent.parent
+REPO = HERE.parent
 SPEC = HERE / "spec.json"
+# Every command and flag the CLI has, written from the command tree itself by
+# TestEmptyFlagAuditCoversEveryCommandAndFlag in cmd/kosli. Reading the tree is
+# the only way to see all of them: cobra prints no listing for a hidden or a
+# deprecated command, and pflag prints none for a hidden flag, so walking
+# --help - which is how spec.json was first written - silently misses them.
+COVERAGE = HERE / "coverage.json"
 # One file per pass, so a --ci run does not overwrite the laptop run. report.py
 # reads both and needs them side by side.
 RESULTS = HERE / "results.tsv"
@@ -416,6 +422,47 @@ def audit(binary, spec, only, only_flag, as_ci, home):
     return rows
 
 
+def unaudited(spec):
+    """Return the command-and-flag pairs the CLI has and spec.json does not.
+
+    A missing pair is not a small omission. The whole claim this audit makes is
+    that it measured every flag of every command, and a pair it never ran is
+    counted nowhere: it is absent from the totals rather than reported as
+    unknown, so the figures read as complete while covering less than they say.
+    """
+    covered = json.loads(COVERAGE.read_text())
+    missing = []
+    for command, flags in sorted(covered.items()):
+        entry = spec.get(command)
+        if entry is None:
+            missing.append(f"{command} (no entry at all)")
+            continue
+        tested = set(entry.get("flags_to_test", []))
+        missing += [f"{command} --{flag}" for flag in flags if flag not in tested]
+    return missing
+
+
+def require_full_coverage(spec):
+    """Stop the run when the CLI has a command or flag spec.json does not.
+
+    Stopping rather than warning is the point. A warning at the top of a run of
+    several hundred combinations is gone by the time the results are read, and
+    the results file it wrote looks exactly like a complete one.
+    """
+    missing = unaudited(spec)
+    if not missing:
+        return
+    raise SystemExit(
+        f"{len(missing)} command-and-flag combinations exist in the CLI but are "
+        f"not in {SPEC.name}:\n\n  "
+        + "\n  ".join(missing)
+        + f"\n\nAdd them to {SPEC.name}, by hand or with bootstrap.py, and run "
+        f"again. If one of them is genuinely not worth auditing, say so in "
+        f"{COVERAGE.name} by way of the test that writes it, so the reason is "
+        f"recorded rather than remembered."
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", default="./kosli", help="CLI to audit")
@@ -426,9 +473,13 @@ def main():
                              " come from CI variables")
     args = parser.parse_args()
 
+    # Checked before the server is reset, so a run that cannot be complete
+    # stops without having thrown away the results of the last one that was.
+    spec = json.loads(SPEC.read_text())
+    require_full_coverage(spec)
+
     reset_server()
     home = tempfile.mkdtemp(prefix="kosli-audit-home-")
-    spec = json.loads(SPEC.read_text())
     rows = audit(args.binary, spec, args.only, args.flag, args.ci, home)
     out = RESULTS_CI if args.ci else RESULTS
     out.write_text("\n".join(merged(out, rows)) + "\n")
