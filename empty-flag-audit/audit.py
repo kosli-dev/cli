@@ -11,12 +11,14 @@ at a time. bootstrap.py wrote the first version of it by interrogating the CLI.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import pathlib
 import re
 import subprocess
 import tempfile
+import time
 
 HERE = pathlib.Path(__file__).parent
 REPO = HERE.parent
@@ -45,6 +47,23 @@ TOKEN = (
 )
 GLOBALS = ["--host", HOST, "--org", ORG, "--api-token", TOKEN]
 
+# `config` is the one command that puts the API token somewhere lasting: given
+# one, it encrypts it with a key kept in the operating system's credentials
+# store, which on macOS is reached through /usr/bin/security. With the audit's
+# throwaway HOME there is no keychain for it to use, so it puts up a dialog and
+# waits for a person - two and a half minutes of one run, and an answer that
+# depended on when the person noticed. It has nothing to do with what config
+# does with an empty value, and config needs no token to do its work, so it is
+# run without one.
+WITHOUT_API_TOKEN = ["config"]
+
+
+def globals_for(command):
+    """Return the global flags to run command with."""
+    if command in WITHOUT_API_TOKEN:
+        return ["--host", HOST, "--org", ORG]
+    return GLOBALS
+
 # Variables a CI system sets, which the CLI uses to fill in flag defaults. The
 # audit sets them only when asked, so a result never depends on where it ran.
 CI_ENV = {
@@ -62,6 +81,16 @@ CI_ENV = {
 }
 
 
+# The AWS commands cannot reach AWS from here, and the SDK's last resort for
+# credentials is the instance-metadata endpoint an EC2 instance would answer on.
+# This machine is not one, so each invocation waits out that endpoint's deadline
+# before failing: five seconds, against a fifth of a second for a command that
+# talks only to the local server. Saying there are no instance credentials makes
+# the SDK give up at once and fail in the same place with the same kind of
+# error, which is all this audit reads. The audit never had credentials to lose.
+NO_CLOUD_CREDENTIALS = {"AWS_EC2_METADATA_DISABLED": "true"}
+
+
 def environment(as_ci, home):
     """Build the environment for one CLI run.
 
@@ -71,6 +100,7 @@ def environment(as_ci, home):
     machine it ran on and on the day it ran.
     """
     env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": str(home)}
+    env.update(NO_CLOUD_CREDENTIALS)
     if as_ci:
         env.update(CI_ENV)
     return env
@@ -89,6 +119,29 @@ def noise(line):
     a sentence that is the same whatever the flags were.
     """
     return "[warning]" in line or DEPRECATION_NOTICE.match(line)
+
+
+# What the CLI prints when its client stops trying, and how many tries it made.
+GAVE_UP = re.compile(r"giving up after (\d+) attempt")
+
+
+def gave_up(text):
+    """Report whether a run exhausted the CLI's retries.
+
+    Worth telling apart from any other failure because of what the client
+    retries: 5xx, 429, 409 and a request that never arrived, and nothing else.
+    A 400 or a 404 is the server reading the request and refusing it, which is
+    frequently the very thing a run is meant to produce; exhausted retries mean
+    the server broke, was overloaded, or was never reached.
+
+    One attempt is not that. The client reports giving up after a single try
+    when the request was never retryable - `get attestation --trail ""` builds
+    an empty URL, and an unsupported protocol scheme is not something a second
+    try would fix. Counting that as exhausted retries would report the CLI's
+    own malformed request as a server fault.
+    """
+    match = GAVE_UP.search(text)
+    return bool(match) and int(match.group(1)) > 1
 
 
 def run(binary, args, as_ci=False, home="/tmp"):
@@ -126,12 +179,20 @@ def fixtures(command, flag):
     """
     key = f"{command} {flag}"
     base = re.sub(r"[^a-z0-9]+", "-", key.lower()).strip("-")
-    return {kind: f"probe-{base}"[:52].rstrip("-") + "-" + suffix
-            for kind, suffix in (
-                ("flow", "fl"), ("trail", "tr"), ("env", "en"),
-                ("policy", "po"), ("control", "co"), ("account", "sa"),
-                ("logical", "lg"), ("name", "nm"),
-            )}
+    names = {kind: f"probe-{base}"[:52].rstrip("-") + "-" + suffix
+             for kind, suffix in (
+                 ("flow", "fl"), ("trail", "tr"), ("env", "en"),
+                 ("policy", "po"), ("control", "co"), ("account", "sa"),
+                 ("logical", "lg"), ("name", "nm"), ("seed", "sd"),
+             )}
+    # A fingerprint this pair owns, for the same reason it owns its flow. One
+    # shared fingerprint is what every attest command reports, so the artifact
+    # behind it collects an attestation from each of them, and by the end of a
+    # run `kosli search` takes ten seconds to resolve it where a freshly
+    # attested artifact takes a fiftieth of one. Deriving it from the key keeps
+    # it the same on every run, which is what makes two runs comparable.
+    names["digest"] = hashlib.sha256(key.encode()).hexdigest()
+    return names
 
 
 def expand(value, command, flag, captured):
@@ -282,7 +343,7 @@ def invocation_for(command, entry, key, flag, how, captured):
     artifact.
     """
     grow = lambda v: expand(v, command, key, captured)
-    argv = command.split() + [grow(a) for a in entry["args"]] + GLOBALS
+    argv = command.split() + [grow(a) for a in entry["args"]] + globals_for(command)
     # The joined form works for every flag type, including the booleans a
     # separate token would leave dangling as a positional argument.
     for name, val in entry["flags"].items():
@@ -371,7 +432,7 @@ def wanted(spec, only, only_flag):
 def audit(binary, spec, only, only_flag, as_ci, home):
     """Run every command-and-flag combination in spec, returning result rows."""
     rows = ["command\tflag\tempty_exit\tomitted_exit\tset_exit\trefused_by"
-            "\tvs_omitted\tvs_set\tmessage"]
+            "\tvs_omitted\tvs_set\tseconds\tgave_up\tmessage"]
     total, done = len(wanted(spec, only, only_flag)), 0
     for command in in_order(spec):
         entry = spec[command]
@@ -393,6 +454,7 @@ def audit(binary, spec, only, only_flag, as_ci, home):
             # everything in the org needs.
             how = {"omitted": flag + "-omitted", "set": flag + "-set",
                    "empty": flag}
+            started = time.time()
             prepared, failure = {}, None
             for kind, key in how.items():
                 fail, captured = prepare(binary, entry, command, key, as_ci, home)
@@ -400,7 +462,8 @@ def audit(binary, spec, only, only_flag, as_ci, home):
                 failure = failure or fail
             if failure:
                 rows.append(f"{command}\t--{flag}\t\t\t\t\tsetup failed"
-                            f"\tsetup failed\t{failure}")
+                            f"\tsetup failed\t{time.time() - started:.1f}"
+                            f"\t\t{failure}")
                 done += 1
                 print(f"[{done}/{total}] {'setup failed':12} {command} --{flag}",
                       flush=True)
@@ -427,7 +490,10 @@ def audit(binary, spec, only, only_flag, as_ci, home):
                 f"{command}\t--{flag}\t{code}\t{seen['omitted'][0]}"
                 f"\t{seen['set'][0]}\t{who}"
                 f"\t{same(seen['empty'][:2], seen['omitted'][:2])}"
-                f"\t{same(seen['empty'][:2], seen['set'][:2])}\t{msg[:160]}")
+                f"\t{same(seen['empty'][:2], seen['set'][:2])}"
+                f"\t{time.time() - started:.1f}"
+                f"\t{','.join(k for k in how if gave_up(seen[k][1]))}"
+                f"\t{msg[:160]}")
             # Flushed, because stdout is a pipe or a file whenever this is run
             # in the background, and a buffered run looks identical to a hung
             # one for minutes at a time.
@@ -435,6 +501,116 @@ def audit(binary, spec, only, only_flag, as_ci, home):
             print(f"[{done}/{total}] {'refused' if code else 'accepted':12}"
                   f" {command} --{flag}", flush=True)
     return rows
+
+
+# How long one command-and-flag pair may take. Of the 700 measured, 694 finish
+# inside 1.5 seconds and the next slowest is 7.3, so this sits in a gap with
+# nothing in it: what it catches is a command waiting on something, not a
+# command doing more work than its neighbours.
+#
+# Waiting is worth catching because of what it hides. Every slow pair found so
+# far was a defect in the audit rather than in the CLI: an AWS client waiting
+# out a metadata endpoint this machine will never answer on, and gitlab.com
+# throttling us after twenty-six requests and its client retrying the refusal.
+# The second was making comparisons nondeterministic as well as slow, which is
+# the real reason to fail on this rather than shrug at it.
+SLOW_SECONDS = 5.0
+
+# Pairs known to take longer, and why. An entry says the wait is understood and
+# accepted, so that anything not listed here is news. Both were measured rather
+# than reasoned about, and neither can be made faster without measuring less:
+# the first because the flag under test is what makes the request impossible,
+# the second because the wait is the CLI backing off from a real server fault.
+SLOW_EXPECTED = {
+    ("archive flow", "--http-proxy"): "a value for the proxy is a proxy that is"
+                                      " not there, so no request can arrive and"
+                                      " the client retries three times",
+    ("attest override", "--commit"): "the server 500s it and the client backs"
+                                     " off, written up in docs/handover/2026-08"
+                                     "-15-override-500-when-attestation-has-no-"
+                                     "commit.md",
+}
+
+
+def over_time_limit(rows):
+    """Return the measured pairs that took too long and are not expected to."""
+    slow = []
+    for row in rows[1:]:
+        fields = row.split("\t")
+        command, flag, seconds = fields[0], fields[1], fields[8]
+        if not seconds or float(seconds) <= SLOW_SECONDS:
+            continue
+        if (command, flag) in SLOW_EXPECTED:
+            continue
+        slow.append((float(seconds), command, flag))
+    return sorted(slow, reverse=True)
+
+
+def report_slow(rows):
+    """Name the pairs that took too long, after the results have been written.
+
+    Reported rather than raised part-way through, so a run that finds one still
+    writes everything it measured. Reported rather than printed and forgotten,
+    because a slow pair reads as a working one: the audit records what the CLI
+    did either way, and nothing in the results says the answer was waited for.
+    """
+    slow = over_time_limit(rows)
+    if not slow:
+        return
+    named = "\n  ".join(f"{s:6.1f}s  {c} {f}" for s, c, f in slow)
+    raise SystemExit(
+        f"\n{len(slow)} command-and-flag combinations took longer than "
+        f"{SLOW_SECONDS:.0f} seconds:\n\n  {named}\n\n"
+        "Find what each is waiting for. If the wait is understood and cannot be "
+        "removed, add it to SLOW_EXPECTED with the reason."
+    )
+
+
+# Pairs where a run is expected to exhaust the retries, and why.
+GAVE_UP_EXPECTED = {
+    ("archive flow", "--http-proxy"): "the flag under test is the proxy, so a"
+                                      " value for it is a proxy that is not"
+                                      " there and no request can arrive",
+    ("attest override", "--commit"): "the server 500s it, written up in docs/"
+                                     "handover/2026-08-15-override-500-when-"
+                                     "attestation-has-no-commit.md. Listed so"
+                                     " that a new one is news; remove it when"
+                                     " the server is fixed",
+}
+
+
+def retried_to_exhaustion(rows):
+    """Return the measured pairs where a run gave up, and are not meant to."""
+    found = []
+    for row in rows[1:]:
+        fields = row.split("\t")
+        command, flag, runs = fields[0], fields[1], fields[9]
+        if not runs or (command, flag) in GAVE_UP_EXPECTED:
+            continue
+        found.append((command, flag, runs))
+    return found
+
+
+def report_gave_up(rows):
+    """Name the pairs where the CLI retried a request until it gave up.
+
+    A run that gives up is reporting a 5xx, a 429, or a request that never
+    arrived. None of those is an answer about the flag being measured, and the
+    row is written as though it were: the comparison that produced it rests on
+    a run that never got a reply. `attest override --commit` sat in the results
+    for weeks as a working row whose control run was a 500 the whole time.
+    """
+    found = retried_to_exhaustion(rows)
+    if not found:
+        return
+    named = "\n  ".join(f"{c} {f}  ({runs})" for c, f, runs in found)
+    raise SystemExit(
+        f"\n{len(found)} command-and-flag combinations had a run retry until it "
+        f"gave up:\n\n  {named}\n\n"
+        "The named runs got a 5xx or a 429, or never reached the server. Find "
+        "out which. If it is the flag under test that makes the request "
+        "impossible, add it to GAVE_UP_EXPECTED with the reason."
+    )
 
 
 def unaudited(spec):
@@ -499,6 +675,11 @@ def main():
     out = RESULTS_CI if args.ci else RESULTS
     out.write_text("\n".join(merged(out, rows)) + "\n")
     print(f"\nwrote {out}")
+    # Both read the results that were just written, so a run that trips either
+    # keeps everything it measured. The retries come first: a run that gave up
+    # is also a slow one, and its cause is the more useful of the two answers.
+    report_gave_up(rows)
+    report_slow(rows)
 
 
 if __name__ == "__main__":

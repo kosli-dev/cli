@@ -1196,9 +1196,9 @@
  "config": {
   "args": [],
   "flags": {},
-  "baseline_ok": false,
-  "error": "Error: [kosli config] failed to save AES encryption key in credentials store: exit status 154",
-  "needs": "a credentials store",
+  "baseline_ok": true,
+  "baseline_exit": 0,
+  "baseline_output": "default config file [/var/folders/21/v4jj5l055w393p67z831r5hr0000gn/T/kosli-audit-home-pktxkdvq/.kosli.yml] updated successfully.",
   "flags_to_test": [
    "set",
    "unset"
@@ -2562,7 +2562,7 @@
  },
  "search": {
   "args": [
-   "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+   "{digest}"
   ],
   "flags": {},
   "baseline_ok": true,
@@ -2574,7 +2574,44 @@
   "flag_values": {
    "output": "json"
   },
-  "setup": [],
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "flow",
+     "{flow}",
+     "--use-empty-template"
+    ]
+   },
+   {
+    "argv": [
+     "begin",
+     "trail",
+     "{trail}",
+     "--flow",
+     "{flow}"
+    ]
+   },
+   {
+    "argv": [
+     "attest",
+     "artifact",
+     "cmd/kosli/testdata/person-schema.json",
+     "--fingerprint",
+     "{digest}",
+     "--build-url",
+     "http://example.com",
+     "--commit-url",
+     "http://example.com",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}",
+     "--name",
+     "{name}"
+    ]
+   }
+  ],
   "verify": []
  },
  "snapshot azure": {
@@ -3432,6 +3469,7 @@
  "assert pullrequest gitlab": {
   "args": [],
   "flags": {
+   "gitlab-base-url": "http://localhost:8001",
    "gitlab-org": "probe-gitlab-org",
    "gitlab-token": "probe-gitlab-token",
    "repository": "probe-repository"
@@ -3450,7 +3488,7 @@
   "flag_values": {
    "commit": "HEAD",
    "dry-run": "true",
-   "gitlab-base-url": "probe-gitlab-base-url",
+   "gitlab-base-url": "http://localhost:8001",
    "gitlab-org": "probe-gitlab-org",
    "gitlab-token": "probe-gitlab-token",
    "repository": "probe-repository"
@@ -3820,6 +3858,7 @@
   "flags": {
    "commit": "HEAD",
    "flow": "{flow}",
+   "gitlab-base-url": "http://localhost:8001",
    "gitlab-org": "probe-gitlab-org",
    "gitlab-token": "probe-gitlab-token",
    "name": "{name}",
@@ -3872,7 +3911,7 @@
    "external-url": "probe-external-url",
    "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
    "flow": "{flow}",
-   "gitlab-base-url": "probe-gitlab-base-url",
+   "gitlab-base-url": "http://localhost:8001",
    "gitlab-org": "probe-gitlab-org",
    "gitlab-token": "probe-gitlab-token",
    "name": "{name}",
@@ -4117,9 +4156,20 @@
     "argv": [
      "create",
      "environment",
+     "{seed}",
+     "--type",
+     "K8S"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "environment",
      "{logical}",
      "--type",
-     "logical"
+     "logical",
+     "--included-environments",
+     "{seed}"
     ]
    }
   ],

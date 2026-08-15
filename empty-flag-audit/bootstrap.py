@@ -19,8 +19,8 @@ import json
 import re
 import tempfile
 
-from audit import (COVERAGE, GLOBALS, ORG, SPEC, expand, fixtures, normalise,
-                   reset_server, run)
+from audit import (COVERAGE, GLOBALS, HOST, ORG, SPEC, expand, fixtures,
+                   globals_for, normalise, reset_server, run)
 
 FINGERPRINT = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 POLICY_FILE = "cmd/kosli/testdata/policy-files/test-policy.yml"
@@ -56,7 +56,6 @@ NEEDS_EXTERNAL = {
     "jira": ["attest jira"],
     "sonarqube": ["attest sonar"],
     "snyk": ["attest snyk"],
-    "a credentials store": ["config"],
     "a server that implements it": ["enable beta", "disable beta"],
     "a connected git provider": ["get repo"],
 }
@@ -74,6 +73,18 @@ VALUES = {
     "origin-url": "http://example.com",
     "build-url": "http://example.com",
     "commit-url": "http://example.com",
+    # Not gitlab.com. A run of `attest pullrequest gitlab` sends it some eighty
+    # requests carrying a token that was never valid, and after about twenty-six
+    # of them gitlab.com starts answering "temporarily unavailable due to
+    # elevated error rates". Its client retries that with a backoff, so every
+    # later call costs four seconds, which was most of the two minutes that
+    # command took. Sending them to the local server instead is answered
+    # definitively and at once, and asks nothing of a service outside.
+    #
+    # A dead port is worse than either: the client retries a refused connection
+    # as well, and takes twelve seconds to give up. What makes this fast is an
+    # answer, not the absence of one.
+    "gitlab-base-url": HOST,
     "repo-root": ".",
     "output": "json",
     "page": "1",
@@ -254,9 +265,16 @@ def setup_commands(command, flag):
     if (command.startswith("attest custom") or "attestation-type" in command) \
             and not command.startswith("create attestation-type"):
         add("create", "attestation-type", n["name"], "--schema", ATTESTATION_SCHEMA)
-    # Joining puts one environment inside another, so both have to exist.
+    # Joining puts one environment inside another, so both have to exist. The
+    # logical one is created around a seed environment rather than empty: a
+    # logical environment with no included environments cannot be read back, and
+    # `list environments` then returns 500 for every environment in the org,
+    # which this audit measures later in the same run. The seed is not the
+    # environment being joined, so the join still has something to do.
     if command.startswith("join environment"):
-        add("create", "environment", n["logical"], "--type", "logical")
+        add("create", "environment", n["seed"], "--type", "K8S")
+        add("create", "environment", n["logical"], "--type", "logical",
+            "--included-environments", n["seed"])
     if "control" in command and not command.startswith("create control"):
         add("create", "control", n["control"], "--name", n["control"])
     if "policy" in command and not command.startswith("create policy"):
@@ -346,7 +364,8 @@ def find_invocation(binary, command, kinds, as_ci, home):
     }
     for _ in range(12):
         grow = lambda v: expand(v, command, "baseline", captured)
-        invocation = command.split() + [grow(p) for p in positionals] + GLOBALS
+        invocation = (command.split() + [grow(p) for p in positionals]
+                      + globals_for(command))
         for name, val in extra.items():
             invocation.append(f"--{name}={grow(val)}")
         code, msg, text = run(binary, invocation, as_ci, home)

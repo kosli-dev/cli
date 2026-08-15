@@ -6,11 +6,12 @@ that an unset shell variable cannot quietly change what a command does.
 ## TL;DR
 
 - An unset shell variable can silently change what a Kosli command does.
-- An audit easily found sixteen cases so far, all exiting 0 and printing what success prints.
+- An audit easily found eighteen cases so far, sixteen of them exiting 0 and printing what success prints.
 - Eleven of them change a compliance answer.
 - One 500s an org's environment listing. 
+- One 500s every override of an attestation reported without a commit, and needs no empty value at all.
 - One sends commit author and message to Kosli after being told to redact them.
-- Sixteen is a floor, not a total. Every round of looking so far has found more.
+- Eighteen is a floor, not a total. Every round of looking so far has found more.
 - The space is too large to check case by case.
 - Proposal: an empty value is always an error, rolled out in four steps.
 - The first roll out step is logging warnings to app.kosli.com.
@@ -114,10 +115,12 @@ the wrong flow, leave a policy governing nothing, and take out an organization's
 environment listing with a 500. It also turned up a bug that needs no empty value
 at all.
 
-Sixteen of them, below. Each was re-run on its own, outside the audit, and its
+Eighteen of them, below. Each was re-run on its own, outside the audit, and its
 result read from the server - not taken from the audit's classification, and not
-read off the code. Every one exits 0 and prints what success prints. `$VAR` means
-a variable that is unset, which is all it takes.
+read off the code. Sixteen exit 0 and print what success prints. Two of them
+fail, and are here because of how they fail: one is a server error that needs no
+empty value to reach it, and the other replaces a clear complaint with the CLI's
+plumbing. `$VAR` means a variable that is unset, which is all it takes.
 
 | Command | With the variable unset | |
 |---|---|---|
@@ -134,24 +137,28 @@ a variable that is unset, which is all it takes.
 | `kosli detach-policy P --environment "$VAR"` | the policy is detached from no environment, so it stays in force | changes compliance |
 | `kosli attest generic --repo-id "$VAR" --repo-url "$VAR" --repository "$VAR"` | `repo_info` is not recorded at all, so the attestation carries no repository provenance | records less than it was told to |
 | `kosli attest generic --redact-commit-info "$VAR"` | the commit author and message are sent in the clear - the very data the flag exists to withhold | sends data meant to be withheld |
-| `kosli create environment E --type logical --included-environments "$VAR"` | the record cannot be read back, and `list environments` returns HTTP 500 for every environment in the org until it is removed | **outright bug**, written up in `../../docs/handover/2026-08-13-included-environments-500.md` |
+| `kosli create environment E --type logical --included-environments "$VAR"` | the record cannot be read back, and `list environments` returns HTTP 500 for every environment in the org until it is removed. Omitting the flag entirely does the same, so this one is not about empty values at all | **outright bug**, written up in `../../docs/handover/2026-08-13-logical-environment-500s-the-org-listing.md` |
+| `kosli attest override --commit HEAD`, overriding an attestation that was reported without a commit | the server 500s, the CLI retries it three times and gives up, and the override does not happen. No empty value is involved | **outright bug**, written up in `../../docs/handover/2026-08-15-override-500-when-attestation-has-no-commit.md` |
 | `kosli begin trail T --flow F` with no `--description` at all | the description the trail already had is replaced by an empty one, even though the server's update is written to leave an absent field alone | **an inconsistency**, not an empty value at all, written up in `../../docs/handover/2026-08-13-upsert-overwrites-unmentioned-fields.md` |
 | `kosli list environments --tag "$VAR"` | answers "No environments were found", identical to a real no-match, exit 0 | wrong answer |
+| `kosli get attestation NAME --flow F --trail "$VAR"` | `Error: Get "": GET  giving up after 1 attempt(s): Get "": unsupported protocol scheme ""`. Omitting the flag says `at least one of --trail, --fingerprint is required when using ATTESTATION-NAME`, so the empty value defeats the check that produces the good message and the user is shown the plumbing instead | unusable error |
 
-Sixteen findings, from one slice of one CLI, all of them silent. And sixteen is
-where the looking stopped, not where the findings did: 136 of the combinations
-that accept an empty value are on commands that record or judge compliance, and
-most have never been examined one at a time. Three rounds of examining them have
-each produced more - two, then three, then one - and the last round also turned
-up the redaction case, which is not about compliance data at all and which
-nobody was looking for.
+Eighteen findings, from one slice of one CLI, and sixteen of them silent. And
+eighteen is where the looking stopped, not where the findings did: 136 of the
+combinations that accept an empty value are on commands that record or judge
+compliance, and most have never been examined one at a time. Four rounds of
+examining them have each produced more - two, then three, then one, then one -
+and those rounds also turned up the redaction case, which is not about
+compliance data at all, and the override 500, which needs no empty value and was
+found by timing the audit rather than by reading its results. Nobody was looking
+for either.
 
 That is the argument. We cannot keep finding these one at a time, and a rule that
 refuses an empty value everywhere removes the whole class rather than the
 instances of it we happen to reach.
 
-Two of them are worth filing on their own account, whatever is decided here, and
-each has its own write-up alongside this one.
+Three of them are worth filing on their own account, whatever is decided here,
+and each has its own write-up alongside this one.
 
 The last of those needs a word, because it is not what it first looked like.
 `kosli create flow` is a create-or-update, and it reads its flags the way
