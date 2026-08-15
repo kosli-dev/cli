@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/jira"
@@ -513,6 +514,13 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 			want:          []string{"#324"},
 			wantError:     false,
 		},
+		{
+			name:          "Invalid regex pattern returns an error",
+			pattern:       "[invalid",
+			commitMessage: "test commit",
+			want:          []string{},
+			wantError:     true,
+		},
 	} {
 		suite.Run(t.name, func() {
 
@@ -536,6 +544,23 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 
 		})
 	}
+}
+
+func (suite *GitViewTestSuite) TestMatchRegexpInCommitMessageORBranchName() {
+	_, workTree, fs, err := testHelpers.InitializeGitRepo(suite.tmpDir)
+	require.NoError(suite.T(), err)
+
+	commitSha, err := testHelpers.CommitToRepo(workTree, fs, "Resolves JIRA-100 and JIRA-200")
+	require.NoError(suite.T(), err)
+
+	gitView, err := New(suite.tmpDir)
+	require.NoError(suite.T(), err)
+
+	re := regexp.MustCompile(`JIRA-[0-9]+`)
+	matches, commitInfo, err := gitView.MatchRegexpInCommitMessageORBranchName(re, commitSha, "", false)
+	require.NoError(suite.T(), err)
+	require.NotNil(suite.T(), commitInfo)
+	require.ElementsMatch(suite.T(), []string{"JIRA-100", "JIRA-200"}, matches)
 }
 
 func (suite *GitViewTestSuite) TestResolveRevision() {

@@ -973,3 +973,11 @@ func (suite *DigestTestSuite) TestGetExcludePathsFromIgnoreFile() {
 func TestDigestTestSuite(t *testing.T) {
 	suite.Run(t, new(DigestTestSuite))
 }
+
+func BenchmarkValidateDigest(b *testing.B) {
+	sha := "db40d79b3a15b17ee9fcc2f49aa73736e0073de6b5a35c459268bb9a31e55139"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = ValidateDigest(sha)
+	}
+}

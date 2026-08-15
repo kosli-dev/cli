@@ -2,6 +2,7 @@ package jira
 
 import (
 	"regexp"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -221,5 +222,28 @@ func TestFindJiraIssueKeys(t *testing.T) {
 			got := FindJiraIssueKeys(tt.text, tt.projectKeys)
 			assert.Equal(t, tt.want, got)
 		})
+	}
+}
+
+func TestFindJiraIssueKeys_ConcurrentCache(t *testing.T) {
+	const workerCount = 20
+	var wg sync.WaitGroup
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			keys := FindJiraIssueKeys("fixes PROJ-42 and OTHER-99", []string{"PROJ", "OTHER"})
+			assert.ElementsMatch(t, []string{"PROJ-42", "OTHER-99"}, keys)
+		}(i)
+	}
+	wg.Wait()
+}
+
+func BenchmarkFindJiraIssueKeys(b *testing.B) {
+	text := "fixes PROJ-42 and OTHER-99 in commit message"
+	projectKeys := []string{"PROJ", "OTHER"}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = FindJiraIssueKeys(text, projectKeys)
 	}
 }

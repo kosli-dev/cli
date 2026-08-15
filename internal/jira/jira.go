@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 
 	jira "github.com/andygrunwald/go-jira"
 )
@@ -107,6 +108,27 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 	return result, nil
 }
 
+const defaultJiraIssueKeyPattern = `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`
+
+var (
+	defaultJiraKeyRegex = regexp.MustCompile(defaultJiraIssueKeyPattern)
+	dashDigitRegex      = regexp.MustCompile(`^-\d`)
+	jiraKeyRegexCache   sync.Map
+)
+
+func getJiraKeyRegex(projectKeys []string) *regexp.Regexp {
+	if len(projectKeys) == 0 {
+		return defaultJiraKeyRegex
+	}
+	pattern := MakeJiraIssueKeyPattern(projectKeys)
+	if val, ok := jiraKeyRegexCache.Load(pattern); ok {
+		return val.(*regexp.Regexp)
+	}
+	re := regexp.MustCompile(pattern)
+	jiraKeyRegexCache.Store(pattern, re)
+	return re
+}
+
 func MakeJiraIssueKeyPattern(projectKeys []string) string {
 	// Jira issue keys consist of [project-key]-[sequential-number].
 	// FindJiraIssueKeys uppercases the text before applying this pattern, so the
@@ -114,7 +136,7 @@ func MakeJiraIssueKeyPattern(projectKeys []string) string {
 	// are also uppercased here for the same reason.
 	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
 	if len(projectKeys) == 0 {
-		return `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`
+		return defaultJiraIssueKeyPattern
 	}
 	upper := make([]string, len(projectKeys))
 	for i, k := range projectKeys {
@@ -131,8 +153,7 @@ func MakeJiraIssueKeyPattern(projectKeys []string) string {
 // immediately followed by a hyphen and a digit.
 func FindJiraIssueKeys(text string, projectKeys []string) []string {
 	upperText := strings.ToUpper(text)
-	pattern := MakeJiraIssueKeyPattern(projectKeys)
-	re := regexp.MustCompile(pattern)
+	re := getJiraKeyRegex(projectKeys)
 	candidates := re.FindAllString(upperText, -1)
 
 	// Deduplicate (all candidates are already uppercase).
@@ -146,10 +167,9 @@ func FindJiraIssueKeys(text string, projectKeys []string) []string {
 	}
 
 	// Filter out matches that are always followed by -<digit> in the uppercased text.
-	dashDigit := regexp.MustCompile(`^-\d`)
 	var result []string
 	for _, m := range unique {
-		if isPartialMultiSegment(upperText, m, dashDigit) {
+		if isPartialMultiSegment(upperText, m, dashDigitRegex) {
 			continue
 		}
 		result = append(result, m)

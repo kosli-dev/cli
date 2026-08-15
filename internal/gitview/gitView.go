@@ -282,12 +282,20 @@ func getCommitURL(repoURL, commitHash string) string {
 // matches lookup happens in the commit message first, and if none is found, matching against the branch name is done
 // if no matches are found in both the commit message and the branch name, an empty slice is returned
 func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA, secondarySource string, ignoreBranchMatch bool) ([]string, *CommitInfo, error) {
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return []string{}, nil, fmt.Errorf("invalid pattern regex %s: %w", pattern, err)
+	}
+	return gv.MatchRegexpInCommitMessageORBranchName(re, commitSHA, secondarySource, ignoreBranchMatch)
+}
+
+// MatchRegexpInCommitMessageORBranchName returns a slice of strings matching a pre-compiled regular expression in a commit message or branch name
+func (gv *GitView) MatchRegexpInCommitMessageORBranchName(re *regexp.Regexp, commitSHA, secondarySource string, ignoreBranchMatch bool) ([]string, *CommitInfo, error) {
 	commitInfo, err := gv.GetCommitInfoFromCommitSHA(commitSHA, true, []string{})
 	if err != nil {
 		return []string{}, nil, err
 	}
 
-	re := regexp.MustCompile(pattern)
 	commitMatches := re.FindAllString(commitInfo.Message, -1)
 	branchMatches := re.FindAllString(commitInfo.Branch, -1)
 	secondaryMatches := re.FindAllString(secondarySource, -1)
