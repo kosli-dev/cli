@@ -23,9 +23,10 @@ is what it does, what it found, and what it cannot reach.
 - Both are measured instances of the gap the decision document argues about: a
   CLI rule does not cover a customer calling the API directly. Neither would be
   closed by the rule it proposes.
-- Every emptied filter is accepted. `tag=`, `search=`, `name=` are answered 200
-  with a list, as though no filter had been asked for, which is the same silent
-  no-match the decision document records on the CLI side.
+- Every emptied filter is accepted: `tag=`, `search=`, `name=` are answered 200
+  rather than refused. What that means then differs by endpoint - an empty tag
+  matches nothing, an empty repo name matches everything - and the status does
+  not say which.
 - Most remaining rows are not an answer for good reasons: some flags never leave
   the machine, and multipart requests are not replayed.
 
@@ -218,11 +219,22 @@ The fourteen acceptances among the reads are all the same kind of flag:
 trails --fingerprint`, `--flow-tag`; `list snapshots --interval`; `log
 environment --interval`; `get artifact --trail`.
 
-Every one is a filter. The server is sent `tag=` where it was sent `tag=probe`,
-and it answers 200 with a list, as though no filter had been asked for. That is
-the API-side twin of `kosli list environments --tag "$VAR"` in the decision
-document, which answers "No environments were found" and exits 0: a filter that
-matched nothing, indistinguishable from a real no-match.
+Every one is a filter, and the server takes all of them: it is sent `tag=` where
+it was sent `tag=probe`, and answers 200 rather than refusing.
+
+What it then means is not the same from one endpoint to the next, which is worth
+more than the acceptance itself. An empty `tag` on `list environments` is
+applied and matches nothing - the server returns zero environments where
+omitting the parameter returns all of them. An empty `repo_name` on `list
+artifacts` is ignored and every artifact comes back. Two filters, both accepted,
+one narrowing to nothing and the other widening to everything, and a caller
+cannot tell which from the status.
+
+The narrowing one is the API-side twin of `kosli list environments --tag "$VAR"`
+in the decision document, which answers "No environments were found" and exits
+0: a filter that matched nothing, indistinguishable from a real no-match. The
+widening one is worse in a compliance setting, because a query meant to be
+narrow silently answers about everything.
 
 The refusals are the structural parameters rather than the filtering ones -
 `per_page`, `page`, `sort_direction`, `reverse`, `snappish1` and `snappish2` -
@@ -235,13 +247,13 @@ refused by the CLI. The server does not refuse them either. A customer calling
 the API directly gets the same silently-empty answer, and the rule proposed for
 the CLI would not change it.
 
-The two unusable controls are both `--repo`, and between them they show the
-server treating one parameter two ways. On `list artifacts` an unknown
-`repo_name` 404s while an empty one returns 200 and every artifact, so the
-filter vanishes. On `log environment` an empty one is looked up and refused:
-`{"message":"Repo '' not found"}`. Neither can be claimed as a verdict while the
-control 404s - the audit has no repository that exists, for want of a connected
-git provider - but the inconsistency is visible.
+The two unusable controls are both `--repo`, and they show the same parameter
+treated a third and fourth way. On `list artifacts` an unknown `repo_name` 404s
+while an empty one returns 200 and every artifact. On `log environment` an empty
+one is looked up and refused: `{"message":"Repo '' not found"}`. Neither can be
+claimed as a verdict while the control 404s - the audit has no repository that
+exists, for want of a connected git provider - but the inconsistency is
+recorded.
 
 ## Why most rows are not an answer
 

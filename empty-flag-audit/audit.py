@@ -216,8 +216,12 @@ VOLATILE = [
      "{uuid}"),
     (re.compile(r"\b\w{3}, \d{1,2} \w{3} \d{4} \d{2}:\d{2}:\d{2} \w+"), "{timestamp}"),
     (re.compile(r"\d{4}-\d{2}-\d{2}T[\d:.+-]+"), "{timestamp}"),
+    # An elapsed time, with or without the trailing "ago". `list snapshots`
+    # prints one bare in its DURATION column, and it grows by a second between
+    # two runs of the same command, so leaving it would make two identical
+    # answers look different.
     (re.compile(r"(about |less than |over |almost )?(an?|\d+) "
-                r"(second|minute|hour|day|week|month|year)s? ago"), "{ago}"),
+                r"(second|minute|hour|day|week|month|year)s?( ago)?"), "{ago}"),
     # A created API key is printed once and is different every time. It is not
     # a uuid, so the pattern above does not reach it.
     (re.compile(r"(?m)^(Key:\s+)\S+$"), r"\1{secret}"),
@@ -229,10 +233,16 @@ VOLATILE = [
 
 
 def stabilise(output):
-    """Blank out the parts of an output that change on their own."""
+    """Blank out the parts of an output that change on their own.
+
+    Column padding goes too. A table's columns are as wide as their widest
+    cell, so a value blanked above still moves every column after it: `list
+    snapshots` prints a DURATION of "about a second" in one run and "2 seconds"
+    in the next, and the header shifts with it.
+    """
     for pattern, name in VOLATILE:
         output = pattern.sub(name, output)
-    return output
+    return re.sub(r"[ \t]{2,}", " ", output)
 
 
 def normalise(output, command, runs):

@@ -103,8 +103,9 @@ request, so the two cannot be told apart. See
 
 ## How it was found
 
-While auditing what the CLI does with empty flag values
-(`empty-flag-audit`). An empty `--description` and an absent `--description`
+While auditing what the CLI does with empty flag values, in the
+`empty-flag-audit/` directory of the CLI repository. An empty `--description`
+and an absent `--description`
 produced identical results, which is only possible if the absent case is sending
 something too. Running every write command with `--debug` and none of its
 optional flags showed which fields arrive empty when nobody asked for them.

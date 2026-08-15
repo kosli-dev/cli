@@ -6,16 +6,25 @@ that an unset shell variable cannot quietly change what a command does.
 ## TL;DR
 
 - An unset shell variable can silently change what a Kosli command does.
-- An audit easily found nineteen cases so far, seventeen of them exiting 0 and printing what success prints.
-- Eleven of them change a compliance answer.
-- One 500s an org's environment listing. 
-- One 500s every override of an attestation reported without a commit, and needs no empty value at all.
-- One sends commit author and message to Kosli after being told to redact them.
-- Nineteen is a floor, not a total. Every round of looking so far has found more.
-- The space is too large to check case by case.
-- Proposal: an empty value is always an error, rolled out in four steps.
-- The first roll out step is logging warnings to app.kosli.com.
-- Cost: two `--description` flags can no longer clear a description.
+- An audit easily found nineteen cases so far:
+  - seventeen of them exiting 0 and printing what success prints.
+  - eleven of them change a compliance answer.
+  - one 500s an org's environment listing. 
+  - one 500s an attest override when reported without a commit.
+  - one sends commit author and message to Kosli after being told to redact them.
+  - nineteen is a floor, not a total. Every round of looking so far has found more.
+  - the space is too large to check case by case.
+- The findings are three kinds of problem:
+  - the CLI does not notice an empty value it was given.
+  - the CLI passes an empty value on where it should send nothing.
+  - the server accepts an empty value it should refuse.
+- Proposal: an empty value is an error on every flag that is given one. A flag
+  whose default is empty is untouched.
+- Cost: two `--description` flags can no longer clear a description, and adding
+  `--clear-description` gives that back.
+- With `--clear-description` alongside, this is a bug fix and can ship in a 2.x
+  release. Without it, two real workflows lose a capability and it needs a major
+  version and a warning period.
 
 ## Why we cannot establish what every empty value does
 
@@ -50,45 +59,71 @@ rather than the ceiling:
 
 ## What was measured instead
 
-One slice of that space, taken by running the CLI rather than reasoning about it.
-The audit is in `empty-flag-audit`. The slice is: one flag emptied at a
-time, every other flag held at a value that works, against a local server. The
-commands needing a service we cannot reach are run too - they fail, but their own
-checks run before they get that far, so what the CLI does with an empty value is
-still visible.
+An audit of a slice of that space, taken by running the CLI against a local
+server (rather than reasoning about it). The audit code is in the `empty-flag-audit/` 
+directory of this repository, its README says how to run it. 
 
-Within that slice it is thorough. Each command is run three times - with the flag
-left out, with a real value, and with an empty value - and the exit codes, the
-output, and the state left on the server afterwards are compared. The whole set
-runs twice, once as on a laptop and once with the environment variables GitHub
-Actions sets.
+The audit slice is thorough. Each command has a baseline: a working
+invocation the audit found. To measure one flag, that flag is taken out of the
+baseline and the command is run three times:
 
-It ran all 700. For 412 of them the command works here, so the whole story is
-visible:
+- with a real value
+- with the flag left out
+- with an empty value
+
+It then compares the three sets of:
+- exit code
+- output
+- state left on the server afterwards
+
+
+It ran all 700 command+flag combinations:
+- For 412 of them the command can succeed against the local server alone, so the
+whole story is visible: what the CLI did with the empty value, and what the
+server did with whatever the CLI sent on.
+- For 288 the command needs a service the audit has no credentials for, so only
+the CLI's half is visible: its own flag checks run before it contacts the
+service.
+- The whole set runs twice, once as on a laptop and once with the
+environment variables GitHub Actions sets.
+
+
+### The 412 that can succeed against the local server
 
 | What happens to an empty value | On a laptop | Inside GitHub Actions |
 |---|---|---|
 | the CLI refuses it | 223 | 219 |
 | the CLI accepts it and the server refuses it | 5 | 9 |
 | nothing refuses it | 183 | 183 |
+| nothing can be said | 1 | 1 |
+| **total** | **412** | **412** |
 
-Of the 183 that nothing refuses, 165 do exactly what omitting the flag does. That
-is not the same as doing nothing: omitting a flag has a meaning of its own, and it
-is rarely the meaning someone had in mind when they wrote that flag with a
-variable after it.
+The one that says nothing is `get attestation --fingerprint`, where all three
+runs fail the same way, so nothing about the failure is the empty value's doing.
 
-Appendix 2 groups the 165 flag names by what they are for and says how many of
-each kind the CLI already refuses. Appendix 3 is the same thing flag by flag.
+Of the 183 that nothing refuses, 166 do exactly what omitting the flag does.
+That is not the same as doing nothing: omitting a flag has a meaning of its own,
+and it is rarely the meaning someone had in mind when they wrote that flag with
+a variable after it. Appendix 2 groups the 165 flag names by what they are for
+and says how many of each kind the CLI already refuses. Appendix 3 is the same
+thing flag by flag.
 
-The other 288 are on commands needing AWS, Azure, a git provider and the rest,
-which cannot succeed here. Their own checks still run first, though, so the half
-this decision is about is visible even without the credentials:
+The other 17 (183-166) do something omitting the flag does not. 13 differ only by the deprecation notice a flag prints for being passed at all, leaving 4:
+
+- `attach-policy --environment` attaches the policy to no environment (in Findings table below)
+- `detach-policy --environment` detaches it from none (in Findings below)
+- `list environments --tag` answers "No environments were found", which is also
+  what a real no-match says (in Findings below).
+- `update service-account --description` clears the description, the one case where the empty value does what someone would have asked for.
+
+### The 288 that need credentials the audit does not have
 
 | What the CLI does with an empty value | On a laptop | Inside GitHub Actions |
 |---|---|---|
 | refuses it | 164 | 161 |
 | does not react, so it reaches the service | 105 | 108 |
 | lets it through, exit 0 | 19 | 19 |
+| **total** | **288** | **288** |
 
 The middle row is the one to look at. Those 105 are empty values that survive every
 check the CLI has and are handed to someone else. Among them are the credentials:
@@ -106,21 +141,12 @@ What those services then do with the empty values they are handed is the only
 thing here that stays unknown, and no amount of work on this machine will show it
 - the release plan below is what turns customers' runs into that measurement.
 
-## What it found
+## Findings
 
-That one slice was enough. In it, a single unset variable can make a flow require
-none of the attestations it was meant to, fingerprint an artifact that was never
-built, put an attestation on the wrong thing, answer a compliance question about
-the wrong flow, leave a policy governing nothing, and take out an organization's
-environment listing with a 500. It also turned up a bug that needs no empty value
-at all.
-
-Nineteen of them, below. Each was re-run on its own, outside the audit, and its
-result read from the server - not taken from the audit's classification, and not
-read off the code. Seventeen exit 0 and print what success prints. Two of them
-fail, and are here because of how they fail: one is a server error that needs no
-empty value to reach it, and the other replaces a clear complaint with the CLI's
-plumbing. `$VAR` means a variable that is unset, which is all it takes.
+One slice produced the nineteen findings below. Each was re-run on its own, 
+outside the audit, and its result read from the
+server - not taken from the audit's classification, and not inferred by reading
+the CLI's source. `$VAR` means a variable that is unset, which is all it takes.
 
 | Command | With the variable unset | |
 |---|---|---|
@@ -171,6 +197,39 @@ The bug is the disagreement, and it is worth settling on its own account: until
 the CLI and server agree on what an absent flag means, "empty" and "absent"
 cannot be given consistent meanings either.
 
+## Three kinds of problem
+
+The findings are three kinds of problem. They need different fixes, and only the
+first is the rule proposed in this document.
+
+**The CLI does not notice an empty value it was given.** `--fingerprint ""`
+reaches the trail-scoped endpoint, `--template-file ""` leaves the default
+template. This is the rule's own territory, and it is most of the nineteen.
+
+**The CLI sends the empty value on, where it should have sent nothing.** `kosli
+list environments --tag ""` puts `?tag=` in the request; omitting the flag sends
+no parameter at all. So this is not a case of an empty value meaning what an
+absent one means - the CLI makes a different request, and asks the server to
+filter on nothing. An optional flag with nothing in it should be left out.
+
+**The server accepts an empty value it should refuse.** Measured separately, in
+`2026-08-15-auditing-empty-values-at-the-api.md`: 25 emptied fields and
+parameters the API takes, including a flow template requiring an attestation
+named "" and an artifact stored with no name. No CLI rule reaches these, because
+a customer can send them without the CLI.
+
+One example moves between the boxes on inspection. `kosli attach-policy P
+--environment ""` looks like the server accepting an empty list, and it is not:
+
+```
+$ kosli attach-policy my-policy --environment ""
+policy 'my-policy' is attached to environments: []
+```
+
+No request is made at all. The CLI iterates an empty list, calls nothing, and
+reports success. The API cannot refuse what it is never sent, so this one is the
+CLI's alone.
+
 ## What this proposal cannot fix
 
 A boolean flag is only safe when the variable is quoted. Unquoted, the shell
@@ -195,11 +254,11 @@ measurement they produce covers CLI traffic only.
 
 The server cannot close that gap by copying the rule, because it mostly never
 sees an empty value. When an empty value produces the same request as omitting
-the flag - which is 165 of the 183 - the server receives an identical payload
+the flag - which is 166 of the 183 - the server receives an identical payload
 either way, and there is nothing empty in it to reject.
 
-Those 165 fall into three kinds, by whose problem the payload turns out to be.
-One of each, read with `--debug`:
+Those 166 fall into three kinds, by whose problem the payload turns out to be.
+Here is one example of each, read with `--debug`:
 
 | Command | What reaches the server | Whose problem |
 |---|---|---|
@@ -209,8 +268,9 @@ One of each, read with `--debug`:
 
 So the server's half of this is not the CLI rule repeated. The CLI rule is
 "refuse an empty value". The server's is: **an absent field means what the
-command's verb says it means, and the CLI and the server must agree about that.** Deciding it command by command would be ninety-one decisions
-nobody will remember, which is how the CLI got inconsistent in the first place.
+command's verb says it means, and the CLI and the server must agree about
+that.** Deciding it command by command would be ninety-four decisions nobody
+will remember, which is how the CLI got inconsistent in the first place.
 The verbs already promise it:
 
 | Verb | What an absent field means | What the CLI does today |
@@ -248,7 +308,10 @@ flag does, or does something nobody asked for.
 
 ## Proposal
 
-Empty is always an error, on every flag, with no exemptions to remember.
+Empty is always an error, on every flag that is given one, with no exemptions to
+remember. A flag whose default is empty is untouched: the rule is about what a
+command was told, not about what it falls back on. That is also how it is
+checked - pflag records whether a flag was set, and the check reads that.
 
 It works because it separates two intents that are spelled identically today: "I
 meant to pass a value and my variable was empty" and "I want no value". They look
@@ -260,14 +323,46 @@ failure replaces silent wrong behaviour rather than correct behaviour.
 
 Not every break is that, though. Someone may be passing an empty value
 deliberately, with no variable involved. They lose nothing they cannot still get
-by omitting the flag, but their pipeline fails until somebody edits it. That is a
-real cost, and it is why this needs a release plan rather than just a fix.
+by omitting the flag, but their pipeline fails until somebody edits it.
+
+There is a good argument that this is not a breaking change at all but a bug
+fix, and that it should ship as one: what starts failing is a command that was
+already doing something its author did not ask for, and a release note nobody
+can act on helps nobody. The measurements say that argument holds for all but
+two of the 202 combinations that change. The two are below, and they decide the
+question rather than qualify it.
 
 ## Releasing this
 
-Commands that succeed today will eventually start failing, so the error itself
-is a breaking change and cannot go out in a 2.x release. Two things make that
-sharper than usual:
+Commands that succeed today will start failing, and the first question is
+whether that is a breaking change at all.
+
+The case for shipping it as a bug fix, in a 2.x release, is strong. A command
+that fails under this rule was passing an empty value it was never meant to
+pass, and doing something its author did not ask for. Nobody is deprived of
+behaviour they wanted. Held against that, a staged rollout keeps the compliance
+holes open for the length of the stage.
+
+The measurements support that for all but two of the 202 combinations. The
+exceptions are `kosli update control --description ""` and `kosli update
+service-account --description ""`, which clear a description on purpose, because
+`update` is a patch and omitting the flag cannot clear anything. Those two are
+not bad commands being caught. They are a capability being removed, and removing
+it without a replacement is a regression however it is labelled.
+
+So the question is not "breaking or not" but "what ships alongside":
+
+- **With `--clear-description`**, nothing is taken away. Every remaining failure
+  is a command that was already wrong, the change is a bug fix, and it can go
+  out in a 2.x release without a staged rollout.
+- **Without it**, two real workflows lose the only way they have to say what
+  they mean, and that does need a major version and a warning period.
+
+The first is better, and it is cheap: one flag on two commands. The rest of this
+section is what the second would cost, and is worth keeping only if
+`--clear-description` turns out to be harder than it looks.
+
+Two things make the second sharper than usual:
 
 - Most of the breakage lands on flags where an empty value changed nothing worth
   noticing, simply because those are most of the flags. They need no decision,
@@ -293,15 +388,17 @@ So: this becomes its own major release, and the changes currently queued for v3
 become the one after. Major versions are cheap; a release note nobody can act on
 is not.
 
-If we add `--clear-description` at the same time, the one capability this removes
-comes back, and that part stops being breaking at all.
+### If it is staged: four steps
 
-### Proposed: four steps
+This is the shape the change takes if `--clear-description` does not ship with
+it, or if we decide the impact needs measuring before the rule lands. At least
+202 combinations change - 183 on the commands that work here, and 19 more on the
+ones needing a service, where the CLI lets an empty value through before the
+service is even reached - and staging is how that is made gradual.
 
-At least 202 combinations changing at once is a lot to ask of customers in one
-upgrade - 183 on the commands that work here, and 19 more on the ones needing a
-service, where the CLI lets an empty value through before the service is even
-reached. So the rule arrives in stages.
+Steps 1 and 2 are worth reading even if the rule ships as a bug fix, because the
+warnings they describe are the only way to learn what an empty value does at the
+services this audit cannot reach.
 
 #### Step 1: somewhere to put a warning, in app.kosli.com
 
@@ -434,9 +531,9 @@ empty value with `--api-token is not set`.
 
 All 165 flag names, what each is for, how many of its commands were run, and what
 happened. Commands needing AWS, Azure, Google Cloud, Kubernetes, a connected git
-provider, Jira, SonarQube, Snyk or a credentials store are included: they cannot
-succeed here, but their own checks run first, so whether the CLI refuses an empty
-value is still visible.
+provider, Jira, SonarQube or Snyk are included: they cannot succeed without
+credentials the audit does not have, but their own checks run first, so whether
+the CLI refuses an empty value is still visible.
 
 "Always" means every measured command refused it. "Some commands" means it was
 refused on some commands and not on others. "Only the server" means the CLI sent

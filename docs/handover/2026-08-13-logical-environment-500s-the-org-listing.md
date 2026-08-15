@@ -91,8 +91,8 @@ either of these settles it:
 
 ## How it was found
 
-By the empty-flag audit in `empty-flag-audit`, which runs every
-command-and-flag combination with an empty value. It stood out because it was
+By the empty-flag audit, in the `empty-flag-audit/` directory of the CLI
+repository, which runs every command-and-flag combination with an empty value. It stood out because it was
 the only case where an empty value broke a command other than the one being run.
 
 The wider trigger was found later, by the audit's own retry check: `list
