@@ -552,8 +552,8 @@ SLOW_EXPECTED = {
                                       " not there, so no request can arrive and"
                                       " the client retries three times",
     ("attest override", "--commit"): "the server 500s it and the client backs"
-                                     " off, written up in docs/handover/2026-08"
-                                     "-15-override-500-when-attestation-has-no-"
+                                     " off, written up in docs/2026-08-15-"
+                                     "override-500-when-attestation-has-no-"
                                      "commit.md",
 }
 

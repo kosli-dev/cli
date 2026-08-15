@@ -19,7 +19,8 @@ An audit easily found nineteen cases so far:
     - add schema `minLength: 1` on `filename`, `template`, `remove_tags`
     - decide empty query params
     - leave the 6 description fields alone
-    - measured in `2026-08-15-auditing-empty-values-at-the-api.md`
+    - measured in
+  `empty-flag-audit/docs/2026-08-15-auditing-empty-values-at-the-api.md`
 
 2. the CLI passes an empty value to the server where it should send nothing.  
   **Proposal** - _not_ covered in this document:
@@ -27,7 +28,7 @@ An audit easily found nineteen cases so far:
     - `omitempty` on 173 fields (34 have it)
     - server and CLI must move together
     - written up in
-  `../../docs/handover/2026-08-13-upsert-overwrites-unmentioned-fields.md`.  
+  `empty-flag-audit/docs/2026-08-13-upsert-overwrites-unmentioned-fields.md`.  
   
 3. the CLI does not notice an empty flag value it was given.  
   **Proposal** - detailed in _this_ document:
@@ -187,9 +188,9 @@ the CLI's source. `$VAR` means a variable that is unset, which is all it takes.
 | `kosli detach-policy P --environment "$VAR"` | the policy is detached from no environment, so it stays in force | changes compliance |
 | `kosli attest generic --repo-id "$VAR" --repo-url "$VAR" --repository "$VAR"` | `repo_info` is not recorded at all, so the attestation carries no repository provenance | records less than it was told to |
 | `kosli attest generic --redact-commit-info "$VAR"` | the commit author and message are sent in the clear - the very data the flag exists to withhold | sends data meant to be withheld |
-| `kosli create environment E --type logical --included-environments "$VAR"` | the record cannot be read back, and `list environments` returns HTTP 500 for every environment in the org until it is removed. Omitting the flag entirely does the same, so this one is not about empty values at all | **outright bug**, written up in `../../docs/handover/2026-08-13-logical-environment-500s-the-org-listing.md` |
-| `kosli attest override --commit HEAD`, overriding an attestation that was reported without a commit | the server 500s, the CLI retries it three times and gives up, and the override does not happen. No empty value is involved | **outright bug**, written up in `../../docs/handover/2026-08-15-override-500-when-attestation-has-no-commit.md` |
-| `kosli begin trail T --flow F` with no `--description` at all | the description the trail already had is replaced by an empty one, even though the server's update is written to leave an absent field alone | **an inconsistency**, not an empty value at all, written up in `../../docs/handover/2026-08-13-upsert-overwrites-unmentioned-fields.md` |
+| `kosli create environment E --type logical --included-environments "$VAR"` | the record cannot be read back, and `list environments` returns HTTP 500 for every environment in the org until it is removed. Omitting the flag entirely does the same, so this one is not about empty values at all | **outright bug**, written up in `empty-flag-audit/docs/2026-08-13-logical-environment-500s-the-org-listing.md` |
+| `kosli attest override --commit HEAD`, overriding an attestation that was reported without a commit | the server 500s, the CLI retries it three times and gives up, and the override does not happen. No empty value is involved | **outright bug**, written up in `empty-flag-audit/docs/2026-08-15-override-500-when-attestation-has-no-commit.md` |
+| `kosli begin trail T --flow F` with no `--description` at all | the description the trail already had is replaced by an empty one, even though the server's update is written to leave an absent field alone | **an inconsistency**, not an empty value at all, written up in `empty-flag-audit/docs/2026-08-13-upsert-overwrites-unmentioned-fields.md` |
 | `kosli list environments --tag "$VAR"` | answers "No environments were found", identical to a real no-match, exit 0 | wrong answer |
 | `kosli tag flow F --unset "$VAR"` | the tag is not removed and stays in force. The CSV split of an empty value yields no elements, so `remove_tags` is sent empty, and the command answers "No tags were applied", exit 0 | removes nothing |
 | `kosli get attestation NAME --flow F --trail "$VAR"`, and the same with `--fingerprint "$VAR"` | `Error: Get "": GET  giving up after 1 attempt(s): Get "": unsupported protocol scheme ""`. Omitting either flag says `at least one of --trail, --fingerprint is required when using ATTESTATION-NAME`, so the empty value defeats the check that produces the good message and the user is shown the plumbing instead. Either flag on its own is enough | unusable error |

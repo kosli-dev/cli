@@ -79,7 +79,7 @@ them.
 ## Suggested fixes
 
 The empty-value rule proposed in
-`../../empty-flag-audit/docs/2026-08-13-empty-value-decision.md` does **not**
+`empty-flag-audit/docs/2026-08-13-empty-value-decision.md` does **not**
 fix this. Refusing an empty `--included-environments` closes one route to the
 bad record and leaves the ordinary route open. This one is the server's, and
 either of these settles it:

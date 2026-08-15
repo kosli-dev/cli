@@ -100,7 +100,7 @@ the CLI still sends `""`, nothing changes at all.
 Until a command says what an absent flag means, it cannot say what an empty one
 means either: today `--description ""` and no `--description` produce the same
 request, so the two cannot be told apart. See
-`../../empty-flag-audit/docs/2026-08-13-empty-value-decision.md`.
+`empty-flag-audit/docs/2026-08-13-empty-value-decision.md`.
 
 That document proposes refusing an empty flag value, and it does not reach this.
 `kosli begin trail` sends `"description": ""` whether or not `--description` was
