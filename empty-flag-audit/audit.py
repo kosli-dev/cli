@@ -76,6 +76,21 @@ def environment(as_ci, home):
     return env
 
 
+# Cobra prints this above the output of a deprecated command, which still runs.
+DEPRECATION_NOTICE = re.compile(r'^Command "[^"]+" is deprecated')
+
+
+def noise(line):
+    """Report whether line is something the CLI says alongside its result.
+
+    A deprecated command still does its work, and a warning is not a result
+    either. Reading either as the command's first meaningful line hides what
+    the command actually did, and for a deprecated command it hides it behind
+    a sentence that is the same whatever the flags were.
+    """
+    return "[warning]" in line or DEPRECATION_NOTICE.match(line)
+
+
 def run(binary, args, as_ci=False, home="/tmp"):
     """Run the CLI once and return (exit code, first meaningful line, all output).
 
@@ -93,7 +108,7 @@ def run(binary, args, as_ci=False, home="/tmp"):
         return 124, "timed out after 120 seconds", "timed out after 120 seconds"
     text = (proc.stderr + proc.stdout).strip()
     lines = text.splitlines()
-    first = next((l for l in lines if l.strip() and "[warning]" not in l), "")
+    first = next((l for l in lines if l.strip() and not noise(l)), "")
     return proc.returncode, first, text
 
 

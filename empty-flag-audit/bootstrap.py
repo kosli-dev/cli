@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Write the first version of spec.json by interrogating the CLI.
 
-For each command this starts from the command alone and reads the CLI's own
+Which commands and flags exist is read from coverage.json, which is written
+from the command tree itself. What each command needs in order to work is
+found by running it: this starts from the command alone and reads the CLI's own
 complaints to fix the invocation: `required flag(s) "flow" not set` adds
 --flow, `accepts 2 arg(s), received 1` adds a positional, and so on. It stops
 when the command works.
@@ -15,10 +17,9 @@ a rule here to make an exception. Re-running this overwrites those edits.
 import argparse
 import json
 import re
-import subprocess
 import tempfile
 
-from audit import (GLOBALS, ORG, SPEC, expand, fixtures, normalise,
+from audit import (COVERAGE, GLOBALS, ORG, SPEC, expand, fixtures, normalise,
                    reset_server, run)
 
 FINGERPRINT = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
@@ -28,11 +29,6 @@ ATTESTATION_SCHEMA = "cmd/kosli/testdata/person-schema.json"
 # A policy that passes. A denying policy would make every `evaluate` run exit
 # non-zero whatever its flags held, leaving nothing to compare an empty value to.
 REGO_POLICY = "cmd/kosli/testdata/policies/allow-all.rego"
-
-# The global flags are declared once on the root command and behave the same
-# wherever they appear, so they are audited on this command alone rather than
-# on all 71 commands.
-GLOBALS_TESTED_ON = "archive flow"
 
 # Commands that answer a question rather than perform an action, and say no by
 # exiting non-zero. "Artifact is not compliant" is the command working, so that
@@ -71,6 +67,10 @@ VALUES = {
     "fingerprint": FINGERPRINT,
     "artifact-type": "file",
     "commit": "HEAD",
+    # What `report artifact` calls the flag the attest commands call --commit.
+    # Both are resolved against the repository the audit runs in, so both need
+    # a reference that exists rather than an invented name.
+    "git-commit": "HEAD",
     "origin-url": "http://example.com",
     "build-url": "http://example.com",
     "commit-url": "http://example.com",
@@ -144,6 +144,7 @@ ENV_TYPES = {
     "snapshot docker": "docker",
     "snapshot path": "server",
     "snapshot paths": "server",
+    "snapshot server": "server",
     "assert snapshot": "server",
     "diff snapshots": "server",
     "get snapshot": "server",
@@ -167,6 +168,9 @@ NOUNS = [
 # Commands whose positionals the noun rule cannot reach: an argument that is a
 # file, or two arguments naming the same fixture.
 COMMAND_POSITIONALS = {
+    # One of four shells, and nothing else is accepted, so an invented name
+    # cannot get this command as far as running.
+    "completion": ["bash"],
     "create policy": ["{policy}", POLICY_FILE],
     "diff snapshots": ["{env}", "{env}"],
     "fingerprint": [ARTIFACT_PATH],
@@ -349,7 +353,10 @@ def find_invocation(binary, command, kinds, as_ci, home):
         if code == 0:
             return settled(0, text)
 
-        if re.search(r'required flag\(s\) "([^"]+)"', msg):
+        # Cobra writes "required flag(s) ... not set". A command checking a flag
+        # itself writes what its author typed, and `snapshot server` writes
+        # "required flag" without the (s), so both spellings are read here.
+        if re.search(r'required flag(?:\(s\))? "([^"]+)"', msg):
             for name in re.findall(r'"([^"]+)"', msg):
                 extra[name] = pick(name)
             continue
@@ -411,12 +418,6 @@ def find_invocation(binary, command, kinds, as_ci, home):
             "error": "gave up after 12 rounds"}
 
 
-# The word pflag prints after a flag's name to say what it takes. A flag with
-# no such word is a boolean, which takes no value of its own.
-FLAG_TYPES = ("string", "strings", "stringArray", "stringToString", "int",
-              "int64", "float", "float64", "duration", "count", "bool")
-
-
 def flag_value(flag, kind, command):
     """Return a real value for flag, for the run an empty value is compared to.
 
@@ -431,76 +432,16 @@ def flag_value(flag, kind, command):
     return value_for(flag, command)
 
 
-def own_flags(text):
-    """Return the part of a help page listing the command's own flags.
+def every_command():
+    """Return {command: {flag: what it takes}} for the whole CLI.
 
-    A help page names flags three times over: in its examples, in its own Flags
-    section, and in the Global Flags every command shares. Only the middle one
-    describes what this command declares.
+    Read from coverage.json rather than from --help. A help page is a listing
+    of what the CLI chooses to show: cobra leaves out a command marked Hidden
+    or Deprecated, and pflag leaves out a hidden flag, so reading help pages
+    finds only the commands nobody minded showing. coverage.json is written
+    from the command tree itself, where nothing is filtered.
     """
-    if "\nFlags:\n" not in text:
-        return ""
-    return text.split("\nFlags:\n", 1)[1].split("Global Flags:")[0]
-
-
-def declared_flags(text):
-    """Return {flag name: what it takes} for the flags a help page declares."""
-    found = {}
-    for line in own_flags(text).splitlines():
-        m = re.search(r"--([a-z][a-z0-9-]*)(?:\s+(\w+))?", line)
-        if not m or m.group(1) == "help":
-            continue
-        kind = m.group(2) if m.group(2) in FLAG_TYPES else "bool"
-        found[m.group(1)] = kind
-    return found
-
-
-# Commands that work and are documented in their own help, but are marked
-# Hidden so they never appear in a command listing. Walking --help cannot find
-# them, so they are named here. `docs` is hidden too and is left out: it
-# generates this repo's documentation and is not something a customer runs.
-HIDDEN_COMMANDS = ["attest override"]
-
-
-def hidden_flags(binary, command):
-    """Return {flag: what it takes} for a command --help does not list."""
-    proc = subprocess.run([binary] + command.split() + ["--help"],
-                          capture_output=True, text=True)
-    return declared_flags(proc.stdout + proc.stderr)
-
-
-def discover(binary, path="kosli"):
-    """Walk the command tree, returning {command: {flag: what it takes}}."""
-    proc = subprocess.run(
-        [binary] + path.split()[1:] + ["--help"], capture_output=True, text=True
-    )
-    text = proc.stdout + proc.stderr
-    in_avail = "Available Commands:" in text
-    # Only the listing, so a flag or an example cannot be read as a subcommand.
-    # One space after the name, not two: the column is padded to the longest
-    # name, so the longest command in each group gets a single space and a
-    # stricter pattern drops exactly it.
-    listing = text.split("Available Commands:")[1].split("\nFlags:")[0] if in_avail else ""
-    subs = re.findall(r"^\s{2}(\w[\w-]*)\s", listing, re.M)
-    found = {}
-    if in_avail and subs:
-        for sub in subs:
-            found.update(discover(binary, f"{path} {sub}"))
-    if "[flags]" in text and (not in_avail or not subs):
-        found[path.replace("kosli ", "", 1)] = declared_flags(text)
-    return found
-
-
-def global_flags(binary):
-    """Return {flag: what it takes} for the flags every command shares."""
-    proc = subprocess.run([binary, "archive", "flow", "--help"],
-                          capture_output=True, text=True)
-    parts = (proc.stdout + proc.stderr).split("Global Flags:")
-    if len(parts) < 2:
-        return {}
-    found = declared_flags("\nFlags:\n" + parts[1])
-    found.pop("version", None)
-    return found
+    return json.loads(COVERAGE.read_text())
 
 
 def main():
@@ -513,10 +454,7 @@ def main():
     reset_server()
     home = tempfile.mkdtemp(prefix="kosli-audit-home-")
 
-    commands = discover(args.binary)
-    for hidden in HIDDEN_COMMANDS:
-        commands[hidden] = hidden_flags(args.binary, hidden)
-    commands[GLOBALS_TESTED_ON].update(global_flags(args.binary))
+    commands = every_command()
     skip = {c: why for why, cs in NEEDS_EXTERNAL.items() for c in cs}
     # Start from what is already there, so re-running with --only rewrites one
     # command's entry and leaves everyone else's, including any edited by hand.

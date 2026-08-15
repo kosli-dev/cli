@@ -40,28 +40,30 @@ var auditCoverageExempt = map[string]bool{
 	"help": true,
 }
 
-// localFlagNames returns the names of the flags a command declares itself,
-// hidden ones included, without the flags it inherits from its parents.
-func localFlagNames(cmd *cobra.Command) []string {
-	names := []string{}
+// localFlags returns the flags a command declares itself, hidden ones included,
+// without the flags it inherits from its parents, each against the type pflag
+// parses it as. The audit needs the type to invent a real value for the run it
+// compares an empty value against, and a boolean is the one that has to be told
+// apart: it takes no value of its own.
+func localFlags(cmd *cobra.Command) map[string]string {
+	flags := map[string]string{}
 	cmd.LocalFlags().VisitAll(func(flag *pflag.Flag) {
 		if flag.Name != "help" {
-			names = append(names, flag.Name)
+			flags[flag.Name] = flag.Value.Type()
 		}
 	})
-	sort.Strings(names)
-	return names
+	return flags
 }
 
 // commandSurface walks the command tree below cmd, collecting every runnable
 // command against the flags it declares. Hidden and deprecated commands are
 // collected like any other, which is the whole point of walking the tree rather
 // than reading a help listing.
-func commandSurface(cmd *cobra.Command, path string, surface map[string][]string) {
+func commandSurface(cmd *cobra.Command, path string, surface map[string]map[string]string) {
 	for _, child := range cmd.Commands() {
 		childPath := strings.TrimSpace(path + " " + child.Name())
 		if child.Runnable() && !auditCoverageExempt[childPath] {
-			surface[childPath] = localFlagNames(child)
+			surface[childPath] = localFlags(child)
 		}
 		commandSurface(child, childPath, surface)
 	}
@@ -70,34 +72,33 @@ func commandSurface(cmd *cobra.Command, path string, surface map[string][]string
 // auditableSurface returns every command the audit is expected to cover, each
 // against the flags it must be run with, the global flags among those of the
 // one command they are measured on.
-func auditableSurface(t *testing.T) map[string][]string {
+func auditableSurface(t *testing.T) map[string]map[string]string {
 	root, err := newRootCmd(io.Discard, io.Discard, nil)
 	require.NoError(t, err)
 
-	surface := map[string][]string{}
+	surface := map[string]map[string]string{}
 	commandSurface(root, "", surface)
 
-	globals := []string{}
-	root.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
-		globals = append(globals, flag.Name)
-	})
 	require.Contains(t, surface, auditGlobalsOn,
 		"the command the global flags are measured on must exist")
-	surface[auditGlobalsOn] = append(surface[auditGlobalsOn], globals...)
-	sort.Strings(surface[auditGlobalsOn])
+	root.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
+		surface[auditGlobalsOn][flag.Name] = flag.Value.Type()
+	})
 
 	return surface
 }
 
 // combinations renders a surface as one "command --flag" line per pair, which
 // is the unit the audit measures and so the unit a difference is reported in.
-func combinations(surface map[string][]string) map[string]bool {
+// A command declaring no flags is a line of its own, so that adding one cannot
+// go unnoticed just because it has nothing to empty.
+func combinations(surface map[string]map[string]string) map[string]bool {
 	pairs := map[string]bool{}
 	for command, flags := range surface {
 		if len(flags) == 0 {
 			pairs[command] = true
 		}
-		for _, flag := range flags {
+		for flag := range flags {
 			pairs[fmt.Sprintf("%s --%s", command, flag)] = true
 		}
 	}
@@ -140,7 +141,7 @@ func TestEmptyFlagAuditCoversEveryCommandAndFlag(t *testing.T) {
 
 	content, err := os.ReadFile(auditCoverageFile)
 	require.NoError(t, err)
-	var covered map[string][]string
+	var covered map[string]map[string]string
 	require.NoError(t, json.Unmarshal(content, &covered))
 
 	real := combinations(auditableSurface(t))
