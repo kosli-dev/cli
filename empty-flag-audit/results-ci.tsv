@@ -690,7 +690,7 @@ tag	--repo-id	0	0	1		same	differs	0.2		No tags were applied for flow 'probe-tag-
 tag	--set	1	0	0	cli	differs	differs	0.2		Error: [kosli tag] invalid argument "" for "-s, --set" flag:  must be formatted as key=value
 tag	--unset	0	0	0		same	differs	0.2		No tags were applied for flow 'probe-tag-unset-fl'
 unarchive control	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
-update control	--description	0	0	0		same	differs	0.2		control probe-update-control-description-co was updated
+update control	--description	0	0	0		differs	differs	0.3		control probe-update-control-description-co was updated
 update control	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 update control	--link	1	0	0	cli	differs	differs	0.3		Error: [kosli update control] invalid argument "" for "--link" flag:  must be formatted as key=value
 update control	--name	1	1	0	downstream	differs	differs	0.2		Error: [kosli update control] name cannot be empty

@@ -101,20 +101,40 @@ environment variables GitHub Actions sets.
 The one that says nothing is `get attestation --fingerprint`, where all three
 runs fail the same way, so nothing about the failure is the empty value's doing.
 
-Of the 183 that nothing refuses, 166 do exactly what omitting the flag does.
+Of the 183 that nothing refuses, 165 do exactly what omitting the flag does.
 That is not the same as doing nothing: omitting a flag has a meaning of its own,
 and it is rarely the meaning someone had in mind when they wrote that flag with
-a variable after it. Appendix 2 groups the 165 flag names by what they are for
-and says how many of each kind the CLI already refuses. Appendix 3 is the same
-thing flag by flag.
+a variable after it. By what the flag is for:
 
-The other 17 (183-166) do something omitting the flag does not. 13 differ only by the deprecation notice a flag prints for being passed at all, leaving 4:
+| What the flag names | How many | What omitting it means, which is what the empty value gets |
+|---|---|---|
+| what the command acts on | 72 | a different target, or none. `--fingerprint` sends the attestation to the trail rather than the artifact; `--commit`, `--repo-id` and `--repository` leave the provenance unrecorded |
+| where to read from | 27 | the file or URL is never read, so what it held is simply absent: `--template-file`, `--params`, `--config-file`, `--repo-root` |
+| which of many | 20 | no filter, so everything is in scope. `--exclude ""` excludes nothing, on 12 commands |
+| a credential | 20 | nothing is sent. All 20 are `--registry-username` and `--registry-password` |
+| text carried along | 18 | the field is left unset: `--description` on 12 commands, `--tag`, `--display-name`, `--comment` |
+| how to present the answer | 7 | the default format or ordering: `--sort`, `--sort-direction`, `--interval`, `--schema` |
+| a proxy | 1 | `--http-proxy`, so the request goes direct |
 
-- `attach-policy --environment` attaches the policy to no environment (in Findings table below)
-- `detach-policy --environment` detaches it from none (in Findings below)
+Refusing an empty value takes none of this away. In every one of the 165 the
+empty value already does what omitting the flag does, so a workflow that wants
+that behaviour can still have it by not writing the flag. What it takes away is
+the ability to spell it `--flag ""`, which is the spelling an unset variable
+produces, and which is why the two cannot be told apart today.
+
+Appendix 2 groups the 165 flag names by what they are for and says how many of
+each kind the CLI already refuses. Appendix 3 is the same thing flag by flag.
+
+The other 18 (183-165) do something omitting the flag does not. 13 differ only by the deprecation notice a flag prints for being passed at all, leaving 5:
+
+- `attach-policy --environment` attaches the policy to no environment (in Findings below)
+- `detach-policy --environment` detaches it from no Environments (in Findings below)
 - `list environments --tag` answers "No environments were found", which is also
   what a real no-match says (in Findings below).
-- `update service-account --description` clears the description, the one case where the empty value does what someone would have asked for.
+- `update control --description` and `update service-account --description`
+  clear the description. These two are the only cases in the 700 where an empty
+  value does what someone would have asked for, and the only capability this
+  proposal removes.
 
 ### The 288 that need credentials the audit does not have
 
@@ -254,10 +274,10 @@ measurement they produce covers CLI traffic only.
 
 The server cannot close that gap by copying the rule, because it mostly never
 sees an empty value. When an empty value produces the same request as omitting
-the flag - which is 166 of the 183 - the server receives an identical payload
+the flag - which is 165 of the 183 - the server receives an identical payload
 either way, and there is nothing empty in it to reject.
 
-Those 166 fall into three kinds, by whose problem the payload turns out to be.
+Those 165 fall into three kinds, by whose problem the payload turns out to be.
 Here is one example of each, read with `--debug`:
 
 | Command | What reaches the server | Whose problem |
