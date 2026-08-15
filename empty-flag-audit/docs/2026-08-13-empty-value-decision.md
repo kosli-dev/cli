@@ -6,12 +6,12 @@ that an unset shell variable cannot quietly change what a command does.
 ## TL;DR
 
 - An unset shell variable can silently change what a Kosli command does.
-- An audit easily found eighteen cases so far, sixteen of them exiting 0 and printing what success prints.
+- An audit easily found nineteen cases so far, seventeen of them exiting 0 and printing what success prints.
 - Eleven of them change a compliance answer.
 - One 500s an org's environment listing. 
 - One 500s every override of an attestation reported without a commit, and needs no empty value at all.
 - One sends commit author and message to Kosli after being told to redact them.
-- Eighteen is a floor, not a total. Every round of looking so far has found more.
+- Nineteen is a floor, not a total. Every round of looking so far has found more.
 - The space is too large to check case by case.
 - Proposal: an empty value is always an error, rolled out in four steps.
 - The first roll out step is logging warnings to app.kosli.com.
@@ -68,11 +68,11 @@ visible:
 
 | What happens to an empty value | On a laptop | Inside GitHub Actions |
 |---|---|---|
-| the CLI refuses it | 218 | 214 |
+| the CLI refuses it | 223 | 219 |
 | the CLI accepts it and the server refuses it | 5 | 9 |
-| nothing refuses it | 189 | 189 |
+| nothing refuses it | 183 | 183 |
 
-Of the 189 that nothing refuses, 172 do exactly what omitting the flag does. That
+Of the 183 that nothing refuses, 165 do exactly what omitting the flag does. That
 is not the same as doing nothing: omitting a flag has a meaning of its own, and it
 is rarely the meaning someone had in mind when they wrote that flag with a
 variable after it.
@@ -86,11 +86,11 @@ this decision is about is visible even without the credentials:
 
 | What the CLI does with an empty value | On a laptop | Inside GitHub Actions |
 |---|---|---|
-| refuses it | 182 | 179 |
-| does not react, so it reaches the service | 87 | 90 |
+| refuses it | 164 | 161 |
+| does not react, so it reaches the service | 105 | 108 |
 | lets it through, exit 0 | 19 | 19 |
 
-The middle row is the one to look at. Those 87 are empty values that survive every
+The middle row is the one to look at. Those 105 are empty values that survive every
 check the CLI has and are handed to someone else. Among them are the credentials:
 `--aws-key-id` and `--aws-secret-key` are refused on none of their three commands,
 `--jira-pat` on neither of its, and `--registry-password` and
@@ -115,9 +115,9 @@ the wrong flow, leave a policy governing nothing, and take out an organization's
 environment listing with a 500. It also turned up a bug that needs no empty value
 at all.
 
-Eighteen of them, below. Each was re-run on its own, outside the audit, and its
+Nineteen of them, below. Each was re-run on its own, outside the audit, and its
 result read from the server - not taken from the audit's classification, and not
-read off the code. Sixteen exit 0 and print what success prints. Two of them
+read off the code. Seventeen exit 0 and print what success prints. Two of them
 fail, and are here because of how they fail: one is a server error that needs no
 empty value to reach it, and the other replaces a clear complaint with the CLI's
 plumbing. `$VAR` means a variable that is unset, which is all it takes.
@@ -141,10 +141,11 @@ plumbing. `$VAR` means a variable that is unset, which is all it takes.
 | `kosli attest override --commit HEAD`, overriding an attestation that was reported without a commit | the server 500s, the CLI retries it three times and gives up, and the override does not happen. No empty value is involved | **outright bug**, written up in `../../docs/handover/2026-08-15-override-500-when-attestation-has-no-commit.md` |
 | `kosli begin trail T --flow F` with no `--description` at all | the description the trail already had is replaced by an empty one, even though the server's update is written to leave an absent field alone | **an inconsistency**, not an empty value at all, written up in `../../docs/handover/2026-08-13-upsert-overwrites-unmentioned-fields.md` |
 | `kosli list environments --tag "$VAR"` | answers "No environments were found", identical to a real no-match, exit 0 | wrong answer |
+| `kosli tag flow F --unset "$VAR"` | the tag is not removed and stays in force. The CSV split of an empty value yields no elements, so `remove_tags` is sent empty, and the command answers "No tags were applied", exit 0 | removes nothing |
 | `kosli get attestation NAME --flow F --trail "$VAR"` | `Error: Get "": GET  giving up after 1 attempt(s): Get "": unsupported protocol scheme ""`. Omitting the flag says `at least one of --trail, --fingerprint is required when using ATTESTATION-NAME`, so the empty value defeats the check that produces the good message and the user is shown the plumbing instead | unusable error |
 
-Eighteen findings, from one slice of one CLI, and sixteen of them silent. And
-eighteen is where the looking stopped, not where the findings did: 160 of the
+Nineteen findings, from one slice of one CLI, and seventeen of them silent.
+And nineteen is where the looking stopped, not where the findings did: 155 of the
 combinations that accept an empty value are on commands that record or judge
 compliance, and most have never been examined one at a time. Four rounds of
 examining them have each produced more - two, then three, then one, then one -
@@ -194,10 +195,10 @@ measurement they produce covers CLI traffic only.
 
 The server cannot close that gap by copying the rule, because it mostly never
 sees an empty value. When an empty value produces the same request as omitting
-the flag - which is 172 of the 189 - the server receives an identical payload
+the flag - which is 165 of the 183 - the server receives an identical payload
 either way, and there is nothing empty in it to reject.
 
-Those 172 fall into three kinds, by whose problem the payload turns out to be.
+Those 165 fall into three kinds, by whose problem the payload turns out to be.
 One of each, read with `--debug`:
 
 | Command | What reaches the server | Whose problem |
@@ -297,8 +298,8 @@ comes back, and that part stops being breaking at all.
 
 ### Proposed: four steps
 
-At least 208 combinations changing at once is a lot to ask of customers in one
-upgrade - 189 on the commands that work here, and 19 more on the ones needing a
+At least 202 combinations changing at once is a lot to ask of customers in one
+upgrade - 183 on the commands that work here, and 19 more on the ones needing a
 service, where the CLI lets an empty value through before the service is even
 reached. So the rule arrives in stages.
 
@@ -314,7 +315,7 @@ A warning goes to two places, and no more than two:
 1. **The workflow run**, printed as now.
 2. **app.kosli.com, at the org level.** A command that has `--org` and
    `--api-token` can send the warning whatever else it was doing, so this covers
-   184 of the 189. The exception is `kosli fingerprint`, which is entirely local
+   178 of the 183. The exception is `kosli fingerprint`, which is entirely local
    and needs no credentials.
 
 This is work in app.kosli.com: somewhere to receive the warnings, and one place
@@ -357,7 +358,7 @@ who are affected before it lands rather than after.
 
 It also reaches where this audit could not. For the 288 combinations on commands
 needing AWS, Azure, a git provider and the rest, we can see what the CLI does but
-not what the service does with the 87 empty values the CLI hands over. Customers
+not what the service does with the 105 empty values the CLI hands over. Customers
 have the credentials we lack, so their warnings are the only place that half can
 be found out.
 
@@ -408,15 +409,15 @@ the 165 names are:
 
 | What the flag is for, with a few examples | Names | Does an empty value mean anything? | CLI always refuses | Only the server refuses | Refuses on some commands | Never refuses |
 |---|---|---|---|---|---|---|
-| identity and selection - `--flow`, `--trail`, `--fingerprint`, `--name` | 53 | no. There is no artifact called "" | 24 | 1 | 15 | 13 |
-| location and input - `--template-file`, `--results-dir`, `--paths` | 27 | no. There is no file called "" | 18 | 1 | 3 | 5 |
+| identity and selection - `--flow`, `--trail`, `--fingerprint`, `--name` | 53 | no. There is no artifact called "" | 25 | 1 | 12 | 15 |
+| location and input - `--template-file`, `--results-dir`, `--paths` | 27 | no. There is no file called "" | 18 | 1 | 2 | 6 |
 | filters - `--exclude`, `--namespaces`, `--services`, `--attestations` | 24 | no. Filtering on "" filters on nothing | 3 | 0 | 0 | 21 |
 | credentials - `--github-token`, `--aws-secret-key`, `--registry-password` | 17 | no. There is no token "" | 12 | 0 | 2 | 3 |
 | output and paging - `--output`, `--sort`, `--page`, `--reverse` | 14 | no | 9 | 0 | 1 | 4 |
 | behaviour switches - `--dry-run`, `--assert`, `--compliant` | 13 | no | 13 | 0 | 0 | 0 |
 | free-text metadata - `--description`, `--comment`, `--reason`, `--tag` | 10 | **sometimes** | 4 | 0 | 1 | 5 |
 | the global flags - `--org`, `--api-token`, `--host`, `--debug` | 7 | no | 6 | 0 | 0 | 1 |
-| **total** | **165** | | **89** | **2** | **22** | **52** |
+| **total** | **165** | | **90** | **2** | **18** | **55** |
 
 The credentials row is the one to look at twice. Twelve of its seventeen names
 are refused by the CLI everywhere they appear. Three never are - `--aws-key-id`,
@@ -461,7 +462,7 @@ listed once.
 | `--assume-yes` | switch | 2 of 2 | always |
 | `--attachments` | identity | 12 of 12 | always |
 | `--attestation-data` | identity | 1 of 1 | always |
-| `--attestation-id` | identity | 1 of 1 | never |
+| `--attestation-id` | identity | 1 of 1 | always |
 | `--attestations` | filter | 3 of 3 | never |
 | `--aws-key-id` | credentials | 3 of 3 | never |
 | `--aws-region` | location | 3 of 3 | some commands |
@@ -564,20 +565,20 @@ listed once.
 | `--policy` | identity | 4 of 4 | some commands |
 | `--privilege` | identity | 2 of 2 | always, some only by the server |
 | `--project` | identity | 3 of 3 | always |
-| `--provider` | identity | 3 of 3 | some commands |
+| `--provider` | identity | 3 of 3 | never |
 | `--pull-request` | identity | 1 of 1 | never |
 | `--quiet` | global | 1 of 1 | always |
 | `--reason` | metadata | 2 of 2 | always |
-| `--redact-commit-info` | identity | 14 of 14 | some commands |
+| `--redact-commit-info` | identity | 14 of 14 | never |
 | `--region` | location | 1 of 1 | always |
 | `--registry-password` | credentials | 17 of 17 | some commands |
 | `--registry-provider` | identity | 17 of 17 | some commands |
 | `--registry-username` | credentials | 17 of 17 | some commands |
 | `--repo` | identity | 2 of 2 | never |
 | `--repo-id` | identity | 17 of 17 | some commands |
-| `--repo-provider` | identity | 14 of 14 | some commands |
+| `--repo-provider` | identity | 14 of 14 | never |
 | `--repo-root` | location | 15 of 15 | never |
-| `--repo-url` | location | 14 of 14 | some commands |
+| `--repo-url` | location | 14 of 14 | never |
 | `--repository` | identity | 18 of 18 | some commands, and not at all in CI |
 | `--require-provenance` | switch | 1 of 1 | always |
 | `--resolve-names` | switch | 1 of 1 | always |

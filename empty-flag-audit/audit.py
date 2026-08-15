@@ -341,9 +341,18 @@ def invocation_for(command, entry, key, flag, how, captured):
     an attestation with no --fingerprint at all and one with an empty
     --fingerprint both land on the trail, while a real fingerprint lands on the
     artifact.
+
+    A flag may name its own positional arguments in `args_for_flag`, used for
+    all three of its runs so they stay comparable with each other. Some flags
+    are only meaningful beside a particular argument - `--artifact-type` wants
+    something to fingerprint - and some are refused beside the command's usual
+    one, as `--attestation-id` is when an attestation name is given. Without
+    this the run with a real value could not work, and the empty value would be
+    compared against a control that failed.
     """
     grow = lambda v: expand(v, command, key, captured)
-    argv = command.split() + [grow(a) for a in entry["args"]] + globals_for(command)
+    args = entry.get("args_for_flag", {}).get(flag, entry["args"])
+    argv = command.split() + [grow(a) for a in args] + globals_for(command)
     # The joined form works for every flag type, including the booleans a
     # separate token would leave dangling as a positional argument.
     for name, val in entry["flags"].items():

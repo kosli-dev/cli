@@ -19,10 +19,15 @@ import json
 import re
 import tempfile
 
-from audit import (COVERAGE, GLOBALS, HOST, ORG, SPEC, expand, fixtures,
-                   globals_for, normalise, reset_server, run)
+from audit import (COVERAGE, GLOBALS, HOST, ORG, SPEC, TOKEN, expand,
+                   fixtures, globals_for, normalise, reset_server, run)
 
-FINGERPRINT = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+# The real SHA256 of ARTIFACT_PATH, not an invented one. Two flags need them to
+# agree: `--fingerprint` names an artifact the server must already hold, and
+# `--artifact-type` makes the CLI compute the fingerprint from the file. An
+# invented value satisfies neither, because the artifact the setup reports and
+# the artifact the CLI fingerprints are then different things.
+FINGERPRINT = "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01"
 POLICY_FILE = "cmd/kosli/testdata/policy-files/test-policy.yml"
 ARTIFACT_PATH = "cmd/kosli/testdata/person-schema.json"
 ATTESTATION_SCHEMA = "cmd/kosli/testdata/person-schema.json"
@@ -87,6 +92,54 @@ VALUES = {
     "gitlab-base-url": HOST,
     "repo-root": ".",
     "output": "json",
+    # Values the CLI or the server states outright, taken from what they say
+    # when refusing an invented one. Each is here because the run with a real
+    # value is the control the empty value is compared against, and a control
+    # that fails leaves the comparison resting on one leg. `--redact-commit-info
+    # probe-redact-commit-info` was refused on seven commands, and the audit
+    # recorded the comparison anyway.
+    "annotate": "probe=annotate",
+    # An expression naming a range of snapshots. Any index does; a made-up word
+    # is refused with "is not a valid snapshot index". --end names one end of
+    # the same kind of interval.
+    "interval": "1",
+    "end": "1",
+    # One of the columns the server will sort on, which it lists when refusing
+    # anything else.
+    "sort": "name",
+    # A tag is a pair, and the CLI says so: "must be in the format of key=value".
+    "flow-tag": "probe=flow-tag",
+    # public or private, which is what the API schema says this field accepts.
+    # The flag is deprecated and still parsed, so it is still measured.
+    "visibility": "public",
+    # A file holding a schema, not a name. The audit has one already.
+    "schema": ATTESTATION_SCHEMA,
+    # A rule in jq format, which is what the flag is for. The schema this audit
+    # uses describes a person, so a rule about their age is one the type will
+    # take.
+    "jq": ".age >= 18",
+    # --start and --end name ends of a snapshot interval; --start-ts and --end-ts
+    # are epoch seconds, parsed as a number.
+    "start": "1",
+    "start-ts": "1",
+    "end-ts": "4102444800",
+    # Hours, parsed as an integer.
+    "grace-period-hours": "24",
+    # Another pair the CLI spells out: "must be formatted as key=value".
+    "link": "probe=http://example.com",
+    "set": "probe=set",
+    "external-url": "probe=http://example.com",
+    "external-fingerprint": f"probe={FINGERPRINT}",
+    "redact-commit-info": "author",
+    "repo-provider": "github",
+    "repo-url": "http://example.com",
+    "sort-direction": "asc",
+    "provider": "github",
+    "params": "{}",
+    "attachments": ARTIFACT_PATH,
+    # An epoch timestamp, which is one of the two spellings the CLI names when
+    # it refuses anything else. A fixed one, so two runs stay comparable.
+    "expires-at": "4102444800",
     "page": "1",
     "page-limit": "5",
     "reason": "probe",
@@ -113,6 +166,12 @@ VALUES = {
 # environment type on `create environment` and a policy type on `create
 # policy`, so one dictionary cannot serve both.
 COMMAND_VALUES = {
+    # The global flags are measured here, and a global flag's working value is
+    # the one this audit is already using. An invented org or token is refused
+    # by the server, which leaves the empty value compared against a run that
+    # never worked - and reads as the CLI having refused something.
+    "archive flow": {"api-token": TOKEN, "org": ORG, "host": HOST,
+                     "max-api-retries": "3"},
     "create environment": {"type": "K8S"},
     "create policy": {"type": "env"},
     "list environments": {"type": "K8S"},

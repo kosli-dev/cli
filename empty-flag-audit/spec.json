@@ -2,6 +2,7 @@
  "attest generic": {
   "args": [],
   "flags": {
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "name": "{name}",
    "trail": "{trail}"
@@ -37,28 +38,28 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "commit": "HEAD",
    "compliant": "true",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "name": "{name}",
    "origin-url": "http://example.com",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "trail": "{trail}",
    "user-data": "cmd/kosli/testdata/person-schema.json"
@@ -80,6 +81,25 @@
      "--flow",
      "{flow}"
     ]
+   },
+   {
+    "argv": [
+     "attest",
+     "artifact",
+     "cmd/kosli/testdata/person-schema.json",
+     "--fingerprint",
+     "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+     "--build-url",
+     "http://example.com",
+     "--commit-url",
+     "http://example.com",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}",
+     "--name",
+     "{name}"
+    ]
    }
   ],
   "verify": [
@@ -92,7 +112,12 @@
     "--output",
     "json"
    ]
-  ]
+  ],
+  "args_for_flag": {
+   "artifact-type": [
+    "cmd/kosli/testdata/person-schema.json"
+   ]
+  }
  },
  "allow artifact": {
   "args": [
@@ -248,14 +273,14 @@
    "quiet"
   ],
   "flag_values": {
-   "api-token": "probe-api-token",
+   "api-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
    "config-file": "probe-config-file",
    "debug": "true",
    "dry-run": "true",
-   "host": "probe-host",
+   "host": "http://localhost:8001",
    "http-proxy": "probe-http-proxy",
-   "max-api-retries": "probe-max-api-retries",
-   "org": "probe-org",
+   "max-api-retries": "3",
+   "org": "docs-cmd-test-user-shared",
    "quiet": "true"
   },
   "setup": [
@@ -283,11 +308,11 @@
    "cmd/kosli/testdata/person-schema.json"
   ],
   "flags": {
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01"
   },
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "COMPLIANT\nFlow: {flow}\n  Trail: {trail}\n  Attestation-name                 type                           status          compliant \n  See more details at http://localhost/docs-cmd-test-user-shared/flows/{flow}/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+  "baseline_output": "COMPLIANT\nFlow: {flow}\n  Trail: {trail}\n  Attestation-name                 type                           status          compliant \n  See more details at http://localhost/docs-cmd-test-user-shared/flows/{flow}/artifacts/1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
   "flags_to_test": [
    "artifact-type",
    "dry-run",
@@ -306,7 +331,7 @@
    "dry-run": "true",
    "environment": "{env}",
    "exclude": "probe-exclude",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "output": "json",
    "policy": "{policy}",
@@ -315,6 +340,25 @@
    "registry-username": "probe-registry-username"
   },
   "setup": [
+   {
+    "argv": [
+     "create",
+     "policy",
+     "{policy}",
+     "cmd/kosli/testdata/policy-files/test-policy.yml",
+     "--type",
+     "env"
+    ]
+   },
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   },
    {
     "argv": [
      "create",
@@ -340,7 +384,7 @@
      "--name",
      "probe-artifact",
      "--fingerprint",
-     "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+     "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
      "--flow",
      "{flow}",
      "--trail",
@@ -408,16 +452,17 @@
    "cmd/kosli/testdata/person-schema.json"
   ],
   "flags": {
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
    "build-url": "http://example.com",
    "commit-url": "http://example.com",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "name": "{name}",
    "trail": "{trail}"
   },
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\nartifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+  "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\nartifact cmd/kosli/testdata/person-schema.json was attested with fingerprint: 1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
   "flags_to_test": [
    "annotate",
    "artifact-type",
@@ -444,7 +489,7 @@
    "trail"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
    "build-url": "http://example.com",
    "commit": "HEAD",
@@ -452,19 +497,19 @@
    "display-name": "probe-display-name",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "name": "{name}",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "trail": "{trail}"
   },
@@ -503,6 +548,7 @@
   "args": [],
   "flags": {
    "attestation-data": "cmd/kosli/testdata/person-schema.json",
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "name": "{name}",
    "trail": "{trail}",
@@ -540,28 +586,28 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "attestation-data": "cmd/kosli/testdata/person-schema.json",
    "commit": "HEAD",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "name": "{name}",
    "origin-url": "http://example.com",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "trail": "{trail}",
    "type": "{name}",
@@ -593,6 +639,25 @@
      "--schema",
      "cmd/kosli/testdata/person-schema.json"
     ]
+   },
+   {
+    "argv": [
+     "attest",
+     "artifact",
+     "cmd/kosli/testdata/person-schema.json",
+     "--fingerprint",
+     "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+     "--build-url",
+     "http://example.com",
+     "--commit-url",
+     "http://example.com",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}",
+     "--name",
+     "{name}"
+    ]
    }
   ],
   "verify": [
@@ -605,13 +670,19 @@
     "--output",
     "json"
    ]
-  ]
+  ],
+  "args_for_flag": {
+   "artifact-type": [
+    "cmd/kosli/testdata/person-schema.json"
+   ]
+  }
  },
  "attest decision": {
   "args": [],
   "flags": {
    "compliant": "true",
    "control": "{control}",
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "name": "{name}",
    "trail": "{trail}"
@@ -648,29 +719,29 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "commit": "HEAD",
    "compliant": "true",
    "control": "{control}",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "name": "{name}",
    "origin-url": "http://example.com",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "trail": "{trail}",
    "user-data": "cmd/kosli/testdata/person-schema.json"
@@ -692,6 +763,25 @@
      "--flow",
      "{flow}"
     ]
+   },
+   {
+    "argv": [
+     "attest",
+     "artifact",
+     "cmd/kosli/testdata/person-schema.json",
+     "--fingerprint",
+     "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+     "--build-url",
+     "http://example.com",
+     "--commit-url",
+     "http://example.com",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}",
+     "--name",
+     "{name}"
+    ]
    }
   ],
   "verify": [
@@ -704,15 +794,21 @@
     "--output",
     "json"
    ]
-  ]
+  ],
+  "args_for_flag": {
+   "artifact-type": [
+    "cmd/kosli/testdata/person-schema.json"
+   ]
+  }
  },
  "attest jira": {
   "args": [],
   "flags": {
-   "jira-pat": "probe-jira-pat",
    "commit": "HEAD",
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "jira-base-url": "probe-jira-base-url",
+   "jira-pat": "probe-jira-pat",
    "name": "{name}",
    "trail": "{trail}"
   },
@@ -756,17 +852,17 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
    "assert": "true",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "commit": "HEAD",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "ignore-branch-match": "true",
    "jira-api-token": "probe-jira-api-token",
@@ -778,14 +874,14 @@
    "jira-username": "probe-jira-username",
    "name": "{name}",
    "origin-url": "http://example.com",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "trail": "{trail}",
    "user-data": "cmd/kosli/testdata/person-schema.json"
@@ -824,9 +920,10 @@
  "attest junit": {
   "args": [],
   "flags": {
-   "results-dir": "cmd/kosli/testdata/junit",
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "name": "{name}",
+   "results-dir": "cmd/kosli/testdata/junit",
    "trail": "{trail}"
   },
   "baseline_ok": true,
@@ -861,27 +958,27 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "commit": "HEAD",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "name": "{name}",
    "origin-url": "http://example.com",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "results-dir": "cmd/kosli/testdata/junit",
    "trail": "{trail}",
@@ -905,6 +1002,25 @@
      "--flow",
      "{flow}"
     ]
+   },
+   {
+    "argv": [
+     "attest",
+     "artifact",
+     "cmd/kosli/testdata/person-schema.json",
+     "--fingerprint",
+     "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+     "--build-url",
+     "http://example.com",
+     "--commit-url",
+     "http://example.com",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}",
+     "--name",
+     "{name}"
+    ]
    }
   ],
   "verify": [
@@ -917,11 +1033,17 @@
     "--output",
     "json"
    ]
-  ]
+  ],
+  "args_for_flag": {
+   "artifact-type": [
+    "cmd/kosli/testdata/person-schema.json"
+   ]
+  }
  },
  "attest snyk": {
   "args": [],
   "flags": {
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "name": "{name}",
    "scan-results": "cmd/kosli/testdata/snyk_scan_example.json",
@@ -959,27 +1081,27 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "commit": "HEAD",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "name": "{name}",
    "origin-url": "http://example.com",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "scan-results": "cmd/kosli/testdata/snyk_scan_example.json",
    "trail": "{trail}",
@@ -1020,6 +1142,7 @@
  "attest sonar": {
   "args": [],
   "flags": {
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "name": "{name}",
    "sonar-api-token": "probe-sonar-api-token",
@@ -1063,29 +1186,29 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "commit": "HEAD",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "max-wait": "probe-max-wait",
    "name": "{name}",
    "origin-url": "http://example.com",
    "pull-request": "probe-pull-request",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "sonar-api-token": "probe-sonar-api-token",
    "sonar-ce-task-url": "probe-sonar-ce-task-url",
@@ -1132,6 +1255,7 @@
    "{trail}"
   ],
   "flags": {
+   "external-url": "probe=http://example.com",
    "flow": "{flow}"
   },
   "baseline_ok": true,
@@ -1158,15 +1282,15 @@
    "commit": "HEAD",
    "description": "probe-description",
    "dry-run": "true",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "origin-url": "http://example.com",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "template-file": "cmd/kosli/testdata/valid_template.yml",
    "user-data": "cmd/kosli/testdata/person-schema.json"
@@ -1204,7 +1328,7 @@
    "unset"
   ],
   "flag_values": {
-   "set": "probe-set",
+   "set": "probe=set",
    "unset": "probe-unset"
   },
   "setup": [],
@@ -1229,7 +1353,7 @@
   "flag_values": {
    "description": "probe-description",
    "dry-run": "true",
-   "expires-at": "probe-expires-at",
+   "expires-at": "4102444800",
    "output": "json",
    "service-account": "{account}"
   },
@@ -1301,11 +1425,21 @@
    "dry-run": "true",
    "exclude-scaling": "true",
    "include-scaling": "true",
-   "included-environments": "probe-included-environments",
+   "included-environments": "{env}",
    "require-provenance": "true",
    "type": "K8S"
   },
-  "setup": [],
+  "setup": [
+   {
+    "argv": [
+     "create",
+     "environment",
+     "{env}",
+     "--type",
+     "K8S"
+    ]
+   }
+  ],
   "verify": [
    [
     "get",
@@ -1338,7 +1472,7 @@
    "template": "probe-template",
    "template-file": "cmd/kosli/testdata/valid_template.yml",
    "use-empty-template": "true",
-   "visibility": "probe-visibility"
+   "visibility": "public"
   },
   "setup": [],
   "verify": [
@@ -1554,7 +1688,7 @@
    "input-file": "cmd/kosli/testdata/person-schema.json",
    "no-assert": "true",
    "output": "json",
-   "params": "probe-params",
+   "params": "{}",
    "policy": "cmd/kosli/testdata/policies/allow-all.rego",
    "show-input": "true"
   },
@@ -1588,7 +1722,7 @@
    "flow": "{flow}",
    "no-assert": "true",
    "output": "json",
-   "params": "probe-params",
+   "params": "{}",
    "policy": "cmd/kosli/testdata/policies/allow-all.rego",
    "show-input": "true"
   },
@@ -1640,7 +1774,7 @@
    "flow": "{flow}",
    "no-assert": "true",
    "output": "json",
-   "params": "probe-params",
+   "params": "{}",
    "policy": "cmd/kosli/testdata/policies/allow-all.rego",
    "show-input": "true"
   },
@@ -1741,12 +1875,12 @@
  },
  "get artifact": {
   "args": [
-   "{flow}@7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+   "{flow}@1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01"
   ],
   "flags": {},
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "Name:              cmd/kosli/testdata/person-schema.json\nFlow:              {flow}\nTrail:             {trail}\nName in template:  probe-artifact\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCreated on:        {timestamp} \u2022 {ago}\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/{flow}/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9?artifact_id={uuid}\nState:             COMPLIANT\nHistory:\n    probe-artifact reported  {timestamp}",
+  "baseline_output": "Name:              cmd/kosli/testdata/person-schema.json\nFlow:              {flow}\nTrail:             {trail}\nName in template:  probe-artifact\nFingerprint:       1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\nCreated on:        {timestamp} \u2022 {ago}\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/{flow}/artifacts/1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01?artifact_id={uuid}\nState:             COMPLIANT\nHistory:\n    probe-artifact reported  {timestamp}",
   "flags_to_test": [
    "output",
    "trail"
@@ -1781,7 +1915,7 @@
      "--name",
      "probe-artifact",
      "--fingerprint",
-     "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+     "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
      "--flow",
      "{flow}",
      "--trail",
@@ -1815,7 +1949,7 @@
   ],
   "flag_values": {
    "attestation-id": "probe-attestation-id",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "output": "json",
    "trail": "{trail}"
@@ -1846,7 +1980,7 @@
      "--name",
      "probe-artifact",
      "--fingerprint",
-     "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+     "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
      "--flow",
      "{flow}",
      "--trail",
@@ -1870,7 +2004,11 @@
     ]
    }
   ],
-  "verify": []
+  "verify": [],
+  "args_for_flag": {
+   "attestation-id": [],
+   "fingerprint": []
+  }
  },
  "get control": {
   "args": [
@@ -2008,7 +2146,7 @@
   ],
   "flag_values": {
    "output": "json",
-   "provider": "probe-provider",
+   "provider": "github",
    "repo-id": "probe-repo-id"
   },
   "setup": [],
@@ -2166,7 +2304,7 @@
   "flags": {},
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "COMMIT   ARTIFACT                                                                       STATE      CREATED_AT\n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9             \n                                                                                                   \n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+  "baseline_output": "COMMIT   ARTIFACT                                                                       STATE      CREATED_AT\n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01             \n                                                                                                   \n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01             \n                                                                                                   \n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01             \n                                                                                                   \n1ade42f  Name: cmd/kosli/testdata/person-schema.json                                    COMPLIANT  {timestamp}\n         Fingerprint: 1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
   "flags_to_test": [
    "flow",
    "output",
@@ -2223,7 +2361,7 @@
    "page": "1",
    "page-limit": "5",
    "search": "probe-search",
-   "sort-direction": "probe-sort-direction",
+   "sort-direction": "asc",
    "tag": "probe-tag"
   },
   "setup": [
@@ -2263,8 +2401,8 @@
    "output": "json",
    "page": "1",
    "page-limit": "5",
-   "sort": "probe-sort",
-   "sort-direction": "probe-sort-direction",
+   "sort": "name",
+   "sort-direction": "asc",
    "space-id": "probe-space-id",
    "tag": "probe-tag",
    "type": "K8S"
@@ -2351,10 +2489,10 @@
    "output": "json",
    "page": "1",
    "page-limit": "5",
-   "provider": "probe-provider",
+   "provider": "github",
    "repo-id": "probe-repo-id",
    "search": "probe-search",
-   "sort-direction": "probe-sort-direction",
+   "sort-direction": "asc",
    "tag": "probe-tag"
   },
   "setup": [],
@@ -2401,7 +2539,7 @@
    "reverse"
   ],
   "flag_values": {
-   "interval": "probe-interval",
+   "interval": "1",
    "output": "json",
    "page": "1",
    "page-limit": "5",
@@ -2446,9 +2584,9 @@
    "page-limit"
   ],
   "flag_values": {
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
-   "flow-tag": "probe-flow-tag",
+   "flow-tag": "probe=flow-tag",
    "output": "json",
    "page": "1",
    "page-limit": "5"
@@ -2528,8 +2666,8 @@
   ],
   "flag_values": {
    "dry-run": "true",
-   "expires-at": "probe-expires-at",
-   "grace-period-hours": "probe-grace-period-hours",
+   "expires-at": "4102444800",
+   "grace-period-hours": "24",
    "output": "json",
    "service-account": "{account}"
   },
@@ -2567,7 +2705,7 @@
   "flags": {},
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "Search result resolved to artifact with fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-assert-artifact-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-assert-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-attest-artifact-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-attest-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-get-artifact-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-get-artifact-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nHas provenance:    true\nFlow:              probe-get-attestation-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-get-attestation-baseline-fl/artifacts/7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}",
+  "baseline_output": "Search result resolved to artifact with fingerprint 1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\nHas provenance:    true\nFlow:              probe-assert-artifact-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-assert-artifact-baseline-fl/artifacts/1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\nHas provenance:    true\nFlow:              probe-attest-artifact-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-attest-artifact-baseline-fl/artifacts/1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\nHas provenance:    true\nFlow:              probe-get-artifact-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-get-artifact-baseline-fl/artifacts/1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}\n\n\nName:              cmd/kosli/testdata/person-schema.json\nFingerprint:       1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\nHas provenance:    true\nFlow:              probe-get-attestation-baseline-fl\nGit commit:        1ade42f39dd06d36aa603b9524a1b3eeaba9b796\nCommit URL:        http://example.com\nBuild URL:         http://example.com\nArtifact URL:      http://localhost/docs-cmd-test-user-shared/flows/probe-get-attestation-baseline-fl/artifacts/1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\nCompliance state:  COMPLIANT\nRunning in:        [  ]\nExited from:       [  ]\nHistory:\n    Commit 1ade42f    {timestamp}\n    Artifact created  {timestamp}",
   "flags_to_test": [
    "output"
   ],
@@ -3090,9 +3228,9 @@
   ],
   "flag_values": {
    "dry-run": "true",
-   "provider": "probe-provider",
+   "provider": "github",
    "repo-id": "probe-repo-id",
-   "set": "probe-set",
+   "set": "probe=set",
    "unset": "probe-unset"
   },
   "setup": [
@@ -3161,7 +3299,7 @@
   "flag_values": {
    "description": "probe-description",
    "dry-run": "true",
-   "link": "probe-link",
+   "link": "probe=http://example.com",
    "name": "{name}"
   },
   "setup": [
@@ -3220,9 +3358,10 @@
  "attest override": {
   "args": [],
   "flags": {
-   "new-compliance-status": "true",
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "name": "{name}",
+   "new-compliance-status": "true",
    "original-attestation-type": "generic",
    "reason": "probe",
    "trail": "{trail}"
@@ -3260,30 +3399,30 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "commit": "HEAD",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "name": "{name}",
    "new-compliance-status": "true",
    "origin-url": "http://example.com",
    "original-attestation-type": "generic",
    "reason": "probe",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "trail": "{trail}",
    "user-data": "cmd/kosli/testdata/person-schema.json"
@@ -3317,6 +3456,25 @@
      "--trail",
      "{trail}"
     ]
+   },
+   {
+    "argv": [
+     "attest",
+     "artifact",
+     "cmd/kosli/testdata/person-schema.json",
+     "--fingerprint",
+     "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+     "--build-url",
+     "http://example.com",
+     "--commit-url",
+     "http://example.com",
+     "--flow",
+     "{flow}",
+     "--trail",
+     "{trail}",
+     "--name",
+     "{name}"
+    ]
    }
   ],
   "verify": [
@@ -3329,7 +3487,12 @@
     "--output",
     "json"
    ]
-  ]
+  ],
+  "args_for_flag": {
+   "artifact-type": [
+    "cmd/kosli/testdata/person-schema.json"
+   ]
+  }
  },
  "archive attestation-type": {
   "args": [
@@ -3540,6 +3703,7 @@
    "azure-org-url": "probe-azure-org-url",
    "azure-token": "probe-azure-token",
    "commit": "HEAD",
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "name": "{name}",
    "project": "probe-project",
@@ -3580,31 +3744,31 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
    "assert": "true",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "azure-org-url": "probe-azure-org-url",
    "azure-token": "probe-azure-token",
    "commit": "HEAD",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "name": "{name}",
    "origin-url": "http://example.com",
    "project": "probe-project",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "trail": "{trail}",
    "user-data": "cmd/kosli/testdata/person-schema.json"
@@ -3643,10 +3807,11 @@
  "attest pullrequest bitbucket": {
   "args": [],
   "flags": {
-   "bitbucket-username": "probe-bitbucket-username",
    "bitbucket-password": "probe-bitbucket-password",
+   "bitbucket-username": "probe-bitbucket-username",
    "bitbucket-workspace": "probe-bitbucket-workspace",
    "commit": "HEAD",
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "name": "{name}",
    "repository": "probe-repository",
@@ -3687,10 +3852,10 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
    "assert": "true",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "bitbucket-access-token": "probe-bitbucket-access-token",
    "bitbucket-password": "probe-bitbucket-password",
    "bitbucket-username": "probe-bitbucket-username",
@@ -3699,20 +3864,20 @@
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "name": "{name}",
    "origin-url": "http://example.com",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "trail": "{trail}",
    "user-data": "cmd/kosli/testdata/person-schema.json"
@@ -3752,6 +3917,7 @@
   "args": [],
   "flags": {
    "commit": "HEAD",
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "github-org": "probe-github-org",
    "github-token": "probe-github-token",
@@ -3793,31 +3959,31 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
    "assert": "true",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "commit": "HEAD",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "github-base-url": "probe-github-base-url",
    "github-org": "probe-github-org",
    "github-token": "probe-github-token",
    "name": "{name}",
    "origin-url": "http://example.com",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "trail": "{trail}",
    "user-data": "cmd/kosli/testdata/person-schema.json"
@@ -3857,6 +4023,7 @@
   "args": [],
   "flags": {
    "commit": "HEAD",
+   "external-url": "probe=http://example.com",
    "flow": "{flow}",
    "gitlab-base-url": "http://localhost:8001",
    "gitlab-org": "probe-gitlab-org",
@@ -3899,31 +4066,31 @@
    "user-data"
   ],
   "flag_values": {
-   "annotate": "probe-annotate",
+   "annotate": "probe=annotate",
    "artifact-type": "file",
    "assert": "true",
-   "attachments": "probe-attachments",
+   "attachments": "cmd/kosli/testdata/person-schema.json",
    "commit": "HEAD",
    "description": "probe-description",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "external-fingerprint": "probe-external-fingerprint",
-   "external-url": "probe-external-url",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+   "external-url": "probe=http://example.com",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "gitlab-base-url": "http://localhost:8001",
    "gitlab-org": "probe-gitlab-org",
    "gitlab-token": "probe-gitlab-token",
    "name": "{name}",
    "origin-url": "http://example.com",
-   "redact-commit-info": "probe-redact-commit-info",
+   "redact-commit-info": "author",
    "registry-password": "probe-registry-password",
    "registry-provider": "probe-registry-provider",
    "registry-username": "probe-registry-username",
    "repo-id": "probe-repo-id",
-   "repo-provider": "probe-repo-provider",
+   "repo-provider": "github",
    "repo-root": ".",
-   "repo-url": "probe-repo-url",
+   "repo-url": "http://example.com",
    "repository": "probe-repository",
    "trail": "{trail}",
    "user-data": "cmd/kosli/testdata/person-schema.json"
@@ -3976,8 +4143,8 @@
   "flag_values": {
    "description": "probe-description",
    "dry-run": "true",
-   "jq": "probe-jq",
-   "schema": "probe-schema"
+   "jq": ".age >= 18",
+   "schema": "cmd/kosli/testdata/person-schema.json"
   },
   "setup": [
    {
@@ -4246,16 +4413,16 @@
    "start-ts"
   ],
   "flag_values": {
-   "end": "probe-end",
-   "end-ts": "probe-end-ts",
-   "interval": "probe-interval",
+   "end": "1",
+   "end-ts": "4102444800",
+   "interval": "1",
    "output": "json",
    "page": "1",
    "page-limit": "5",
    "repo": "probe-repo",
    "reverse": "true",
-   "start": "probe-start",
-   "start-ts": "probe-start-ts"
+   "start": "1",
+   "start-ts": "1"
   },
   "setup": [
    {
@@ -4363,7 +4530,7 @@
    "cmd/kosli/testdata/person-schema.json"
   ],
   "flags": {
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "build-url": "http://example.com",
    "commit-url": "http://example.com",
    "flow": "{flow}",
@@ -4371,7 +4538,7 @@
   },
   "baseline_ok": true,
   "baseline_exit": 0,
-  "baseline_output": "Command \"artifact\" is deprecated, see kosli attest commands\nartifact cmd/kosli/testdata/person-schema.json was reported with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+  "baseline_output": "Command \"artifact\" is deprecated, see kosli attest commands\nartifact cmd/kosli/testdata/person-schema.json was reported with fingerprint: 1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
   "flags_to_test": [
    "artifact-type",
    "build-url",
@@ -4393,7 +4560,7 @@
    "commit-url": "http://example.com",
    "dry-run": "true",
    "exclude": "probe-exclude",
-   "fingerprint": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+   "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
    "flow": "{flow}",
    "git-commit": "HEAD",
    "name": "{name}",

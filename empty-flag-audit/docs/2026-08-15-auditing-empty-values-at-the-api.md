@@ -17,8 +17,11 @@ is what it does, what it found, and what it cannot reach.
   8 it refuses.
 - Among the eleven, `create flow --template` is refused by the CLI and accepted
   by the API, which stores a flow requiring an attestation whose name is empty.
-- That is a measured instance of the gap the decision document argues about: a
-  CLI rule does not cover a customer calling the API directly.
+- Also among them, an artifact can be stored with no name at all, leaving anyone
+  who investigates it holding a fingerprint and a blank record.
+- Both are measured instances of the gap the decision document argues about: a
+  CLI rule does not cover a customer calling the API directly. Neither would be
+  closed by the rule it proposes.
 - Most rows are not an answer, and mostly for good reasons: the read commands
   send no body, and some flags never leave the machine.
 
@@ -124,8 +127,67 @@ It does nothing for anyone calling the API. That is the argument in the decision
 document's "What a CLI rule cannot reach" section, with a measured instance
 behind it instead of a worked example.
 
-The two `--artifact-type` rows say the same thing about a different field: the
-server accepts an artifact whose `filename` is empty.
+The four rows reaching `filename` say the same thing about a different field,
+and it is the one a customer would feel. The server accepts an artifact whose
+`filename` is empty, stores it, and serves it back that way:
+
+```
+$ kosli get artifact FLOW@aaaa...
+Name:
+Flow:              empty-filename-flow
+Fingerprint:       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+```
+
+An artifact is identified by its fingerprint, so no compliance verdict changes.
+What is lost is the only human-readable handle on the record. Someone who finds
+something important about an artifact and has its fingerprint opens the record
+to learn what the thing actually was, and there is nothing there. The trail is
+intact and unreadable, which for a product whose value is the auditability of
+the trail is not a small defect - and it is Kosli that accepted the record
+without saying anything.
+
+That puts it in the same family as `--redact-commit-info` and `repo_info` in the
+decision document: the record is poorer than the customer believes it to be, and
+nothing said so at the time.
+
+No route through the CLI produces it, which is why it is here rather than in the
+decision document's table. But nothing in the CLI checks this field, and the
+distinction matters: it is not protected, it is only never constructed empty.
+
+`attest artifact` decides the name like this (`cmd/kosli/attestArtifact.go:174`):
+
+```go
+if o.displayName != "" {
+    o.payload.Filename = o.displayName
+} else {
+    ...
+    o.payload.Filename = filepath.Base(args[0])
+}
+```
+
+An empty `--display-name` fails that test, so the else branch runs and the name
+comes from the artifact named on the command line. A workflow step written as
+
+```
+kosli attest artifact ./target/my-app.jar --artifact-type file \
+  --display-name "$RELEASE_NAME" ...
+```
+
+sends `"filename": "release-2026.8"` when the variable holds one, and
+`"filename": "my-app.jar"` when it is unset - identical to what omitting the
+flag sends, with nothing said about the difference. The artifact is recorded, and
+recorded under the wrong name.
+
+`report artifact --name ""` does the same. `--artifact-type ""` on both commands
+fails earlier, and not on account of the filename either: `either
+--artifact-type or --fingerprint must be specified`
+(`cmd/kosli/cli_utils.go:488`) is a rule about which of two flags is set, and an
+empty value reads there as unset.
+
+So the CLI never sends an empty `filename` because the positional argument is
+required and the fallback always has it, not because anyone validates it. Only a
+caller writing the request themselves can send `""`, and the empty-value rule
+proposed for the CLI would not close it.
 
 The eight it refuses are the reassuring half, and they are mostly types rather
 than emptiness: `include_scaling`, `require_provenance` and `privilege` are a
