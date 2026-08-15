@@ -34,7 +34,7 @@ assert artifact	--registry-username						nothing to read	the run with the flag s
 assert snapshot	--dry-run						nothing to read	the run with the flag set sent no request
 attach-policy	--dry-run						nothing to read	the run with the flag set sent no request
 attach-policy	--environment	POST	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-attach-policy-environment-set-en/policies				no field	the flag changes no field of the payload
-attest artifact	--annotate						nothing to read	the run with the flag set sent no request
+attest artifact	--annotate	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-annotate-set-fl	annotations	201	400	the server refuses it	{"message":"Input payload validation failed","errors":{"annotations":"Input should be a valid dictionary [input: ]"}}
 attest artifact	--artifact-type	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-artifact-type-set-fl	filename	201	201	the server accepts it	{"message":"OK"}
 attest artifact	--build-url	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-build-url-set-fl				no field	the flag changes no field of the payload
 attest artifact	--commit	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-commit-set-fl				no field	the flag changes no field of the payload
@@ -42,163 +42,163 @@ attest artifact	--commit-url	POST	http://localhost:8001/api/v2/artifacts/docs-cm
 attest artifact	--display-name	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-display-name-set-fl	filename	201	201	the server accepts it	{"message":"OK"}
 attest artifact	--dry-run						nothing to read	the run with the flag set sent no request
 attest artifact	--exclude	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-exclude-set-fl				no field	the flag changes no field of the payload
-attest artifact	--external-fingerprint						nothing to read	the run with the flag set sent no request
-attest artifact	--external-url						nothing to read	the run with the flag set sent no request
+attest artifact	--external-fingerprint	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-external-fingerprint-set-fl	external_urls	201	400	the server refuses it	{"message":"Input payload validation failed","errors":{"external_urls":"Input should be a valid dictionary [input: ]"}}
+attest artifact	--external-url	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-external-url-set-fl	external_urls	201	400	the server refuses it	{"message":"Input payload validation failed","errors":{"external_urls":"Input should be a valid dictionary [input: ]"}}
 attest artifact	--fingerprint	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-fingerprint-set-fl				no field	the flag changes no field of the payload
 attest artifact	--flow	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-flow-set-fl				no field	the flag changes no field of the payload
 attest artifact	--name	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-name-set-fl				no field	the flag changes no field of the payload
-attest artifact	--redact-commit-info						nothing to read	the run with the flag set sent no request
+attest artifact	--redact-commit-info	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-redact-commit-info-set-fl	git_commit_info	201	400	the server refuses it	{"message":"Input payload validation failed","errors":{"git_commit_info":"Input should be a valid dictionary or object t
 attest artifact	--registry-password						nothing to read	the run with the flag set sent no request
 attest artifact	--registry-provider	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-registry-provider-set-fl				no field	the flag changes no field of the payload
 attest artifact	--registry-username						nothing to read	the run with the flag set sent no request
 attest artifact	--repo-id	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-repo-id-set-fl				no field	the flag changes no field of the payload
-attest artifact	--repo-provider						nothing to read	the run with the flag set sent no request
+attest artifact	--repo-provider	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-repo-provider-set-fl				no field	the flag changes no field of the payload
 attest artifact	--repo-root	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-repo-root-set-fl				no field	the flag changes no field of the payload
-attest artifact	--repo-url						nothing to read	the run with the flag set sent no request
+attest artifact	--repo-url	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-repo-url-set-fl				no field	the flag changes no field of the payload
 attest artifact	--repository	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-repository-set-fl				no field	the flag changes no field of the payload
 attest artifact	--trail	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-attest-artifact-trail-set-fl				no field	the flag changes no field of the payload
-attest custom	--annotate						nothing to read	the run with the flag set sent no request
-attest custom	--artifact-type						nothing to read	the run with the flag set sent no request
-attest custom	--attachments						nothing to read	the run with the flag set sent no request
+attest custom	--annotate	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-annotate-set-fl/trail/probe-attest-custom-annotate-set-tr/custom	annotations	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
+attest custom	--artifact-type	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-artifact-type-set-fl/trail/probe-attest-custom-artifact-type-set-tr/custom				no field	the flag changes no field of the payload
+attest custom	--attachments	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-attachments-set-fl/trail/probe-attest-custom-attachments-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--attestation-data	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-attestation-data-set-fl/trail/probe-attest-custom-attestation-data-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--commit	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-commit-set-fl/trail/probe-attest-custom-commit-set-tr/custom	git_commit_info	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest custom	--description	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-description-set-fl/trail/probe-attest-custom-description-set-tr/custom	description	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest custom	--dry-run						nothing to read	the run with the flag set sent no request
 attest custom	--exclude	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-exclude-set-fl/trail/probe-attest-custom-exclude-set-tr/custom				no field	the flag changes no field of the payload
-attest custom	--external-fingerprint						nothing to read	the run with the flag set sent no request
-attest custom	--external-url						nothing to read	the run with the flag set sent no request
+attest custom	--external-fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-external-fingerprint-set-fl/trail/probe-attest-custom-external-fingerprint-set-tr/custom	external_urls	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
+attest custom	--external-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-external-url-set-fl/trail/probe-attest-custom-external-url-set-tr/custom	external_urls	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest custom	--fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-fingerprint-set-fl/trail/probe-attest-custom-fingerprint-set-tr/custom	artifact_fingerprint	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest custom	--flow	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-flow-set-fl/trail/probe-attest-custom-flow-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--name	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-name-set-fl/trail/probe-attest-custom-name-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--origin-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-origin-url-set-fl/trail/probe-attest-custom-origin-url-set-tr/custom	origin_url	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-attest custom	--redact-commit-info						nothing to read	the run with the flag set sent no request
+attest custom	--redact-commit-info	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-redact-commit-info-set-fl/trail/probe-attest-custom-redact-commit-info-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--registry-password						nothing to read	the run with the flag set sent no request
 attest custom	--registry-provider	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-registry-provider-set-fl/trail/probe-attest-custom-registry-provider-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--registry-username						nothing to read	the run with the flag set sent no request
 attest custom	--repo-id	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-repo-id-set-fl/trail/probe-attest-custom-repo-id-set-tr/custom				no field	the flag changes no field of the payload
-attest custom	--repo-provider						nothing to read	the run with the flag set sent no request
+attest custom	--repo-provider	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-repo-provider-set-fl/trail/probe-attest-custom-repo-provider-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--repo-root	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-repo-root-set-fl/trail/probe-attest-custom-repo-root-set-tr/custom				no field	the flag changes no field of the payload
-attest custom	--repo-url						nothing to read	the run with the flag set sent no request
+attest custom	--repo-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-repo-url-set-fl/trail/probe-attest-custom-repo-url-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--repository	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-repository-set-fl/trail/probe-attest-custom-repository-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--trail	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-trail-set-fl/trail/probe-attest-custom-trail-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--type	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-type-set-fl/trail/probe-attest-custom-type-set-tr/custom				no field	the flag changes no field of the payload
 attest custom	--user-data	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-custom-user-data-set-fl/trail/probe-attest-custom-user-data-set-tr/custom	user_data	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-attest decision	--annotate						nothing to read	the run with the flag set sent no request
-attest decision	--artifact-type						nothing to read	the run with the flag set sent no request
-attest decision	--attachments						nothing to read	the run with the flag set sent no request
+attest decision	--annotate	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-annotate-set-fl/trail/probe-attest-decision-annotate-set-tr/system	annotations	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
+attest decision	--artifact-type	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-artifact-type-set-fl/trail/probe-attest-decision-artifact-type-set-tr/system				no field	the flag changes no field of the payload
+attest decision	--attachments	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-attachments-set-fl/trail/probe-attest-decision-attachments-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--commit	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-commit-set-fl/trail/probe-attest-decision-commit-set-tr/system	git_commit_info	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest decision	--compliant	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-compliant-set-fl/trail/probe-attest-decision-compliant-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--control	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-control-set-fl/trail/probe-attest-decision-control-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--description	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-description-set-fl/trail/probe-attest-decision-description-set-tr/system	description	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest decision	--dry-run						nothing to read	the run with the flag set sent no request
 attest decision	--exclude	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-exclude-set-fl/trail/probe-attest-decision-exclude-set-tr/system				no field	the flag changes no field of the payload
-attest decision	--external-fingerprint						nothing to read	the run with the flag set sent no request
-attest decision	--external-url						nothing to read	the run with the flag set sent no request
+attest decision	--external-fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-external-fingerprint-set-fl/trail/probe-attest-decision-external-fingerprint-set-tr/system	external_urls	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
+attest decision	--external-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-external-url-set-fl/trail/probe-attest-decision-external-url-set-tr/system	external_urls	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest decision	--fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-fingerprint-set-fl/trail/probe-attest-decision-fingerprint-set-tr/system	artifact_fingerprint	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest decision	--flow	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-flow-set-fl/trail/probe-attest-decision-flow-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--name	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-name-set-fl/trail/probe-attest-decision-name-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--origin-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-origin-url-set-fl/trail/probe-attest-decision-origin-url-set-tr/system	origin_url	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-attest decision	--redact-commit-info						nothing to read	the run with the flag set sent no request
+attest decision	--redact-commit-info	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-redact-commit-info-set-fl/trail/probe-attest-decision-redact-commit-info-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--registry-password						nothing to read	the run with the flag set sent no request
 attest decision	--registry-provider	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-registry-provider-set-fl/trail/probe-attest-decision-registry-provider-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--registry-username						nothing to read	the run with the flag set sent no request
 attest decision	--repo-id	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-repo-id-set-fl/trail/probe-attest-decision-repo-id-set-tr/system				no field	the flag changes no field of the payload
-attest decision	--repo-provider						nothing to read	the run with the flag set sent no request
+attest decision	--repo-provider	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-repo-provider-set-fl/trail/probe-attest-decision-repo-provider-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--repo-root	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-repo-root-set-fl/trail/probe-attest-decision-repo-root-set-tr/system				no field	the flag changes no field of the payload
-attest decision	--repo-url						nothing to read	the run with the flag set sent no request
+attest decision	--repo-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-repo-url-set-fl/trail/probe-attest-decision-repo-url-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--repository	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-repository-set-fl/trail/probe-attest-decision-repository-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--trail	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-trail-set-fl/trail/probe-attest-decision-trail-set-tr/system				no field	the flag changes no field of the payload
 attest decision	--user-data	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-decision-user-data-set-fl/trail/probe-attest-decision-user-data-set-tr/system	user_data	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-attest generic	--annotate						nothing to read	the run with the flag set sent no request
-attest generic	--artifact-type						nothing to read	the run with the flag set sent no request
-attest generic	--attachments						nothing to read	the run with the flag set sent no request
+attest generic	--annotate	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-annotate-set-fl/trail/probe-attest-generic-annotate-set-tr/generic	annotations	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
+attest generic	--artifact-type	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-artifact-type-set-fl/trail/probe-attest-generic-artifact-type-set-tr/generic				no field	the flag changes no field of the payload
+attest generic	--attachments	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-attachments-set-fl/trail/probe-attest-generic-attachments-set-tr/generic				no field	the flag changes no field of the payload
 attest generic	--commit	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-commit-set-fl/trail/probe-attest-generic-commit-set-tr/generic	git_commit_info	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest generic	--compliant	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-compliant-set-fl/trail/probe-attest-generic-compliant-set-tr/generic				no field	the flag changes no field of the payload
 attest generic	--description	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-description-set-fl/trail/probe-attest-generic-description-set-tr/generic	description	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest generic	--dry-run						nothing to read	the run with the flag set sent no request
 attest generic	--exclude	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-exclude-set-fl/trail/probe-attest-generic-exclude-set-tr/generic				no field	the flag changes no field of the payload
-attest generic	--external-fingerprint						nothing to read	the run with the flag set sent no request
-attest generic	--external-url						nothing to read	the run with the flag set sent no request
+attest generic	--external-fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-external-fingerprint-set-fl/trail/probe-attest-generic-external-fingerprint-set-tr/generic	external_urls	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
+attest generic	--external-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-external-url-set-fl/trail/probe-attest-generic-external-url-set-tr/generic	external_urls	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest generic	--fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-fingerprint-set-fl/trail/probe-attest-generic-fingerprint-set-tr/generic	artifact_fingerprint	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest generic	--flow	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-flow-set-fl/trail/probe-attest-generic-flow-set-tr/generic				no field	the flag changes no field of the payload
 attest generic	--name	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-name-set-fl/trail/probe-attest-generic-name-set-tr/generic				no field	the flag changes no field of the payload
 attest generic	--origin-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-origin-url-set-fl/trail/probe-attest-generic-origin-url-set-tr/generic	origin_url	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-attest generic	--redact-commit-info						nothing to read	the run with the flag set sent no request
+attest generic	--redact-commit-info	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-redact-commit-info-set-fl/trail/probe-attest-generic-redact-commit-info-set-tr/generic				no field	the flag changes no field of the payload
 attest generic	--registry-password						nothing to read	the run with the flag set sent no request
 attest generic	--registry-provider	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-registry-provider-set-fl/trail/probe-attest-generic-registry-provider-set-tr/generic				no field	the flag changes no field of the payload
 attest generic	--registry-username						nothing to read	the run with the flag set sent no request
 attest generic	--repo-id	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-repo-id-set-fl/trail/probe-attest-generic-repo-id-set-tr/generic				no field	the flag changes no field of the payload
-attest generic	--repo-provider						nothing to read	the run with the flag set sent no request
+attest generic	--repo-provider	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-repo-provider-set-fl/trail/probe-attest-generic-repo-provider-set-tr/generic				no field	the flag changes no field of the payload
 attest generic	--repo-root	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-repo-root-set-fl/trail/probe-attest-generic-repo-root-set-tr/generic				no field	the flag changes no field of the payload
-attest generic	--repo-url						nothing to read	the run with the flag set sent no request
+attest generic	--repo-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-repo-url-set-fl/trail/probe-attest-generic-repo-url-set-tr/generic				no field	the flag changes no field of the payload
 attest generic	--repository	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-repository-set-fl/trail/probe-attest-generic-repository-set-tr/generic				no field	the flag changes no field of the payload
 attest generic	--trail	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-trail-set-fl/trail/probe-attest-generic-trail-set-tr/generic				no field	the flag changes no field of the payload
 attest generic	--user-data	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-generic-user-data-set-fl/trail/probe-attest-generic-user-data-set-tr/generic	user_data	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-attest junit	--annotate						nothing to read	the run with the flag set sent no request
-attest junit	--artifact-type						nothing to read	the run with the flag set sent no request
-attest junit	--attachments						nothing to read	the run with the flag set sent no request
+attest junit	--annotate	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-annotate-set-fl/trail/probe-attest-junit-annotate-set-tr/junit	annotations	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
+attest junit	--artifact-type	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-artifact-type-set-fl/trail/probe-attest-junit-artifact-type-set-tr/junit				no field	the flag changes no field of the payload
+attest junit	--attachments	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-attachments-set-fl/trail/probe-attest-junit-attachments-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--commit	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-commit-set-fl/trail/probe-attest-junit-commit-set-tr/junit	git_commit_info	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest junit	--description	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-description-set-fl/trail/probe-attest-junit-description-set-tr/junit	description	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest junit	--dry-run						nothing to read	the run with the flag set sent no request
 attest junit	--exclude	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-exclude-set-fl/trail/probe-attest-junit-exclude-set-tr/junit				no field	the flag changes no field of the payload
-attest junit	--external-fingerprint						nothing to read	the run with the flag set sent no request
-attest junit	--external-url						nothing to read	the run with the flag set sent no request
+attest junit	--external-fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-external-fingerprint-set-fl/trail/probe-attest-junit-external-fingerprint-set-tr/junit	external_urls	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
+attest junit	--external-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-external-url-set-fl/trail/probe-attest-junit-external-url-set-tr/junit	external_urls	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest junit	--fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-fingerprint-set-fl/trail/probe-attest-junit-fingerprint-set-tr/junit	artifact_fingerprint	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 attest junit	--flow	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-flow-set-fl/trail/probe-attest-junit-flow-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--name	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-name-set-fl/trail/probe-attest-junit-name-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--origin-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-origin-url-set-fl/trail/probe-attest-junit-origin-url-set-tr/junit	origin_url	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-attest junit	--redact-commit-info						nothing to read	the run with the flag set sent no request
+attest junit	--redact-commit-info	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-redact-commit-info-set-fl/trail/probe-attest-junit-redact-commit-info-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--registry-password						nothing to read	the run with the flag set sent no request
 attest junit	--registry-provider	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-registry-provider-set-fl/trail/probe-attest-junit-registry-provider-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--registry-username						nothing to read	the run with the flag set sent no request
 attest junit	--repo-id	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-repo-id-set-fl/trail/probe-attest-junit-repo-id-set-tr/junit				no field	the flag changes no field of the payload
-attest junit	--repo-provider						nothing to read	the run with the flag set sent no request
+attest junit	--repo-provider	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-repo-provider-set-fl/trail/probe-attest-junit-repo-provider-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--repo-root	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-repo-root-set-fl/trail/probe-attest-junit-repo-root-set-tr/junit				no field	the flag changes no field of the payload
-attest junit	--repo-url						nothing to read	the run with the flag set sent no request
+attest junit	--repo-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-repo-url-set-fl/trail/probe-attest-junit-repo-url-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--repository	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-repository-set-fl/trail/probe-attest-junit-repository-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--results-dir	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-results-dir-set-fl/trail/probe-attest-junit-results-dir-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--trail	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-trail-set-fl/trail/probe-attest-junit-trail-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--upload-results	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-upload-results-set-fl/trail/probe-attest-junit-upload-results-set-tr/junit				no field	the flag changes no field of the payload
 attest junit	--user-data	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-junit-user-data-set-fl/trail/probe-attest-junit-user-data-set-tr/junit	user_data	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-attest override	--annotate						nothing to read	the run with the flag set sent no request
-attest override	--artifact-type						nothing to read	the run with the flag set sent no request
+attest override	--annotate	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-annotate-set-fl/trail/probe-attest-override-annotate-set-tr/override	annotations	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"annotations":"Input should be a valid dictionary [input: ]"}}
+attest override	--artifact-type	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-artifact-type-set-fl/trail/probe-attest-override-artifact-type-set-tr/override				no field	the flag changes no field of the payload
 attest override	--attachments	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-attachments-set-fl/trail/probe-attest-override-attachments-set-tr/override				no field	the flag changes no field of the payload
 attest override	--commit	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-commit-set-fl/trail/probe-attest-override-commit-set-tr/override	git_commit_info	500	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"git_commit_info":"Input should be a valid dictionary or object t
 attest override	--description	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-description-set-fl/trail/probe-attest-override-description-set-tr/override	description	200	200	the server accepts it	"OK"
 attest override	--dry-run						nothing to read	the run with the flag set sent no request
 attest override	--exclude	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-exclude-set-fl/trail/probe-attest-override-exclude-set-tr/override				no field	the flag changes no field of the payload
-attest override	--external-fingerprint						nothing to read	the run with the flag set sent no request
-attest override	--external-url						nothing to read	the run with the flag set sent no request
-attest override	--fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-fingerprint-set-fl/trail/probe-attest-override-fingerprint-set-tr/override	artifact_fingerprint	404	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"artifact_fingerprint":"String should match pattern '^[a-f0-9]{64
+attest override	--external-fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-external-fingerprint-set-fl/trail/probe-attest-override-external-fingerprint-set-tr/override	external_urls	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"external_urls":"Input should be a valid dictionary [input: ]"}}
+attest override	--external-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-external-url-set-fl/trail/probe-attest-override-external-url-set-tr/override	external_urls	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"external_urls":"Input should be a valid dictionary [input: ]"}}
+attest override	--fingerprint	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-fingerprint-set-fl/trail/probe-attest-override-fingerprint-set-tr/override	artifact_fingerprint	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"artifact_fingerprint":"String should match pattern '^[a-f0-9]{64
 attest override	--flow	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-flow-set-fl/trail/probe-attest-override-flow-set-tr/override				no field	the flag changes no field of the payload
 attest override	--name	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-name-set-fl/trail/probe-attest-override-name-set-tr/override				no field	the flag changes no field of the payload
 attest override	--new-compliance-status	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-new-compliance-status-set-fl/trail/probe-attest-override-new-compliance-status-set-tr/override				no field	the flag changes no field of the payload
 attest override	--origin-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-origin-url-set-fl/trail/probe-attest-override-origin-url-set-tr/override	origin_url	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"origin_url":"Input should be a valid URL, input is empty [input:
 attest override	--original-attestation-type	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-original-attestation-type-set-fl/trail/probe-attest-override-original-attestation-type-set-tr/override				no field	the flag changes no field of the payload
 attest override	--reason	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-reason-set-fl/trail/probe-attest-override-reason-set-tr/override				no field	the flag changes no field of the payload
-attest override	--redact-commit-info						nothing to read	the run with the flag set sent no request
+attest override	--redact-commit-info	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-redact-commit-info-set-fl/trail/probe-attest-override-redact-commit-info-set-tr/override				no field	the flag changes no field of the payload
 attest override	--registry-password						nothing to read	the run with the flag set sent no request
 attest override	--registry-provider	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-registry-provider-set-fl/trail/probe-attest-override-registry-provider-set-tr/override				no field	the flag changes no field of the payload
 attest override	--registry-username						nothing to read	the run with the flag set sent no request
 attest override	--repo-id	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-repo-id-set-fl/trail/probe-attest-override-repo-id-set-tr/override				no field	the flag changes no field of the payload
-attest override	--repo-provider						nothing to read	the run with the flag set sent no request
+attest override	--repo-provider	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-repo-provider-set-fl/trail/probe-attest-override-repo-provider-set-tr/override				no field	the flag changes no field of the payload
 attest override	--repo-root	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-repo-root-set-fl/trail/probe-attest-override-repo-root-set-tr/override				no field	the flag changes no field of the payload
-attest override	--repo-url						nothing to read	the run with the flag set sent no request
+attest override	--repo-url	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-repo-url-set-fl/trail/probe-attest-override-repo-url-set-tr/override				no field	the flag changes no field of the payload
 attest override	--repository	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-repository-set-fl/trail/probe-attest-override-repository-set-tr/override				no field	the flag changes no field of the payload
 attest override	--trail	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-trail-set-fl/trail/probe-attest-override-trail-set-tr/override				no field	the flag changes no field of the payload
 attest override	--user-data	POST	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-attest-override-user-data-set-fl/trail/probe-attest-override-user-data-set-tr/override	user_data	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"user_data.dict[any,any]":"Input should be a valid dictionary [in
 begin trail	--commit	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-commit-set-fl	git_commit_info	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 begin trail	--description	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-description-set-fl	description	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 begin trail	--dry-run						nothing to read	the run with the flag set sent no request
-begin trail	--external-fingerprint						nothing to read	the run with the flag set sent no request
-begin trail	--external-url						nothing to read	the run with the flag set sent no request
+begin trail	--external-fingerprint	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-external-fingerprint-set-fl	external_urls	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
+begin trail	--external-url	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-external-url-set-fl	external_urls	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 begin trail	--flow	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-flow-set-fl				no field	the flag changes no field of the payload
 begin trail	--origin-url	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-origin-url-set-fl	origin_url	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-begin trail	--redact-commit-info						nothing to read	the run with the flag set sent no request
+begin trail	--redact-commit-info	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-redact-commit-info-set-fl				no field	the flag changes no field of the payload
 begin trail	--repo-id	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-repo-id-set-fl				no field	the flag changes no field of the payload
-begin trail	--repo-provider						nothing to read	the run with the flag set sent no request
+begin trail	--repo-provider	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-repo-provider-set-fl				no field	the flag changes no field of the payload
 begin trail	--repo-root	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-repo-root-set-fl				no field	the flag changes no field of the payload
-begin trail	--repo-url						nothing to read	the run with the flag set sent no request
+begin trail	--repo-url	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-repo-url-set-fl				no field	the flag changes no field of the payload
 begin trail	--repository	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-repository-set-fl				no field	the flag changes no field of the payload
 begin trail	--template-file	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-template-file-set-fl				no field	the flag changes no field of the payload
 begin trail	--user-data	PUT	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-begin-trail-user-data-set-fl	user_data	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
@@ -206,13 +206,13 @@ config	--set						nothing to read	the run with the flag set sent no request
 config	--unset						nothing to read	the run with the flag set sent no request
 create api-key	--description	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-create-api-key-description-set-sa/api-keys				no field	the flag changes no field of the payload
 create api-key	--dry-run						nothing to read	the run with the flag set sent no request
-create api-key	--expires-at						nothing to read	the run with the flag set sent no request
+create api-key	--expires-at	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-create-api-key-expires-at-set-sa/api-keys	expires_at	201	400	the server refuses it	{"message":"Input payload validation failed","errors":{"expires_at":"Input should be a valid integer, unable to parse st
 create api-key	--output	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-create-api-key-output-set-sa/api-keys				no field	the flag changes no field of the payload
 create api-key	--service-account	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-create-api-key-service-account-set-sa/api-keys				no field	the flag changes no field of the payload
 create attestation-type	--description	POST	http://localhost:8001/api/v2/custom-attestation-types/docs-cmd-test-user-shared	description	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 create attestation-type	--dry-run						nothing to read	the run with the flag set sent no request
 create attestation-type	--jq	POST	http://localhost:8001/api/v2/custom-attestation-types/docs-cmd-test-user-shared	evaluator	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-create attestation-type	--schema						nothing to read	the run with the flag set sent no request
+create attestation-type	--schema	POST	http://localhost:8001/api/v2/custom-attestation-types/docs-cmd-test-user-shared				no field	the flag changes no field of the payload
 create control	--description	POST	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared	description	409	409	unusable, the control failed	{"message":"A control with identifier 'probe-create-control-description-set-co' already exists in organization 'docs-cmd
 create control	--dry-run						nothing to read	the run with the flag set sent no request
 create control	--name	POST	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared				no field	the flag changes no field of the payload
@@ -220,7 +220,7 @@ create environment	--description	PUT	http://localhost:8001/api/v2/environments/d
 create environment	--dry-run						nothing to read	the run with the flag set sent no request
 create environment	--exclude-scaling	PUT	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared	include_scaling	201	400	the server refuses it	{"message":"Input payload validation failed","errors":{"include_scaling":"Input should be a valid boolean, unable to int
 create environment	--include-scaling	PUT	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared	include_scaling	201	400	the server refuses it	{"message":"Input payload validation failed","errors":{"include_scaling":"Input should be a valid boolean, unable to int
-create environment	--included-environments	PUT	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared	included_environments	404	404	unusable, the control failed	{"message":"Environment named '' does not exist for organization 'docs-cmd-test-user-shared'"}
+create environment	--included-environments	PUT	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared	included_environments	201	404	the server refuses it	{"message":"Environment named '' does not exist for organization 'docs-cmd-test-user-shared'"}
 create environment	--require-provenance	PUT	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared	require_provenance	201	400	the server refuses it	{"message":"Input payload validation failed","errors":{"require_provenance":"Input should be a valid boolean, unable to
 create environment	--type	PUT	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared				no field	the flag changes no field of the payload
 create flow	--description	PUT	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared	description	201	201	the server accepts it	"OK"
@@ -228,12 +228,12 @@ create flow	--dry-run						nothing to read	the run with the flag set sent no req
 create flow	--template	PUT	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared	template	201	201	the server accepts it	"OK"
 create flow	--template-file	PUT	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared/template_file	template	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
 create flow	--use-empty-template	PUT	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared/template_file	template	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"data_json":"Field required [input: None]"}}
-create flow	--visibility	PUT	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared	visibility	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"visibility":"Input should be 'public' or 'private' [input: ]"}}
+create flow	--visibility	PUT	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared	visibility	201	400	the server refuses it	{"message":"Input payload validation failed","errors":{"visibility":"Input should be 'public' or 'private' [input: ]"}}
 create policy	--comment	PUT	http://localhost:8001/api/v2/policies/docs-cmd-test-user-shared	comment	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"payload":"Field required [input: None]"}}
 create policy	--description	PUT	http://localhost:8001/api/v2/policies/docs-cmd-test-user-shared	description	400	400	unusable, the control failed	{"message":"Input payload validation failed","errors":{"payload":"Field required [input: None]"}}
 create policy	--dry-run						nothing to read	the run with the flag set sent no request
 create policy	--type	PUT	http://localhost:8001/api/v2/policies/docs-cmd-test-user-shared				no field	the flag changes no field of the payload
-create service-account	--description	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared	description	201	201	the server accepts it	{"name":"replay-e19b9fc0","display_name":"replay-e19b9fc0","privilege":"reader","creating_user_id":"858ac60e-cdf4-4cd5-9
+create service-account	--description	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared	description	201	201	the server accepts it	{"name":"replay-bb9274a1","display_name":"replay-bb9274a1","privilege":"reader","creating_user_id":"45d4340a-0100-4b72-9
 create service-account	--dry-run						nothing to read	the run with the flag set sent no request
 create service-account	--privilege	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared				no field	the flag changes no field of the payload
 delete api-key	--assume-yes						nothing to read	the run with the flag set sent no request
@@ -245,8 +245,10 @@ delete service-account	--dry-run						nothing to read	the run with the flag set 
 delete service-account	--yes						nothing to read	the run with the flag set sent no request
 detach-policy	--dry-run						nothing to read	the run with the flag set sent no request
 detach-policy	--environment	DELETE	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-detach-policy-environment-set-en/policies				no field	the flag changes no field of the payload
-diff snapshots	--output						nothing to read	the run with the flag set sent no request
-diff snapshots	--show-unchanged						nothing to read	the run with the flag set sent no request
+diff snapshots	--output	GET	http://localhost:8001/api/v2/env-diff/docs-cmd-test-user-shared?snappish1=probe-diff-snapshots-output-set-en&snappish2=probe-diff-snapshots-output-set-en	snappish1	200	400	the server refuses it	{"message":"Bad snappish "}
+diff snapshots	--output	GET	http://localhost:8001/api/v2/env-diff/docs-cmd-test-user-shared?snappish1=probe-diff-snapshots-output-set-en&snappish2=probe-diff-snapshots-output-set-en	snappish2	200	400	the server refuses it	{"message":"Bad snappish "}
+diff snapshots	--show-unchanged	GET	http://localhost:8001/api/v2/env-diff/docs-cmd-test-user-shared?snappish1=probe-diff-snapshots-show-unchanged-set-en&snappish2=probe-diff-snapshots-show-unchanged-set-en	snappish1	200	400	the server refuses it	{"message":"Bad snappish "}
+diff snapshots	--show-unchanged	GET	http://localhost:8001/api/v2/env-diff/docs-cmd-test-user-shared?snappish1=probe-diff-snapshots-show-unchanged-set-en&snappish2=probe-diff-snapshots-show-unchanged-set-en	snappish2	200	400	the server refuses it	{"message":"Bad snappish "}
 evaluate input	--assert						nothing to read	the run with the flag set sent no request
 evaluate input	--attestations						nothing to read	the run with the flag set sent no request
 evaluate input	--flow						nothing to read	the run with the flag set sent no request
@@ -278,89 +280,92 @@ fingerprint	--exclude						nothing to read	the run with the flag set sent no req
 fingerprint	--registry-password						nothing to read	the run with the flag set sent no request
 fingerprint	--registry-provider						nothing to read	the run with the flag set sent no request
 fingerprint	--registry-username						nothing to read	the run with the flag set sent no request
-get api-key	--output						nothing to read	the run with the flag set sent no request
-get api-key	--service-account						nothing to read	the run with the flag set sent no request
-get artifact	--output						nothing to read	the run with the flag set sent no request
-get artifact	--trail						nothing to read	the run with the flag set sent no request
+get api-key	--output	GET	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-get-api-key-output-set-sa/api-keys/198ec734-1b34-4c8c-8c18-192e718f				no field	the flag changes no query parameter
+get api-key	--service-account	GET	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-get-api-key-service-account-set-sa/api-keys/e38080f8-7880-4150-bc6f-c059dfcb				no field	the flag changes no query parameter
+get artifact	--output	GET	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-get-artifact-output-set-fl/fingerprint/1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01				no field	the flag changes no query parameter
+get artifact	--trail	GET	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-get-artifact-trail-set-fl/fingerprint/1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01?trail=probe-get-artifact-trail-set-tr	trail	200	200	the server accepts it	{"id":"26c8908c-2675-4ff8-9676-adeab366","trail_name":"probe-get-artifact-trail-set-tr","template_reference_name":"probe
 get attestation	--attestation-id						nothing to read	the run with the flag set sent no request
 get attestation	--fingerprint						nothing to read	the run with the flag set sent no request
-get attestation	--flow						nothing to read	the run with the flag set sent no request
-get attestation	--output						nothing to read	the run with the flag set sent no request
-get attestation	--trail						nothing to read	the run with the flag set sent no request
-get attestation-type	--output						nothing to read	the run with the flag set sent no request
-get control	--output						nothing to read	the run with the flag set sent no request
-get default-org	--output						nothing to read	the run with the flag set sent no request
-get environment	--output						nothing to read	the run with the flag set sent no request
-get flow	--output						nothing to read	the run with the flag set sent no request
-get policy	--output						nothing to read	the run with the flag set sent no request
-get service-account	--output						nothing to read	the run with the flag set sent no request
-get snapshot	--output						nothing to read	the run with the flag set sent no request
-get trail	--flow						nothing to read	the run with the flag set sent no request
-get trail	--output						nothing to read	the run with the flag set sent no request
+get attestation	--flow	GET	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-get-attestation-flow-set-fl/trail/probe-get-attestation-flow-set-tr/probe-attestation				no field	the flag changes no query parameter
+get attestation	--output	GET	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-get-attestation-output-set-fl/trail/probe-get-attestation-output-set-tr/probe-attestation				no field	the flag changes no query parameter
+get attestation	--trail	GET	http://localhost:8001/api/v2/attestations/docs-cmd-test-user-shared/probe-get-attestation-trail-set-fl/trail/probe-get-attestation-trail-set-tr/probe-attestation				no field	the flag changes no query parameter
+get attestation-type	--output	GET	http://localhost:8001/api/v2/custom-attestation-types/docs-cmd-test-user-shared/probe-get-attestation-type-output-set-nm				no field	the flag changes no query parameter
+get control	--output	GET	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared/probe-get-control-output-set-co				no field	the flag changes no query parameter
+get default-org	--output	GET	http://localhost:8001/api/v2/user/default-org				no field	the flag changes no query parameter
+get environment	--output	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-get-environment-output-set-en				no field	the flag changes no query parameter
+get flow	--output	GET	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared/probe-get-flow-output-set-fl				no field	the flag changes no query parameter
+get policy	--output	GET	http://localhost:8001/api/v2/policies/docs-cmd-test-user-shared/probe-get-policy-output-set-po				no field	the flag changes no query parameter
+get service-account	--output	GET	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-get-service-account-output-set-sa				no field	the flag changes no query parameter
+get snapshot	--output	GET	http://localhost:8001/api/v2/snapshots/docs-cmd-test-user-shared/probe-get-snapshot-output-set-en/-1				no field	the flag changes no query parameter
+get trail	--flow	GET	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-get-trail-flow-set-fl/probe-get-trail-flow-set-tr				no field	the flag changes no query parameter
+get trail	--output	GET	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared/probe-get-trail-output-set-fl/probe-get-trail-output-set-tr				no field	the flag changes no query parameter
 join environment	--dry-run						nothing to read	the run with the flag set sent no request
 join environment	--logical	PUT	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-join-environment-logical-set-lg/join				no field	the flag changes no field of the payload
 join environment	--physical	PUT	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-join-environment-physical-set-lg/join				no field	the flag changes no field of the payload
-list api-keys	--output						nothing to read	the run with the flag set sent no request
-list api-keys	--service-account						nothing to read	the run with the flag set sent no request
-list artifacts	--flow						nothing to read	the run with the flag set sent no request
-list artifacts	--output						nothing to read	the run with the flag set sent no request
-list artifacts	--page						nothing to read	the run with the flag set sent no request
-list artifacts	--page-limit						nothing to read	the run with the flag set sent no request
-list artifacts	--repo						nothing to read	the run with the flag set sent no request
-list attestation-types	--output						nothing to read	the run with the flag set sent no request
-list controls	--archived						nothing to read	the run with the flag set sent no request
-list controls	--output						nothing to read	the run with the flag set sent no request
-list controls	--page						nothing to read	the run with the flag set sent no request
-list controls	--page-limit						nothing to read	the run with the flag set sent no request
-list controls	--search						nothing to read	the run with the flag set sent no request
-list controls	--sort-direction						nothing to read	the run with the flag set sent no request
-list controls	--tag						nothing to read	the run with the flag set sent no request
-list environments	--name						nothing to read	the run with the flag set sent no request
-list environments	--output						nothing to read	the run with the flag set sent no request
-list environments	--page						nothing to read	the run with the flag set sent no request
-list environments	--page-limit						nothing to read	the run with the flag set sent no request
-list environments	--sort						nothing to read	the run with the flag set sent no request
-list environments	--sort-direction						nothing to read	the run with the flag set sent no request
-list environments	--space-id						nothing to read	the run with the flag set sent no request
-list environments	--tag						nothing to read	the run with the flag set sent no request
-list environments	--type						nothing to read	the run with the flag set sent no request
-list flows	--ignore-case						nothing to read	the run with the flag set sent no request
-list flows	--name						nothing to read	the run with the flag set sent no request
-list flows	--output						nothing to read	the run with the flag set sent no request
-list flows	--page						nothing to read	the run with the flag set sent no request
-list flows	--page-limit						nothing to read	the run with the flag set sent no request
-list policies	--output						nothing to read	the run with the flag set sent no request
-list repos	--name						nothing to read	the run with the flag set sent no request
-list repos	--output						nothing to read	the run with the flag set sent no request
-list repos	--page						nothing to read	the run with the flag set sent no request
-list repos	--page-limit						nothing to read	the run with the flag set sent no request
-list repos	--provider						nothing to read	the run with the flag set sent no request
-list repos	--repo-id						nothing to read	the run with the flag set sent no request
-list repos	--search						nothing to read	the run with the flag set sent no request
-list repos	--sort-direction						nothing to read	the run with the flag set sent no request
-list repos	--tag						nothing to read	the run with the flag set sent no request
-list service-accounts	--output						nothing to read	the run with the flag set sent no request
-list snapshots	--interval						nothing to read	the run with the flag set sent no request
-list snapshots	--output						nothing to read	the run with the flag set sent no request
-list snapshots	--page						nothing to read	the run with the flag set sent no request
-list snapshots	--page-limit						nothing to read	the run with the flag set sent no request
-list snapshots	--reverse						nothing to read	the run with the flag set sent no request
-list trails	--fingerprint						nothing to read	the run with the flag set sent no request
-list trails	--flow						nothing to read	the run with the flag set sent no request
-list trails	--flow-tag						nothing to read	the run with the flag set sent no request
-list trails	--output						nothing to read	the run with the flag set sent no request
-list trails	--page						nothing to read	the run with the flag set sent no request
-list trails	--page-limit						nothing to read	the run with the flag set sent no request
-log environment	--end						nothing to read	the run with the flag set sent no request
-log environment	--end-ts						nothing to read	the run with the flag set sent no request
-log environment	--interval						nothing to read	the run with the flag set sent no request
-log environment	--output						nothing to read	the run with the flag set sent no request
-log environment	--page						nothing to read	the run with the flag set sent no request
-log environment	--page-limit						nothing to read	the run with the flag set sent no request
-log environment	--repo						nothing to read	the run with the flag set sent no request
-log environment	--reverse						nothing to read	the run with the flag set sent no request
-log environment	--start						nothing to read	the run with the flag set sent no request
-log environment	--start-ts						nothing to read	the run with the flag set sent no request
+list api-keys	--output	GET	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-list-api-keys-output-set-sa/api-keys				no field	the flag changes no query parameter
+list api-keys	--service-account	GET	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-list-api-keys-service-account-set-sa/api-keys				no field	the flag changes no query parameter
+list artifacts	--flow	GET	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared?flow_name=probe-list-artifacts-flow-set-fl&page=1&per_page=15	flow_name	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.flow_name":"String should match pattern '^[a-zA-Z0-9][a-zA
+list artifacts	--output	GET	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared?page=1&per_page=15				no field	the flag changes no query parameter
+list artifacts	--page	GET	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared?page=1&per_page=15				no field	the flag changes no query parameter
+list artifacts	--page-limit	GET	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared?page=1&per_page=5	per_page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.per_page":"Input should be a valid integer, unable to pars
+list artifacts	--repo	GET	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared?page=1&per_page=15&repo_name=probe-repo	repo_name	404	200	unusable, the control failed	[{"id":"897cd776-c3f8-4d34-bd9b-a2667013","trail_name":"probe-get-attestation-trail-set-tr","template_reference_name":"p
+list attestation-types	--output	GET	http://localhost:8001/api/v2/custom-attestation-types/docs-cmd-test-user-shared				no field	the flag changes no query parameter
+list controls	--archived	GET	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared?archived=true&page=1&per_page=15	archived	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.archived":"Input should be a valid boolean, unable to inte
+list controls	--output	GET	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared?page=1&per_page=15				no field	the flag changes no query parameter
+list controls	--page	GET	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared?page=1&per_page=15				no field	the flag changes no query parameter
+list controls	--page-limit	GET	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared?page=1&per_page=5	per_page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.per_page":"Input should be a valid integer, unable to pars
+list controls	--search	GET	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared?page=1&per_page=15&search=probe-search	search	200	200	the server accepts it	{"_links":{"self":{"href":"http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared?page=1&per_page=15&search="},
+list controls	--sort-direction	GET	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared?page=1&per_page=15&sort_direction=asc	sort_direction	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.sort_direction":"Input should be 'asc' or 'desc' [input: ]
+list controls	--tag	GET	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared?page=1&per_page=15&tag=probe-tag	tag	200	200	the server accepts it	{"_links":{"self":{"href":"http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared?page=1&per_page=15&tag="},"fi
+list environments	--name	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?name=probe-list-environments-name-set-nm&page=1&per_page=5	name	200	200	the server accepts it	{"_links":{"self":{"href":"http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?name=&page=1&per_page=5"}
+list environments	--output	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5				no field	the flag changes no query parameter
+list environments	--page	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5				no field	the flag changes no query parameter
+list environments	--page-limit	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5	page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.page":"Input should be a valid integer, unable to parse st
+list environments	--page-limit	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5	per_page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.per_page":"Input should be a valid integer, unable to pars
+list environments	--sort	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5&sort=name	sort	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.sort":"Input should be 'name', 'last_modified_at' or 'last
+list environments	--sort-direction	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5&sort_direction=asc	sort_direction	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.sort_direction":"Input should be 'asc' or 'desc' [input: ]
+list environments	--space-id	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5&space_id=probe-space-id	space_id	200	200	the server accepts it	{"_links":{"self":{"href":"http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5&space_i
+list environments	--tag	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5&tag=probe-tag	tag	200	200	the server accepts it	{"_links":{"self":{"href":"http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5&tag="},
+list environments	--type	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared?page=1&per_page=5&type=K8S	type	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.type[0]":"Input should be 'K8S', 'ECS', 'S3', 'lambda', 's
+list flows	--ignore-case	GET	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared				no field	the flag changes no query parameter
+list flows	--name	GET	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared?search_by_name=probe-list-flows-name-set-nm	search_by_name	200	400	the server refuses it	{"message":"Empty string is not allowed for flow names."}
+list flows	--output	GET	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared				no field	the flag changes no query parameter
+list flows	--page	GET	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared?page=1&per_page=20	page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.page":"Input should be a valid integer, unable to parse st
+list flows	--page	GET	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared?page=1&per_page=20	per_page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.per_page":"Input should be a valid integer, unable to pars
+list flows	--page-limit	GET	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared?page=1&per_page=5	page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.page":"Input should be a valid integer, unable to parse st
+list flows	--page-limit	GET	http://localhost:8001/api/v2/flows/docs-cmd-test-user-shared?page=1&per_page=5	per_page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.per_page":"Input should be a valid integer, unable to pars
+list policies	--output	GET	http://localhost:8001/api/v2/policies/docs-cmd-test-user-shared				no field	the flag changes no query parameter
+list repos	--name	GET	http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?name=probe-list-repos-name-set-nm&page=1&per_page=15	name	200	200	the server accepts it	{"_links":{"self":{"href":"http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?name=&page=1&per_page=15"},"firs
+list repos	--output	GET	http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=15				no field	the flag changes no query parameter
+list repos	--page	GET	http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=15				no field	the flag changes no query parameter
+list repos	--page-limit	GET	http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=5	per_page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.per_page":"Input should be a valid integer, unable to pars
+list repos	--provider	GET	http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=15&provider=github	provider	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.provider":"Input should be 'github', 'gitlab', 'bitbucket'
+list repos	--repo-id	GET	http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=15&repo_id=probe-repo-id	repo_id	200	200	the server accepts it	{"_links":{"self":{"href":"http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=15&repo_id="},"f
+list repos	--search	GET	http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=15&search=probe-search	search	200	200	the server accepts it	{"_links":{"self":{"href":"http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=15&search="},"fi
+list repos	--sort-direction	GET	http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=15&sort_direction=asc	sort_direction	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.sort_direction":"Input should be 'asc' or 'desc' [input: ]
+list repos	--tag	GET	http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=15&tag=probe-tag	tag	200	200	the server accepts it	{"_links":{"self":{"href":"http://localhost:8001/api/v2/repos/docs-cmd-test-user-shared?page=1&per_page=15&tag="},"first
+list service-accounts	--output	GET	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared				no field	the flag changes no query parameter
+list snapshots	--interval	GET	http://localhost:8001/api/v2/snapshots/docs-cmd-test-user-shared/probe-list-snapshots-interval-set-en?interval=1&page=1&per_page=15&reverse=false	interval	200	200	the server accepts it	[{"index":1,"from":1786793334.7993636,"to":0.0,"compliant":false,"duration":0.571397066116333}]
+list snapshots	--output	GET	http://localhost:8001/api/v2/snapshots/docs-cmd-test-user-shared/probe-list-snapshots-output-set-en?interval=&page=1&per_page=15&reverse=false				no field	the flag changes no query parameter
+list snapshots	--page	GET	http://localhost:8001/api/v2/snapshots/docs-cmd-test-user-shared/probe-list-snapshots-page-set-en?interval=&page=1&per_page=15&reverse=false				no field	the flag changes no query parameter
+list snapshots	--page-limit	GET	http://localhost:8001/api/v2/snapshots/docs-cmd-test-user-shared/probe-list-snapshots-page-limit-set-en?interval=&page=1&per_page=5&reverse=false	per_page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.per_page":"Input should be a valid integer, unable to pars
+list snapshots	--reverse	GET	http://localhost:8001/api/v2/snapshots/docs-cmd-test-user-shared/probe-list-snapshots-reverse-set-en?interval=&page=1&per_page=15&reverse=true	reverse	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.reverse":"Input should be a valid boolean, unable to inter
+list trails	--fingerprint	GET	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared?fingerprint=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01&page=1&per_page=20	fingerprint	200	200	the server accepts it	{"data":[],"pagination":{"total":0,"page":1,"per_page":20,"page_count":0}}
+list trails	--flow	GET	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared?flow=probe-list-trails-flow-set-fl&page=1&per_page=20	flow	200	404	the server refuses it	{"message":"Flow named '' does not exist for organization 'docs-cmd-test-user-shared'"}
+list trails	--flow-tag	GET	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared?flow_tag=probe%3Dflow-tag&page=1&per_page=20	flow_tag	200	200	the server accepts it	{"data":[],"pagination":{"total":0,"page":1,"per_page":20,"page_count":0}}
+list trails	--output	GET	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared?page=1&per_page=20				no field	the flag changes no query parameter
+list trails	--page	GET	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared?page=1&per_page=20				no field	the flag changes no query parameter
+list trails	--page-limit	GET	http://localhost:8001/api/v2/trails/docs-cmd-test-user-shared?page=1&per_page=5	per_page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.per_page":"Input should be a valid integer, unable to pars
+log environment	--end	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-log-environment-end-set-en/events?end=1&interval=&page=1&per_page=15&reverse=false	end	200	400	the server refuses it	{"message":"Invalid interval value: "}
+log environment	--end-ts	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-log-environment-end-ts-set-en/events?end_ts=4102444800&interval=&page=1&per_page=15&reverse=false	end_ts	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.end_ts":"Input should be a valid number, unable to parse s
+log environment	--interval	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-log-environment-interval-set-en/events?interval=1&page=1&per_page=15&reverse=false	interval	200	200	the server accepts it	[{"environment_name":"probe-log-environment-interval-set-en","snapshot_index":1,"artifact_name":"probe-artifact","sha256
+log environment	--output	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-log-environment-output-set-en/events?interval=&page=1&per_page=15&reverse=false				no field	the flag changes no query parameter
+log environment	--page	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-log-environment-page-set-en/events?interval=&page=1&per_page=15&reverse=false				no field	the flag changes no query parameter
+log environment	--page-limit	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-log-environment-page-limit-set-en/events?interval=&page=1&per_page=5&reverse=false	per_page	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.per_page":"Input should be a valid integer, unable to pars
+log environment	--repo	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-log-environment-repo-set-en/events?interval=&page=1&per_page=15&repo_name=probe-repo&reverse=false	repo_name	404	404	unusable, the control failed	{"message":"Repo '' not found"}
+log environment	--reverse	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-log-environment-reverse-set-en/events?interval=&page=1&per_page=15&reverse=true	reverse	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.reverse":"Input should be a valid boolean, unable to inter
+log environment	--start	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-log-environment-start-set-en/events?interval=&page=1&per_page=15&reverse=false&start=1	start	200	400	the server refuses it	{"message":"Invalid interval value: "}
+log environment	--start-ts	GET	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-log-environment-start-ts-set-en/events?interval=&page=1&per_page=15&reverse=false&start_ts=1	start_ts	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"query.start_ts":"Input should be a valid number, unable to parse
 rename environment	--dry-run						nothing to read	the run with the flag set sent no request
 rename flow	--dry-run						nothing to read	the run with the flag set sent no request
 report artifact	--artifact-type	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-report-artifact-artifact-type-set-fl	filename	201	201	the server accepts it	{"message":"OK"}
@@ -377,11 +382,11 @@ report artifact	--registry-provider	POST	http://localhost:8001/api/v2/artifacts/
 report artifact	--registry-username						nothing to read	the run with the flag set sent no request
 report artifact	--repo-root	POST	http://localhost:8001/api/v2/artifacts/docs-cmd-test-user-shared/probe-report-artifact-repo-root-set-fl				no field	the flag changes no field of the payload
 rotate api-key	--dry-run						nothing to read	the run with the flag set sent no request
-rotate api-key	--expires-at						nothing to read	the run with the flag set sent no request
-rotate api-key	--grace-period-hours						nothing to read	the run with the flag set sent no request
-rotate api-key	--output	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-rotate-api-key-output-set-sa/api-keys/b4b21216-5798-46a1-bba4-f941a3e4/rotate				no field	the flag changes no field of the payload
-rotate api-key	--service-account	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-rotate-api-key-service-account-set-sa/api-keys/89d80c71-59d4-423b-859f-8b6c4744/rotate				no field	the flag changes no field of the payload
-search	--output						nothing to read	the run with the flag set sent no request
+rotate api-key	--expires-at	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-rotate-api-key-expires-at-set-sa/api-keys/85c4a98e-b52b-4503-99fa-b3eac5d4/rotate				no field	the flag changes no field of the payload
+rotate api-key	--grace-period-hours	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-rotate-api-key-grace-period-hours-set-sa/api-keys/7157e218-3843-4be1-b3b7-13f6740b/rotate				no field	the flag changes no field of the payload
+rotate api-key	--output	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-rotate-api-key-output-set-sa/api-keys/5f2eb6bb-f90f-4d71-a8bd-296e6e1e/rotate				no field	the flag changes no field of the payload
+rotate api-key	--service-account	POST	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-rotate-api-key-service-account-set-sa/api-keys/1aa3aa9e-9587-4009-b64e-3972e99f/rotate				no field	the flag changes no field of the payload
+search	--output	GET	http://localhost:8001/api/v2/search/docs-cmd-test-user-shared/sha/c4bec949ae58e8c07ac28ccb4205be3f42e9c3415c2a02594622bd386d5ce4bf				no field	the flag changes no query parameter
 snapshot docker	--dry-run						nothing to read	the run with the flag set sent no request
 snapshot path	--dry-run						nothing to read	the run with the flag set sent no request
 snapshot path	--exclude	PUT	http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared/probe-snapshot-path-exclude-set-en/report/server	artifacts	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"artifacts[0]":"Input should be a valid dictionary or object to e
@@ -399,12 +404,12 @@ status	--assert						nothing to read	the run with the flag set sent no request
 tag	--dry-run						nothing to read	the run with the flag set sent no request
 tag	--provider						nothing to read	the run with the flag set sent no request
 tag	--repo-id						nothing to read	the run with the flag set sent no request
-tag	--set						nothing to read	the run with the flag set sent no request
+tag	--set	PATCH	http://localhost:8001/api/v2/tags/docs-cmd-test-user-shared/flow/probe-tag-set-set-fl	set_tags	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"set_tags":"Input should be a valid dictionary [input: ]"}}
 tag	--unset	PATCH	http://localhost:8001/api/v2/tags/docs-cmd-test-user-shared/flow/probe-tag-unset-set-fl	remove_tags	200	200	the server accepts it	"OK"
 unarchive control	--dry-run						nothing to read	the run with the flag set sent no request
-update control	--description	PUT	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared/probe-update-control-description-set-co	description	200	200	the server accepts it	{"identifier":"probe-update-control-description-set-co","name":"replay-0a53320e","version":4,"created_at":1786786188.646
+update control	--description	PUT	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared/probe-update-control-description-set-co	description	200	200	the server accepts it	{"identifier":"probe-update-control-description-set-co","name":"replay-037edd6d","version":4,"created_at":1786793375.712
 update control	--dry-run						nothing to read	the run with the flag set sent no request
-update control	--link						nothing to read	the run with the flag set sent no request
+update control	--link	PUT	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared/probe-update-control-link-set-co	links	200	400	the server refuses it	{"message":"Input payload validation failed","errors":{"links":"Input should be a valid dictionary [input: ]"}}
 update control	--name	PUT	http://localhost:8001/api/v2/controls/docs-cmd-test-user-shared/probe-update-control-name-set-co				no field	the flag changes no field of the payload
 update default-org	--dry-run						nothing to read	the run with the flag set sent no request
 update service-account	--description	PATCH	http://localhost:8001/api/v2/service-accounts/docs-cmd-test-user-shared/probe-update-service-account-description-set-sa				no field	the flag changes no field of the payload

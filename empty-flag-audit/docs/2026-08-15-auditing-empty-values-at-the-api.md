@@ -9,12 +9,13 @@ is what it does, what it found, and what it cannot reach.
 - The question cannot be asked through the CLI, because an empty value mostly
   produces the same request as omitting the flag.
 - It can be asked by capturing the request and replaying it, which needs no new
-  instrumentation: `--debug` already logs the outgoing URL and JSON body.
-- The flag-to-field mapping can be measured rather than written by hand, by
-  diffing the payload of a run with the flag set against one with it omitted.
+  instrumentation: `--debug` already logs what the CLI sends.
+- What a flag controls can be measured rather than written by hand, by diffing
+  the request of a run with the flag set against one with it omitted - a payload
+  field for a command that writes, a query parameter for one that reads.
 - `replay.py` does it, reading the same spec.json and writing results-api.tsv.
-- Of 412 rows, 19 are an answer about the server: 11 fields it accepts empty and
-  8 it refuses.
+- Of 417 rows, 77 are an answer about the server: 25 it accepts empty and 52 it
+  refuses.
 - Among the eleven, `create flow --template` is refused by the CLI and accepted
   by the API, which stores a flow requiring an attestation whose name is empty.
 - Also among them, an artifact can be stored with no name at all, leaving anyone
@@ -22,13 +23,16 @@ is what it does, what it found, and what it cannot reach.
 - Both are measured instances of the gap the decision document argues about: a
   CLI rule does not cover a customer calling the API directly. Neither would be
   closed by the rule it proposes.
-- Most rows are not an answer, and mostly for good reasons: the read commands
-  send no body, and some flags never leave the machine.
+- Every emptied filter is accepted. `tag=`, `search=`, `name=` are answered 200
+  with a list, as though no filter had been asked for, which is the same silent
+  no-match the decision document records on the CLI side.
+- Most remaining rows are not an answer for good reasons: some flags never leave
+  the machine, and multipart requests are not replayed.
 
 ## Why the CLI cannot ask this
 
-`2026-08-13-empty-value-decision.md` already establishes the constraint. For 172
-of the 189 combinations nothing refuses, an empty value produces a request
+`2026-08-13-empty-value-decision.md` already establishes the constraint. For 165
+of the 183 combinations nothing refuses, an empty value produces a request
 identical to the one omitting the flag sends, so there is nothing empty in the
 payload for the server to reject. Running the CLI harder cannot get at the
 server's behaviour, because the CLI never puts the question to it.
@@ -39,17 +43,17 @@ than through the CLI.
 
 ## What makes it possible
 
-`--debug` logs the outgoing request, not only the response. `internal/requests/requests.go:265-276`
-logs the URL and the pretty-printed JSON body of every request before it is
-sent. The audit already runs every command with `--debug` (`empty-flag-audit/audit.py:212`)
-and uses only the status line, discarding the payload.
-
-So the extension needs no change to the CLI to see what is being sent.
+`--debug` logs the outgoing request, not only the response.
+`internal/requests/requests.go:265-276` logs the method, the URL and the
+pretty-printed JSON body of every request that carries one, and every request is
+logged again with its full URL when the answer comes back - which is where a
+read's query string is found, since a read carries no body. The audit already
+runs every command with `--debug` and uses only the status line.
 
 ## The mapping does not have to be written by hand
 
-Which payload field a flag controls is not recorded anywhere, and a hand-written
-table of 152 flags would be another thing to keep in step with the code. It can
+What a flag controls is not recorded anywhere, and a hand-written table of 165
+flags would be another thing to keep in step with the code. It can
 be measured instead: capture the payload of the run with the flag set and the
 run with the flag omitted, and the field that differs is the field that flag
 controls.
@@ -84,16 +88,21 @@ valid. Each row says which it was.
 
 ## What it found
 
-A sweep of the 74 commands that can produce a request gives 412 rows, of which
-19 are an answer about the server:
+A sweep of the 74 commands that can produce a request gives 417 rows, of which
+77 are an answer about the server:
 
 | Outcome | Rows |
 |---|---|
-| nothing to read - no JSON body was captured | 254 |
-| no field - a body was sent, the flag changed nothing in it | 104 |
-| unusable - the captured request was not valid | 35 |
-| **the server accepts the emptied field** | **11** |
-| **the server refuses the emptied field** | **8** |
+| no field - the flag changed nothing the request carries | 174 |
+| nothing to read - no request was captured | 117 |
+| unusable - the captured request was not valid | 49 |
+| **the server refuses the emptied value** | **52** |
+| **the server accepts the emptied value** | **25** |
+
+Two kinds of request are asked, and they answer differently. The commands that
+write carry their flags in a JSON body: 331 rows, 20 refusals and 11
+acceptances. The commands that read carry theirs in the query string: 86 rows,
+32 refusals and 14 acceptances, and only 2 controls that failed.
 
 The eleven it accepts are worth reading as a list, because each is a field a
 customer can empty by calling the API however the CLI behaves:
@@ -200,23 +209,57 @@ refused with `400 Input payload validation failed`, `description: Field
 required`. The server must accept an absent description before the CLI can stop
 sending one.
 
+## Every emptied filter is accepted
+
+The fourteen acceptances among the reads are all the same kind of flag:
+
+`list controls --search`, `--tag`; `list environments --name`, `--tag`,
+`--space-id`; `list repos --name`, `--search`, `--tag`, `--repo-id`; `list
+trails --fingerprint`, `--flow-tag`; `list snapshots --interval`; `log
+environment --interval`; `get artifact --trail`.
+
+Every one is a filter. The server is sent `tag=` where it was sent `tag=probe`,
+and it answers 200 with a list, as though no filter had been asked for. That is
+the API-side twin of `kosli list environments --tag "$VAR"` in the decision
+document, which answers "No environments were found" and exits 0: a filter that
+matched nothing, indistinguishable from a real no-match.
+
+The refusals are the structural parameters rather than the filtering ones -
+`per_page`, `page`, `sort_direction`, `reverse`, `snappish1` and `snappish2` -
+which the server type-checks and rejects when they arrive empty.
+
+So the two halves agree, and unhelpfully. The decision document's appendix 2
+already says of the filters that an empty value means nothing for them - "there
+is no artifact called ''" - and records that 21 of the 24 filter flags are never
+refused by the CLI. The server does not refuse them either. A customer calling
+the API directly gets the same silently-empty answer, and the rule proposed for
+the CLI would not change it.
+
+The two unusable controls are both `--repo`, and between them they show the
+server treating one parameter two ways. On `list artifacts` an unknown
+`repo_name` 404s while an empty one returns 200 and every artifact, so the
+filter vanishes. On `log environment` an empty one is looked up and refused:
+`{"message":"Repo '' not found"}`. Neither can be claimed as a verdict while the
+control 404s - the audit has no repository that exists, for want of a connected
+git provider - but the inconsistency is visible.
+
 ## Why most rows are not an answer
 
-The 254 and the 104 are not failures of the probe, and three quarters of them
-are cases where there is nothing for it to ask:
+The 174 and the 117 are not failures of the probe, and most of them are cases
+where there is nothing for it to ask:
 
-- **The reads send no body.** `list` (51 rows), `get` (19), `log` (10), `diff`
-  and `search` put their flags in the query string. Reachable, by emptying the
-  parameter in the captured URL, which is a second mechanism this does not have.
 - **Some flags never leave the machine.** `--output`, `--repo-root`, `--exclude`
-  and the like change what the CLI does, not what it sends. "The flag changes no
-  field of the payload" is the true answer for them, not a gap.
-- **`kosli fingerprint` (6 rows) sends nothing at all**, by design.
-- **`--dry-run` runs send nothing**, also by design.
+  and the like change what the CLI does, not what it sends. "The flag changes
+  nothing the request carries" is the true answer for them, not a gap.
+- **`kosli fingerprint` sends nothing at all**, by design, and neither does any
+  `--dry-run` run.
+- **A command whose run with a real value fails sends nothing to capture.**
+  That is most of the 117, and it is the audit's own doing rather than the
+  CLI's.
 
-The 35 unusable controls are the ones worth fixing, and they are a symptom of
-something larger: the audit invents the values it gives flags, and 114 of its
-own control runs fail for the same reason. That is written up in
+The 49 unusable controls are the ones worth fixing, and they are a symptom of
+something larger: the audit invents the values it gives flags. Its own control
+runs failed 114 times for the same reason, now 30. That is written up in
 `2026-08-15-the-audit-invents-its-input-values.md`.
 
 ## What is settled, and what is not
@@ -231,12 +274,15 @@ Settled while building it:
   than a create and an update. The probe refuses to send anywhere but the local
   host, which is what keeps a run of it away from app.kosli.com.
 
+- **Query parameters are asked too.** A read carries its flags in the URL rather
+  than a body, so the same diff is taken over the query string and the parameter
+  is emptied there. It is what took the answers from 19 to 77. The method is not
+  logged on the line that survives a read, so only commands whose verb settles it
+  - `get`, `list`, `log`, `diff`, `search` - are read this way. Replaying a read
+  is also the only replay that is safe to repeat, since nothing is created.
+
 Not settled:
 
-- **Query parameters.** The read commands put their flags in the URL, which is
-  85 of the rows that produced no answer. Emptying a parameter in the captured
-  URL is the same idea one layer over, and it is the largest single thing
-  missing.
 - **Multipart requests log only their JSON fields**
   (`internal/requests/requests.go:334-344`), so `--attachments` and the
   template-file endpoints cannot be replayed as JSON. Two `create flow` rows

@@ -26,6 +26,7 @@ import json
 import re
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 
@@ -37,6 +38,18 @@ RESULTS = "results-api.tsv"
 # The line --debug prints before a request body, naming what it is sending to
 # where. requests.go logs the method beside the URL for this.
 SENT = re.compile(r"payload sent to: (\w+) (\S+)")
+
+# The line --debug prints after every request, whatever it carried. A read sends
+# no body, so this is the only trace of it, and it holds the query string the
+# flags became.
+MADE = re.compile(r"request made to (\S+) and got status (\d+)")
+
+# The commands whose requests are reads. That line does not name the method, and
+# a command with no body could be a GET or a DELETE, so the ones probed this way
+# are the ones whose verb settles it. Replaying a read is also the only kind of
+# replay that is safe to repeat: nothing is created, so the control and the
+# emptied request cannot interfere with each other.
+READ_VERBS = ("get ", "list ", "log ", "diff ", "search")
 
 # Payload fields that must differ between replays. A replay of a create is a
 # create: sending the captured payload twice would update the first resource
@@ -66,6 +79,40 @@ def captured_request(text):
             if depth == 0:
                 return match.group(1), match.group(2), json.loads(text[start:index + 1])
     return None
+
+
+def captured_read(text, command):
+    """Return (method, url, query) for a read, or None.
+
+    A read carries its flags in the query string rather than a body, so what a
+    flag controls is found by comparing two urls rather than two payloads. The
+    method is not logged, which is why only commands whose verb settles it are
+    read this way.
+    """
+    if not command.startswith(READ_VERBS):
+        return None
+    match = MADE.search(text)
+    if not match:
+        return None
+    url = match.group(1)
+    return "GET", url, dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(url).query))
+
+
+def controlled_parameters(omitted, given):
+    """Return the query parameters that differ between two captured urls."""
+    if omitted is None or given is None:
+        return []
+    return sorted(k for k in set(omitted) | set(given)
+                  if omitted.get(k) != given.get(k))
+
+
+def with_parameter(url, parameter, value):
+    """Return the url with one query parameter set to value."""
+    parts = urllib.parse.urlsplit(url)
+    query = dict(urllib.parse.parse_qsl(parts.query))
+    query[parameter] = value
+    return urllib.parse.urlunsplit(parts._replace(
+        query=urllib.parse.urlencode(query)))
 
 
 def controlled_fields(omitted, given):
@@ -132,8 +179,11 @@ def replay(method, url, payload):
     """
     if not url.startswith(HOST):
         raise SystemExit(f"refusing to send anywhere but {HOST}: {url}")
+    # A read carries nothing. Sending it an empty body rather than no body is a
+    # different request from the one the CLI made.
+    body = None if payload is None else json.dumps(payload).encode()
     request = urllib.request.Request(
-        url, method=method, data=json.dumps(payload).encode(),
+        url, method=method, data=body,
         headers={"Content-Type": "application/json; charset=utf-8",
                  "Authorization": f"Bearer {TOKEN}"})
     try:
@@ -157,7 +207,7 @@ def capture(binary, entry, command, flag, how, home):
         return None
     argv = invocation_for(command, entry, key, flag, how, captured)
     _, _, text = run(binary, argv + ["--debug"], False, home)
-    request = captured_request(text)
+    request = captured_request(text) or captured_read(text, command)
     return request and request + ((key, captured),)
 
 
@@ -169,20 +219,46 @@ def probe(binary, entry, command, flag, home):
         return [f"{command}\t--{flag}\t\t\t\t\t\tnothing to read\tthe run with"
                 f" the flag set sent no request"]
 
-    method, url, payload, owned = given
+    method, url, carried, owned = given
     runs = [owned] + ([omitted[3]] if omitted else [])
+    if method == "GET":
+        return read_rows(command, flag, method, url, carried,
+                         omitted[2] if omitted else None)
+
     fields = controlled_fields(
         without_fixtures(omitted[2], command, runs) if omitted else None,
-        without_fixtures(payload, command, runs))
+        without_fixtures(carried, command, runs))
     if not fields:
         return [f"{command}\t--{flag}\t{method}\t{url}\t\t\t\tno field\tthe flag"
                 f" changes no field of the payload"]
 
     rows = []
     for field in fields:
-        control = replay(method, url, freshened(payload))
-        answer = replay(method, url, emptied(freshened(payload), field))
+        control = replay(method, url, freshened(carried))
+        answer = replay(method, url, emptied(freshened(carried), field))
         rows.append(f"{command}\t--{flag}\t{method}\t{url}\t{field}"
+                    f"\t{control[0]}\t{answer[0]}\t{verdict(control[0], answer[0])}"
+                    f"\t{answer[1].strip()[:120]}")
+    return rows
+
+
+def read_rows(command, flag, method, url, query, omitted_query):
+    """Return the rows for a read, whose flags are query parameters.
+
+    The fixture names a read sends are in its path rather than its parameters,
+    so two runs' parameters can be compared as they are. Emptying one is the
+    same question the body path asks: the server is sent `page=` where it was
+    sent `page=1`, and its answer is about every client rather than the CLI.
+    """
+    parameters = controlled_parameters(omitted_query, query)
+    if not parameters:
+        return [f"{command}\t--{flag}\t{method}\t{url}\t\t\t\tno field\tthe flag"
+                f" changes no query parameter"]
+    rows = []
+    for parameter in parameters:
+        control = replay(method, url, None)
+        answer = replay(method, with_parameter(url, parameter, ""), None)
+        rows.append(f"{command}\t--{flag}\t{method}\t{url}\t{parameter}"
                     f"\t{control[0]}\t{answer[0]}\t{verdict(control[0], answer[0])}"
                     f"\t{answer[1].strip()[:120]}")
     return rows
