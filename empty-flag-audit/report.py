@@ -151,6 +151,13 @@ def appendices(laptop, ci):
             else f"{c['measured']} of {c['measured'] + c['skipped']}"
         rows.append(f"| `--{name}` | {kind} | {measured} | {verdict(c)} |")
 
+    # The totals are the document's own cross-check: one row per flag name, and
+    # the column adds up to every command-and-flag combination the audit ran.
+    ran = sum(c["measured"] for c in counts.values())
+    missed = sum(c["skipped"] for c in counts.values())
+    total = str(ran) if not missed else f"{ran} of {ran + missed}"
+    rows.append(f"| **total** | **{len(counts)} flags** | **{total}** | |")
+
     column = {"always": "always", "always, some only by the server": "server",
               "some commands": "some", "never": "never",
               "not measured": "unmeasured"}

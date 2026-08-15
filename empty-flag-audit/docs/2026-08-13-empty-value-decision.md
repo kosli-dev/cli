@@ -600,3 +600,4 @@ listed once.
 | `--watch` | output | 2 | always |
 | `--yes` | switch | 2 | always |
 | `--zip` | output | 1 | always |
+| **total** | **165 flags** | **700** | |
