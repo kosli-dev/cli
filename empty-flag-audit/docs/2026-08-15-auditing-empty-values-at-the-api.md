@@ -94,8 +94,8 @@ A sweep of the 74 commands that can produce a request gives 417 rows, of which
 
 | Outcome | Rows |
 |---|---|
-| no field - the flag changed nothing the request carries | 174 |
-| nothing to read - no request was captured | 117 |
+| no field - the flag changed nothing the request carries | 175 |
+| nothing to read - no request was captured | 116 |
 | unusable - the captured request was not valid | 49 |
 | **the server refuses the emptied value** | **52** |
 | **the server accepts the emptied value** | **25** |
@@ -257,7 +257,7 @@ recorded.
 
 ## Why most rows are not an answer
 
-The 174 and the 117 are not failures of the probe, and most of them are cases
+The 175 and the 116 are not failures of the probe, and most of them are cases
 where there is nothing for it to ask:
 
 - **Some flags never leave the machine.** `--output`, `--repo-root`, `--exclude`
@@ -266,7 +266,7 @@ where there is nothing for it to ask:
 - **`kosli fingerprint` sends nothing at all**, by design, and neither does any
   `--dry-run` run.
 - **A command whose run with a real value fails sends nothing to capture.**
-  That is most of the 117, and it is the audit's own doing rather than the
+  That is most of the 116, and it is the audit's own doing rather than the
   CLI's.
 
 The 49 unusable controls are the ones worth fixing, and they are a symptom of
