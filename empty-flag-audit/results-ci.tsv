@@ -511,12 +511,12 @@ get api-key	--output	1	0	0	cli	differs	differs	0.3		Error: [kosli get api-key] u
 get api-key	--service-account	1	1	0	cli	differs	differs	0.2		Error: [kosli get api-key] flag '--service-account' is required, but empty string was provided
 get artifact	--output	1	0	0	cli	differs	differs	0.7		Error: [kosli get artifact] unsupported output format:
 get artifact	--trail	0	0	0		same	same	0.6		Name:                     cmd/kosli/testdata/person-schema.json
-get attestation	--attestation-id	1	1	1	cli	same	differs	0.5		Error: [kosli get attestation flow=probe-get-attestation-attestation-id-fl trail=probe-get-attestation-attestation-id-tr] one of ATTESTATION-NAME argument or --
-get attestation	--fingerprint	1	1	1	cli	same	same	0.5		Error: [kosli get attestation flow=probe-get-attestation-fingerprint-fl trail=probe-get-attestation-fingerprint-tr] one of ATTESTATION-NAME argument or --attest
-get attestation	--flow	1	1	0	cli	same	differs	0.5		Error: [kosli get attestation trail=probe-get-attestation-flow-tr] --flow is required when using ATTESTATION-NAME
-get attestation	--output	1	0	0	cli	differs	differs	0.5		Error: [kosli get attestation flow=probe-get-attestation-output-fl trail=probe-get-attestation-output-tr] unsupported output format:
-get attestation	--trail	1	1	0	cli	differs	differs	0.5		Error: [kosli get attestation flow=probe-get-attestation-trail-fl] Get "": GET  giving up after 1 attempt(s): Get "": unsupported protocol scheme ""
-get attestation-type	--output	1	0	0	cli	differs	differs	0.4		Error: [kosli get attestation-type] unsupported output format:
+get attestation	--attestation-id	1	1	1	cli	same	differs	0.6		Error: [kosli get attestation flow=probe-get-attestation-attestation-id-fl trail=probe-get-attestation-attestation-id-tr] one of ATTESTATION-NAME argument or --
+get attestation	--fingerprint	1	1	0	cli	differs	differs	0.5		Error: [kosli get attestation flow=probe-get-attestation-fingerprint-fl] Get "": GET  giving up after 1 attempt(s): Get "": unsupported protocol scheme ""
+get attestation	--flow	1	1	0	cli	same	differs	0.6		Error: [kosli get attestation trail=probe-get-attestation-flow-tr] --flow is required when using ATTESTATION-NAME
+get attestation	--output	1	0	0	cli	differs	differs	0.6		Error: [kosli get attestation flow=probe-get-attestation-output-fl trail=probe-get-attestation-output-tr] unsupported output format:
+get attestation	--trail	1	1	0	cli	differs	differs	0.6		Error: [kosli get attestation flow=probe-get-attestation-trail-fl] Get "": GET  giving up after 1 attempt(s): Get "": unsupported protocol scheme ""
+get attestation-type	--output	1	0	0	cli	differs	differs	0.3		Error: [kosli get attestation-type] unsupported output format:
 get control	--output	1	0	0	cli	differs	differs	0.2		Error: [kosli get control] unsupported output format:
 get default-org	--output	1	0	0	cli	differs	differs	0.1		Error: [kosli get default-org] unsupported output format:
 get environment	--output	1	0	0	cli	differs	differs	0.2		Error: [kosli get environment] unsupported output format:

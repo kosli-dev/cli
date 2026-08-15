@@ -2002,12 +2002,33 @@
           "--trail",
           "{trail}"
         ]
+      },
+      {
+        "argv": [
+          "attest",
+          "generic",
+          "--name",
+          "probe-on-artifact",
+          "--flow",
+          "{flow}",
+          "--trail",
+          "{trail}",
+          "--fingerprint",
+          "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01"
+        ]
       }
     ],
     "verify": [],
     "args_for_flag": {
       "attestation-id": [],
-      "fingerprint": []
+      "fingerprint": [
+        "probe-on-artifact"
+      ]
+    },
+    "flags_for_flag": {
+      "fingerprint": {
+        "flow": "{flow}"
+      }
     }
   },
   "get control": {

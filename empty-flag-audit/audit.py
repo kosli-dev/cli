@@ -359,20 +359,27 @@ def invocation_for(command, entry, key, flag, how, captured):
     one, as `--attestation-id` is when an attestation name is given. Without
     this the run with a real value could not work, and the empty value would be
     compared against a control that failed.
+
+    `flags_for_flag` replaces the rest of the command's flags in the same way,
+    for a flag the command's usual ones exclude. `get attestation` takes either
+    `--trail` or `--fingerprint` beside an attestation name, never both, so
+    measuring `--fingerprint` means running without the `--trail` the other
+    flags rely on.
     """
     grow = lambda v: expand(v, command, key, captured)
     args = entry.get("args_for_flag", {}).get(flag, entry["args"])
+    flags = entry.get("flags_for_flag", {}).get(flag, entry["flags"])
     argv = command.split() + [grow(a) for a in args] + globals_for(command)
     # The joined form works for every flag type, including the booleans a
     # separate token would leave dangling as a positional argument.
-    for name, val in entry["flags"].items():
+    for name, val in flags.items():
         if name != flag:
             argv.append(f"--{name}={grow(val)}")
     if how == "omitted":
         return argv
     if how == "empty":
         return argv + [f"--{flag}", ""]
-    value = entry["flags"].get(flag) or entry.get("flag_values", {}).get(flag, "")
+    value = flags.get(flag) or entry.get("flag_values", {}).get(flag, "")
     return argv + [f"--{flag}={grow(value)}"]
 
 

@@ -77,29 +77,25 @@ It then compares the three sets of:
 - state left on the server afterwards
 
 
-It ran all 700 command+flag combinations:
+It ran all 700 command+flag combinations twice, once as on a laptop and once with the
+environment variables GitHub Actions sets:
+
 - For 412 of them the command can succeed against the local server alone, so the
 whole story is visible: what the CLI did with the empty value, and what the
 server did with whatever the CLI sent on.
 - For 288 the command needs a service the audit has no credentials for, so only
 the CLI's half is visible: its own flag checks run before it contacts the
 service.
-- The whole set runs twice, once as on a laptop and once with the
-environment variables GitHub Actions sets.
 
 
 ### The 412 that can succeed against the local server
 
 | What happens to an empty value | On a laptop | Inside GitHub Actions |
 |---|---|---|
-| the CLI refuses it | 223 | 219 |
+| the CLI refuses it | 224 | 220 |
 | the CLI accepts it and the server refuses it | 5 | 9 |
 | nothing refuses it | 183 | 183 |
-| nothing can be said | 1 | 1 |
 | **total** | **412** | **412** |
-
-The one that says nothing is `get attestation --fingerprint`, where all three
-runs fail the same way, so nothing about the failure is the empty value's doing.
 
 Of the 183 that nothing refuses, 165 do exactly what omitting the flag does.
 That is not the same as doing nothing: omitting a flag has a meaning of its own,

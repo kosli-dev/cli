@@ -181,9 +181,16 @@ def main():
               + f"{sum(c.values()):>8}")
 
     if args.write_appendices:
+        # The table is the last thing in the document, and everything from this
+        # heading down is regenerated. Anchoring on the heading keeps prose
+        # above it safe: a row of any other table can begin with a flag name.
         text = DOC.read_text()
-        head = text[:text.index("| `--")]
-        DOC.write_text(head + "\n".join(rows) + "\n")
+        anchor = "## Appendix 3: every flag in the CLI"
+        if anchor not in text:
+            raise SystemExit(f"{DOC.name} has no '{anchor}' heading to write under")
+        head = text[:text.index(anchor) + len(anchor)]
+        preamble = text[len(head):text.index("| `--", len(head))]
+        DOC.write_text(head + preamble + "\n".join(rows) + "\n")
         print(f"\nrewrote the flag-by-flag table in {DOC.name}: {len(rows)} rows")
     else:
         print("\n(--write-appendices rewrites the flag-by-flag table in the document)")
