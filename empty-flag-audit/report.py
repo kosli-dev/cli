@@ -144,8 +144,12 @@ def appendices(laptop, ci):
     for name in sorted(counts):
         c = counts[name]
         kind = "global" if name in GLOBALS else cats.get(name, "uncategorised")
-        rows.append(f"| `--{name}` | {kind} | {c['measured']} of "
-                    f"{c['measured'] + c['skipped']} | {verdict(c)} |")
+        # Just the count when every command declaring the flag was measured,
+        # which is the whole table today. A shortfall says so, "3 of 5", so a
+        # skipped command cannot hide behind a bare number.
+        measured = str(c["measured"]) if not c["skipped"] \
+            else f"{c['measured']} of {c['measured'] + c['skipped']}"
+        rows.append(f"| `--{name}` | {kind} | {measured} | {verdict(c)} |")
 
     column = {"always": "always", "always, some only by the server": "server",
               "some commands": "some", "never": "never",

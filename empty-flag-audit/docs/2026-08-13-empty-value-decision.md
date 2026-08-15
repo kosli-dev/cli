@@ -435,168 +435,168 @@ listed once.
 
 | Flag | What it is for | Commands measured | Refuses an empty value |
 |---|---|---|---|
-| `--annotate` | metadata | 13 of 13 | always |
-| `--api-token` | global | 1 of 1 | always |
-| `--archived` | filter | 1 of 1 | always |
-| `--artifact-type` | identity | 17 of 17 | some commands |
-| `--assert` | switch | 9 of 9 | always |
-| `--assume-yes` | switch | 2 of 2 | always |
-| `--attachments` | identity | 12 of 12 | always |
-| `--attestation-data` | identity | 1 of 1 | always |
-| `--attestation-id` | identity | 1 of 1 | always |
-| `--attestations` | filter | 3 of 3 | never |
-| `--aws-key-id` | credentials | 3 of 3 | never |
-| `--aws-region` | location | 3 of 3 | some commands |
-| `--aws-secret-key` | credentials | 3 of 3 | never |
-| `--azure-client-id` | credentials | 1 of 1 | always |
-| `--azure-client-secret` | credentials | 1 of 1 | always |
-| `--azure-org-url` | location | 2 of 2 | always |
-| `--azure-resource-group-name` | identity | 1 of 1 | always |
-| `--azure-subscription-id` | identity | 1 of 1 | always |
-| `--azure-tenant-id` | identity | 1 of 1 | always |
-| `--azure-token` | credentials | 2 of 2 | always |
-| `--bitbucket-access-token` | credentials | 2 of 2 | always |
-| `--bitbucket-password` | credentials | 2 of 2 | always |
-| `--bitbucket-username` | credentials | 2 of 2 | always |
-| `--bitbucket-workspace` | location | 2 of 2 | always |
-| `--bucket` | location | 1 of 1 | always |
-| `--build-url` | location | 2 of 2 | always, but in CI only the server does |
-| `--cluster` | identity | 1 of 1 | always |
-| `--clusters` | filter | 1 of 1 | never |
-| `--clusters-regex` | filter | 1 of 1 | never |
-| `--comment` | metadata | 1 of 1 | never |
-| `--commit` | identity | 18 of 18 | some commands |
-| `--commit-url` | location | 2 of 2 | always, but in CI only the server does |
-| `--compliant` | switch | 2 of 2 | always |
-| `--config-file` | location | 2 of 2 | some commands |
-| `--control` | identity | 1 of 1 | always |
-| `--debug` | global | 1 of 1 | always |
-| `--description` | metadata | 22 of 22 | some commands |
-| `--digests-source` | identity | 1 of 1 | always |
-| `--display-name` | metadata | 1 of 1 | never |
-| `--dry-run` | switch | 56 of 56 | always |
-| `--e` | identity | 2 of 2 | never |
-| `--end` | identity | 1 of 1 | never |
-| `--end-ts` | identity | 1 of 1 | always |
-| `--environment` | identity | 4 of 4 | some commands |
-| `--exclude` | filter | 23 of 23 | never |
-| `--exclude-namespaces` | filter | 1 of 1 | never |
-| `--exclude-namespaces-regex` | filter | 1 of 1 | never |
-| `--exclude-regex` | filter | 4 of 4 | never |
-| `--exclude-scaling` | filter | 1 of 1 | always |
-| `--exclude-services` | filter | 1 of 1 | never |
-| `--exclude-services-regex` | filter | 1 of 1 | never |
-| `--expires-at` | identity | 2 of 2 | never |
-| `--external-fingerprint` | identity | 14 of 14 | always |
-| `--external-url` | location | 14 of 14 | always |
-| `--fingerprint` | identity | 18 of 18 | some commands |
-| `--flow` | identity | 23 of 23 | some commands |
-| `--flow-tag` | filter | 1 of 1 | never |
-| `--function-name` | identity | 1 of 1 | always |
-| `--function-names` | filter | 1 of 1 | never |
-| `--function-names-regex` | filter | 1 of 1 | never |
-| `--function-version` | identity | 1 of 1 | always |
-| `--git-commit` | identity | 1 of 1 | always |
-| `--github-base-url` | location | 2 of 2 | always |
-| `--github-org` | identity | 2 of 2 | always, and not at all in CI |
-| `--github-token` | credentials | 2 of 2 | always |
-| `--gitlab-base-url` | location | 2 of 2 | always |
-| `--gitlab-org` | identity | 2 of 2 | always |
-| `--gitlab-token` | credentials | 2 of 2 | always |
-| `--grace-period-hours` | identity | 1 of 1 | always |
-| `--host` | global | 1 of 1 | always |
-| `--http-proxy` | global | 1 of 1 | never |
-| `--ignore-branch-match` | switch | 1 of 1 | always |
-| `--ignore-case` | switch | 1 of 1 | always |
-| `--include` | filter | 2 of 2 | never |
-| `--include-regex` | filter | 2 of 2 | never |
-| `--include-scaling` | filter | 1 of 1 | always |
-| `--included-environments` | filter | 1 of 1 | never |
-| `--input-file` | location | 1 of 1 | always |
-| `--interval` | output | 2 of 2 | never |
-| `--jira-api-token` | credentials | 1 of 1 | always |
-| `--jira-base-url` | location | 1 of 1 | always |
-| `--jira-issue-fields` | identity | 1 of 1 | never |
-| `--jira-pat` | credentials | 1 of 1 | never |
-| `--jira-project-key` | identity | 1 of 1 | never |
-| `--jira-secondary-source` | identity | 1 of 1 | never |
-| `--jira-username` | credentials | 1 of 1 | always |
-| `--jq` | location | 1 of 1 | always, some only by the server |
-| `--kubeconfig` | credentials | 1 of 1 | always |
-| `--link` | metadata | 1 of 1 | always |
-| `--logical` | identity | 1 of 1 | always |
-| `--max-api-retries` | global | 1 of 1 | always |
-| `--max-wait` | output | 1 of 1 | always |
-| `--name` | identity | 20 of 20 | some commands |
-| `--namespaces` | filter | 1 of 1 | never |
-| `--namespaces-regex` | filter | 1 of 1 | never |
-| `--new-compliance-status` | switch | 1 of 1 | always |
-| `--no-assert` | switch | 3 of 3 | always |
-| `--org` | global | 1 of 1 | always |
-| `--origin-url` | location | 13 of 13 | never |
-| `--original-attestation-type` | identity | 1 of 1 | always |
-| `--output` | output | 33 of 33 | some commands |
-| `--page` | output | 8 of 8 | always |
-| `--page-limit` | output | 8 of 8 | always |
-| `--params` | location | 3 of 3 | never |
-| `--path` | location | 1 of 1 | always |
-| `--paths` | location | 1 of 1 | always |
-| `--paths-file` | location | 1 of 1 | always |
-| `--physical` | identity | 1 of 1 | always |
-| `--policy` | identity | 4 of 4 | some commands |
-| `--privilege` | identity | 2 of 2 | always, some only by the server |
-| `--project` | identity | 3 of 3 | always |
-| `--provider` | identity | 3 of 3 | never |
-| `--pull-request` | identity | 1 of 1 | never |
-| `--quiet` | global | 1 of 1 | always |
-| `--reason` | metadata | 2 of 2 | always |
-| `--redact-commit-info` | identity | 14 of 14 | never |
-| `--region` | location | 1 of 1 | always |
-| `--registry-password` | credentials | 17 of 17 | some commands |
-| `--registry-provider` | identity | 17 of 17 | some commands |
-| `--registry-username` | credentials | 17 of 17 | some commands |
-| `--repo` | identity | 2 of 2 | never |
-| `--repo-id` | identity | 17 of 17 | some commands |
-| `--repo-provider` | identity | 14 of 14 | never |
-| `--repo-root` | location | 15 of 15 | never |
-| `--repo-url` | location | 14 of 14 | never |
-| `--repository` | identity | 18 of 18 | some commands, and not at all in CI |
-| `--require-provenance` | switch | 1 of 1 | always |
-| `--resolve-names` | switch | 1 of 1 | always |
-| `--results-dir` | location | 1 of 1 | always |
-| `--reverse` | output | 2 of 2 | always |
-| `--scan-results` | location | 1 of 1 | always |
-| `--schema` | output | 1 of 1 | never |
-| `--search` | filter | 2 of 2 | never |
-| `--service-account` | identity | 5 of 5 | always |
-| `--service-name` | identity | 1 of 1 | always |
-| `--services` | filter | 1 of 1 | never |
-| `--services-regex` | filter | 1 of 1 | never |
-| `--set` | metadata | 2 of 2 | always |
-| `--short` | output | 1 of 1 | always |
-| `--show-input` | output | 3 of 3 | always |
-| `--show-unchanged` | output | 1 of 1 | always |
-| `--sonar-api-token` | credentials | 1 of 1 | always |
-| `--sonar-ce-task-url` | location | 1 of 1 | always |
-| `--sonar-project-key` | identity | 1 of 1 | never |
-| `--sonar-revision` | identity | 1 of 1 | never |
-| `--sonar-server-url` | location | 1 of 1 | never |
-| `--sonar-working-dir` | location | 1 of 1 | always |
-| `--sort` | output | 1 of 1 | never |
-| `--sort-direction` | output | 3 of 3 | never |
-| `--space-id` | filter | 1 of 1 | never |
-| `--start` | identity | 1 of 1 | never |
-| `--start-ts` | identity | 1 of 1 | always |
-| `--tag` | metadata | 3 of 3 | never |
-| `--template` | identity | 1 of 1 | always |
-| `--template-file` | location | 2 of 2 | never |
-| `--trail` | identity | 15 of 15 | some commands |
-| `--type` | identity | 4 of 4 | some commands |
-| `--unset` | metadata | 2 of 2 | never |
-| `--upload-results` | switch | 2 of 2 | always |
-| `--use-empty-template` | switch | 1 of 1 | always |
-| `--user-data` | identity | 13 of 13 | never |
-| `--visibility` | metadata | 1 of 1 | never |
-| `--watch` | output | 2 of 2 | always |
-| `--yes` | switch | 2 of 2 | always |
-| `--zip` | output | 1 of 1 | always |
+| `--annotate` | metadata | 13 | always |
+| `--api-token` | global | 1 | always |
+| `--archived` | filter | 1 | always |
+| `--artifact-type` | identity | 17 | some commands |
+| `--assert` | switch | 9 | always |
+| `--assume-yes` | switch | 2 | always |
+| `--attachments` | identity | 12 | always |
+| `--attestation-data` | identity | 1 | always |
+| `--attestation-id` | identity | 1 | always |
+| `--attestations` | filter | 3 | never |
+| `--aws-key-id` | credentials | 3 | never |
+| `--aws-region` | location | 3 | some commands |
+| `--aws-secret-key` | credentials | 3 | never |
+| `--azure-client-id` | credentials | 1 | always |
+| `--azure-client-secret` | credentials | 1 | always |
+| `--azure-org-url` | location | 2 | always |
+| `--azure-resource-group-name` | identity | 1 | always |
+| `--azure-subscription-id` | identity | 1 | always |
+| `--azure-tenant-id` | identity | 1 | always |
+| `--azure-token` | credentials | 2 | always |
+| `--bitbucket-access-token` | credentials | 2 | always |
+| `--bitbucket-password` | credentials | 2 | always |
+| `--bitbucket-username` | credentials | 2 | always |
+| `--bitbucket-workspace` | location | 2 | always |
+| `--bucket` | location | 1 | always |
+| `--build-url` | location | 2 | always, but in CI only the server does |
+| `--cluster` | identity | 1 | always |
+| `--clusters` | filter | 1 | never |
+| `--clusters-regex` | filter | 1 | never |
+| `--comment` | metadata | 1 | never |
+| `--commit` | identity | 18 | some commands |
+| `--commit-url` | location | 2 | always, but in CI only the server does |
+| `--compliant` | switch | 2 | always |
+| `--config-file` | location | 2 | some commands |
+| `--control` | identity | 1 | always |
+| `--debug` | global | 1 | always |
+| `--description` | metadata | 22 | some commands |
+| `--digests-source` | identity | 1 | always |
+| `--display-name` | metadata | 1 | never |
+| `--dry-run` | switch | 56 | always |
+| `--e` | identity | 2 | never |
+| `--end` | identity | 1 | never |
+| `--end-ts` | identity | 1 | always |
+| `--environment` | identity | 4 | some commands |
+| `--exclude` | filter | 23 | never |
+| `--exclude-namespaces` | filter | 1 | never |
+| `--exclude-namespaces-regex` | filter | 1 | never |
+| `--exclude-regex` | filter | 4 | never |
+| `--exclude-scaling` | filter | 1 | always |
+| `--exclude-services` | filter | 1 | never |
+| `--exclude-services-regex` | filter | 1 | never |
+| `--expires-at` | identity | 2 | never |
+| `--external-fingerprint` | identity | 14 | always |
+| `--external-url` | location | 14 | always |
+| `--fingerprint` | identity | 18 | some commands |
+| `--flow` | identity | 23 | some commands |
+| `--flow-tag` | filter | 1 | never |
+| `--function-name` | identity | 1 | always |
+| `--function-names` | filter | 1 | never |
+| `--function-names-regex` | filter | 1 | never |
+| `--function-version` | identity | 1 | always |
+| `--git-commit` | identity | 1 | always |
+| `--github-base-url` | location | 2 | always |
+| `--github-org` | identity | 2 | always, and not at all in CI |
+| `--github-token` | credentials | 2 | always |
+| `--gitlab-base-url` | location | 2 | always |
+| `--gitlab-org` | identity | 2 | always |
+| `--gitlab-token` | credentials | 2 | always |
+| `--grace-period-hours` | identity | 1 | always |
+| `--host` | global | 1 | always |
+| `--http-proxy` | global | 1 | never |
+| `--ignore-branch-match` | switch | 1 | always |
+| `--ignore-case` | switch | 1 | always |
+| `--include` | filter | 2 | never |
+| `--include-regex` | filter | 2 | never |
+| `--include-scaling` | filter | 1 | always |
+| `--included-environments` | filter | 1 | never |
+| `--input-file` | location | 1 | always |
+| `--interval` | output | 2 | never |
+| `--jira-api-token` | credentials | 1 | always |
+| `--jira-base-url` | location | 1 | always |
+| `--jira-issue-fields` | identity | 1 | never |
+| `--jira-pat` | credentials | 1 | never |
+| `--jira-project-key` | identity | 1 | never |
+| `--jira-secondary-source` | identity | 1 | never |
+| `--jira-username` | credentials | 1 | always |
+| `--jq` | location | 1 | always, some only by the server |
+| `--kubeconfig` | credentials | 1 | always |
+| `--link` | metadata | 1 | always |
+| `--logical` | identity | 1 | always |
+| `--max-api-retries` | global | 1 | always |
+| `--max-wait` | output | 1 | always |
+| `--name` | identity | 20 | some commands |
+| `--namespaces` | filter | 1 | never |
+| `--namespaces-regex` | filter | 1 | never |
+| `--new-compliance-status` | switch | 1 | always |
+| `--no-assert` | switch | 3 | always |
+| `--org` | global | 1 | always |
+| `--origin-url` | location | 13 | never |
+| `--original-attestation-type` | identity | 1 | always |
+| `--output` | output | 33 | some commands |
+| `--page` | output | 8 | always |
+| `--page-limit` | output | 8 | always |
+| `--params` | location | 3 | never |
+| `--path` | location | 1 | always |
+| `--paths` | location | 1 | always |
+| `--paths-file` | location | 1 | always |
+| `--physical` | identity | 1 | always |
+| `--policy` | identity | 4 | some commands |
+| `--privilege` | identity | 2 | always, some only by the server |
+| `--project` | identity | 3 | always |
+| `--provider` | identity | 3 | never |
+| `--pull-request` | identity | 1 | never |
+| `--quiet` | global | 1 | always |
+| `--reason` | metadata | 2 | always |
+| `--redact-commit-info` | identity | 14 | never |
+| `--region` | location | 1 | always |
+| `--registry-password` | credentials | 17 | some commands |
+| `--registry-provider` | identity | 17 | some commands |
+| `--registry-username` | credentials | 17 | some commands |
+| `--repo` | identity | 2 | never |
+| `--repo-id` | identity | 17 | some commands |
+| `--repo-provider` | identity | 14 | never |
+| `--repo-root` | location | 15 | never |
+| `--repo-url` | location | 14 | never |
+| `--repository` | identity | 18 | some commands, and not at all in CI |
+| `--require-provenance` | switch | 1 | always |
+| `--resolve-names` | switch | 1 | always |
+| `--results-dir` | location | 1 | always |
+| `--reverse` | output | 2 | always |
+| `--scan-results` | location | 1 | always |
+| `--schema` | output | 1 | never |
+| `--search` | filter | 2 | never |
+| `--service-account` | identity | 5 | always |
+| `--service-name` | identity | 1 | always |
+| `--services` | filter | 1 | never |
+| `--services-regex` | filter | 1 | never |
+| `--set` | metadata | 2 | always |
+| `--short` | output | 1 | always |
+| `--show-input` | output | 3 | always |
+| `--show-unchanged` | output | 1 | always |
+| `--sonar-api-token` | credentials | 1 | always |
+| `--sonar-ce-task-url` | location | 1 | always |
+| `--sonar-project-key` | identity | 1 | never |
+| `--sonar-revision` | identity | 1 | never |
+| `--sonar-server-url` | location | 1 | never |
+| `--sonar-working-dir` | location | 1 | always |
+| `--sort` | output | 1 | never |
+| `--sort-direction` | output | 3 | never |
+| `--space-id` | filter | 1 | never |
+| `--start` | identity | 1 | never |
+| `--start-ts` | identity | 1 | always |
+| `--tag` | metadata | 3 | never |
+| `--template` | identity | 1 | always |
+| `--template-file` | location | 2 | never |
+| `--trail` | identity | 15 | some commands |
+| `--type` | identity | 4 | some commands |
+| `--unset` | metadata | 2 | never |
+| `--upload-results` | switch | 2 | always |
+| `--use-empty-template` | switch | 1 | always |
+| `--user-data` | identity | 13 | never |
+| `--visibility` | metadata | 1 | never |
+| `--watch` | output | 2 | always |
+| `--yes` | switch | 2 | always |
+| `--zip` | output | 1 | always |
