@@ -1,9 +1,8 @@
 # Extending the audit to ask the same question of the API
 
-The empty-flag audit answers "does the CLI refuse an empty value". This is about
-answering the other half: when the CLI does not refuse it, does the server? The
-answer is yes, the audit can be extended to ask that, and a prototype has done
-it for one command and found something with it.
+The empty-flag audit answers "does the CLI refuse an empty value". `replay.py`
+answers the other half: when the CLI does not refuse it, does the server? This
+is what it does, what it found, and what it cannot reach.
 
 ## TL;DR
 
@@ -13,16 +12,20 @@ it for one command and found something with it.
   instrumentation: `--debug` already logs the outgoing URL and JSON body.
 - The flag-to-field mapping can be measured rather than written by hand, by
   diffing the payload of a run with the flag set against one with it omitted.
-- A prototype on `kosli create flow` works end to end.
-- It found that `--template ""` is refused by the CLI and accepted by the API,
-  which stores a flow requiring an attestation whose name is empty.
-- That is the first measured instance of the gap the decision document argues
-  about: a CLI rule does not cover a customer calling the API directly.
+- `replay.py` does it, reading the same spec.json and writing results-api.tsv.
+- Of 412 rows, 19 are an answer about the server: 11 fields it accepts empty and
+  8 it refuses.
+- Among the eleven, `create flow --template` is refused by the CLI and accepted
+  by the API, which stores a flow requiring an attestation whose name is empty.
+- That is a measured instance of the gap the decision document argues about: a
+  CLI rule does not cover a customer calling the API directly.
+- Most rows are not an answer, and mostly for good reasons: the read commands
+  send no body, and some flags never leave the machine.
 
 ## Why the CLI cannot ask this
 
-`2026-08-13-empty-value-decision.md` already establishes the constraint. For 162
-of the 166 combinations nothing refuses, an empty value produces a request
+`2026-08-13-empty-value-decision.md` already establishes the constraint. For 172
+of the 189 combinations nothing refuses, an empty value produces a request
 identical to the one omitting the flag sends, so there is nothing empty in the
 payload for the server to reject. Running the CLI harder cannot get at the
 server's behaviour, because the CLI never puts the question to it.
@@ -53,37 +56,56 @@ or the name shows up as a field the flag controls. And the comparison is between
 `omitted` and `set`, not `empty` and `set`, because the empty run may not reach
 the point of sending anything.
 
-## The prototype
+## The tool
 
-`/tmp/claude-501/empty-api-probe.py`, in the session scratchpad rather than the
-repo. It probes `kosli create flow`, and for each flag it:
+`replay.py`, beside `audit.py` and reading the same `spec.json`. Not a third
+mode of the audit: `--ci` asks the audit's question in another environment and
+its rows line up with the plain run's, while this asks a different question and
+its rows are about a captured request. It writes `results-api.tsv`.
 
-1. runs the CLI three times with `--debug`, capturing URL and payload for the
-   flag omitted, set, and empty
-2. derives the field that flag controls by diffing the omitted and set payloads
-3. replays the captured request twice against the local server: once unmodified
-   as a control, and once with that field emptied
+For each command-and-flag pair it:
 
-The control matters. Without it a rejection cannot be told apart from a replay
-that was malformed for some unrelated reason. It is the same three-run shape the
-audit already uses, moved down a layer.
+1. runs two of the audit's own invocations with `--debug`, capturing method, URL
+   and payload with the flag omitted and with it set
+2. derives the field that flag controls by diffing those two payloads
+3. replays the captured request twice: once unmodified as a control, and once
+   with that field emptied
+
+It reuses `invocation_for`, so it captures the very invocations the audit
+measures, and `normalise`, so two runs' fixture names do not read as a field the
+flag controls - without that, `--description` appeared to control `name`.
+
+The control matters, and earned itself on the first command it ran. Without it a
+`400` beside an emptied `400` reads as a refusal when the request was never
+valid. Each row says which it was.
 
 ## What it found
 
-| Flag | Field | What the CLI does | What the API does |
-|---|---|---|---|
-| `--description` | `description` | accepts it, and sends a payload identical to the one omitting the flag sends | 201 |
-| `--template` | `template` | refuses it, exit 1 | **201** |
+A sweep of the 74 commands that can produce a request gives 412 rows, of which
+19 are an answer about the server:
 
-The first row is the expected case, and it confirms by measurement what the
-decision document argues: there is nothing for the server to reject, because
-nothing empty ever reaches it.
+| Outcome | Rows |
+|---|---|
+| nothing to read - no JSON body was captured | 254 |
+| no field - a body was sent, the flag changed nothing in it | 104 |
+| unusable - the captured request was not valid | 35 |
+| **the server accepts the emptied field** | **11** |
+| **the server refuses the emptied field** | **8** |
 
-The second row is new. `--template ""` is refused by the CLI, by the
-`nonEmptyStringSlice` type added in #1092 (`cmd/kosli/nonEmptyStringSlice.go:99`,
-used on `--template` at `cmd/kosli/createFlow.go:90` and `--attachments` at
-`cmd/kosli/flags.go:113`). Sending `template: [""]` straight to the API is
-accepted, and reading the flow back shows it stored:
+The eleven it accepts are worth reading as a list, because each is a field a
+customer can empty by calling the API however the CLI behaves:
+
+`create flow --description`, `--template`; `create environment --description`;
+`create service-account --description`; `update control --description`;
+`attest override --description`; `attest artifact --artifact-type`,
+`--display-name`; `report artifact --artifact-type`, `--name`; `tag --unset`.
+
+`create flow --template` is the one to look at. `--template ""` is refused by the
+CLI, by the `nonEmptyStringSlice` type added in #1092
+(`cmd/kosli/nonEmptyStringSlice.go:99`, used on `--template` at
+`cmd/kosli/createFlow.go:90` and `--attachments` at `cmd/kosli/flags.go:113`).
+Sending `template: [""]` straight to the API is accepted, and reading the flow
+back shows it stored:
 
 ```
 version: 1
@@ -98,10 +120,17 @@ trail:
 
 A flow requiring an attestation whose name is empty, which no attestation can be
 made to match by name. The CLI-side type closes this for people using the CLI.
-It does nothing for anyone calling the API.
+It does nothing for anyone calling the API. That is the argument in the decision
+document's "What a CLI rule cannot reach" section, with a measured instance
+behind it instead of a worked example.
 
-That is the argument in the "What a CLI rule cannot reach" section, with a
-measured instance behind it instead of a worked example.
+The two `--artifact-type` rows say the same thing about a different field: the
+server accepts an artifact whose `filename` is empty.
+
+The eight it refuses are the reassuring half, and they are mostly types rather
+than emptiness: `include_scaling`, `require_provenance` and `privilege` are a
+boolean and an enum, `user_data` and `artifacts` are objects, and an empty
+string is not one. `origin_url` is refused as a URL.
 
 The probe also confirmed the ordering constraint in step 2 of the release plan
 from the other direction. A `create flow` payload with no `description` is
@@ -109,24 +138,50 @@ refused with `400 Input payload validation failed`, `description: Field
 required`. The server must accept an absent description before the CLI can stop
 sending one.
 
-## What has to be settled before this generalises
+## Why most rows are not an answer
 
-None of these is hard, but none is free either.
+The 254 and the 104 are not failures of the probe, and three quarters of them
+are cases where there is nothing for it to ask:
 
-- **The method is not logged.** `--debug` logs the URL but not the HTTP method,
-  so the prototype read `http.MethodPut` out of `cmd/kosli/createFlow.go:138`.
-  Either the method joins the log line, which is a one-line change, or the
-  extension keeps a per-command table, which is the hand-written mapping this
-  approach otherwise avoids. Logging it is the better of the two.
-- **Multipart requests log only their JSON fields** (`internal/requests/requests.go:334-344`),
-  so the commands carrying attachments need their own handling.
-- **Not every flag becomes a payload field.** Query parameters on the `list` and
-  `get` commands, and flags that never leave the machine at all (`--exclude`,
-  `--repo-root`, `--output`), have no body field to empty. The query-parameter
-  ones are still reachable by emptying the parameter in the captured URL.
-- **Replaying mutates the server**, so each replay needs a fresh resource name
-  and the existing reset discipline. The probe refuses to send anywhere but the
-  local host, which is what keeps a run of it away from app.kosli.com.
+- **The reads send no body.** `list` (51 rows), `get` (19), `log` (10), `diff`
+  and `search` put their flags in the query string. Reachable, by emptying the
+  parameter in the captured URL, which is a second mechanism this does not have.
+- **Some flags never leave the machine.** `--output`, `--repo-root`, `--exclude`
+  and the like change what the CLI does, not what it sends. "The flag changes no
+  field of the payload" is the true answer for them, not a gap.
+- **`kosli fingerprint` (6 rows) sends nothing at all**, by design.
+- **`--dry-run` runs send nothing**, also by design.
+
+The 35 unusable controls are the ones worth fixing, and they are a symptom of
+something larger: the audit invents the values it gives flags, and 114 of its
+own control runs fail for the same reason. That is written up in
+`2026-08-15-the-audit-invents-its-input-values.md`.
+
+## What is settled, and what is not
+
+Settled while building it:
+
+- **The method is logged.** `--debug` prints it beside the URL
+  (`internal/requests/requests.go:268`), so nothing here keeps a hand-written
+  table of which endpoint takes which verb.
+- **Replays do not collide.** A payload field that names the resource is made
+  unique per replay, so a control and an emptied replay are two creates rather
+  than a create and an update. The probe refuses to send anywhere but the local
+  host, which is what keeps a run of it away from app.kosli.com.
+
+Not settled:
+
+- **Query parameters.** The read commands put their flags in the URL, which is
+  85 of the rows that produced no answer. Emptying a parameter in the captured
+  URL is the same idea one layer over, and it is the largest single thing
+  missing.
+- **Multipart requests log only their JSON fields**
+  (`internal/requests/requests.go:334-344`), so `--attachments` and the
+  template-file endpoints cannot be replayed as JSON. Two `create flow` rows
+  show this as a control that fails.
+- **Fields the CLI never sends.** The schema at `/api/v2/openapi.json` describes
+  202 fields, and the probe can only ask about the ones some flag puts in a
+  payload. A field no flag reaches is a hole no amount of driving the CLI finds.
 - **The third-party services stay out of reach.** AWS, Azure, Jira, SonarQube
   and the rest are unaffected by any of this. What they do with an empty value
   is still only visible in customers' runs.

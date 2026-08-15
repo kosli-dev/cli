@@ -12,11 +12,18 @@ all. Only running it settles which.
 ## Running it
 
 ```bash
-make test_setup                       # a local server on localhost:8001
-./empty-flag-audit/audit.py      # produces results.tsv
-./empty-flag-audit/audit.py --ci # produces results-ci.tsv
-./empty-flag-audit/report.py     # the figures the decision document quotes
+make test_setup                    # a local server on localhost:8001
+./empty-flag-audit/audit.py        # produces results.tsv
+./empty-flag-audit/audit.py --ci   # produces results-ci.tsv
+./empty-flag-audit/report.py       # the figures the decision document quotes
+./empty-flag-audit/replay.py       # produces results-api.tsv
 ```
+
+`audit.py` asks what the CLI does with an empty value. `replay.py` asks what the
+server does with an emptied field, by capturing a request the CLI sent and
+sending it again with one field emptied. It is a separate script rather than a
+third mode because it measures something else: `--ci` produces rows that line up
+with the plain run's, and these do not.
 
 Narrower runs, for working on one entry:
 
@@ -100,8 +107,21 @@ compared against the other two runs rather than against exit 0, so their answers
 are not mistaken for refusals.
 
 **Commands needing a service we cannot reach** - AWS, Azure, Google Cloud,
-Kubernetes, a connected git provider, Jira, SonarQube, Snyk, a credentials store
-- are recorded with a skip reason rather than guessed at.
+Kubernetes, a connected git provider, Jira, SonarQube, Snyk - are recorded with a
+skip reason rather than guessed at.
+
+**Nothing may wait without explaining itself.** A run stops with a non-zero exit
+when a combination takes over five seconds, or when a run retried a request until
+it gave up. Every wait found so far was a defect: an AWS client waiting out a
+metadata endpoint, gitlab.com throttling us, a keychain dialog waiting for a
+person, and a server 500 the client kept retrying. Both checks report after the
+results are written, so a run that trips one still keeps what it measured, and
+both take named exceptions carrying their reason.
+
+**Coverage is pinned to the command tree.** coverage.json is written from cobra's
+own tree by a Go test, and audit.py refuses to run until spec.json covers it.
+Reading --help instead used to miss whatever cobra does not list: deprecated
+commands, hidden commands, and flags hidden by deprecation.
 
 **Global flags** are declared once on the root command and behave the same
 wherever they appear, so they are audited once, on `archive flow`, rather than on
@@ -109,6 +129,15 @@ every command.
 
 ## Known gaps
 
-Hidden commands are invisible to `--help`, so `bootstrap.py` never found them and
-they are absent from `spec.json`. `attest override` is one, and it carries
-`--new-compliance-status`.
+**The audit invents the values it gives flags.** A flag it knows nothing about
+gets a made-up value, and for 114 of the 412 runnable combinations the run with
+that value fails - so the empty run is compared against a control that did not
+work. Written up in `docs/2026-08-15-the-audit-invents-its-input-values.md`.
+
+**`replay.py` cannot reach a flag that is not a payload field.** The read
+commands put their flags in the query string, and multipart requests are not
+replayed as JSON. Of its 412 rows, 19 are an answer about the server. Written up
+in `docs/2026-08-15-auditing-empty-values-at-the-api.md`.
+
+**What a third-party service does with an empty value stays unknown.** The CLI's
+own checks are visible without credentials; what AWS or Jira then does is not.

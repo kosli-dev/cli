@@ -463,7 +463,12 @@ func (suite *RequestsTestSuite) TestDebugPayloadOutput() {
 					RequireProvenance: true,
 				},
 			},
-			expectedLog: "############### PAYLOAD ###############\npayload sent to: http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared\nthis is the payload being sent: \n {\n    \"name\": \"test-environment\",\n    \"type\": \"K8S\",\n    \"description\": \"test-environment\",\n    \"include_scaling\": true,\n    \"require_provenance\": true\n}\n",
+			// The method is logged beside the URL because the two together are
+			// what identifies the request. Reading the log to find out what a
+			// command sends - which is how the empty-flag audit learns which
+			// payload field a flag controls - a URL alone does not say whether
+			// it was written to with a PUT or a POST.
+			expectedLog: "############### PAYLOAD ###############\npayload sent to: PUT http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared\nthis is the payload being sent: \n {\n    \"name\": \"test-environment\",\n    \"type\": \"K8S\",\n    \"description\": \"test-environment\",\n    \"include_scaling\": true,\n    \"require_provenance\": true\n}\n",
 		},
 		{
 			name: "GET request with debug does not log non-existent payload",
