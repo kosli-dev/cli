@@ -44,29 +44,12 @@ value. The CLI has 94 commands declaring 165 distinct flag names between them,
 which is already 700 command-and-flag combinations, and that count is the floor
 rather than the ceiling:
 
-- **The answer is not in the flag's type.** A flag may be refused by a
-  required-flag check, by a value allowlist in `PreRunE`, by a mutual-exclusion
-  rule, by the server, or by a third party - or not refused at all. `--page` is
-  refused everywhere and `--fingerprint` is accepted on some commands, and no one
-  decided either; it fell out of how each was declared.
-- **The same flag name behaves differently on different commands.** 23 of the
-  165 are refused on some commands and accepted on others.
-- **Some differences never reach the output.** `kosli attest generic` prints
-  `generic attestation 'unit-test' is reported to trail: my-trail` and exits 0
-  whether the attestation went to the artifact or to the trail. The difference is
-  only visible in what was stored.
-- **The rules change inside CI.** A flag is checked because it is marked
-  required, and that marking is skipped when the flag's default comes from a CI
-  environment variable. Four combinations we know of stop being checked by the
-  CLI inside GitHub Actions. Appendix 1 shows this happening.
-- **Flags interact.** `kosli attest generic --fingerprint ""` silently attests to
-  the trail; add `--artifact-type file` and the same empty value is refused with
-  `only one of --fingerprint, --artifact-type is allowed`. One flag decides
-  whether another is checked, so the real space is much larger than 700.
-- **Some commands need what we do not have.** 288 of the 700 combinations are on
-  20 commands needing AWS, Azure, Google Cloud, Kubernetes, a connected git
-  provider, Jira, SonarQube or Snyk. What the CLI does
-  with them can still be seen; what the service does cannot.
+- The answer is not in the flag's type.
+- The same flag name can behave differently on different commands.
+- Some differences never reach the output.
+- The rules can change inside CI.
+- Flags can interact.
+- Some commands talk to external services.
 
 ## What was measured instead
 
@@ -88,7 +71,9 @@ The audit then compares the three sets of:
 - state left on the server afterwards
 
 
-The audit ran all 700 command+flag combinations twice, once as on a laptop and once with the environment variables GitHub Actions sets:
+The audit ran all 700 command+flag combinations twice,
+once as on a laptop and once with the environment variables GitHub Actions sets.
+(There are small differences, as detailed in Appendix 1.)
 
 - For 412 the command can succeed against the local server alone, so the
 whole story is visible: what the CLI did with the empty value, and what the
@@ -100,17 +85,17 @@ service.
 
 ## The 412 that can succeed against the local server
 
-| What happens to an empty value | On a laptop | Inside GitHub Actions |
-|---|---|---|
-| the CLI refuses it | 224 | 220 |
-| the CLI accepts it but the server refuses it | 5 | 9 |
-| nothing refuses it | 183 | 183 |
-| **total** | **412** | **412** |
+| What happens to an empty value | Count | 
+|---|---|
+| the CLI refuses it | 224 | 
+| the CLI accepts it but the server refuses it | 5 | 
+| nothing refuses it | 183 | 
+| **total** | **412** | 
 
 Of the 183 that nothing refuses, 165 do exactly what omitting the flag does.
-That is not the same as doing nothing: omitting a flag has a meaning of its own,
-and it is rarely the meaning intended when that flag was written with a variable
-after it:
+That is not the same as doing nothing: omitting a flag has a meaning of its own.
+But it is rarely, if ever, the meaning _intended_ when that flag was written with
+a variable after it:
 
 | What the flag names | How many | What omitting it does (== what `--flag ""` does) |
 |---|---|---|
@@ -124,8 +109,8 @@ after it:
 | **total** | **165** | |
 
 Refusing an empty value takes none of this away. In every one of the 165 the
-empty value already does what omitting the flag does, so a workflow that wants
-that behaviour can still have it by not writing the flag. What it takes away is
+empty value already does what omitting the flag does, so a workflow that _really_
+wants that behaviour can still have it by not writing the flag. What it takes away is
 the ability to spell it `--flag ""`, which is the spelling an unset variable
 produces, and which is why the two cannot be told apart today.
 
@@ -135,36 +120,29 @@ The other 18 (183-165) do something omitting the flag does not. 13 differ only b
 - `detach-policy --environment` detaches it from no Environments (in Findings below)
 - `list environments --tag` answers "No environments were found", which is also
   what a real no-match says (in Findings below).
-- `update control --description` and `update service-account --description`
-  clear the description. These two are the only cases in the 700 where an empty
-  value does what someone would have asked for, and the only capability this
-  proposal removes.
+
+The remaining two are `update control --description` and `update service-account --description` which clear the description. These two are the _only_ cases in the 
+700 where an empty value does what was asked for, and the only capability this 
+proposal removes. These are covered in the `The one capability this removes` section.
 
 ## The 288 that need credentials the audit does not have
 
-| What the CLI does with an empty value | On a laptop | Inside GitHub Actions |
-|---|---|---|
-| refuses it | 164 | 161 |
-| does not react, so it reaches the service | 105 | 108 |
-| lets it through, exit 0 | 19 | 19 |
-| **total** | **288** | **288** |
+| What the CLI does with an empty value | Count | 
+|---|---|
+| refuses it | 164 | 
+| does not react, so it reaches the service | 105 | 
+| lets it through, exit 0 | 19 | 
+| **total** | **288** | 
 
-The middle row is the one to look at. Those 105 are empty values that survive every
-check the CLI has and are handed to someone else. Among them are the credentials:
-`--aws-key-id` and `--aws-secret-key` are refused on none of their three commands,
-`--jira-pat` on neither of its, and `--registry-password` and
-`--registry-username` on 6 of their 17 - so the same registry credential is
-checked on six commands and not on the other eleven.
+The middle 105 are empty values that survive every check the CLI has and are handed
+to a service. 
+What those services then do with the empty values they are handed is unknown. 
+There no discernible refusal pattern.
+For example, credentials:
+- `--aws-key-id` and `--aws-secret-key` are refused on _none_ of their commands
+- `--registry-password` and `--registry-username` are refused on _some_ of their commands
+- `--jira-pat`, `--github-token`, `--gitlab-token`, the `--bitbucket-*` and `--azure-*` pair, `--jira-api-token`, `--sonar-api-token` and `--kubeconfig` are refused on _all_ their commands. 
 
-Most credential flags are refused, though. `--github-token`, `--gitlab-token`,
-the `--bitbucket-*` and `--azure-*` pair, `--jira-api-token`, `--sonar-api-token`
-and `--kubeconfig` are all refused everywhere they appear. Which are and which
-are not follows no pattern anyone chose.
-
-What those services then do with the empty values they are handed is the only
-thing here that stays unknown, and no amount of work on this machine will show it
-- the warnings in Appendix 0 are what would turn customers' runs into that
-measurement.
 
 ## Findings
 
@@ -195,22 +173,16 @@ the CLI's source. `$VAR` means a variable that is unset, which is all it takes.
 | `kosli tag flow F --unset "$VAR"` | the tag is not removed and stays in force. The CSV split of an empty value yields no elements, so `remove_tags` is sent empty, and the command answers "No tags were applied", exit 0 | removes nothing |
 | `kosli get attestation NAME --flow F --trail "$VAR"`, and the same with `--fingerprint "$VAR"` | `Error: Get "": GET  giving up after 1 attempt(s): Get "": unsupported protocol scheme ""`. Omitting either flag says `at least one of --trail, --fingerprint is required when using ATTESTATION-NAME`, so the empty value defeats the check that produces the good message and the user is shown the plumbing instead. Either flag on its own is enough | unusable error |
 
-Nineteen findings, from one slice of one CLI, and seventeen of them silent.
-And nineteen is where the looking stopped, not where the findings did: 155 of the
-combinations that accept an empty value are on commands that record or judge
-compliance, and most have never been examined one at a time. Four rounds of
-examining them have each produced more - two, then three, then one, then one -
-and those rounds also turned up the redaction case, which is not about
-compliance data at all, and the override 500, which needs no empty value and was
-found by timing the audit rather than by reading its results. Nobody was looking
-for either.
+Nineteen findings, from one slice of one CLI, seventeen of them silent.
+And nineteen is where the looking stopped, not where the findings did. Four rounds of
+examining them have each produced more cases, as well as finding the redaction case,
+and the attest-override 500 case. 
 
-That is the argument. We cannot keep finding these one at a time, and a rule that
+We cannot keep finding these one at a time. A rule that
 refuses an empty value everywhere removes the whole class rather than the
-instances of it we happen to reach.
+instances we happen to stumble upon.
 
-Three of them are worth filing on their own account, whatever is decided here,
-and each has its own write-up alongside this one.
+Three of them are worth filing on their own account, whatever is decided here.
 
 ## What this proposal cannot fix
 
@@ -241,15 +213,13 @@ is in that position.
 
 Clearing needs to be said in the flag rather than carried in the value, which
 is the part an unset variable can reach. `kosli tag` already does this: `--set`
-adds, `--unset` removes, and the field is named as the flag's argument
-(`cmd/kosli/tag.go:120`). The same shape here is 
-`kosli update control X --unset description`, and it ships in the same release
-as the refusal.
+adds, `--unset` removes, and the field is named as the flag's argument.
+The same shape here is `kosli update control X --unset description`, 
+and it ships in the same release as the refusal.
 
-The server already has the notion. Its service-account endpoint documents
-`description: null` as the way to clear one and distinguishes it from an omitted
-field, so `--unset description` gives the CLI a way to say what the API can
-already hear.
+The server already documents `description: null` for a service-account endpoint 
+as the way to clear one and distinguishes it from an omitted field, 
+so `--unset description` gives the CLI a way to say what the API can already hear.
 
 Whether anyone relies on this capability is answerable before the change ships,
 for controls at least. Every create and update of a control writes a version 
@@ -264,8 +234,8 @@ flag does, or does something nobody asked for.
 
 ## Proposal
 
-Empty is always an error, on every flag that is given one, with no exemptions to
-remember. A flag whose default is empty is untouched: the rule is about what a
+Empty is _always_ an error, on every flag that is given one. No exceptions. 
+A flag whose default is empty is untouched: the rule is about what a
 command was told, not about what it falls back on. That is also how it is
 checked - pflag records whether a flag was set, and the check reads that.
 
@@ -278,51 +248,36 @@ exactly the request that omitting the flag produces, so the server receives an
 identical payload either way and has nothing empty to reject. Only the CLI can
 still see the difference, because only the CLI saw the flag.
 
-Most breaks will be where a variable is genuinely unset, and in those pipelines
-the command is already doing something its author did not ask for. There the
-failure replaces silent wrong behaviour rather than correct behaviour.
-
-Not every break is that, though. Someone may be passing an empty value
-deliberately, with no variable involved. They lose nothing they cannot still get
-by omitting the flag, but their pipeline fails until somebody edits it.
-
-This is a bug fix rather than a breaking change: what starts failing is a
-command that was already doing something its author did not ask for. The
-measurements say that holds for all but two of the 202 combinations that change,
-and those two keep the capability under `--unset description`, so anyone
-affected has a one-line edit to make.
-
 ## Releasing this
 
-Commands that succeed today will start failing. That is not a breaking change:
-a command that fails under this rule was passing an empty value it was never
-meant to pass, and doing something its author did not ask for. Nobody is
-deprived of behaviour they wanted.
+A command that fails under this rule was passing an empty value it was never
+meant to pass, and doing something its author did not ask for. 
+- Nobody is deprived of behaviour they wanted.
+- Everyone affected has an easy one-line fix to make.
 
-The measurements support that for all but two of the 202 combinations. The
-exceptions are `kosli update control --description ""` and 
-`kosli update service-account --description ""`, which clear a description 
-on purpose, because
-`update` is a patch and omitting the flag cannot clear anything. Those two are
-not bad commands being caught. They are a capability being removed, so
+The measurements support that for all but two of the 202 combinations.
+The exceptions are:
+- `kosli update control --description ""` 
+- `kosli update service-account --description ""`
+
+Those two are not bad commands being caught.
+They are a capability being removed, so
 `--unset description` ships alongside: one new flag on two commands.
 
-With it, every remaining failure is a command that was already wrong. This goes
-out as a bug fix in a 2.x release, with a release note, and no staged rollout -
-which would keep the compliance holes open for the length of the stage.
+This goes out as a bug fix in a 2.x release, with a release note.
+
+---
 
 ## Appendix 0: the staged release, if it is needed
 
-This is the shape the change takes if `--unset description` does not ship with
-it, or if we decide the impact needs measuring before refusing empty values
-lands. At least
-202 combinations change - 183 on the commands that work here, and 19 more on the
-ones needing a service, where the CLI lets an empty value through before the
-service is even reached - and staging is how that is made gradual.
+If `--unset description` does not ship with it, or if we decide the impact needs
+measuring before refusing empty values lands, we can stage the release.
+At least 202 combinations change - 183 plus 19 more on the
+ones needing a service. Staging is how that is made gradual.
 
-Steps 1 and 2 are worth reading even if the refusal ships as a bug fix, because the
-warnings they describe are the only way to learn what an empty value does at the
-services this audit cannot reach.
+Steps 1 and 2 are worth reading even if the empty-value refusal ships as a bug 
+fix, because the warnings they describe are the only way to learn what an empty
+value does at the services this audit cannot reach.
 
 ### Step 1: somewhere to put a warning, in app.kosli.com
 
@@ -331,7 +286,7 @@ migration, it is a delay, and we would reach step 3 knowing no more than we do
 now. So before the CLI warns about anything, there has to be somewhere for the
 warning to go.
 
-A warning goes to two places, and no more than two:
+A warning goes to two places:
 
 1. **The workflow run**, printed as now.
 2. **app.kosli.com, at the org level.** A command that has `--org` and
@@ -360,8 +315,7 @@ version. Ship `KOSLI_ALLOW_EMPTY_FLAG_VALUES=true` alongside it as an escape
 hatch, so anyone caught out has a one-line unblock while they fix the pipeline,
 and remove it in the next major release.
 
-When to ship it is a question step 2 answers: when the reported warnings have
-fallen far enough that the remaining breakage is small and known.
+When to ship it is a question step 2 answers.
 
 ### Step 4: delete what the guard replaced
 
@@ -373,8 +327,8 @@ someone's memory.
 ### Why steps 1 and 2 come first
 
 Reporting warnings is not only a kindness to customers. It answers the question a
-release note cannot: how much would step 3 actually break? Today that is an
-argument. With this it becomes a number, per org, and we can tell the customers
+release note cannot: how much would step 3 actually break? Today that is a guess.
+With this it becomes a number, per org, and we can tell the customers
 who are affected before it lands rather than after.
 
 It also reaches where this audit could not. For the 288 combinations on commands
@@ -383,17 +337,17 @@ not what the service does with the 105 empty values the CLI hands over. Customer
 have the credentials we lack, so their warnings are the only place that half can
 be found out.
 
-Three conditions on the reporting. Sending a warning must never fail the command
-that produced it: this is a report, not a check. It has to stay rare enough to be
-worth looking at, which the numbers here suggest it will be. And it must go to
-the `--host` the command was already given, through the same `--http-proxy` - not
-to a hardcoded address.
+Three conditions on the reporting:
+1. Sending a warning must never fail the command that produced it: this is a
+report, not a check.
+2. It has to stay rare enough to be worth looking at, which the numbers here
+suggest it will be. 
+3. It must go to the `--host` the command was already given, through the same `--http-proxy` - not to a hardcoded address.
 
 That last one is what makes egress restrictions a non-issue. A command reporting
 a snapshot from inside a locked-down network can already reach the host it
 reports to, because that is what it is doing; a warning to the same host needs
-nothing that the command did not already need. Posting somewhere else would break
-exactly the customers who are most careful about what leaves their network.
+nothing that the command did not already need. 
 
 ---
 
