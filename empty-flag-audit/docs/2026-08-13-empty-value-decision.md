@@ -20,8 +20,8 @@ that an unset shell variable cannot quietly change what a command does.
 ## Why we cannot establish what every empty value does
 
 It is impractical to work out what every command does with every empty flag
-value. The CLI has 91 commands declaring 152 distinct flag names between them,
-which is already 653 command-and-flag combinations, and that count is the floor
+value. The CLI has 94 commands declaring 165 distinct flag names between them,
+which is already 700 command-and-flag combinations, and that count is the floor
 rather than the ceiling:
 
 - **The answer is not in the flag's type.** A flag may be refused by a
@@ -29,23 +29,23 @@ rather than the ceiling:
   rule, by the server, or by a third party - or not refused at all. `--page` is
   refused everywhere and `--fingerprint` is accepted on some commands, and no one
   decided either; it fell out of how each was declared.
-- **The same flag name behaves differently on different commands.** 21 of the
-  152 are refused on some commands and accepted on others.
+- **The same flag name behaves differently on different commands.** 23 of the
+  165 are refused on some commands and accepted on others.
 - **Some differences never reach the output.** `kosli attest generic` prints
   `generic attestation 'unit-test' is reported to trail: my-trail` and exits 0
   whether the attestation went to the artifact or to the trail. The difference is
   only visible in what was stored.
 - **The rules change inside CI.** A flag is checked because it is marked
   required, and that marking is skipped when the flag's default comes from a CI
-  environment variable. Two combinations we know of stop being checked by the CLI
-  inside GitHub Actions. Appendix 1 shows this happening.
+  environment variable. Four combinations we know of stop being checked by the
+  CLI inside GitHub Actions. Appendix 1 shows this happening.
 - **Flags interact.** `kosli attest generic --fingerprint ""` silently attests to
   the trail; add `--artifact-type file` and the same empty value is refused with
   `only one of --fingerprint, --artifact-type is allowed`. One flag decides
-  whether another is checked, so the real space is much larger than 653.
-- **Some commands need what we do not have.** 279 of the 653 combinations are on
-  21 commands needing AWS, Azure, Google Cloud, Kubernetes, a connected git
-  provider, Jira, SonarQube, Snyk, or a credentials store. What the CLI does
+  whether another is checked, so the real space is much larger than 700.
+- **Some commands need what we do not have.** 288 of the 700 combinations are on
+  20 commands needing AWS, Azure, Google Cloud, Kubernetes, a connected git
+  provider, Jira, SonarQube or Snyk. What the CLI does
   with them can still be seen; what the service does cannot.
 
 ## What was measured instead
@@ -63,39 +63,39 @@ output, and the state left on the server afterwards are compared. The whole set
 runs twice, once as on a laptop and once with the environment variables GitHub
 Actions sets.
 
-It ran all 653. For 374 of them the command works here, so the whole story is
+It ran all 700. For 412 of them the command works here, so the whole story is
 visible:
 
 | What happens to an empty value | On a laptop | Inside GitHub Actions |
 |---|---|---|
-| the CLI refuses it | 203 | 201 |
-| the CLI accepts it and the server refuses it | 5 | 7 |
-| nothing refuses it | 166 | 166 |
+| the CLI refuses it | 218 | 214 |
+| the CLI accepts it and the server refuses it | 5 | 9 |
+| nothing refuses it | 189 | 189 |
 
-Of the 166 that nothing refuses, 162 do exactly what omitting the flag does. That
+Of the 189 that nothing refuses, 172 do exactly what omitting the flag does. That
 is not the same as doing nothing: omitting a flag has a meaning of its own, and it
 is rarely the meaning someone had in mind when they wrote that flag with a
 variable after it.
 
-Appendix 2 groups the 152 flag names by what they are for and says how many of
+Appendix 2 groups the 165 flag names by what they are for and says how many of
 each kind the CLI already refuses. Appendix 3 is the same thing flag by flag.
 
-The other 279 are on commands needing AWS, Azure, a git provider and the rest,
+The other 288 are on commands needing AWS, Azure, a git provider and the rest,
 which cannot succeed here. Their own checks still run first, though, so the half
 this decision is about is visible even without the credentials:
 
 | What the CLI does with an empty value | On a laptop | Inside GitHub Actions |
 |---|---|---|
-| refuses it | 173 | 172 |
-| does not react, so it reaches the service | 88 | 89 |
-| lets it through, exit 0 | 18 | 18 |
+| refuses it | 182 | 179 |
+| does not react, so it reaches the service | 87 | 90 |
+| lets it through, exit 0 | 19 | 19 |
 
-The middle row is the one to look at. Those 88 are empty values that survive every
+The middle row is the one to look at. Those 87 are empty values that survive every
 check the CLI has and are handed to someone else. Among them are the credentials:
 `--aws-key-id` and `--aws-secret-key` are refused on none of their three commands,
 `--jira-pat` on neither of its, and `--registry-password` and
-`--registry-username` on 6 of their 16 - so the same registry credential is
-checked on six commands and not on the other ten.
+`--registry-username` on 6 of their 17 - so the same registry credential is
+checked on six commands and not on the other eleven.
 
 Most credential flags are refused, though. `--github-token`, `--gitlab-token`,
 the `--bitbucket-*` and `--azure-*` pair, `--jira-api-token`, `--sonar-api-token`
@@ -144,7 +144,7 @@ plumbing. `$VAR` means a variable that is unset, which is all it takes.
 | `kosli get attestation NAME --flow F --trail "$VAR"` | `Error: Get "": GET  giving up after 1 attempt(s): Get "": unsupported protocol scheme ""`. Omitting the flag says `at least one of --trail, --fingerprint is required when using ATTESTATION-NAME`, so the empty value defeats the check that produces the good message and the user is shown the plumbing instead | unusable error |
 
 Eighteen findings, from one slice of one CLI, and sixteen of them silent. And
-eighteen is where the looking stopped, not where the findings did: 136 of the
+eighteen is where the looking stopped, not where the findings did: 160 of the
 combinations that accept an empty value are on commands that record or judge
 compliance, and most have never been examined one at a time. Four rounds of
 examining them have each produced more - two, then three, then one, then one -
@@ -194,10 +194,10 @@ measurement they produce covers CLI traffic only.
 
 The server cannot close that gap by copying the rule, because it mostly never
 sees an empty value. When an empty value produces the same request as omitting
-the flag - which is 162 of the 166 - the server receives an identical payload
+the flag - which is 172 of the 189 - the server receives an identical payload
 either way, and there is nothing empty in it to reject.
 
-Those 162 fall into three kinds, by whose problem the payload turns out to be.
+Those 172 fall into three kinds, by whose problem the payload turns out to be.
 One of each, read with `--debug`:
 
 | Command | What reaches the server | Whose problem |
@@ -297,8 +297,8 @@ comes back, and that part stops being breaking at all.
 
 ### Proposed: four steps
 
-At least 184 combinations changing at once is a lot to ask of customers in one
-upgrade - 166 on the commands that work here, and 18 more on the ones needing a
+At least 208 combinations changing at once is a lot to ask of customers in one
+upgrade - 189 on the commands that work here, and 19 more on the ones needing a
 service, where the CLI lets an empty value through before the service is even
 reached. So the rule arrives in stages.
 
@@ -314,7 +314,7 @@ A warning goes to two places, and no more than two:
 1. **The workflow run**, printed as now.
 2. **app.kosli.com, at the org level.** A command that has `--org` and
    `--api-token` can send the warning whatever else it was doing, so this covers
-   163 of the 166. The exception is `kosli fingerprint`, which is entirely local
+   184 of the 189. The exception is `kosli fingerprint`, which is entirely local
    and needs no credentials.
 
 This is work in app.kosli.com: somewhere to receive the warnings, and one place
@@ -355,9 +355,9 @@ release note cannot: how much would step 3 actually break? Today that is an
 argument. With this it becomes a number, per org, and we can tell the customers
 who are affected before it lands rather than after.
 
-It also reaches where this audit could not. For the 279 combinations on commands
+It also reaches where this audit could not. For the 288 combinations on commands
 needing AWS, Azure, a git provider and the rest, we can see what the CLI does but
-not what the service does with the 88 empty values the CLI hands over. Customers
+not what the service does with the 87 empty values the CLI hands over. Customers
 have the credentials we lack, so their warnings are the only place that half can
 be found out.
 
@@ -392,10 +392,11 @@ kosli attest artifact ... --build-url ""
 Error: Input payload validation failed: map[build_url:Input should be a valid URL, input is empty]
 ```
 
-That moves two combinations - `attest artifact --build-url` and `attest artifact
---commit-url` - from being refused by the CLI to being refused by the server.
-Both are still refused here, because this server happens to check them. The point
-is that the CLI stopped, in exactly the place these bugs happen. That is cli#1088.
+That moves four combinations - `--build-url` and `--commit-url`, on `attest
+artifact` and on `report artifact` - from being refused by the CLI to being
+refused by the server. All four are still refused here, because this server
+happens to check them. The point is that the CLI stopped, in exactly the place
+these bugs happen. That is cli#1088.
 
 ---
 
@@ -403,26 +404,26 @@ is that the CLI stopped, in exactly the place these bugs happen. That is cli#108
 
 The question worth asking of each flag is what it means to the person running the
 command, and whether an empty value means anything for that. Grouped that way,
-the 152 names are:
+the 165 names are:
 
 | What the flag is for, with a few examples | Names | Does an empty value mean anything? | CLI always refuses | Only the server refuses | Refuses on some commands | Never refuses |
 |---|---|---|---|---|---|---|
-| identity and selection - `--flow`, `--trail`, `--fingerprint`, `--name` | 46 | no. There is no artifact called "" | 19 | 1 | 14 | 12 |
-| location and input - `--template-file`, `--results-dir`, `--paths` | 26 | no. There is no file called "" | 17 | 1 | 3 | 5 |
-| filters - `--exclude`, `--namespaces`, `--services`, `--attestations` | 22 | no. Filtering on "" filters on nothing | 1 | 0 | 0 | 21 |
+| identity and selection - `--flow`, `--trail`, `--fingerprint`, `--name` | 53 | no. There is no artifact called "" | 24 | 1 | 15 | 13 |
+| location and input - `--template-file`, `--results-dir`, `--paths` | 27 | no. There is no file called "" | 18 | 1 | 3 | 5 |
+| filters - `--exclude`, `--namespaces`, `--services`, `--attestations` | 24 | no. Filtering on "" filters on nothing | 3 | 0 | 0 | 21 |
 | credentials - `--github-token`, `--aws-secret-key`, `--registry-password` | 17 | no. There is no token "" | 12 | 0 | 2 | 3 |
 | output and paging - `--output`, `--sort`, `--page`, `--reverse` | 14 | no | 9 | 0 | 1 | 4 |
-| behaviour switches - `--dry-run`, `--assert`, `--compliant` | 11 | no | 11 | 0 | 0 | 0 |
-| free-text metadata - `--description`, `--comment`, `--reason`, `--tag` | 9 | **sometimes** | 4 | 0 | 1 | 4 |
+| behaviour switches - `--dry-run`, `--assert`, `--compliant` | 13 | no | 13 | 0 | 0 | 0 |
+| free-text metadata - `--description`, `--comment`, `--reason`, `--tag` | 10 | **sometimes** | 4 | 0 | 1 | 5 |
 | the global flags - `--org`, `--api-token`, `--host`, `--debug` | 7 | no | 6 | 0 | 0 | 1 |
-| **total** | **152** | | **79** | **2** | **21** | **50** |
+| **total** | **165** | | **89** | **2** | **22** | **52** |
 
 The credentials row is the one to look at twice. Twelve of its seventeen names
 are refused by the CLI everywhere they appear. Three never are - `--aws-key-id`,
 `--aws-secret-key` and `--jira-pat` - so an empty one is handed to AWS or to Jira,
 and whether it is caught then depends on that service and not on us. The last two,
 `--registry-password` and `--registry-username`, are refused on six commands and
-not on the other ten. Kosli's own
+not on the other eleven. Kosli's own
 `--api-token` is not among them: it is a global flag, and it already refuses an
 empty value with `--api-token is not set`.
 
@@ -430,7 +431,7 @@ empty value with `--api-token is not set`.
 
 ## Appendix 3: every flag in the CLI
 
-All 152 flag names, what each is for, how many of its commands were run, and what
+All 165 flag names, what each is for, how many of its commands were run, and what
 happened. Commands needing AWS, Azure, Google Cloud, Kubernetes, a connected git
 provider, Jira, SonarQube, Snyk or a credentials store are included: they cannot
 succeed here, but their own checks run first, so whether the CLI refuses an empty
@@ -455,13 +456,13 @@ listed once.
 | `--annotate` | metadata | 13 of 13 | always |
 | `--api-token` | global | 1 of 1 | always |
 | `--archived` | filter | 1 of 1 | always |
-| `--artifact-type` | identity | 16 of 16 | some commands |
+| `--artifact-type` | identity | 17 of 17 | some commands |
 | `--assert` | switch | 9 of 9 | always |
 | `--assume-yes` | switch | 2 of 2 | always |
-| `--attachments` | identity | 11 of 11 | always |
+| `--attachments` | identity | 12 of 12 | always |
 | `--attestation-data` | identity | 1 of 1 | always |
 | `--attestation-id` | identity | 1 of 1 | never |
-| `--attestations` | filter | 2 of 2 | never |
+| `--attestations` | filter | 3 of 3 | never |
 | `--aws-key-id` | credentials | 3 of 3 | never |
 | `--aws-region` | location | 3 of 3 | some commands |
 | `--aws-secret-key` | credentials | 3 of 3 | never |
@@ -477,12 +478,13 @@ listed once.
 | `--bitbucket-username` | credentials | 2 of 2 | always |
 | `--bitbucket-workspace` | location | 2 of 2 | always |
 | `--bucket` | location | 1 of 1 | always |
-| `--build-url` | location | 1 of 1 | always, but in CI only the server does |
+| `--build-url` | location | 2 of 2 | always, but in CI only the server does |
+| `--cluster` | identity | 1 of 1 | always |
 | `--clusters` | filter | 1 of 1 | never |
 | `--clusters-regex` | filter | 1 of 1 | never |
 | `--comment` | metadata | 1 of 1 | never |
 | `--commit` | identity | 18 of 18 | some commands |
-| `--commit-url` | location | 1 of 1 | always, but in CI only the server does |
+| `--commit-url` | location | 2 of 2 | always, but in CI only the server does |
 | `--compliant` | switch | 2 of 2 | always |
 | `--config-file` | location | 2 of 2 | some commands |
 | `--control` | identity | 1 of 1 | always |
@@ -490,24 +492,29 @@ listed once.
 | `--description` | metadata | 22 of 22 | some commands |
 | `--digests-source` | identity | 1 of 1 | always |
 | `--display-name` | metadata | 1 of 1 | never |
-| `--dry-run` | switch | 54 of 54 | always |
+| `--dry-run` | switch | 56 of 56 | always |
+| `--e` | identity | 2 of 2 | never |
 | `--end` | identity | 1 of 1 | never |
 | `--end-ts` | identity | 1 of 1 | always |
 | `--environment` | identity | 4 of 4 | some commands |
-| `--exclude` | filter | 21 of 21 | never |
+| `--exclude` | filter | 23 of 23 | never |
 | `--exclude-namespaces` | filter | 1 of 1 | never |
 | `--exclude-namespaces-regex` | filter | 1 of 1 | never |
 | `--exclude-regex` | filter | 4 of 4 | never |
+| `--exclude-scaling` | filter | 1 of 1 | always |
 | `--exclude-services` | filter | 1 of 1 | never |
 | `--exclude-services-regex` | filter | 1 of 1 | never |
 | `--expires-at` | identity | 2 of 2 | never |
 | `--external-fingerprint` | identity | 14 of 14 | always |
 | `--external-url` | location | 14 of 14 | always |
-| `--fingerprint` | identity | 17 of 17 | some commands |
-| `--flow` | identity | 21 of 21 | some commands |
+| `--fingerprint` | identity | 18 of 18 | some commands |
+| `--flow` | identity | 23 of 23 | some commands |
 | `--flow-tag` | filter | 1 of 1 | never |
+| `--function-name` | identity | 1 of 1 | always |
 | `--function-names` | filter | 1 of 1 | never |
 | `--function-names-regex` | filter | 1 of 1 | never |
+| `--function-version` | identity | 1 of 1 | always |
+| `--git-commit` | identity | 1 of 1 | always |
 | `--github-base-url` | location | 2 of 2 | always |
 | `--github-org` | identity | 2 of 2 | always, and not at all in CI |
 | `--github-token` | credentials | 2 of 2 | always |
@@ -521,6 +528,7 @@ listed once.
 | `--ignore-case` | switch | 1 of 1 | always |
 | `--include` | filter | 2 of 2 | never |
 | `--include-regex` | filter | 2 of 2 | never |
+| `--include-scaling` | filter | 1 of 1 | always |
 | `--included-environments` | filter | 1 of 1 | never |
 | `--input-file` | location | 1 of 1 | always |
 | `--interval` | output | 2 of 2 | never |
@@ -537,7 +545,7 @@ listed once.
 | `--logical` | identity | 1 of 1 | always |
 | `--max-api-retries` | global | 1 of 1 | always |
 | `--max-wait` | output | 1 of 1 | always |
-| `--name` | identity | 19 of 19 | some commands |
+| `--name` | identity | 20 of 20 | some commands |
 | `--namespaces` | filter | 1 of 1 | never |
 | `--namespaces-regex` | filter | 1 of 1 | never |
 | `--new-compliance-status` | switch | 1 of 1 | always |
@@ -550,6 +558,7 @@ listed once.
 | `--page-limit` | output | 8 of 8 | always |
 | `--params` | location | 3 of 3 | never |
 | `--path` | location | 1 of 1 | always |
+| `--paths` | location | 1 of 1 | always |
 | `--paths-file` | location | 1 of 1 | always |
 | `--physical` | identity | 1 of 1 | always |
 | `--policy` | identity | 4 of 4 | some commands |
@@ -561,14 +570,16 @@ listed once.
 | `--reason` | metadata | 2 of 2 | always |
 | `--redact-commit-info` | identity | 14 of 14 | some commands |
 | `--region` | location | 1 of 1 | always |
-| `--registry-password` | credentials | 16 of 16 | some commands |
-| `--registry-username` | credentials | 16 of 16 | some commands |
+| `--registry-password` | credentials | 17 of 17 | some commands |
+| `--registry-provider` | identity | 17 of 17 | some commands |
+| `--registry-username` | credentials | 17 of 17 | some commands |
 | `--repo` | identity | 2 of 2 | never |
 | `--repo-id` | identity | 17 of 17 | some commands |
 | `--repo-provider` | identity | 14 of 14 | some commands |
-| `--repo-root` | location | 14 of 14 | never |
+| `--repo-root` | location | 15 of 15 | never |
 | `--repo-url` | location | 14 of 14 | some commands |
 | `--repository` | identity | 18 of 18 | some commands, and not at all in CI |
+| `--require-provenance` | switch | 1 of 1 | always |
 | `--resolve-names` | switch | 1 of 1 | always |
 | `--results-dir` | location | 1 of 1 | always |
 | `--reverse` | output | 2 of 2 | always |
@@ -576,6 +587,7 @@ listed once.
 | `--schema` | output | 1 of 1 | never |
 | `--search` | filter | 2 of 2 | never |
 | `--service-account` | identity | 5 of 5 | always |
+| `--service-name` | identity | 1 of 1 | always |
 | `--services` | filter | 1 of 1 | never |
 | `--services-regex` | filter | 1 of 1 | never |
 | `--set` | metadata | 2 of 2 | always |
@@ -602,5 +614,7 @@ listed once.
 | `--upload-results` | switch | 2 of 2 | always |
 | `--use-empty-template` | switch | 1 of 1 | always |
 | `--user-data` | identity | 13 of 13 | never |
+| `--visibility` | metadata | 1 of 1 | never |
 | `--watch` | output | 2 of 2 | always |
+| `--yes` | switch | 2 of 2 | always |
 | `--zip` | output | 1 of 1 | always |
