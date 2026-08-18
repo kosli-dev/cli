@@ -235,7 +235,10 @@ flag does, or does something nobody asked for.
 Empty is _always_ an error, on every flag that is given one. No exceptions. 
 A flag whose default is empty is untouched: the rule is about what a
 command was told, not about what it falls back on. That is also how it is
-checked - pflag records whether a flag was set, and the check reads that.
+checked - every flag's value is wrapped, and the wrapper refuses what it is
+handed rather than reading what the flag ends up holding. A default is never
+handed to it, and an empty element of a multi-value flag is still there to be
+seen.
 
 It works because it separates two intents that are spelled identically today: "I
 meant to pass a value and my variable was empty" and "I want no value". They look
@@ -349,28 +352,27 @@ nothing that the command did not already need.
 
 ---
 
-## Appendix 1: why the CLI checks less inside CI
+## Appendix 1: the CLI checks the same inside CI
 
-A flag refuses an empty value when it is marked required, and `RequireFlags` only
-marks a flag required when its default is empty. Several defaults are filled in
-from CI environment variables, so inside CI those flags are not marked required
-and the CLI stops checking them:
+A flag's default has nothing to do with whether an empty value is refused. The
+wrapper refuses what a command is handed, so a default filled in from a CI
+environment variable changes nothing:
 
 ```
 # on a laptop
 kosli attest artifact ... --build-url ""
-Error: flag '--build-url' is required, but empty string was provided
+Error: flag '--build-url' was given an empty value
 
 # in GitHub Actions
 kosli attest artifact ... --build-url ""
-Error: Input payload validation failed: map[build_url:Input should be a valid URL, input is empty]
+Error: flag '--build-url' was given an empty value
 ```
 
-That moves four combinations - `--build-url` and `--commit-url`, on `attest
-artifact` and on `report artifact` - from being refused by the CLI to being
-refused by the server. All four are still refused here, because this server
-happens to check them. The point is that the CLI stopped, in exactly the place
-these bugs happen. That is cli#1088.
+Four combinations used to differ here - `--build-url` and `--commit-url`, on
+`attest artifact` and on `report artifact` - because `RequireFlags` marks a flag
+required only when its default is empty, and inside CI those defaults are
+filled. The audit run with CI variables set records all four as refused by the
+CLI, along with the other 696. That closes cli#1088.
 
 ---
 

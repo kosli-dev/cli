@@ -115,9 +115,8 @@ customer can empty by calling the API however the CLI behaves:
 `--display-name`; `report artifact --artifact-type`, `--name`; `tag --unset`.
 
 `create flow --template` is the one to look at. `--template ""` is refused by the
-CLI, by the `nonEmptyStringSlice` type added in #1092
-(`cmd/kosli/nonEmptyStringSlice.go:99`, used on `--template` at
-`cmd/kosli/createFlow.go:90` and `--attachments` at `cmd/kosli/flags.go:113`).
+CLI, by the wrapper every flag's value carries (`cmd/kosli/nonEmptyValue.go`,
+applied by the walk in `cmd/kosli/root.go`).
 Sending `template: [""]` straight to the API is accepted, and reading the flow
 back shows it stored:
 
