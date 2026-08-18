@@ -217,6 +217,28 @@ func (suite *RootCommandTestSuite) TestUnappliableValueFromEnvNamesTheEnvVar() {
 		"a value taken from the environment must name the environment variable")
 }
 
+// TestWhollyEmptyEnvVarIsUnsetRatherThanRefused pins the one gap in "an empty
+// value is always an error": a KOSLI_ variable set to "" is not refused, it is
+// invisible. viper's default AllowEmptyEnv(false) treats it as unset, so
+// bindFlags never applies it to the flag and the wrapper never sees it. The
+// command then fails, or falls back to a default, exactly as if the variable
+// were not there.
+//
+// An empty element inside a value does reach the flag and is refused, which
+// TestAttestGenericRejectsEmptyAttachmentFromEnv covers. Enabling AllowEmptyEnv
+// would bring the wholly-empty case under the rule as well, and this test is
+// what would fail first.
+func (suite *RootCommandTestSuite) TestWhollyEmptyEnvVarIsUnsetRatherThanRefused() {
+	suite.T().Setenv("KOSLI_ORG", "")
+
+	_, _, _, _, err := executeCommandC("list flows --api-token DRY_RUN")
+
+	suite.Require().Error(err)
+	suite.ErrorContains(err, "--org is not set")
+	suite.NotContains(err.Error(), "was given an empty value",
+		"an empty environment variable is not seen by the flag, so the empty-value rule cannot speak")
+}
+
 func (suite *RootCommandTestSuite) TestQuietFlagSuppressesWarnings() {
 	_, _, _, stderr, err := executeCommandC(
 		"version --config-file testdata/config/plain-text-token.yaml --quiet")

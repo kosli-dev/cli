@@ -46,7 +46,10 @@ type nonEmptyValue struct {
 // rejects a legitimate expression over a bare quote.
 type nonEmptySliceValue struct {
 	nonEmptyValue
-	wrapped        pflag.SliceValue
+	// elements is the same value the embedded nonEmptyValue wraps, seen through
+	// the interface that reaches its elements. It is named apart from that
+	// field so neither shadows the other.
+	elements       pflag.SliceValue
 	splitsOnCommas bool
 }
 
@@ -56,7 +59,7 @@ func newNonEmptyValue(wrapped pflag.Value) pflag.Value {
 	if slice, ok := wrapped.(pflag.SliceValue); ok {
 		return &nonEmptySliceValue{
 			nonEmptyValue:  nonEmptyValue{wrapped: wrapped},
-			wrapped:        slice,
+			elements:       slice,
 			splitsOnCommas: wrapped.Type() == "stringSlice",
 		}
 	}
@@ -100,7 +103,7 @@ func (v *nonEmptySliceValue) Append(value string) error {
 	if value == "" {
 		return errEmptyFlagValue
 	}
-	return v.wrapped.Append(value)
+	return v.elements.Append(value)
 }
 
 // Replace overwrites every element, refusing an empty one. It is part of
@@ -112,12 +115,12 @@ func (v *nonEmptySliceValue) Replace(values []string) error {
 			return errEmptyFlagValue
 		}
 	}
-	return v.wrapped.Replace(values)
+	return v.elements.Replace(values)
 }
 
 // GetSlice returns the elements. It is part of pflag.SliceValue.
 func (v *nonEmptySliceValue) GetSlice() []string {
-	return v.wrapped.GetSlice()
+	return v.elements.GetSlice()
 }
 
 // refuseEmptyElements reports an empty element in a comma-separated value. An
