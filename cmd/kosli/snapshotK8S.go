@@ -161,10 +161,6 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 		Long:    snapshotK8SLongDesc,
 		Example: snapshotK8SExample,
 		Args: func(cmd *cobra.Command, args []string) error {
-			configFileFlag := cmd.Flags().Lookup("config-file")
-			if configFileFlag != nil && configFileFlag.Changed && o.configFilePath == "" {
-				return fmt.Errorf("cannot use '--config-file' with an empty value")
-			}
 			useConfigFile := o.configFilePath != ""
 			if useConfigFile && len(args) > 0 {
 				return fmt.Errorf("cannot use '--config-file' together with a positional environment name argument")
@@ -183,10 +179,6 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			configFileFlag := cmd.Flags().Lookup("config-file")
-			if configFileFlag != nil && configFileFlag.Changed && o.configFilePath == "" {
-				return ErrorBeforePrintingUsage(cmd, "cannot use '--config-file' with an empty value")
-			}
 			useConfigFile := o.configFilePath != ""
 			if useConfigFile {
 				namespaceFlagNames := []string{"namespaces", "exclude-namespaces", "namespaces-regex", "exclude-namespaces-regex"}

@@ -22,7 +22,6 @@ import (
 	"github.com/kosli-dev/cli/internal/utils"
 	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/xeonx/timeago"
 	"golang.org/x/term"
 )
@@ -291,25 +290,6 @@ func RequireFlags(cmd *cobra.Command, flagNames []string) error {
 		}
 	}
 	return nil
-}
-
-// isEmptyFlagValue reports whether a flag was given a value carrying nothing.
-// A slice flag holds no value when it has no non-empty element: --exclude ""
-// leaves a stringSlice with no elements, and --attachments "" leaves a
-// stringArray holding one empty one. Asking the value for its type keeps a
-// string flag given "[]" a real value, since that is what pflag renders an
-// empty slice as.
-func isEmptyFlagValue(f *pflag.Flag) bool {
-	slice, ok := f.Value.(pflag.SliceValue)
-	if !ok {
-		return f.Value.String() == ""
-	}
-	for _, element := range slice.GetSlice() {
-		if element != "" {
-			return false
-		}
-	}
-	return true
 }
 
 // DeprecateFlags declares a list of flags as deprecated for a given command

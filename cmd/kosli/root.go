@@ -409,10 +409,6 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 				if strings.HasPrefix(f.Value.String(), "-") {
 					flagError = fmt.Errorf("flag '--%s' has value '%s' which is illegal", f.Name, f.Value.String())
 				}
-
-				if f.Changed && isEmptyFlagValue(f) {
-					flagError = fmt.Errorf("flag '--%s' was given an empty value", f.Name)
-				}
 			})
 
 			return flagError
@@ -471,7 +467,40 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 	cobra.AddTemplateFunc("isDeprecated", isDeprecated)
 	cmd.SetUsageTemplate(usageTemplate)
 
+	// Every flag on every command refuses an empty value, wrapped here rather
+	// than at each registration so no command can be added without it.
+	refuseEmptyFlagValues(cmd)
+	cmd.SetFlagErrorFunc(reportEmptyFlagValue)
+
 	return cmd, nil
+}
+
+// refuseEmptyFlagValues wraps every flag of cmd and its subcommands so an empty
+// value is refused as it is set, which is the only point at which an empty
+// element of a multi-value flag still exists.
+func refuseEmptyFlagValues(cmd *cobra.Command) {
+	wrap := func(f *pflag.Flag) {
+		f.Value = newNonEmptyValue(f.Value)
+	}
+	cmd.Flags().VisitAll(wrap)
+	cmd.PersistentFlags().VisitAll(wrap)
+	for _, child := range cmd.Commands() {
+		refuseEmptyFlagValues(child)
+	}
+}
+
+// reportEmptyFlagValue gives every flag one wording for an empty value. pflag
+// reports a refused value in its own words and wraps the cause, so the cause is
+// what says whether this is the empty-value rule speaking.
+func reportEmptyFlagValue(cmd *cobra.Command, err error) error {
+	if !errors.Is(err, errEmptyFlagValue) {
+		return err
+	}
+	var invalid *pflag.InvalidValueError
+	if errors.As(err, &invalid) {
+		return fmt.Errorf("flag '--%s' was given an empty value", invalid.GetFlag().Name)
+	}
+	return err
 }
 
 func initialize(cmd *cobra.Command, out, errOut io.Writer) error {

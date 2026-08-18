@@ -87,7 +87,7 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", flowDescriptionFlag)
 	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "", visibilityFlag)
-	cmd.Flags().VarP(newNonEmptyStringSlice(&o.payload.Template), "template", "t", templateFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.Template, "template", "t", []string{}, templateFlag)
 	cmd.Flags().StringVarP(&o.TemplateFile, "template-file", "f", "", templateFileFlag)
 	cmd.Flags().BoolVar(&o.UseEmptyTemplate, "use-empty-template", false, useEmptyTemplateFlag)
 	addDryRunFlag(cmd)
