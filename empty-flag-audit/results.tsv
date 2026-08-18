@@ -1,36 +1,36 @@
 command	flag	empty_exit	omitted_exit	set_exit	refused_by	vs_omitted	vs_set	seconds	gave_up	message
-allow artifact	--artifact-type	1	0	0	cli	differs	differs	1.5		Error: [kosli allow artifact] flag '--artifact-type' was given an empty value
+allow artifact	--artifact-type	1	0	0	cli	differs	differs	0.6		Error: [kosli allow artifact] flag '--artifact-type' was given an empty value
 allow artifact	--dry-run	1	0	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
-allow artifact	--environment	1	1	0	cli	differs	differs	0.3		Error: [kosli allow artifact] flag '--environment' was given an empty value
+allow artifact	--environment	1	1	0	cli	differs	differs	0.4		Error: [kosli allow artifact] flag '--environment' was given an empty value
 allow artifact	--exclude	1	0	0	cli	differs	differs	0.4		Error: [kosli allow artifact] flag '--exclude' was given an empty value
 allow artifact	--fingerprint	1	1	0	cli	differs	differs	0.3		Error: [kosli allow artifact] flag '--fingerprint' was given an empty value
 allow artifact	--reason	1	1	0	cli	differs	differs	0.3		Error: [kosli allow artifact] flag '--reason' was given an empty value
-allow artifact	--registry-password	1	0	1	cli	differs	differs	0.3		Error: [kosli allow artifact] flag '--registry-password' was given an empty value
+allow artifact	--registry-password	1	0	1	cli	differs	differs	0.4		Error: [kosli allow artifact] flag '--registry-password' was given an empty value
 allow artifact	--registry-provider	1	0	0	cli	differs	differs	0.4		Error: [kosli allow artifact] flag '--registry-provider' was given an empty value
 allow artifact	--registry-username	1	0	1	cli	differs	differs	0.3		Error: [kosli allow artifact] flag '--registry-username' was given an empty value
 archive attestation-type	--dry-run	1	0	0	cli	differs	differs	0.4		Error: flag '--dry-run' was given an empty value
-archive control	--dry-run	1	0	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+archive control	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 archive environment	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 archive flow	--api-token	1	0	0	cli	differs	differs	0.3		Error: [kosli archive flow] flag '--api-token' was given an empty value
 archive flow	--config-file	1	0	0	cli	differs	differs	0.3		Error: [kosli archive flow] flag '--config-file' was given an empty value
-archive flow	--debug	1	0	0	cli	differs	differs	0.3		Error: flag '--debug' was given an empty value
+archive flow	--debug	1	0	0	cli	differs	differs	0.2		Error: flag '--debug' was given an empty value
 archive flow	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 archive flow	--host	1	0	0	cli	differs	differs	0.3		Error: [kosli archive flow] flag '--host' was given an empty value
 archive flow	--http-proxy	1	0	1	cli	differs	differs	7.3	set	Error: [kosli archive flow] flag '--http-proxy' was given an empty value
-archive flow	--max-api-retries	1	0	0	cli	differs	differs	0.3		Error: [kosli archive flow] flag '--max-api-retries' was given an empty value
-archive flow	--org	1	0	0	cli	differs	differs	0.2		Error: [kosli archive flow] flag '--org' was given an empty value
-archive flow	--quiet	1	0	0	cli	differs	differs	0.2		Error: flag '--quiet' was given an empty value
+archive flow	--max-api-retries	1	0	0	cli	differs	differs	0.4		Error: [kosli archive flow] flag '--max-api-retries' was given an empty value
+archive flow	--org	1	0	0	cli	differs	differs	0.3		Error: [kosli archive flow] flag '--org' was given an empty value
+archive flow	--quiet	1	0	0	cli	differs	differs	0.3		Error: flag '--quiet' was given an empty value
 assert artifact	--artifact-type	1	0	0	cli	differs	differs	0.6		Error: [kosli assert artifact] flag '--artifact-type' was given an empty value
 assert artifact	--dry-run	1	0	0	cli	differs	differs	0.6		Error: flag '--dry-run' was given an empty value
 assert artifact	--environment	1	0	0	cli	differs	differs	0.6		Error: [kosli assert artifact] flag '--environment' was given an empty value
 assert artifact	--exclude	1	0	0	cli	differs	differs	0.6		Error: [kosli assert artifact] flag '--exclude' was given an empty value
-assert artifact	--fingerprint	1	1	0	cli	differs	differs	0.6		Error: [kosli assert artifact] flag '--fingerprint' was given an empty value
+assert artifact	--fingerprint	1	1	0	cli	differs	differs	0.5		Error: [kosli assert artifact] flag '--fingerprint' was given an empty value
 assert artifact	--flow	1	0	0	cli	differs	differs	0.6		Error: [kosli assert artifact] flag '--flow' was given an empty value
 assert artifact	--output	1	0	0	cli	differs	differs	0.6		Error: [kosli assert artifact] flag '--output' was given an empty value
 assert artifact	--policy	1	0	0	cli	differs	differs	0.6		Error: [kosli assert artifact] flag '--policy' was given an empty value
-assert artifact	--registry-password	1	0	1	cli	differs	differs	0.5		Error: [kosli assert artifact] flag '--registry-password' was given an empty value
+assert artifact	--registry-password	1	0	1	cli	differs	differs	0.6		Error: [kosli assert artifact] flag '--registry-password' was given an empty value
 assert artifact	--registry-provider	1	0	0	cli	differs	differs	0.6		Error: [kosli assert artifact] flag '--registry-provider' was given an empty value
-assert artifact	--registry-username	1	0	1	cli	differs	differs	0.5		Error: [kosli assert artifact] flag '--registry-username' was given an empty value
+assert artifact	--registry-username	1	0	1	cli	differs	differs	0.6		Error: [kosli assert artifact] flag '--registry-username' was given an empty value
 assert pullrequest azure	--azure-org-url	1	1	1	cli	differs	differs	0.1		Error: [kosli assert pullrequest azure] flag '--azure-org-url' was given an empty value
 assert pullrequest azure	--azure-token	1	1	1	cli	differs	differs	0.1		Error: [kosli assert pullrequest azure] flag '--azure-token' was given an empty value
 assert pullrequest azure	--commit	1	1	1	cli	differs	differs	0.1		Error: [kosli assert pullrequest azure] flag '--commit' was given an empty value
@@ -39,365 +39,365 @@ assert pullrequest azure	--project	1	1	1	cli	differs	differs	0.1		Error: [kosli 
 assert pullrequest azure	--repository	1	1	1	cli	differs	differs	0.1		Error: [kosli assert pullrequest azure] flag '--repository' was given an empty value
 assert pullrequest bitbucket	--bitbucket-access-token	1	1	1	cli	differs	differs	0.3		Error: [kosli assert pullrequest bitbucket] flag '--bitbucket-access-token' was given an empty value
 assert pullrequest bitbucket	--bitbucket-password	1	1	1	cli	differs	differs	0.3		Error: [kosli assert pullrequest bitbucket] flag '--bitbucket-password' was given an empty value
-assert pullrequest bitbucket	--bitbucket-username	1	1	1	cli	differs	differs	0.3		Error: [kosli assert pullrequest bitbucket] flag '--bitbucket-username' was given an empty value
+assert pullrequest bitbucket	--bitbucket-username	1	1	1	cli	differs	differs	0.8		Error: [kosli assert pullrequest bitbucket] flag '--bitbucket-username' was given an empty value
 assert pullrequest bitbucket	--bitbucket-workspace	1	1	1	cli	differs	differs	0.3		Error: [kosli assert pullrequest bitbucket] flag '--bitbucket-workspace' was given an empty value
 assert pullrequest bitbucket	--commit	1	1	1	cli	differs	differs	0.5		Error: [kosli assert pullrequest bitbucket] flag '--commit' was given an empty value
-assert pullrequest bitbucket	--dry-run	1	1	0	cli	differs	differs	0.5		Error: flag '--dry-run' was given an empty value
-assert pullrequest bitbucket	--repository	1	1	1	cli	differs	differs	0.3		Error: [kosli assert pullrequest bitbucket] flag '--repository' was given an empty value
+assert pullrequest bitbucket	--dry-run	1	1	0	cli	differs	differs	0.4		Error: flag '--dry-run' was given an empty value
+assert pullrequest bitbucket	--repository	1	1	1	cli	differs	differs	0.2		Error: [kosli assert pullrequest bitbucket] flag '--repository' was given an empty value
 assert pullrequest github	--commit	1	1	1	cli	differs	differs	0.4		Error: [kosli assert pullrequest github] flag '--commit' was given an empty value
-assert pullrequest github	--dry-run	1	1	0	cli	differs	differs	0.5		Error: flag '--dry-run' was given an empty value
+assert pullrequest github	--dry-run	1	1	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
 assert pullrequest github	--github-base-url	1	1	1	cli	differs	differs	0.2		Error: [kosli assert pullrequest github] flag '--github-base-url' was given an empty value
-assert pullrequest github	--github-org	1	1	1	cli	differs	differs	0.3		Error: [kosli assert pullrequest github] flag '--github-org' was given an empty value
+assert pullrequest github	--github-org	1	1	1	cli	differs	differs	0.2		Error: [kosli assert pullrequest github] flag '--github-org' was given an empty value
 assert pullrequest github	--github-token	1	1	1	cli	differs	differs	0.2		Error: [kosli assert pullrequest github] flag '--github-token' was given an empty value
 assert pullrequest github	--repository	1	1	1	cli	differs	differs	0.2		Error: [kosli assert pullrequest github] flag '--repository' was given an empty value
 assert pullrequest gitlab	--commit	1	1	1	cli	differs	differs	0.1		Error: [kosli assert pullrequest gitlab] flag '--commit' was given an empty value
-assert pullrequest gitlab	--dry-run	1	1	0	cli	differs	differs	0.1		Error: flag '--dry-run' was given an empty value
+assert pullrequest gitlab	--dry-run	1	1	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 assert pullrequest gitlab	--gitlab-base-url	1	1	1	cli	differs	differs	0.4		Error: [kosli assert pullrequest gitlab] flag '--gitlab-base-url' was given an empty value
 assert pullrequest gitlab	--gitlab-org	1	1	1	cli	differs	differs	0.1		Error: [kosli assert pullrequest gitlab] flag '--gitlab-org' was given an empty value
 assert pullrequest gitlab	--gitlab-token	1	1	1	cli	differs	differs	0.1		Error: [kosli assert pullrequest gitlab] flag '--gitlab-token' was given an empty value
 assert pullrequest gitlab	--repository	1	1	1	cli	differs	differs	0.1		Error: [kosli assert pullrequest gitlab] flag '--repository' was given an empty value
-assert snapshot	--dry-run	1	1	0	cli	differs	differs	0.6		Error: flag '--dry-run' was given an empty value
-attach-policy	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
-attach-policy	--environment	1	1	0	cli	differs	differs	0.2		Error: [kosli attach-policy] flag '--environment' was given an empty value
+assert snapshot	--dry-run	1	1	0	cli	differs	differs	0.5		Error: flag '--dry-run' was given an empty value
+attach-policy	--dry-run	1	0	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+attach-policy	--environment	1	1	0	cli	differs	differs	0.3		Error: [kosli attach-policy] flag '--environment' was given an empty value
 attest artifact	--annotate	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-annotate-fl trail=probe-attest-artifact-annotate-tr] flag '--annotate' was given an empty value
-attest artifact	--artifact-type	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-artifact-type-fl trail=probe-attest-artifact-artifact-type-tr] flag '--artifact-type' was given an empt
-attest artifact	--build-url	1	1	0	cli	differs	differs	0.3		Error: [kosli attest artifact flow=probe-attest-artifact-build-url-fl trail=probe-attest-artifact-build-url-tr] flag '--build-url' was given an empty value
+attest artifact	--artifact-type	1	0	0	cli	differs	differs	0.5		Error: [kosli attest artifact flow=probe-attest-artifact-artifact-type-fl trail=probe-attest-artifact-artifact-type-tr] flag '--artifact-type' was given an empt
+attest artifact	--build-url	1	1	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-build-url-fl trail=probe-attest-artifact-build-url-tr] flag '--build-url' was given an empty value
 attest artifact	--commit	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-commit-fl trail=probe-attest-artifact-commit-tr] flag '--commit' was given an empty value
-attest artifact	--commit-url	1	1	0	cli	differs	differs	0.3		Error: [kosli attest artifact flow=probe-attest-artifact-commit-url-fl trail=probe-attest-artifact-commit-url-tr] flag '--commit-url' was given an empty value
+attest artifact	--commit-url	1	1	0	cli	differs	differs	0.5		Error: [kosli attest artifact flow=probe-attest-artifact-commit-url-fl trail=probe-attest-artifact-commit-url-tr] flag '--commit-url' was given an empty value
 attest artifact	--display-name	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-display-name-fl trail=probe-attest-artifact-display-name-tr] flag '--display-name' was given an empty v
 attest artifact	--dry-run	1	0	0	cli	differs	differs	0.4		Error: flag '--dry-run' was given an empty value
 attest artifact	--exclude	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-exclude-fl trail=probe-attest-artifact-exclude-tr] flag '--exclude' was given an empty value
-attest artifact	--external-fingerprint	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-external-fingerprint-fl trail=probe-attest-artifact-external-fingerprint-tr] flag '--external-fingerpri
+attest artifact	--external-fingerprint	1	0	0	cli	differs	differs	0.5		Error: [kosli attest artifact flow=probe-attest-artifact-external-fingerprint-fl trail=probe-attest-artifact-external-fingerprint-tr] flag '--external-fingerpri
 attest artifact	--external-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-external-url-fl trail=probe-attest-artifact-external-url-tr] flag '--external-url' was given an empty v
-attest artifact	--fingerprint	1	1	0	cli	differs	differs	0.3		Error: [kosli attest artifact flow=probe-attest-artifact-fingerprint-fl trail=probe-attest-artifact-fingerprint-tr] flag '--fingerprint' was given an empty valu
+attest artifact	--fingerprint	1	1	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-fingerprint-fl trail=probe-attest-artifact-fingerprint-tr] flag '--fingerprint' was given an empty valu
 attest artifact	--flow	1	1	0	cli	differs	differs	0.4		Error: [kosli attest artifact trail=probe-attest-artifact-flow-tr] flag '--flow' was given an empty value
 attest artifact	--name	1	1	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-name-fl trail=probe-attest-artifact-name-tr] flag '--name' was given an empty value
 attest artifact	--redact-commit-info	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-redact-commit-info-fl trail=probe-attest-artifact-redact-commit-info-tr] flag '--redact-commit-info' wa
-attest artifact	--registry-password	1	0	1	cli	differs	differs	0.3		Error: [kosli attest artifact flow=probe-attest-artifact-registry-password-fl trail=probe-attest-artifact-registry-password-tr] flag '--registry-password' was g
-attest artifact	--registry-provider	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-registry-provider-fl trail=probe-attest-artifact-registry-provider-tr] flag '--registry-provider' was g
+attest artifact	--registry-password	1	0	1	cli	differs	differs	0.5		Error: [kosli attest artifact flow=probe-attest-artifact-registry-password-fl trail=probe-attest-artifact-registry-password-tr] flag '--registry-password' was g
+attest artifact	--registry-provider	1	0	0	cli	differs	differs	0.3		Error: [kosli attest artifact flow=probe-attest-artifact-registry-provider-fl trail=probe-attest-artifact-registry-provider-tr] flag '--registry-provider' was g
 attest artifact	--registry-username	1	0	1	cli	differs	differs	0.3		Error: [kosli attest artifact flow=probe-attest-artifact-registry-username-fl trail=probe-attest-artifact-registry-username-tr] flag '--registry-username' was g
 attest artifact	--repo-id	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-repo-id-fl trail=probe-attest-artifact-repo-id-tr] flag '--repo-id' was given an empty value
 attest artifact	--repo-provider	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-repo-provider-fl trail=probe-attest-artifact-repo-provider-tr] flag '--repo-provider' was given an empt
-attest artifact	--repo-root	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-repo-root-fl trail=probe-attest-artifact-repo-root-tr] flag '--repo-root' was given an empty value
-attest artifact	--repo-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-repo-url-fl trail=probe-attest-artifact-repo-url-tr] flag '--repo-url' was given an empty value
+attest artifact	--repo-root	1	0	0	cli	differs	differs	0.3		Error: [kosli attest artifact flow=probe-attest-artifact-repo-root-fl trail=probe-attest-artifact-repo-root-tr] flag '--repo-root' was given an empty value
+attest artifact	--repo-url	1	0	0	cli	differs	differs	0.3		Error: [kosli attest artifact flow=probe-attest-artifact-repo-url-fl trail=probe-attest-artifact-repo-url-tr] flag '--repo-url' was given an empty value
 attest artifact	--repository	1	0	0	cli	differs	differs	0.4		Error: [kosli attest artifact flow=probe-attest-artifact-repository-fl trail=probe-attest-artifact-repository-tr] flag '--repository' was given an empty value
 attest artifact	--trail	1	1	0	cli	differs	differs	0.3		Error: [kosli attest artifact flow=probe-attest-artifact-trail-fl] flag '--trail' was given an empty value
 attest custom	--annotate	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-annotate-fl trail=probe-attest-custom-annotate-tr] flag '--annotate' was given an empty value
 attest custom	--artifact-type	1	1	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-artifact-type-fl trail=probe-attest-custom-artifact-type-tr] flag '--artifact-type' was given an empty valu
 attest custom	--attachments	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-attachments-fl trail=probe-attest-custom-attachments-tr] flag '--attachments' was given an empty value
-attest custom	--attestation-data	1	1	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-attestation-data-fl trail=probe-attest-custom-attestation-data-tr] flag '--attestation-data' was given an e
+attest custom	--attestation-data	1	1	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-attestation-data-fl trail=probe-attest-custom-attestation-data-tr] flag '--attestation-data' was given an e
 attest custom	--commit	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-commit-fl trail=probe-attest-custom-commit-tr] flag '--commit' was given an empty value
-attest custom	--description	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-description-fl trail=probe-attest-custom-description-tr] flag '--description' was given an empty value
-attest custom	--dry-run	1	0	0	cli	differs	differs	0.7		Error: flag '--dry-run' was given an empty value
-attest custom	--exclude	1	0	0	cli	differs	differs	0.7		Error: [kosli attest custom flow=probe-attest-custom-exclude-fl trail=probe-attest-custom-exclude-tr] flag '--exclude' was given an empty value
-attest custom	--external-fingerprint	1	0	0	cli	differs	differs	0.7		Error: [kosli attest custom flow=probe-attest-custom-external-fingerprint-fl trail=probe-attest-custom-external-fingerprint-tr] flag '--external-fingerprint' wa
-attest custom	--external-url	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-external-url-fl trail=probe-attest-custom-external-url-tr] flag '--external-url' was given an empty value
+attest custom	--description	1	0	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-description-fl trail=probe-attest-custom-description-tr] flag '--description' was given an empty value
+attest custom	--dry-run	1	0	0	cli	differs	differs	0.5		Error: flag '--dry-run' was given an empty value
+attest custom	--exclude	1	0	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-exclude-fl trail=probe-attest-custom-exclude-tr] flag '--exclude' was given an empty value
+attest custom	--external-fingerprint	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-external-fingerprint-fl trail=probe-attest-custom-external-fingerprint-tr] flag '--external-fingerprint' wa
+attest custom	--external-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-external-url-fl trail=probe-attest-custom-external-url-tr] flag '--external-url' was given an empty value
 attest custom	--fingerprint	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-fingerprint-fl trail=probe-attest-custom-fingerprint-tr] flag '--fingerprint' was given an empty value
 attest custom	--flow	1	1	0	cli	differs	differs	0.6		Error: [kosli attest custom trail=probe-attest-custom-flow-tr] flag '--flow' was given an empty value
-attest custom	--name	1	1	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-name-fl trail=probe-attest-custom-name-tr] flag '--name' was given an empty value
-attest custom	--origin-url	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-origin-url-fl trail=probe-attest-custom-origin-url-tr] flag '--origin-url' was given an empty value
+attest custom	--name	1	1	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-name-fl trail=probe-attest-custom-name-tr] flag '--name' was given an empty value
+attest custom	--origin-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-origin-url-fl trail=probe-attest-custom-origin-url-tr] flag '--origin-url' was given an empty value
 attest custom	--redact-commit-info	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-redact-commit-info-fl trail=probe-attest-custom-redact-commit-info-tr] flag '--redact-commit-info' was give
-attest custom	--registry-password	1	0	1	cli	differs	differs	0.7		Error: [kosli attest custom flow=probe-attest-custom-registry-password-fl trail=probe-attest-custom-registry-password-tr] flag '--registry-password' was given a
-attest custom	--registry-provider	1	0	0	cli	differs	differs	0.7		Error: [kosli attest custom flow=probe-attest-custom-registry-provider-fl trail=probe-attest-custom-registry-provider-tr] flag '--registry-provider' was given a
-attest custom	--registry-username	1	0	1	cli	differs	differs	1.0		Error: [kosli attest custom flow=probe-attest-custom-registry-username-fl trail=probe-attest-custom-registry-username-tr] flag '--registry-username' was given a
-attest custom	--repo-id	1	0	0	cli	differs	differs	0.7		Error: [kosli attest custom flow=probe-attest-custom-repo-id-fl trail=probe-attest-custom-repo-id-tr] flag '--repo-id' was given an empty value
-attest custom	--repo-provider	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-repo-provider-fl trail=probe-attest-custom-repo-provider-tr] flag '--repo-provider' was given an empty valu
+attest custom	--registry-password	1	0	1	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-registry-password-fl trail=probe-attest-custom-registry-password-tr] flag '--registry-password' was given a
+attest custom	--registry-provider	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-registry-provider-fl trail=probe-attest-custom-registry-provider-tr] flag '--registry-provider' was given a
+attest custom	--registry-username	1	0	1	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-registry-username-fl trail=probe-attest-custom-registry-username-tr] flag '--registry-username' was given a
+attest custom	--repo-id	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-repo-id-fl trail=probe-attest-custom-repo-id-tr] flag '--repo-id' was given an empty value
+attest custom	--repo-provider	1	0	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-repo-provider-fl trail=probe-attest-custom-repo-provider-tr] flag '--repo-provider' was given an empty valu
 attest custom	--repo-root	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-repo-root-fl trail=probe-attest-custom-repo-root-tr] flag '--repo-root' was given an empty value
-attest custom	--repo-url	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-repo-url-fl trail=probe-attest-custom-repo-url-tr] flag '--repo-url' was given an empty value
+attest custom	--repo-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-repo-url-fl trail=probe-attest-custom-repo-url-tr] flag '--repo-url' was given an empty value
 attest custom	--repository	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-repository-fl trail=probe-attest-custom-repository-tr] flag '--repository' was given an empty value
-attest custom	--trail	1	1	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-trail-fl] flag '--trail' was given an empty value
-attest custom	--type	1	1	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-type-fl trail=probe-attest-custom-type-tr] flag '--type' was given an empty value
-attest custom	--user-data	1	0	0	cli	differs	differs	0.6		Error: [kosli attest custom flow=probe-attest-custom-user-data-fl trail=probe-attest-custom-user-data-tr] flag '--user-data' was given an empty value
+attest custom	--trail	1	1	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-trail-fl] flag '--trail' was given an empty value
+attest custom	--type	1	1	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-type-fl trail=probe-attest-custom-type-tr] flag '--type' was given an empty value
+attest custom	--user-data	1	0	0	cli	differs	differs	0.5		Error: [kosli attest custom flow=probe-attest-custom-user-data-fl trail=probe-attest-custom-user-data-tr] flag '--user-data' was given an empty value
 attest decision	--annotate	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-annotate-fl trail=probe-attest-decision-annotate-tr] flag '--annotate' was given an empty value
-attest decision	--artifact-type	1	1	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-artifact-type-fl trail=probe-attest-decision-artifact-type-tr] flag '--artifact-type' was given an empt
+attest decision	--artifact-type	1	1	0	cli	differs	differs	0.4		Error: [kosli attest decision flow=probe-attest-decision-artifact-type-fl trail=probe-attest-decision-artifact-type-tr] flag '--artifact-type' was given an empt
 attest decision	--attachments	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-attachments-fl trail=probe-attest-decision-attachments-tr] flag '--attachments' was given an empty valu
 attest decision	--commit	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-commit-fl trail=probe-attest-decision-commit-tr] flag '--commit' was given an empty value
-attest decision	--compliant	1	1	0	cli	differs	differs	0.5		Error: flag '--compliant' was given an empty value
+attest decision	--compliant	1	1	0	cli	differs	differs	0.4		Error: flag '--compliant' was given an empty value
 attest decision	--control	1	1	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-control-fl trail=probe-attest-decision-control-tr] flag '--control' was given an empty value
-attest decision	--description	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-description-fl trail=probe-attest-decision-description-tr] flag '--description' was given an empty valu
-attest decision	--dry-run	1	0	0	cli	differs	differs	0.6		Error: flag '--dry-run' was given an empty value
+attest decision	--description	1	0	0	cli	differs	differs	0.4		Error: [kosli attest decision flow=probe-attest-decision-description-fl trail=probe-attest-decision-description-tr] flag '--description' was given an empty valu
+attest decision	--dry-run	1	0	0	cli	differs	differs	0.4		Error: flag '--dry-run' was given an empty value
 attest decision	--exclude	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-exclude-fl trail=probe-attest-decision-exclude-tr] flag '--exclude' was given an empty value
-attest decision	--external-fingerprint	1	0	0	cli	differs	differs	0.6		Error: [kosli attest decision flow=probe-attest-decision-external-fingerprint-fl trail=probe-attest-decision-external-fingerprint-tr] flag '--external-fingerpri
-attest decision	--external-url	1	0	0	cli	differs	differs	0.6		Error: [kosli attest decision flow=probe-attest-decision-external-url-fl trail=probe-attest-decision-external-url-tr] flag '--external-url' was given an empty v
-attest decision	--fingerprint	1	0	0	cli	differs	differs	0.6		Error: [kosli attest decision flow=probe-attest-decision-fingerprint-fl trail=probe-attest-decision-fingerprint-tr] flag '--fingerprint' was given an empty valu
-attest decision	--flow	1	1	0	cli	differs	differs	0.6		Error: [kosli attest decision trail=probe-attest-decision-flow-tr] flag '--flow' was given an empty value
-attest decision	--name	1	1	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-name-fl trail=probe-attest-decision-name-tr] flag '--name' was given an empty value
+attest decision	--external-fingerprint	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-external-fingerprint-fl trail=probe-attest-decision-external-fingerprint-tr] flag '--external-fingerpri
+attest decision	--external-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-external-url-fl trail=probe-attest-decision-external-url-tr] flag '--external-url' was given an empty v
+attest decision	--fingerprint	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-fingerprint-fl trail=probe-attest-decision-fingerprint-tr] flag '--fingerprint' was given an empty valu
+attest decision	--flow	1	1	0	cli	differs	differs	0.5		Error: [kosli attest decision trail=probe-attest-decision-flow-tr] flag '--flow' was given an empty value
+attest decision	--name	1	1	0	cli	differs	differs	0.4		Error: [kosli attest decision flow=probe-attest-decision-name-fl trail=probe-attest-decision-name-tr] flag '--name' was given an empty value
 attest decision	--origin-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-origin-url-fl trail=probe-attest-decision-origin-url-tr] flag '--origin-url' was given an empty value
 attest decision	--redact-commit-info	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-redact-commit-info-fl trail=probe-attest-decision-redact-commit-info-tr] flag '--redact-commit-info' wa
-attest decision	--registry-password	1	0	1	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-registry-password-fl trail=probe-attest-decision-registry-password-tr] flag '--registry-password' was g
+attest decision	--registry-password	1	0	1	cli	differs	differs	0.4		Error: [kosli attest decision flow=probe-attest-decision-registry-password-fl trail=probe-attest-decision-registry-password-tr] flag '--registry-password' was g
 attest decision	--registry-provider	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-registry-provider-fl trail=probe-attest-decision-registry-provider-tr] flag '--registry-provider' was g
 attest decision	--registry-username	1	0	1	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-registry-username-fl trail=probe-attest-decision-registry-username-tr] flag '--registry-username' was g
 attest decision	--repo-id	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-repo-id-fl trail=probe-attest-decision-repo-id-tr] flag '--repo-id' was given an empty value
-attest decision	--repo-provider	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-repo-provider-fl trail=probe-attest-decision-repo-provider-tr] flag '--repo-provider' was given an empt
+attest decision	--repo-provider	1	0	0	cli	differs	differs	0.4		Error: [kosli attest decision flow=probe-attest-decision-repo-provider-fl trail=probe-attest-decision-repo-provider-tr] flag '--repo-provider' was given an empt
 attest decision	--repo-root	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-repo-root-fl trail=probe-attest-decision-repo-root-tr] flag '--repo-root' was given an empty value
 attest decision	--repo-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-repo-url-fl trail=probe-attest-decision-repo-url-tr] flag '--repo-url' was given an empty value
-attest decision	--repository	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-repository-fl trail=probe-attest-decision-repository-tr] flag '--repository' was given an empty value
+attest decision	--repository	1	0	0	cli	differs	differs	0.4		Error: [kosli attest decision flow=probe-attest-decision-repository-fl trail=probe-attest-decision-repository-tr] flag '--repository' was given an empty value
 attest decision	--trail	1	1	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-trail-fl] flag '--trail' was given an empty value
 attest decision	--user-data	1	0	0	cli	differs	differs	0.5		Error: [kosli attest decision flow=probe-attest-decision-user-data-fl trail=probe-attest-decision-user-data-tr] flag '--user-data' was given an empty value
 attest generic	--annotate	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-annotate-fl trail=probe-attest-generic-annotate-tr] flag '--annotate' was given an empty value
-attest generic	--artifact-type	1	1	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-artifact-type-fl trail=probe-attest-generic-artifact-type-tr] flag '--artifact-type' was given an empty v
+attest generic	--artifact-type	1	1	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-artifact-type-fl trail=probe-attest-generic-artifact-type-tr] flag '--artifact-type' was given an empty v
 attest generic	--attachments	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-attachments-fl trail=probe-attest-generic-attachments-tr] flag '--attachments' was given an empty value
 attest generic	--commit	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-commit-fl trail=probe-attest-generic-commit-tr] flag '--commit' was given an empty value
-attest generic	--compliant	1	0	0	cli	differs	differs	0.5		Error: flag '--compliant' was given an empty value
+attest generic	--compliant	1	0	0	cli	differs	differs	0.4		Error: flag '--compliant' was given an empty value
 attest generic	--description	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-description-fl trail=probe-attest-generic-description-tr] flag '--description' was given an empty value
-attest generic	--dry-run	1	0	0	cli	differs	differs	0.5		Error: flag '--dry-run' was given an empty value
+attest generic	--dry-run	1	0	0	cli	differs	differs	0.4		Error: flag '--dry-run' was given an empty value
 attest generic	--exclude	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-exclude-fl trail=probe-attest-generic-exclude-tr] flag '--exclude' was given an empty value
-attest generic	--external-fingerprint	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-external-fingerprint-fl trail=probe-attest-generic-external-fingerprint-tr] flag '--external-fingerprint'
-attest generic	--external-url	1	0	0	cli	differs	differs	0.6		Error: [kosli attest generic flow=probe-attest-generic-external-url-fl trail=probe-attest-generic-external-url-tr] flag '--external-url' was given an empty valu
+attest generic	--external-fingerprint	1	0	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-external-fingerprint-fl trail=probe-attest-generic-external-fingerprint-tr] flag '--external-fingerprint'
+attest generic	--external-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-external-url-fl trail=probe-attest-generic-external-url-tr] flag '--external-url' was given an empty valu
 attest generic	--fingerprint	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-fingerprint-fl trail=probe-attest-generic-fingerprint-tr] flag '--fingerprint' was given an empty value
-attest generic	--flow	1	1	0	cli	differs	differs	0.5		Error: [kosli attest generic trail=probe-attest-generic-flow-tr] flag '--flow' was given an empty value
-attest generic	--name	1	1	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-name-fl trail=probe-attest-generic-name-tr] flag '--name' was given an empty value
-attest generic	--origin-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-origin-url-fl trail=probe-attest-generic-origin-url-tr] flag '--origin-url' was given an empty value
-attest generic	--redact-commit-info	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-redact-commit-info-fl trail=probe-attest-generic-redact-commit-info-tr] flag '--redact-commit-info' was g
-attest generic	--registry-password	1	0	1	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-registry-password-fl trail=probe-attest-generic-registry-password-tr] flag '--registry-password' was give
-attest generic	--registry-provider	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-registry-provider-fl trail=probe-attest-generic-registry-provider-tr] flag '--registry-provider' was give
+attest generic	--flow	1	1	0	cli	differs	differs	0.4		Error: [kosli attest generic trail=probe-attest-generic-flow-tr] flag '--flow' was given an empty value
+attest generic	--name	1	1	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-name-fl trail=probe-attest-generic-name-tr] flag '--name' was given an empty value
+attest generic	--origin-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-origin-url-fl trail=probe-attest-generic-origin-url-tr] flag '--origin-url' was given an empty value
+attest generic	--redact-commit-info	1	0	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-redact-commit-info-fl trail=probe-attest-generic-redact-commit-info-tr] flag '--redact-commit-info' was g
+attest generic	--registry-password	1	0	1	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-registry-password-fl trail=probe-attest-generic-registry-password-tr] flag '--registry-password' was give
+attest generic	--registry-provider	1	0	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-registry-provider-fl trail=probe-attest-generic-registry-provider-tr] flag '--registry-provider' was give
 attest generic	--registry-username	1	0	1	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-registry-username-fl trail=probe-attest-generic-registry-username-tr] flag '--registry-username' was give
-attest generic	--repo-id	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-repo-id-fl trail=probe-attest-generic-repo-id-tr] flag '--repo-id' was given an empty value
-attest generic	--repo-provider	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-repo-provider-fl trail=probe-attest-generic-repo-provider-tr] flag '--repo-provider' was given an empty v
-attest generic	--repo-root	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-repo-root-fl trail=probe-attest-generic-repo-root-tr] flag '--repo-root' was given an empty value
-attest generic	--repo-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-repo-url-fl trail=probe-attest-generic-repo-url-tr] flag '--repo-url' was given an empty value
+attest generic	--repo-id	1	0	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-repo-id-fl trail=probe-attest-generic-repo-id-tr] flag '--repo-id' was given an empty value
+attest generic	--repo-provider	1	0	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-repo-provider-fl trail=probe-attest-generic-repo-provider-tr] flag '--repo-provider' was given an empty v
+attest generic	--repo-root	1	0	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-repo-root-fl trail=probe-attest-generic-repo-root-tr] flag '--repo-root' was given an empty value
+attest generic	--repo-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-repo-url-fl trail=probe-attest-generic-repo-url-tr] flag '--repo-url' was given an empty value
 attest generic	--repository	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-repository-fl trail=probe-attest-generic-repository-tr] flag '--repository' was given an empty value
-attest generic	--trail	1	1	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-trail-fl] flag '--trail' was given an empty value
+attest generic	--trail	1	1	0	cli	differs	differs	0.4		Error: [kosli attest generic flow=probe-attest-generic-trail-fl] flag '--trail' was given an empty value
 attest generic	--user-data	1	0	0	cli	differs	differs	0.5		Error: [kosli attest generic flow=probe-attest-generic-user-data-fl trail=probe-attest-generic-user-data-tr] flag '--user-data' was given an empty value
-attest jira	--annotate	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-annotate-fl trail=probe-attest-jira-annotate-tr] flag '--annotate' was given an empty value
+attest jira	--annotate	1	0	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-annotate-fl trail=probe-attest-jira-annotate-tr] flag '--annotate' was given an empty value
 attest jira	--artifact-type	1	0	1	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-artifact-type-fl trail=probe-attest-jira-artifact-type-tr] flag '--artifact-type' was given an empty value
 attest jira	--assert	1	0	1	cli	differs	differs	0.4		Error: flag '--assert' was given an empty value
-attest jira	--attachments	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-attachments-fl trail=probe-attest-jira-attachments-tr] flag '--attachments' was given an empty value
-attest jira	--commit	1	1	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-commit-fl trail=probe-attest-jira-commit-tr] flag '--commit' was given an empty value
+attest jira	--attachments	1	0	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-attachments-fl trail=probe-attest-jira-attachments-tr] flag '--attachments' was given an empty value
+attest jira	--commit	1	1	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-commit-fl trail=probe-attest-jira-commit-tr] flag '--commit' was given an empty value
 attest jira	--description	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-description-fl trail=probe-attest-jira-description-tr] flag '--description' was given an empty value
 attest jira	--dry-run	1	0	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
-attest jira	--exclude	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-exclude-fl trail=probe-attest-jira-exclude-tr] flag '--exclude' was given an empty value
-attest jira	--external-fingerprint	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-external-fingerprint-fl trail=probe-attest-jira-external-fingerprint-tr] flag '--external-fingerprint' was give
+attest jira	--exclude	1	0	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-exclude-fl trail=probe-attest-jira-exclude-tr] flag '--exclude' was given an empty value
+attest jira	--external-fingerprint	1	0	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-external-fingerprint-fl trail=probe-attest-jira-external-fingerprint-tr] flag '--external-fingerprint' was give
 attest jira	--external-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-external-url-fl trail=probe-attest-jira-external-url-tr] flag '--external-url' was given an empty value
-attest jira	--fingerprint	1	0	1	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-fingerprint-fl trail=probe-attest-jira-fingerprint-tr] flag '--fingerprint' was given an empty value
-attest jira	--flow	1	1	0	cli	differs	differs	0.4		Error: [kosli attest jira trail=probe-attest-jira-flow-tr] flag '--flow' was given an empty value
+attest jira	--fingerprint	1	0	1	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-fingerprint-fl trail=probe-attest-jira-fingerprint-tr] flag '--fingerprint' was given an empty value
+attest jira	--flow	1	1	0	cli	differs	differs	0.3		Error: [kosli attest jira trail=probe-attest-jira-flow-tr] flag '--flow' was given an empty value
 attest jira	--ignore-branch-match	1	0	0	cli	differs	differs	0.4		Error: flag '--ignore-branch-match' was given an empty value
 attest jira	--jira-api-token	1	0	1	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-jira-api-token-fl trail=probe-attest-jira-jira-api-token-tr] flag '--jira-api-token' was given an empty value
-attest jira	--jira-base-url	1	1	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-jira-base-url-fl trail=probe-attest-jira-jira-base-url-tr] flag '--jira-base-url' was given an empty value
+attest jira	--jira-base-url	1	1	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-jira-base-url-fl trail=probe-attest-jira-jira-base-url-tr] flag '--jira-base-url' was given an empty value
 attest jira	--jira-issue-fields	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-jira-issue-fields-fl trail=probe-attest-jira-jira-issue-fields-tr] flag '--jira-issue-fields' was given an empt
-attest jira	--jira-pat	1	1	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-jira-pat-fl trail=probe-attest-jira-jira-pat-tr] flag '--jira-pat' was given an empty value
-attest jira	--jira-project-key	1	0	1	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-jira-project-key-fl trail=probe-attest-jira-jira-project-key-tr] flag '--jira-project-key' was given an empty v
+attest jira	--jira-pat	1	1	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-jira-pat-fl trail=probe-attest-jira-jira-pat-tr] flag '--jira-pat' was given an empty value
+attest jira	--jira-project-key	1	0	1	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-jira-project-key-fl trail=probe-attest-jira-jira-project-key-tr] flag '--jira-project-key' was given an empty v
 attest jira	--jira-secondary-source	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-jira-secondary-source-fl trail=probe-attest-jira-jira-secondary-source-tr] flag '--jira-secondary-source' was g
 attest jira	--jira-username	1	0	1	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-jira-username-fl trail=probe-attest-jira-jira-username-tr] flag '--jira-username' was given an empty value
-attest jira	--name	1	1	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-name-fl trail=probe-attest-jira-name-tr] flag '--name' was given an empty value
+attest jira	--name	1	1	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-name-fl trail=probe-attest-jira-name-tr] flag '--name' was given an empty value
 attest jira	--origin-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-origin-url-fl trail=probe-attest-jira-origin-url-tr] flag '--origin-url' was given an empty value
-attest jira	--redact-commit-info	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-redact-commit-info-fl trail=probe-attest-jira-redact-commit-info-tr] flag '--redact-commit-info' was given an e
-attest jira	--registry-password	1	0	1	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-registry-password-fl trail=probe-attest-jira-registry-password-tr] flag '--registry-password' was given an empt
+attest jira	--redact-commit-info	1	0	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-redact-commit-info-fl trail=probe-attest-jira-redact-commit-info-tr] flag '--redact-commit-info' was given an e
+attest jira	--registry-password	1	0	1	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-registry-password-fl trail=probe-attest-jira-registry-password-tr] flag '--registry-password' was given an empt
 attest jira	--registry-provider	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-registry-provider-fl trail=probe-attest-jira-registry-provider-tr] flag '--registry-provider' was given an empt
-attest jira	--registry-username	1	0	1	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-registry-username-fl trail=probe-attest-jira-registry-username-tr] flag '--registry-username' was given an empt
-attest jira	--repo-id	1	0	0	cli	differs	differs	0.5		Error: [kosli attest jira flow=probe-attest-jira-repo-id-fl trail=probe-attest-jira-repo-id-tr] flag '--repo-id' was given an empty value
+attest jira	--registry-username	1	0	1	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-registry-username-fl trail=probe-attest-jira-registry-username-tr] flag '--registry-username' was given an empt
+attest jira	--repo-id	1	0	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-repo-id-fl trail=probe-attest-jira-repo-id-tr] flag '--repo-id' was given an empty value
 attest jira	--repo-provider	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-repo-provider-fl trail=probe-attest-jira-repo-provider-tr] flag '--repo-provider' was given an empty value
-attest jira	--repo-root	1	0	0	cli	differs	differs	0.5		Error: [kosli attest jira flow=probe-attest-jira-repo-root-fl trail=probe-attest-jira-repo-root-tr] flag '--repo-root' was given an empty value
-attest jira	--repo-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-repo-url-fl trail=probe-attest-jira-repo-url-tr] flag '--repo-url' was given an empty value
+attest jira	--repo-root	1	0	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-repo-root-fl trail=probe-attest-jira-repo-root-tr] flag '--repo-root' was given an empty value
+attest jira	--repo-url	1	0	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-repo-url-fl trail=probe-attest-jira-repo-url-tr] flag '--repo-url' was given an empty value
 attest jira	--repository	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-repository-fl trail=probe-attest-jira-repository-tr] flag '--repository' was given an empty value
-attest jira	--trail	1	1	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-trail-fl] flag '--trail' was given an empty value
+attest jira	--trail	1	1	0	cli	differs	differs	0.3		Error: [kosli attest jira flow=probe-attest-jira-trail-fl] flag '--trail' was given an empty value
 attest jira	--user-data	1	0	0	cli	differs	differs	0.4		Error: [kosli attest jira flow=probe-attest-jira-user-data-fl trail=probe-attest-jira-user-data-tr] flag '--user-data' was given an empty value
 attest junit	--annotate	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-annotate-fl trail=probe-attest-junit-annotate-tr] flag '--annotate' was given an empty value
-attest junit	--artifact-type	1	1	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-artifact-type-fl trail=probe-attest-junit-artifact-type-tr] flag '--artifact-type' was given an empty value
+attest junit	--artifact-type	1	1	0	cli	differs	differs	0.4		Error: [kosli attest junit flow=probe-attest-junit-artifact-type-fl trail=probe-attest-junit-artifact-type-tr] flag '--artifact-type' was given an empty value
 attest junit	--attachments	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-attachments-fl trail=probe-attest-junit-attachments-tr] flag '--attachments' was given an empty value
 attest junit	--commit	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-commit-fl trail=probe-attest-junit-commit-tr] flag '--commit' was given an empty value
 attest junit	--description	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-description-fl trail=probe-attest-junit-description-tr] flag '--description' was given an empty value
 attest junit	--dry-run	1	0	0	cli	differs	differs	0.5		Error: flag '--dry-run' was given an empty value
 attest junit	--exclude	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-exclude-fl trail=probe-attest-junit-exclude-tr] flag '--exclude' was given an empty value
-attest junit	--external-fingerprint	1	0	0	cli	differs	differs	0.7		Error: [kosli attest junit flow=probe-attest-junit-external-fingerprint-fl trail=probe-attest-junit-external-fingerprint-tr] flag '--external-fingerprint' was g
-attest junit	--external-url	1	0	0	cli	differs	differs	0.8		Error: [kosli attest junit flow=probe-attest-junit-external-url-fl trail=probe-attest-junit-external-url-tr] flag '--external-url' was given an empty value
+attest junit	--external-fingerprint	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-external-fingerprint-fl trail=probe-attest-junit-external-fingerprint-tr] flag '--external-fingerprint' was g
+attest junit	--external-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-external-url-fl trail=probe-attest-junit-external-url-tr] flag '--external-url' was given an empty value
 attest junit	--fingerprint	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-fingerprint-fl trail=probe-attest-junit-fingerprint-tr] flag '--fingerprint' was given an empty value
 attest junit	--flow	1	1	0	cli	differs	differs	0.5		Error: [kosli attest junit trail=probe-attest-junit-flow-tr] flag '--flow' was given an empty value
-attest junit	--name	1	1	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-name-fl trail=probe-attest-junit-name-tr] flag '--name' was given an empty value
-attest junit	--origin-url	1	0	0	cli	differs	differs	0.6		Error: [kosli attest junit flow=probe-attest-junit-origin-url-fl trail=probe-attest-junit-origin-url-tr] flag '--origin-url' was given an empty value
-attest junit	--redact-commit-info	1	0	0	cli	differs	differs	0.6		Error: [kosli attest junit flow=probe-attest-junit-redact-commit-info-fl trail=probe-attest-junit-redact-commit-info-tr] flag '--redact-commit-info' was given a
+attest junit	--name	1	1	0	cli	differs	differs	0.4		Error: [kosli attest junit flow=probe-attest-junit-name-fl trail=probe-attest-junit-name-tr] flag '--name' was given an empty value
+attest junit	--origin-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-origin-url-fl trail=probe-attest-junit-origin-url-tr] flag '--origin-url' was given an empty value
+attest junit	--redact-commit-info	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-redact-commit-info-fl trail=probe-attest-junit-redact-commit-info-tr] flag '--redact-commit-info' was given a
 attest junit	--registry-password	1	0	1	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-registry-password-fl trail=probe-attest-junit-registry-password-tr] flag '--registry-password' was given an e
 attest junit	--registry-provider	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-registry-provider-fl trail=probe-attest-junit-registry-provider-tr] flag '--registry-provider' was given an e
-attest junit	--registry-username	1	0	1	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-registry-username-fl trail=probe-attest-junit-registry-username-tr] flag '--registry-username' was given an e
-attest junit	--repo-id	1	0	0	cli	differs	differs	0.6		Error: [kosli attest junit flow=probe-attest-junit-repo-id-fl trail=probe-attest-junit-repo-id-tr] flag '--repo-id' was given an empty value
-attest junit	--repo-provider	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-repo-provider-fl trail=probe-attest-junit-repo-provider-tr] flag '--repo-provider' was given an empty value
+attest junit	--registry-username	1	0	1	cli	differs	differs	0.4		Error: [kosli attest junit flow=probe-attest-junit-registry-username-fl trail=probe-attest-junit-registry-username-tr] flag '--registry-username' was given an e
+attest junit	--repo-id	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-repo-id-fl trail=probe-attest-junit-repo-id-tr] flag '--repo-id' was given an empty value
+attest junit	--repo-provider	1	0	0	cli	differs	differs	0.4		Error: [kosli attest junit flow=probe-attest-junit-repo-provider-fl trail=probe-attest-junit-repo-provider-tr] flag '--repo-provider' was given an empty value
 attest junit	--repo-root	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-repo-root-fl trail=probe-attest-junit-repo-root-tr] flag '--repo-root' was given an empty value
-attest junit	--repo-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-repo-url-fl trail=probe-attest-junit-repo-url-tr] flag '--repo-url' was given an empty value
+attest junit	--repo-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest junit flow=probe-attest-junit-repo-url-fl trail=probe-attest-junit-repo-url-tr] flag '--repo-url' was given an empty value
 attest junit	--repository	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-repository-fl trail=probe-attest-junit-repository-tr] flag '--repository' was given an empty value
 attest junit	--results-dir	1	1	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-results-dir-fl trail=probe-attest-junit-results-dir-tr] flag '--results-dir' was given an empty value
-attest junit	--trail	1	1	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-trail-fl] flag '--trail' was given an empty value
+attest junit	--trail	1	1	0	cli	differs	differs	0.4		Error: [kosli attest junit flow=probe-attest-junit-trail-fl] flag '--trail' was given an empty value
 attest junit	--upload-results	1	0	0	cli	differs	differs	0.5		Error: flag '--upload-results' was given an empty value
 attest junit	--user-data	1	0	0	cli	differs	differs	0.5		Error: [kosli attest junit flow=probe-attest-junit-user-data-fl trail=probe-attest-junit-user-data-tr] flag '--user-data' was given an empty value
 attest override	--annotate	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-annotate-fl trail=probe-attest-override-annotate-tr] flag '--annotate' was given an empty value
-attest override	--artifact-type	1	1	1	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-artifact-type-fl trail=probe-attest-override-artifact-type-tr] flag '--artifact-type' was given an empt
+attest override	--artifact-type	1	1	1	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-artifact-type-fl trail=probe-attest-override-artifact-type-tr] flag '--artifact-type' was given an empt
 attest override	--attachments	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-attachments-fl trail=probe-attest-override-attachments-tr] flag '--attachments' was given an empty valu
-attest override	--commit	1	0	1	cli	differs	differs	7.8	set	Error: [kosli attest override flow=probe-attest-override-commit-fl trail=probe-attest-override-commit-tr] flag '--commit' was given an empty value
-attest override	--description	1	0	0	cli	differs	differs	0.7		Error: [kosli attest override flow=probe-attest-override-description-fl trail=probe-attest-override-description-tr] flag '--description' was given an empty valu
+attest override	--commit	1	0	1	cli	differs	differs	7.7	set	Error: [kosli attest override flow=probe-attest-override-commit-fl trail=probe-attest-override-commit-tr] flag '--commit' was given an empty value
+attest override	--description	1	0	0	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-description-fl trail=probe-attest-override-description-tr] flag '--description' was given an empty valu
 attest override	--dry-run	1	0	0	cli	differs	differs	0.6		Error: flag '--dry-run' was given an empty value
-attest override	--exclude	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-exclude-fl trail=probe-attest-override-exclude-tr] flag '--exclude' was given an empty value
+attest override	--exclude	1	0	0	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-exclude-fl trail=probe-attest-override-exclude-tr] flag '--exclude' was given an empty value
 attest override	--external-fingerprint	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-external-fingerprint-fl trail=probe-attest-override-external-fingerprint-tr] flag '--external-fingerpri
-attest override	--external-url	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-external-url-fl trail=probe-attest-override-external-url-tr] flag '--external-url' was given an empty v
+attest override	--external-url	1	0	0	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-external-url-fl trail=probe-attest-override-external-url-tr] flag '--external-url' was given an empty v
 attest override	--fingerprint	1	0	1	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-fingerprint-fl trail=probe-attest-override-fingerprint-tr] flag '--fingerprint' was given an empty valu
-attest override	--flow	1	1	0	cli	differs	differs	0.6		Error: [kosli attest override trail=probe-attest-override-flow-tr] flag '--flow' was given an empty value
+attest override	--flow	1	1	0	cli	differs	differs	0.5		Error: [kosli attest override trail=probe-attest-override-flow-tr] flag '--flow' was given an empty value
 attest override	--name	1	1	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-name-fl trail=probe-attest-override-name-tr] flag '--name' was given an empty value
-attest override	--new-compliance-status	1	1	0	cli	differs	differs	0.6		Error: flag '--new-compliance-status' was given an empty value
+attest override	--new-compliance-status	1	1	0	cli	differs	differs	0.5		Error: flag '--new-compliance-status' was given an empty value
 attest override	--origin-url	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-origin-url-fl trail=probe-attest-override-origin-url-tr] flag '--origin-url' was given an empty value
 attest override	--original-attestation-type	1	1	0	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-original-attestation-type-fl trail=probe-attest-override-original-attestation-type-tr] flag '--original
 attest override	--reason	1	1	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-reason-fl trail=probe-attest-override-reason-tr] flag '--reason' was given an empty value
-attest override	--redact-commit-info	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-redact-commit-info-fl trail=probe-attest-override-redact-commit-info-tr] flag '--redact-commit-info' wa
+attest override	--redact-commit-info	1	0	0	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-redact-commit-info-fl trail=probe-attest-override-redact-commit-info-tr] flag '--redact-commit-info' wa
 attest override	--registry-password	1	0	1	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-registry-password-fl trail=probe-attest-override-registry-password-tr] flag '--registry-password' was g
-attest override	--registry-provider	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-registry-provider-fl trail=probe-attest-override-registry-provider-tr] flag '--registry-provider' was g
+attest override	--registry-provider	1	0	0	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-registry-provider-fl trail=probe-attest-override-registry-provider-tr] flag '--registry-provider' was g
 attest override	--registry-username	1	0	1	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-registry-username-fl trail=probe-attest-override-registry-username-tr] flag '--registry-username' was g
-attest override	--repo-id	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-repo-id-fl trail=probe-attest-override-repo-id-tr] flag '--repo-id' was given an empty value
+attest override	--repo-id	1	0	0	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-repo-id-fl trail=probe-attest-override-repo-id-tr] flag '--repo-id' was given an empty value
 attest override	--repo-provider	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-repo-provider-fl trail=probe-attest-override-repo-provider-tr] flag '--repo-provider' was given an empt
-attest override	--repo-root	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-repo-root-fl trail=probe-attest-override-repo-root-tr] flag '--repo-root' was given an empty value
+attest override	--repo-root	1	0	0	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-repo-root-fl trail=probe-attest-override-repo-root-tr] flag '--repo-root' was given an empty value
 attest override	--repo-url	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-repo-url-fl trail=probe-attest-override-repo-url-tr] flag '--repo-url' was given an empty value
-attest override	--repository	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-repository-fl trail=probe-attest-override-repository-tr] flag '--repository' was given an empty value
+attest override	--repository	1	0	0	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-repository-fl trail=probe-attest-override-repository-tr] flag '--repository' was given an empty value
 attest override	--trail	1	1	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-trail-fl] flag '--trail' was given an empty value
-attest override	--user-data	1	0	0	cli	differs	differs	0.6		Error: [kosli attest override flow=probe-attest-override-user-data-fl trail=probe-attest-override-user-data-tr] flag '--user-data' was given an empty value
-attest pullrequest azure	--annotate	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-annotate-fl trail=probe-attest-pullrequest-azure-annotate-tr] flag '--annotate' was g
+attest override	--user-data	1	0	0	cli	differs	differs	0.5		Error: [kosli attest override flow=probe-attest-override-user-data-fl trail=probe-attest-override-user-data-tr] flag '--user-data' was given an empty value
+attest pullrequest azure	--annotate	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-annotate-fl trail=probe-attest-pullrequest-azure-annotate-tr] flag '--annotate' was g
 attest pullrequest azure	--artifact-type	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-artifact-type-fl trail=probe-attest-pullrequest-azure-artifact-type-tr] flag '--artif
-attest pullrequest azure	--assert	1	1	1	cli	differs	differs	0.4		Error: flag '--assert' was given an empty value
+attest pullrequest azure	--assert	1	1	1	cli	differs	differs	0.3		Error: flag '--assert' was given an empty value
 attest pullrequest azure	--attachments	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-attachments-fl trail=probe-attest-pullrequest-azure-attachments-tr] flag '--attachmen
 attest pullrequest azure	--azure-org-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-azure-org-url-fl trail=probe-attest-pullrequest-azure-azure-org-url-tr] flag '--azure
 attest pullrequest azure	--azure-token	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-azure-token-fl trail=probe-attest-pullrequest-azure-azure-token-tr] flag '--azure-tok
 attest pullrequest azure	--commit	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-commit-fl trail=probe-attest-pullrequest-azure-commit-tr] flag '--commit' was given a
-attest pullrequest azure	--description	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-description-fl trail=probe-attest-pullrequest-azure-description-tr] flag '--descripti
-attest pullrequest azure	--dry-run	1	1	0	cli	differs	differs	0.4		Error: flag '--dry-run' was given an empty value
-attest pullrequest azure	--exclude	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-exclude-fl trail=probe-attest-pullrequest-azure-exclude-tr] flag '--exclude' was give
-attest pullrequest azure	--external-fingerprint	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-external-fingerprint-fl trail=probe-attest-pullrequest-azure-external-fingerprint-tr]
-attest pullrequest azure	--external-url	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-external-url-fl trail=probe-attest-pullrequest-azure-external-url-tr] flag '--externa
+attest pullrequest azure	--description	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-description-fl trail=probe-attest-pullrequest-azure-description-tr] flag '--descripti
+attest pullrequest azure	--dry-run	1	1	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+attest pullrequest azure	--exclude	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-exclude-fl trail=probe-attest-pullrequest-azure-exclude-tr] flag '--exclude' was give
+attest pullrequest azure	--external-fingerprint	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-external-fingerprint-fl trail=probe-attest-pullrequest-azure-external-fingerprint-tr]
+attest pullrequest azure	--external-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-external-url-fl trail=probe-attest-pullrequest-azure-external-url-tr] flag '--externa
 attest pullrequest azure	--fingerprint	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-fingerprint-fl trail=probe-attest-pullrequest-azure-fingerprint-tr] flag '--fingerpri
-attest pullrequest azure	--flow	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure trail=probe-attest-pullrequest-azure-flow-tr] flag '--flow' was given an empty value
-attest pullrequest azure	--name	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-name-fl trail=probe-attest-pullrequest-azure-name-tr] flag '--name' was given an empt
-attest pullrequest azure	--origin-url	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-origin-url-fl trail=probe-attest-pullrequest-azure-origin-url-tr] flag '--origin-url'
+attest pullrequest azure	--flow	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure trail=probe-attest-pullrequest-azure-flow-tr] flag '--flow' was given an empty value
+attest pullrequest azure	--name	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-name-fl trail=probe-attest-pullrequest-azure-name-tr] flag '--name' was given an empt
+attest pullrequest azure	--origin-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-origin-url-fl trail=probe-attest-pullrequest-azure-origin-url-tr] flag '--origin-url'
 attest pullrequest azure	--project	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-project-fl trail=probe-attest-pullrequest-azure-project-tr] flag '--project' was give
-attest pullrequest azure	--redact-commit-info	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-redact-commit-info-fl trail=probe-attest-pullrequest-azure-redact-commit-info-tr] fla
+attest pullrequest azure	--redact-commit-info	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-redact-commit-info-fl trail=probe-attest-pullrequest-azure-redact-commit-info-tr] fla
 attest pullrequest azure	--registry-password	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-registry-password-fl trail=probe-attest-pullrequest-azure-registry-password-tr] flag 
-attest pullrequest azure	--registry-provider	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-registry-provider-fl trail=probe-attest-pullrequest-azure-registry-provider-tr] flag 
-attest pullrequest azure	--registry-username	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-registry-username-fl trail=probe-attest-pullrequest-azure-registry-username-tr] flag 
+attest pullrequest azure	--registry-provider	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-registry-provider-fl trail=probe-attest-pullrequest-azure-registry-provider-tr] flag 
+attest pullrequest azure	--registry-username	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-registry-username-fl trail=probe-attest-pullrequest-azure-registry-username-tr] flag 
 attest pullrequest azure	--repo-id	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-repo-id-fl trail=probe-attest-pullrequest-azure-repo-id-tr] flag '--repo-id' was give
 attest pullrequest azure	--repo-provider	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-repo-provider-fl trail=probe-attest-pullrequest-azure-repo-provider-tr] flag '--repo-
 attest pullrequest azure	--repo-root	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-repo-root-fl trail=probe-attest-pullrequest-azure-repo-root-tr] flag '--repo-root' wa
 attest pullrequest azure	--repo-url	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-repo-url-fl trail=probe-attest-pullrequest-azure-repo-url-tr] flag '--repo-url' was g
 attest pullrequest azure	--repository	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-repository-fl trail=probe-attest-pullrequest-azure-repository-tr] flag '--repository'
 attest pullrequest azure	--trail	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-trail-fl] flag '--trail' was given an empty value
-attest pullrequest azure	--user-data	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-user-data-fl trail=probe-attest-pullrequest-azure-user-data-tr] flag '--user-data' wa
-attest pullrequest bitbucket	--annotate	1	1	1	cli	differs	differs	0.9		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-annotate-fl trail=probe-attest-pullrequest-bitbucket-annotate-tr] flag '--ann
+attest pullrequest azure	--user-data	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest azure flow=probe-attest-pullrequest-azure-user-data-fl trail=probe-attest-pullrequest-azure-user-data-tr] flag '--user-data' wa
+attest pullrequest bitbucket	--annotate	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-annotate-fl trail=probe-attest-pullrequest-bitbucket-annotate-tr] flag '--ann
 attest pullrequest bitbucket	--artifact-type	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-artifact-type-fl trail=probe-attest-pullrequest-bitbucket-artifact-type-tr] f
-attest pullrequest bitbucket	--assert	1	1	1	cli	differs	differs	0.9		Error: flag '--assert' was given an empty value
+attest pullrequest bitbucket	--assert	1	1	1	cli	differs	differs	0.8		Error: flag '--assert' was given an empty value
 attest pullrequest bitbucket	--attachments	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-attachments-fl trail=probe-attest-pullrequest-bitbucket-attachments-tr] flag 
 attest pullrequest bitbucket	--bitbucket-access-token	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-bitbucket-access-fl trail=probe-attest-pullrequest-bitbucket-bitbucket-access
-attest pullrequest bitbucket	--bitbucket-password	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-bitbucket-passwor-fl trail=probe-attest-pullrequest-bitbucket-bitbucket-passw
+attest pullrequest bitbucket	--bitbucket-password	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-bitbucket-passwor-fl trail=probe-attest-pullrequest-bitbucket-bitbucket-passw
 attest pullrequest bitbucket	--bitbucket-username	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-bitbucket-usernam-fl trail=probe-attest-pullrequest-bitbucket-bitbucket-usern
 attest pullrequest bitbucket	--bitbucket-workspace	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-bitbucket-workspa-fl trail=probe-attest-pullrequest-bitbucket-bitbucket-works
 attest pullrequest bitbucket	--commit	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-commit-fl trail=probe-attest-pullrequest-bitbucket-commit-tr] flag '--commit'
 attest pullrequest bitbucket	--description	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-description-fl trail=probe-attest-pullrequest-bitbucket-description-tr] flag 
 attest pullrequest bitbucket	--dry-run	1	1	0	cli	differs	differs	0.8		Error: flag '--dry-run' was given an empty value
-attest pullrequest bitbucket	--exclude	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-exclude-fl trail=probe-attest-pullrequest-bitbucket-exclude-tr] flag '--exclu
-attest pullrequest bitbucket	--external-fingerprint	1	1	1	cli	differs	differs	0.9		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-external-fingerpr-fl trail=probe-attest-pullrequest-bitbucket-external-finger
+attest pullrequest bitbucket	--exclude	1	1	1	cli	differs	differs	0.9		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-exclude-fl trail=probe-attest-pullrequest-bitbucket-exclude-tr] flag '--exclu
+attest pullrequest bitbucket	--external-fingerprint	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-external-fingerpr-fl trail=probe-attest-pullrequest-bitbucket-external-finger
 attest pullrequest bitbucket	--external-url	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-external-url-fl trail=probe-attest-pullrequest-bitbucket-external-url-tr] fla
 attest pullrequest bitbucket	--fingerprint	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-fingerprint-fl trail=probe-attest-pullrequest-bitbucket-fingerprint-tr] flag 
-attest pullrequest bitbucket	--flow	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket trail=probe-attest-pullrequest-bitbucket-flow-tr] flag '--flow' was given an empty value
+attest pullrequest bitbucket	--flow	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest bitbucket trail=probe-attest-pullrequest-bitbucket-flow-tr] flag '--flow' was given an empty value
 attest pullrequest bitbucket	--name	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-name-fl trail=probe-attest-pullrequest-bitbucket-name-tr] flag '--name' was g
 attest pullrequest bitbucket	--origin-url	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-origin-url-fl trail=probe-attest-pullrequest-bitbucket-origin-url-tr] flag '-
-attest pullrequest bitbucket	--redact-commit-info	1	1	1	cli	differs	differs	0.9		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-redact-commit-inf-fl trail=probe-attest-pullrequest-bitbucket-redact-commit-i
-attest pullrequest bitbucket	--registry-password	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-registry-password-fl trail=probe-attest-pullrequest-bitbucket-registry-passwo
+attest pullrequest bitbucket	--redact-commit-info	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-redact-commit-inf-fl trail=probe-attest-pullrequest-bitbucket-redact-commit-i
+attest pullrequest bitbucket	--registry-password	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-registry-password-fl trail=probe-attest-pullrequest-bitbucket-registry-passwo
 attest pullrequest bitbucket	--registry-provider	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-registry-provider-fl trail=probe-attest-pullrequest-bitbucket-registry-provid
 attest pullrequest bitbucket	--registry-username	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-registry-username-fl trail=probe-attest-pullrequest-bitbucket-registry-userna
 attest pullrequest bitbucket	--repo-id	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repo-id-fl trail=probe-attest-pullrequest-bitbucket-repo-id-tr] flag '--repo-
 attest pullrequest bitbucket	--repo-provider	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repo-provider-fl trail=probe-attest-pullrequest-bitbucket-repo-provider-tr] f
-attest pullrequest bitbucket	--repo-root	1	1	1	cli	differs	differs	0.9		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repo-root-fl trail=probe-attest-pullrequest-bitbucket-repo-root-tr] flag '--r
+attest pullrequest bitbucket	--repo-root	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repo-root-fl trail=probe-attest-pullrequest-bitbucket-repo-root-tr] flag '--r
 attest pullrequest bitbucket	--repo-url	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repo-url-fl trail=probe-attest-pullrequest-bitbucket-repo-url-tr] flag '--rep
-attest pullrequest bitbucket	--repository	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repository-fl trail=probe-attest-pullrequest-bitbucket-repository-tr] flag '-
-attest pullrequest bitbucket	--trail	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-trail-fl] flag '--trail' was given an empty value
+attest pullrequest bitbucket	--repository	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-repository-fl trail=probe-attest-pullrequest-bitbucket-repository-tr] flag '-
+attest pullrequest bitbucket	--trail	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-trail-fl] flag '--trail' was given an empty value
 attest pullrequest bitbucket	--user-data	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest bitbucket flow=probe-attest-pullrequest-bitbucket-user-data-fl trail=probe-attest-pullrequest-bitbucket-user-data-tr] flag '--u
-attest pullrequest github	--annotate	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-annotate-fl trail=probe-attest-pullrequest-github-annotate-tr] flag '--annotate' wa
+attest pullrequest github	--annotate	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-annotate-fl trail=probe-attest-pullrequest-github-annotate-tr] flag '--annotate' wa
 attest pullrequest github	--artifact-type	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-artifact-type-fl trail=probe-attest-pullrequest-github-artifact-type-tr] flag '--ar
-attest pullrequest github	--assert	1	1	1	cli	differs	differs	0.7		Error: flag '--assert' was given an empty value
+attest pullrequest github	--assert	1	1	1	cli	differs	differs	0.6		Error: flag '--assert' was given an empty value
 attest pullrequest github	--attachments	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-attachments-fl trail=probe-attest-pullrequest-github-attachments-tr] flag '--attach
 attest pullrequest github	--commit	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-commit-fl trail=probe-attest-pullrequest-github-commit-tr] flag '--commit' was give
 attest pullrequest github	--description	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-description-fl trail=probe-attest-pullrequest-github-description-tr] flag '--descri
 attest pullrequest github	--dry-run	1	1	0	cli	differs	differs	0.7		Error: flag '--dry-run' was given an empty value
-attest pullrequest github	--exclude	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-exclude-fl trail=probe-attest-pullrequest-github-exclude-tr] flag '--exclude' was g
+attest pullrequest github	--exclude	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-exclude-fl trail=probe-attest-pullrequest-github-exclude-tr] flag '--exclude' was g
 attest pullrequest github	--external-fingerprint	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-external-fingerprint-fl trail=probe-attest-pullrequest-github-external-fingerprint-
-attest pullrequest github	--external-url	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-external-url-fl trail=probe-attest-pullrequest-github-external-url-tr] flag '--exte
-attest pullrequest github	--fingerprint	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-fingerprint-fl trail=probe-attest-pullrequest-github-fingerprint-tr] flag '--finger
-attest pullrequest github	--flow	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github trail=probe-attest-pullrequest-github-flow-tr] flag '--flow' was given an empty value
-attest pullrequest github	--github-base-url	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-github-base-url-fl trail=probe-attest-pullrequest-github-github-base-url-tr] flag '
-attest pullrequest github	--github-org	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-github-org-fl trail=probe-attest-pullrequest-github-github-org-tr] flag '--github-o
-attest pullrequest github	--github-token	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-github-token-fl trail=probe-attest-pullrequest-github-github-token-tr] flag '--gith
-attest pullrequest github	--name	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-name-fl trail=probe-attest-pullrequest-github-name-tr] flag '--name' was given an e
+attest pullrequest github	--external-url	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-external-url-fl trail=probe-attest-pullrequest-github-external-url-tr] flag '--exte
+attest pullrequest github	--fingerprint	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-fingerprint-fl trail=probe-attest-pullrequest-github-fingerprint-tr] flag '--finger
+attest pullrequest github	--flow	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest github trail=probe-attest-pullrequest-github-flow-tr] flag '--flow' was given an empty value
+attest pullrequest github	--github-base-url	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-github-base-url-fl trail=probe-attest-pullrequest-github-github-base-url-tr] flag '
+attest pullrequest github	--github-org	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-github-org-fl trail=probe-attest-pullrequest-github-github-org-tr] flag '--github-o
+attest pullrequest github	--github-token	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-github-token-fl trail=probe-attest-pullrequest-github-github-token-tr] flag '--gith
+attest pullrequest github	--name	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-name-fl trail=probe-attest-pullrequest-github-name-tr] flag '--name' was given an e
 attest pullrequest github	--origin-url	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-origin-url-fl trail=probe-attest-pullrequest-github-origin-url-tr] flag '--origin-u
-attest pullrequest github	--redact-commit-info	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-redact-commit-info-fl trail=probe-attest-pullrequest-github-redact-commit-info-tr] 
-attest pullrequest github	--registry-password	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-registry-password-fl trail=probe-attest-pullrequest-github-registry-password-tr] fl
-attest pullrequest github	--registry-provider	1	1	1	cli	differs	differs	1.1		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-registry-provider-fl trail=probe-attest-pullrequest-github-registry-provider-tr] fl
+attest pullrequest github	--redact-commit-info	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-redact-commit-info-fl trail=probe-attest-pullrequest-github-redact-commit-info-tr] 
+attest pullrequest github	--registry-password	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-registry-password-fl trail=probe-attest-pullrequest-github-registry-password-tr] fl
+attest pullrequest github	--registry-provider	1	1	1	cli	differs	differs	0.8		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-registry-provider-fl trail=probe-attest-pullrequest-github-registry-provider-tr] fl
 attest pullrequest github	--registry-username	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-registry-username-fl trail=probe-attest-pullrequest-github-registry-username-tr] fl
-attest pullrequest github	--repo-id	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repo-id-fl trail=probe-attest-pullrequest-github-repo-id-tr] flag '--repo-id' was g
+attest pullrequest github	--repo-id	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repo-id-fl trail=probe-attest-pullrequest-github-repo-id-tr] flag '--repo-id' was g
 attest pullrequest github	--repo-provider	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repo-provider-fl trail=probe-attest-pullrequest-github-repo-provider-tr] flag '--re
 attest pullrequest github	--repo-root	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repo-root-fl trail=probe-attest-pullrequest-github-repo-root-tr] flag '--repo-root'
-attest pullrequest github	--repo-url	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repo-url-fl trail=probe-attest-pullrequest-github-repo-url-tr] flag '--repo-url' wa
-attest pullrequest github	--repository	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repository-fl trail=probe-attest-pullrequest-github-repository-tr] flag '--reposito
+attest pullrequest github	--repo-url	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repo-url-fl trail=probe-attest-pullrequest-github-repo-url-tr] flag '--repo-url' wa
+attest pullrequest github	--repository	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-repository-fl trail=probe-attest-pullrequest-github-repository-tr] flag '--reposito
 attest pullrequest github	--trail	1	1	1	cli	differs	differs	0.5		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-trail-fl] flag '--trail' was given an empty value
-attest pullrequest github	--user-data	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-user-data-fl trail=probe-attest-pullrequest-github-user-data-tr] flag '--user-data'
-attest pullrequest gitlab	--annotate	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-annotate-fl trail=probe-attest-pullrequest-gitlab-annotate-tr] flag '--annotate' wa
-attest pullrequest gitlab	--artifact-type	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-artifact-type-fl trail=probe-attest-pullrequest-gitlab-artifact-type-tr] flag '--ar
+attest pullrequest github	--user-data	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest github flow=probe-attest-pullrequest-github-user-data-fl trail=probe-attest-pullrequest-github-user-data-tr] flag '--user-data'
+attest pullrequest gitlab	--annotate	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-annotate-fl trail=probe-attest-pullrequest-gitlab-annotate-tr] flag '--annotate' wa
+attest pullrequest gitlab	--artifact-type	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-artifact-type-fl trail=probe-attest-pullrequest-gitlab-artifact-type-tr] flag '--ar
 attest pullrequest gitlab	--assert	1	1	1	cli	differs	differs	0.3		Error: flag '--assert' was given an empty value
 attest pullrequest gitlab	--attachments	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-attachments-fl trail=probe-attest-pullrequest-gitlab-attachments-tr] flag '--attach
-attest pullrequest gitlab	--commit	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-commit-fl trail=probe-attest-pullrequest-gitlab-commit-tr] flag '--commit' was give
+attest pullrequest gitlab	--commit	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-commit-fl trail=probe-attest-pullrequest-gitlab-commit-tr] flag '--commit' was give
 attest pullrequest gitlab	--description	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-description-fl trail=probe-attest-pullrequest-gitlab-description-tr] flag '--descri
 attest pullrequest gitlab	--dry-run	1	1	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
-attest pullrequest gitlab	--exclude	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-exclude-fl trail=probe-attest-pullrequest-gitlab-exclude-tr] flag '--exclude' was g
+attest pullrequest gitlab	--exclude	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-exclude-fl trail=probe-attest-pullrequest-gitlab-exclude-tr] flag '--exclude' was g
 attest pullrequest gitlab	--external-fingerprint	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-external-fingerprint-fl trail=probe-attest-pullrequest-gitlab-external-fingerprint-
 attest pullrequest gitlab	--external-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-external-url-fl trail=probe-attest-pullrequest-gitlab-external-url-tr] flag '--exte
-attest pullrequest gitlab	--fingerprint	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-fingerprint-fl trail=probe-attest-pullrequest-gitlab-fingerprint-tr] flag '--finger
-attest pullrequest gitlab	--flow	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab trail=probe-attest-pullrequest-gitlab-flow-tr] flag '--flow' was given an empty value
-attest pullrequest gitlab	--gitlab-base-url	1	1	1	cli	differs	differs	0.6		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-gitlab-base-url-fl trail=probe-attest-pullrequest-gitlab-gitlab-base-url-tr] flag '
+attest pullrequest gitlab	--fingerprint	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-fingerprint-fl trail=probe-attest-pullrequest-gitlab-fingerprint-tr] flag '--finger
+attest pullrequest gitlab	--flow	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab trail=probe-attest-pullrequest-gitlab-flow-tr] flag '--flow' was given an empty value
+attest pullrequest gitlab	--gitlab-base-url	1	1	1	cli	differs	differs	0.7		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-gitlab-base-url-fl trail=probe-attest-pullrequest-gitlab-gitlab-base-url-tr] flag '
 attest pullrequest gitlab	--gitlab-org	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-gitlab-org-fl trail=probe-attest-pullrequest-gitlab-gitlab-org-tr] flag '--gitlab-o
 attest pullrequest gitlab	--gitlab-token	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-gitlab-token-fl trail=probe-attest-pullrequest-gitlab-gitlab-token-tr] flag '--gitl
 attest pullrequest gitlab	--name	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-name-fl trail=probe-attest-pullrequest-gitlab-name-tr] flag '--name' was given an e
-attest pullrequest gitlab	--origin-url	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-origin-url-fl trail=probe-attest-pullrequest-gitlab-origin-url-tr] flag '--origin-u
+attest pullrequest gitlab	--origin-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-origin-url-fl trail=probe-attest-pullrequest-gitlab-origin-url-tr] flag '--origin-u
 attest pullrequest gitlab	--redact-commit-info	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-redact-commit-info-fl trail=probe-attest-pullrequest-gitlab-redact-commit-info-tr] 
 attest pullrequest gitlab	--registry-password	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-registry-password-fl trail=probe-attest-pullrequest-gitlab-registry-password-tr] fl
-attest pullrequest gitlab	--registry-provider	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-registry-provider-fl trail=probe-attest-pullrequest-gitlab-registry-provider-tr] fl
+attest pullrequest gitlab	--registry-provider	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-registry-provider-fl trail=probe-attest-pullrequest-gitlab-registry-provider-tr] fl
 attest pullrequest gitlab	--registry-username	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-registry-username-fl trail=probe-attest-pullrequest-gitlab-registry-username-tr] fl
 attest pullrequest gitlab	--repo-id	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repo-id-fl trail=probe-attest-pullrequest-gitlab-repo-id-tr] flag '--repo-id' was g
-attest pullrequest gitlab	--repo-provider	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repo-provider-fl trail=probe-attest-pullrequest-gitlab-repo-provider-tr] flag '--re
-attest pullrequest gitlab	--repo-root	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repo-root-fl trail=probe-attest-pullrequest-gitlab-repo-root-tr] flag '--repo-root'
+attest pullrequest gitlab	--repo-provider	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repo-provider-fl trail=probe-attest-pullrequest-gitlab-repo-provider-tr] flag '--re
+attest pullrequest gitlab	--repo-root	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repo-root-fl trail=probe-attest-pullrequest-gitlab-repo-root-tr] flag '--repo-root'
 attest pullrequest gitlab	--repo-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repo-url-fl trail=probe-attest-pullrequest-gitlab-repo-url-tr] flag '--repo-url' wa
-attest pullrequest gitlab	--repository	1	1	1	cli	differs	differs	0.4		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repository-fl trail=probe-attest-pullrequest-gitlab-repository-tr] flag '--reposito
+attest pullrequest gitlab	--repository	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repository-fl trail=probe-attest-pullrequest-gitlab-repository-tr] flag '--reposito
 attest pullrequest gitlab	--trail	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-trail-fl] flag '--trail' was given an empty value
 attest pullrequest gitlab	--user-data	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-user-data-fl trail=probe-attest-pullrequest-gitlab-user-data-tr] flag '--user-data'
 attest snyk	--annotate	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-annotate-fl trail=probe-attest-snyk-annotate-tr] flag '--annotate' was given an empty value
-attest snyk	--artifact-type	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-artifact-type-fl trail=probe-attest-snyk-artifact-type-tr] flag '--artifact-type' was given an empty value
-attest snyk	--attachments	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-attachments-fl trail=probe-attest-snyk-attachments-tr] flag '--attachments' was given an empty value
+attest snyk	--artifact-type	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-artifact-type-fl trail=probe-attest-snyk-artifact-type-tr] flag '--artifact-type' was given an empty value
+attest snyk	--attachments	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-attachments-fl trail=probe-attest-snyk-attachments-tr] flag '--attachments' was given an empty value
 attest snyk	--commit	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-commit-fl trail=probe-attest-snyk-commit-tr] flag '--commit' was given an empty value
-attest snyk	--description	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-description-fl trail=probe-attest-snyk-description-tr] flag '--description' was given an empty value
-attest snyk	--dry-run	1	1	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+attest snyk	--description	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-description-fl trail=probe-attest-snyk-description-tr] flag '--description' was given an empty value
+attest snyk	--dry-run	1	1	0	cli	differs	differs	0.4		Error: flag '--dry-run' was given an empty value
 attest snyk	--exclude	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-exclude-fl trail=probe-attest-snyk-exclude-tr] flag '--exclude' was given an empty value
-attest snyk	--external-fingerprint	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-external-fingerprint-fl trail=probe-attest-snyk-external-fingerprint-tr] flag '--external-fingerprint' was give
-attest snyk	--external-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-external-url-fl trail=probe-attest-snyk-external-url-tr] flag '--external-url' was given an empty value
+attest snyk	--external-fingerprint	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-external-fingerprint-fl trail=probe-attest-snyk-external-fingerprint-tr] flag '--external-fingerprint' was give
+attest snyk	--external-url	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-external-url-fl trail=probe-attest-snyk-external-url-tr] flag '--external-url' was given an empty value
 attest snyk	--fingerprint	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-fingerprint-fl trail=probe-attest-snyk-fingerprint-tr] flag '--fingerprint' was given an empty value
-attest snyk	--flow	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk trail=probe-attest-snyk-flow-tr] flag '--flow' was given an empty value
+attest snyk	--flow	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk trail=probe-attest-snyk-flow-tr] flag '--flow' was given an empty value
 attest snyk	--name	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-name-fl trail=probe-attest-snyk-name-tr] flag '--name' was given an empty value
-attest snyk	--origin-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-origin-url-fl trail=probe-attest-snyk-origin-url-tr] flag '--origin-url' was given an empty value
-attest snyk	--redact-commit-info	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-redact-commit-info-fl trail=probe-attest-snyk-redact-commit-info-tr] flag '--redact-commit-info' was given an e
+attest snyk	--origin-url	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-origin-url-fl trail=probe-attest-snyk-origin-url-tr] flag '--origin-url' was given an empty value
+attest snyk	--redact-commit-info	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-redact-commit-info-fl trail=probe-attest-snyk-redact-commit-info-tr] flag '--redact-commit-info' was given an e
 attest snyk	--registry-password	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-registry-password-fl trail=probe-attest-snyk-registry-password-tr] flag '--registry-password' was given an empt
-attest snyk	--registry-provider	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-registry-provider-fl trail=probe-attest-snyk-registry-provider-tr] flag '--registry-provider' was given an empt
-attest snyk	--registry-username	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-registry-username-fl trail=probe-attest-snyk-registry-username-tr] flag '--registry-username' was given an empt
+attest snyk	--registry-provider	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-registry-provider-fl trail=probe-attest-snyk-registry-provider-tr] flag '--registry-provider' was given an empt
+attest snyk	--registry-username	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-registry-username-fl trail=probe-attest-snyk-registry-username-tr] flag '--registry-username' was given an empt
 attest snyk	--repo-id	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-repo-id-fl trail=probe-attest-snyk-repo-id-tr] flag '--repo-id' was given an empty value
-attest snyk	--repo-provider	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-repo-provider-fl trail=probe-attest-snyk-repo-provider-tr] flag '--repo-provider' was given an empty value
-attest snyk	--repo-root	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-repo-root-fl trail=probe-attest-snyk-repo-root-tr] flag '--repo-root' was given an empty value
-attest snyk	--repo-url	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-repo-url-fl trail=probe-attest-snyk-repo-url-tr] flag '--repo-url' was given an empty value
+attest snyk	--repo-provider	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-repo-provider-fl trail=probe-attest-snyk-repo-provider-tr] flag '--repo-provider' was given an empty value
+attest snyk	--repo-root	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-repo-root-fl trail=probe-attest-snyk-repo-root-tr] flag '--repo-root' was given an empty value
+attest snyk	--repo-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-repo-url-fl trail=probe-attest-snyk-repo-url-tr] flag '--repo-url' was given an empty value
 attest snyk	--repository	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-repository-fl trail=probe-attest-snyk-repository-tr] flag '--repository' was given an empty value
 attest snyk	--scan-results	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-scan-results-fl trail=probe-attest-snyk-scan-results-tr] flag '--scan-results' was given an empty value
-attest snyk	--trail	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-trail-fl] flag '--trail' was given an empty value
+attest snyk	--trail	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-trail-fl] flag '--trail' was given an empty value
 attest snyk	--upload-results	1	1	1	cli	differs	differs	0.3		Error: flag '--upload-results' was given an empty value
-attest snyk	--user-data	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-user-data-fl trail=probe-attest-snyk-user-data-tr] flag '--user-data' was given an empty value
-attest sonar	--annotate	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar flow=probe-attest-sonar-annotate-fl trail=probe-attest-sonar-annotate-tr] flag '--annotate' was given an empty value
+attest snyk	--user-data	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-user-data-fl trail=probe-attest-snyk-user-data-tr] flag '--user-data' was given an empty value
+attest sonar	--annotate	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-annotate-fl trail=probe-attest-sonar-annotate-tr] flag '--annotate' was given an empty value
 attest sonar	--artifact-type	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-artifact-type-fl trail=probe-attest-sonar-artifact-type-tr] flag '--artifact-type' was given an empty value
 attest sonar	--attachments	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-attachments-fl trail=probe-attest-sonar-attachments-tr] flag '--attachments' was given an empty value
-attest sonar	--commit	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar flow=probe-attest-sonar-commit-fl trail=probe-attest-sonar-commit-tr] flag '--commit' was given an empty value
+attest sonar	--commit	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-commit-fl trail=probe-attest-sonar-commit-tr] flag '--commit' was given an empty value
 attest sonar	--description	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-description-fl trail=probe-attest-sonar-description-tr] flag '--description' was given an empty value
 attest sonar	--dry-run	1	1	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
-attest sonar	--exclude	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar flow=probe-attest-sonar-exclude-fl trail=probe-attest-sonar-exclude-tr] flag '--exclude' was given an empty value
+attest sonar	--exclude	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-exclude-fl trail=probe-attest-sonar-exclude-tr] flag '--exclude' was given an empty value
 attest sonar	--external-fingerprint	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-external-fingerprint-fl trail=probe-attest-sonar-external-fingerprint-tr] flag '--external-fingerprint' was g
 attest sonar	--external-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-external-url-fl trail=probe-attest-sonar-external-url-tr] flag '--external-url' was given an empty value
-attest sonar	--fingerprint	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-fingerprint-fl trail=probe-attest-sonar-fingerprint-tr] flag '--fingerprint' was given an empty value
-attest sonar	--flow	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar trail=probe-attest-sonar-flow-tr] flag '--flow' was given an empty value
+attest sonar	--fingerprint	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar flow=probe-attest-sonar-fingerprint-fl trail=probe-attest-sonar-fingerprint-tr] flag '--fingerprint' was given an empty value
+attest sonar	--flow	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar trail=probe-attest-sonar-flow-tr] flag '--flow' was given an empty value
 attest sonar	--max-wait	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-max-wait-fl trail=probe-attest-sonar-max-wait-tr] flag '--max-wait' was given an empty value
-attest sonar	--name	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-name-fl trail=probe-attest-sonar-name-tr] flag '--name' was given an empty value
-attest sonar	--origin-url	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar flow=probe-attest-sonar-origin-url-fl trail=probe-attest-sonar-origin-url-tr] flag '--origin-url' was given an empty value
+attest sonar	--name	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar flow=probe-attest-sonar-name-fl trail=probe-attest-sonar-name-tr] flag '--name' was given an empty value
+attest sonar	--origin-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-origin-url-fl trail=probe-attest-sonar-origin-url-tr] flag '--origin-url' was given an empty value
 attest sonar	--pull-request	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-pull-request-fl trail=probe-attest-sonar-pull-request-tr] flag '--pull-request' was given an empty value
 attest sonar	--redact-commit-info	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-redact-commit-info-fl trail=probe-attest-sonar-redact-commit-info-tr] flag '--redact-commit-info' was given a
 attest sonar	--registry-password	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar flow=probe-attest-sonar-registry-password-fl trail=probe-attest-sonar-registry-password-tr] flag '--registry-password' was given an e
@@ -407,75 +407,75 @@ attest sonar	--repo-id	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar
 attest sonar	--repo-provider	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-repo-provider-fl trail=probe-attest-sonar-repo-provider-tr] flag '--repo-provider' was given an empty value
 attest sonar	--repo-root	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-repo-root-fl trail=probe-attest-sonar-repo-root-tr] flag '--repo-root' was given an empty value
 attest sonar	--repo-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-repo-url-fl trail=probe-attest-sonar-repo-url-tr] flag '--repo-url' was given an empty value
-attest sonar	--repository	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar flow=probe-attest-sonar-repository-fl trail=probe-attest-sonar-repository-tr] flag '--repository' was given an empty value
+attest sonar	--repository	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-repository-fl trail=probe-attest-sonar-repository-tr] flag '--repository' was given an empty value
 attest sonar	--sonar-api-token	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-sonar-api-token-fl trail=probe-attest-sonar-sonar-api-token-tr] flag '--sonar-api-token' was given an empty v
 attest sonar	--sonar-ce-task-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-sonar-ce-task-url-fl trail=probe-attest-sonar-sonar-ce-task-url-tr] flag '--sonar-ce-task-url' was given an e
-attest sonar	--sonar-project-key	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar flow=probe-attest-sonar-sonar-project-key-fl trail=probe-attest-sonar-sonar-project-key-tr] flag '--sonar-project-key' was given an e
+attest sonar	--sonar-project-key	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-sonar-project-key-fl trail=probe-attest-sonar-sonar-project-key-tr] flag '--sonar-project-key' was given an e
 attest sonar	--sonar-revision	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-sonar-revision-fl trail=probe-attest-sonar-sonar-revision-tr] flag '--sonar-revision' was given an empty valu
 attest sonar	--sonar-server-url	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-sonar-server-url-fl trail=probe-attest-sonar-sonar-server-url-tr] flag '--sonar-server-url' was given an empt
-attest sonar	--sonar-working-dir	1	1	1	cli	differs	differs	0.4		Error: [kosli attest sonar flow=probe-attest-sonar-sonar-working-dir-fl trail=probe-attest-sonar-sonar-working-dir-tr] flag '--sonar-working-dir' was given an e
+attest sonar	--sonar-working-dir	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-sonar-working-dir-fl trail=probe-attest-sonar-sonar-working-dir-tr] flag '--sonar-working-dir' was given an e
 attest sonar	--trail	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-trail-fl] flag '--trail' was given an empty value
 attest sonar	--user-data	1	1	1	cli	differs	differs	0.3		Error: [kosli attest sonar flow=probe-attest-sonar-user-data-fl trail=probe-attest-sonar-user-data-tr] flag '--user-data' was given an empty value
-begin trail	--commit	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-commit-fl] flag '--commit' was given an empty value
+begin trail	--commit	1	0	0	cli	differs	differs	0.2		Error: [kosli begin trail flow=probe-begin-trail-commit-fl] flag '--commit' was given an empty value
 begin trail	--description	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-description-fl] flag '--description' was given an empty value
 begin trail	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
-begin trail	--external-fingerprint	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-external-fingerprint-fl] flag '--external-fingerprint' was given an empty value
-begin trail	--external-url	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-external-url-fl] flag '--external-url' was given an empty value
+begin trail	--external-fingerprint	1	0	0	cli	differs	differs	0.2		Error: [kosli begin trail flow=probe-begin-trail-external-fingerprint-fl] flag '--external-fingerprint' was given an empty value
+begin trail	--external-url	1	0	0	cli	differs	differs	0.2		Error: [kosli begin trail flow=probe-begin-trail-external-url-fl] flag '--external-url' was given an empty value
 begin trail	--flow	1	1	0	cli	differs	differs	0.3		Error: [kosli begin trail] flag '--flow' was given an empty value
-begin trail	--origin-url	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-origin-url-fl] flag '--origin-url' was given an empty value
-begin trail	--redact-commit-info	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-redact-commit-info-fl] flag '--redact-commit-info' was given an empty value
-begin trail	--repo-id	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-repo-id-fl] flag '--repo-id' was given an empty value
-begin trail	--repo-provider	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-repo-provider-fl] flag '--repo-provider' was given an empty value
+begin trail	--origin-url	1	0	0	cli	differs	differs	0.2		Error: [kosli begin trail flow=probe-begin-trail-origin-url-fl] flag '--origin-url' was given an empty value
+begin trail	--redact-commit-info	1	0	0	cli	differs	differs	0.2		Error: [kosli begin trail flow=probe-begin-trail-redact-commit-info-fl] flag '--redact-commit-info' was given an empty value
+begin trail	--repo-id	1	0	0	cli	differs	differs	0.2		Error: [kosli begin trail flow=probe-begin-trail-repo-id-fl] flag '--repo-id' was given an empty value
+begin trail	--repo-provider	1	0	0	cli	differs	differs	0.2		Error: [kosli begin trail flow=probe-begin-trail-repo-provider-fl] flag '--repo-provider' was given an empty value
 begin trail	--repo-root	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-repo-root-fl] flag '--repo-root' was given an empty value
-begin trail	--repo-url	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-repo-url-fl] flag '--repo-url' was given an empty value
-begin trail	--repository	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-repository-fl] flag '--repository' was given an empty value
-begin trail	--template-file	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-template-file-fl] flag '--template-file' was given an empty value
+begin trail	--repo-url	1	0	0	cli	differs	differs	0.2		Error: [kosli begin trail flow=probe-begin-trail-repo-url-fl] flag '--repo-url' was given an empty value
+begin trail	--repository	1	0	0	cli	differs	differs	0.2		Error: [kosli begin trail flow=probe-begin-trail-repository-fl] flag '--repository' was given an empty value
+begin trail	--template-file	1	0	0	cli	differs	differs	0.2		Error: [kosli begin trail flow=probe-begin-trail-template-file-fl] flag '--template-file' was given an empty value
 begin trail	--user-data	1	0	0	cli	differs	differs	0.3		Error: [kosli begin trail flow=probe-begin-trail-user-data-fl] flag '--user-data' was given an empty value
 config	--set	1	0	0	cli	differs	differs	0.1		Error: [kosli config] flag '--set' was given an empty value
 config	--unset	1	0	0	cli	differs	differs	0.1		Error: [kosli config] flag '--unset' was given an empty value
-create api-key	--description	1	1	0	cli	differs	differs	0.2		Error: [kosli create api-key] flag '--description' was given an empty value
-create api-key	--dry-run	1	0	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+create api-key	--description	1	1	0	cli	differs	differs	0.3		Error: [kosli create api-key] flag '--description' was given an empty value
+create api-key	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 create api-key	--expires-at	1	0	0	cli	differs	differs	0.2		Error: [kosli create api-key] flag '--expires-at' was given an empty value
 create api-key	--output	1	0	0	cli	differs	differs	0.2		Error: [kosli create api-key] flag '--output' was given an empty value
 create api-key	--service-account	1	1	0	cli	differs	differs	0.2		Error: [kosli create api-key] flag '--service-account' was given an empty value
 create attestation-type	--description	1	0	0	cli	differs	differs	0.3		Error: [kosli create attestation-type] flag '--description' was given an empty value
-create attestation-type	--dry-run	1	0	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+create attestation-type	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 create attestation-type	--jq	1	0	0	cli	differs	differs	0.3		Error: [kosli create attestation-type] flag '--jq' was given an empty value
 create attestation-type	--schema	1	0	0	cli	differs	differs	0.3		Error: [kosli create attestation-type] flag '--schema' was given an empty value
 create control	--description	1	0	0	cli	differs	differs	0.2		Error: [kosli create control] flag '--description' was given an empty value
-create control	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
-create control	--name	1	1	0	cli	differs	differs	0.2		Error: [kosli create control] flag '--name' was given an empty value
-create environment	--description	1	0	0	cli	differs	differs	0.2		Error: [kosli create environment] flag '--description' was given an empty value
+create control	--dry-run	1	0	0	cli	differs	differs	0.1		Error: flag '--dry-run' was given an empty value
+create control	--name	1	1	0	cli	differs	differs	0.1		Error: [kosli create control] flag '--name' was given an empty value
+create environment	--description	1	0	0	cli	differs	differs	0.3		Error: [kosli create environment] flag '--description' was given an empty value
 create environment	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 create environment	--exclude-scaling	1	0	0	cli	differs	differs	0.2		Error: flag '--exclude-scaling' was given an empty value
-create environment	--include-scaling	1	0	0	cli	differs	differs	0.3		Error: flag '--include-scaling' was given an empty value
+create environment	--include-scaling	1	0	0	cli	differs	differs	0.2		Error: flag '--include-scaling' was given an empty value
 create environment	--included-environments	1	0	0	cli	differs	differs	0.2		Error: [kosli create environment] flag '--included-environments' was given an empty value
-create environment	--require-provenance	1	0	0	cli	differs	differs	0.2		Error: flag '--require-provenance' was given an empty value
+create environment	--require-provenance	1	0	0	cli	differs	differs	0.3		Error: flag '--require-provenance' was given an empty value
 create environment	--type	1	1	0	cli	differs	differs	0.2		Error: [kosli create environment] flag '--type' was given an empty value
 create flow	--description	1	0	0	cli	differs	differs	0.2		Error: [kosli create flow] flag '--description' was given an empty value
-create flow	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
+create flow	--dry-run	1	0	0	cli	differs	differs	0.1		Error: flag '--dry-run' was given an empty value
 create flow	--template	1	0	0	cli	differs	differs	0.2		Error: [kosli create flow] flag '--template' was given an empty value
 create flow	--template-file	1	0	0	cli	differs	differs	0.2		Error: [kosli create flow] flag '--template-file' was given an empty value
 create flow	--use-empty-template	1	0	0	cli	differs	differs	0.2		Error: flag '--use-empty-template' was given an empty value
 create flow	--visibility	1	0	0	cli	differs	differs	0.2		Error: [kosli create flow] flag '--visibility' was given an empty value
 create policy	--comment	1	0	0	cli	differs	differs	0.2		Error: [kosli create policy] flag '--comment' was given an empty value
 create policy	--description	1	0	0	cli	differs	differs	0.2		Error: [kosli create policy] flag '--description' was given an empty value
-create policy	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
+create policy	--dry-run	1	0	0	cli	differs	differs	0.1		Error: flag '--dry-run' was given an empty value
 create policy	--type	1	0	0	cli	differs	differs	0.2		Error: [kosli create policy] flag '--type' was given an empty value
 create service-account	--description	1	0	0	cli	differs	differs	0.2		Error: [kosli create service-account] flag '--description' was given an empty value
-create service-account	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
+create service-account	--dry-run	1	0	0	cli	differs	differs	0.1		Error: flag '--dry-run' was given an empty value
 create service-account	--privilege	1	1	0	cli	differs	differs	0.2		Error: [kosli create service-account] flag '--privilege' was given an empty value
-delete api-key	--assume-yes	1	1	0	cli	differs	differs	0.3		Error: flag '--assume-yes' was given an empty value
+delete api-key	--assume-yes	1	1	0	cli	differs	differs	0.2		Error: flag '--assume-yes' was given an empty value
 delete api-key	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 delete api-key	--service-account	1	1	0	cli	differs	differs	0.3		Error: [kosli delete api-key] flag '--service-account' was given an empty value
-delete api-key	--yes	1	0	0	cli	differs	differs	0.3		Error: flag '--yes' was given an empty value
-delete service-account	--assume-yes	1	1	0	cli	differs	differs	0.3		Error: flag '--assume-yes' was given an empty value
+delete api-key	--yes	1	0	0	cli	differs	differs	0.2		Error: flag '--yes' was given an empty value
+delete service-account	--assume-yes	1	1	0	cli	differs	differs	0.2		Error: flag '--assume-yes' was given an empty value
 delete service-account	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 delete service-account	--yes	1	0	0	cli	differs	differs	0.3		Error: flag '--yes' was given an empty value
 detach-policy	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
-detach-policy	--environment	1	1	0	cli	differs	differs	0.3		Error: [kosli detach-policy] flag '--environment' was given an empty value
-diff snapshots	--output	1	0	0	cli	differs	differs	2.2		Error: [kosli diff snapshots] flag '--output' was given an empty value
-diff snapshots	--show-unchanged	1	0	0	cli	differs	differs	2.2		Error: flag '--show-unchanged' was given an empty value
+detach-policy	--environment	1	1	0	cli	differs	differs	0.2		Error: [kosli detach-policy] flag '--environment' was given an empty value
+diff snapshots	--output	1	0	0	cli	differs	differs	2.1		Error: [kosli diff snapshots] flag '--output' was given an empty value
+diff snapshots	--show-unchanged	1	0	0	cli	differs	differs	2.1		Error: flag '--show-unchanged' was given an empty value
 evaluate input	--assert	1	0	0	cli	differs	differs	0.1		Error: flag '--assert' was given an empty value
 evaluate input	--attestations	1	0	0	cli	differs	differs	0.1		Error: [kosli evaluate input] flag '--attestations' was given an empty value
 evaluate input	--flow	1	0	0	cli	differs	differs	0.1		Error: [kosli evaluate input] flag '--flow' was given an empty value
@@ -491,11 +491,11 @@ evaluate trail	--flow	1	1	0	cli	differs	differs	0.3		Error: [kosli evaluate trai
 evaluate trail	--no-assert	1	0	0	cli	differs	differs	0.3		Error: flag '--no-assert' was given an empty value
 evaluate trail	--output	1	0	0	cli	differs	differs	0.3		Error: [kosli evaluate trail flow=probe-evaluate-trail-output-fl] flag '--output' was given an empty value
 evaluate trail	--params	1	0	0	cli	differs	differs	0.3		Error: [kosli evaluate trail flow=probe-evaluate-trail-params-fl] flag '--params' was given an empty value
-evaluate trail	--policy	1	1	0	cli	differs	differs	0.3		Error: [kosli evaluate trail flow=probe-evaluate-trail-policy-fl] flag '--policy' was given an empty value
+evaluate trail	--policy	1	1	0	cli	differs	differs	0.2		Error: [kosli evaluate trail flow=probe-evaluate-trail-policy-fl] flag '--policy' was given an empty value
 evaluate trail	--show-input	1	0	0	cli	differs	differs	0.3		Error: flag '--show-input' was given an empty value
 evaluate trails	--assert	1	0	0	cli	differs	differs	0.3		Error: flag '--assert' was given an empty value
 evaluate trails	--attestations	1	0	0	cli	differs	differs	0.3		Error: [kosli evaluate trails flow=probe-evaluate-trails-attestations-fl] flag '--attestations' was given an empty value
-evaluate trails	--flow	1	1	0	cli	differs	differs	0.3		Error: [kosli evaluate trails] flag '--flow' was given an empty value
+evaluate trails	--flow	1	1	0	cli	differs	differs	0.2		Error: [kosli evaluate trails] flag '--flow' was given an empty value
 evaluate trails	--no-assert	1	0	0	cli	differs	differs	0.3		Error: flag '--no-assert' was given an empty value
 evaluate trails	--output	1	0	0	cli	differs	differs	0.3		Error: [kosli evaluate trails flow=probe-evaluate-trails-output-fl] flag '--output' was given an empty value
 evaluate trails	--params	1	0	0	cli	differs	differs	0.3		Error: [kosli evaluate trails flow=probe-evaluate-trails-params-fl] flag '--params' was given an empty value
@@ -508,15 +508,15 @@ fingerprint	--registry-password	1	0	1	cli	differs	differs	0.1		Error: [kosli fin
 fingerprint	--registry-provider	1	0	0	cli	differs	differs	0.1		Error: [kosli fingerprint] flag '--registry-provider' was given an empty value
 fingerprint	--registry-username	1	0	1	cli	differs	differs	0.1		Error: [kosli fingerprint] flag '--registry-username' was given an empty value
 get api-key	--output	1	0	0	cli	differs	differs	0.3		Error: [kosli get api-key] flag '--output' was given an empty value
-get api-key	--service-account	1	1	0	cli	differs	differs	0.3		Error: [kosli get api-key] flag '--service-account' was given an empty value
-get artifact	--output	1	0	0	cli	differs	differs	0.7		Error: [kosli get artifact] flag '--output' was given an empty value
+get api-key	--service-account	1	1	0	cli	differs	differs	0.2		Error: [kosli get api-key] flag '--service-account' was given an empty value
+get artifact	--output	1	0	0	cli	differs	differs	0.5		Error: [kosli get artifact] flag '--output' was given an empty value
 get artifact	--trail	1	0	0	cli	differs	differs	0.5		Error: [kosli get artifact] flag '--trail' was given an empty value
 get attestation	--attestation-id	1	1	1	cli	differs	differs	0.6		Error: [kosli get attestation flow=probe-get-attestation-attestation-id-fl trail=probe-get-attestation-attestation-id-tr] flag '--attestation-id' was given an e
-get attestation	--fingerprint	1	1	0	cli	differs	differs	0.6		Error: [kosli get attestation flow=probe-get-attestation-fingerprint-fl] flag '--fingerprint' was given an empty value
-get attestation	--flow	1	1	0	cli	differs	differs	0.7		Error: [kosli get attestation trail=probe-get-attestation-flow-tr] flag '--flow' was given an empty value
+get attestation	--fingerprint	1	1	0	cli	differs	differs	0.5		Error: [kosli get attestation flow=probe-get-attestation-fingerprint-fl] flag '--fingerprint' was given an empty value
+get attestation	--flow	1	1	0	cli	differs	differs	0.6		Error: [kosli get attestation trail=probe-get-attestation-flow-tr] flag '--flow' was given an empty value
 get attestation	--output	1	0	0	cli	differs	differs	0.6		Error: [kosli get attestation flow=probe-get-attestation-output-fl trail=probe-get-attestation-output-tr] flag '--output' was given an empty value
 get attestation	--trail	1	1	0	cli	differs	differs	0.6		Error: [kosli get attestation flow=probe-get-attestation-trail-fl] flag '--trail' was given an empty value
-get attestation-type	--output	1	0	0	cli	differs	differs	0.4		Error: [kosli get attestation-type] flag '--output' was given an empty value
+get attestation-type	--output	1	0	0	cli	differs	differs	0.3		Error: [kosli get attestation-type] flag '--output' was given an empty value
 get control	--output	1	0	0	cli	differs	differs	0.2		Error: [kosli get control] flag '--output' was given an empty value
 get default-org	--output	1	0	0	cli	differs	differs	0.1		Error: [kosli get default-org] flag '--output' was given an empty value
 get environment	--output	1	0	0	cli	differs	differs	0.2		Error: [kosli get environment] flag '--output' was given an empty value
@@ -533,13 +533,13 @@ join environment	--dry-run	1	0	0	cli	differs	differs	0.4		Error: flag '--dry-run
 join environment	--logical	1	1	0	cli	differs	differs	0.4		Error: [kosli join environment] flag '--logical' was given an empty value
 join environment	--physical	1	1	0	cli	differs	differs	0.4		Error: [kosli join environment] flag '--physical' was given an empty value
 list api-keys	--output	1	0	0	cli	differs	differs	0.3		Error: [kosli list api-keys] flag '--output' was given an empty value
-list api-keys	--service-account	1	1	0	cli	differs	differs	0.3		Error: [kosli list api-keys] flag '--service-account' was given an empty value
-list artifacts	--flow	1	0	0	cli	differs	differs	0.4		Error: [kosli list artifacts] flag '--flow' was given an empty value
-list artifacts	--output	1	0	0	cli	differs	differs	0.5		Error: [kosli list artifacts] flag '--output' was given an empty value
+list api-keys	--service-account	1	1	0	cli	differs	differs	0.2		Error: [kosli list api-keys] flag '--service-account' was given an empty value
+list artifacts	--flow	1	0	0	cli	differs	differs	0.3		Error: [kosli list artifacts] flag '--flow' was given an empty value
+list artifacts	--output	1	0	0	cli	differs	differs	0.4		Error: [kosli list artifacts] flag '--output' was given an empty value
 list artifacts	--page	1	0	0	cli	differs	differs	0.5		Error: [kosli list artifacts] flag '--page' was given an empty value
 list artifacts	--page-limit	1	0	0	cli	differs	differs	0.4		Error: [kosli list artifacts] flag '--page-limit' was given an empty value
 list artifacts	--repo	1	0	1	cli	differs	differs	0.4		Error: [kosli list artifacts] flag '--repo' was given an empty value
-list attestation-types	--output	1	0	0	cli	differs	differs	0.8		Error: [kosli list attestation-types] flag '--output' was given an empty value
+list attestation-types	--output	1	0	0	cli	differs	differs	0.7		Error: [kosli list attestation-types] flag '--output' was given an empty value
 list controls	--archived	1	0	0	cli	differs	differs	0.2		Error: flag '--archived' was given an empty value
 list controls	--output	1	0	0	cli	differs	differs	0.2		Error: [kosli list controls] flag '--output' was given an empty value
 list controls	--page	1	0	0	cli	differs	differs	0.2		Error: [kosli list controls] flag '--page' was given an empty value
@@ -557,9 +557,9 @@ list environments	--space-id	1	0	0	cli	differs	differs	0.2		Error: [kosli list e
 list environments	--tag	1	0	0	cli	differs	differs	0.2		Error: [kosli list environments] flag '--tag' was given an empty value
 list environments	--type	1	0	0	cli	differs	differs	0.2		Error: [kosli list environments] flag '--type' was given an empty value
 list flows	--ignore-case	1	0	0	cli	differs	differs	0.3		Error: flag '--ignore-case' was given an empty value
-list flows	--name	1	0	0	cli	differs	differs	0.3		Error: [kosli list flows] flag '--name' was given an empty value
+list flows	--name	1	0	0	cli	differs	differs	0.2		Error: [kosli list flows] flag '--name' was given an empty value
 list flows	--output	1	0	0	cli	differs	differs	0.3		Error: [kosli list flows] flag '--output' was given an empty value
-list flows	--page	1	0	0	cli	differs	differs	0.3		Error: [kosli list flows] flag '--page' was given an empty value
+list flows	--page	1	0	0	cli	differs	differs	0.2		Error: [kosli list flows] flag '--page' was given an empty value
 list flows	--page-limit	1	0	0	cli	differs	differs	0.2		Error: [kosli list flows] flag '--page-limit' was given an empty value
 list policies	--output	1	0	0	cli	differs	differs	0.2		Error: [kosli list policies] flag '--output' was given an empty value
 list repos	--name	1	0	0	cli	differs	differs	0.1		Error: [kosli list repos] flag '--name' was given an empty value
@@ -573,9 +573,9 @@ list repos	--sort-direction	1	0	0	cli	differs	differs	0.1		Error: [kosli list re
 list repos	--tag	1	0	0	cli	differs	differs	0.1		Error: [kosli list repos] flag '--tag' was given an empty value
 list service-accounts	--output	1	0	0	cli	differs	differs	0.2		Error: [kosli list service-accounts] flag '--output' was given an empty value
 list snapshots	--interval	1	0	0	cli	differs	differs	2.2		Error: [kosli list snapshots] flag '--interval' was given an empty value
-list snapshots	--output	1	0	0	cli	differs	differs	2.3		Error: [kosli list snapshots] flag '--output' was given an empty value
-list snapshots	--page	1	0	0	cli	differs	differs	2.0		Error: [kosli list snapshots] flag '--page' was given an empty value
-list snapshots	--page-limit	1	0	0	cli	differs	differs	2.0		Error: [kosli list snapshots] flag '--page-limit' was given an empty value
+list snapshots	--output	1	0	0	cli	differs	differs	2.2		Error: [kosli list snapshots] flag '--output' was given an empty value
+list snapshots	--page	1	0	0	cli	differs	differs	2.1		Error: [kosli list snapshots] flag '--page' was given an empty value
+list snapshots	--page-limit	1	0	0	cli	differs	differs	2.1		Error: [kosli list snapshots] flag '--page-limit' was given an empty value
 list snapshots	--reverse	1	0	0	cli	differs	differs	2.1		Error: flag '--reverse' was given an empty value
 list trails	--fingerprint	1	0	0	cli	differs	differs	0.3		Error: [kosli list trails] flag '--fingerprint' was given an empty value
 list trails	--flow	1	0	0	cli	differs	differs	0.3		Error: [kosli list trails] flag '--flow' was given an empty value
@@ -583,70 +583,70 @@ list trails	--flow-tag	1	0	0	cli	differs	differs	0.3		Error: [kosli list trails]
 list trails	--output	1	0	0	cli	differs	differs	0.3		Error: [kosli list trails] flag '--output' was given an empty value
 list trails	--page	1	0	0	cli	differs	differs	0.3		Error: [kosli list trails] flag '--page' was given an empty value
 list trails	--page-limit	1	0	0	cli	differs	differs	0.3		Error: [kosli list trails] flag '--page-limit' was given an empty value
-log environment	--end	1	0	0	cli	differs	differs	3.0		Error: [kosli log environment] flag '--end' was given an empty value
+log environment	--end	1	0	0	cli	differs	differs	3.1		Error: [kosli log environment] flag '--end' was given an empty value
 log environment	--end-ts	1	0	0	cli	differs	differs	3.0		Error: [kosli log environment] flag '--end-ts' was given an empty value
 log environment	--interval	1	0	0	cli	differs	differs	3.1		Error: [kosli log environment] flag '--interval' was given an empty value
-log environment	--output	1	0	0	cli	differs	differs	2.9		Error: [kosli log environment] flag '--output' was given an empty value
+log environment	--output	1	0	0	cli	differs	differs	3.0		Error: [kosli log environment] flag '--output' was given an empty value
 log environment	--page	1	0	0	cli	differs	differs	3.0		Error: [kosli log environment] flag '--page' was given an empty value
 log environment	--page-limit	1	0	0	cli	differs	differs	3.0		Error: [kosli log environment] flag '--page-limit' was given an empty value
 log environment	--repo	1	0	1	cli	differs	differs	2.6		Error: [kosli log environment] flag '--repo' was given an empty value
-log environment	--reverse	1	0	0	cli	differs	differs	3.1		Error: flag '--reverse' was given an empty value
+log environment	--reverse	1	0	0	cli	differs	differs	2.9		Error: flag '--reverse' was given an empty value
 log environment	--start	1	0	0	cli	differs	differs	3.0		Error: [kosli log environment] flag '--start' was given an empty value
-log environment	--start-ts	1	0	0	cli	differs	differs	3.0		Error: [kosli log environment] flag '--start-ts' was given an empty value
+log environment	--start-ts	1	0	0	cli	differs	differs	3.1		Error: [kosli log environment] flag '--start-ts' was given an empty value
 rename environment	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 rename flow	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 report artifact	--artifact-type	1	0	0	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-artifact-type-fl] flag '--artifact-type' was given an empty value
 report artifact	--build-url	1	1	0	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-build-url-fl] flag '--build-url' was given an empty value
 report artifact	--commit-url	1	1	0	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-commit-url-fl] flag '--commit-url' was given an empty value
 report artifact	--dry-run	1	0	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
-report artifact	--exclude	1	0	0	cli	differs	differs	0.4		Error: [kosli report artifact flow=probe-report-artifact-exclude-fl] flag '--exclude' was given an empty value
+report artifact	--exclude	1	0	0	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-exclude-fl] flag '--exclude' was given an empty value
 report artifact	--fingerprint	1	1	0	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-fingerprint-fl] flag '--fingerprint' was given an empty value
 report artifact	--flow	1	1	0	cli	differs	differs	0.3		Error: [kosli report artifact] flag '--flow' was given an empty value
 report artifact	--git-commit	1	1	0	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-git-commit-fl] flag '--git-commit' was given an empty value
-report artifact	--name	1	0	0	cli	differs	differs	0.4		Error: [kosli report artifact flow=probe-report-artifact-name-fl] flag '--name' was given an empty value
+report artifact	--name	1	0	0	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-name-fl] flag '--name' was given an empty value
 report artifact	--registry-password	1	0	1	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-registry-password-fl] flag '--registry-password' was given an empty value
 report artifact	--registry-provider	1	0	0	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-registry-provider-fl] flag '--registry-provider' was given an empty value
 report artifact	--registry-username	1	0	1	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-registry-username-fl] flag '--registry-username' was given an empty value
 report artifact	--repo-root	1	0	0	cli	differs	differs	0.3		Error: [kosli report artifact flow=probe-report-artifact-repo-root-fl] flag '--repo-root' was given an empty value
-rotate api-key	--dry-run	1	0	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+rotate api-key	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 rotate api-key	--expires-at	1	0	0	cli	differs	differs	0.3		Error: [kosli rotate api-key] flag '--expires-at' was given an empty value
 rotate api-key	--grace-period-hours	1	0	0	cli	differs	differs	0.3		Error: [kosli rotate api-key] flag '--grace-period-hours' was given an empty value
 rotate api-key	--output	1	0	0	cli	differs	differs	0.3		Error: [kosli rotate api-key] flag '--output' was given an empty value
-rotate api-key	--service-account	1	1	0	cli	differs	differs	0.3		Error: [kosli rotate api-key] flag '--service-account' was given an empty value
+rotate api-key	--service-account	1	1	0	cli	differs	differs	0.2		Error: [kosli rotate api-key] flag '--service-account' was given an empty value
 search	--output	1	0	0	cli	differs	differs	0.5		Error: [kosli search] flag '--output' was given an empty value
 snapshot azure	--azure-client-id	1	1	1	cli	differs	differs	0.5		Error: [kosli snapshot azure] flag '--azure-client-id' was given an empty value
-snapshot azure	--azure-client-secret	1	1	1	cli	differs	differs	0.6		Error: [kosli snapshot azure] flag '--azure-client-secret' was given an empty value
-snapshot azure	--azure-resource-group-name	1	1	1	cli	differs	differs	0.5		Error: [kosli snapshot azure] flag '--azure-resource-group-name' was given an empty value
-snapshot azure	--azure-subscription-id	1	1	1	cli	differs	differs	0.5		Error: [kosli snapshot azure] flag '--azure-subscription-id' was given an empty value
+snapshot azure	--azure-client-secret	1	1	1	cli	differs	differs	0.4		Error: [kosli snapshot azure] flag '--azure-client-secret' was given an empty value
+snapshot azure	--azure-resource-group-name	1	1	1	cli	differs	differs	0.4		Error: [kosli snapshot azure] flag '--azure-resource-group-name' was given an empty value
+snapshot azure	--azure-subscription-id	1	1	1	cli	differs	differs	0.4		Error: [kosli snapshot azure] flag '--azure-subscription-id' was given an empty value
 snapshot azure	--azure-tenant-id	1	1	1	cli	differs	differs	0.5		Error: [kosli snapshot azure] flag '--azure-tenant-id' was given an empty value
-snapshot azure	--digests-source	1	1	1	cli	differs	differs	0.7		Error: [kosli snapshot azure] flag '--digests-source' was given an empty value
-snapshot azure	--dry-run	1	1	0	cli	differs	differs	0.7		Error: flag '--dry-run' was given an empty value
-snapshot azure	--zip	1	1	1	cli	differs	differs	0.6		Error: flag '--zip' was given an empty value
+snapshot azure	--digests-source	1	1	1	cli	differs	differs	0.6		Error: [kosli snapshot azure] flag '--digests-source' was given an empty value
+snapshot azure	--dry-run	1	1	0	cli	differs	differs	0.8		Error: flag '--dry-run' was given an empty value
+snapshot azure	--zip	1	1	1	cli	differs	differs	1.0		Error: flag '--zip' was given an empty value
 snapshot cloud-run	--dry-run	1	1	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 snapshot cloud-run	--exclude	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot cloud-run] flag '--exclude' was given an empty value
 snapshot cloud-run	--exclude-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot cloud-run] flag '--exclude-regex' was given an empty value
 snapshot cloud-run	--include	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot cloud-run] flag '--include' was given an empty value
-snapshot cloud-run	--include-regex	1	1	1	cli	differs	differs	0.3		Error: [kosli snapshot cloud-run] flag '--include-regex' was given an empty value
+snapshot cloud-run	--include-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot cloud-run] flag '--include-regex' was given an empty value
 snapshot cloud-run	--project	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot cloud-run] flag '--project' was given an empty value
 snapshot cloud-run	--region	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot cloud-run] flag '--region' was given an empty value
 snapshot cloud-run	--resolve-names	1	1	1	cli	differs	differs	0.2		Error: flag '--resolve-names' was given an empty value
-snapshot docker	--dry-run	1	0	0	cli	differs	differs	0.9		Error: flag '--dry-run' was given an empty value
+snapshot docker	--dry-run	1	0	0	cli	differs	differs	0.8		Error: flag '--dry-run' was given an empty value
 snapshot ecs	--aws-key-id	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--aws-key-id' was given an empty value
-snapshot ecs	--aws-region	1	1	1	cli	differs	differs	0.3		Error: [kosli snapshot ecs] flag '--aws-region' was given an empty value
+snapshot ecs	--aws-region	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--aws-region' was given an empty value
 snapshot ecs	--aws-secret-key	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--aws-secret-key' was given an empty value
 snapshot ecs	--cluster	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--cluster' was given an empty value
 snapshot ecs	--clusters	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--clusters' was given an empty value
 snapshot ecs	--clusters-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--clusters-regex' was given an empty value
-snapshot ecs	--dry-run	1	1	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+snapshot ecs	--dry-run	1	1	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 snapshot ecs	--exclude	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--exclude' was given an empty value
 snapshot ecs	--exclude-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--exclude-regex' was given an empty value
 snapshot ecs	--exclude-services	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--exclude-services' was given an empty value
-snapshot ecs	--exclude-services-regex	1	1	1	cli	differs	differs	0.3		Error: [kosli snapshot ecs] flag '--exclude-services-regex' was given an empty value
+snapshot ecs	--exclude-services-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--exclude-services-regex' was given an empty value
 snapshot ecs	--service-name	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--service-name' was given an empty value
 snapshot ecs	--services	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--services' was given an empty value
 snapshot ecs	--services-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot ecs] flag '--services-regex' was given an empty value
 snapshot k8s	--config-file	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot k8s] flag '--config-file' was given an empty value
-snapshot k8s	--dry-run	1	1	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+snapshot k8s	--dry-run	1	1	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 snapshot k8s	--exclude-namespaces	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot k8s] flag '--exclude-namespaces' was given an empty value
 snapshot k8s	--exclude-namespaces-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot k8s] flag '--exclude-namespaces-regex' was given an empty value
 snapshot k8s	--kubeconfig	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot k8s] flag '--kubeconfig' was given an empty value
@@ -655,32 +655,32 @@ snapshot k8s	--namespaces-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli sna
 snapshot lambda	--aws-key-id	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot lambda] flag '--aws-key-id' was given an empty value
 snapshot lambda	--aws-region	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot lambda] flag '--aws-region' was given an empty value
 snapshot lambda	--aws-secret-key	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot lambda] flag '--aws-secret-key' was given an empty value
-snapshot lambda	--dry-run	1	1	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+snapshot lambda	--dry-run	1	1	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 snapshot lambda	--exclude	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot lambda] flag '--exclude' was given an empty value
 snapshot lambda	--exclude-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot lambda] flag '--exclude-regex' was given an empty value
 snapshot lambda	--function-name	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot lambda] flag '--function-name' was given an empty value
 snapshot lambda	--function-names	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot lambda] flag '--function-names' was given an empty value
-snapshot lambda	--function-names-regex	1	1	1	cli	differs	differs	0.3		Error: [kosli snapshot lambda] flag '--function-names-regex' was given an empty value
+snapshot lambda	--function-names-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot lambda] flag '--function-names-regex' was given an empty value
 snapshot lambda	--function-version	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot lambda] flag '--function-version' was given an empty value
-snapshot path	--dry-run	1	0	0	cli	differs	differs	0.8		Error: flag '--dry-run' was given an empty value
-snapshot path	--exclude	1	0	0	cli	differs	differs	1.7		Error: [kosli snapshot path] flag '--exclude' was given an empty value
+snapshot path	--dry-run	1	0	0	cli	differs	differs	0.9		Error: flag '--dry-run' was given an empty value
+snapshot path	--exclude	1	0	0	cli	differs	differs	1.5		Error: [kosli snapshot path] flag '--exclude' was given an empty value
 snapshot path	--name	1	1	0	cli	differs	differs	0.9		Error: [kosli snapshot path] flag '--name' was given an empty value
-snapshot path	--path	1	1	0	cli	differs	differs	0.9		Error: [kosli snapshot path] flag '--path' was given an empty value
-snapshot path	--watch	1	0	0	cli	differs	differs	1.5		Error: flag '--watch' was given an empty value
+snapshot path	--path	1	1	0	cli	differs	differs	0.8		Error: [kosli snapshot path] flag '--path' was given an empty value
+snapshot path	--watch	1	0	0	cli	differs	differs	1.6		Error: flag '--watch' was given an empty value
 snapshot paths	--dry-run	1	0	0	cli	differs	differs	0.9		Error: flag '--dry-run' was given an empty value
 snapshot paths	--paths-file	1	1	0	cli	differs	differs	0.9		Error: [kosli snapshot paths] flag '--paths-file' was given an empty value
-snapshot paths	--watch	1	0	0	cli	differs	differs	1.4		Error: flag '--watch' was given an empty value
+snapshot paths	--watch	1	0	0	cli	differs	differs	1.5		Error: flag '--watch' was given an empty value
 snapshot s3	--aws-key-id	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot s3] flag '--aws-key-id' was given an empty value
 snapshot s3	--aws-region	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot s3] flag '--aws-region' was given an empty value
 snapshot s3	--aws-secret-key	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot s3] flag '--aws-secret-key' was given an empty value
 snapshot s3	--bucket	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot s3] flag '--bucket' was given an empty value
 snapshot s3	--dry-run	1	1	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 snapshot s3	--exclude	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot s3] flag '--exclude' was given an empty value
-snapshot s3	--exclude-regex	1	1	1	cli	differs	differs	0.3		Error: [kosli snapshot s3] flag '--exclude-regex' was given an empty value
+snapshot s3	--exclude-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot s3] flag '--exclude-regex' was given an empty value
 snapshot s3	--include	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot s3] flag '--include' was given an empty value
 snapshot s3	--include-regex	1	1	1	cli	differs	differs	0.2		Error: [kosli snapshot s3] flag '--include-regex' was given an empty value
 snapshot server	--dry-run	1	0	0	cli	differs	differs	0.9		Error: flag '--dry-run' was given an empty value
-snapshot server	--e	1	0	0	cli	differs	differs	0.8		Error: [kosli snapshot server] flag '--e' was given an empty value
+snapshot server	--e	1	0	0	cli	differs	differs	0.7		Error: [kosli snapshot server] flag '--e' was given an empty value
 snapshot server	--exclude	1	0	0	cli	differs	differs	0.7		Error: [kosli snapshot server] flag '--exclude' was given an empty value
 snapshot server	--paths	1	1	0	cli	differs	differs	0.5		Error: [kosli snapshot server] flag '--paths' was given an empty value
 status	--assert	1	0	0	cli	differs	differs	0.1		Error: flag '--assert' was given an empty value
@@ -690,12 +690,12 @@ tag	--repo-id	1	0	1	cli	differs	differs	0.2		Error: [kosli tag] flag '--repo-id'
 tag	--set	1	0	0	cli	differs	differs	0.2		Error: [kosli tag] flag '--set' was given an empty value
 tag	--unset	1	0	0	cli	differs	differs	0.2		Error: [kosli tag] flag '--unset' was given an empty value
 unarchive control	--dry-run	1	0	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
-update control	--description	1	0	0	cli	differs	differs	0.3		Error: [kosli update control] flag '--description' was given an empty value
+update control	--description	1	0	0	cli	differs	differs	0.2		Error: [kosli update control] flag '--description' was given an empty value
 update control	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
-update control	--link	1	0	0	cli	differs	differs	0.3		Error: [kosli update control] flag '--link' was given an empty value
+update control	--link	1	0	0	cli	differs	differs	0.2		Error: [kosli update control] flag '--link' was given an empty value
 update control	--name	1	1	0	cli	differs	differs	0.3		Error: [kosli update control] flag '--name' was given an empty value
 update default-org	--dry-run	1	0	0	cli	differs	differs	0.1		Error: flag '--dry-run' was given an empty value
-update service-account	--description	1	1	0	cli	differs	differs	0.3		Error: [kosli update service-account] flag '--description' was given an empty value
-update service-account	--dry-run	1	0	0	cli	differs	differs	0.3		Error: flag '--dry-run' was given an empty value
+update service-account	--description	1	1	0	cli	differs	differs	0.2		Error: [kosli update service-account] flag '--description' was given an empty value
+update service-account	--dry-run	1	0	0	cli	differs	differs	0.2		Error: flag '--dry-run' was given an empty value
 update service-account	--privilege	1	0	0	cli	differs	differs	0.3		Error: [kosli update service-account] flag '--privilege' was given an empty value
 version	--short	1	0	0	cli	differs	differs	0.1		Error: flag '--short' was given an empty value

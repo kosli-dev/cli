@@ -204,8 +204,13 @@ def expand(value, command, flag, captured):
     the empty JSON document some flags take - survives untouched.
     """
     names = dict(fixtures(command, flag), **captured)
-    return re.sub(r"\{(" + "|".join(names) + r")\}",
-                  lambda m: names[m.group(1)], value)
+    # One pattern for every placeholder, rather than one built out of the
+    # names: a name is looked up after it matches, so a name carrying regex
+    # characters cannot change what the pattern means. A value that is itself
+    # braces - the empty JSON document some flags take - has nothing between
+    # them to match.
+    return re.sub(r"\{([^{}]+)\}",
+                  lambda m: names.get(m.group(1), m.group(0)), value)
 
 
 # Things that differ between two runs of the same invocation for reasons that
