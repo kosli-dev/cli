@@ -35,7 +35,7 @@ jobs:
                 artifact: ${{fromJson(inputs.artifacts)}}
         steps:
         - name: Harden Runner
-          uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+          uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
           with:
             egress-policy: audit
 
@@ -59,7 +59,7 @@ jobs:
 
         - name: Attest Build Provenance
           id: artifact-gh-attest
-          uses: actions/attest@v4.2.1
+          uses: actions/attest@v4.2.2
           with:
             subject-name: ${{matrix.artifact.template_name}}
             subject-digest: sha256:${{ env.FINGERPRINT }}
@@ -94,7 +94,7 @@ jobs:
 
         - name: Attest SBOM to Github
           id: sbom-gh-attest
-          uses: actions/attest@v4.2.1
+          uses: actions/attest@v4.2.2
           with:
             sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
             subject-name: ${{matrix.artifact.template_name}}

@@ -27,7 +27,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
         with:
           egress-policy: audit
 
@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 0
 
       - name: Claude review (dependency updates)
-        uses: anthropics/claude-code-action@v1.0.183
+        uses: anthropics/claude-code-action@v1.0.191
 
         env:
           GH_TOKEN: ${{ github.token }}
@@ -82,7 +82,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
         with:
           egress-policy: audit
 
@@ -98,7 +98,7 @@ jobs:
           check-latest: true
 
       - name: Claude review (general)
-        uses: anthropics/claude-code-action@v1.0.183
+        uses: anthropics/claude-code-action@v1.0.191
         env:
           GH_TOKEN: ${{ github.token }}
         with:
