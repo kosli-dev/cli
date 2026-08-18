@@ -265,7 +265,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		if c.Debug && req.Body != nil {
 			// log the payload
 			c.Logger.Info("############### PAYLOAD ###############")
-			c.Logger.Info("payload sent to: %s", req.URL)
+			c.Logger.Info("payload sent to: %s %s", req.Method, req.URL)
 			err := c.PayloadOutput(req, jsonFields, "this is the payload being sent:")
 			if err != nil {
 				// Logger.Error is fatal (it exits), which would contradict the

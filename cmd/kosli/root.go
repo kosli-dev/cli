@@ -401,19 +401,14 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 				global.DryRun = true
 			}
 
-			// If the user types "--description $variable --sha256 ..." and $variable is "" then Cobra
-			// will assign --sha256 as the value of --description, and give a very misleading error message.
-			// So we do some extra checking to tell the user about this.
+			// A value that starts with a dash is the next flag, swallowed as this
+			// flag's value: "--description --sha256 ..." leaves --description
+			// holding "--sha256". Cobra's own error for what follows describes
+			// the parse rather than the mistake, so it is named here instead.
 			var flagError error = nil
 			cmd.Flags().VisitAll(func(f *pflag.Flag) {
 				if strings.HasPrefix(f.Value.String(), "-") {
 					flagError = fmt.Errorf("flag '--%s' has value '%s' which is illegal", f.Name, f.Value.String())
-				}
-
-				if _, ok := f.Annotations[cobra.BashCompOneRequiredFlag]; ok {
-					if f.Changed && f.Value.String() == "" {
-						flagError = fmt.Errorf("flag '--%s' is required, but empty string was provided", f.Name)
-					}
 				}
 			})
 
@@ -473,7 +468,40 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 	cobra.AddTemplateFunc("isDeprecated", isDeprecated)
 	cmd.SetUsageTemplate(usageTemplate)
 
+	// Every flag on every command refuses an empty value, wrapped here rather
+	// than at each registration so no command can be added without it.
+	refuseEmptyFlagValues(cmd)
+	cmd.SetFlagErrorFunc(reportEmptyFlagValue)
+
 	return cmd, nil
+}
+
+// refuseEmptyFlagValues wraps every flag of cmd and its subcommands so an empty
+// value is refused as it is set, which is the only point at which an empty
+// element of a multi-value flag still exists.
+func refuseEmptyFlagValues(cmd *cobra.Command) {
+	wrap := func(f *pflag.Flag) {
+		f.Value = newNonEmptyValue(f.Value)
+	}
+	cmd.Flags().VisitAll(wrap)
+	cmd.PersistentFlags().VisitAll(wrap)
+	for _, child := range cmd.Commands() {
+		refuseEmptyFlagValues(child)
+	}
+}
+
+// reportEmptyFlagValue gives every flag one wording for an empty value. pflag
+// reports a refused value in its own words and wraps the cause, so the cause is
+// what says whether this is the empty-value rule speaking.
+func reportEmptyFlagValue(cmd *cobra.Command, err error) error {
+	if !errors.Is(err, errEmptyFlagValue) {
+		return err
+	}
+	var invalid *pflag.InvalidValueError
+	if errors.As(err, &invalid) {
+		return fmt.Errorf("flag '--%s' was given an empty value", invalid.GetFlag().Name)
+	}
+	return err
 }
 
 func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
@@ -578,9 +606,9 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 func configValueSource(flagName string) string {
 	envVar := fmt.Sprintf("%s_%s", envPrefix, strings.ToUpper(strings.ReplaceAll(flagName, "-", "_")))
 	if value, exists := os.LookupEnv(envVar); exists && value != "" {
-		return envVar
+		return "environment variable " + envVar
 	}
-	return fmt.Sprintf("[%s]", global.ConfigFile)
+	return fmt.Sprintf("config file [%s]", global.ConfigFile)
 }
 
 // Bind each cobra flag to its associated viper configuration
@@ -639,7 +667,15 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
 			}
 
 			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
-				bindErr = errors.Join(bindErr, fmt.Errorf("failed to set flag '--%s' from %s: %v", f.Name, configValueSource(f.Name), err))
+				// An empty value is refused here as it is on the command line,
+				// and reads the same way. pflag wraps the refusal in its own
+				// words, so the cause is what says the empty-value rule spoke,
+				// and it has to be read before %v flattens it.
+				if errors.Is(err, errEmptyFlagValue) {
+					bindErr = errors.Join(bindErr, fmt.Errorf("flag '--%s' was given an empty value by %s", f.Name, configValueSource(f.Name)))
+				} else {
+					bindErr = errors.Join(bindErr, fmt.Errorf("failed to set flag '--%s' from %s: %v", f.Name, configValueSource(f.Name), err))
+				}
 			}
 		}
 	})

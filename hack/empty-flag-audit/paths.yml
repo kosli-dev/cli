@@ -1,0 +1,9 @@
+---
+# A path spec for `kosli snapshot paths`, used by the empty-flag audit.
+# The paths are relative to the repo root, which is where the audit runs the
+# CLI from. The checked-in spec files under cmd/kosli/testdata are relative to
+# cmd/kosli, so they cannot be reused here.
+version: 1
+artifacts:
+  probe-artifact:
+    path: cmd/kosli/testdata/person-schema.json

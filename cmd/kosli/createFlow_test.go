@@ -108,6 +108,17 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			cmd:    "create flow newFlowWithEmptyTemplate --use-empty-template --description \"changed description\" " + suite.defaultKosliArguments,
 			golden: "flow 'newFlowWithEmptyTemplate' was created\n",
 		},
+		{
+			wantError: true,
+			name:      "fails when --template-file is passed as empty string",
+			cmd:       "create flow newFlow --template-file \"\" --description \"my new flow\" " + suite.defaultKosliArguments,
+			golden:    "Error: flag '--template-file' was given an empty value\n",
+		},
+		{
+			name:   "a --description of [] is a real value, not an empty one",
+			cmd:    "create flow newFlowWithBracketsDescription --use-empty-template --description \"[]\" " + suite.defaultKosliArguments,
+			golden: "flow 'newFlowWithBracketsDescription' was created\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

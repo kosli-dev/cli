@@ -1,0 +1,886 @@
+{
+ "allow artifact": {
+  "artifact-type": "string",
+  "dry-run": "bool",
+  "environment": "string",
+  "exclude": "stringSlice",
+  "fingerprint": "string",
+  "reason": "string",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string"
+ },
+ "archive attestation-type": {
+  "dry-run": "bool"
+ },
+ "archive control": {
+  "dry-run": "bool"
+ },
+ "archive environment": {
+  "dry-run": "bool"
+ },
+ "archive flow": {
+  "api-token": "string",
+  "config-file": "string",
+  "debug": "bool",
+  "dry-run": "bool",
+  "host": "string",
+  "http-proxy": "string",
+  "max-api-retries": "int",
+  "org": "string",
+  "quiet": "bool"
+ },
+ "assert artifact": {
+  "artifact-type": "string",
+  "dry-run": "bool",
+  "environment": "string",
+  "exclude": "stringSlice",
+  "fingerprint": "string",
+  "flow": "string",
+  "output": "string",
+  "policy": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string"
+ },
+ "assert pullrequest azure": {
+  "azure-org-url": "string",
+  "azure-token": "string",
+  "commit": "string",
+  "dry-run": "bool",
+  "project": "string",
+  "repository": "string"
+ },
+ "assert pullrequest bitbucket": {
+  "bitbucket-access-token": "string",
+  "bitbucket-password": "string",
+  "bitbucket-username": "string",
+  "bitbucket-workspace": "string",
+  "commit": "string",
+  "dry-run": "bool",
+  "repository": "string"
+ },
+ "assert pullrequest github": {
+  "commit": "string",
+  "dry-run": "bool",
+  "github-base-url": "string",
+  "github-org": "string",
+  "github-token": "string",
+  "repository": "string"
+ },
+ "assert pullrequest gitlab": {
+  "commit": "string",
+  "dry-run": "bool",
+  "gitlab-base-url": "string",
+  "gitlab-org": "string",
+  "gitlab-token": "string",
+  "repository": "string"
+ },
+ "assert snapshot": {
+  "dry-run": "bool"
+ },
+ "assert status": {},
+ "attach-policy": {
+  "dry-run": "bool",
+  "environment": "stringSlice"
+ },
+ "attest artifact": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "build-url": "string",
+  "commit": "string",
+  "commit-url": "string",
+  "display-name": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "name": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "trail": "string"
+ },
+ "attest custom": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "attachments": "stringSlice",
+  "attestation-data": "string",
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "name": "string",
+  "origin-url": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "trail": "string",
+  "type": "string",
+  "user-data": "string"
+ },
+ "attest decision": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "attachments": "stringSlice",
+  "commit": "string",
+  "compliant": "bool",
+  "control": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "name": "string",
+  "origin-url": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "trail": "string",
+  "user-data": "string"
+ },
+ "attest generic": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "attachments": "stringSlice",
+  "commit": "string",
+  "compliant": "bool",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "name": "string",
+  "origin-url": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "trail": "string",
+  "user-data": "string"
+ },
+ "attest jira": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "assert": "bool",
+  "attachments": "stringSlice",
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "ignore-branch-match": "bool",
+  "jira-api-token": "string",
+  "jira-base-url": "string",
+  "jira-issue-fields": "string",
+  "jira-pat": "string",
+  "jira-project-key": "stringSlice",
+  "jira-secondary-source": "string",
+  "jira-username": "string",
+  "name": "string",
+  "origin-url": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "trail": "string",
+  "user-data": "string"
+ },
+ "attest junit": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "attachments": "stringSlice",
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "name": "string",
+  "origin-url": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "results-dir": "string",
+  "trail": "string",
+  "upload-results": "bool",
+  "user-data": "string"
+ },
+ "attest override": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "attachments": "stringSlice",
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "name": "string",
+  "new-compliance-status": "bool",
+  "origin-url": "string",
+  "original-attestation-type": "string",
+  "reason": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "trail": "string",
+  "user-data": "string"
+ },
+ "attest pullrequest azure": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "assert": "bool",
+  "attachments": "stringSlice",
+  "azure-org-url": "string",
+  "azure-token": "string",
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "name": "string",
+  "origin-url": "string",
+  "project": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "trail": "string",
+  "user-data": "string"
+ },
+ "attest pullrequest bitbucket": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "assert": "bool",
+  "attachments": "stringSlice",
+  "bitbucket-access-token": "string",
+  "bitbucket-password": "string",
+  "bitbucket-username": "string",
+  "bitbucket-workspace": "string",
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "name": "string",
+  "origin-url": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "trail": "string",
+  "user-data": "string"
+ },
+ "attest pullrequest github": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "assert": "bool",
+  "attachments": "stringSlice",
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "github-base-url": "string",
+  "github-org": "string",
+  "github-token": "string",
+  "name": "string",
+  "origin-url": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "trail": "string",
+  "user-data": "string"
+ },
+ "attest pullrequest gitlab": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "assert": "bool",
+  "attachments": "stringSlice",
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "gitlab-base-url": "string",
+  "gitlab-org": "string",
+  "gitlab-token": "string",
+  "name": "string",
+  "origin-url": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "trail": "string",
+  "user-data": "string"
+ },
+ "attest snyk": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "attachments": "stringSlice",
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "name": "string",
+  "origin-url": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "scan-results": "string",
+  "trail": "string",
+  "upload-results": "bool",
+  "user-data": "string"
+ },
+ "attest sonar": {
+  "annotate": "stringToString",
+  "artifact-type": "string",
+  "attachments": "stringSlice",
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "fingerprint": "string",
+  "flow": "string",
+  "max-wait": "int",
+  "name": "string",
+  "origin-url": "string",
+  "pull-request": "string",
+  "redact-commit-info": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "sonar-api-token": "string",
+  "sonar-ce-task-url": "string",
+  "sonar-project-key": "string",
+  "sonar-revision": "string",
+  "sonar-server-url": "string",
+  "sonar-working-dir": "string",
+  "trail": "string",
+  "user-data": "string"
+ },
+ "begin trail": {
+  "commit": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "external-fingerprint": "stringToString",
+  "external-url": "stringToString",
+  "flow": "string",
+  "origin-url": "string",
+  "redact-commit-info": "stringSlice",
+  "repo-id": "string",
+  "repo-provider": "string",
+  "repo-root": "string",
+  "repo-url": "string",
+  "repository": "string",
+  "template-file": "string",
+  "user-data": "string"
+ },
+ "completion": {},
+ "config": {
+  "set": "stringToString",
+  "unset": "stringSlice"
+ },
+ "create api-key": {
+  "description": "string",
+  "dry-run": "bool",
+  "expires-at": "string",
+  "output": "string",
+  "service-account": "string"
+ },
+ "create attestation-type": {
+  "description": "string",
+  "dry-run": "bool",
+  "jq": "stringArray",
+  "schema": "string"
+ },
+ "create control": {
+  "description": "string",
+  "dry-run": "bool",
+  "name": "string"
+ },
+ "create environment": {
+  "description": "string",
+  "dry-run": "bool",
+  "exclude-scaling": "bool",
+  "include-scaling": "bool",
+  "included-environments": "stringSlice",
+  "require-provenance": "bool",
+  "type": "string"
+ },
+ "create flow": {
+  "description": "string",
+  "dry-run": "bool",
+  "template": "stringSlice",
+  "template-file": "string",
+  "use-empty-template": "bool",
+  "visibility": "string"
+ },
+ "create policy": {
+  "comment": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "type": "string"
+ },
+ "create service-account": {
+  "description": "string",
+  "dry-run": "bool",
+  "privilege": "string"
+ },
+ "delete api-key": {
+  "assume-yes": "bool",
+  "dry-run": "bool",
+  "service-account": "string",
+  "yes": "bool"
+ },
+ "delete service-account": {
+  "assume-yes": "bool",
+  "dry-run": "bool",
+  "yes": "bool"
+ },
+ "detach-policy": {
+  "dry-run": "bool",
+  "environment": "stringSlice"
+ },
+ "diff snapshots": {
+  "output": "string",
+  "show-unchanged": "bool"
+ },
+ "disable beta": {},
+ "enable beta": {},
+ "evaluate input": {
+  "assert": "bool",
+  "attestations": "stringSlice",
+  "flow": "string",
+  "input-file": "string",
+  "no-assert": "bool",
+  "output": "string",
+  "params": "string",
+  "policy": "string",
+  "show-input": "bool"
+ },
+ "evaluate trail": {
+  "assert": "bool",
+  "attestations": "stringSlice",
+  "flow": "string",
+  "no-assert": "bool",
+  "output": "string",
+  "params": "string",
+  "policy": "string",
+  "show-input": "bool"
+ },
+ "evaluate trails": {
+  "assert": "bool",
+  "attestations": "stringSlice",
+  "flow": "string",
+  "no-assert": "bool",
+  "output": "string",
+  "params": "string",
+  "policy": "string",
+  "show-input": "bool"
+ },
+ "fingerprint": {
+  "artifact-type": "string",
+  "e": "stringSlice",
+  "exclude": "stringSlice",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string"
+ },
+ "get api-key": {
+  "output": "string",
+  "service-account": "string"
+ },
+ "get artifact": {
+  "output": "string",
+  "trail": "string"
+ },
+ "get attestation": {
+  "attestation-id": "string",
+  "fingerprint": "string",
+  "flow": "string",
+  "output": "string",
+  "trail": "string"
+ },
+ "get attestation-type": {
+  "output": "string"
+ },
+ "get control": {
+  "output": "string"
+ },
+ "get default-org": {
+  "output": "string"
+ },
+ "get environment": {
+  "output": "string"
+ },
+ "get flow": {
+  "output": "string"
+ },
+ "get policy": {
+  "output": "string"
+ },
+ "get repo": {
+  "output": "string",
+  "provider": "string",
+  "repo-id": "string"
+ },
+ "get service-account": {
+  "output": "string"
+ },
+ "get snapshot": {
+  "output": "string"
+ },
+ "get trail": {
+  "flow": "string",
+  "output": "string"
+ },
+ "join environment": {
+  "dry-run": "bool",
+  "logical": "string",
+  "physical": "string"
+ },
+ "list api-keys": {
+  "output": "string",
+  "service-account": "string"
+ },
+ "list artifacts": {
+  "flow": "string",
+  "output": "string",
+  "page": "int",
+  "page-limit": "int",
+  "repo": "string"
+ },
+ "list attestation-types": {
+  "output": "string"
+ },
+ "list controls": {
+  "archived": "bool",
+  "output": "string",
+  "page": "int",
+  "page-limit": "int",
+  "search": "string",
+  "sort-direction": "string",
+  "tag": "stringArray"
+ },
+ "list environments": {
+  "name": "string",
+  "output": "string",
+  "page": "int",
+  "page-limit": "int",
+  "sort": "string",
+  "sort-direction": "string",
+  "space-id": "stringSlice",
+  "tag": "stringArray",
+  "type": "stringSlice"
+ },
+ "list flows": {
+  "ignore-case": "bool",
+  "name": "string",
+  "output": "string",
+  "page": "int",
+  "page-limit": "int"
+ },
+ "list policies": {
+  "output": "string"
+ },
+ "list repos": {
+  "name": "string",
+  "output": "string",
+  "page": "int",
+  "page-limit": "int",
+  "provider": "string",
+  "repo-id": "string",
+  "search": "string",
+  "sort-direction": "string",
+  "tag": "stringArray"
+ },
+ "list service-accounts": {
+  "output": "string"
+ },
+ "list snapshots": {
+  "interval": "string",
+  "output": "string",
+  "page": "int",
+  "page-limit": "int",
+  "reverse": "bool"
+ },
+ "list trails": {
+  "fingerprint": "string",
+  "flow": "string",
+  "flow-tag": "string",
+  "output": "string",
+  "page": "int",
+  "page-limit": "int"
+ },
+ "log environment": {
+  "end": "string",
+  "end-ts": "float64",
+  "interval": "string",
+  "output": "string",
+  "page": "int",
+  "page-limit": "int",
+  "repo": "stringSlice",
+  "reverse": "bool",
+  "start": "string",
+  "start-ts": "float64"
+ },
+ "rename environment": {
+  "dry-run": "bool"
+ },
+ "rename flow": {
+  "dry-run": "bool"
+ },
+ "report artifact": {
+  "artifact-type": "string",
+  "build-url": "string",
+  "commit-url": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "fingerprint": "string",
+  "flow": "string",
+  "git-commit": "string",
+  "name": "string",
+  "registry-password": "string",
+  "registry-provider": "string",
+  "registry-username": "string",
+  "repo-root": "string"
+ },
+ "rotate api-key": {
+  "dry-run": "bool",
+  "expires-at": "string",
+  "grace-period-hours": "int",
+  "output": "string",
+  "service-account": "string"
+ },
+ "search": {
+  "output": "string"
+ },
+ "snapshot azure": {
+  "azure-client-id": "string",
+  "azure-client-secret": "string",
+  "azure-resource-group-name": "string",
+  "azure-subscription-id": "string",
+  "azure-tenant-id": "string",
+  "digests-source": "string",
+  "dry-run": "bool",
+  "zip": "bool"
+ },
+ "snapshot cloud-run": {
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "exclude-regex": "stringSlice",
+  "include": "stringSlice",
+  "include-regex": "stringSlice",
+  "project": "string",
+  "region": "string",
+  "resolve-names": "bool"
+ },
+ "snapshot docker": {
+  "dry-run": "bool"
+ },
+ "snapshot ecs": {
+  "aws-key-id": "string",
+  "aws-region": "string",
+  "aws-secret-key": "string",
+  "cluster": "stringSlice",
+  "clusters": "stringSlice",
+  "clusters-regex": "stringSlice",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "exclude-regex": "stringSlice",
+  "exclude-services": "stringSlice",
+  "exclude-services-regex": "stringSlice",
+  "service-name": "string",
+  "services": "stringSlice",
+  "services-regex": "stringSlice"
+ },
+ "snapshot k8s": {
+  "config-file": "string",
+  "dry-run": "bool",
+  "exclude-namespaces": "stringSlice",
+  "exclude-namespaces-regex": "stringSlice",
+  "kubeconfig": "string",
+  "namespaces": "stringSlice",
+  "namespaces-regex": "stringSlice"
+ },
+ "snapshot lambda": {
+  "aws-key-id": "string",
+  "aws-region": "string",
+  "aws-secret-key": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "exclude-regex": "stringSlice",
+  "function-name": "stringSlice",
+  "function-names": "stringSlice",
+  "function-names-regex": "stringSlice",
+  "function-version": "string"
+ },
+ "snapshot path": {
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "name": "string",
+  "path": "string",
+  "watch": "bool"
+ },
+ "snapshot paths": {
+  "dry-run": "bool",
+  "paths-file": "string",
+  "watch": "bool"
+ },
+ "snapshot s3": {
+  "aws-key-id": "string",
+  "aws-region": "string",
+  "aws-secret-key": "string",
+  "bucket": "string",
+  "dry-run": "bool",
+  "exclude": "stringSlice",
+  "exclude-regex": "stringSlice",
+  "include": "stringSlice",
+  "include-regex": "stringSlice"
+ },
+ "snapshot server": {
+  "dry-run": "bool",
+  "e": "stringSlice",
+  "exclude": "stringSlice",
+  "paths": "stringSlice"
+ },
+ "status": {
+  "assert": "bool"
+ },
+ "tag": {
+  "dry-run": "bool",
+  "provider": "string",
+  "repo-id": "string",
+  "set": "stringToString",
+  "unset": "stringSlice"
+ },
+ "unarchive control": {
+  "dry-run": "bool"
+ },
+ "update control": {
+  "description": "string",
+  "dry-run": "bool",
+  "link": "stringToString",
+  "name": "string"
+ },
+ "update default-org": {
+  "dry-run": "bool"
+ },
+ "update service-account": {
+  "description": "string",
+  "dry-run": "bool",
+  "privilege": "string"
+ },
+ "version": {
+  "short": "bool"
+ }
+}

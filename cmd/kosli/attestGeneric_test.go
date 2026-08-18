@@ -102,7 +102,7 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			wantError: true,
 			name:      "fails when --name is passed as empty string",
 			cmd:       fmt.Sprintf("attest generic --name \"\" --commit HEAD --origin-url http://example.com  %s", suite.defaultKosliArguments),
-			golden:    "Error: flag '--name' is required, but empty string was provided\n",
+			golden:    "Error: flag '--name' was given an empty value\n",
 		},
 		{
 			name:   "can attest generic against an artifact using artifact-name and --fingerprint",
@@ -246,6 +246,24 @@ func TestAttestGenericRejectsEmptyAttachmentFromEnv(t *testing.T) {
 
 	require.Error(t, err)
 	require.ErrorContains(t, err, "attachments")
+}
+
+// TestAttestGenericEmptyAttachmentFromEnvReadsLikeTheCommandLine pins the
+// wording, not only the refusal. A value from the environment reaches the flag
+// through bindFlags rather than through cobra's parsing, so it does not pass
+// the flag-error function that gives every other empty value one wording. The
+// source is named because, unlike a value typed on the command line, it is not
+// in front of the reader.
+func TestAttestGenericEmptyAttachmentFromEnvReadsLikeTheCommandLine(t *testing.T) {
+	t.Setenv("KOSLI_ATTACHMENTS", "testdata/file1,,testdata/file1")
+
+	_, _, _, _, err := executeCommandC(
+		`attest generic ` +
+			`--fingerprint 0000000000000000000000000000000000000000000000000000000000000001 ` +
+			`--name foo --flow f --trail t --org demo --api-token DRY_RUN --dry-run`)
+
+	require.EqualError(t, err,
+		"flag '--attachments' was given an empty value by environment variable KOSLI_ATTACHMENTS")
 }
 
 // In order for 'go test' to run this suite, we need to create

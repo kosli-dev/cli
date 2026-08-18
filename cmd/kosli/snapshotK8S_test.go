@@ -60,7 +60,7 @@ func (suite *SnapshotK8STestSuite) TestSnapshotK8SCmd() {
 			wantError: true,
 			name:      "snapshot K8S fails if --config-file is set to empty value",
 			cmd:       fmt.Sprintf(`snapshot k8s --config-file "" %s`, suite.defaultKosliArguments),
-			golden:    "Error: cannot use '--config-file' with an empty value\n",
+			golden:    "Error: flag '--config-file' was given an empty value\n",
 		},
 		{
 			wantError: true,
