@@ -85,18 +85,18 @@ for its two flags, and wrote the reasoning down: config and environment values
 "reach the refusal by the same path as the command line". Following that keeps
 one rule instead of two.
 
-**Two flags need an exemption or a replacement.** `update control --description ""`
-and `update service-account --description ""` clear a description on purpose,
-which the decision document already identifies as the whole cost of the proposal.
-Whatever shape the rule takes, it needs either an opt-out for those two or
-`--unset description` alongside, in the shape `kosli tag --unset` already uses.
+**Two flags lose a capability.** `update control --description ""` and
+`update service-account --description ""` clear a description on purpose,
+which the decision document identifies as the whole cost of the proposal.
+That cost is accepted: the two commands stop being able to empty a
+description, and nothing is added in its place.
 
 ## Where the rule could live
 
 | Layer | How | Strength | Weakness |
 |---|---|---|---|
 | Post-parse, in `PersistentPreRunE` | extend the existing loop at `root.go:408` | the loop and the predicate exist; one place to read | needs type-aware emptiness for slices; runs after `initialize()`, so config and environment values are already indistinguishable |
-| Value wrapping, at registration | generalise `nonEmptyStringSlice` into a decorator wrapping every flag's `Value` | type-agnostic, so slices need no special case; catches every `Set`, whoever calls it; follows a pattern already reviewed and shipped | a walk over the command tree to wrap, and the two deliberate-clear flags need an opt-out |
+| Value wrapping, at registration | generalise `nonEmptyStringSlice` into a decorator wrapping every flag's `Value` | type-agnostic, so slices need no special case; catches every `Set`, whoever calls it; follows a pattern already reviewed and shipped | a walk over the command tree to wrap |
 | Pre-parse, on raw argv | extend `rejectEmptyBoolFlagValues` to all flags | sees the raw token, so slice splitting never happens; command-line only, by construction | duplicates pflag's parsing rules, which the comments in that file show is fiddly: `=` and space forms, shorthands, grouping, the `--` terminator |
 
 Value wrapping is the one to prefer. It is the pattern the CLI already uses for
@@ -110,7 +110,7 @@ loop is worth keeping as a backstop for anything the wrapping cannot reach.
 |---|---|
 | the rule itself | one small type plus a registration walk, or four lines if the existing loop is extended |
 | removing the required-only gate | 4 lines, and Appendix 1's CI blind spot goes with it |
-| the two deliberate-clear flags | an opt-out, or `--unset description`, which the decision document already scopes |
+| the two deliberate-clear flags | nothing, the capability goes |
 | warning instead of erroring, for step 2 | the same call site, returning a warning rather than an error |
 | tests for the rule | new, and worth writing per flag category rather than per flag |
 | existing test fallout | small: five test files mention the current message, so keeping its wording costs almost nothing |

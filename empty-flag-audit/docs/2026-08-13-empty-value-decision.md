@@ -34,7 +34,7 @@ An audit easily found nineteen cases so far:
   **Proposal** - detailed in _this_ document:
     - an empty value is an error on every flag that is given one
     - a flag whose default is empty is untouched
-    - add `--unset description` to the two commands that clear one
+    - clearing a description stops being possible, which is accepted
     - ship as a bug fix in a 2.x release
 
 ## Why we cannot establish what every empty value does
@@ -207,19 +207,17 @@ other way: clear a description on purpose. Refusing an empty value takes that aw
 - `kosli update control --description ""`
 - `kosli update service-account --description ""`
 
-They need it because `update` is a _patch_: omitting the flag changes nothing
-there, so an empty value is the only way to say "clear this". No other command
-is in that position.
+They could say it because `update` is a _patch_: omitting the flag changes
+nothing there, so an empty value was the only way to say "clear this". No other
+command is in that position.
 
-Clearing needs to be said in the flag rather than carried in the value, which
-is the part an unset variable can reach. `kosli tag` already does this: `--set`
-adds, `--unset` removes, and the field is named as the flag's argument.
-The same shape here is `kosli update control X --unset description`, 
-and it ships in the same release as the refusal.
+Nothing replaces it. Clearing a description is not behaviour the CLI has to
+offer, so these two commands lose it: a description can be changed but not
+emptied. That is a decision rather than a finding - the measurement only says
+where the capability existed, not that it is worth keeping.
 
-The server already documents `description: null` for a service-account endpoint 
-as the way to clear one and distinguishes it from an omitted field, 
-so `--unset description` gives the CLI a way to say what the API can already hear.
+Both endpoints accept `description: null`, so a way to clear one can be added
+later without server work if it is ever asked for.
 
 Whether anyone relies on this capability is answerable before the change ships,
 for controls at least. Every create and update of a control writes a version 
@@ -260,9 +258,9 @@ The exceptions are:
 - `kosli update control --description ""` 
 - `kosli update service-account --description ""`
 
-Those two are not bad commands being caught.
-They are a capability being removed, so
-`--unset description` ships alongside: one new flag on two commands.
+Those two are not bad commands being caught. They are a capability being
+removed, and removing it is the decision: clearing a description is not
+required behaviour, so nothing ships in its place.
 
 This goes out as a bug fix in a 2.x release, with a release note.
 
@@ -270,8 +268,8 @@ This goes out as a bug fix in a 2.x release, with a release note.
 
 ## Appendix 0: the staged release, if it is needed
 
-If `--unset description` does not ship with it, or if we decide the impact needs
-measuring before refusing empty values lands, we can stage the release.
+If we decide the impact needs measuring before refusing empty values lands, we
+can stage the release.
 At least 202 combinations change - 183 plus 19 more on the
 ones needing a service. Staging is how that is made gradual.
 
