@@ -66,7 +66,7 @@ func (suite *AttestOverrideCommandTestSuite) TestAttestOverrideCmd() {
 			wantError: true,
 			name:      "fails when --name is passed as empty string",
 			cmd:       fmt.Sprintf("attest override --name \"\" --reason r --original-attestation-type generic --new-compliance-status=true %s", suite.defaultKosliArguments),
-			golden:    "Error: flag '--name' is required, but empty string was provided\n",
+			golden:    "Error: flag '--name' was given an empty value\n",
 		},
 		{
 			wantError: true,

@@ -410,10 +410,8 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 					flagError = fmt.Errorf("flag '--%s' has value '%s' which is illegal", f.Name, f.Value.String())
 				}
 
-				if _, ok := f.Annotations[cobra.BashCompOneRequiredFlag]; ok {
-					if f.Changed && f.Value.String() == "" {
-						flagError = fmt.Errorf("flag '--%s' is required, but empty string was provided", f.Name)
-					}
+				if f.Changed && isEmptyFlagValue(f) {
+					flagError = fmt.Errorf("flag '--%s' was given an empty value", f.Name)
 				}
 			})
 

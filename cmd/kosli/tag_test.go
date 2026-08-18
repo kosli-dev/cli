@@ -109,6 +109,12 @@ func (suite *TagTestSuite) TestTagCmd() {
 			golden: "Tag(s) [foo] added for flow 'tag-flow'\n",
 		},
 		{
+			wantError: true,
+			name:      "fails when --unset is passed as empty string",
+			cmd:       fmt.Sprintf("tag flow %s --unset \"\" %s", suite.flowName, suite.defaultKosliArguments),
+			golden:    "Error: flag '--unset' was given an empty value\n",
+		},
+		{
 			name:   "can tag a control",
 			cmd:    fmt.Sprintf("tag control %s --set foo=bar %s", suite.controlID, suite.defaultKosliArguments),
 			golden: "Tag(s) [foo] added for control 'tag-control'\n",

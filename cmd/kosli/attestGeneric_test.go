@@ -102,7 +102,7 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			wantError: true,
 			name:      "fails when --name is passed as empty string",
 			cmd:       fmt.Sprintf("attest generic --name \"\" --commit HEAD --origin-url http://example.com  %s", suite.defaultKosliArguments),
-			golden:    "Error: flag '--name' is required, but empty string was provided\n",
+			golden:    "Error: flag '--name' was given an empty value\n",
 		},
 		{
 			name:   "can attest generic against an artifact using artifact-name and --fingerprint",

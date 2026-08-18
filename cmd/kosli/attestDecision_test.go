@@ -73,7 +73,7 @@ func (suite *AttestDecisionCommandTestSuite) TestAttestDecisionCmd() {
 			wantError: true,
 			name:      "fails when --name is passed as empty string",
 			cmd:       fmt.Sprintf("attest decision --name \"\" --control RCTL-043 --compliant=true %s", suite.defaultKosliArguments),
-			golden:    "Error: flag '--name' is required, but empty string was provided\n",
+			golden:    "Error: flag '--name' was given an empty value\n",
 		},
 		{
 			name:   "can record a compliant decision against a trail",
