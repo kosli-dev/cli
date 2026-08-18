@@ -21,14 +21,15 @@ import tempfile
 import time
 
 HERE = pathlib.Path(__file__).parent
-REPO = HERE.parent
+REPO = HERE.parent.parent
 SPEC = HERE / "spec.json"
 # Every command and flag the CLI has, written from the command tree itself by
-# TestEmptyFlagAuditCoversEveryCommandAndFlag in cmd/kosli. Reading the tree is
+# TestEmptyFlagAuditCoversEveryCommandAndFlag and kept beside that test, which
+# is what writes it. This audit only reads it. Reading the tree is
 # the only way to see all of them: cobra prints no listing for a hidden or a
 # deprecated command, and pflag prints none for a hidden flag, so walking
 # --help - which is how spec.json was first written - silently misses them.
-COVERAGE = HERE / "coverage.json"
+COVERAGE = REPO / "cmd/kosli/testdata/empty-flag-audit-coverage.json"
 # One file per pass, so a --ci run does not overwrite the laptop run. report.py
 # reads both and needs them side by side.
 RESULTS = HERE / "results.tsv"

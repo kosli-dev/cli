@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// The empty-flag audit in empty-flag-audit/ runs every command with every one
-// of its flags emptied. It can only do that for commands it knows about,
+// The empty-flag audit in hack/empty-flag-audit/ runs every command with every
+// one of its flags emptied. It can only do that for commands it knows about,
 // and it cannot find them by reading --help: cobra leaves a Hidden or a
 // Deprecated command out of every listing it prints, and pflag leaves a hidden
 // flag out too. The audit found `attest override` only because someone named it
@@ -25,7 +25,7 @@ import (
 // The command tree itself has no such blind spot. This test walks it and
 // compares it against the surface the audit is expected to cover, so a command
 // or flag added later fails here rather than being silently unaudited.
-const auditCoverageFile = "../../empty-flag-audit/coverage.json"
+const auditCoverageFile = "testdata/empty-flag-audit-coverage.json"
 
 // The global flags are declared once on the root command and behave the same
 // wherever they appear, so the audit measures them on one command rather than

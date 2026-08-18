@@ -151,7 +151,7 @@ VALUES = {
     "logical": "probe-logical",
     "path": ARTIFACT_PATH,
     "paths": ".",
-    "paths-file": "empty-flag-audit/paths.yml",
+    "paths-file": "hack/empty-flag-audit/paths.yml",
     "template-file": "cmd/kosli/testdata/valid_template.yml",
     "scan-results": "cmd/kosli/testdata/snyk_scan_example.json",
     "user-data": ARTIFACT_PATH,

@@ -13,10 +13,10 @@ all. Only running it settles which.
 
 ```bash
 make test_setup                    # a local server on localhost:8001
-./empty-flag-audit/audit.py        # produces results.tsv
-./empty-flag-audit/audit.py --ci   # produces results-ci.tsv
-./empty-flag-audit/report.py       # the figures the decision document quotes
-./empty-flag-audit/replay.py       # produces results-api.tsv
+./hack/empty-flag-audit/audit.py        # produces results.tsv
+./hack/empty-flag-audit/audit.py --ci   # produces results-ci.tsv
+./hack/empty-flag-audit/report.py       # the figures the decision document quotes
+./hack/empty-flag-audit/replay.py       # produces results-api.tsv
 ```
 
 `audit.py` asks what the CLI does with an empty value. `replay.py` asks what the
@@ -28,7 +28,7 @@ with the plain run's, and these do not.
 Narrower runs, for working on one entry:
 
 ```bash
-./empty-flag-audit/audit.py --only "attest generic" --flag fingerprint
+./hack/empty-flag-audit/audit.py --only "attest generic" --flag fingerprint
 ```
 
 Both passes are needed before `report.py`, which compares them to find the flags
