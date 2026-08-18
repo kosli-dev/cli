@@ -46,6 +46,16 @@ func (suite *FingerprintTestSuite) TestFingerprintCmd() {
 			golden:    "Error: flag '--exclude' was given an empty value\n",
 		},
 		{
+			// The shape an unset variable makes of a comma list, which is how a
+			// multi-value flag takes several values. Without the refusal the
+			// list is two exclusions rather than the three asked for, and the
+			// fingerprint is one nobody built.
+			wantError: true,
+			name:      "fails when a comma list holds an empty element",
+			cmd:       "fingerprint --artifact-type dir testdata/folder1 --exclude folder2,,folder3",
+			golden:    "Error: flag '--exclude' was given an empty value\n",
+		},
+		{
 			name:   "dir fingerprint with ignore file",
 			cmd:    "fingerprint --artifact-type dir testdata/folder1-with-ignore",
 			golden: "038897ea5334462098d65125380d58a493671fb3b8bdbbee1e75ec8bd4a65c23\n",
