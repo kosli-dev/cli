@@ -337,12 +337,21 @@ func ArchiveCustomAttestationType(typeName string, t *testing.T) {
 
 func CreateCustomAttestationType(typeName, schemaFilePath string, jqEvaluators []string, t *testing.T) {
 	t.Helper()
+	CreateCustomAttestationTypeWithSummary(typeName, schemaFilePath, jqEvaluators, "", t)
+}
+
+// CreateCustomAttestationTypeWithSummary creates an attestation type whose summary
+// is set from summaryJSON, in the same form the --summary-json flag takes. An empty
+// summaryJSON creates a type without a summary.
+func CreateCustomAttestationTypeWithSummary(typeName, schemaFilePath string, jqEvaluators []string, summaryJSON string, t *testing.T) {
+	t.Helper()
 	o := &createAttestationTypeOptions{
 		payload: CreateAttestationTypePayload{
 			TypeName: typeName,
 		},
 		schemaFilePath: schemaFilePath,
 		jqRules:        jqEvaluators,
+		summaryJSON:    summaryJSON,
 	}
 	err := o.run([]string{typeName})
 	require.NoError(t, err, "attestation type should be created without error")

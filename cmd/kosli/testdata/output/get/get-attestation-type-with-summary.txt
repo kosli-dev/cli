@@ -1,0 +1,19 @@
+Name:              summary-type
+Organization:      docs-cmd-test-user-shared
+Archived:          false
+Created By:        docs-cmd-test-user
+Created at:        .*
+Last modified at:  .*
+Versions:
+                   Version:      1
+                   Timestamp:    .*
+                   Created By:   docs-cmd-test-user
+                   Type schema:  \{"additionalProperties":true,"properties":\{"age":\{"type":"integer"\},"name":\{"type":"string"\}\},"type":"object"\}
+                   Evaluator:
+                                 Content Type:  jq
+                                 Rules:
+                                      .age > 21
+                   Summary:
+                                 Age:   .age
+                                 Name:  .name
+   
