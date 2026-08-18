@@ -1,8 +1,9 @@
 # Extending the audit to ask the same question of the API
 
-The empty-flag audit answers "does the CLI refuse an empty value". `replay.py`
+`audit.py` answers "does the CLI refuse an empty value". `replay.py`
 answers the other half: when the CLI does not refuse it, does the server? This
-is what it does, what it found, and what it cannot reach.
+document sets out how `replay.py` works, what it found, and what it cannot
+reach.
 
 ## TL;DR
 
@@ -16,13 +17,13 @@ is what it does, what it found, and what it cannot reach.
 - `replay.py` does it, reading the same spec.json and writing results-api.tsv.
 - Of 417 rows, 77 are an answer about the server: 25 it accepts empty and 52 it
   refuses.
-- Among the eleven, `create flow --template` is refused by the CLI and accepted
+- Among them, `create flow --template` is refused by the CLI and accepted
   by the API, which stores a flow requiring an attestation whose name is empty.
 - Also among them, an artifact can be stored with no name at all, leaving anyone
   who investigates it holding a fingerprint and a blank record.
-- Both are measured instances of the gap the decision document argues about: a
-  CLI rule does not cover a customer calling the API directly. Neither would be
-  closed by the rule it proposes.
+- Both are measured instances of the gap the decision document argues about:
+  refusing empty flag values in the CLI does nothing for a customer calling the
+  API directly, so neither of these closes.
 - Every emptied filter is accepted: `tag=`, `search=`, `name=` are answered 200
   rather than refused. What that means then differs by endpoint - an empty tag
   matches nothing, an empty repo name matches everything - and the status does
@@ -101,8 +102,8 @@ A sweep of the 74 commands that can produce a request gives 417 rows, of which
 | **the server accepts the emptied value** | **25** |
 
 Two kinds of request are asked, and they answer differently. The commands that
-write carry their flags in a JSON body: 331 rows, 20 refusals and 11
-acceptances. The commands that read carry theirs in the query string: 86 rows,
+write carry their flags in a JSON body: 329 rows, 20 refusals and 11
+acceptances. The commands that read carry theirs in the query string: 88 rows,
 32 refusals and 14 acceptances, and only 2 controls that failed.
 
 The eleven it accepts are worth reading as a list, because each is a field a
@@ -134,8 +135,8 @@ trail:
 A flow requiring an attestation whose name is empty, which no attestation can be
 made to match by name. The CLI-side type closes this for people using the CLI.
 It does nothing for anyone calling the API. That is the argument in the decision
-document's "What a CLI rule cannot reach" section, with a measured instance
-behind it instead of a worked example.
+document's proposal, which says a CLI rule can only reach CLI traffic, with a
+measured instance behind it instead of a worked example.
 
 The four rows reaching `filename` say the same thing about a different field,
 and it is the one a customer would feel. The server accepts an artifact whose
@@ -199,16 +200,17 @@ required and the fallback always has it, not because anyone validates it. Only a
 caller writing the request themselves can send `""`, and the empty-value rule
 proposed for the CLI would not close it.
 
-The eight it refuses are the reassuring half, and they are mostly types rather
-than emptiness: `include_scaling`, `require_provenance` and `privilege` are a
-boolean and an enum, `user_data` and `artifacts` are objects, and an empty
-string is not one. `origin_url` is refused as a URL.
+The twenty it refuses are the reassuring half, over 14 distinct fields, and
+they are mostly types rather than emptiness: `include_scaling`,
+`require_provenance` and `privilege` are a boolean and an enum, `user_data` and
+`artifacts` are objects, and an empty string is not one. `origin_url` is refused
+as a URL.
 
-The probe also confirmed the ordering constraint in step 2 of the release plan
-from the other direction. A `create flow` payload with no `description` is
-refused with `400 Input payload validation failed`, `description: Field
-required`. The server must accept an absent description before the CLI can stop
-sending one.
+The probe also confirmed, from the other direction, the ordering constraint in
+step 2 of the staged release in the decision document's Appendix 0. A `create
+flow` payload with no `description` is refused with `400 Input payload
+validation failed`, `description: Field required`. The server must accept an
+absent description before the CLI can stop sending one.
 
 ## Every emptied filter is accepted
 
@@ -244,8 +246,8 @@ So the two halves agree, and unhelpfully. The decision document's appendix 2
 already says of the filters that an empty value means nothing for them - "there
 is no artifact called ''" - and records that 21 of the 24 filter flags are never
 refused by the CLI. The server does not refuse them either. A customer calling
-the API directly gets the same silently-empty answer, and the rule proposed for
-the CLI would not change it.
+the API directly gets the same silently-empty answer, which refusing empty flag
+values in the CLI would not change.
 
 The two unusable controls are both `--repo`, and they show the same parameter
 treated a third and fourth way. On `list artifacts` an unknown `repo_name` 404s
@@ -271,7 +273,7 @@ where there is nothing for it to ask:
 
 The 49 unusable controls are the ones worth fixing, and they are a symptom of
 something larger: the audit invents the values it gives flags. Its own control
-runs failed 114 times for the same reason, now 30. That is written up in
+runs failed 114 times for the same reason, now 29. That is written up in
 `2026-08-15-the-audit-invents-its-input-values.md`.
 
 ## What is settled, and what is not
@@ -288,10 +290,10 @@ Settled while building it:
 
 - **Query parameters are asked too.** A read carries its flags in the URL rather
   than a body, so the same diff is taken over the query string and the parameter
-  is emptied there. It is what took the answers from 19 to 77. The method is not
-  logged on the line that survives a read, so only commands whose verb settles it
-  - `get`, `list`, `log`, `diff`, `search` - are read this way. Replaying a read
-  is also the only replay that is safe to repeat, since nothing is created.
+  is emptied there. The method is not logged on the line that survives a read,
+  so only commands whose verb settles it - `get`, `list`, `log`, `diff`,
+  `search` - are read this way. Replaying a read is also the only replay that
+  is safe to repeat, since nothing is created.
 
 Not settled:
 
@@ -314,7 +316,7 @@ on reasoning about what the payloads must look like. This turns it into the same
 kind of measurement the rest of the audit is built on, and it does so for the
 layer that covers every client rather than one of them.
 
-It also gives the server-side work a test list. The rule for the server is not
-"refuse an empty value" but "an absent field means what the verb says it means",
-and a probe that replays every captured request with one field emptied, and
-again with it removed, is how that rule gets checked rather than asserted.
+It also gives the server-side work a test list. What the server has to enforce
+is not "refuse an empty value" but "an absent field means what the verb says it
+means", and a probe that replays every captured request with one field emptied,
+and again with it removed, is how that gets checked rather than asserted.
