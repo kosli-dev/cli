@@ -605,9 +605,9 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 func configValueSource(flagName string) string {
 	envVar := fmt.Sprintf("%s_%s", envPrefix, strings.ToUpper(strings.ReplaceAll(flagName, "-", "_")))
 	if value, exists := os.LookupEnv(envVar); exists && value != "" {
-		return envVar
+		return "environment variable " + envVar
 	}
-	return fmt.Sprintf("[%s]", global.ConfigFile)
+	return fmt.Sprintf("config file [%s]", global.ConfigFile)
 }
 
 // Bind each cobra flag to its associated viper configuration
@@ -666,7 +666,15 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
 			}
 
 			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
-				bindErr = errors.Join(bindErr, fmt.Errorf("failed to set flag '--%s' from %s: %v", f.Name, configValueSource(f.Name), err))
+				// An empty value is refused here as it is on the command line,
+				// and reads the same way. pflag wraps the refusal in its own
+				// words, so the cause is what says the empty-value rule spoke,
+				// and it has to be read before %v flattens it.
+				if errors.Is(err, errEmptyFlagValue) {
+					bindErr = errors.Join(bindErr, fmt.Errorf("flag '--%s' was given an empty value by %s", f.Name, configValueSource(f.Name)))
+				} else {
+					bindErr = errors.Join(bindErr, fmt.Errorf("failed to set flag '--%s' from %s: %v", f.Name, configValueSource(f.Name), err))
+				}
 			}
 		}
 	})

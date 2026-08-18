@@ -248,6 +248,24 @@ func TestAttestGenericRejectsEmptyAttachmentFromEnv(t *testing.T) {
 	require.ErrorContains(t, err, "attachments")
 }
 
+// TestAttestGenericEmptyAttachmentFromEnvReadsLikeTheCommandLine pins the
+// wording, not only the refusal. A value from the environment reaches the flag
+// through bindFlags rather than through cobra's parsing, so it does not pass
+// the flag-error function that gives every other empty value one wording. The
+// source is named because, unlike a value typed on the command line, it is not
+// in front of the reader.
+func TestAttestGenericEmptyAttachmentFromEnvReadsLikeTheCommandLine(t *testing.T) {
+	t.Setenv("KOSLI_ATTACHMENTS", "testdata/file1,,testdata/file1")
+
+	_, _, _, _, err := executeCommandC(
+		`attest generic ` +
+			`--fingerprint 0000000000000000000000000000000000000000000000000000000000000001 ` +
+			`--name foo --flow f --trail t --org demo --api-token DRY_RUN --dry-run`)
+
+	require.EqualError(t, err,
+		"flag '--attachments' was given an empty value by environment variable KOSLI_ATTACHMENTS")
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestAttestGenericCommandTestSuite(t *testing.T) {
