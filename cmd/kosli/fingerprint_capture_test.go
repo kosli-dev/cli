@@ -167,6 +167,41 @@ func (suite *FingerprintCaptureTestSuite) TestFingerprintFile_DebugModeIsAllowed
 			"if this fails, someone has silenced the logger inside the fingerprint code path")
 }
 
+// TestFingerprintOCI_CaptureCleanliness covers the OCI variant. The OCI
+// code path goes through registry HTTP calls (internal/server) and is
+// entirely separate from the file/dir/docker implementations — so it
+// could legitimately introduce stderr output (HTTP debug logs, auth
+// warnings, etc.) that the other tests would not catch.
+//
+// This test pins the same customer-facing contract for OCI:
+// stdout must be exactly the fingerprint + newline; stderr must be
+// exactly empty; and the combined stdout+stderr stream (what `2>&1`
+// captures in CI) must still be exactly the fingerprint.
+//
+// Uses a public image pinned by digest to ensure the fingerprint is
+// stable and the assertion is deterministic across environments.
+func (suite *FingerprintCaptureTestSuite) TestFingerprintOCI_CaptureCleanliness() {
+	defer version.SetCheckForUpdateOverride(func(string) (string, error) {
+		return fakeUpdateNotice, nil
+	})()
+
+	const alpineFingerprint = "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
+	const alpineOCIImage = "docker.io/library/alpine@sha256:" + alpineFingerprint
+
+	_, combined, stdout, stderr, err := executeCommandC(
+		"fingerprint --artifact-type oci " + alpineOCIImage)
+	suite.Require().NoError(err)
+
+	suite.Equal(alpineFingerprint+"\n", stdout,
+		"stdout must contain only the fingerprint — anything else breaks shell capture")
+
+	suite.Equal("", stderr,
+		"stderr must be empty — any output here pollutes 2>&1 capture pipelines")
+
+	suite.Equal(alpineFingerprint+"\n", combined,
+		"combined output (the 2>&1 capture pattern) must be exactly the fingerprint")
+}
+
 func TestFingerprintCaptureTestSuite(t *testing.T) {
 	suite.Run(t, new(FingerprintCaptureTestSuite))
 }
