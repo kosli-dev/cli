@@ -105,7 +105,7 @@ func combinations(surface map[string]map[string]string) map[string]bool {
 	return pairs
 }
 
-// missingFrom returns the members of want that have are absent from got.
+// missingFrom returns the members of want that are absent from got.
 func missingFrom(want, got map[string]bool) []string {
 	absent := []string{}
 	for pair := range want {

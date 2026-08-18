@@ -41,6 +41,10 @@ HOST = "http://localhost:8001"
 # a personal org, which would show up as a missing result rather than a real
 # one.
 ORG = "docs-cmd-test-user-shared"
+# The local test server's shared dev token, hardcoded here as it is in the 76
+# Go test files that use the same one: it authenticates nothing beyond
+# localhost:8001, and the audit has to run without a real credential so that a
+# run cannot reach a real organisation. The payload is {"id":"cd788989"}.
 TOKEN = (
     "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
     ".eyJpZCI6ImNkNzg4OTg5In0"

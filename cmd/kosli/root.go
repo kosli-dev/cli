@@ -401,9 +401,10 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 				global.DryRun = true
 			}
 
-			// If the user types "--description $variable --sha256 ..." and $variable is "" then Cobra
-			// will assign --sha256 as the value of --description, and give a very misleading error message.
-			// So we do some extra checking to tell the user about this.
+			// A value that starts with a dash is the next flag, swallowed as this
+			// flag's value: "--description --sha256 ..." leaves --description
+			// holding "--sha256". Cobra's own error for what follows describes
+			// the parse rather than the mistake, so it is named here instead.
 			var flagError error = nil
 			cmd.Flags().VisitAll(func(f *pflag.Flag) {
 				if strings.HasPrefix(f.Value.String(), "-") {
