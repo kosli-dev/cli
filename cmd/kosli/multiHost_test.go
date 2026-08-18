@@ -134,6 +134,27 @@ func (suite *MultiHostTestSuite) TestRunDoubledHost() {
 	}
 }
 
+// TestRunMultiHostRefusesAnEmptyHostInTheList pins that an empty element in the
+// --host list is refused. This file splits the list rather than pflag, so what
+// catches the empty element is the per-host call: each element is appended as
+// that call's own --host, and an empty one is refused as it is set. The error
+// names the host it came from, which for this element is empty.
+func (suite *MultiHostTestSuite) TestRunMultiHostRefusesAnEmptyHostInTheList() {
+	args := []string{
+		"kosli", "status",
+		fmt.Sprintf("--host=%s,,%s", localHost, localHost),
+		fmt.Sprintf("--api-token=%s,%s,%s", apiToken, apiToken, apiToken),
+		fmt.Sprintf("--org=%s", orgName),
+	}
+
+	defer func(original []string) { os.Args = original }(os.Args)
+	os.Args = args
+	_, err := runMultiHost(args)
+
+	assert.EqualError(suite.T(), err,
+		"\n[]\n[kosli status] flag '--host' was given an empty value")
+}
+
 // TestRunDoubledHostAcceptsSpaceSeparatedBoolFlag checks that a boolean flag
 // written in the space form is honoured on the multi-host path too. --debug is
 // false here, so the output must be the bare fingerprint: no per-host [debug]
