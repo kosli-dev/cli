@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -26,6 +30,12 @@ See an example schema file
 These rules specify acceptable values for attestation data, e.g. ^.age >= 21^ or ^.failing_tests == 0^.  
 When a custom attestation is reported, the provided data is evaluated according to the rules defined in its attestation-type. 
 All rules must return ^true^ for the evaluation to pass and the attestation to be determined compliant.
+
+^--summary-json^ defines the summary shown for attestations of this type, given as a JSON array of
+^{"name": ..., "expression": ...}^ entries. Each expression is a jq expression evaluated against the
+attestation data, and entries are displayed in the order given, e.g.
+^'[{"name":"Critical","expression":".critical_count"}]'^.
+Attestation types created without a summary fall back to the jq evaluation rules checklist.
 `
 
 const createAttestationTypeExample = `
@@ -38,12 +48,25 @@ kosli create attestation-type customTypeName \
     --schema person-schema.json \
     --jq ".age >= 18"
     --jq ".age < 65"
+
+# create/update a custom attestation type with a summary:
+kosli create attestation-type customTypeName \
+    --schema scan-schema.json \
+    --summary-json '[{"name":"Critical","expression":".critical_count"},{"name":"Tool","expression":".scanner.name"}]'
 `
 
 type createAttestationTypeOptions struct {
 	payload        CreateAttestationTypePayload
 	schemaFilePath string
 	jqRules        []string
+	summaryJSON    string
+}
+
+// SummaryEntry is one named jq expression displayed in the summary of
+// attestations made using a custom attestation type.
+type SummaryEntry struct {
+	Name       string `json:"name"`
+	Expression string `json:"expression"`
 }
 
 type JQEvaluatorPayload struct {
@@ -59,6 +82,36 @@ type CreateAttestationTypePayload struct {
 	TypeName    string              `json:"name"`
 	Description string              `json:"description,omitempty"`
 	Evaluator   *JQEvaluatorPayload `json:"evaluator,omitempty"`
+	Summary     []SummaryEntry      `json:"summary,omitempty"`
+}
+
+// parseSummaryJSON parses the --summary-json flag value into an ordered list of
+// summary entries. The value must be a JSON array of {name, expression} objects,
+// both fields non-empty.
+func parseSummaryJSON(value string) ([]SummaryEntry, error) {
+	if strings.TrimSpace(value) == "" {
+		return nil, nil
+	}
+
+	var summary []SummaryEntry
+	if err := json.Unmarshal([]byte(value), &summary); err != nil {
+		var syntaxErr *json.SyntaxError
+		if errors.As(err, &syntaxErr) {
+			return nil, fmt.Errorf("--summary-json is not valid JSON: %s", err.Error())
+		}
+		return nil, fmt.Errorf("--summary-json must be a JSON array of {name, expression} entries")
+	}
+
+	for i, entry := range summary {
+		if strings.TrimSpace(entry.Name) == "" {
+			return nil, fmt.Errorf("--summary-json entry %d is missing a name", i+1)
+		}
+		if strings.TrimSpace(entry.Expression) == "" {
+			return nil, fmt.Errorf("--summary-json entry %d is missing an expression", i+1)
+		}
+	}
+
+	return summary, nil
 }
 
 func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
@@ -84,6 +137,7 @@ func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", attestationTypeDescriptionFlag)
 	cmd.Flags().StringVarP(&o.schemaFilePath, "schema", "s", "", attestationTypeSchemaFlag)
 	cmd.Flags().StringArrayVar(&o.jqRules, "jq", []string{}, attestationTypeJqFlag)
+	cmd.Flags().StringVar(&o.summaryJSON, "summary-json", "", attestationTypeSummaryJsonFlag)
 
 	addDryRunFlag(cmd)
 	return cmd
@@ -94,6 +148,12 @@ func (o *createAttestationTypeOptions) run(args []string) error {
 	if len(o.jqRules) > 0 {
 		o.payload.Evaluator = NewJQEvaluatorPayload(o.jqRules)
 	}
+
+	summary, err := parseSummaryJSON(o.summaryJSON)
+	if err != nil {
+		return err
+	}
+	o.payload.Summary = summary
 
 	form, err := prepareAttestationTypeForm(o.payload, o.schemaFilePath)
 	if err != nil {
