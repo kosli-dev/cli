@@ -54,8 +54,8 @@ type beginTrailOptions struct {
 
 type TrailPayload struct {
 	Name         string                   `json:"name"`
-	Description  string                   `json:"description"`
-	UserData     interface{}              `json:"user_data"`
+	Description  string                   `json:"description,omitempty"`
+	UserData     interface{}              `json:"user_data,omitempty"`
 	Commit       *gitview.BasicCommitInfo `json:"git_commit_info,omitempty"`
 	GitRepoInfo  *gitview.GitRepoInfo     `json:"repo_info,omitempty"`
 	ExternalURLs map[string]*URLInfo      `json:"external_urls,omitempty"`
@@ -122,7 +122,7 @@ func (o *beginTrailOptions) run(args []string) error {
 
 	o.payload.Name = args[0]
 
-	o.payload.UserData, err = LoadJsonData(o.userDataFile)
+	o.payload.UserData, err = LoadOptionalJsonData(o.userDataFile)
 	if err != nil {
 		return err
 	}

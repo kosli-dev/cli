@@ -568,6 +568,16 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 	}
 }
 
+// No filepath means the caller has nothing to send. Returning nil is what lets
+// omitempty keep the key out of the payload, so the CLI behaves like an API
+// client that omits the field rather than one that sends an empty object.
+func (suite *CliUtilsTestSuite) TestLoadOptionalJsonDataWithNoFilepath() {
+	data, err := LoadOptionalJsonData("")
+
+	require.NoError(suite.T(), err)
+	require.Nil(suite.T(), data)
+}
+
 func (suite *CliUtilsTestSuite) TestValidateArtifactArg() {
 	for _, t := range []struct {
 		name                      string
