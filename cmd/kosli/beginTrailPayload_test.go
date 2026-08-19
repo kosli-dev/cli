@@ -29,6 +29,22 @@ func TestTrailPayloadOmitsUnsetUserData(t *testing.T) {
 	require.NotContains(t, got, "user_data")
 }
 
+// A --user-data file holding {} is a deliberate empty document, not an absent
+// flag, and only the flag being absent may drop the key. The loaded value is a
+// non-nil empty map, which omitempty keeps, so the server receives the {} the
+// caller asked for and writes it.
+func TestTrailPayloadKeepsAnExplicitlyEmptyUserData(t *testing.T) {
+	userData, err := LoadOptionalJsonData("testdata/user-data-empty-object.json")
+	require.NoError(t, err)
+
+	body, err := json.Marshal(TrailPayload{Name: "test-123", UserData: userData})
+	require.NoError(t, err)
+
+	var got map[string]interface{}
+	require.NoError(t, json.Unmarshal(body, &got))
+	require.Equal(t, map[string]interface{}{}, got["user_data"])
+}
+
 // omitempty must not swallow a value the user did give, so a payload carrying
 // both fields sends both.
 func TestTrailPayloadKeepsSetDescriptionAndUserData(t *testing.T) {
