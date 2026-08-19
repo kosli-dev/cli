@@ -113,6 +113,56 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 			cmd:       `create attestation-type wibble-bad --summary-json '[{"name":"Critical"},{"name":"Tool","expression":".t"}]'` + suite.defaultKosliArguments,
 			golden:    "Error: --summary-json entry 1 is missing an expression\n",
 		},
+		{
+			name:   "repeatable summary is provided",
+			cmd:    `create attestation-type wibble-13 --summary 'Critical=.critical_count' --summary 'Tool=.scanner.name'` + suite.defaultKosliArguments,
+			golden: "attestation-type wibble-13 was created\n",
+		},
+		{
+			name:   "repeatable summary expressions can contain commas and equals",
+			cmd:    `create attestation-type wibble-14 --summary 'Tool=[.a, .b] | map(select(.x == 1)) | length'` + suite.defaultKosliArguments,
+			golden: "attestation-type wibble-14 was created\n",
+		},
+		{
+			name:   "repeatable summary and jq rules can be combined",
+			cmd:    `create attestation-type wibble-15 --jq '.critical_count == 0' --summary 'Critical=.critical_count'` + suite.defaultKosliArguments,
+			golden: "attestation-type wibble-15 was created\n",
+		},
+		{
+			name:   "repeatable summary and schema can be combined",
+			cmd:    `create attestation-type wibble-16 --schema testdata/person-schema.json --summary 'Age=.age'` + suite.defaultKosliArguments,
+			golden: "attestation-type wibble-16 was created\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when a repeatable summary entry has no equals sign",
+			cmd:       `create attestation-type wibble-bad --summary 'Critical'` + suite.defaultKosliArguments,
+			golden:    "Error: --summary entry 1 must be in the form NAME=EXPRESSION\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when a repeatable summary entry has no name",
+			cmd:       `create attestation-type wibble-bad --summary '=.critical_count'` + suite.defaultKosliArguments,
+			golden:    "Error: --summary entry 1 is missing a name\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when a repeatable summary entry has no expression",
+			cmd:       `create attestation-type wibble-bad --summary 'Critical='` + suite.defaultKosliArguments,
+			golden:    "Error: --summary entry 1 is missing an expression\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when a repeatable summary value is a bare expression",
+			cmd:       `create attestation-type wibble-bad --summary '.failing == 0'` + suite.defaultKosliArguments,
+			golden:    "Error: --summary entry 1 expression cannot start with '='\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when both summary flags are provided",
+			cmd:       `create attestation-type wibble-bad --summary 'Critical=.critical_count' --summary-json '[{"name":"Critical","expression":".critical_count"}]'` + suite.defaultKosliArguments,
+			golden:    "Error: only one of --summary, --summary-json is allowed\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
@@ -208,6 +258,112 @@ func TestParseSummaryJSON(t *testing.T) {
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				summary, err := parseSummaryJSON(tc.value)
+				require.EqualError(t, err, tc.wantErr)
+				require.Empty(t, summary)
+			})
+		}
+	})
+}
+
+func TestParseSummaryFlags(t *testing.T) {
+	t.Run("no flags leaves summary out of the payload", func(t *testing.T) {
+		summary, err := parseSummaryFlags(nil)
+		require.NoError(t, err)
+		require.Empty(t, summary)
+
+		payload := CreateAttestationTypePayload{TypeName: "wibble", Summary: summary}
+		body, err := json.Marshal(payload)
+		require.NoError(t, err)
+		require.NotContains(t, string(body), "summary")
+	})
+
+	t.Run("entries keep the order the flags were given in", func(t *testing.T) {
+		summary, err := parseSummaryFlags([]string{"Critical=.critical_count", "Tool=.scanner.name"})
+		require.NoError(t, err)
+		require.Equal(t, []SummaryEntry{
+			{Name: "Critical", Expression: ".critical_count"},
+			{Name: "Tool", Expression: ".scanner.name"},
+		}, summary)
+	})
+
+	// The whole reason for splitting on the first "=" only: JQ expressions use
+	// "==" for comparison, and commas are meaningful inside them. Both must
+	// survive into the expression untouched.
+	t.Run("splits on the first equals only", func(t *testing.T) {
+		summary, err := parseSummaryFlags([]string{"Tool=[.a, .b] | map(select(.x == 1)) | length"})
+		require.NoError(t, err)
+		require.Equal(t, []SummaryEntry{
+			{Name: "Tool", Expression: "[.a, .b] | map(select(.x == 1)) | length"},
+		}, summary)
+	})
+
+	t.Run("whitespace around name and expression is trimmed", func(t *testing.T) {
+		summary, err := parseSummaryFlags([]string{"  Critical  =  .critical_count  "})
+		require.NoError(t, err)
+		require.Equal(t, []SummaryEntry{
+			{Name: "Critical", Expression: ".critical_count"},
+		}, summary)
+	})
+
+	t.Run("rejects entries that are not usable", func(t *testing.T) {
+		for _, tc := range []struct {
+			name    string
+			values  []string
+			wantErr string
+		}{
+			{
+				name:    "no separator",
+				values:  []string{"Critical"},
+				wantErr: "--summary entry 1 must be in the form NAME=EXPRESSION",
+			},
+			{
+				name:    "empty value",
+				values:  []string{""},
+				wantErr: "--summary entry 1 must be in the form NAME=EXPRESSION",
+			},
+			{
+				name:    "empty name",
+				values:  []string{"=.critical_count"},
+				wantErr: "--summary entry 1 is missing a name",
+			},
+			{
+				name:    "whitespace-only name",
+				values:  []string{"  =.critical_count"},
+				wantErr: "--summary entry 1 is missing a name",
+			},
+			{
+				name:    "empty expression",
+				values:  []string{"Critical="},
+				wantErr: "--summary entry 1 is missing an expression",
+			},
+			{
+				name:    "whitespace-only expression",
+				values:  []string{"Critical=   "},
+				wantErr: "--summary entry 1 is missing an expression",
+			},
+			{
+				// A bare jq expression using "==" carries a separator, so it
+				// would otherwise parse to {".failing", "= 0"}. No valid jq
+				// expression starts with "=" — it is only ever infix.
+				name:    "bare expression using ==",
+				values:  []string{".failing == 0"},
+				wantErr: "--summary entry 1 expression cannot start with '='",
+			},
+			{
+				name:    "doubled separator",
+				values:  []string{"Critical== 0"},
+				wantErr: "--summary entry 1 expression cannot start with '='",
+			},
+			{
+				// Proves the reported index tracks the flag's position rather
+				// than being coincidentally right for a single entry.
+				name:    "second entry is the bad one",
+				values:  []string{"A=.a", "B"},
+				wantErr: "--summary entry 2 must be in the form NAME=EXPRESSION",
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				summary, err := parseSummaryFlags(tc.values)
 				require.EqualError(t, err, tc.wantErr)
 				require.Empty(t, summary)
 			})

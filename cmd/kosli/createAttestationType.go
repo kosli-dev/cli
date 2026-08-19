@@ -31,10 +31,16 @@ These rules specify acceptable values for attestation data, e.g. ^.age >= 21^ or
 When a custom attestation is reported, the provided data is evaluated according to the rules defined in its attestation-type. 
 All rules must return ^true^ for the evaluation to pass and the attestation to be determined compliant.
 
-^--summary-json^ defines the summary shown for attestations of this type, given as a JSON array of
-^{"name": ..., "expression": ...}^ entries. Each expression is a jq expression evaluated against the
-attestation data, and entries are displayed in the order given, e.g.
-^'[{"name":"Critical","expression":".critical_count"}]'^.
+^--summary^ defines one entry of the summary shown for attestations of this type, given as
+^'NAME=EXPRESSION'^ where the expression is a jq expression evaluated against the attestation data.
+The flag can be repeated to add further entries, which are displayed in the order given, e.g.
+^--summary "Critical=.critical_count" --summary "Tool=.scanner.name"^.
+Each value is split on its first ^=^ only, so jq expressions containing ^==^ are unaffected.
+
+^--summary-json^ is an alternative to ^--summary^ for summaries that are easier to express as JSON,
+given as a JSON array of ^{"name": ..., "expression": ...}^ entries, e.g.
+^'[{"name":"Critical","expression":".critical_count"}]'^. The two summary flags cannot be combined.
+
 Attestation types created without a summary fall back to the jq evaluation rules checklist.
 `
 
@@ -52,14 +58,21 @@ kosli create attestation-type customTypeName \
 # create/update a custom attestation type with a summary:
 kosli create attestation-type customTypeName \
     --schema scan-schema.json \
+    --summary "Critical=.critical_count" \
+    --summary "Tool=.scanner.name"
+
+# create/update a custom attestation type with a summary given as JSON:
+kosli create attestation-type customTypeName \
+    --schema scan-schema.json \
     --summary-json '[{"name":"Critical","expression":".critical_count"},{"name":"Tool","expression":".scanner.name"}]'
 `
 
 type createAttestationTypeOptions struct {
-	payload        CreateAttestationTypePayload
-	schemaFilePath string
-	jqRules        []string
-	summaryJSON    string
+	payload         CreateAttestationTypePayload
+	schemaFilePath  string
+	jqRules         []string
+	summaryJSON     string
+	summaryKeyValue []string
 }
 
 // SummaryEntry is one named jq expression displayed in the summary of
@@ -114,6 +127,43 @@ func parseSummaryJSON(value string) ([]SummaryEntry, error) {
 	return summary, nil
 }
 
+// parseSummaryFlags parses repeated --summary NAME=EXPRESSION values into an
+// ordered list of summary entries, preserving the order the flags were given in.
+// Each value is split on its first "=" only, so JQ expressions containing "=="
+// or assignments keep their meaning; whitespace around both halves is trimmed.
+func parseSummaryFlags(values []string) ([]SummaryEntry, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	summary := make([]SummaryEntry, 0, len(values))
+	for i, value := range values {
+		name, expression, found := strings.Cut(value, "=")
+		if !found {
+			return nil, fmt.Errorf("--summary entry %d must be in the form NAME=EXPRESSION", i+1)
+		}
+
+		name = strings.TrimSpace(name)
+		expression = strings.TrimSpace(expression)
+		if name == "" {
+			return nil, fmt.Errorf("--summary entry %d is missing a name", i+1)
+		}
+		if expression == "" {
+			return nil, fmt.Errorf("--summary entry %d is missing an expression", i+1)
+		}
+		// Catches a bare jq expression passed without a name: ".failing == 0"
+		// splits to {".failing", "= 0"}. No valid jq expression starts with "=",
+		// so a leading one always means the value was not NAME=EXPRESSION.
+		if strings.HasPrefix(expression, "=") {
+			return nil, fmt.Errorf("--summary entry %d expression cannot start with '='", i+1)
+		}
+
+		summary = append(summary, SummaryEntry{Name: name, Expression: expression})
+	}
+
+	return summary, nil
+}
+
 func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
 	o := new(createAttestationTypeOptions)
 	cmd := &cobra.Command{
@@ -127,7 +177,10 @@ func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			return nil
+
+			// Both flags set the same payload field, so letting one silently win
+			// would be a trap.
+			return MuXRequiredFlags(cmd, []string{"summary", "summary-json"}, false)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -137,6 +190,7 @@ func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", attestationTypeDescriptionFlag)
 	cmd.Flags().StringVarP(&o.schemaFilePath, "schema", "s", "", attestationTypeSchemaFlag)
 	cmd.Flags().StringArrayVar(&o.jqRules, "jq", []string{}, attestationTypeJqFlag)
+	cmd.Flags().StringArrayVar(&o.summaryKeyValue, "summary", []string{}, attestationTypeSummaryFlag)
 	cmd.Flags().StringVar(&o.summaryJSON, "summary-json", "", attestationTypeSummaryJsonFlag)
 
 	addDryRunFlag(cmd)
@@ -152,6 +206,14 @@ func (o *createAttestationTypeOptions) run(args []string) error {
 	summary, err := parseSummaryJSON(o.summaryJSON)
 	if err != nil {
 		return err
+	}
+	if summary == nil {
+		// --summary and --summary-json are mutually exclusive, so at most one of
+		// these two parses can yield entries.
+		summary, err = parseSummaryFlags(o.summaryKeyValue)
+		if err != nil {
+			return err
+		}
 	}
 	o.payload.Summary = summary
 
