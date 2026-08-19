@@ -488,6 +488,57 @@ func initializeRepoAndCommit(repoPath string, commitsNumber int) (*git.Repositor
 	return repo, w, nil
 }
 
+func (suite *GitViewTestSuite) TestGetTrailerValues() {
+	for _, tt := range []struct {
+		name     string
+		message  string
+		key      string
+		expected []string
+	}{
+		{
+			name:     "no trailers returns empty slice",
+			message:  "fix: something\n\nsome body text",
+			key:      "Jira",
+			expected: []string{},
+		},
+		{
+			name:     "single matching trailer",
+			message:  "fix: something\n\nJira: BX-123",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "key match is case-insensitive",
+			message:  "fix: something\n\njira: BX-123",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "multiple occurrences of same key",
+			message:  "fix: something\n\nJira: BX-123\nJira: BX-456",
+			key:      "Jira",
+			expected: []string{"BX-123", "BX-456"},
+		},
+		{
+			name:     "non-matching trailers are ignored",
+			message:  "fix: something\n\nJira: BX-123\nOna-Environment-Id: ONA-456",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "whitespace trimmed from value",
+			message:  "fix: something\n\nJira:   BX-123  ",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+	} {
+		suite.Run(tt.name, func() {
+			result := GetTrailerValues(tt.message, tt.key)
+			require.Equal(suite.T(), tt.expected, result)
+		})
+	}
+}
+
 func TestGitViewTestSuite(t *testing.T) {
 	suite.Run(t, new(GitViewTestSuite))
 }
