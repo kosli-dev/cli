@@ -578,6 +578,17 @@ func (suite *CliUtilsTestSuite) TestLoadOptionalJsonDataWithNoFilepath() {
 	require.Nil(suite.T(), data)
 }
 
+// A file holding JSON null carries no document to send, so it unmarshals to
+// nil and omitempty keeps the key out of the payload. The trail's stored
+// user_data is left alone, which is what the API does with an explicit null
+// too: the server excludes a None before it looks for the field.
+func (suite *CliUtilsTestSuite) TestLoadOptionalJsonDataWithANullDocument() {
+	data, err := LoadOptionalJsonData("testdata/user-data-null.json")
+
+	require.NoError(suite.T(), err)
+	require.Nil(suite.T(), data)
+}
+
 func (suite *CliUtilsTestSuite) TestValidateArtifactArg() {
 	for _, t := range []struct {
 		name                      string
