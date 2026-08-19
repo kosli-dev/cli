@@ -316,6 +316,23 @@ func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA, s
 	return matches, commitInfo, nil
 }
 
+// GetTrailerValues extracts the values of all trailer lines in a commit message
+// that match the given key. The key comparison is case-insensitive. Trailer lines
+// have the format "<key>: <value>". Returns an empty (non-nil) slice if none are found.
+func GetTrailerValues(message, key string) []string {
+	result := []string{}
+	prefix := strings.ToLower(key) + ":"
+	for _, line := range strings.Split(message, "\n") {
+		if strings.HasPrefix(strings.ToLower(line), prefix) {
+			value := strings.TrimSpace(line[len(prefix):])
+			if value != "" {
+				result = append(result, value)
+			}
+		}
+	}
+	return result
+}
+
 // ResolveRevision returns an explicit commit SHA1 from commit SHA or ref (e.g. HEAD~2)
 func (gv *GitView) ResolveRevision(commitSHAOrRef string) (string, error) {
 	hash, err := gv.repository.ResolveRevision(plumbing.Revision(commitSHAOrRef))

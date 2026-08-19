@@ -331,6 +331,41 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			cmd:       fmt.Sprintf("attest jira --name .foo --commit HEAD --jira-base-url https://kosli-test.atlassian.net %s", suite.defaultKosliArguments),
 			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
 		},
+		{
+			name: "27 can attest jira using --jira-trailer to extract issue key from commit trailer",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-trailer Jira
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "fix: some change\n\nJira: EX-1\nOna-Environment-Id: ONA-999",
+			},
+		},
+		{
+			name: "28 --jira-trailer with no matching trailer produces no issue IDs (non-compliant but reported)",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-trailer Jira
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "fix: some change with no jira trailer",
+			},
+		},
+		{
+			wantError: true,
+			name:      "29 --jira-trailer with --assert fails when trailer is absent",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-trailer Jira
+					--assert
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in commit message or branch name\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "fix: some change with no jira trailer",
+			},
+		},
 	}
 
 	for _, test := range tests {

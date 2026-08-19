@@ -29,6 +29,7 @@ type attestJiraOptions struct {
 	projectKeys       []string
 	issueFields       string
 	secondarySource   string
+	trailerKey        string
 	ignoreBranchMatch bool
 	assert            bool
 	payload           JiraAttestationPayload
@@ -260,6 +261,7 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVar(&o.projectKeys, "jira-project-key", []string{}, jiraProjectKeyFlag)
 	cmd.Flags().StringVar(&o.issueFields, "jira-issue-fields", "", jiraIssueFieldFlag)
 	cmd.Flags().StringVar(&o.secondarySource, "jira-secondary-source", "", jiraSecondarySourceFlag)
+	cmd.Flags().StringVar(&o.trailerKey, "jira-trailer", "", jiraTrailerFlag)
 	cmd.Flags().BoolVar(&o.ignoreBranchMatch, "ignore-branch-match", false, ignoreBranchMatchFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, attestationAssertFlag)
 
@@ -301,19 +303,27 @@ func (o *attestJiraOptions) run(args []string) error {
 		return err
 	}
 
-	// Search commit message, branch name, and secondary source for Jira issue keys,
-	// filtering out false positives from multi-segment identifiers like CVE-2026-41284.
-	searchTexts := []string{commitInfo.Message}
-	if !o.ignoreBranchMatch {
-		searchTexts = append(searchTexts, commitInfo.Branch)
+	// Find Jira issue keys either from a named git trailer or by scanning the
+	// commit message, branch name, and secondary source.
+	var issueIDs []string
+	if o.trailerKey != "" {
+		trailerValues := gitview.GetTrailerValues(commitInfo.Message, o.trailerKey)
+		combinedTrailerText := strings.Join(trailerValues, "\n")
+		issueIDs = jira.FindJiraIssueKeys(combinedTrailerText, o.projectKeys)
+		logger.Debug("Checked for Jira issue references in trailer '%s' of Git commit %s: %v", o.trailerKey, commitInfo.Sha1, trailerValues)
+	} else {
+		searchTexts := []string{commitInfo.Message}
+		if !o.ignoreBranchMatch {
+			searchTexts = append(searchTexts, commitInfo.Branch)
+		}
+		if o.secondarySource != "" {
+			searchTexts = append(searchTexts, o.secondarySource)
+		}
+		combinedText := strings.Join(searchTexts, "\n")
+		issueIDs = jira.FindJiraIssueKeys(combinedText, o.projectKeys)
+		logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
 	}
-	if o.secondarySource != "" {
-		searchTexts = append(searchTexts, o.secondarySource)
-	}
-	combinedText := strings.Join(searchTexts, "\n")
-	issueIDs := jira.FindJiraIssueKeys(combinedText, o.projectKeys)
-	logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
-	logger.Debug("the following Jira references are found in commit message or branch name: %v", issueIDs)
+	logger.Debug("the following Jira references are found: %v", issueIDs)
 
 	issueLog := ""
 	issueFoundCount := 0
