@@ -457,6 +457,15 @@ func LoadJsonData(filepath string) (interface{}, error) {
 	return result, nil
 }
 
+// LoadOptionalJsonData loads json data from a file, and returns nil when no
+// file was given so that an omitempty field stays out of the payload.
+func LoadOptionalJsonData(filepath string) (interface{}, error) {
+	if filepath == "" {
+		return nil, nil
+	}
+	return LoadJsonData(filepath)
+}
+
 // ValidateArtifactArg validates the artifact name or path argument
 func ValidateArtifactArg(args []string, artifactType, inputSha256 string, alwaysRequireArtifactName bool) error {
 	if len(args) > 1 {
