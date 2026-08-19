@@ -49,7 +49,7 @@ jobs:
           claude_args: |
             --max-turns 40
             --max-budget-usd 5
-            --model claude-opus-4-8
+            --model claude-opus-5
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
           prompt: |
             REPO: ${{ github.repository }}
@@ -109,7 +109,7 @@ jobs:
           claude_args: |
             --max-turns 40
             --max-budget-usd 5
-            --model claude-opus-4-8
+            --model claude-opus-5
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(go build:*),Bash(go vet:*),Bash(go mod tidy:*),Bash(git diff:*),Bash(golangci-lint:*)"
 
           prompt: |
