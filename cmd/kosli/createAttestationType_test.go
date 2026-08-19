@@ -75,6 +75,8 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 			golden: "attestation-type wibble-9 was created\n",
 		},
 		{
+			// Deliberately asymmetric with the empty --summary case below: a blank
+			// JSON blob reads as "not given", a blank key=value entry as malformed.
 			name:   "empty summary json string is accepted",
 			cmd:    `create attestation-type wibble-10 --summary-json ''` + suite.defaultKosliArguments,
 			golden: "attestation-type wibble-10 was created\n",
@@ -158,9 +160,25 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 			golden:    "Error: --summary entry 1 expression cannot start with '='\n",
 		},
 		{
+			// Unlike --summary-json '', which is a no-op. Matters in CI, where
+			// --summary "$VAR" with VAR unset fails instead of silently no-opping.
+			wantError: true,
+			name:      "fails when a repeatable summary value is empty",
+			cmd:       `create attestation-type wibble-bad --summary ''` + suite.defaultKosliArguments,
+			golden:    "Error: --summary entry 1 must be in the form NAME=EXPRESSION\n",
+		},
+		{
 			wantError: true,
 			name:      "fails when both summary flags are provided",
 			cmd:       `create attestation-type wibble-bad --summary 'Critical=.critical_count' --summary-json '[{"name":"Critical","expression":".critical_count"}]'` + suite.defaultKosliArguments,
+			golden:    "Error: only one of --summary, --summary-json is allowed\n",
+		},
+		{
+			// MuXRequiredFlags keys off flag.Changed, so an explicitly empty
+			// --summary-json still trips the exclusion despite being a no-op.
+			wantError: true,
+			name:      "fails when both summary flags are provided and summary json is empty",
+			cmd:       `create attestation-type wibble-bad --summary 'Critical=.critical_count' --summary-json ''` + suite.defaultKosliArguments,
 			golden:    "Error: only one of --summary, --summary-json is allowed\n",
 		},
 	}
