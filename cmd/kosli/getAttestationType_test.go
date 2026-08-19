@@ -14,12 +14,14 @@ type GetAttestationTypeCommandTestSuite struct {
 	suite.Suite
 	attestationTypeName   string
 	archivedTypeName      string
+	summaryTypeName       string
 	defaultKosliArguments string
 }
 
 func (suite *GetAttestationTypeCommandTestSuite) SetupTest() {
 	suite.attestationTypeName = "custom-attestation-type-1"
 	suite.archivedTypeName = "archived-type"
+	suite.summaryTypeName = "summary-type"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user-shared",
@@ -30,6 +32,8 @@ func (suite *GetAttestationTypeCommandTestSuite) SetupTest() {
 	CreateCustomAttestationType(suite.attestationTypeName, "testdata/person-schema.json", []string{".age > 21"}, suite.T())
 	CreateCustomAttestationType(suite.archivedTypeName, "testdata/person-schema.json", []string{".age < 21"}, suite.T())
 	ArchiveCustomAttestationType(suite.archivedTypeName, suite.T())
+	CreateCustomAttestationTypeWithSummary(suite.summaryTypeName, "testdata/person-schema.json", []string{".age > 21"},
+		`[{"name":"Age","expression":".age"},{"name":"Name","expression":".name"}]`, suite.T())
 }
 
 func (suite *GetAttestationTypeCommandTestSuite) TestGetAttestationTypeCmd() {
@@ -72,6 +76,11 @@ func (suite *GetAttestationTypeCommandTestSuite) TestGetAttestationTypeCmd() {
 			name:       "getting an existing attestation type version works",
 			cmd:        fmt.Sprintf(`get attestation-type %s@v1 %s`, suite.attestationTypeName, suite.defaultKosliArguments),
 			goldenFile: "output/get/get-attestation-type-version.txt",
+		},
+		{
+			name:       "summary entries are shown in the table output",
+			cmd:        fmt.Sprintf(`get attestation-type %s %s`, suite.summaryTypeName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-attestation-type-with-summary.txt",
 		},
 		{
 			name: "getting an existing attestation type with --output json works",

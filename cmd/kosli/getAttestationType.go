@@ -190,5 +190,18 @@ func printVersionedAttestationTypeAsTable(raw map[string]interface{}, rows []str
 		}
 	}
 
+	// Types created without a summary have a null "summary", which fails this
+	// type assertion and prints nothing, leaving their output unchanged.
+	if summary, ok := attestationType["summary"].([]interface{}); ok && len(summary) > 0 {
+		rows = append(rows, "	Summary:\t")
+		for _, entry := range summary {
+			entryMap, ok := entry.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			rows = append(rows, fmt.Sprintf("		%s:\t%s", entryMap["name"], entryMap["expression"]))
+		}
+	}
+
 	return rows, nil
 }
