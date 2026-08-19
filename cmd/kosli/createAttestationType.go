@@ -102,7 +102,10 @@ type CreateAttestationTypePayload struct {
 // summary entries. The value must be a JSON array of {name, expression} objects,
 // both fields non-empty.
 func parseSummaryJSON(value string) ([]SummaryEntry, error) {
-	if strings.TrimSpace(value) == "" {
+	// Only a wholly absent value is no summary. The empty-value rule refuses an
+	// empty one on the command line, so "" here means the flag was left out;
+	// whitespace was written on purpose and falls through to be rejected.
+	if value == "" {
 		return nil, nil
 	}
 
