@@ -4161,13 +4161,17 @@
       "description",
       "dry-run",
       "jq",
-      "schema"
+      "schema",
+      "summary",
+      "summary-json"
     ],
     "flag_values": {
       "description": "probe-description",
       "dry-run": "true",
       "jq": ".age >= 18",
-      "schema": "cmd/kosli/testdata/person-schema.json"
+      "schema": "cmd/kosli/testdata/person-schema.json",
+      "summary": "Critical=.critical_count",
+      "summary-json": "[{\"name\":\"Critical\",\"expression\":\".critical_count\"}]"
     },
     "setup": [
       {
