@@ -17,9 +17,12 @@ COPY . .
 
 RUN make build
 
+RUN mkdir -p /image-tmp
+
 ### Final Image ###
 FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/kosli/kosli /bin/kosli
+COPY --from=builder --chmod=1777 /image-tmp /tmp
 ENTRYPOINT ["/bin/kosli"]
