@@ -212,6 +212,7 @@
   "jira-pat": "string",
   "jira-project-key": "stringSlice",
   "jira-secondary-source": "string",
+  "jira-trailer": "string",
   "jira-username": "string",
   "name": "string",
   "origin-url": "string",
