@@ -262,9 +262,8 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		},
 		{
 			// cobra splits the list with encoding/csv, which does not trim, so without
-			// normalisation the " EX" fragment fails validation. EX is deliberately the
-			// padded one: with --assert the case only passes if the key that has to match
-			// the EX-1 commit is the one that was trimmed.
+			// normalisation the " EX" fragment fails validation and the command never
+			// reaches the matcher. --assert carries the rest of the path end to end.
 			name: "20b can specify jira project keys as a comma-separated list with spaces",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
