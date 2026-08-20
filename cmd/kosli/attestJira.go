@@ -287,6 +287,7 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	o.payload.JiraResults = []*jira.JiraIssueInfo{}
 
+	o.normaliseJiraProjectKeys()
 	err = o.validateJiraProjectKeys()
 	if err != nil {
 		return err
@@ -387,6 +388,17 @@ func jiraSearchText(commitInfo *gitview.CommitInfo, secondarySource string, igno
 // the Jira project key has to start with a capital letter and can then have capital letters numbers and underscore.
 // But Jira itself will accept lower case letters when searching a repository for matching branches and commits.
 var jiraProjectKeyRegexp = regexp.MustCompile("^[A-Za-z][A-Za-z0-9_]{1,9}$")
+
+// normaliseJiraProjectKeys trims each project key in place. cobra splits a comma-separated
+// list with encoding/csv, which does not trim, so --jira-project-key "ABC, DEF" arrives as
+// {"ABC", " DEF"} and the untrimmed fragment fails validation. Normalising once here means a
+// single canonical key reaches both validateJiraProjectKeys and jira.FindJiraIssueKeys,
+// rather than each trimming separately and having to agree.
+func (o *attestJiraOptions) normaliseJiraProjectKeys() {
+	for i, projectKey := range o.projectKeys {
+		o.projectKeys[i] = strings.TrimSpace(projectKey)
+	}
+}
 
 func (o *attestJiraOptions) validateJiraProjectKeys() error {
 	invalidKeys := []string{}

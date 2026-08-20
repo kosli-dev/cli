@@ -261,6 +261,30 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
+			// cobra splits the list with encoding/csv, which does not trim, so without
+			// normalisation the " ABC" fragment fails validation
+			name: "20b can specify jira project keys as a comma-separated list with spaces",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-project-key "EX, ABC"
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			name: "20c a jira project key padded with spaces is accepted",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-project-key " EX "
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
 			wantError: true,
 			name:      "21 fails with an invalid Jira project key specified",
 			cmd: fmt.Sprintf(`attest jira --name bar
@@ -393,6 +417,60 @@ func TestJiraSearchText(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			require.Equal(t, tc.want, jiraSearchText(commitInfo, tc.secondarySource, tc.ignoreBranchMatch))
+		})
+	}
+}
+
+func TestNormaliseJiraProjectKeys(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		projectKeys []string
+		want        []string
+	}{
+		{
+			// cobra splits on the comma without trimming, so this is what
+			// --jira-project-key "ABC, DEF" actually delivers
+			name:        "a space after the comma is trimmed",
+			projectKeys: []string{"ABC", " DEF"},
+			want:        []string{"ABC", "DEF"},
+		},
+		{
+			name:        "space on both sides is trimmed",
+			projectKeys: []string{" EX "},
+			want:        []string{"EX"},
+		},
+		{
+			name:        "tabs and newlines are trimmed",
+			projectKeys: []string{"\tEX", "ABC\n"},
+			want:        []string{"EX", "ABC"},
+		},
+		{
+			name:        "keys that need no trimming are left alone",
+			projectKeys: []string{"ABC", "low", "A_99"},
+			want:        []string{"ABC", "low", "A_99"},
+		},
+		{
+			// a trailing comma yields an empty fragment, which stays empty so that
+			// validateJiraProjectKeys still rejects it
+			name:        "an empty key stays empty",
+			projectKeys: []string{"ABC", ""},
+			want:        []string{"ABC", ""},
+		},
+		{
+			name:        "a whitespace-only key becomes empty and is still rejected downstream",
+			projectKeys: []string{"ABC", " "},
+			want:        []string{"ABC", ""},
+		},
+		{
+			name:        "no keys is left alone",
+			projectKeys: []string{},
+			want:        []string{},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			o := &attestJiraOptions{projectKeys: tc.projectKeys}
+			o.normaliseJiraProjectKeys()
+			require.Equal(t, tc.want, o.projectKeys)
 		})
 	}
 }
