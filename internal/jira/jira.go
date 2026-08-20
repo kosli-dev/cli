@@ -116,33 +116,67 @@ var (
 	dashDigitRegexp = regexp.MustCompile(`^-\d`)
 )
 
-func MakeJiraIssueKeyPattern(projectKeys []string) string {
-	// Jira issue keys consist of [project-key]-[sequential-number].
-	// FindJiraIssueKeys uppercases the text before applying this pattern, so the
-	// pattern only needs to handle uppercase. Project keys supplied by the caller
-	// are also uppercased here for the same reason.
-	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
+// makeJiraIssueKeyPattern builds the regex matching Jira issue keys of the given projects.
+// Jira issue keys consist of [project-key]-[sequential-number]; see
+// https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
+//
+// The return value carries three distinct meanings:
+//
+//   - no project keys at all: the default pattern, matching keys of every project.
+//   - at least one usable key: a pattern matching keys of those projects only.
+//   - keys given, none of them usable: "", meaning no issue key can match.
+//
+// The "" case must NOT be compiled directly - the empty pattern matches at every position,
+// so compiling it yields the exact opposite of what it means. Use jiraIssueKeyRegexp, which
+// maps it to a nil regexp; this function is unexported so that nothing else can get it
+// wrong. It is separate from the no-keys case on purpose: answering "these projects all
+// turned out to be unusable" with the default pattern would widen a caller who named
+// projects to every project, and on an attestation path the keys that widening invents are
+// then looked up and attested.
+//
+// FindJiraIssueKeys uppercases the text before applying the pattern, so the pattern only
+// needs to handle uppercase, and the project keys are uppercased here for the same reason.
+// Each key is also quoted, so the pattern always compiles whatever the caller passes; a key
+// a Jira project could actually have carries no regex metacharacters, so quoting leaves it
+// unchanged. Keys are trimmed, and blank ones dropped rather than interpolated: an empty
+// alternative reduces the group to nothing and leaves a pattern matching any -[0-9]+, which
+// reports a phantom key such as -41284 out of CVE-2026-41284, and a whitespace-only key does
+// the same thing one column over, since a space is not a metacharacter for QuoteMeta to
+// escape. Trimming also stops " PROJ" from reporting " PROJ-123", which is not a key any
+// Jira project has.
+func makeJiraIssueKeyPattern(projectKeys []string) string {
 	if len(projectKeys) == 0 {
 		return defaultJiraIssueKeyPattern
 	}
-	// each key is quoted, so the returned pattern always compiles whatever the caller
-	// passes. A key that a Jira project could actually have carries no regex
-	// metacharacters, so quoting leaves it unchanged.
-	upper := make([]string, len(projectKeys))
-	for i, k := range projectKeys {
-		upper[i] = regexp.QuoteMeta(strings.ToUpper(k))
+	upper := make([]string, 0, len(projectKeys))
+	for _, k := range projectKeys {
+		k = strings.TrimSpace(k)
+		if k == "" {
+			continue
+		}
+		upper = append(upper, regexp.QuoteMeta(strings.ToUpper(k)))
+	}
+	if len(upper) == 0 {
+		return ""
 	}
 	return `\b(` + strings.Join(upper, "|") + `)-[0-9]+`
 }
 
-// jiraIssueKeyRegexp returns the compiled issue key pattern for the given project keys.
-// The default pattern is compiled once; a project-key pattern is compiled per call, and
-// cannot panic because MakeJiraIssueKeyPattern quotes the keys it interpolates.
+// jiraIssueKeyRegexp returns the compiled issue key pattern for the given project keys, or
+// nil if no issue key can match, which makeJiraIssueKeyPattern reports as "".
+//
+// A project-key pattern is compiled per call, and cannot panic because
+// makeJiraIssueKeyPattern quotes the keys it interpolates. When the pattern is the default
+// one, the copy compiled at package level is returned instead.
 func jiraIssueKeyRegexp(projectKeys []string) *regexp.Regexp {
-	if len(projectKeys) == 0 {
+	switch pattern := makeJiraIssueKeyPattern(projectKeys); pattern {
+	case "":
+		return nil
+	case defaultJiraIssueKeyPattern:
 		return defaultJiraIssueKeyRegexp
+	default:
+		return regexp.MustCompile(pattern)
 	}
-	return regexp.MustCompile(MakeJiraIssueKeyPattern(projectKeys))
 }
 
 // FindJiraIssueKeys finds all Jira issue keys in text, filtering out
@@ -152,8 +186,12 @@ func jiraIssueKeyRegexp(projectKeys []string) *regexp.Regexp {
 // A match is discarded if every occurrence in the uppercased text is
 // immediately followed by a hyphen and a digit.
 func FindJiraIssueKeys(text string, projectKeys []string) []string {
-	upperText := strings.ToUpper(text)
 	re := jiraIssueKeyRegexp(projectKeys)
+	if re == nil {
+		// project keys were given but none of them is usable, so no key can belong to them
+		return nil
+	}
+	upperText := strings.ToUpper(text)
 	candidates := re.FindAllString(upperText, -1)
 
 	// Deduplicate (all candidates are already uppercase).

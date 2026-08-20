@@ -223,15 +223,17 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 		wantFiltered []string
 	}{
 		{
+			// Creates no namespaces: the invalid pattern is reported as soon as filtering
+			// reaches it, and the cluster's own namespaces (default, kube-system, ...)
+			// are enough to reach it. Any created here would be a create and a delete
+			// against a real cluster for nothing.
 			name: "invalid regex patterns return error",
 			args: args{
-				namespaces: []string{"filter-err-a1", "filter-err-a2"},
 				filter: &filters.ResourceFilterOptions{
 					IncludeNamesRegex: []string{"["},
 				},
 			},
 			expectError: true,
-			want:        []string{},
 		},
 		{
 			name: "namespaces matching the include regex patterns are returned",
@@ -268,7 +270,6 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 				},
 			},
 			expectError: true,
-			want:        []string{},
 		},
 	} {
 		suite.Run(t.name, func() {
@@ -286,8 +287,17 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 			}
 			require.NoErrorf(suite.T(), err, "error was NOT expected but got: %v.", err)
 			if len(t.wantFiltered) > 0 {
-				require.Subset(suite.T(), result, []string{"filter-exc-b1"},
-					"TestFilterNamespaces: %v should contain the non-excluded namespace", result)
+				// every namespace this case created and did not ask to be filtered out
+				// has to survive, so the case describes its own expectation instead of
+				// naming a survivor twice
+				survivors := []string{}
+				for _, ns := range t.args.namespaces {
+					if !slices.Contains(t.wantFiltered, ns) {
+						survivors = append(survivors, ns)
+					}
+				}
+				require.Subset(suite.T(), result, survivors,
+					"TestFilterNamespaces: %v should contain every non-excluded namespace %v", result, survivors)
 				for _, ns := range t.wantFiltered {
 					require.NotContains(suite.T(), result, ns,
 						"TestFilterNamespaces: %s should have been filtered out of %v", ns, result)

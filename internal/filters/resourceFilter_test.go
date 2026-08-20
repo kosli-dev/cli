@@ -281,9 +281,13 @@ func (suite *FiltersSuite) TestCompileClonesLiteralNames() {
 	require.True(suite.T(), included, "bar was not excluded when the filter was compiled")
 }
 
-// TestCompiledFilterConcurrentShouldInclude verifies that one compiled filter can be
-// shared by many goroutines, as the k8s and ECS snapshot paths do. The filter carries an
-// invalid pattern so that the error path is exercised concurrently too. Run with -race.
+// TestCompiledFilterConcurrentShouldInclude shares one compiled filter across many
+// goroutines, as the k8s and ECS snapshot paths do. The filter carries an invalid pattern
+// so that the error path is exercised concurrently too.
+//
+// Every goroutine writes its own slot and reads only immutable state, so the assertions
+// check that concurrent matching returns the right answers - both of them, for the same
+// filter - rather than that the sharing itself is synchronised.
 func (suite *FiltersSuite) TestCompiledFilterConcurrentShouldInclude() {
 	filter := &ResourceFilterOptions{
 		IncludeNamesRegex: []string{"^include-.*$", "^never-reached["},
