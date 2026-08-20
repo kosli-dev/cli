@@ -242,8 +242,7 @@ func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterO
 		return result, err
 	}
 
-	if len(filter.IncludeNames) == 0 && len(filter.IncludeNamesRegex) == 0 &&
-		len(filter.ExcludeNames) == 0 && len(filter.ExcludeNamesRegex) == 0 {
+	if !filter.IsSet() {
 		for _, ns := range nsList {
 			result = append(result, ns.Name)
 		}

@@ -63,11 +63,14 @@ type CompiledResourceFilter struct {
 // reported by ShouldInclude when matching a name reaches that pattern. Reporting it here
 // instead would reject filters that never reach it, such as a name settled by
 // ExcludeNames, or an invalid pattern behind one that already matched.
+//
+// The literal name slices are cloned, so that mutating the options afterwards cannot
+// change what an already-compiled filter matches.
 func (filter *ResourceFilterOptions) Compile() *CompiledResourceFilter {
 	return &CompiledResourceFilter{
-		includeNames:    filter.IncludeNames,
+		includeNames:    slices.Clone(filter.IncludeNames),
 		includePatterns: compileNamesRegex(filter.IncludeNamesRegex, "include"),
-		excludeNames:    filter.ExcludeNames,
+		excludeNames:    slices.Clone(filter.ExcludeNames),
 		excludePatterns: compileNamesRegex(filter.ExcludeNamesRegex, "exclude"),
 	}
 }

@@ -262,6 +262,25 @@ func (suite *FiltersSuite) TestCompile() {
 	}
 }
 
+// TestCompileClonesLiteralNames pins the immutability CompiledResourceFilter's doc comment
+// claims, and which makes it safe to share one compiled filter across goroutines: mutating
+// the options after Compile must not change what the compiled filter matches.
+func (suite *FiltersSuite) TestCompileClonesLiteralNames() {
+	filter := &ResourceFilterOptions{ExcludeNames: []string{"foo"}}
+	compiled := filter.Compile()
+
+	filter.ExcludeNames[0] = "bar"
+	filter.ExcludeNames = append(filter.ExcludeNames, "baz")
+
+	included, err := compiled.ShouldInclude("foo")
+	require.NoError(suite.T(), err)
+	require.False(suite.T(), included, "foo was excluded when the filter was compiled")
+
+	included, err = compiled.ShouldInclude("bar")
+	require.NoError(suite.T(), err)
+	require.True(suite.T(), included, "bar was not excluded when the filter was compiled")
+}
+
 // TestCompiledFilterConcurrentShouldInclude verifies that one compiled filter can be
 // shared by many goroutines, as the k8s and ECS snapshot paths do. The filter carries an
 // invalid pattern so that the error path is exercised concurrently too. Run with -race.

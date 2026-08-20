@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -252,6 +253,23 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 			},
 			wantFiltered: []string{"filter-exc-a1", "filter-exc-a2"},
 		},
+		{
+			// An invalid pattern is only reported once matching a name reaches it, and a
+			// name listed in ExcludeNames is settled before that. On this path the
+			// short-circuit never saves the snapshot though: the cluster's own
+			// namespaces (default, kube-system, ...) are not in ExcludeNames, so one of
+			// them always reaches the pattern.
+			name: "an invalid exclude pattern is reported despite the excluded literal name",
+			args: args{
+				namespaces: []string{"filter-lazy-a1"},
+				filter: &filters.ResourceFilterOptions{
+					ExcludeNames:      []string{"filter-lazy-a1"},
+					ExcludeNamesRegex: []string{"["},
+				},
+			},
+			expectError: true,
+			want:        []string{},
+		},
 	} {
 		suite.Run(t.name, func() {
 			// namespace names must not be shared with another test method: AfterTest
@@ -276,7 +294,21 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 				}
 				return
 			}
-			require.ElementsMatch(suite.T(), t.want, result, "TestFilterNamespaces: got %v -- want %v", result, t.want)
+			// filterNamespaces returns the namespaces in the order the cluster listed
+			// them, which the goroutine-per-namespace fan-out it replaced could not
+			// guarantee. Build the expectation in that same order so the assertion
+			// pins the ordering and not just the set.
+			nsList, err := suite.clientset.GetClusterNamespaces()
+			require.NoErrorf(suite.T(), err, "error listing cluster namespaces")
+			wantInClusterOrder := []string{}
+			for _, ns := range nsList {
+				if slices.Contains(t.want, ns.Name) {
+					wantInClusterOrder = append(wantInClusterOrder, ns.Name)
+				}
+			}
+			require.ElementsMatch(suite.T(), t.want, wantInClusterOrder,
+				"TestFilterNamespaces: %v missing from the cluster listing, the ordering assertion would be vacuous", t.want)
+			require.Equal(suite.T(), wantInClusterOrder, result, "TestFilterNamespaces: got %v -- want %v", result, wantInClusterOrder)
 		})
 	}
 

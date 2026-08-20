@@ -134,8 +134,8 @@ func MakeJiraIssueKeyPattern(projectKeys []string) string {
 
 // jiraIssueKeyRegexp returns the compiled issue key pattern for the given project keys.
 // The default pattern is compiled once; a project-key pattern is compiled per call, which
-// is safe from panics because validateJiraProjectKeys has already rejected any key outside
-// ^[A-Za-z][A-Za-z0-9_]{1,9}$, so a key cannot carry regex metacharacters.
+// is safe from panics because validateJiraProjectKeys has already rejected any key that
+// jiraProjectKeyRegexp does not match, so a key cannot carry regex metacharacters.
 func jiraIssueKeyRegexp(projectKeys []string) *regexp.Regexp {
 	if len(projectKeys) == 0 {
 		return defaultJiraIssueKeyRegexp
