@@ -380,7 +380,14 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *SonarResults, project *Project, revision string, logger *log.Logger) (string, error) {
 	var analysisID string
 
-	projectAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", url.Values{"project": {project.Key}})
+	// Forward branch to search analyses on non-default branches (#1116). SonarQube
+	// defaults this endpoint to the project's main branch, so without it a scan on
+	// any other branch is invisible here.
+	params := url.Values{"project": {project.Key}}
+	if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
+		params.Set("branch", sonarResults.Branch.Name)
+	}
+	projectAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", params)
 	if err != nil {
 		return "", err
 	}
