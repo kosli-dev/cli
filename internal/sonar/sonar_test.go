@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/sonar"
@@ -277,5 +278,54 @@ func TestGetProjectAnalysisFromRevision_WrongRevisionOnBranch(t *testing.T) {
 	}
 	if sonarResults.AnalysedAt != "" {
 		t.Errorf("expected AnalysedAt to stay empty on no match, got %q", sonarResults.AnalysedAt)
+	}
+}
+
+// TestGetProjectAnalysisFromRevision_NoBranchErrorSuggestsFlag covers the other
+// half of #1116: an empty search result is indistinguishable from a permissions
+// problem, which is what cost the customer several days. When no branch was given,
+// the error has to say that only the main branch was searched.
+func TestGetProjectAnalysisFromRevision_NoBranchErrorSuggestsFlag(t *testing.T) {
+	var receivedBranch string
+	var branchParamPresent bool
+	server := branchScopedAnalysesServer(t, &receivedBranch, &branchParamPresent)
+	defer server.Close()
+
+	sonarResults := &sonar.SonarResults{ServerUrl: server.URL}
+	project := &sonar.Project{Key: revProjectKey}
+
+	_, err := sonar.GetProjectAnalysisFromRevision(http.DefaultClient, sonarResults, project, revRevision, discardLogger())
+	if err == nil {
+		t.Fatal("expected an error when the main branch has no analysis for the revision")
+	}
+	if !strings.Contains(err.Error(), "--sonar-branch") {
+		t.Errorf("expected the error to point at --sonar-branch, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "main branch") {
+		t.Errorf("expected the error to say only the main branch was searched, got: %v", err)
+	}
+}
+
+// TestGetProjectAnalysisFromRevision_BranchErrorNamesBranch is the same contract
+// once a branch has been supplied: the error must name the branch that was
+// searched, and must not suggest a flag that is already in use.
+func TestGetProjectAnalysisFromRevision_BranchErrorNamesBranch(t *testing.T) {
+	var receivedBranch string
+	var branchParamPresent bool
+	server := branchScopedAnalysesServer(t, &receivedBranch, &branchParamPresent)
+	defer server.Close()
+
+	sonarResults := &sonar.SonarResults{ServerUrl: server.URL, Branch: &sonar.Branch{Name: revMainBranch}}
+	project := &sonar.Project{Key: revProjectKey}
+
+	_, err := sonar.GetProjectAnalysisFromRevision(http.DefaultClient, sonarResults, project, revRevision, discardLogger())
+	if err == nil {
+		t.Fatal("expected an error when the searched branch has no analysis for the revision")
+	}
+	if !strings.Contains(err.Error(), revMainBranch) {
+		t.Errorf("expected the error to name branch %q, got: %v", revMainBranch, err)
+	}
+	if strings.Contains(err.Error(), "--sonar-branch") {
+		t.Errorf("expected no --sonar-branch suggestion when a branch was given, got: %v", err)
 	}
 }

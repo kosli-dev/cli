@@ -433,7 +433,13 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	}
 
 	if sonarResults.AnalysedAt == "" {
-		return "", fmt.Errorf("analysis for revision %s of project %s not found. Check the revision is correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key)
+		// An empty result reads like a permissions problem, so say which branch was
+		// actually searched: unscoped, SonarQube only searches the main branch (#1116).
+		scope := "only the project's main branch was searched, because no --sonar-branch was given"
+		if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
+			scope = fmt.Sprintf("branch %s was searched", sonarResults.Branch.Name)
+		}
+		return "", fmt.Errorf("analysis for revision %s of project %s not found: %s. Check the revision and the branch are correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key, scope)
 	}
 
 	return analysisID, nil

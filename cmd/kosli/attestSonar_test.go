@@ -182,7 +182,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			wantError: true,
 			name:      "16 if incorrect revision given (or the scan for the given revision has been deleted by SonarCloud)",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 %s", suite.defaultKosliArguments),
-			golden:    "Error: analysis for revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 of project cyber-dojo_differ not found. Check the revision is correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube\n",
+			golden:    "Error: analysis for revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 of project cyber-dojo_differ not found: only the project's main branch was searched, because no --sonar-branch was given. Check the revision and the branch are correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube\n",
 		},
 		{
 			wantError: true,
@@ -345,7 +345,7 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 			wantError: true,
 			name:      "113 if incorrect revision given, give an error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-server-url http://localhost:9000 --sonar-project-key test5 --sonar-revision 8e6f9489e5f2ddf8e719b503e374975e8b607fd2 %s", suite.defaultKosliArguments),
-			golden:    "Error: analysis for revision 8e6f9489e5f2ddf8e719b503e374975e8b607fd2 of project test5 not found. Check the revision is correct. Snapshot may also have been deleted by SonarQube\n",
+			golden:    "Error: analysis for revision 8e6f9489e5f2ddf8e719b503e374975e8b607fd2 of project test5 not found: only the project's main branch was searched, because no --sonar-branch was given. Check the revision and the branch are correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube\n",
 		},
 		{
 			wantError: true,
