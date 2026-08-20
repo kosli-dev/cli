@@ -69,8 +69,10 @@ test_attest_artifact_dir() {
   local commit_sha
   commit_sha="$(git -C "$REPO_ROOT" rev-parse HEAD)" || return 1
 
-  # --dry-run here would silently report this
-  # case as a pass even if the command fails. Guard against that below rather than trusting the exit code alone.
+  # --api-token is required by PreRunE even under --dry-run
+  # (attestArtifact.go:115) — it looks redundant below, but removing it fails
+  # the command. And --dry-run turns any error into a warning plus exit 0
+  # (main.go:202-206), so the exit code alone can't be trusted here.
   local output
   output="$(docker run --rm \
     -v "${REPO_ROOT}":/workspace:ro \
@@ -91,7 +93,12 @@ test_attest_artifact_dir() {
   local status=$?
   echo "$output"
 
-  [ "$status" -eq 0 ] && ! grep -q "Encountered an error but --dry-run is enabled" <<< "$output"
+  # The dry-run banner is only printed once the dir is fingerprinted, git info
+  # resolved and the payload built (requests.go:254), so asserting it is
+  # present proves this case did its work — and fails closed if the command
+  # dies earlier or the message is reworded.
+  grep -q "THIS IS A DRY-RUN" <<< "$output" || return 1
+  [ "$status" -eq 0 ]
 }
 
 # --- Run all cases ------------------------------------------------------
