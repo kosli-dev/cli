@@ -69,13 +69,8 @@ test_attest_artifact_dir() {
   local commit_sha
   commit_sha="$(git -C "$REPO_ROOT" rev-parse HEAD)" || return 1
 
-  # --api-token is a required flag, validated before --dry-run's own
-  # short-circuit is ever reached — omitting it fails the command, not the
-  # request. And under --dry-run, main.go turns ANY command error into a
-  # logged warning plus exit 0 ("Encountered an error but --dry-run is
-  # enabled"), so a missing/invalid token here would silently report this
-  # case as a pass without exercising fingerprinting or git resolution at
-  # all. Guard against that below rather than trusting the exit code alone.
+  # --dry-run here would silently report this
+  # case as a pass even if the command fails. Guard against that below rather than trusting the exit code alone.
   local output
   output="$(docker run --rm \
     -v "${REPO_ROOT}":/workspace:ro \
