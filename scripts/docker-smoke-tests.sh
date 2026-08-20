@@ -19,9 +19,23 @@ fi
 EXIT_CODE=0
 RESULTS="[]"
 
-# Runs a smoke test case and records its outcome in $RESULTS_FILE, keyed by
-# name. The CI workflow reports a single aggregate attestation, compliant only
-# if every recorded case succeeded, with the results file attached.
+# Updates the named entry's outcome in $RESULTS and flushes to $RESULTS_FILE.
+write_result() {
+  local name="$1"
+  local outcome="$2"
+
+  RESULTS="$(jq --arg name "$name" --arg outcome "$outcome" \
+    'map(if .name == $name then .outcome = $outcome else . end)' <<< "$RESULTS")" \
+    || { echo "jq failed" >&2; exit 1; }
+  printf '%s\n' "$RESULTS" > "$RESULTS_FILE" || { echo "failed to write $RESULTS_FILE" >&2; exit 1; }
+}
+
+# Runs a smoke test case and records its outcome, keyed by name. The CI
+# workflow reports a single aggregate attestation, compliant only if every
+# recorded case succeeded, with the results file attached. Every case is
+# seeded as "not-run" before any case executes (see below), so a run that
+# aborts part-way leaves a results file that reads as incomplete rather than
+# as a clean pass.
 # Usage: run_case <case-name> <test-function>
 run_case() {
   local name="$1"
@@ -36,14 +50,12 @@ run_case() {
   echo "::endgroup::"
   echo "Smoke test ${name}: ${outcome}"
 
-  RESULTS="$(jq --arg name "$name" --arg outcome "$outcome" \
-    '. + [{name: $name, outcome: $outcome}]' <<< "$RESULTS")" || { echo "jq failed" >&2; exit 1; }
-  printf '%s\n' "$RESULTS" > "$RESULTS_FILE" || { echo "failed to write $RESULTS_FILE" >&2; exit 1; }
+  write_result "$name" "$outcome"
 }
 
 # --- Smoke test cases -------------------------------------------------
 # Add a new smoke test by writing a test_* function below and adding one
-# run_case call for it — no CI workflow changes needed.
+# entry to the CASES array further down — no CI workflow changes needed.
 
 test_list_environments() {
   docker run --rm \
@@ -55,12 +67,13 @@ test_list_environments() {
 
 test_attest_artifact_dir() {
   local commit_sha
-  commit_sha="$(git -C "$REPO_ROOT" rev-parse HEAD)"
+  commit_sha="$(git -C "$REPO_ROOT" rev-parse HEAD)" || return 1
 
+  # --dry-run short-circuits before any request is sent, so no API token is
+  # needed here (unlike test_list_environments, which does talk to the API).
   docker run --rm \
     -v "${REPO_ROOT}":/workspace:ro \
     -w /workspace \
-    -e KOSLI_API_TOKEN=any-token-will-do \
     -e KOSLI_ORG=test-org \
     "${IMAGE}:${TAG}" \
     attest artifact /workspace/internal/utils \
@@ -76,8 +89,24 @@ test_attest_artifact_dir() {
 }
 
 # --- Run all cases ------------------------------------------------------
+# Add a case by adding one entry here alongside its test_* function above.
 
-run_case "list-environments" test_list_environments
-run_case "attest-artifact-dir" test_attest_artifact_dir
+CASES=(
+  "list-environments:test_list_environments"
+  "attest-artifact-dir:test_attest_artifact_dir"
+)
+
+# Seed every case as not-run and flush before running any of them, so an
+# abort part-way through (crash, timeout, hung docker run) leaves a results
+# file that visibly distinguishes "didn't run" from "passed".
+for entry in "${CASES[@]}"; do
+  RESULTS="$(jq --arg name "${entry%%:*}" '. + [{name: $name, outcome: "not-run"}]' <<< "$RESULTS")" \
+    || { echo "jq failed" >&2; exit 1; }
+done
+printf '%s\n' "$RESULTS" > "$RESULTS_FILE" || { echo "failed to write $RESULTS_FILE" >&2; exit 1; }
+
+for entry in "${CASES[@]}"; do
+  run_case "${entry%%:*}" "${entry##*:}"
+done
 
 exit $EXIT_CODE
