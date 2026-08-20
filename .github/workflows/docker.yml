@@ -341,7 +341,7 @@ jobs:
           RESULTS_FILE: smoke-test-results.json
         run: ./scripts/docker-smoke-tests.sh
 
-      - name: Report docker smoke test attestation to Kosli
+      - name: Report Docker smoke test attestation to Kosli
         if: ${{ inputs.report_to_kosli != 'none' && (success() || failure()) }}
         env:
           KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
