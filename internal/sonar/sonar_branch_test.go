@@ -300,3 +300,28 @@ func TestGetSonarResults_NoTaskThenFailure_DoesNotWarn(t *testing.T) {
 		t.Errorf("expected no warning ahead of the error, got stderr: %q", stderr.String())
 	}
 }
+
+// TestGetSonarResults_PullRequestNoTask_DoesNotWarn pins the scope of the
+// missing-task warning. On the pull-request path GetTaskID can only match on the
+// PR key, and api/ce/activity is recent-first and page-bounded, so a PR task
+// ageing out is ordinary rather than surprising. Warning there would be noise,
+// and would tie a passing test to SonarQube's activity window.
+func TestGetSonarResults_PullRequestNoTask_DoesNotWarn(t *testing.T) {
+	fake := &fakeBranchSonar{}
+	srv := httptest.NewServer(fake.handler())
+	defer srv.Close()
+
+	log, stderr := bufferLogger()
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, "", revPullRequest, "", 5)
+	results, err := sc.GetSonarResults(log)
+	if err != nil {
+		t.Fatalf("expected the pull-request scan to be found, got error: %v", err)
+	}
+
+	if results.TaskID != "" {
+		t.Fatalf("expected no task to have matched on the pull-request path, got %q", results.TaskID)
+	}
+	if stderr.Len() != 0 {
+		t.Errorf("expected no warning for an ordinary pull-request task miss, got stderr: %q", stderr.String())
+	}
+}

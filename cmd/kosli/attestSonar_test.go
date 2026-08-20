@@ -163,6 +163,10 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			golden:    "Error: open .scannerwork/report-task.txt: no such file or directory. Check your working directory is set correctly. Alternatively provide the project key and either revision or pull-request ID for the scan to attest\n",
 		},
 		{
+			// Depends on SonarCloud still holding a compute engine task for the latest
+			// analysis: the CLI warns when it does not, and that warning is compared
+			// as part of the golden. getLatestAnalysisRevision picks the newest
+			// analysis, so its task is at the top of api/ce/activity.
 			name:   "13 can retrieve scan results using project key and revision and attest them",
 			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-revision %s %s", suite.mainRevision, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",

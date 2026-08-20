@@ -250,6 +250,11 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 		// Here the scan is identified by report-task.txt or --sonar-ce-task-url, and
 		// the branch is read from the scan task, so a supplied branch reaches nothing.
 		// Say so rather than ignoring it in silence.
+		//
+		// Reaching this block is what makes that true: readFile puts the file's
+		// ceTaskUrl on sc.CETaskUrl, so both ways of naming a scan by its task arrive
+		// here, and an empty analysisID means the project-key path did not already
+		// resolve one.
 		if sc.branch != "" {
 			logger.Warn("--sonar-branch is ignored when the scan is identified by report-task.txt or --sonar-ce-task-url: the branch is read from the scan task")
 		}
@@ -286,13 +291,17 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	sonarResults.Project = *project
 	sonarResults.QualityGate = qualityGate
 
-	// No task ID means api/ce/activity held no task for this scan: it is a bounded
-	// recent-activity list and takes no branch parameter, so an older scan can age
-	// out of it. The attestation is still valid, it just says less — and nothing
-	// used to say why. Warned here, on the way out, so it describes the payload
-	// being returned rather than appearing ahead of an error the caller reports.
-	if sonarResults.TaskID == "" {
-		logger.Warn("no SonarQube compute engine task was found for this scan of project %s: the attestation carries no task ID or scan status", project.Key)
+	// No task ID means api/ce/activity held no task for this scan. Warned here, on
+	// the way out, so it describes the payload being returned rather than appearing
+	// ahead of an error the caller reports.
+	//
+	// Only when we have an analysis ID: SonarQube has just returned that analysis,
+	// so its task missing from the activity list is surprising and worth saying. On
+	// the pull-request path there is no analysis ID and the match can only be on the
+	// PR key, which a recent-first, page-bounded list drops as a matter of course —
+	// warning there would be noise about the ordinary case.
+	if analysisID != "" && sonarResults.TaskID == "" {
+		logger.Warn("no SonarQube compute engine task was found for analysis %s of project %s: the attestation carries no task ID or scan status", analysisID, project.Key)
 	}
 
 	return sonarResults, nil
