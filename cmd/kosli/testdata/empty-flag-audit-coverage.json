@@ -459,6 +459,7 @@
   "repo-url": "string",
   "repository": "string",
   "sonar-api-token": "string",
+  "sonar-branch": "string",
   "sonar-ce-task-url": "string",
   "sonar-project-key": "string",
   "sonar-revision": "string",
