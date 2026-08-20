@@ -69,11 +69,18 @@ test_attest_artifact_dir() {
   local commit_sha
   commit_sha="$(git -C "$REPO_ROOT" rev-parse HEAD)" || return 1
 
-  # --dry-run short-circuits before any request is sent, so no API token is
-  # needed here (unlike test_list_environments, which does talk to the API).
-  docker run --rm \
+  # --api-token is a required flag, validated before --dry-run's own
+  # short-circuit is ever reached — omitting it fails the command, not the
+  # request. And under --dry-run, main.go turns ANY command error into a
+  # logged warning plus exit 0 ("Encountered an error but --dry-run is
+  # enabled"), so a missing/invalid token here would silently report this
+  # case as a pass without exercising fingerprinting or git resolution at
+  # all. Guard against that below rather than trusting the exit code alone.
+  local output
+  output="$(docker run --rm \
     -v "${REPO_ROOT}":/workspace:ro \
     -w /workspace \
+    -e KOSLI_API_TOKEN=any-token-will-do \
     -e KOSLI_ORG=test-org \
     "${IMAGE}:${TAG}" \
     attest artifact /workspace/internal/utils \
@@ -85,7 +92,11 @@ test_attest_artifact_dir() {
     --commit-url "https://github.com/kosli-dev/cli/commit/${commit_sha}" \
     --repo-root /workspace \
     --dry-run \
-    --debug
+    --debug 2>&1)"
+  local status=$?
+  echo "$output"
+
+  [ "$status" -eq 0 ] && ! grep -q "Encountered an error but --dry-run is enabled" <<< "$output"
 }
 
 # --- Run all cases ------------------------------------------------------
