@@ -255,6 +255,12 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 		// ceTaskUrl on sc.CETaskUrl, so both ways of naming a scan by its task arrive
 		// here, and an empty analysisID means the project-key path did not already
 		// resolve one.
+		//
+		// Unlike the missing-task warning at the end of this function, this one is
+		// deliberately emitted before the lookups that can fail. "The flag you passed
+		// is ignored" is true whether or not the run then succeeds, and is worth
+		// saying either way; the other warning describes a payload, so it would be a
+		// false statement on a run that never publishes one.
 		if sc.branch != "" {
 			logger.Warn("--sonar-branch is ignored when the scan is identified by report-task.txt or --sonar-ce-task-url: the branch is read from the scan task")
 		}
