@@ -56,10 +56,10 @@ func (suite *CreateControlTestSuite) TestCreateControlCmd() {
 			goldenRegex: "^Error: A control with identifier 'my-control' already exists in organization",
 		},
 		{
-			wantError:   true,
-			name:        "fails when the identifier contains invalid characters",
-			cmd:         "create control 'bad identifier' --name 'My Control'" + suite.defaultKosliArguments,
-			goldenRegex: "^Error: Input payload validation failed:.*Control identifier 'bad identifier' contains invalid characters",
+			wantError: true,
+			name:      "fails when the identifier contains invalid characters",
+			cmd:       "create control 'bad identifier' --name 'My Control'" + suite.defaultKosliArguments,
+			golden:    "Error: Input payload validation failed: map[identifier:String should match pattern '^[a-zA-Z0-9\\-._~]+$' [input: bad identifier]]\n",
 		},
 	}
 

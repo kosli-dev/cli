@@ -39,7 +39,7 @@ func (suite *RenameFlowCommandTestSuite) TestRenameFlowCmd() {
 			wantError: true,
 			name:      "renaming flow fails if the new name is illegal",
 			cmd:       fmt.Sprintf(`rename flow %s 'new illegal name' %s`, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: 'new illegal name' is an invalid name for flows. Valid names should start with an alphanumeric and only contain alphanumeric characters, '.', '-', '_' and '~'.\n",
+			golden:    "Error: Input payload validation failed: map[new_name:String should match pattern '^[a-zA-Z0-9][a-zA-Z0-9\\.\\-_~]*$' [input: new illegal name]]\n",
 		},
 		{
 			wantError: true,
