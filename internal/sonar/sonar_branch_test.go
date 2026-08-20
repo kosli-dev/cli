@@ -279,3 +279,24 @@ func TestGetSonarResults_BranchIgnoredOnCETaskPath_Warns(t *testing.T) {
 		t.Errorf("expected a warning that --sonar-branch is ignored on this path, got stderr: %q", stderr.String())
 	}
 }
+
+// TestGetSonarResults_NoTaskThenFailure_DoesNotWarn is the case CI caught: when
+// the lookup goes on to fail, the command already says something specific and
+// true, and a warning about an attestation that is never published is noise
+// ahead of a better message. The warning describes the payload we are about to
+// return, so it must not appear on a path that returns an error instead.
+func TestGetSonarResults_NoTaskThenFailure_DoesNotWarn(t *testing.T) {
+	fake := &fakeBranchSonar{omitMatchingTask: true}
+	srv := httptest.NewServer(fake.handler())
+	defer srv.Close()
+
+	log, stderr := bufferLogger()
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, "", "99", "", 5)
+	if _, err := sc.GetSonarResults(log); err == nil {
+		t.Fatal("expected an error for a pull request that does not exist")
+	}
+
+	if stderr.Len() != 0 {
+		t.Errorf("expected no warning ahead of the error, got stderr: %q", stderr.String())
+	}
+}

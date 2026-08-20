@@ -273,6 +273,15 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	sonarResults.Project = *project
 	sonarResults.QualityGate = qualityGate
 
+	// No task ID means api/ce/activity held no task for this scan: it is a bounded
+	// recent-activity list and takes no branch parameter, so an older scan can age
+	// out of it. The attestation is still valid, it just says less — and nothing
+	// used to say why. Warned here, on the way out, so it describes the payload
+	// being returned rather than appearing ahead of an error the caller reports.
+	if sonarResults.TaskID == "" {
+		logger.Warn("no SonarQube compute engine task was found for this scan of project %s: the attestation carries no task ID or scan status", project.Key)
+	}
+
 	return sonarResults, nil
 }
 
@@ -627,13 +636,11 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 		return sonarResponseError(CEActivityResponse.StatusCode)
 	}
 
-	matchedTask := false
 	for t := range CEActivityData.Tasks {
 		task := CEActivityData.Tasks[t]
 		matched := (analysisID != "" && task.AnalysisID == analysisID) ||
 			(analysisID == "" && sonarResults.PullRequest != "" && task.PullRequest == sonarResults.PullRequest)
 		if matched {
-			matchedTask = true
 			sonarResults.TaskID = task.TaskID
 			sonarResults.Status = task.Status
 			project.Name = task.ComponentName
@@ -649,17 +656,6 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 			}
 			break
 		}
-	}
-
-	// api/ce/activity is a bounded recent-activity list and takes no branch
-	// parameter, so the task may simply not be there. Without this the attestation
-	// is published with no task ID and no status, and nothing says why.
-	if !matchedTask {
-		sought := fmt.Sprintf("analysis %s", analysisID)
-		if analysisID == "" {
-			sought = fmt.Sprintf("pull request %s", sonarResults.PullRequest)
-		}
-		logger.Warn("no SonarQube compute engine task found for %s of project %s: the attestation will carry no task ID or scan status", sought, project.Key)
 	}
 
 	return nil
