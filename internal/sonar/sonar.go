@@ -160,6 +160,19 @@ func sonarURL(serverURL, apiPath string, params url.Values) (string, error) {
 	return u.String(), nil
 }
 
+// analysesSearchURL builds a project_analyses/search URL, scoped to the branch
+// when there is one: SonarQube otherwise searches only the project's main branch,
+// so an analysis on any other branch is invisible (#861, #1116). Both lookups
+// share this so the rule cannot be fixed on one path and left broken on the other,
+// which is how those two issues came to be six months apart.
+func analysesSearchURL(sonarResults *SonarResults, project *Project) (string, error) {
+	params := url.Values{"project": {project.Key}}
+	if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
+		params.Set("branch", sonarResults.Branch.Name)
+	}
+	return sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", params)
+}
+
 func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error) {
 	var analysisID string
 	var err error
@@ -221,11 +234,11 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			if err != nil {
 				return nil, err
 			}
-			// GetTaskID rewrites the branch from the matched task, and clears it when
-			// the task reports none — which SonarQube does for main-branch tasks, and
-			// older self-hosted Servers do more widely. The task is authoritative for
-			// the branch type, but it must not delete the branch the user gave us to
-			// find the analysis with (#1116).
+			// The task's own branch wins when it reports one — it is the scan's own
+			// record, reached via an analysis ID the branch-scoped search returned.
+			// But it must not delete the branch the user gave us when it reports none,
+			// which SonarQube does for main-branch tasks and older self-hosted Servers
+			// do more widely (#1116).
 			if sc.branch != "" && sonarResults.PullRequest == "" &&
 				(sonarResults.Branch == nil || sonarResults.Branch.Name == "") {
 				sonarResults.Branch = &Branch{Name: sc.branch}
@@ -413,14 +426,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *SonarResults, project *Project, revision string, logger *log.Logger) (string, error) {
 	var analysisID string
 
-	// Forward branch to search analyses on non-default branches (#1116). SonarQube
-	// defaults this endpoint to the project's main branch, so without it a scan on
-	// any other branch is invisible here.
-	params := url.Values{"project": {project.Key}}
-	if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
-		params.Set("branch", sonarResults.Branch.Name)
-	}
-	projectAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", params)
+	projectAnalysesURL, err := analysesSearchURL(sonarResults, project)
 	if err != nil {
 		return "", err
 	}
@@ -473,12 +479,7 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 }
 
 func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID string) error {
-	// Forward branch to find analyses on non-default branches (#861).
-	params := url.Values{"project": {project.Key}}
-	if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
-		params.Set("branch", sonarResults.Branch.Name)
-	}
-	projectAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", params)
+	projectAnalysesURL, err := analysesSearchURL(sonarResults, project)
 	if err != nil {
 		return err
 	}
