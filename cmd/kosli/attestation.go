@@ -180,9 +180,13 @@ func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
 	return nil
 }
 
+// annotationKeyRegexp is compiled once, so processAnnotations does not re-compile a
+// constant pattern for every annotation key it checks.
+var annotationKeyRegexp = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
+
 func processAnnotations(annotations map[string]string) (map[string]string, error) {
 	for label := range annotations {
-		if !regexp.MustCompile(`^[A-Za-z0-9_]+$`).MatchString(label) {
+		if !annotationKeyRegexp.MatchString(label) {
 			return nil, fmt.Errorf("--annotate flag should be in the format key=value. Invalid key: '%s'. Key can only contain [A-Za-z0-9_]", label)
 		}
 	}

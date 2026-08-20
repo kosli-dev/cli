@@ -107,20 +107,76 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 	return result, nil
 }
 
-func MakeJiraIssueKeyPattern(projectKeys []string) string {
-	// Jira issue keys consist of [project-key]-[sequential-number].
-	// FindJiraIssueKeys uppercases the text before applying this pattern, so the
-	// pattern only needs to handle uppercase. Project keys supplied by the caller
-	// are also uppercased here for the same reason.
-	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
+const defaultJiraIssueKeyPattern = `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`
+
+var (
+	// compiled once, as the default pattern is a constant
+	defaultJiraIssueKeyRegexp = regexp.MustCompile(defaultJiraIssueKeyPattern)
+	// dashDigitRegexp is compiled once and shared by all isPartialMultiSegment calls
+	dashDigitRegexp = regexp.MustCompile(`^-\d`)
+)
+
+// makeJiraIssueKeyPattern builds the regex matching Jira issue keys of the given projects.
+// Jira issue keys consist of [project-key]-[sequential-number]; see
+// https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
+//
+// The return value carries three distinct meanings:
+//
+//   - no project keys at all: the default pattern, matching keys of every project.
+//   - at least one usable key: a pattern matching keys of those projects only.
+//   - keys given, none of them usable: "", meaning no issue key can match.
+//
+// The "" case must NOT be compiled directly - the empty pattern matches at every position,
+// so compiling it yields the exact opposite of what it means. Use jiraIssueKeyRegexp, which
+// maps it to a nil regexp; this function is unexported so that nothing else can get it
+// wrong. It is separate from the no-keys case on purpose: answering "these projects all
+// turned out to be unusable" with the default pattern would widen a caller who named
+// projects to every project, and on an attestation path the keys that widening invents are
+// then looked up and attested.
+//
+// FindJiraIssueKeys uppercases the text before applying the pattern, so the pattern only
+// needs to handle uppercase, and the project keys are uppercased here for the same reason.
+// Each key is also quoted, so the pattern always compiles whatever the caller passes; a key
+// a Jira project could actually have carries no regex metacharacters, so quoting leaves it
+// unchanged. Keys are trimmed, and blank ones dropped rather than interpolated: an empty
+// alternative reduces the group to nothing and leaves a pattern matching any -[0-9]+, which
+// reports a phantom key such as -41284 out of CVE-2026-41284, and a whitespace-only key does
+// the same thing one column over, since a space is not a metacharacter for QuoteMeta to
+// escape. Trimming also stops " PROJ" from reporting " PROJ-123", which is not a key any
+// Jira project has.
+func makeJiraIssueKeyPattern(projectKeys []string) string {
 	if len(projectKeys) == 0 {
-		return `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`
+		return defaultJiraIssueKeyPattern
 	}
-	upper := make([]string, len(projectKeys))
-	for i, k := range projectKeys {
-		upper[i] = strings.ToUpper(k)
+	upper := make([]string, 0, len(projectKeys))
+	for _, k := range projectKeys {
+		k = strings.TrimSpace(k)
+		if k == "" {
+			continue
+		}
+		upper = append(upper, regexp.QuoteMeta(strings.ToUpper(k)))
+	}
+	if len(upper) == 0 {
+		return ""
 	}
 	return `\b(` + strings.Join(upper, "|") + `)-[0-9]+`
+}
+
+// jiraIssueKeyRegexp returns the compiled issue key pattern for the given project keys, or
+// nil if no issue key can match, which makeJiraIssueKeyPattern reports as "".
+//
+// A project-key pattern is compiled per call, and cannot panic because
+// makeJiraIssueKeyPattern quotes the keys it interpolates. When the pattern is the default
+// one, the copy compiled at package level is returned instead.
+func jiraIssueKeyRegexp(projectKeys []string) *regexp.Regexp {
+	switch pattern := makeJiraIssueKeyPattern(projectKeys); pattern {
+	case "":
+		return nil
+	case defaultJiraIssueKeyPattern:
+		return defaultJiraIssueKeyRegexp
+	default:
+		return regexp.MustCompile(pattern)
+	}
 }
 
 // FindJiraIssueKeys finds all Jira issue keys in text, filtering out
@@ -130,9 +186,12 @@ func MakeJiraIssueKeyPattern(projectKeys []string) string {
 // A match is discarded if every occurrence in the uppercased text is
 // immediately followed by a hyphen and a digit.
 func FindJiraIssueKeys(text string, projectKeys []string) []string {
+	re := jiraIssueKeyRegexp(projectKeys)
+	if re == nil {
+		// project keys were given but none of them is usable, so no key can belong to them
+		return nil
+	}
 	upperText := strings.ToUpper(text)
-	pattern := MakeJiraIssueKeyPattern(projectKeys)
-	re := regexp.MustCompile(pattern)
 	candidates := re.FindAllString(upperText, -1)
 
 	// Deduplicate (all candidates are already uppercase).
@@ -146,10 +205,9 @@ func FindJiraIssueKeys(text string, projectKeys []string) []string {
 	}
 
 	// Filter out matches that are always followed by -<digit> in the uppercased text.
-	dashDigit := regexp.MustCompile(`^-\d`)
 	var result []string
 	for _, m := range unique {
-		if isPartialMultiSegment(upperText, m, dashDigit) {
+		if isPartialMultiSegment(upperText, m) {
 			continue
 		}
 		result = append(result, m)
@@ -166,7 +224,7 @@ func FindJiraIssueKeys(text string, projectKeys []string) []string {
 // is immediately followed by a "-<digit>" suffix, indicating it is part
 // of a longer multi-segment identifier (e.g. CVE-2026-41284).
 // Precondition: match must exist in text (guaranteed when called from FindJiraIssueKeys).
-func isPartialMultiSegment(text, match string, dashDigit *regexp.Regexp) bool {
+func isPartialMultiSegment(text, match string) bool {
 	start := 0
 	for {
 		idx := strings.Index(text[start:], match)
@@ -174,7 +232,7 @@ func isPartialMultiSegment(text, match string, dashDigit *regexp.Regexp) bool {
 			break
 		}
 		afterIdx := start + idx + len(match)
-		if afterIdx >= len(text) || !dashDigit.MatchString(text[afterIdx:]) {
+		if afterIdx >= len(text) || !dashDigitRegexp.MatchString(text[afterIdx:]) {
 			return false
 		}
 		start = start + idx + 1

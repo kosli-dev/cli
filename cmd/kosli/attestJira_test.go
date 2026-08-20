@@ -7,6 +7,7 @@ import (
 
 	billy "github.com/go-git/go-billy/v5"
 	git "github.com/go-git/go-git/v5"
+	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -354,6 +355,46 @@ func execJiraTestCase(test cmdTestCase, suite *AttestJiraCommandTestSuite) {
 	}
 
 	runTestCmd(suite.T(), []cmdTestCase{test})
+}
+
+func TestJiraSearchText(t *testing.T) {
+	commitInfo := &gitview.CommitInfo{
+		BasicCommitInfo: gitview.BasicCommitInfo{
+			Message: "EX-1 fix the thing",
+			Branch:  "bugfix/EX-2",
+		},
+	}
+	for _, tc := range []struct {
+		name              string
+		secondarySource   string
+		ignoreBranchMatch bool
+		want              string
+	}{
+		{
+			name: "the commit message and the branch name are searched",
+			want: "EX-1 fix the thing\nbugfix/EX-2",
+		},
+		{
+			name:              "the branch name is skipped when ignoreBranchMatch is set",
+			ignoreBranchMatch: true,
+			want:              "EX-1 fix the thing",
+		},
+		{
+			name:            "a secondary source is appended",
+			secondarySource: "EX-3",
+			want:            "EX-1 fix the thing\nbugfix/EX-2\nEX-3",
+		},
+		{
+			name:              "a secondary source is appended without the branch name",
+			secondarySource:   "EX-3",
+			ignoreBranchMatch: true,
+			want:              "EX-1 fix the thing\nEX-3",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, jiraSearchText(commitInfo, tc.secondarySource, tc.ignoreBranchMatch))
+		})
+	}
 }
 
 // In order for 'go test' to run this suite, we need to create

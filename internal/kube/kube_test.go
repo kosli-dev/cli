@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -211,38 +212,113 @@ func (suite *KubeTestSuite) TestGetPodsDataWithThrottling() {
 
 func (suite *KubeTestSuite) TestFilterNamespaces() {
 	type args struct {
-		nsList []corev1.Namespace
-		filter *filters.ResourceFilterOptions
+		namespaces []string
+		filter     *filters.ResourceFilterOptions
 	}
 	for _, t := range []struct {
-		name        string
-		args        args
-		expectError bool
-		want        []string
+		name         string
+		args         args
+		expectError  bool
+		want         []string
+		wantFiltered []string
 	}{
 		{
+			// Creates no namespaces: the invalid pattern is reported as soon as filtering
+			// reaches it, and the cluster's own namespaces (default, kube-system, ...)
+			// are enough to reach it. Any created here would be a create and a delete
+			// against a real cluster for nothing.
 			name: "invalid regex patterns return error",
 			args: args{
-				nsList: []corev1.Namespace{
-					{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}},
-					{ObjectMeta: metav1.ObjectMeta{Name: "ns2"}},
-				},
 				filter: &filters.ResourceFilterOptions{
 					IncludeNamesRegex: []string{"["},
 				},
 			},
 			expectError: true,
-			want:        []string{},
+		},
+		{
+			name: "namespaces matching the include regex patterns are returned",
+			args: args{
+				namespaces: []string{"filter-inc-a1", "filter-inc-a2", "filter-inc-b1"},
+				filter: &filters.ResourceFilterOptions{
+					IncludeNamesRegex: []string{"^filter-inc-a.*$"},
+				},
+			},
+			want: []string{"filter-inc-a1", "filter-inc-a2"},
+		},
+		{
+			name: "namespaces matching the exclude regex patterns are filtered out",
+			args: args{
+				namespaces: []string{"filter-exc-a1", "filter-exc-a2", "filter-exc-b1"},
+				filter: &filters.ResourceFilterOptions{
+					ExcludeNamesRegex: []string{"^filter-exc-a.*$"},
+				},
+			},
+			wantFiltered: []string{"filter-exc-a1", "filter-exc-a2"},
+		},
+		{
+			// An invalid pattern is only reported once matching a name reaches it, and a
+			// name listed in ExcludeNames is settled before that. On this path the
+			// short-circuit never saves the snapshot though: the cluster's own
+			// namespaces (default, kube-system, ...) are not in ExcludeNames, so one of
+			// them always reaches the pattern.
+			name: "an invalid exclude pattern is reported despite the excluded literal name",
+			args: args{
+				namespaces: []string{"filter-lazy-a1"},
+				filter: &filters.ResourceFilterOptions{
+					ExcludeNames:      []string{"filter-lazy-a1"},
+					ExcludeNamesRegex: []string{"["},
+				},
+			},
+			expectError: true,
 		},
 	} {
 		suite.Run(t.name, func() {
+			// namespace names must not be shared with another test method: AfterTest
+			// only asks for deletion, and a namespace lingers in Terminating for a
+			// while after that, so re-creating one by the same name fails with
+			// "object is being deleted". Hence the filter- prefix here.
+			for _, ns := range t.args.namespaces {
+				suite.createNamespace(ns)
+			}
 			result, err := suite.clientset.filterNamespaces(t.args.filter)
 			if t.expectError {
 				require.Error(suite.T(), err, "error was expected but got none.")
-			} else {
-				require.NoErrorf(suite.T(), err, "error was NOT expected but got: %v.", err)
-				require.Equal(suite.T(), t.want, result, "TestFilterNamespaces: got %v -- want %v", result, t.want)
+				return
 			}
+			require.NoErrorf(suite.T(), err, "error was NOT expected but got: %v.", err)
+			if len(t.wantFiltered) > 0 {
+				// every namespace this case created and did not ask to be filtered out
+				// has to survive, so the case describes its own expectation instead of
+				// naming a survivor twice
+				survivors := []string{}
+				for _, ns := range t.args.namespaces {
+					if !slices.Contains(t.wantFiltered, ns) {
+						survivors = append(survivors, ns)
+					}
+				}
+				require.Subset(suite.T(), result, survivors,
+					"TestFilterNamespaces: %v should contain every non-excluded namespace %v", result, survivors)
+				for _, ns := range t.wantFiltered {
+					require.NotContains(suite.T(), result, ns,
+						"TestFilterNamespaces: %s should have been filtered out of %v", ns, result)
+				}
+				return
+			}
+			// filterNamespaces returns the namespaces in the order the cluster listed
+			// them, which the goroutine-per-namespace fan-out it replaced could not
+			// guarantee. Build the expectation in that same order so the assertion
+			// pins the ordering and not just the set.
+			nsList, err := suite.clientset.GetClusterNamespaces()
+			require.NoErrorf(suite.T(), err, "error listing cluster namespaces")
+			wantInClusterOrder := []string{}
+			for _, ns := range nsList {
+				if slices.Contains(t.want, ns.Name) {
+					wantInClusterOrder = append(wantInClusterOrder, ns.Name)
+				}
+			}
+			require.ElementsMatch(suite.T(), t.want, wantInClusterOrder,
+				"TestFilterNamespaces: %v missing from the cluster listing, the ordering assertion would be vacuous", t.want)
+			require.Equal(suite.T(), wantInClusterOrder, result, "TestFilterNamespaces: got %v -- want %v", result, wantInClusterOrder)
 		})
 	}
 

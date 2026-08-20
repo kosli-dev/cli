@@ -303,15 +303,7 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	// Search commit message, branch name, and secondary source for Jira issue keys,
 	// filtering out false positives from multi-segment identifiers like CVE-2026-41284.
-	searchTexts := []string{commitInfo.Message}
-	if !o.ignoreBranchMatch {
-		searchTexts = append(searchTexts, commitInfo.Branch)
-	}
-	if o.secondarySource != "" {
-		searchTexts = append(searchTexts, o.secondarySource)
-	}
-	combinedText := strings.Join(searchTexts, "\n")
-	issueIDs := jira.FindJiraIssueKeys(combinedText, o.projectKeys)
+	issueIDs := jira.FindJiraIssueKeys(jiraSearchText(commitInfo, o.secondarySource, o.ignoreBranchMatch), o.projectKeys)
 	logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
 	logger.Debug("the following Jira references are found in commit message or branch name: %v", issueIDs)
 
@@ -374,18 +366,32 @@ func (o *attestJiraOptions) run(args []string) error {
 	return wrapAttestationError(err)
 }
 
-func (o *attestJiraOptions) validateJiraProjectKeys() error {
-	// According to Jira documentation https://confluence.atlassian.com/adminjiraserver/changing-the-project-key-format-938847081.html
-	// the Jira project key has to start with a capital letter and can then have capital letters numbers and underscore.
-	// But Jira itself will accept lower case letters when searching a repository for matching branches and commits
-	matchesJiraProjectKeys, err := regexp.Compile("^[A-Za-z][A-Za-z0-9_]{1,9}$")
-	if err != nil {
-		return err
+// jiraSearchText joins the texts that are searched for Jira issue keys: the commit
+// message, the branch name unless ignoreBranchMatch is set, and the secondary source
+// when one is given.
+func jiraSearchText(commitInfo *gitview.CommitInfo, secondarySource string, ignoreBranchMatch bool) string {
+	searchTexts := []string{commitInfo.Message}
+	if !ignoreBranchMatch {
+		searchTexts = append(searchTexts, commitInfo.Branch)
 	}
+	if secondarySource != "" {
+		searchTexts = append(searchTexts, secondarySource)
+	}
+	return strings.Join(searchTexts, "\n")
+}
 
+// jiraProjectKeyRegexp is compiled once, so validateJiraProjectKeys does not re-compile a
+// constant pattern on every invocation.
+//
+// According to Jira documentation https://confluence.atlassian.com/adminjiraserver/changing-the-project-key-format-938847081.html
+// the Jira project key has to start with a capital letter and can then have capital letters numbers and underscore.
+// But Jira itself will accept lower case letters when searching a repository for matching branches and commits.
+var jiraProjectKeyRegexp = regexp.MustCompile("^[A-Za-z][A-Za-z0-9_]{1,9}$")
+
+func (o *attestJiraOptions) validateJiraProjectKeys() error {
 	invalidKeys := []string{}
 	for _, projectKey := range o.projectKeys {
-		isValid := matchesJiraProjectKeys.MatchString(projectKey)
+		isValid := jiraProjectKeyRegexp.MatchString(projectKey)
 		if !isValid {
 			invalidKeys = append(invalidKeys, projectKey)
 		}

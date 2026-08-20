@@ -61,11 +61,54 @@ func TestMakeJiraIssueKey(t *testing.T) {
 				"DEF-123",
 			},
 		},
+		{
+			// A real Jira project key cannot contain these, and validateJiraProjectKeys
+			// rejects them before they reach here: quoting is what makes "the pattern
+			// always compiles" a property of the code rather than a promise its callers
+			// have to keep.
+			name:        "Project keys carrying regex metacharacters are quoted",
+			projectKeys: []string{"a(b", "c[d"},
+			want:        `\b(A\(B|C\[D)-[0-9]+`,
+			matches: []string{
+				"A(B-123",
+				"C[D-456",
+			},
+			nonMatches: []string{
+				"AB-123",
+				"AXB-123",
+			},
+		},
+		{
+			// Keys are trimmed and blank ones dropped, so that --jira-project-key "EX, "
+			// cannot widen the pattern: an empty alternative matches any -[0-9]+, a
+			// whitespace-only key does the same one column over, and an untrimmed " EX"
+			// would report " EX-12" as the key.
+			name:        "Blank project keys are dropped and the rest trimmed",
+			projectKeys: []string{" EX ", "", " ", "\t"},
+			want:        `\b(EX)-[0-9]+`,
+			matches: []string{
+				"EX-12",
+			},
+			nonMatches: []string{
+				"CVE-2026-41284",
+				"-41284",
+				"fix -123",
+				"XEX-12",
+			},
+		},
+		{
+			// Not the default pattern: the caller named projects, so widening to every
+			// project would answer a question they did not ask. "" means nothing can
+			// match, which FindJiraIssueKeys turns into no keys.
+			name:        "Project keys that all drop out match nothing rather than everything",
+			projectKeys: []string{"", " ", "\t"},
+			want:        "",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MakeJiraIssueKeyPattern(tt.projectKeys)
+			got := makeJiraIssueKeyPattern(tt.projectKeys)
 			if got != tt.want {
 				t.Errorf("makeJiraIssueKeyPattern() = %v, want %v", got, tt.want)
 			}
@@ -113,6 +156,22 @@ func TestFindJiraIssueKeys(t *testing.T) {
 			name:        "CVE identifier is not matched",
 			text:        "fix CVE-2026-41284",
 			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			// The empty key must not widen the pattern to any -[0-9]+, which would
+			// report -41284 out of the CVE as a key of project EX.
+			name:        "an empty project key alongside a real one finds only the real project's keys",
+			text:        "EX-12 fixes CVE-2026-41284",
+			projectKeys: []string{"EX", ""},
+			want:        []string{"EX-12"},
+		},
+		{
+			// And project keys that all drop out find nothing, rather than falling back
+			// to every project and returning PROJ-42.
+			name:        "project keys that all drop out find nothing",
+			text:        "PROJ-42 fixes CVE-2026-41284",
+			projectKeys: []string{"", ""},
 			want:        nil,
 		},
 		{
@@ -222,4 +281,18 @@ func TestFindJiraIssueKeys(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func BenchmarkFindJiraIssueKeys(b *testing.B) {
+	text := "EX-1 fixes the regression reported in EX-2, see also branch bugfix/EX-3"
+	b.Run("default pattern", func(b *testing.B) {
+		for b.Loop() {
+			FindJiraIssueKeys(text, nil)
+		}
+	})
+	b.Run("project key pattern", func(b *testing.B) {
+		for b.Loop() {
+			FindJiraIssueKeys(text, []string{"EX"})
+		}
+	})
 }

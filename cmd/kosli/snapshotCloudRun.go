@@ -158,6 +158,9 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 		return err
 	}
 
+	// compile the filter patterns once, instead of once per service and job
+	compiledFilter := o.resourceFilter.Compile()
+
 	ctx := context.Background()
 	client, err := newCloudRunClient(ctx, o.resolveNames)
 	if err != nil {
@@ -177,21 +180,21 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 
 	filteredServices := make([]cloudrun.Service, 0, len(services))
 	for _, svc := range services {
-		include, err := o.resourceFilter.ShouldInclude(svc.Name)
+		included, err := compiledFilter.ShouldInclude(svc.Name)
 		if err != nil {
 			return err
 		}
-		if include {
+		if included {
 			filteredServices = append(filteredServices, svc)
 		}
 	}
 	filteredJobs := make([]cloudrun.Job, 0, len(jobs))
 	for _, job := range jobs {
-		include, err := o.resourceFilter.ShouldInclude(job.Name)
+		included, err := compiledFilter.ShouldInclude(job.Name)
 		if err != nil {
 			return err
 		}
-		if include {
+		if included {
 			filteredJobs = append(filteredJobs, job)
 		}
 	}

@@ -3,6 +3,7 @@ package kube
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/kosli-dev/cli/internal/filters"
@@ -232,7 +233,9 @@ func processPods(list *corev1.PodList, logger *logger.Logger) ([]*PodData, error
 func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterOptions) ([]string, error) {
 	if len(filter.IncludeNamesRegex) == 0 && len(filter.ExcludeNamesRegex) == 0 {
 		if len(filter.IncludeNames) > 0 {
-			return filter.IncludeNames, nil
+			// cloned for the same reason Compile clones them: the caller keeps the
+			// options, and the result must not alias a slice they can still change
+			return slices.Clone(filter.IncludeNames), nil
 		}
 	}
 	result := []string{}
@@ -242,54 +245,24 @@ func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterO
 		return result, err
 	}
 
-	if len(filter.IncludeNames) == 0 && len(filter.IncludeNamesRegex) == 0 &&
-		len(filter.ExcludeNames) == 0 && len(filter.ExcludeNamesRegex) == 0 {
+	if !filter.IsSet() {
 		for _, ns := range nsList {
 			result = append(result, ns.Name)
 		}
 		return result, nil
 	}
 
-	var (
-		wg    sync.WaitGroup
-		mutex = &sync.Mutex{}
-	)
-
-	errs := make(chan error, 1) // Buffered only for the first error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Make sure it's called to release resources even if no errors
+	// compile the filter patterns once, instead of once per namespace
+	compiledFilter := filter.Compile()
 
 	for _, ns := range nsList {
-		wg.Add(1)
-		go func(ns string) {
-			defer wg.Done()
-
-			// Check if any error occurred in any other gorouties:
-			select {
-			case <-ctx.Done():
-				return // Error somewhere, terminate
-			default: // Default is must to avoid blocking
-			}
-
-			include, err := filter.ShouldInclude(ns)
-			if err != nil {
-				select {
-				case errs <- err:
-				default:
-				}
-				cancel() // send cancel signal to goroutines
-				return
-			}
-			if include {
-				mutex.Lock()
-				result = append(result, ns)
-				mutex.Unlock()
-			}
-		}(ns.Name)
-	}
-	wg.Wait()
-	if ctx.Err() != nil {
-		return result, <-errs
+		included, err := compiledFilter.ShouldInclude(ns.Name)
+		if err != nil {
+			return result, err
+		}
+		if included {
+			result = append(result, ns.Name)
+		}
 	}
 	return result, nil
 }

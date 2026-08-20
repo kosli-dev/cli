@@ -343,15 +343,16 @@ func RemoteDockerImageSha256(client *requests.Client, imageName, imageTag, regis
 	return strings.TrimPrefix(digestHeader, "sha256:"), nil
 }
 
+const validSha256Pattern = "^([a-f0-9]{64})$"
+
+// validSha256Regexp is compiled once, so ValidateDigest does not re-compile a
+// constant pattern on every call.
+var validSha256Regexp = regexp.MustCompile(validSha256Pattern)
+
 // ValidateDigest checks if a digest matches the sha256 regex
 func ValidateDigest(sha256ToCheck string) error {
-	validSha256regex := "^([a-f0-9]{64})$"
-	r, err := regexp.Compile(validSha256regex)
-	if err != nil {
-		return fmt.Errorf("failed to validate the provided SHA256 fingerprint")
-	}
-	if !r.MatchString(sha256ToCheck) {
-		return fmt.Errorf("%s is not a valid SHA256 fingerprint. It should match the pattern %v", sha256ToCheck, validSha256regex)
+	if !validSha256Regexp.MatchString(sha256ToCheck) {
+		return fmt.Errorf("%s is not a valid SHA256 fingerprint. It should match the pattern %v", sha256ToCheck, validSha256Pattern)
 	}
 	return nil
 }

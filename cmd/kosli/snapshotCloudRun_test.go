@@ -158,6 +158,20 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd() {
 			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --include-regex "^a" --exclude-regex "^b" %s`, suite.envName, suite.defaultKosliArguments),
 			golden:    "Error: only one of --include-regex, --exclude-regex is allowed\n",
 		},
+		{
+			wantError: true,
+			name:      "10 snapshot cloud-run fails if --include-regex is an invalid regex",
+			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --include-regex "[invalid" --dry-run %s`, suite.envName, suite.defaultKosliArguments),
+			// no literal names are set, so filtering the first service reaches the
+			// invalid pattern and the snapshot fails
+			goldenRegex: `invalid include name regex pattern \[invalid: error parsing regexp: missing closing \]`,
+		},
+		{
+			wantError:   true,
+			name:        "11 snapshot cloud-run fails if --exclude-regex is an invalid regex",
+			cmd:         fmt.Sprintf(`snapshot cloud-run %s --project p --region r --exclude-regex "[invalid" --dry-run %s`, suite.envName, suite.defaultKosliArguments),
+			goldenRegex: `invalid exclude name regex pattern \[invalid: error parsing regexp: missing closing \]`,
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
@@ -196,6 +210,16 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeRegex(
 	out := suite.runFilteredCmd(`--exclude-regex "^al"`)
 	require.NotContains(suite.T(), out, `"serviceName": "alpha"`)
 	require.Contains(suite.T(), out, `"serviceName": "beta"`)
+}
+
+// TestSnapshotCloudRunFilter_ExcludeLiteralShortCircuitsInvalidRegex covers the reporting
+// semantics of an invalid pattern: it is reported only when filtering a name reaches it.
+// Both stub services are excluded by name, so neither reaches the invalid pattern and the
+// snapshot succeeds with nothing in it.
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeLiteralShortCircuitsInvalidRegex() {
+	out := suite.runFilteredCmd(`--exclude alpha,beta --exclude-regex "[invalid"`)
+	require.NotContains(suite.T(), out, `"serviceName": "alpha"`)
+	require.NotContains(suite.T(), out, `"serviceName": "beta"`)
 }
 
 // TestSnapshotCloudRunCmd_HappyPathReportsToServer exercises the full
