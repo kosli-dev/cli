@@ -201,8 +201,9 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			sonarResults.Revision = sc.revision
 			// On this path there is no CE task to read the branch from, so the branch
 			// can only come from the user (#1116). Set it on the results, which is the
-			// one mechanism both analyses lookups use to scope their search.
-			if sc.branch != "" {
+			// one mechanism both analyses lookups use to scope their search. A pull
+			// request scan is not a branch scan, so the branch is not carried there.
+			if sc.branch != "" && sc.pullRequest == "" {
 				sonarResults.Branch = &Branch{Name: sc.branch}
 			}
 			project.Url, err = sonarURL(sonarResults.ServerUrl, "dashboard", url.Values{"id": {project.Key}})
@@ -220,10 +221,25 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			if err != nil {
 				return nil, err
 			}
+			// GetTaskID rewrites the branch from the matched task, and clears it when
+			// the task reports none — which SonarQube does for main-branch tasks, and
+			// older self-hosted Servers do more widely. The task is authoritative for
+			// the branch type, but it must not delete the branch the user gave us to
+			// find the analysis with (#1116).
+			if sc.branch != "" && sonarResults.PullRequest == "" &&
+				(sonarResults.Branch == nil || sonarResults.Branch.Name == "") {
+				sonarResults.Branch = &Branch{Name: sc.branch}
+			}
 		}
 	}
 
 	if analysisID == "" && sc.CETaskUrl != "" {
+		// Here the scan is identified by report-task.txt or --sonar-ce-task-url, and
+		// the branch is read from the scan task, so a supplied branch reaches nothing.
+		// Say so rather than ignoring it in silence.
+		if sc.branch != "" {
+			logger.Warn("--sonar-branch is ignored when the scan is identified by report-task.txt or --sonar-ce-task-url: the branch is read from the scan task")
+		}
 		//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
 		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, sc.maxWait, logger)
 		if err != nil {
@@ -436,10 +452,12 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 		// An empty result reads like a permissions problem, so say which branch was
 		// actually searched: unscoped, SonarQube only searches the main branch (#1116).
 		scope := "only the project's main branch was searched, because no --sonar-branch was given"
+		advice := "Check the revision is correct, and pass --sonar-branch if the scan ran on another branch."
 		if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
 			scope = fmt.Sprintf("branch %s was searched", sonarResults.Branch.Name)
+			advice = "Check the revision and the branch are correct."
 		}
-		return "", fmt.Errorf("analysis for revision %s of project %s not found: %s. Check the revision and the branch are correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key, scope)
+		return "", fmt.Errorf("analysis for revision %s of project %s not found: %s. %s \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key, scope, advice)
 	}
 
 	return analysisID, nil
@@ -609,11 +627,13 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 		return sonarResponseError(CEActivityResponse.StatusCode)
 	}
 
+	matchedTask := false
 	for t := range CEActivityData.Tasks {
 		task := CEActivityData.Tasks[t]
 		matched := (analysisID != "" && task.AnalysisID == analysisID) ||
 			(analysisID == "" && sonarResults.PullRequest != "" && task.PullRequest == sonarResults.PullRequest)
 		if matched {
+			matchedTask = true
 			sonarResults.TaskID = task.TaskID
 			sonarResults.Status = task.Status
 			project.Name = task.ComponentName
@@ -629,6 +649,17 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 			}
 			break
 		}
+	}
+
+	// api/ce/activity is a bounded recent-activity list and takes no branch
+	// parameter, so the task may simply not be there. Without this the attestation
+	// is published with no task ID and no status, and nothing says why.
+	if !matchedTask {
+		sought := fmt.Sprintf("analysis %s", analysisID)
+		if analysisID == "" {
+			sought = fmt.Sprintf("pull request %s", sonarResults.PullRequest)
+		}
+		logger.Warn("no SonarQube compute engine task found for %s of project %s: the attestation will carry no task ID or scan status", sought, project.Key)
 	}
 
 	return nil

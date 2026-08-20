@@ -1,14 +1,24 @@
 package sonar_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/sonar"
 )
+
+// bufferLogger returns a logger whose warnings can be asserted on. Warn writes to
+// the error stream.
+func bufferLogger() (*logger.Logger, *bytes.Buffer) {
+	stderr := &bytes.Buffer{}
+	return logger.NewLogger(&bytes.Buffer{}, stderr, false), stderr
+}
 
 // fakeBranchSonar is a SonarQube stand-in for the project-key/revision path of
 // issue #1116. It models the customer's project: the analysis for the revision
@@ -20,6 +30,9 @@ type fakeBranchSonar struct {
 	searchProjects []string // project param of each project_analyses/search request
 	taskBranch     string   // branch reported on the ce/activity task
 	taskBranchType string
+	// omitMatchingTask serves activity without the task for our analysis, as a
+	// bounded recent-activity list eventually does.
+	omitMatchingTask bool
 }
 
 func (f *fakeBranchSonar) handler() http.HandlerFunc {
@@ -43,27 +56,37 @@ func (f *fakeBranchSonar) handler() http.HandlerFunc {
 			// The activity list spans every branch of the project, so it also holds
 			// tasks for other analyses. The decoy comes first: the task we want has to
 			// be selected by analysis ID, not by being the only one there.
-			_ = json.NewEncoder(w).Encode(sonar.ActivityResponse{
-				Tasks: []sonar.Task{
-					{
-						TaskID:        "DECOY",
-						ComponentName: "customer project",
-						ComponentKey:  revProjectKey,
-						AnalysisID:    "SOME_OTHER_ANALYSIS",
-						Status:        "FAILED",
-						Branch:        revMainBranch,
-						BranchType:    "LONG",
-					},
-					{
-						TaskID:        revTaskID,
-						ComponentName: "customer project",
-						ComponentKey:  revProjectKey,
-						AnalysisID:    revAnalysisKey,
-						Status:        "SUCCESS",
-						Branch:        f.taskBranch,
-						BranchType:    f.taskBranchType,
-					},
+			tasks := []sonar.Task{
+				{
+					TaskID:        "DECOY",
+					ComponentName: "customer project",
+					ComponentKey:  revProjectKey,
+					AnalysisID:    "SOME_OTHER_ANALYSIS",
+					Status:        "FAILED",
+					Branch:        revMainBranch,
+					BranchType:    "LONG",
 				},
+			}
+			if !f.omitMatchingTask {
+				tasks = append(tasks, sonar.Task{
+					TaskID:        revTaskID,
+					ComponentName: "customer project",
+					ComponentKey:  revProjectKey,
+					AnalysisID:    revAnalysisKey,
+					Status:        "SUCCESS",
+					Branch:        f.taskBranch,
+					BranchType:    f.taskBranchType,
+				})
+			}
+			_ = json.NewEncoder(w).Encode(sonar.ActivityResponse{Tasks: tasks})
+		case "/api/project_pull_requests/list":
+			_ = json.NewEncoder(w).Encode(sonar.PullRequestsResponse{
+				PullRequests: []sonar.PullRequestInfo{{
+					Key:          revPullRequest,
+					Branch:       "feature/whatever",
+					AnalysisDate: revAnalysisDate,
+					Commit:       sonar.PRCommit{SHA: revRevision},
+				}},
 			})
 		case "/api/qualitygates/project_status":
 			_ = json.NewEncoder(w).Encode(sonar.QualityGateResponse{
@@ -90,10 +113,16 @@ func TestGetSonarResults_ProjectKeyPath_WithBranch(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
+	log, stderr := bufferLogger()
 	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, revRevision, "", revFeatureBranch, 5)
-	results, err := sc.GetSonarResults(discardLogger())
+	results, err := sc.GetSonarResults(log)
 	if err != nil {
 		t.Fatalf("expected the scan on %s to be found, got error: %v", revFeatureBranch, err)
+	}
+	// The happy path warns about nothing: neither an unmatched task nor an ignored
+	// flag, both of which are warned about elsewhere.
+	if stderr.Len() != 0 {
+		t.Errorf("expected no warnings on the happy path, got stderr: %q", stderr.String())
 	}
 
 	branches, projects := fake.searches()
@@ -148,20 +177,105 @@ func TestGetSonarResults_ProjectKeyPath_WithoutBranch(t *testing.T) {
 	}
 }
 
-// TestGetSonarResults_BranchIgnoredForPullRequest documents that a PR scan is not a
-// branch scan: with --pull-request the branch is not used to scope any search.
-// The two flags are mutually exclusive at the CLI, so this only pins the library.
+// TestGetSonarResults_BranchIgnoredForPullRequest is the invalid state the guard
+// exists to prevent: a PR scan is not a branch scan, so an attestation must not
+// carry both. The CLI blocks the flag combination, but nothing stopped the
+// library from producing it — and the CE task only clears the branch when it
+// matches a task, which api/ce/activity (a bounded recent-activity list) need
+// not contain.
 func TestGetSonarResults_BranchIgnoredForPullRequest(t *testing.T) {
 	fake := &fakeBranchSonar{}
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, "", "42", revFeatureBranch, 5)
-	// The PR lookup is not served by this fake, so this fails; what matters is that
-	// no branch-scoped analyses search was made on the way.
-	_, _ = sc.GetSonarResults(discardLogger())
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, "", revPullRequest, revFeatureBranch, 5)
+	results, err := sc.GetSonarResults(discardLogger())
+	if err != nil {
+		t.Fatalf("expected the pull-request scan to be found, got error: %v", err)
+	}
 
 	if branches, _ := fake.searches(); len(branches) != 0 {
 		t.Errorf("expected no project_analyses/search on the pull-request path, got %v", branches)
+	}
+	if results.PullRequest != revPullRequest {
+		t.Errorf("expected pull request %q, got %q", revPullRequest, results.PullRequest)
+	}
+	if results.Branch != nil {
+		t.Errorf("expected no branch alongside a pull request, got %+v", results.Branch)
+	}
+}
+
+// TestGetSonarResults_TaskWithoutBranch_KeepsSuppliedBranch pins which side wins
+// when the CE task reports no branch at all — SonarQube omits it for main-branch
+// tasks, and older self-hosted Servers omit it more widely. The task is
+// authoritative for the branch type, but it must not delete the branch the user
+// gave us to find the analysis with.
+func TestGetSonarResults_TaskWithoutBranch_KeepsSuppliedBranch(t *testing.T) {
+	fake := &fakeBranchSonar{taskBranch: "", taskBranchType: ""}
+	srv := httptest.NewServer(fake.handler())
+	defer srv.Close()
+
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, revRevision, "", revFeatureBranch, 5)
+	results, err := sc.GetSonarResults(discardLogger())
+	if err != nil {
+		t.Fatalf("expected the scan to be found, got error: %v", err)
+	}
+
+	if results.Branch == nil || results.Branch.Name != revFeatureBranch {
+		t.Fatalf("expected the supplied branch %q to survive a task that reports none, got %+v", revFeatureBranch, results.Branch)
+	}
+	if results.Branch.Type != "" {
+		t.Errorf("expected no branch type when the task reports none, got %q", results.Branch.Type)
+	}
+	if results.TaskID != revTaskID {
+		t.Errorf("expected the task to still be matched, got TaskID %q", results.TaskID)
+	}
+}
+
+// TestGetSonarResults_NoMatchingTask_Warns covers the silent gap: api/ce/activity
+// cannot be scoped to a branch and is a bounded recent-activity list, so it may
+// simply not hold the task. The attestation is then published with no task ID
+// and no scan status, which used to happen without a word.
+func TestGetSonarResults_NoMatchingTask_Warns(t *testing.T) {
+	fake := &fakeBranchSonar{taskBranch: revFeatureBranch, taskBranchType: "LONG", omitMatchingTask: true}
+	srv := httptest.NewServer(fake.handler())
+	defer srv.Close()
+
+	log, stderr := bufferLogger()
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, revRevision, "", revFeatureBranch, 5)
+	results, err := sc.GetSonarResults(log)
+	if err != nil {
+		t.Fatalf("expected the scan to be found, got error: %v", err)
+	}
+
+	if results.TaskID != "" {
+		t.Errorf("expected no task ID when no task matched, got %q", results.TaskID)
+	}
+	if !strings.Contains(stderr.String(), "no SonarQube compute engine task") {
+		t.Errorf("expected a warning that no task matched, got stderr: %q", stderr.String())
+	}
+	// The branch still has to survive: it is what found the analysis.
+	if results.Branch == nil || results.Branch.Name != revFeatureBranch {
+		t.Errorf("expected the supplied branch to survive, got %+v", results.Branch)
+	}
+}
+
+// TestGetSonarResults_BranchIgnoredOnCETaskPath_Warns covers the flag being a
+// no-op: identified by report-task.txt or --sonar-ce-task-url, the branch comes
+// from the scan task and --sonar-branch reaches nothing. Silently ignoring it is
+// the same class of unexplained outcome this flag exists to remove.
+func TestGetSonarResults_BranchIgnoredOnCETaskPath_Warns(t *testing.T) {
+	fake := &fakeSonar{acceptsBearer: true, acceptsBasic: true}
+	srv := httptest.NewServer(fake.handler())
+	defer srv.Close()
+
+	log, stderr := bufferLogger()
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", revFeatureBranch, 5)
+	if _, err := sc.GetSonarResults(log); err != nil {
+		t.Fatalf("expected the CE task path to succeed, got error: %v", err)
+	}
+
+	if !strings.Contains(stderr.String(), "--sonar-branch is ignored") {
+		t.Errorf("expected a warning that --sonar-branch is ignored on this path, got stderr: %q", stderr.String())
 	}
 }

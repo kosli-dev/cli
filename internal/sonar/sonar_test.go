@@ -112,6 +112,7 @@ const (
 	revFeatureBranch = "release/uat"
 	revAnalysisKey   = "AaAeAfTdP27JeOuKOycd"
 	revTaskID        = "AaAeAfTdP27JeOuKOyce"
+	revPullRequest   = "42"
 	revAnalysisDate  = "2026-08-20T11:09:48+0400"
 	revRevision      = "8700f236fe2fd6c3e2dc5bf33c7e5f3aa8fd3dee"
 )
