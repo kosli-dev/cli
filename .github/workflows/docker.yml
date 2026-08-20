@@ -184,6 +184,8 @@ jobs:
       attestations: write
       packages: write
       artifact-metadata: write
+    env:
+      RESULTS_FILE: smoke-test-results.json
 
     steps:
       - name: Harden Runner
@@ -334,17 +336,16 @@ jobs:
               --org ${{ inputs.kosli_org }}
 
       - name: Run Docker image smoke tests
+        if: ${{ success() || failure() }}
         env:
           IMAGE: ${{ env.IMAGE }}
           TAG: ${{ inputs.tag }}
-          RESULTS_FILE: smoke-test-results.json
         run: ./scripts/docker-smoke-tests.sh
 
       - name: Report Docker smoke test attestation to Kosli
         if: ${{ inputs.report_to_kosli != 'none' && (success() || failure()) }}
         env:
           KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-          RESULTS_FILE: smoke-test-results.json
         run: |
           if [ ! -s "$RESULTS_FILE" ]; then
             echo '[{"name":"smoke-tests","outcome":"failure","note":"runner produced no results"}]' > "$RESULTS_FILE"

@@ -38,7 +38,7 @@ run_case() {
 
   RESULTS="$(jq --arg name "$name" --arg outcome "$outcome" \
     '. + [{name: $name, outcome: $outcome}]' <<< "$RESULTS")" || { echo "jq failed" >&2; exit 1; }
-  printf '%s\n' "$RESULTS" > "$RESULTS_FILE"
+  printf '%s\n' "$RESULTS" > "$RESULTS_FILE" || { echo "failed to write $RESULTS_FILE" >&2; exit 1; }
 }
 
 # --- Smoke test cases -------------------------------------------------
