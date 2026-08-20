@@ -262,23 +262,30 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		},
 		{
 			// cobra splits the list with encoding/csv, which does not trim, so without
-			// normalisation the " ABC" fragment fails validation
+			// normalisation the " EX" fragment fails validation. EX is deliberately the
+			// padded one: with --assert the case only passes if the key that has to match
+			// the EX-1 commit is the one that was trimmed.
 			name: "20b can specify jira project keys as a comma-separated list with spaces",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
-					--jira-project-key "EX, ABC"
-					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+					--jira-project-key "ABC, EX"
+					--repo-root %s
+					--assert %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "jira attestation 'bar' is reported to trail: test-123\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
 			},
 		},
 		{
+			// --assert so this covers the whole path rather than validation alone: the
+			// success line above is printed either way, but a padded key that reached the
+			// matcher unusable would find no references and fail the assert.
 			name: "20c a jira project key padded with spaces is accepted",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-project-key " EX "
-					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+					--repo-root %s
+					--assert %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "jira attestation 'bar' is reported to trail: test-123\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
@@ -292,7 +299,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-project-key 1AB
 					--jira-project-key AB-44
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "Error: invalid Jira project keys: [1AB AB-44]\n",
+			golden: "Error: invalid Jira project keys: [\"1AB\" \"AB-44\"]\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
 			},
@@ -471,6 +478,50 @@ func TestNormaliseJiraProjectKeys(t *testing.T) {
 			o := &attestJiraOptions{projectKeys: tc.projectKeys}
 			o.normaliseJiraProjectKeys()
 			require.Equal(t, tc.want, o.projectKeys)
+		})
+	}
+}
+
+// TestValidateJiraProjectKeys pins that validation normalises the keys itself, rather than
+// relying on its caller to have done it, and that a key which is only whitespace is named in
+// the error instead of rendering as nothing.
+func TestValidateJiraProjectKeys(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		projectKeys []string
+		wantErr     string
+		wantKeys    []string
+	}{
+		{
+			name:        "a padded key is accepted and left trimmed",
+			projectKeys: []string{" EX "},
+			wantKeys:    []string{"EX"},
+		},
+		{
+			name:        "a padded comma-separated list is accepted",
+			projectKeys: []string{"ABC", " EX"},
+			wantKeys:    []string{"ABC", "EX"},
+		},
+		{
+			name:        "an invalid key is still rejected, and quoted",
+			projectKeys: []string{"1AB", "AB-44"},
+			wantErr:     `invalid Jira project keys: ["1AB" "AB-44"]`,
+		},
+		{
+			name:        "a whitespace-only key is named in the error rather than rendering as nothing",
+			projectKeys: []string{"ABC", " "},
+			wantErr:     `invalid Jira project keys: [""]`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			o := &attestJiraOptions{projectKeys: tc.projectKeys}
+			err := o.validateJiraProjectKeys()
+			if tc.wantErr != "" {
+				require.EqualError(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.wantKeys, o.projectKeys)
 		})
 	}
 }
