@@ -333,7 +333,7 @@ jobs:
               --scan-results snyk-docker.json
               --org ${{ inputs.kosli_org }}
 
-      - name: Run docker image smoke tests
+      - name: Run Docker image smoke tests
         id: smoke-tests
         env:
           IMAGE: ${{ env.IMAGE }}
