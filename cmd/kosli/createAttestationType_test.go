@@ -75,11 +75,13 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 			golden: "attestation-type wibble-9 was created\n",
 		},
 		{
-			// Deliberately asymmetric with the empty --summary case below: a blank
-			// JSON blob reads as "not given", a blank key=value entry as malformed.
-			name:   "empty summary json string is accepted",
-			cmd:    `create attestation-type wibble-10 --summary-json ''` + suite.defaultKosliArguments,
-			golden: "attestation-type wibble-10 was created\n",
+			// Refused while parsing by the repo-wide empty-value rule, so the
+			// command's own wording never appears. '[]' above is still accepted:
+			// a summary with no entries, not a missing value.
+			wantError: true,
+			name:      "fails when summary json is empty",
+			cmd:       `create attestation-type wibble-10 --summary-json ''` + suite.defaultKosliArguments,
+			golden:    "Error: flag '--summary-json' was given an empty value\n",
 		},
 		{
 			name:   "summary json and jq rules can be combined",
@@ -90,6 +92,12 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 			name:   "summary json and schema can be combined",
 			cmd:    `create attestation-type wibble-12 --schema testdata/person-schema.json --summary-json '[{"name":"Age","expression":".age"}]'` + suite.defaultKosliArguments,
 			golden: "attestation-type wibble-12 was created\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when summary json is only whitespace",
+			cmd:       `create attestation-type wibble-bad --summary-json '   '` + suite.defaultKosliArguments,
+			golden:    "Error: --summary-json is not valid JSON: unexpected end of JSON input\n",
 		},
 		{
 			wantError: true,
@@ -160,12 +168,12 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 			golden:    "Error: --summary entry 1 expression cannot start with '='\n",
 		},
 		{
-			// Unlike --summary-json '', which is a no-op. Matters in CI, where
-			// --summary "$VAR" with VAR unset fails instead of silently no-opping.
+			// Matters in CI, where --summary "$VAR" with VAR unset fails instead
+			// of silently no-opping.
 			wantError: true,
 			name:      "fails when a repeatable summary value is empty",
 			cmd:       `create attestation-type wibble-bad --summary ''` + suite.defaultKosliArguments,
-			golden:    "Error: --summary entry 1 must be in the form NAME=EXPRESSION\n",
+			golden:    "Error: flag '--summary' was given an empty value\n",
 		},
 		{
 			wantError: true,
@@ -174,12 +182,12 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 			golden:    "Error: only one of --summary, --summary-json is allowed\n",
 		},
 		{
-			// MuXRequiredFlags keys off flag.Changed, so an explicitly empty
-			// --summary-json still trips the exclusion despite being a no-op.
+			// Parsing refuses the empty value before PreRunE runs, so the
+			// empty-value rule is reported rather than the exclusion.
 			wantError: true,
 			name:      "fails when both summary flags are provided and summary json is empty",
 			cmd:       `create attestation-type wibble-bad --summary 'Critical=.critical_count' --summary-json ''` + suite.defaultKosliArguments,
-			golden:    "Error: only one of --summary, --summary-json is allowed\n",
+			golden:    "Error: flag '--summary-json' was given an empty value\n",
 		},
 	}
 
@@ -220,12 +228,22 @@ func TestParseSummaryJSON(t *testing.T) {
 		}, summary)
 	})
 
-	// An unset flag arrives here as "". Parsing it must stay a no-op rather than
-	// falling through to json.Unmarshal, which rejects an empty string.
-	t.Run("blank values are treated as no summary", func(t *testing.T) {
-		for _, value := range []string{"", "   ", "\t\n"} {
+	// An unset flag arrives here as "", and only as "": the empty-value rule
+	// refuses an empty one on the command line. Parsing it must stay a no-op
+	// rather than falling through to json.Unmarshal, which rejects "".
+	t.Run("an unset flag is treated as no summary", func(t *testing.T) {
+		summary, err := parseSummaryJSON("")
+		require.NoError(t, err)
+		require.Empty(t, summary)
+	})
+
+	// Whitespace is not the flag being left out. Treating it as one silently
+	// drops the summary, as --summary-json "$VAR" with VAR set to a space would.
+	t.Run("whitespace-only values are rejected", func(t *testing.T) {
+		for _, value := range []string{"   ", "\t\n"} {
 			summary, err := parseSummaryJSON(value)
-			require.NoErrorf(t, err, "value %q", value)
+			require.EqualErrorf(t, err,
+				"--summary-json is not valid JSON: unexpected end of JSON input", "value %q", value)
 			require.Emptyf(t, summary, "value %q", value)
 		}
 	})

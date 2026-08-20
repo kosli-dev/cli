@@ -20,35 +20,35 @@ You can specify attestation type parameters in flags.
 
 ^TYPE-NAME^ must start with a letter or number, and only contain letters, numbers, ^.^, ^-^, ^_^, and ^~^.
 
-^--schema^ is a path to a file containing a JSON schema which will be used to validate attestations made using this type.  
-The schema is used to specify the structure of the attestation data, e.g. any fields that are required or 
+^--schema^ is a path to a file containing a JSON schema which will be used to validate attestations made using this type.
+The schema is used to specify the structure of the attestation data, e.g. any fields that are required or
 the expected type of the data.
-See an example schema file 
+See an example schema file
 [here](https://github.com/cyber-dojo/kosli-attestation-types/blob/f9130c58d3a8151b0b0e7c5db284e4380eb2d2cf/metrics-coverage.schema.json).
 
-^--jq^ defines an evaluation rule, given in jq-format, for this attestation type. The flag can be repeated in order to add additional rules.  
-These rules specify acceptable values for attestation data, e.g. ^.age >= 21^ or ^.failing_tests == 0^.  
-When a custom attestation is reported, the provided data is evaluated according to the rules defined in its attestation-type. 
+^--jq^ defines an evaluation rule, given in ^jq^-format, for this attestation type. The flag can be repeated in order to add additional rules.
+These rules specify acceptable values for attestation data, e.g. ^.age >= 21^ or ^.failing_tests == 0^.
+When a custom attestation is reported, the provided data is evaluated according to the rules defined in its attestation-type.
 All rules must return ^true^ for the evaluation to pass and the attestation to be determined compliant.
 
 ^--summary^ defines one entry of the summary shown for attestations of this type, given as
-^'NAME=EXPRESSION'^ where the expression is a jq expression evaluated against the attestation data.
+^'NAME=EXPRESSION'^ where the expression is a ^jq^ expression evaluated against the attestation data.
 The flag can be repeated to add further entries, which are displayed in the order given, e.g.
 ^--summary "Critical=.critical_count" --summary "Tool=.scanner.name"^.
-Each value is split on its first ^=^ only, so jq expressions containing ^==^ are unaffected.
+Each value is split on its first ^=^ only, so ^jq^ expressions containing ^==^ are unaffected.
 
 ^--summary-json^ is an alternative to ^--summary^ for summaries that are easier to express as JSON,
 given as a JSON array of ^{"name": ..., "expression": ...}^ entries, e.g.
 ^'[{"name":"Critical","expression":".critical_count"}]'^. The two summary flags cannot be combined.
 
-Attestation types created without a summary fall back to the jq evaluation rules checklist.
+Attestation types created without a summary fall back to the ^jq^ evaluation rules checklist.
 `
 
 const createAttestationTypeExample = `
 # create/update a custom attestation type with no schema no evaluation rules:
-kosli create attestation-type customTypeName 
+kosli create attestation-type customTypeName
 
-# create/update a custom attestation type with schema and jq evaluation rules:
+# create/update a custom attestation type with schema and ^jq^ evaluation rules:
 kosli create attestation-type customTypeName \
     --description "Attest that a person meets the age requirements." \
     --schema person-schema.json \
@@ -102,7 +102,10 @@ type CreateAttestationTypePayload struct {
 // summary entries. The value must be a JSON array of {name, expression} objects,
 // both fields non-empty.
 func parseSummaryJSON(value string) ([]SummaryEntry, error) {
-	if strings.TrimSpace(value) == "" {
+	// Only a wholly absent value is no summary. The empty-value rule refuses an
+	// empty one on the command line, so "" here means the flag was left out;
+	// whitespace was written on purpose and falls through to be rejected.
+	if value == "" {
 		return nil, nil
 	}
 

@@ -500,7 +500,9 @@
   "description": "string",
   "dry-run": "bool",
   "jq": "stringArray",
-  "schema": "string"
+  "schema": "string",
+  "summary": "stringArray",
+  "summary-json": "string"
  },
  "create control": {
   "description": "string",
