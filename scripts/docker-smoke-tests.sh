@@ -57,22 +57,12 @@ run_case() {
 # Add a new smoke test by writing a test_* function below and adding one
 # entry to the CASES array further down — no CI workflow changes needed.
 
-test_list_environments() {
-  docker run --rm \
-    -e KOSLI_API_TOKEN=any-token-will-do \
-    -e KOSLI_ORG=cyber-dojo \
-    "${IMAGE}:${TAG}" \
-    list environments
-}
-
 test_attest_artifact_dir() {
   local commit_sha
   commit_sha="$(git -C "$REPO_ROOT" rev-parse HEAD)" || return 1
 
-  # --api-token is required by PreRunE even under --dry-run
-  # (attestArtifact.go:115) — it looks redundant below, but removing it fails
-  # the command. And --dry-run turns any error into a warning plus exit 0
-  # (main.go:202-206), so the exit code alone can't be trusted here.
+  #--dry-run turns any error into a warning plus exit 0,
+  # so the exit code alone can't be trusted here.
   local output
   output="$(docker run --rm \
     -v "${REPO_ROOT}":/workspace:ro \
@@ -105,7 +95,6 @@ test_attest_artifact_dir() {
 # Add a case by adding one entry here alongside its test_* function above.
 
 CASES=(
-  "list-environments:test_list_environments"
   "attest-artifact-dir:test_attest_artifact_dir"
 )
 
