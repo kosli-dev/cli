@@ -184,6 +184,8 @@ jobs:
       attestations: write
       packages: write
       artifact-metadata: write
+    env:
+      RESULTS_FILE: smoke-test-results.json
 
     steps:
       - name: Harden Runner
@@ -333,26 +335,28 @@ jobs:
               --scan-results snyk-docker.json
               --org ${{ inputs.kosli_org }}
 
-      - name: Smoke test the docker image to be sure it can connect to Kosli
-        id: smoke-test
+      - name: Run Docker image smoke tests
+        if: ${{ success() || failure() }}
         env:
-          KOSLI_ORG: cyber-dojo
-          KOSLI_API_TOKEN: any-token-will-do
-        run:
-          docker run -e KOSLI_API_TOKEN
-            -e KOSLI_ORG --rm ${{ env.IMAGE }}:${{ inputs.tag }}
-            list environments
+          IMAGE: ${{ env.IMAGE }}
+          TAG: ${{ inputs.tag }}
+        run: ./scripts/docker-smoke-tests.sh
 
       - name: Report Docker smoke test attestation to Kosli
         if: ${{ inputs.report_to_kosli != 'none' && (success() || failure()) }}
         env:
           KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-          SMOKE_TEST_OUTCOME: ${{ steps.smoke-test.outcome }}
-        run:
-          kosli attest generic
-              --flow ${{ inputs.flow_name }}
-              --trail ${{ inputs.trail_name }}
-              --fingerprint ${{ env.FINGERPRINT }}
-              --name smoke-test
-              --compliant=${{ steps.smoke-test.outcome == 'success' }}
-              --org ${{ inputs.kosli_org }}
+        run: |
+          if [ ! -s "$RESULTS_FILE" ]; then
+            echo '[{"name":"smoke-tests","outcome":"failure","note":"runner produced no results"}]' > "$RESULTS_FILE"
+          fi
+          COMPLIANT=true
+          jq -e 'length > 0 and all(.[]; .outcome == "success")' "$RESULTS_FILE" > /dev/null || COMPLIANT=false
+          kosli attest generic \
+            --flow ${{ inputs.flow_name }} \
+            --trail ${{ inputs.trail_name }} \
+            --fingerprint ${{ env.FINGERPRINT }} \
+            --name smoke-test \
+            --compliant="$COMPLIANT" \
+            --attachments "$RESULTS_FILE" \
+            --org ${{ inputs.kosli_org }}

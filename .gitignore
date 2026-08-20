@@ -5,6 +5,7 @@ TODO.md
 merkely.yaml
 kosli.yaml
 pipe.json
+smoke-test-results.json
 dist/
 coverage.out
 cover.out
