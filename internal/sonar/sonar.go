@@ -22,6 +22,7 @@ type SonarConfig struct {
 	projectKey  string
 	serverURL   string
 	pullRequest string
+	branch      string
 	maxWait     int
 }
 
@@ -135,7 +136,7 @@ type Error struct {
 	Msg string `json:"msg"`
 }
 
-func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision, pullRequest string, maxWait int) *SonarConfig {
+func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision, pullRequest, branch string, maxWait int) *SonarConfig {
 	return &SonarConfig{
 		APIToken:    apiToken,
 		WorkingDir:  workingDir,
@@ -144,6 +145,7 @@ func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revi
 		projectKey:  projectKey,
 		serverURL:   serverURL,
 		pullRequest: pullRequest,
+		branch:      branch,
 		maxWait:     maxWait,
 	}
 }
@@ -197,6 +199,12 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			project.Key = sc.projectKey
 			sonarResults.ServerUrl = sc.serverURL
 			sonarResults.Revision = sc.revision
+			// On this path there is no CE task to read the branch from, so the branch
+			// can only come from the user (#1116). Set it on the results, which is the
+			// one mechanism both analyses lookups use to scope their search.
+			if sc.branch != "" {
+				sonarResults.Branch = &Branch{Name: sc.branch}
+			}
 			project.Url, err = sonarURL(sonarResults.ServerUrl, "dashboard", url.Values{"id": {project.Key}})
 			if err != nil {
 				return nil, err

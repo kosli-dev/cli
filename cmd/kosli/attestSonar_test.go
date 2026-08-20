@@ -253,6 +253,12 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		},
 		{
 			wantError: true,
+			name:      "30 can't provide both sonar-branch and pull-request",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-branch release/uat --pull-request 5 %s", suite.defaultKosliArguments),
+			golden:    "Error: only one of --sonar-branch, --pull-request is allowed\n",
+		},
+		{
+			wantError: true,
 			name:      "29 fails when --name has invalid dot format",
 			cmd:       fmt.Sprintf("attest sonar --name .foo %s", suite.defaultKosliArguments),
 			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
