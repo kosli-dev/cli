@@ -250,46 +250,17 @@ func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterO
 		return result, nil
 	}
 
-	var (
-		wg    sync.WaitGroup
-		mutex = &sync.Mutex{}
-	)
-
-	errs := make(chan error, 1) // Buffered only for the first error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Make sure it's called to release resources even if no errors
+	// compile the filter patterns once, instead of once per namespace
+	compiledFilter := filter.Compile()
 
 	for _, ns := range nsList {
-		wg.Add(1)
-		go func(ns string) {
-			defer wg.Done()
-
-			// Check if any error occurred in any other gorouties:
-			select {
-			case <-ctx.Done():
-				return // Error somewhere, terminate
-			default: // Default is must to avoid blocking
-			}
-
-			include, err := filter.ShouldInclude(ns)
-			if err != nil {
-				select {
-				case errs <- err:
-				default:
-				}
-				cancel() // send cancel signal to goroutines
-				return
-			}
-			if include {
-				mutex.Lock()
-				result = append(result, ns)
-				mutex.Unlock()
-			}
-		}(ns.Name)
-	}
-	wg.Wait()
-	if ctx.Err() != nil {
-		return result, <-errs
+		included, err := compiledFilter.ShouldInclude(ns.Name)
+		if err != nil {
+			return result, err
+		}
+		if included {
+			result = append(result, ns.Name)
+		}
 	}
 	return result, nil
 }

@@ -21,11 +21,13 @@ func TestGetFilteredECSServicesInCluster_EmptyCluster(t *testing.T) {
 		Services:    []ecsTypes.Service{},
 	}
 
+	emptyFilter := (&filters.ResourceFilterOptions{}).Compile()
+
 	allServices, err := getFilteredECSServicesInCluster(
 		client,
 		"empty-cluster",
 		&[]ecsTypes.Service{},
-		&filters.ResourceFilterOptions{},
+		emptyFilter,
 		nil,
 		logger.NewStandardLogger(),
 	)
@@ -43,11 +45,13 @@ func TestGetFilteredECSServicesInCluster_WithServices(t *testing.T) {
 		Services:    []ecsTypes.Service{{ServiceName: &svcName}},
 	}
 
+	emptyFilter := (&filters.ResourceFilterOptions{}).Compile()
+
 	allServices, err := getFilteredECSServicesInCluster(
 		client,
 		"cluster",
 		&[]ecsTypes.Service{},
-		&filters.ResourceFilterOptions{},
+		emptyFilter,
 		nil,
 		logger.NewStandardLogger(),
 	)

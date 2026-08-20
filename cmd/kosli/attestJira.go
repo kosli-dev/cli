@@ -303,15 +303,7 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	// Search commit message, branch name, and secondary source for Jira issue keys,
 	// filtering out false positives from multi-segment identifiers like CVE-2026-41284.
-	searchTexts := []string{commitInfo.Message}
-	if !o.ignoreBranchMatch {
-		searchTexts = append(searchTexts, commitInfo.Branch)
-	}
-	if o.secondarySource != "" {
-		searchTexts = append(searchTexts, o.secondarySource)
-	}
-	combinedText := strings.Join(searchTexts, "\n")
-	issueIDs := jira.FindJiraIssueKeys(combinedText, o.projectKeys)
+	issueIDs := jira.FindJiraIssueKeys(jiraSearchText(commitInfo, o.secondarySource, o.ignoreBranchMatch), o.projectKeys)
 	logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
 	logger.Debug("the following Jira references are found in commit message or branch name: %v", issueIDs)
 
@@ -372,6 +364,20 @@ func (o *attestJiraOptions) run(args []string) error {
 		err = fmt.Errorf("%smissing Jira issues from references found in commit message or branch name%s", errString, issueLog)
 	}
 	return wrapAttestationError(err)
+}
+
+// jiraSearchText joins the texts that are searched for Jira issue keys: the commit
+// message, the branch name unless ignoreBranchMatch is set, and the secondary source
+// when one is given.
+func jiraSearchText(commitInfo *gitview.CommitInfo, secondarySource string, ignoreBranchMatch bool) string {
+	searchTexts := []string{commitInfo.Message}
+	if !ignoreBranchMatch {
+		searchTexts = append(searchTexts, commitInfo.Branch)
+	}
+	if secondarySource != "" {
+		searchTexts = append(searchTexts, secondarySource)
+	}
+	return strings.Join(searchTexts, "\n")
 }
 
 func (o *attestJiraOptions) validateJiraProjectKeys() error {

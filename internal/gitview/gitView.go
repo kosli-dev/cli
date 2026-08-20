@@ -3,8 +3,6 @@ package gitview
 import (
 	"fmt"
 	"net/url"
-	"regexp"
-	"sort"
 	"strings"
 
 	git "github.com/go-git/go-git/v5"
@@ -276,44 +274,6 @@ func getCommitURL(repoURL, commitHash string) string {
 		// (self hosted)
 		return parsedURL.JoinPath("commit", commitHash).String()
 	}
-}
-
-// MatchPatternInCommitMessageORBranchName returns a slice of strings matching a pattern in a commit message or branch name
-// matches lookup happens in the commit message first, and if none is found, matching against the branch name is done
-// if no matches are found in both the commit message and the branch name, an empty slice is returned
-func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA, secondarySource string, ignoreBranchMatch bool) ([]string, *CommitInfo, error) {
-	commitInfo, err := gv.GetCommitInfoFromCommitSHA(commitSHA, true, []string{})
-	if err != nil {
-		return []string{}, nil, err
-	}
-
-	re := regexp.MustCompile(pattern)
-	commitMatches := re.FindAllString(commitInfo.Message, -1)
-	branchMatches := re.FindAllString(commitInfo.Branch, -1)
-	secondaryMatches := re.FindAllString(secondarySource, -1)
-
-	// Use a map to remove duplicates
-	uniqueMatches := make(map[string]struct{})
-	for _, match := range commitMatches {
-		uniqueMatches[match] = struct{}{}
-	}
-	if !ignoreBranchMatch {
-		for _, match := range branchMatches {
-			uniqueMatches[match] = struct{}{}
-		}
-	}
-	for _, match := range secondaryMatches {
-		uniqueMatches[match] = struct{}{}
-	}
-
-	// Convert map keys back to a slice
-	matches := make([]string, 0, len(uniqueMatches))
-	for match := range uniqueMatches {
-		matches = append(matches, match)
-	}
-	sort.Strings(matches)
-
-	return matches, commitInfo, nil
 }
 
 // ResolveRevision returns an explicit commit SHA1 from commit SHA or ref (e.g. HEAD~2)

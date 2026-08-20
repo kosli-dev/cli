@@ -228,8 +228,9 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 }
 
 // getFilteredLambdaFuncs fetches a filtered set of lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
+// filter is pre-compiled by the caller, so its regex patterns are not re-compiled per function or per page
 func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *[]types.FunctionConfiguration,
-	filter *filters.ResourceFilterOptions) (*[]types.FunctionConfiguration, error) {
+	filter *filters.CompiledResourceFilter) (*[]types.FunctionConfiguration, error) {
 	params := &lambda.ListFunctionsInput{}
 	if nextMarker != nil {
 		params.Marker = nextMarker
@@ -240,16 +241,15 @@ func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *
 		return allFunctions, err
 	}
 
-	if len(filter.IncludeNames) == 0 && len(filter.IncludeNamesRegex) == 0 &&
-		len(filter.ExcludeNames) == 0 && len(filter.ExcludeNamesRegex) == 0 {
+	if !filter.IsSet() {
 		*allFunctions = append(*allFunctions, listFunctionsOutput.Functions...)
 	} else {
 		for _, f := range listFunctionsOutput.Functions {
-			include, err := filter.ShouldInclude(*f.FunctionName)
+			included, err := filter.ShouldInclude(*f.FunctionName)
 			if err != nil {
 				return allFunctions, err
 			}
-			if include {
+			if included {
 				*allFunctions = append(*allFunctions, f)
 			}
 		}
@@ -277,7 +277,10 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.Resource
 func getLambdaPackageDataFromClient(client LambdaAPI, filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
 	lambdaData := []*LambdaData{}
 
-	filteredFunctions, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, filter)
+	// compile the filter patterns once, instead of once per function and per page
+	compiledFilter := filter.Compile()
+
+	filteredFunctions, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, compiledFilter)
 	if err != nil {
 		return lambdaData, err
 	}
@@ -577,8 +580,9 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 }
 
 // getFilteredECSClusters fetches a filtered set of ECS clusters recursively (50 at a time) and returns a list of ecs Clusters
+// clusterFilter is pre-compiled by the caller, so its regex patterns are not re-compiled per cluster or per page
 func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
-	clusterFilter *filters.ResourceFilterOptions, nextToken *string, logger *logger.Logger) (*[]ecsTypes.Cluster, error) {
+	clusterFilter *filters.CompiledResourceFilter, nextToken *string, logger *logger.Logger) (*[]ecsTypes.Cluster, error) {
 	params := &ecs.ListClustersInput{}
 	if nextToken != nil {
 		params.NextToken = nextToken
@@ -599,11 +603,11 @@ func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
 		*allClusters = append(*allClusters, describeClustersOutput.Clusters...)
 	} else {
 		for _, c := range describeClustersOutput.Clusters {
-			include, err := clusterFilter.ShouldInclude(*c.ClusterName)
+			included, err := clusterFilter.ShouldInclude(*c.ClusterName)
 			if err != nil {
 				return allClusters, err
 			}
-			if include {
+			if included {
 				*allClusters = append(*allClusters, c)
 			}
 		}
@@ -633,7 +637,11 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter 
 		return allTasksData, fmt.Errorf("failed to create ECS client: %w", err)
 	}
 
-	filteredClusters, err := getFilteredECSClusters(client, &[]ecsTypes.Cluster{}, clusterFilter, nil, logger)
+	// compile the filter patterns once, instead of once per cluster and per service
+	compiledClusterFilter := clusterFilter.Compile()
+	compiledServiceFilter := serviceFilter.Compile()
+
+	filteredClusters, err := getFilteredECSClusters(client, &[]ecsTypes.Cluster{}, compiledClusterFilter, nil, logger)
 	if err != nil {
 		return allTasksData, fmt.Errorf("failed to filter ECS clusters: %w", err)
 	}
@@ -649,7 +657,7 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter 
 		go func(clusterName string) {
 			defer wg.Done()
 
-			filteredServices, err := getFilteredECSServicesInCluster(client, clusterName, &[]ecsTypes.Service{}, serviceFilter, nil, logger)
+			filteredServices, err := getFilteredECSServicesInCluster(client, clusterName, &[]ecsTypes.Service{}, compiledServiceFilter, nil, logger)
 			if err != nil {
 				errChan <- fmt.Errorf("failed to filter ECS services in cluster %s: %w", clusterName, err)
 				return
@@ -682,7 +690,8 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter 
 }
 
 // getFilteredECSServicesInCluster fetches a filtered set of ECS services recursively (10 at a time) and returns a list of ecs Services
-func getFilteredECSServicesInCluster(client ECSServicesAPI, cluster string, allServices *[]ecsTypes.Service, serviceFilter *filters.ResourceFilterOptions,
+// serviceFilter is pre-compiled by the caller, so its regex patterns are not re-compiled per service, per page or per cluster
+func getFilteredECSServicesInCluster(client ECSServicesAPI, cluster string, allServices *[]ecsTypes.Service, serviceFilter *filters.CompiledResourceFilter,
 	nextToken *string, logger *logger.Logger) (*[]ecsTypes.Service, error) {
 	listInput := &ecs.ListServicesInput{
 		Cluster: aws.String(cluster),
@@ -713,11 +722,11 @@ func getFilteredECSServicesInCluster(client ECSServicesAPI, cluster string, allS
 		*allServices = append(*allServices, describeServicesOutput.Services...)
 	} else {
 		for _, s := range describeServicesOutput.Services {
-			include, err := serviceFilter.ShouldInclude(*s.ServiceName)
+			included, err := serviceFilter.ShouldInclude(*s.ServiceName)
 			if err != nil {
 				return allServices, err
 			}
-			if include {
+			if included {
 				*allServices = append(*allServices, s)
 			}
 		}

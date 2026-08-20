@@ -223,3 +223,17 @@ func TestFindJiraIssueKeys(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkFindJiraIssueKeys(b *testing.B) {
+	text := "EX-1 fixes the regression reported in EX-2, see also branch bugfix/EX-3"
+	b.Run("default pattern", func(b *testing.B) {
+		for b.Loop() {
+			FindJiraIssueKeys(text, nil)
+		}
+	})
+	b.Run("project key pattern", func(b *testing.B) {
+		for b.Loop() {
+			FindJiraIssueKeys(text, []string{"EX"})
+		}
+	})
+}

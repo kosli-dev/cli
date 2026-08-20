@@ -107,6 +107,15 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 	return result, nil
 }
 
+const defaultJiraIssueKeyPattern = `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`
+
+var (
+	// compiled once, as the default pattern is a constant
+	defaultJiraIssueKeyRegexp = regexp.MustCompile(defaultJiraIssueKeyPattern)
+	// dashDigitRegexp is compiled once and shared by all isPartialMultiSegment calls
+	dashDigitRegexp = regexp.MustCompile(`^-\d`)
+)
+
 func MakeJiraIssueKeyPattern(projectKeys []string) string {
 	// Jira issue keys consist of [project-key]-[sequential-number].
 	// FindJiraIssueKeys uppercases the text before applying this pattern, so the
@@ -114,13 +123,24 @@ func MakeJiraIssueKeyPattern(projectKeys []string) string {
 	// are also uppercased here for the same reason.
 	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
 	if len(projectKeys) == 0 {
-		return `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`
+		return defaultJiraIssueKeyPattern
 	}
 	upper := make([]string, len(projectKeys))
 	for i, k := range projectKeys {
 		upper[i] = strings.ToUpper(k)
 	}
 	return `\b(` + strings.Join(upper, "|") + `)-[0-9]+`
+}
+
+// jiraIssueKeyRegexp returns the compiled issue key pattern for the given project keys.
+// The default pattern is compiled once; a project-key pattern is compiled per call, which
+// is safe from panics because validateJiraProjectKeys has already rejected any key outside
+// ^[A-Za-z][A-Za-z0-9_]{1,9}$, so a key cannot carry regex metacharacters.
+func jiraIssueKeyRegexp(projectKeys []string) *regexp.Regexp {
+	if len(projectKeys) == 0 {
+		return defaultJiraIssueKeyRegexp
+	}
+	return regexp.MustCompile(MakeJiraIssueKeyPattern(projectKeys))
 }
 
 // FindJiraIssueKeys finds all Jira issue keys in text, filtering out
@@ -131,8 +151,7 @@ func MakeJiraIssueKeyPattern(projectKeys []string) string {
 // immediately followed by a hyphen and a digit.
 func FindJiraIssueKeys(text string, projectKeys []string) []string {
 	upperText := strings.ToUpper(text)
-	pattern := MakeJiraIssueKeyPattern(projectKeys)
-	re := regexp.MustCompile(pattern)
+	re := jiraIssueKeyRegexp(projectKeys)
 	candidates := re.FindAllString(upperText, -1)
 
 	// Deduplicate (all candidates are already uppercase).
@@ -146,10 +165,9 @@ func FindJiraIssueKeys(text string, projectKeys []string) []string {
 	}
 
 	// Filter out matches that are always followed by -<digit> in the uppercased text.
-	dashDigit := regexp.MustCompile(`^-\d`)
 	var result []string
 	for _, m := range unique {
-		if isPartialMultiSegment(upperText, m, dashDigit) {
+		if isPartialMultiSegment(upperText, m) {
 			continue
 		}
 		result = append(result, m)
@@ -166,7 +184,7 @@ func FindJiraIssueKeys(text string, projectKeys []string) []string {
 // is immediately followed by a "-<digit>" suffix, indicating it is part
 // of a longer multi-segment identifier (e.g. CVE-2026-41284).
 // Precondition: match must exist in text (guaranteed when called from FindJiraIssueKeys).
-func isPartialMultiSegment(text, match string, dashDigit *regexp.Regexp) bool {
+func isPartialMultiSegment(text, match string) bool {
 	start := 0
 	for {
 		idx := strings.Index(text[start:], match)
@@ -174,7 +192,7 @@ func isPartialMultiSegment(text, match string, dashDigit *regexp.Regexp) bool {
 			break
 		}
 		afterIdx := start + idx + len(match)
-		if afterIdx >= len(text) || !dashDigit.MatchString(text[afterIdx:]) {
+		if afterIdx >= len(text) || !dashDigitRegexp.MatchString(text[afterIdx:]) {
 			return false
 		}
 		start = start + idx + 1

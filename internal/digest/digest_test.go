@@ -638,6 +638,15 @@ func (suite *DigestTestSuite) TestValidateDigest() {
 	}
 }
 
+// TestValidateDigestErrorMessage guards the exact error message. Command tests in
+// cmd/kosli assert this text (including the regex pattern) in their golden output.
+func (suite *DigestTestSuite) TestValidateDigestErrorMessage() {
+	err := ValidateDigest("xxxx")
+	require.EqualError(suite.T(),
+		err,
+		"xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$")
+}
+
 func (suite *DigestTestSuite) TestDockerImageSha256() {
 	type want struct {
 		sha256      string
@@ -972,4 +981,13 @@ func (suite *DigestTestSuite) TestGetExcludePathsFromIgnoreFile() {
 // a normal test function and pass our suite to suite.Run
 func TestDigestTestSuite(t *testing.T) {
 	suite.Run(t, new(DigestTestSuite))
+}
+
+func BenchmarkValidateDigest(b *testing.B) {
+	sha256 := "db40d79b3a15b17ee9fcc2f49aa73736e0073de6b5a35c459268bb9a31e55139"
+	for b.Loop() {
+		if err := ValidateDigest(sha256); err != nil {
+			b.Fatal(err)
+		}
+	}
 }

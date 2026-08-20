@@ -211,22 +211,20 @@ func (suite *KubeTestSuite) TestGetPodsDataWithThrottling() {
 
 func (suite *KubeTestSuite) TestFilterNamespaces() {
 	type args struct {
-		nsList []corev1.Namespace
-		filter *filters.ResourceFilterOptions
+		namespaces []string
+		filter     *filters.ResourceFilterOptions
 	}
 	for _, t := range []struct {
-		name        string
-		args        args
-		expectError bool
-		want        []string
+		name         string
+		args         args
+		expectError  bool
+		want         []string
+		wantFiltered []string
 	}{
 		{
 			name: "invalid regex patterns return error",
 			args: args{
-				nsList: []corev1.Namespace{
-					{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}},
-					{ObjectMeta: metav1.ObjectMeta{Name: "ns2"}},
-				},
+				namespaces: []string{"filter-err-a1", "filter-err-a2"},
 				filter: &filters.ResourceFilterOptions{
 					IncludeNamesRegex: []string{"["},
 				},
@@ -234,15 +232,51 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 			expectError: true,
 			want:        []string{},
 		},
+		{
+			name: "namespaces matching the include regex patterns are returned",
+			args: args{
+				namespaces: []string{"filter-inc-a1", "filter-inc-a2", "filter-inc-b1"},
+				filter: &filters.ResourceFilterOptions{
+					IncludeNamesRegex: []string{"^filter-inc-a.*$"},
+				},
+			},
+			want: []string{"filter-inc-a1", "filter-inc-a2"},
+		},
+		{
+			name: "namespaces matching the exclude regex patterns are filtered out",
+			args: args{
+				namespaces: []string{"filter-exc-a1", "filter-exc-a2", "filter-exc-b1"},
+				filter: &filters.ResourceFilterOptions{
+					ExcludeNamesRegex: []string{"^filter-exc-a.*$"},
+				},
+			},
+			wantFiltered: []string{"filter-exc-a1", "filter-exc-a2"},
+		},
 	} {
 		suite.Run(t.name, func() {
+			// namespace names must not be shared with another test method: AfterTest
+			// only asks for deletion, and a namespace lingers in Terminating for a
+			// while after that, so re-creating one by the same name fails with
+			// "object is being deleted". Hence the filter- prefix here.
+			for _, ns := range t.args.namespaces {
+				suite.createNamespace(ns)
+			}
 			result, err := suite.clientset.filterNamespaces(t.args.filter)
 			if t.expectError {
 				require.Error(suite.T(), err, "error was expected but got none.")
-			} else {
-				require.NoErrorf(suite.T(), err, "error was NOT expected but got: %v.", err)
-				require.Equal(suite.T(), t.want, result, "TestFilterNamespaces: got %v -- want %v", result, t.want)
+				return
 			}
+			require.NoErrorf(suite.T(), err, "error was NOT expected but got: %v.", err)
+			if len(t.wantFiltered) > 0 {
+				require.Subset(suite.T(), result, []string{"filter-exc-b1"},
+					"TestFilterNamespaces: %v should contain the non-excluded namespace", result)
+				for _, ns := range t.wantFiltered {
+					require.NotContains(suite.T(), result, ns,
+						"TestFilterNamespaces: %s should have been filtered out of %v", ns, result)
+				}
+				return
+			}
+			require.ElementsMatch(suite.T(), t.want, result, "TestFilterNamespaces: got %v -- want %v", result, t.want)
 		})
 	}
 

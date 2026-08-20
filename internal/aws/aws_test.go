@@ -763,13 +763,35 @@ func (suite *AWSTestSuite) TestGetFilteredLambdaFuncs() {
 			filter:    &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"invalid["}},
 			wantErr:   true,
 		},
+		{
+			// an invalid pattern is only reported once filtering a function reaches it,
+			// so functions settled by ExcludeNames are filtered without error
+			name:      "invalid regex behind an excluded literal name is not reached",
+			functions: []string{"alpha"},
+			filter: &filters.ResourceFilterOptions{
+				ExcludeNames:      []string{"alpha"},
+				ExcludeNamesRegex: []string{"invalid["},
+			},
+			expectedNames: []string{},
+		},
+		{
+			name:      "invalid regex is reported once a function does not match the excluded literal name",
+			functions: []string{"alpha", "beta"},
+			filter: &filters.ResourceFilterOptions{
+				ExcludeNames:      []string{"alpha"},
+				ExcludeNamesRegex: []string{"invalid["},
+			},
+			wantErr: true,
+		},
 	} {
 		suite.Run(t.name, func() {
 			client := fakeLambdaClientWithFunctions(t.functions...)
 			if t.pageSize > 0 {
 				client.PageSize = t.pageSize
 			}
-			result, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, t.filter)
+			compiledFilter := t.filter.Compile()
+
+			result, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, compiledFilter)
 			if t.wantErr {
 				require.Error(suite.T(), err)
 				return
