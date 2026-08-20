@@ -40,16 +40,30 @@ func (f *fakeBranchSonar) handler() http.HandlerFunc {
 			}
 			_ = json.NewEncoder(w).Encode(resp)
 		case "/api/ce/activity":
+			// The activity list spans every branch of the project, so it also holds
+			// tasks for other analyses. The decoy comes first: the task we want has to
+			// be selected by analysis ID, not by being the only one there.
 			_ = json.NewEncoder(w).Encode(sonar.ActivityResponse{
-				Tasks: []sonar.Task{{
-					TaskID:        "AaAeAfTdP27JeOuKOyce",
-					ComponentName: "customer project",
-					ComponentKey:  revProjectKey,
-					AnalysisID:    revAnalysisKey,
-					Status:        "SUCCESS",
-					Branch:        f.taskBranch,
-					BranchType:    f.taskBranchType,
-				}},
+				Tasks: []sonar.Task{
+					{
+						TaskID:        "DECOY",
+						ComponentName: "customer project",
+						ComponentKey:  revProjectKey,
+						AnalysisID:    "SOME_OTHER_ANALYSIS",
+						Status:        "FAILED",
+						Branch:        revMainBranch,
+						BranchType:    "LONG",
+					},
+					{
+						TaskID:        revTaskID,
+						ComponentName: "customer project",
+						ComponentKey:  revProjectKey,
+						AnalysisID:    revAnalysisKey,
+						Status:        "SUCCESS",
+						Branch:        f.taskBranch,
+						BranchType:    f.taskBranchType,
+					},
+				},
 			})
 		case "/api/qualitygates/project_status":
 			_ = json.NewEncoder(w).Encode(sonar.QualityGateResponse{
@@ -100,6 +114,17 @@ func TestGetSonarResults_ProjectKeyPath_WithBranch(t *testing.T) {
 	}
 	if results.QualityGate == nil || results.QualityGate.Status != "OK" {
 		t.Fatalf("expected quality gate OK, got %+v", results.QualityGate)
+	}
+	if results.TaskID != revTaskID {
+		t.Errorf("expected the task for analysis %s, got TaskID %q", revAnalysisKey, results.TaskID)
+	}
+	if results.Status != "SUCCESS" {
+		t.Errorf("expected status SUCCESS from the matched task, got %q", results.Status)
+	}
+	// The CE task is authoritative once found, and it is the only source of the
+	// branch type — the flag supplies a name only.
+	if results.Branch.Type != "LONG" {
+		t.Errorf("expected branch type from the CE task, got %q", results.Branch.Type)
 	}
 }
 
