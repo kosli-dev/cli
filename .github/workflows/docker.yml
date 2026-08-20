@@ -333,26 +333,29 @@ jobs:
               --scan-results snyk-docker.json
               --org ${{ inputs.kosli_org }}
 
-      - name: Smoke test the docker image to be sure it can connect to Kosli
-        id: smoke-test
+      - name: Run docker image smoke tests
+        id: smoke-tests
         env:
-          KOSLI_ORG: cyber-dojo
-          KOSLI_API_TOKEN: any-token-will-do
-        run:
-          docker run -e KOSLI_API_TOKEN
-            -e KOSLI_ORG --rm ${{ env.IMAGE }}:${{ inputs.tag }}
-            list environments
+          IMAGE: ${{ env.IMAGE }}
+          TAG: ${{ inputs.tag }}
+          RESULTS_FILE: smoke-test-results.json
+        run: ./scripts/docker-smoke-tests.sh
 
-      - name: Report Docker smoke test attestation to Kosli
+      - name: Report docker smoke test attestations to Kosli
         if: ${{ inputs.report_to_kosli != 'none' && (success() || failure()) }}
         env:
           KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-          SMOKE_TEST_OUTCOME: ${{ steps.smoke-test.outcome }}
-        run:
-          kosli attest generic
-              --flow ${{ inputs.flow_name }}
-              --trail ${{ inputs.trail_name }}
-              --fingerprint ${{ env.FINGERPRINT }}
-              --name smoke-test
-              --compliant=${{ steps.smoke-test.outcome == 'success' }}
+        run: |
+          jq -c '.[]' smoke-test-results.json | while read -r result; do
+            NAME=$(jq -r '.name' <<< "$result")
+            OUTCOME=$(jq -r '.outcome' <<< "$result")
+            COMPLIANT=false
+            [ "$OUTCOME" = "success" ] && COMPLIANT=true
+            kosli attest generic \
+              --flow ${{ inputs.flow_name }} \
+              --trail ${{ inputs.trail_name }} \
+              --fingerprint ${{ env.FINGERPRINT }} \
+              --name "$NAME" \
+              --compliant="$COMPLIANT" \
               --org ${{ inputs.kosli_org }}
+          done
