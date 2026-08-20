@@ -352,7 +352,7 @@ jobs:
             --flow ${{ inputs.flow_name }} \
             --trail ${{ inputs.trail_name }} \
             --fingerprint ${{ env.FINGERPRINT }} \
-            --name smoke-tests \
+            --name smoke-test \
             --compliant="$COMPLIANT" \
             --attachments smoke-test-results.json \
             --org ${{ inputs.kosli_org }}
