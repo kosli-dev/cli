@@ -3,6 +3,7 @@ package kube
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/kosli-dev/cli/internal/filters"
@@ -232,7 +233,9 @@ func processPods(list *corev1.PodList, logger *logger.Logger) ([]*PodData, error
 func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterOptions) ([]string, error) {
 	if len(filter.IncludeNamesRegex) == 0 && len(filter.ExcludeNamesRegex) == 0 {
 		if len(filter.IncludeNames) > 0 {
-			return filter.IncludeNames, nil
+			// cloned for the same reason Compile clones them: the caller keeps the
+			// options, and the result must not alias a slice they can still change
+			return slices.Clone(filter.IncludeNames), nil
 		}
 	}
 	result := []string{}
