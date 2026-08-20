@@ -125,17 +125,19 @@ func MakeJiraIssueKeyPattern(projectKeys []string) string {
 	if len(projectKeys) == 0 {
 		return defaultJiraIssueKeyPattern
 	}
+	// each key is quoted, so the returned pattern always compiles whatever the caller
+	// passes. A key that a Jira project could actually have carries no regex
+	// metacharacters, so quoting leaves it unchanged.
 	upper := make([]string, len(projectKeys))
 	for i, k := range projectKeys {
-		upper[i] = strings.ToUpper(k)
+		upper[i] = regexp.QuoteMeta(strings.ToUpper(k))
 	}
 	return `\b(` + strings.Join(upper, "|") + `)-[0-9]+`
 }
 
 // jiraIssueKeyRegexp returns the compiled issue key pattern for the given project keys.
-// The default pattern is compiled once; a project-key pattern is compiled per call, which
-// is safe from panics because validateJiraProjectKeys has already rejected any key that
-// jiraProjectKeyRegexp does not match, so a key cannot carry regex metacharacters.
+// The default pattern is compiled once; a project-key pattern is compiled per call, and
+// cannot panic because MakeJiraIssueKeyPattern quotes the keys it interpolates.
 func jiraIssueKeyRegexp(projectKeys []string) *regexp.Regexp {
 	if len(projectKeys) == 0 {
 		return defaultJiraIssueKeyRegexp

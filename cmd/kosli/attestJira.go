@@ -386,9 +386,6 @@ func jiraSearchText(commitInfo *gitview.CommitInfo, secondarySource string, igno
 // According to Jira documentation https://confluence.atlassian.com/adminjiraserver/changing-the-project-key-format-938847081.html
 // the Jira project key has to start with a capital letter and can then have capital letters numbers and underscore.
 // But Jira itself will accept lower case letters when searching a repository for matching branches and commits.
-//
-// jira.MakeJiraIssueKeyPattern relies on this: a key that matches here carries no regex
-// metacharacters, so building a pattern from validated keys cannot fail to compile.
 var jiraProjectKeyRegexp = regexp.MustCompile("^[A-Za-z][A-Za-z0-9_]{1,9}$")
 
 func (o *attestJiraOptions) validateJiraProjectKeys() error {

@@ -61,6 +61,23 @@ func TestMakeJiraIssueKey(t *testing.T) {
 				"DEF-123",
 			},
 		},
+		{
+			// A real Jira project key cannot contain these, and validateJiraProjectKeys
+			// rejects them before they reach here, but this is an exported function:
+			// quoting the keys is what makes "the pattern always compiles" a property of
+			// the code rather than a promise the caller has to keep.
+			name:        "Project keys carrying regex metacharacters are quoted",
+			projectKeys: []string{"a(b", "c[d"},
+			want:        `\b(A\(B|C\[D)-[0-9]+`,
+			matches: []string{
+				"A(B-123",
+				"C[D-456",
+			},
+			nonMatches: []string{
+				"AB-123",
+				"AXB-123",
+			},
+		},
 	}
 
 	for _, tt := range tests {
