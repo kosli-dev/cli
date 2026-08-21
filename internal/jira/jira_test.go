@@ -4,7 +4,9 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/maxcnunes/httpfake"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMakeJiraIssueKey(t *testing.T) {
@@ -281,6 +283,110 @@ func TestFindJiraIssueKeys(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+// TestGetJiraIssueInfo pins which Jira responses mean "the issue does not exist"
+// and which mean "we could not find out". Only a 404 is an answer about the issue:
+// every other failure has to reach the caller as an error, because reporting it as
+// a missing issue makes `attest jira --assert` fail a pipeline for a reason that
+// has nothing to do with the commit's Jira references.
+func TestGetJiraIssueInfo(t *testing.T) {
+	const issueID = "EX-1"
+
+	t.Run("an existing issue is reported as existing", func(t *testing.T) {
+		fake := httpfake.New()
+		defer fake.Close()
+		fake.NewHandler().
+			Get("/rest/api/2/issue/" + issueID).
+			Reply(200).
+			BodyString(`{"id":"10001","key":"EX-1","fields":{"summary":"a summary"}}`)
+
+		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+		result, err := jc.GetJiraIssueInfo(issueID, "summary")
+		require.NoError(t, err)
+		assert.True(t, result.IssueExists)
+		assert.Equal(t, issueID, result.IssueID)
+	})
+
+	t.Run("a 404 is the one status that means the issue does not exist", func(t *testing.T) {
+		fake := httpfake.New()
+		defer fake.Close()
+		fake.NewHandler().
+			Get("/rest/api/2/issue/" + issueID).
+			Reply(404).
+			BodyString(`{"errorMessages":["Issue does not exist or you do not have permission to see it."],"errors":{}}`)
+
+		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+		result, err := jc.GetJiraIssueInfo(issueID, "")
+		require.NoError(t, err)
+		assert.False(t, result.IssueExists)
+	})
+
+	// A stale API token is what this whole classification is for: Jira answers an
+	// expired credential with 401, and swallowing it reported every referenced issue
+	// as missing until someone recycled the token.
+	t.Run("an expired credential is an error, not a missing issue", func(t *testing.T) {
+		fake := httpfake.New()
+		defer fake.Close()
+		fake.NewHandler().
+			Get("/rest/api/2/issue/" + issueID).
+			Reply(401).
+			BodyString(`{"errorMessages":["Client must be authenticated to access this resource."],"errors":{}}`)
+
+		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+		result, err := jc.GetJiraIssueInfo(issueID, "")
+		require.Error(t, err)
+		assert.False(t, result.IssueExists)
+		assert.Contains(t, err.Error(), "authenticate")
+		// the message has to name the credential to check and where it was used
+		assert.Contains(t, err.Error(), "user@example.com")
+		assert.Contains(t, err.Error(), fake.Server.URL)
+	})
+
+	t.Run("a credential without browse permission is an error, not a missing issue", func(t *testing.T) {
+		fake := httpfake.New()
+		defer fake.Close()
+		fake.NewHandler().
+			Get("/rest/api/2/issue/" + issueID).
+			Reply(403).
+			BodyString(`{"errorMessages":["You do not have the permission to see the specified issue."],"errors":{}}`)
+
+		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+		result, err := jc.GetJiraIssueInfo(issueID, "")
+		require.Error(t, err)
+		assert.False(t, result.IssueExists)
+		assert.Contains(t, err.Error(), "permission")
+		assert.Contains(t, err.Error(), issueID)
+	})
+
+	t.Run("a server error is an error, not a missing issue", func(t *testing.T) {
+		fake := httpfake.New()
+		defer fake.Close()
+		fake.NewHandler().
+			Get("/rest/api/2/issue/" + issueID).
+			Reply(500).
+			BodyString(`{"errorMessages":["Internal server error"],"errors":{}}`)
+
+		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+		result, err := jc.GetJiraIssueInfo(issueID, "")
+		require.Error(t, err)
+		assert.False(t, result.IssueExists)
+	})
+
+	// The transport failure is the other half of the same bug: go-jira returns a nil
+	// response there, so the status switch never runs and the old guard fell through
+	// to IssueExists=false with no error.
+	t.Run("an unreachable Jira is an error, not a missing issue", func(t *testing.T) {
+		fake := httpfake.New()
+		fake.Close() // nothing is listening on this address any more
+		unreachableURL := fake.Server.URL
+
+		jc := NewJiraConfig(unreachableURL, "user@example.com", "token", "")
+		result, err := jc.GetJiraIssueInfo(issueID, "")
+		require.Error(t, err)
+		assert.False(t, result.IssueExists)
+		assert.Contains(t, err.Error(), unreachableURL)
+	})
 }
 
 func BenchmarkFindJiraIssueKeys(b *testing.B) {

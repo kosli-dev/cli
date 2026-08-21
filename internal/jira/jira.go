@@ -64,8 +64,20 @@ func (jc *JiraConfig) NewJiraClient() (*jira.Client, error) {
 	return jiraClient, nil
 }
 
+// credentialDescription names the credential the client is using, so that an
+// authentication or permission failure says which one to go and check.
+func (jc *JiraConfig) credentialDescription() string {
+	if jc.Username != "" && jc.APIToken != "" {
+		return fmt.Sprintf("API token of user %s", jc.Username)
+	}
+	return "personal access token"
+}
+
 // GetJiraIssueInfo retrieve Jira issue information
-// if issue is not found, we still return a JiraIssueInfo object with IssueExists set to false
+// if issue is not found, we still return a JiraIssueInfo object with IssueExists set to false.
+// Every other failure - an unreachable Jira, a rejected credential, a server error - is
+// returned as an error rather than as a missing issue, so that a caller asserting on
+// Jira references fails on what actually went wrong.
 func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*JiraIssueInfo, error) {
 	issueUrl, err := url.Parse(jc.BaseURL)
 	if err != nil {
@@ -94,8 +106,26 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 	}
 
 	issue, response, err := jiraClient.Issue.Get(issueID, &queryOptions)
-	if err != nil && response != nil && response.StatusCode != http.StatusNotFound {
-		return result, err
+	if err != nil {
+		if response == nil {
+			// no response at all: DNS, TLS, timeout, connection refused. Nothing was
+			// learned about the issue, so this must not read as "the issue is missing".
+			return result, fmt.Errorf("failed to reach Jira at %s: %s", jc.BaseURL, err)
+		}
+		switch response.StatusCode {
+		case http.StatusNotFound:
+			// The only status that answers the question. Jira returns 404 both for an
+			// issue that does not exist and for one the credential may not browse - it
+			// will not confirm the existence of an issue you cannot see - so a 404
+			// alone cannot tell the two apart.
+			return result, nil
+		case http.StatusUnauthorized:
+			return result, fmt.Errorf("failed to authenticate with Jira at %s: check the %s (Jira answered HTTP 401)", jc.BaseURL, jc.credentialDescription())
+		case http.StatusForbidden:
+			return result, fmt.Errorf("not permitted to view Jira issue %s at %s: check that the %s has the Browse Projects permission (Jira answered HTTP 403)", issueID, jc.BaseURL, jc.credentialDescription())
+		default:
+			return result, err
+		}
 	}
 
 	if issue != nil {
