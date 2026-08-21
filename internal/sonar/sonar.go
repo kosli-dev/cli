@@ -161,9 +161,11 @@ func sonarURL(serverURL, apiPath string, params url.Values) (string, error) {
 }
 
 // analysesSearchURL scopes the search to the branch when we know it; SonarQube
-// otherwise searches only the project's main branch (#861, #1116).
+// otherwise searches only the project's main branch (#861, #1116). ps is SonarQube's
+// maximum: the endpoint returns the 100 newest analyses by default, which can leave
+// an older revision unmatched, and we search these results by revision.
 func analysesSearchURL(sonarResults *SonarResults, project *Project) (string, error) {
-	params := url.Values{"project": {project.Key}}
+	params := url.Values{"project": {project.Key}, "ps": {"500"}}
 	if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
 		params.Set("branch", sonarResults.Branch.Name)
 	}
@@ -439,7 +441,7 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 		advice := "Check the revision is correct, and pass --sonar-branch if the scan ran on another branch."
 		if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
 			scope = fmt.Sprintf("branch %s was searched", sonarResults.Branch.Name)
-			advice = "Check the revision and the branch are correct."
+			advice = "Check the revision and the branch are correct. Only the most recent analyses are searched, so an older scan may not be listed."
 		}
 		return "", fmt.Errorf("analysis for revision %s of project %s not found: %s. %s \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key, scope, advice)
 	}
