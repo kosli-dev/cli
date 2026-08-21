@@ -219,34 +219,35 @@ func TestGetProjectAnalysisFromRevision_BranchParam(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		var gotBranch, gotProject string
-		var present bool
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			gotBranch = r.URL.Query().Get("branch")
-			gotProject = r.URL.Query().Get("project")
-			_, present = r.URL.Query()["branch"]
-			_ = json.NewEncoder(w).Encode(sonar.ProjectAnalyses{Analyses: []sonar.Analysis{
-				{Key: revAnalysisKey, Date: revAnalysisDate, Revision: revRevision},
-			}})
-		}))
+		t.Run(c.name, func(t *testing.T) {
+			var gotBranch, gotProject string
+			var present bool
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotBranch = r.URL.Query().Get("branch")
+				gotProject = r.URL.Query().Get("project")
+				_, present = r.URL.Query()["branch"]
+				_ = json.NewEncoder(w).Encode(sonar.ProjectAnalyses{Analyses: []sonar.Analysis{
+					{Key: revAnalysisKey, Date: revAnalysisDate, Revision: revRevision},
+				}})
+			}))
+			defer server.Close()
 
-		sonarResults := &sonar.SonarResults{ServerUrl: server.URL, Branch: c.branch}
-		project := &sonar.Project{Key: revProjectKey}
-		_, err := sonar.GetProjectAnalysisFromRevision(http.DefaultClient, sonarResults, project, revRevision, discardLogger())
-		server.Close()
-
-		if err != nil {
-			t.Fatalf("%s: unexpected error: %v", c.name, err)
-		}
-		if present != c.wantPresent {
-			t.Errorf("%s: branch parameter present=%t, want %t (got %q)", c.name, present, c.wantPresent, gotBranch)
-		}
-		if c.wantPresent && gotBranch != c.wantBranch {
-			t.Errorf("%s: SonarQube received branch %q, want %q", c.name, gotBranch, c.wantBranch)
-		}
-		if gotProject != revProjectKey {
-			t.Errorf("%s: project parameter altered: got %q, want %q", c.name, gotProject, revProjectKey)
-		}
+			sonarResults := &sonar.SonarResults{ServerUrl: server.URL, Branch: c.branch}
+			project := &sonar.Project{Key: revProjectKey}
+			_, err := sonar.GetProjectAnalysisFromRevision(http.DefaultClient, sonarResults, project, revRevision, discardLogger())
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if present != c.wantPresent {
+				t.Errorf("branch parameter present=%t, want %t (got %q)", present, c.wantPresent, gotBranch)
+			}
+			if c.wantPresent && gotBranch != c.wantBranch {
+				t.Errorf("SonarQube received branch %q, want %q", gotBranch, c.wantBranch)
+			}
+			if gotProject != revProjectKey {
+				t.Errorf("project parameter altered: got %q, want %q", gotProject, revProjectKey)
+			}
+		})
 	}
 }
 
@@ -265,24 +266,25 @@ func TestGetProjectAnalysisFromRevision_NotFoundError(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_ = json.NewEncoder(w).Encode(sonar.ProjectAnalyses{Analyses: []sonar.Analysis{}})
-		}))
+		t.Run(c.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_ = json.NewEncoder(w).Encode(sonar.ProjectAnalyses{Analyses: []sonar.Analysis{}})
+			}))
+			defer server.Close()
 
-		sonarResults := &sonar.SonarResults{ServerUrl: server.URL, Branch: c.branch}
-		project := &sonar.Project{Key: revProjectKey}
-		_, err := sonar.GetProjectAnalysisFromRevision(http.DefaultClient, sonarResults, project, revRevision, discardLogger())
-		server.Close()
-
-		if err == nil {
-			t.Fatalf("%s: expected an error when no analysis matches", c.name)
-		}
-		if !strings.Contains(err.Error(), c.wantInErr) {
-			t.Errorf("%s: expected %q in the error, got: %v", c.name, c.wantInErr, err)
-		}
-		if c.wantNotErr != "" && strings.Contains(err.Error(), c.wantNotErr) {
-			t.Errorf("%s: did not expect %q in the error, got: %v", c.name, c.wantNotErr, err)
-		}
+			sonarResults := &sonar.SonarResults{ServerUrl: server.URL, Branch: c.branch}
+			project := &sonar.Project{Key: revProjectKey}
+			_, err := sonar.GetProjectAnalysisFromRevision(http.DefaultClient, sonarResults, project, revRevision, discardLogger())
+			if err == nil {
+				t.Fatal("expected an error when no analysis matches")
+			}
+			if !strings.Contains(err.Error(), c.wantInErr) {
+				t.Errorf("expected %q in the error, got: %v", c.wantInErr, err)
+			}
+			if c.wantNotErr != "" && strings.Contains(err.Error(), c.wantNotErr) {
+				t.Errorf("did not expect %q in the error, got: %v", c.wantNotErr, err)
+			}
+		})
 	}
 }
 
@@ -316,6 +318,10 @@ func TestGetSonarResults_ProjectKeyPath_WithBranch(t *testing.T) {
 	if results.QualityGate == nil || results.QualityGate.Status != "OK" {
 		t.Fatalf("expected quality gate OK, got %+v", results.QualityGate)
 	}
+	// Type can only come from the matched CE task: the flag sets a name and no type.
+	if results.Branch == nil || results.Branch.Name != revFeatureBranch || results.Branch.Type != "LONG" {
+		t.Errorf("expected branch %s with the type from the CE task, got %+v", revFeatureBranch, results.Branch)
+	}
 }
 
 // TestGetSonarResults_ProjectKeyPath_WithoutBranch is the other half of the same
@@ -327,8 +333,12 @@ func TestGetSonarResults_ProjectKeyPath_WithoutBranch(t *testing.T) {
 	defer srv.Close()
 
 	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, revRevision, "", "", 5)
-	if _, err := sc.GetSonarResults(discardLogger()); err == nil {
+	_, err := sc.GetSonarResults(discardLogger())
+	if err == nil {
 		t.Fatal("expected the unscoped search to fail, as it does for the customer in #1116")
+	}
+	if !strings.Contains(err.Error(), "--sonar-branch") {
+		t.Errorf("expected the error to point at --sonar-branch, got: %v", err)
 	}
 
 	if branches, _ := fake.searches(); len(branches) != 1 || branches[0] != "" {
