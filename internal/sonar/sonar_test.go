@@ -125,6 +125,9 @@ type fakeSonarProject struct {
 	mu             sync.Mutex
 	searchBranches []string
 	searchProjects []string
+	// omitMatchingTask serves an activity list without the task for our analysis,
+	// as SonarQube does when the token cannot read api/ce/activity.
+	omitMatchingTask bool
 }
 
 func (f *fakeSonarProject) handler() http.HandlerFunc {
@@ -147,11 +150,16 @@ func (f *fakeSonarProject) handler() http.HandlerFunc {
 		case "/api/ce/activity":
 			// The activity list spans every branch of the project, so the decoy comes
 			// first: the task must be selected by analysis ID, not by being the only one.
-			_ = json.NewEncoder(w).Encode(sonar.ActivityResponse{Tasks: []sonar.Task{
+			tasks := []sonar.Task{
 				{TaskID: "DECOY", AnalysisID: "SOME_OTHER_ANALYSIS", Status: "FAILED", ComponentKey: revProjectKey},
-				{TaskID: revTaskID, AnalysisID: revAnalysisKey, Status: "SUCCESS", ComponentKey: revProjectKey,
-					ComponentName: "customer project", Branch: revFeatureBranch, BranchType: "LONG"},
-			}})
+			}
+			if !f.omitMatchingTask {
+				tasks = append(tasks, sonar.Task{
+					TaskID: revTaskID, AnalysisID: revAnalysisKey, Status: "SUCCESS", ComponentKey: revProjectKey,
+					ComponentName: "customer project", Branch: revFeatureBranch, BranchType: "LONG",
+				})
+			}
+			_ = json.NewEncoder(w).Encode(sonar.ActivityResponse{Tasks: tasks})
 		case "/api/project_pull_requests/list":
 			_ = json.NewEncoder(w).Encode(sonar.PullRequestsResponse{
 				PullRequests: []sonar.PullRequestInfo{{
@@ -368,5 +376,36 @@ func TestGetSonarResults_BranchIgnoredForPullRequest(t *testing.T) {
 	}
 	if results.Branch != nil {
 		t.Errorf("expected no branch alongside a pull request, got %+v", results.Branch)
+	}
+}
+
+// TestGetSonarResults_NoMatchingTask_KeepsSuppliedBranch pins the payload when
+// api/ce/activity holds no task for the analysis. That is reachable in production:
+// the endpoint needs administrative permission, so an ordinary CI token gets an
+// error body that decodes to zero tasks, and the list is unpaginated besides.
+//
+// GetTaskID only rewrites the branch when a task matches, so the branch the user
+// supplied stands, with no type — only a task can supply one. Better data than
+// dropping it, and pinned here so the choice is deliberate rather than a side
+// effect of setting the branch before the lookup that needs it.
+func TestGetSonarResults_NoMatchingTask_KeepsSuppliedBranch(t *testing.T) {
+	fake := &fakeSonarProject{omitMatchingTask: true}
+	srv := httptest.NewServer(fake.handler())
+	defer srv.Close()
+
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, revRevision, "", revFeatureBranch, 5)
+	results, err := sc.GetSonarResults(discardLogger())
+	if err != nil {
+		t.Fatalf("expected the scan to be found, got error: %v", err)
+	}
+	if results.TaskID != "" {
+		t.Fatalf("expected no task to have matched, got TaskID %q", results.TaskID)
+	}
+
+	if results.Branch == nil || results.Branch.Name != revFeatureBranch {
+		t.Fatalf("expected the supplied branch %q to stand, got %+v", revFeatureBranch, results.Branch)
+	}
+	if results.Branch.Type != "" {
+		t.Errorf("expected no branch type without a task to supply one, got %q", results.Branch.Type)
 	}
 }
