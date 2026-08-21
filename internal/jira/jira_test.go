@@ -1,10 +1,17 @@
 package jira
 
 import (
+	"bytes"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"regexp"
+	"strings"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMakeJiraIssueKey(t *testing.T) {
@@ -281,6 +288,160 @@ func TestFindJiraIssueKeys(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+// TestGetJiraIssueInfo covers how a lookup is classified. The abort paths are part of the
+// contract and are asserted here: a returned error means the attest command stops before
+// reporting the attestation, so a case that returns no error today must not start doing so.
+func TestGetJiraIssueInfo(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		// handler serves the issue endpoint. When nil the server is closed before the
+		// lookup, so the request fails at the transport level.
+		handler    http.HandlerFunc
+		wantStatus LookupStatus
+		wantExists bool
+		wantErr    []string // substrings of the returned error; empty means no error
+		wantReason []string // substrings of LookupReason
+		wantDebug  string
+	}{
+		{
+			name: "an existing issue is found",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"key":"EX-1"}`))
+			},
+			wantStatus: IssueFound,
+			wantExists: true,
+			wantDebug:  "status 200",
+		},
+		{
+			name: "a 404 with no evidence of rejected credentials is a missing issue",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("X-AUSERNAME", "user@example.com")
+				w.Header().Set("X-Seraph-LoginReason", "OK")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"errorMessages":["Issue does not exist"]}`))
+			},
+			wantStatus: IssueMissing,
+			wantDebug:  "status 404",
+		},
+		{
+			name: "a 404 handled as anonymous is unverified, not missing",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("X-AUSERNAME", "anonymous")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"errorMessages":["Issue does not exist"]}`))
+			},
+			wantStatus: LookupUnverified,
+			wantReason: []string{"username user@example.com and API token", "anonymous", "may have expired"},
+			wantDebug:  "status 404",
+		},
+		{
+			name: "a 404 with a failed login reason is unverified, not missing",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("X-Seraph-LoginReason", "AUTHENTICATED_FAILED")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"errorMessages":["Issue does not exist"]}`))
+			},
+			wantStatus: LookupUnverified,
+			wantReason: []string{"AUTHENTICATED_FAILED", "may have expired"},
+			wantDebug:  "status 404",
+		},
+		{
+			name: "a 401 aborts, naming the base URL and the credentials",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write([]byte(`{"errorMessages":["Client must be authenticated"]}`))
+			},
+			wantErr:   []string{"EX-1", "401", "username user@example.com and API token", "may have expired"},
+			wantDebug: "status 401",
+		},
+		{
+			name: "a 403 aborts, naming the base URL and the credentials",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusForbidden)
+			},
+			wantErr:   []string{"403", "may have expired"},
+			wantDebug: "status 403",
+		},
+		{
+			name: "a 500 aborts without blaming the credentials",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			},
+			wantErr:   []string{"500"},
+			wantDebug: "status 500",
+		},
+		{
+			name:       "a transport failure is unverified rather than silently missing",
+			handler:    nil,
+			wantStatus: LookupUnverified,
+			wantReason: []string{"could not reach Jira at"},
+			wantDebug:  "no response",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				tt.handler(w, r)
+			}))
+			if tt.handler == nil {
+				server.Close()
+			} else {
+				defer server.Close()
+			}
+
+			debug := new(bytes.Buffer)
+			jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+			result, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, debug, true))
+
+			require.NotNil(t, result)
+			assert.Equal(t, "EX-1", result.IssueID)
+			assert.Contains(t, debug.String(), tt.wantDebug)
+
+			if len(tt.wantErr) > 0 {
+				require.Error(t, err)
+				for _, want := range tt.wantErr {
+					assert.Contains(t, err.Error(), want)
+				}
+				assert.NotContains(t, err.Error(), "\n", "an error built from a Jira response body must stay on one line")
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantStatus, result.LookupStatus)
+			assert.Equal(t, tt.wantExists, result.IssueExists)
+			for _, want := range tt.wantReason {
+				assert.Contains(t, result.LookupReason, want)
+			}
+			if len(tt.wantReason) == 0 {
+				assert.Empty(t, result.LookupReason)
+			}
+		})
+	}
+}
+
+// TestGetJiraIssueInfoFlattensResponseBody guards the message enrichment against Jira
+// answering with a non-JSON body: NewJiraError embeds the whole body in the error it
+// builds, and a login page must not end up in a log line.
+func TestGetJiraIssueInfoFlattensResponseBody(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte("<html>\n<body>\n" + strings.Repeat("login page ", 200) + "\n</body>\n</html>"))
+	}))
+	defer server.Close()
+
+	jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+	_, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, io.Discard, false))
+
+	require.Error(t, err)
+	assert.NotContains(t, err.Error(), "\n")
+	assert.Less(t, len(err.Error()), 500)
 }
 
 func BenchmarkFindJiraIssueKeys(b *testing.B) {
