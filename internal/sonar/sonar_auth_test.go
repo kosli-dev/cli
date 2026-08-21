@@ -123,7 +123,7 @@ func TestGetSonarResults_Pre10Server_FallsBackToBasic(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", 5)
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", "", 5)
 	res, err := sc.GetSonarResults(discardLogger())
 	if err != nil {
 		t.Fatalf("expected success against pre-10 server via Basic fallback, got error: %v", err)
@@ -158,7 +158,7 @@ func TestGetSonarResults_BearerServer_NoBasicSent(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", 5)
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", "", 5)
 	res, err := sc.GetSonarResults(discardLogger())
 	if err != nil {
 		t.Fatalf("expected success against a Bearer-capable server, got error: %v", err)
@@ -182,7 +182,7 @@ func TestGetSonarResults_InvalidToken_TriesBothThenErrors(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", 5)
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", "", 5)
 	_, err := sc.GetSonarResults(discardLogger())
 	if err == nil {
 		t.Fatal("expected an error when neither auth scheme is accepted")
@@ -212,7 +212,7 @@ func TestGetSonarResults_ServerError_NoFallback(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", 5)
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", "", 5)
 	_, err := sc.GetSonarResults(discardLogger())
 	if err == nil {
 		t.Fatal("expected an error on HTTP 503")
@@ -237,7 +237,7 @@ func TestGetSonarResults_StructuredForbidden_NoFallback(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", 5)
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", "", 5)
 	_, err := sc.GetSonarResults(discardLogger())
 	if err == nil {
 		t.Fatal("expected an error on a structured 403")
@@ -260,7 +260,7 @@ func TestGetSonarResults_TokenWhitespaceTrimmed(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	sc := sonar.NewSonarConfig("tok\n", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", 5)
+	sc := sonar.NewSonarConfig("tok\n", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", "", 5)
 	res, err := sc.GetSonarResults(discardLogger())
 	if err != nil {
 		t.Fatalf("expected success with a trimmed token, got error: %v", err)
@@ -286,7 +286,7 @@ func TestGetSonarResults_Pre10PollLoop_ResolvesSchemeOncePerRun(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", 3)
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", "", 3)
 	res, err := sc.GetSonarResults(discardLogger())
 	if err != nil {
 		t.Fatalf("expected success after a PENDING poll, got error: %v", err)
@@ -307,7 +307,7 @@ func TestGetSonarResults_Forbidden_NonJSON_RendersActualStatus(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", 5)
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id=AYx", "", "", "", "", "", 5)
 	_, err := sc.GetSonarResults(discardLogger())
 	if err == nil {
 		t.Fatal("expected an error on a 403 with a non-JSON body")
