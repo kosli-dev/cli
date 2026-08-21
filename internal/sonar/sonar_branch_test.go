@@ -235,11 +235,15 @@ func TestGetSonarResults_TaskWithoutBranch_KeepsSuppliedBranch(t *testing.T) {
 	}
 }
 
-// TestGetSonarResults_NoMatchingTask_Warns covers the silent gap: api/ce/activity
-// cannot be scoped to a branch and is a bounded recent-activity list, so it may
-// simply not hold the task. The attestation is then published with no task ID
-// and no scan status, which used to happen without a word.
-func TestGetSonarResults_NoMatchingTask_Warns(t *testing.T) {
+// TestGetSonarResults_NoMatchingTask_KeepsSuppliedBranch covers the case where
+// api/ce/activity holds no task for the scan: it cannot be scoped to a branch and
+// is a bounded recent-activity list, so an older scan's task may be gone. The
+// branch still has to survive, because it is what found the analysis.
+//
+// The payload's task ID, status and project name are all empty here, which is
+// pre-existing behaviour on this path and deliberately left alone: reporting it
+// is not part of #1116. Asserting no output keeps that decision explicit.
+func TestGetSonarResults_NoMatchingTask_KeepsSuppliedBranch(t *testing.T) {
 	fake := &fakeBranchSonar{taskBranch: revFeatureBranch, taskBranchType: "LONG", omitMatchingTask: true}
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
@@ -254,13 +258,11 @@ func TestGetSonarResults_NoMatchingTask_Warns(t *testing.T) {
 	if results.TaskID != "" {
 		t.Errorf("expected no task ID when no task matched, got %q", results.TaskID)
 	}
-	if !strings.Contains(stderr.String(), "no SonarQube compute engine task") {
-		t.Errorf("expected a warning that no task matched, got stderr: %q", stderr.String())
-	}
-	// The project name comes from the task too, so the warning names it: keep the
-	// message tied to something the test checks.
 	if results.Project.Name != "" {
 		t.Errorf("expected no project name when no task matched, got %q", results.Project.Name)
+	}
+	if stderr.Len() != 0 {
+		t.Errorf("expected no output about a pre-existing payload gap, got stderr: %q", stderr.String())
 	}
 	// The branch still has to survive: it is what found the analysis.
 	if results.Branch == nil || results.Branch.Name != revFeatureBranch {
@@ -285,51 +287,5 @@ func TestGetSonarResults_BranchIgnoredOnCETaskPath_Warns(t *testing.T) {
 
 	if !strings.Contains(stderr.String(), "--sonar-branch is ignored") {
 		t.Errorf("expected a warning that --sonar-branch is ignored on this path, got stderr: %q", stderr.String())
-	}
-}
-
-// TestGetSonarResults_NoTaskThenFailure_DoesNotWarn is the case CI caught: when
-// the lookup goes on to fail, the command already says something specific and
-// true, and a warning about an attestation that is never published is noise
-// ahead of a better message. The warning describes the payload we are about to
-// return, so it must not appear on a path that returns an error instead.
-func TestGetSonarResults_NoTaskThenFailure_DoesNotWarn(t *testing.T) {
-	fake := &fakeBranchSonar{omitMatchingTask: true}
-	srv := httptest.NewServer(fake.handler())
-	defer srv.Close()
-
-	log, stderr := bufferLogger()
-	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, "", "99", "", 5)
-	if _, err := sc.GetSonarResults(log); err == nil {
-		t.Fatal("expected an error for a pull request that does not exist")
-	}
-
-	if stderr.Len() != 0 {
-		t.Errorf("expected no warning ahead of the error, got stderr: %q", stderr.String())
-	}
-}
-
-// TestGetSonarResults_PullRequestNoTask_DoesNotWarn pins the scope of the
-// missing-task warning. On the pull-request path GetTaskID can only match on the
-// PR key, and api/ce/activity is recent-first and page-bounded, so a PR task
-// ageing out is ordinary rather than surprising. Warning there would be noise,
-// and would tie a passing test to SonarQube's activity window.
-func TestGetSonarResults_PullRequestNoTask_DoesNotWarn(t *testing.T) {
-	fake := &fakeBranchSonar{}
-	srv := httptest.NewServer(fake.handler())
-	defer srv.Close()
-
-	log, stderr := bufferLogger()
-	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, "", revPullRequest, "", 5)
-	results, err := sc.GetSonarResults(log)
-	if err != nil {
-		t.Fatalf("expected the pull-request scan to be found, got error: %v", err)
-	}
-
-	if results.TaskID != "" {
-		t.Fatalf("expected no task to have matched on the pull-request path, got %q", results.TaskID)
-	}
-	if stderr.Len() != 0 {
-		t.Errorf("expected no warning for an ordinary pull-request task miss, got stderr: %q", stderr.String())
 	}
 }

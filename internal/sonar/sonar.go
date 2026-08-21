@@ -239,6 +239,9 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			// But it must not delete the branch the user gave us when it reports none,
 			// which SonarQube does for main-branch tasks and older self-hosted Servers
 			// do more widely (#1116).
+			//
+			// Unlike the guard above, PullRequest here can also have been set from the
+			// matched task, so this must read the results field rather than the config.
 			if sc.branch != "" && sonarResults.PullRequest == "" &&
 				(sonarResults.Branch == nil || sonarResults.Branch.Name == "") {
 				sonarResults.Branch = &Branch{Name: sc.branch}
@@ -296,19 +299,6 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 
 	sonarResults.Project = *project
 	sonarResults.QualityGate = qualityGate
-
-	// No task ID means api/ce/activity held no task for this scan. Warned here, on
-	// the way out, so it describes the payload being returned rather than appearing
-	// ahead of an error the caller reports.
-	//
-	// Only when we have an analysis ID: SonarQube has just returned that analysis,
-	// so its task missing from the activity list is surprising and worth saying. On
-	// the pull-request path there is no analysis ID and the match can only be on the
-	// PR key, which a recent-first, page-bounded list drops as a matter of course —
-	// warning there would be noise about the ordinary case.
-	if analysisID != "" && sonarResults.TaskID == "" {
-		logger.Warn("no SonarQube compute engine task was found for analysis %s of project %s: the attestation carries no task ID, scan status or project name", analysisID, project.Key)
-	}
 
 	return sonarResults, nil
 }
