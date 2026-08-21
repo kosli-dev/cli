@@ -189,6 +189,66 @@ func TestAttestJiraUnverifiableCredential(t *testing.T) {
 	require.Contains(t, combined, "is reported to trail")
 }
 
+// TestAttestJiraVerifiedCredentialMissingIssue pins the path the credential check is most
+// likely to have broken: the credential verifies, the issue really is missing, and the run
+// must behave exactly as it did before the check existed - attestation reported with the
+// issue not found, and --assert failing on that.
+//
+// The equivalent suite cases (07, 09, 25) skip without the shared Jira secrets, so this is
+// the only place that pins it everywhere.
+func TestAttestJiraVerifiedCredentialMissingIssue(t *testing.T) {
+	jiraStub := httpfake.New()
+	defer jiraStub.Close()
+	jiraStub.NewHandler().
+		Get("/rest/api/2/myself").
+		Reply(200).
+		BodyString(`{"accountId":"1234","emailAddress":"ci@example.com","displayName":"CI"}`)
+	jiraStub.NewHandler().
+		Get("/rest/api/2/issue/EX-1").
+		Reply(404).
+		BodyString(`{"errorMessages":["Issue does not exist or you do not have permission to see it."],"errors":{}}`)
+
+	kosliStub := httpfake.New()
+	defer kosliStub.Close()
+	kosliStub.NewHandler().
+		Post("/api/v2/attestations/docs-cmd-test-user/attest-jira/trail/test-123/jira").
+		Reply(201).
+		BodyString(`{}`)
+
+	tmpDir, err := os.MkdirTemp("", "testDir")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tmpDir))
+	}()
+
+	_, workTree, fs, err := testHelpers.InitializeGitRepo(tmpDir)
+	require.NoError(t, err)
+	commitSha, err := testHelpers.CommitToRepo(workTree, fs, "EX-1 test commit")
+	require.NoError(t, err)
+
+	global = &GlobalOpts{
+		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
+		Org:      "docs-cmd-test-user",
+		Host:     kosliStub.Server.URL,
+	}
+	cmd := fmt.Sprintf(`attest jira --name bar
+			--jira-base-url %s%s
+			--repo-root %s
+			--commit %s
+			--assert
+			--flow attest-jira --trail test-123 --host %s --org %s --api-token %s`,
+		jiraStub.Server.URL, stubJiraCredentials, tmpDir, commitSha,
+		global.Host, global.Org, global.ApiToken)
+
+	_, combined, _, _, err := executeCommandC(cmd)
+	require.Error(t, err)
+	require.Contains(t, combined, "is reported to trail")
+	require.Contains(t, combined, "missing Jira issues from references found in commit message or branch name")
+	require.Contains(t, combined, "EX-1: issue not found")
+	// A credential that verified says nothing to warn about.
+	require.NotContains(t, combined, "could not verify the Jira credential")
+}
+
 func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 	tests := []cmdTestCase{
 		{
@@ -264,7 +324,11 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			cmd: fmt.Sprintf(`attest jira testdata/file1 --artifact-type file --name foo
 								--jira-base-url https://kosli-test.atlassian.net
 								--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "jira attestation 'foo' is reported to trail: test-123\n",
+			// Matched rather than compared exactly: a non-existent issue takes the
+			// credential-verification path, so if the live Jira ever rate-limits or errors
+			// on /myself the run prepends a warning. The behaviour under test is that the
+			// attestation is still reported, which is what this pins.
+			goldenRegex: "jira attestation 'foo' is reported to trail: test-123\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-999 test commit",
 			},

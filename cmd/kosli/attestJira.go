@@ -72,11 +72,13 @@ attestation's compliance status depends on referencing existing Jira issues.
 
 Jira answers 404 both for an issue that does not exist and for one your credentials may not
 see, so when a reference is not found your credentials are verified before that answer is
-believed. If Jira rejects them, the command fails saying so instead of reporting a
-non-existing issue. A wrong ^--jira-base-url^ produces the same 404, so the error names both
-as candidates. If the verification cannot be completed at all (Jira unreachable, a server
-error), a warning is logged and the attestation is still reported with the issue marked as
-non-existing.
+believed. If Jira refuses them, the command fails saying so instead of reporting a
+non-existing issue.
+Any other outcome of that check leaves the question open rather than answered, so a warning
+is logged and the attestation is still reported with the issue marked as non-existing. That
+covers Jira being unreachable or erroring, and a ^--jira-base-url^ that does not point at a
+Jira - the warning names it as a candidate, since a wrong base URL 404s exactly like a
+credential that may not see the issue.
 
 The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
 are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you
@@ -336,17 +338,18 @@ func (o *attestJiraOptions) run(args []string) error {
 	// something was not found: where every reference resolved, the credential has
 	// already proved itself, and the extra call would be pure overhead.
 	//
-	// Only a rejection stops the attestation. If the check itself does not complete -
-	// Jira unreachable, a 5xx, a proxy in the way - we have learned nothing about the
-	// credential, and failing on that would put back the bug this replaced: a network
-	// blip failing a pipeline. Warn and report the 404 we did observe.
+	// Only a rejection stops the attestation. If the check does not conclude - Jira
+	// unreachable, a 5xx, a 404 from something that may not even be a Jira - we have
+	// learned nothing about the credential, and failing on that would put back the bug
+	// this replaced: a blip on a third-party call failing a pipeline. Warn and report the
+	// 404 we did observe.
 	if issueFoundCount != len(issueIDs) {
 		if err := jc.VerifyCredentials(); err != nil {
-			var notVerified *jira.CredentialNotVerifiedError
-			if errors.As(err, &notVerified) {
+			var rejected *jira.CredentialRejectedError
+			if errors.As(err, &rejected) {
 				return err
 			}
-			logger.Warn("could not verify the Jira credential, so the issues Jira did not return are reported as not found on the strength of its 404 alone: %s", err)
+			logger.Warn("could not verify the Jira credential (%s); issues Jira did not return are reported as not found", err)
 		}
 	}
 

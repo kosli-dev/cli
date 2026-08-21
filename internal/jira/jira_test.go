@@ -425,18 +425,19 @@ func TestVerifyCredentials(t *testing.T) {
 			jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
 			err := jc.VerifyCredentials()
 			require.Error(t, err)
-			var notVerified *CredentialNotVerifiedError
-			require.ErrorAs(t, err, &notVerified)
-			assert.Equal(t, status, notVerified.StatusCode)
+			var rejected *CredentialRejectedError
+			require.ErrorAs(t, err, &rejected)
+			assert.Equal(t, status, rejected.StatusCode)
 			assert.Contains(t, err.Error(), "user@example.com")
 			assert.Contains(t, err.Error(), fake.Server.URL)
 		})
 	}
 
-	// A 404 cannot be read as "verified", but it does not single out the credential
-	// either: the same 404 comes back from a base URL that is not a Jira. The error has to
-	// name both, or it sends the reader off to rotate a token that was never the problem.
-	t.Run("a 404 on the identity endpoint names the base URL as well as the credential", func(t *testing.T) {
+	// A 404 is neither a rejection nor verification. Everything that realistically answers
+	// /myself with 404 is a misconfiguration rather than a credential, so it names the base
+	// URL alongside the credential and does NOT count as a rejection: a proxy that starts
+	// 404ing unknown paths must not fail a run over an issue that really is missing.
+	t.Run("a 404 on the identity endpoint names the base URL and is not a rejection", func(t *testing.T) {
 		fake := httpfake.New()
 		defer fake.Close()
 		fake.NewHandler().
@@ -447,21 +448,21 @@ func TestVerifyCredentials(t *testing.T) {
 		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
 		err := jc.VerifyCredentials()
 		require.Error(t, err)
-		var notVerified *CredentialNotVerifiedError
-		require.ErrorAs(t, err, &notVerified)
+		var rejected *CredentialRejectedError
+		assert.NotErrorAs(t, err, &rejected)
 		assert.Contains(t, err.Error(), "user@example.com")
 		assert.Contains(t, err.Error(), "--jira-base-url")
 	})
 
-	// The failures below say nothing about the credential, so they must NOT wrap the
-	// sentinel: a caller that hard-fails on rejection would otherwise abort a good run
+	// The failures below say nothing about the credential either, so they must not be
+	// rejections: a caller that hard-fails on rejection would otherwise abort a good run
 	// every time a verification call happens to blip.
 	t.Run("an unreachable Jira is a failure to verify, not a rejection", func(t *testing.T) {
 		jc := NewJiraConfig(unreachableJira, "user@example.com", "token", "")
 		err := jc.VerifyCredentials()
 		require.Error(t, err)
-		var notVerified *CredentialNotVerifiedError
-		assert.NotErrorAs(t, err, &notVerified)
+		var rejected *CredentialRejectedError
+		assert.NotErrorAs(t, err, &rejected)
 		assert.Contains(t, err.Error(), unreachableJira)
 	})
 
@@ -476,8 +477,8 @@ func TestVerifyCredentials(t *testing.T) {
 		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
 		err := jc.VerifyCredentials()
 		require.Error(t, err)
-		var notVerified *CredentialNotVerifiedError
-		assert.NotErrorAs(t, err, &notVerified)
+		var rejected *CredentialRejectedError
+		assert.NotErrorAs(t, err, &rejected)
 	})
 }
 
