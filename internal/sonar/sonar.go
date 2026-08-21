@@ -216,7 +216,7 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			// can only come from the user (#1116). Set it on the results, which is the
 			// one mechanism both analyses lookups use to scope their search. A pull
 			// request scan is not a branch scan, so the branch is not carried there.
-			if sc.branch != "" && sc.pullRequest == "" {
+			if sc.branch != "" && sonarResults.PullRequest == "" {
 				sonarResults.Branch = &Branch{Name: sc.branch}
 			}
 			project.Url, err = sonarURL(sonarResults.ServerUrl, "dashboard", url.Values{"id": {project.Key}})
@@ -307,7 +307,7 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	// PR key, which a recent-first, page-bounded list drops as a matter of course —
 	// warning there would be noise about the ordinary case.
 	if analysisID != "" && sonarResults.TaskID == "" {
-		logger.Warn("no SonarQube compute engine task was found for analysis %s of project %s: the attestation carries no task ID or scan status", analysisID, project.Key)
+		logger.Warn("no SonarQube compute engine task was found for analysis %s of project %s: the attestation carries no task ID, scan status or project name", analysisID, project.Key)
 	}
 
 	return sonarResults, nil

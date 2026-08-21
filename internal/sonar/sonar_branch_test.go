@@ -147,6 +147,9 @@ func TestGetSonarResults_ProjectKeyPath_WithBranch(t *testing.T) {
 	if results.TaskID != revTaskID {
 		t.Errorf("expected the task for analysis %s, got TaskID %q", revAnalysisKey, results.TaskID)
 	}
+	if results.Project.Name != "customer project" {
+		t.Errorf("expected the project name from the matched task, got %q", results.Project.Name)
+	}
 	if results.Status != "SUCCESS" {
 		t.Errorf("expected status SUCCESS from the matched task, got %q", results.Status)
 	}
@@ -253,6 +256,11 @@ func TestGetSonarResults_NoMatchingTask_Warns(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "no SonarQube compute engine task") {
 		t.Errorf("expected a warning that no task matched, got stderr: %q", stderr.String())
+	}
+	// The project name comes from the task too, so the warning names it: keep the
+	// message tied to something the test checks.
+	if results.Project.Name != "" {
+		t.Errorf("expected no project name when no task matched, got %q", results.Project.Name)
 	}
 	// The branch still has to survive: it is what found the analysis.
 	if results.Branch == nil || results.Branch.Name != revFeatureBranch {
