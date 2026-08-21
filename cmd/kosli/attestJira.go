@@ -70,7 +70,9 @@ The found issue references will be checked against Jira to confirm their existen
 The attestation is reported in all cases, and its compliance status depends on referencing
 existing Jira issues.  
 If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
-This is because Jira returns same 404 error code in all cases.
+This is because Jira returns same 404 error code in all cases. When Jira's response shows that it did not
+accept the credentials, a warning naming them is printed and the issue is reported as not confirmed rather
+than silently as missing; run with ^--debug^ to see the status Jira returned for each issue.
 
 The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
 are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you
@@ -310,17 +312,19 @@ func (o *attestJiraOptions) run(args []string) error {
 	issueLog := ""
 	issueFoundCount := 0
 	for _, issueID := range issueIDs {
-		result, err := jc.GetJiraIssueInfo(issueID, o.issueFields)
+		result, err := jc.GetJiraIssueInfo(issueID, o.issueFields, logger)
 		if err != nil {
 			return err
 		}
 		o.payload.JiraResults = append(o.payload.JiraResults, result)
-		issueExistLog := "issue not found"
-		if result.IssueExists {
-			issueExistLog = "issue found"
+		switch result.LookupStatus {
+		case jira.IssueFound:
 			issueFoundCount++
+		case jira.LookupUnverified:
+			logger.Warn("could not confirm Jira issue %s: %s. The attestation is reported with the issue counted as not found.",
+				issueID, result.LookupReason)
 		}
-		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, issueExistLog)
+		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, jiraIssueLogLine(result))
 	}
 
 	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
@@ -364,6 +368,24 @@ func (o *attestJiraOptions) run(args []string) error {
 		err = fmt.Errorf("%smissing Jira issues from references found in commit message or branch name%s", errString, issueLog)
 	}
 	return wrapAttestationError(err)
+}
+
+// jiraIssueLogLine describes one lookup for the per-issue list that goes into the log and
+// into the --assert error.
+//
+// A lookup that could not be completed is listed as not confirmed, with the reason, rather
+// than as a missing issue: reporting an expired Jira token as "issue not found" is what
+// sent users looking for a missing issue. It still counts as not found everywhere else, so
+// the attestation, its compliance status and the --assert exit code are unchanged.
+func jiraIssueLogLine(result *jira.JiraIssueInfo) string {
+	switch result.LookupStatus {
+	case jira.IssueFound:
+		return "issue found"
+	case jira.LookupUnverified:
+		return fmt.Sprintf("issue not confirmed: %s", result.LookupReason)
+	default:
+		return "issue not found"
+	}
 }
 
 // jiraSearchText joins the texts that are searched for Jira issue keys: the commit

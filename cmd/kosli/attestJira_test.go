@@ -8,6 +8,7 @@ import (
 	billy "github.com/go-git/go-billy/v5"
 	git "github.com/go-git/go-git/v5"
 	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/kosli-dev/cli/internal/jira"
 	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -385,6 +386,34 @@ func execJiraTestCase(test cmdTestCase, suite *AttestJiraCommandTestSuite) {
 	}
 
 	runTestCmd(suite.T(), []cmdTestCase{test})
+}
+
+func TestJiraIssueLogLine(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		result *jira.JiraIssueInfo
+		want   string
+	}{
+		{
+			name:   "a found issue",
+			result: &jira.JiraIssueInfo{LookupStatus: jira.IssueFound, IssueExists: true},
+			want:   "issue found",
+		},
+		{
+			name:   "a missing issue",
+			result: &jira.JiraIssueInfo{LookupStatus: jira.IssueMissing},
+			want:   "issue not found",
+		},
+		{
+			name:   "an unverified lookup carries its reason instead of claiming the issue is missing",
+			result: &jira.JiraIssueInfo{LookupStatus: jira.LookupUnverified, LookupReason: "could not reach Jira at https://example.atlassian.net: timeout"},
+			want:   "issue not confirmed: could not reach Jira at https://example.atlassian.net: timeout",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, jiraIssueLogLine(tc.result))
+		})
+	}
 }
 
 func TestJiraSearchText(t *testing.T) {

@@ -1,6 +1,7 @@
 package jira
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -148,7 +149,7 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string, log *
 		if response.StatusCode == http.StatusUnauthorized || response.StatusCode == http.StatusForbidden {
 			message += "; the credentials may have expired or been revoked"
 		}
-		return result, fmt.Errorf("%s: %s", message, oneLine(err.Error()))
+		return result, fmt.Errorf("%s: %s", message, errorDetail(err))
 	}
 
 	if issue != nil {
@@ -198,6 +199,17 @@ func (jc *JiraConfig) authDescription() string {
 		return fmt.Sprintf("username %s and API token", jc.Username)
 	}
 	return "personal access token"
+}
+
+// errorDetail extracts what Jira itself said, for a message that already names the status.
+// go-jira parses a JSON error body into jira.Error and renders it together with a generic
+// "request failed ... Status code: N" sentence, which only repeats the status we print.
+func errorDetail(err error) string {
+	var jiraErr *jira.Error
+	if errors.As(err, &jiraErr) && len(jiraErr.ErrorMessages) > 0 {
+		return oneLine(strings.Join(jiraErr.ErrorMessages, "; "))
+	}
+	return oneLine(err.Error())
 }
 
 // oneLine flattens and truncates text taken from a Jira error before it goes into a
