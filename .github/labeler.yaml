@@ -1,0 +1,14 @@
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.md'
+          - 'docs/**'
+
+go:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.go'
+
+github-actions:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'

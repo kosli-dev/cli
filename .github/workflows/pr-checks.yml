@@ -33,3 +33,21 @@ jobs:
           #custom_labels: '{"feat": "feature", "fix": "fix", "docs": "documentation", "test": "test", "ci": "CI/CD", "refactor": "refactor", "perf": "performance", "chore": "chore", "revert": "revert", "wip": "WIP"}'
           #add_scope_label: 'true'
           token: ${{ secrets.GITHUB_TOKEN }}
+  labeler:
+    # Run only when the PR comes from the same repository, not from a fork
+    #if: github.event.pull_request.head.repo.full_name == github.repository
+    name: Label PRs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Label PRs
+        id: label-prs
+        uses: actions/labeler@v7
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          sync-labels: true
+          configuration-path: ".github/labeler.yaml"
