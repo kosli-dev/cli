@@ -73,6 +73,20 @@ func (jc *JiraConfig) credentialDescription() string {
 	return "personal access token"
 }
 
+// CredentialNotVerifiedError reports that the credential check came back negative: Jira
+// either refused the credential or answered in a way that cannot be read as verification.
+//
+// Callers match it with errors.As to tell it apart from a check that did not complete at
+// all - an unreachable Jira, a 5xx, a proxy in the way - which says nothing either way. It
+// is a type rather than a sentinel so that each status can carry its own wording: a 401
+// names the credential, while a 404 has to name the base URL too.
+type CredentialNotVerifiedError struct {
+	StatusCode int
+	msg        string
+}
+
+func (e *CredentialNotVerifiedError) Error() string { return e.msg }
+
 // VerifyCredentials checks that Jira accepts the configured credential, by asking it
 // who we are.
 //
@@ -82,6 +96,10 @@ func (jc *JiraConfig) credentialDescription() string {
 // caller that has just been told an issue is missing can use this to find out which of
 // the two it is looking at, and report a stale token as a stale token rather than as a
 // commit whose Jira references do not exist.
+//
+// A negative answer is a *CredentialNotVerifiedError. Any other failure - an unreachable
+// Jira, a 5xx, a proxy error - is a plain error, because it says nothing about the
+// credential and should not be mistaken for an answer.
 func (jc *JiraConfig) VerifyCredentials() error {
 	jiraClient, err := jc.NewJiraClient()
 	if err != nil {
@@ -95,10 +113,25 @@ func (jc *JiraConfig) VerifyCredentials() error {
 	if response == nil {
 		return fmt.Errorf("failed to reach Jira at %s: %s", jc.BaseURL, err)
 	}
-	// Unlike the issue endpoint, a 404 here is not an answer about an issue, so it is
-	// not waved through: whatever Jira means by it, the credential did not verify.
-	if response.StatusCode == http.StatusUnauthorized || response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("failed to authenticate with Jira at %s: check the %s (Jira answered HTTP %d)", jc.BaseURL, jc.credentialDescription(), response.StatusCode)
+	switch response.StatusCode {
+	case http.StatusUnauthorized, http.StatusForbidden:
+		// These single out the credential: Jira saw it and refused it.
+		return &CredentialNotVerifiedError{
+			StatusCode: response.StatusCode,
+			msg:        fmt.Sprintf("failed to authenticate with Jira at %s: check the %s (Jira answered HTTP %d)", jc.BaseURL, jc.credentialDescription(), response.StatusCode),
+		}
+	case http.StatusNotFound:
+		// A 404 cannot be read as "verified", but it does not single out the credential
+		// either: a base URL that is not a Jira, carries the wrong context path, or sits
+		// behind a proxy that 404s unknown paths answers exactly the same way. Name both
+		// candidates rather than sending the reader off to rotate a token that was never
+		// the problem. Kept in this bucket defensively - we have not observed a Jira
+		// answering /myself with 404 for a credential it rejects - because treating it as
+		// verification would be the more expensive guess.
+		return &CredentialNotVerifiedError{
+			StatusCode: response.StatusCode,
+			msg:        fmt.Sprintf("failed to verify the Jira credential at %s: check the %s, and that --jira-base-url points at your Jira (Jira answered HTTP 404)", jc.BaseURL, jc.credentialDescription()),
+		}
 	}
 	return fmt.Errorf("failed to verify the Jira credential at %s: %s", jc.BaseURL, err)
 }

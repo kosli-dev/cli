@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -66,11 +67,16 @@ If you want to restrict the Jira issue matching to a specific project, use the
 
 If the ^--ignore-branch-match^ is set, the branch name is not parsed for a match.
 
-The found issue references will be checked against Jira to confirm their existence.
-The attestation is reported in all cases, and its compliance status depends on referencing
-existing Jira issues.  
-If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
-This is because Jira returns same 404 error code in all cases.
+The found issue references will be checked against Jira to confirm their existence, and the
+attestation's compliance status depends on referencing existing Jira issues.
+
+Jira answers 404 both for an issue that does not exist and for one your credentials may not
+see, so when a reference is not found your credentials are verified before that answer is
+believed. If Jira rejects them, the command fails saying so instead of reporting a
+non-existing issue. A wrong ^--jira-base-url^ produces the same 404, so the error names both
+as candidates. If the verification cannot be completed at all (Jira unreachable, a server
+error), a warning is logged and the attestation is still reported with the issue marked as
+non-existing.
 
 The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
 are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you
@@ -329,9 +335,18 @@ func (o *attestJiraOptions) run(args []string) error {
 	// are before believing it, and report a stale credential as one. Only asked when
 	// something was not found: where every reference resolved, the credential has
 	// already proved itself, and the extra call would be pure overhead.
+	//
+	// Only a rejection stops the attestation. If the check itself does not complete -
+	// Jira unreachable, a 5xx, a proxy in the way - we have learned nothing about the
+	// credential, and failing on that would put back the bug this replaced: a network
+	// blip failing a pipeline. Warn and report the 404 we did observe.
 	if issueFoundCount != len(issueIDs) {
 		if err := jc.VerifyCredentials(); err != nil {
-			return err
+			var notVerified *jira.CredentialNotVerifiedError
+			if errors.As(err, &notVerified) {
+				return err
+			}
+			logger.Warn("could not verify the Jira credential, so the issues Jira did not return are reported as not found on the strength of its 404 alone: %s", err)
 		}
 	}
 

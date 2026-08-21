@@ -1,6 +1,7 @@
 package jira
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -285,6 +286,12 @@ func TestFindJiraIssueKeys(t *testing.T) {
 	}
 }
 
+// unreachableJira is a base URL no listener can be behind: a connection to port 0 fails
+// immediately, whatever else is running on the box. Starting a server and closing it
+// would leave the port free for anything else to claim - including another package's
+// tests, which run concurrently under `make test_integration`.
+const unreachableJira = "http://127.0.0.1:0"
+
 // TestGetJiraIssueInfo pins which Jira responses mean "the issue does not exist"
 // and which mean "we could not find out". Only a 404 is an answer about the issue:
 // every other failure has to reach the caller as an error, because reporting it as
@@ -377,15 +384,11 @@ func TestGetJiraIssueInfo(t *testing.T) {
 	// response there, so the status switch never runs and the old guard fell through
 	// to IssueExists=false with no error.
 	t.Run("an unreachable Jira is an error, not a missing issue", func(t *testing.T) {
-		fake := httpfake.New()
-		fake.Close() // nothing is listening on this address any more
-		unreachableURL := fake.Server.URL
-
-		jc := NewJiraConfig(unreachableURL, "user@example.com", "token", "")
+		jc := NewJiraConfig(unreachableJira, "user@example.com", "token", "")
 		result, err := jc.GetJiraIssueInfo(issueID, "")
 		require.Error(t, err)
 		assert.False(t, result.IssueExists)
-		assert.Contains(t, err.Error(), unreachableURL)
+		assert.Contains(t, err.Error(), unreachableJira)
 	})
 }
 
@@ -408,25 +411,32 @@ func TestVerifyCredentials(t *testing.T) {
 		require.NoError(t, jc.VerifyCredentials())
 	})
 
-	t.Run("a rejected credential is named in the error", func(t *testing.T) {
-		fake := httpfake.New()
-		defer fake.Close()
-		fake.NewHandler().
-			Get("/rest/api/2/myself").
-			Reply(401).
-			BodyString(`{"errorMessages":["Client must be authenticated to access this resource."],"errors":{}}`)
+	// 401 and 403 are the answers that single out the credential, so the error both wraps
+	// the sentinel and says which credential to go and check.
+	for _, status := range []int{401, 403} {
+		t.Run(fmt.Sprintf("a credential rejected with %d is reported as rejected", status), func(t *testing.T) {
+			fake := httpfake.New()
+			defer fake.Close()
+			fake.NewHandler().
+				Get("/rest/api/2/myself").
+				Reply(status).
+				BodyString(`{"errorMessages":["Client must be authenticated to access this resource."],"errors":{}}`)
 
-		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
-		err := jc.VerifyCredentials()
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "authenticate")
-		assert.Contains(t, err.Error(), "user@example.com")
-		assert.Contains(t, err.Error(), fake.Server.URL)
-	})
+			jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+			err := jc.VerifyCredentials()
+			require.Error(t, err)
+			var notVerified *CredentialNotVerifiedError
+			require.ErrorAs(t, err, &notVerified)
+			assert.Equal(t, status, notVerified.StatusCode)
+			assert.Contains(t, err.Error(), "user@example.com")
+			assert.Contains(t, err.Error(), fake.Server.URL)
+		})
+	}
 
-	// Jira Cloud answers /myself with 404 rather than 401 for some rejected
-	// credentials, so a 404 here cannot be waved through as "no such user".
-	t.Run("a 404 on the identity endpoint is still a failure to verify", func(t *testing.T) {
+	// A 404 cannot be read as "verified", but it does not single out the credential
+	// either: the same 404 comes back from a base URL that is not a Jira. The error has to
+	// name both, or it sends the reader off to rotate a token that was never the problem.
+	t.Run("a 404 on the identity endpoint names the base URL as well as the credential", func(t *testing.T) {
 		fake := httpfake.New()
 		defer fake.Close()
 		fake.NewHandler().
@@ -435,16 +445,39 @@ func TestVerifyCredentials(t *testing.T) {
 			BodyString(`{"errorMessages":["Not found"],"errors":{}}`)
 
 		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
-		require.Error(t, jc.VerifyCredentials())
+		err := jc.VerifyCredentials()
+		require.Error(t, err)
+		var notVerified *CredentialNotVerifiedError
+		require.ErrorAs(t, err, &notVerified)
+		assert.Contains(t, err.Error(), "user@example.com")
+		assert.Contains(t, err.Error(), "--jira-base-url")
 	})
 
-	t.Run("an unreachable Jira is a failure to verify", func(t *testing.T) {
+	// The failures below say nothing about the credential, so they must NOT wrap the
+	// sentinel: a caller that hard-fails on rejection would otherwise abort a good run
+	// every time a verification call happens to blip.
+	t.Run("an unreachable Jira is a failure to verify, not a rejection", func(t *testing.T) {
+		jc := NewJiraConfig(unreachableJira, "user@example.com", "token", "")
+		err := jc.VerifyCredentials()
+		require.Error(t, err)
+		var notVerified *CredentialNotVerifiedError
+		assert.NotErrorAs(t, err, &notVerified)
+		assert.Contains(t, err.Error(), unreachableJira)
+	})
+
+	t.Run("a server error is a failure to verify, not a rejection", func(t *testing.T) {
 		fake := httpfake.New()
-		fake.Close() // nothing is listening on this address any more
+		defer fake.Close()
+		fake.NewHandler().
+			Get("/rest/api/2/myself").
+			Reply(503).
+			BodyString(`{"errorMessages":["Service unavailable"],"errors":{}}`)
+
 		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
 		err := jc.VerifyCredentials()
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), fake.Server.URL)
+		var notVerified *CredentialNotVerifiedError
+		assert.NotErrorAs(t, err, &notVerified)
 	})
 }
 
