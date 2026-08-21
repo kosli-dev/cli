@@ -67,14 +67,19 @@ If you want to restrict the Jira issue matching to a specific project, use the
 If the ^--ignore-branch-match^ is set, the branch name is not parsed for a match.
 
 The found issue references will be checked against Jira to confirm their existence.
-The attestation is reported in all cases, and its compliance status depends on referencing
-existing Jira issues.
+The attestation is reported whenever Jira answers, and its compliance status depends on
+referencing existing Jira issues.
 If your Jira credentials are wrong, or ^--jira-base-url^ does not point at your Jira, the
 issues are reported as non existing. This is because Jira returns the same 404 whether an
 issue does not exist or your credentials may not see it.
 When that happens a warning naming the likely cause is written to stderr, so a run whose
 issues all came back missing says whether the credentials were the reason. The warning does
 not change the exit code; ^--assert^ still fails on the issues that were not found.
+
+If Jira cannot be reached at all, or answers the issue lookup with an error rather than a
+404, the command fails instead of reporting those issues as non existing: a lookup that was
+never answered is not evidence that an issue is missing. This means ^attest jira^ can exit
+non-zero on a Jira outage even without ^--assert^.
 
 The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
 are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you
