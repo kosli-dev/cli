@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -67,18 +66,15 @@ If you want to restrict the Jira issue matching to a specific project, use the
 
 If the ^--ignore-branch-match^ is set, the branch name is not parsed for a match.
 
-The found issue references will be checked against Jira to confirm their existence, and the
-attestation's compliance status depends on referencing existing Jira issues.
-
-Jira answers 404 both for an issue that does not exist and for one your credentials may not
-see, so when a reference is not found your credentials are verified before that answer is
-believed. If Jira refuses them, the command fails saying so instead of reporting a
-non-existing issue.
-Any other outcome of that check leaves the question open rather than answered, so a warning
-is logged and the attestation is still reported with the issue marked as non-existing. That
-covers Jira being unreachable or erroring, and a ^--jira-base-url^ that does not point at a
-Jira - the warning names it as a candidate, since a wrong base URL 404s exactly like a
-credential that may not see the issue.
+The found issue references will be checked against Jira to confirm their existence.
+The attestation is reported in all cases, and its compliance status depends on referencing
+existing Jira issues.
+If your Jira credentials are wrong, or ^--jira-base-url^ does not point at your Jira, the
+issues are reported as non existing. This is because Jira returns the same 404 whether an
+issue does not exist or your credentials may not see it.
+When that happens a warning naming the likely cause is written to stderr, so a run whose
+issues all came back missing says whether the credentials were the reason. The warning does
+not change the exit code; ^--assert^ still fails on the issues that were not found.
 
 The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
 are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you
@@ -331,25 +327,20 @@ func (o *attestJiraOptions) run(args []string) error {
 		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, issueExistLog)
 	}
 
-	// Jira answers a credential it will not accept with 404 on the issue endpoint - it
-	// does not confirm that an issue exists to a caller who may not see it - so a
-	// not-found issue may be an expired token rather than a missing issue. Ask who we
-	// are before believing it, and report a stale credential as one. Only asked when
-	// something was not found: where every reference resolved, the credential has
-	// already proved itself, and the extra call would be pure overhead.
+	// Jira answers a credential it will not accept with 404 on the issue endpoint - it does
+	// not confirm that an issue exists to a caller who may not see it - so a not-found
+	// issue may be an expired token rather than a missing issue. Ask who we are, so that
+	// the output can say which. Only asked when something was not found: where every
+	// reference resolved, the credential has already proved itself and the extra call would
+	// be pure overhead.
 	//
-	// Only a rejection stops the attestation. If the check does not conclude - Jira
-	// unreachable, a 5xx, a 404 from something that may not even be a Jira - we have
-	// learned nothing about the credential, and failing on that would put back the bug
-	// this replaced: a blip on a third-party call failing a pipeline. Warn and report the
-	// 404 we did observe.
+	// This only ever adds a warning. The attestation is still reported and the exit code is
+	// unchanged, so a stale token cannot fail a pipeline that would have passed, and
+	// neither can a blip on this call. --assert still fails on the issues that were not
+	// found, as it did before - with the warning now explaining why they were not.
 	if issueFoundCount != len(issueIDs) {
 		if err := jc.VerifyCredentials(); err != nil {
-			var rejected *jira.CredentialRejectedError
-			if errors.As(err, &rejected) {
-				return err
-			}
-			logger.Warn("could not verify the Jira credential (%s); issues Jira did not return are reported as not found", err)
+			logger.Warn("%s. Issues Jira did not return are reported as not found", err)
 		}
 	}
 

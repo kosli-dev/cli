@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
+	"sync/atomic"
 	"testing"
 
 	billy "github.com/go-git/go-billy/v5"
@@ -85,18 +87,59 @@ func newStubJiraWithStaleCredential(issueKey string) *httpfake.HTTPFake {
 	return fake
 }
 
-// TestAttestJiraStaleCredential pins the CLI-level half of the fix: a credential Jira will
-// not accept is reported as one, rather than as a commit whose Jira references have all
-// disappeared.
+// stubJiraIssueMissing serves a Jira that accepts the credential and does not have the
+// issue: the ordinary "this reference is genuinely missing" case.
+func stubJiraIssueMissing(issueKey string) *httpfake.HTTPFake {
+	fake := httpfake.New()
+	fake.NewHandler().
+		Get("/rest/api/2/myself").
+		Reply(200).
+		BodyString(`{"accountId":"1234","emailAddress":"ci@example.com","displayName":"CI"}`)
+	fake.NewHandler().
+		Get("/rest/api/2/issue/" + issueKey).
+		Reply(404).
+		BodyString(`{"errorMessages":["Issue does not exist or you do not have permission to see it."],"errors":{}}`)
+	return fake
+}
+
+// newStubKosliAttestation stubs the jira attestation endpoint and counts the requests it
+// receives, so that "the attestation was reported" is a fact about what was sent rather
+// than an inference from the output text. Stubbing it also keeps these tests off the local
+// Kosli server: without it a regression that moved the POST ahead of the credential check
+// would quietly attest a bogus issue_exists=false into the real attest-jira flow, and only
+// then fail on a missing string.
+func newStubKosliAttestation(t *testing.T) (*httpfake.HTTPFake, *atomic.Int32) {
+	t.Helper()
+	fake := httpfake.New()
+	var reported atomic.Int32
+	fake.NewHandler().
+		Post("/api/v2/attestations/docs-cmd-test-user/attest-jira/trail/test-123/jira").
+		Handle(func(w http.ResponseWriter, _ *http.Request, _ *httpfake.Request) {
+			reported.Add(1)
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{}`))
+		})
+	return fake, &reported
+}
+
+// TestAttestJiraStaleCredential pins the CLI-level half of the fix: when Jira will not
+// accept the credential, the run says so, instead of leaving the reader with a commit whose
+// Jira references have all apparently disappeared.
 //
-// It sits outside AttestJiraCommandTestSuite on purpose. That suite's SetupTest skips
-// unless the shared Jira secrets are present, which would leave this regression covered
-// only in the secret-bearing environment - and it needs neither: the stub is the whole
-// point (a credential that is refused cannot come from the real Jira), and the command
-// fails before any attestation is POSTed, so the local Kosli server is not involved either.
+// The warning is all that changes. The attestation is still reported and the exit code is
+// still whatever --assert made it, so a stale token cannot fail a pipeline that would
+// otherwise have passed.
+//
+// It sits outside AttestJiraCommandTestSuite on purpose: that suite's SetupTest skips unless
+// the shared Jira secrets are present, which would leave this covered only in the
+// secret-bearing environment, and a credential that is refused cannot come from the real
+// Jira anyway. Both sides are stubbed, so it needs neither the secrets nor localhost:8001.
 func TestAttestJiraStaleCredential(t *testing.T) {
 	staleCredentialJira := newStubJiraWithStaleCredential("EX-1")
 	defer staleCredentialJira.Close()
+
+	kosliStub, reported := newStubKosliAttestation(t)
+	defer kosliStub.Close()
 
 	tmpDir, err := os.MkdirTemp("", "testDir")
 	require.NoError(t, err)
@@ -112,33 +155,40 @@ func TestAttestJiraStaleCredential(t *testing.T) {
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user",
-		Host:     "http://localhost:8001",
+		Host:     kosliStub.Server.URL,
 	}
-	kosliArguments := fmt.Sprintf(" --flow attest-jira --trail test-123 --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-
 	cmd := fmt.Sprintf(`attest jira --name bar
 			--jira-base-url %s%s
 			--repo-root %s
 			--commit %s
-			--assert %s`, staleCredentialJira.Server.URL, stubJiraCredentials, tmpDir, commitSha, kosliArguments)
+			--assert
+			--flow attest-jira --trail test-123 --host %s --org %s --api-token %s`,
+		staleCredentialJira.Server.URL, stubJiraCredentials, tmpDir, commitSha,
+		global.Host, global.Org, global.ApiToken)
 
 	// Asserted on the output rather than against a golden: the CLI prefixes a repo-info
 	// warning when it cannot detect the CI environment, so an exact match would pass in CI
 	// and fail on a developer's machine - the portability this test exists for.
-	_, combined, _, _, err := executeCommandC(cmd)
+	_, combined, _, stderr, err := executeCommandC(cmd)
+
+	// The warning names the credential, and goes to stderr so that it cannot corrupt output
+	// a caller is parsing.
+	require.Contains(t, stderr, fmt.Sprintf("the API token of user ci@example.com was not accepted by Jira at %s (HTTP 401)", staleCredentialJira.Server.URL))
+
+	// The exit code is --assert's alone: the issues were not found, exactly as before this
+	// check existed. The credential warning explains why, it does not decide the outcome.
 	require.Error(t, err)
-	require.Contains(t, combined, fmt.Sprintf("failed to authenticate with Jira at %s: check the API token of user ci@example.com (Jira answered HTTP 401)", staleCredentialJira.Server.URL))
-	// And no attestation is reported: issue_exists=false is not a fact we established, so
-	// it does not belong in the trail.
-	require.NotContains(t, combined, "is reported to trail")
+	require.Contains(t, combined, "missing Jira issues from references found in commit message or branch name")
+	require.Contains(t, combined, "is reported to trail")
+	require.Equal(t, int32(1), reported.Load(), "the attestation must still be reported")
 }
 
-// TestAttestJiraUnverifiableCredential pins the other half of the same decision: when the
-// credential check does not complete - Jira answered, but with a 503 that says nothing
-// about the credential - the run carries on and reports the attestation.
+// TestAttestJiraUnverifiableCredential covers the check not completing at all - Jira
+// answered, but with a 503 - where the warning must not claim the credential was refused,
+// since nothing about the credential was learned.
 //
-// Failing there would reinstate the bug this change removed, a blip on a third-party call
-// failing a pipeline, just relocated to a verification that is only ever a tie-breaker.
+// The exit code and the attestation are the same as in the stale-credential case: this call
+// only ever adds a line to stderr, so a blip on it cannot fail a run either.
 func TestAttestJiraUnverifiableCredential(t *testing.T) {
 	jiraStub := httpfake.New()
 	defer jiraStub.Close()
@@ -151,13 +201,8 @@ func TestAttestJiraUnverifiableCredential(t *testing.T) {
 		Reply(503).
 		BodyString(`{"errorMessages":["Service unavailable"],"errors":{}}`)
 
-	// The attestation is stubbed too, so the test does not need the local Kosli server.
-	kosliStub := httpfake.New()
+	kosliStub, reported := newStubKosliAttestation(t)
 	defer kosliStub.Close()
-	kosliStub.NewHandler().
-		Post("/api/v2/attestations/docs-cmd-test-user/attest-jira/trail/test-123/jira").
-		Reply(201).
-		BodyString(`{}`)
 
 	tmpDir, err := os.MkdirTemp("", "testDir")
 	require.NoError(t, err)
@@ -183,10 +228,11 @@ func TestAttestJiraUnverifiableCredential(t *testing.T) {
 		jiraStub.Server.URL, stubJiraCredentials, tmpDir, commitSha,
 		global.Host, global.Org, global.ApiToken)
 
-	_, combined, _, _, err := executeCommandC(cmd)
+	_, combined, _, stderr, err := executeCommandC(cmd)
 	require.NoError(t, err)
-	require.Contains(t, combined, "could not verify the Jira credential")
+	require.Contains(t, stderr, "could not check the Jira credential")
 	require.Contains(t, combined, "is reported to trail")
+	require.Equal(t, int32(1), reported.Load(), "the attestation must still be reported")
 }
 
 // TestAttestJiraVerifiedCredentialMissingIssue pins the path the credential check is most
@@ -197,23 +243,11 @@ func TestAttestJiraUnverifiableCredential(t *testing.T) {
 // The equivalent suite cases (07, 09, 25) skip without the shared Jira secrets, so this is
 // the only place that pins it everywhere.
 func TestAttestJiraVerifiedCredentialMissingIssue(t *testing.T) {
-	jiraStub := httpfake.New()
+	jiraStub := stubJiraIssueMissing("EX-1")
 	defer jiraStub.Close()
-	jiraStub.NewHandler().
-		Get("/rest/api/2/myself").
-		Reply(200).
-		BodyString(`{"accountId":"1234","emailAddress":"ci@example.com","displayName":"CI"}`)
-	jiraStub.NewHandler().
-		Get("/rest/api/2/issue/EX-1").
-		Reply(404).
-		BodyString(`{"errorMessages":["Issue does not exist or you do not have permission to see it."],"errors":{}}`)
 
-	kosliStub := httpfake.New()
+	kosliStub, reported := newStubKosliAttestation(t)
 	defer kosliStub.Close()
-	kosliStub.NewHandler().
-		Post("/api/v2/attestations/docs-cmd-test-user/attest-jira/trail/test-123/jira").
-		Reply(201).
-		BodyString(`{}`)
 
 	tmpDir, err := os.MkdirTemp("", "testDir")
 	require.NoError(t, err)
@@ -240,13 +274,15 @@ func TestAttestJiraVerifiedCredentialMissingIssue(t *testing.T) {
 		jiraStub.Server.URL, stubJiraCredentials, tmpDir, commitSha,
 		global.Host, global.Org, global.ApiToken)
 
-	_, combined, _, _, err := executeCommandC(cmd)
+	_, combined, _, stderr, err := executeCommandC(cmd)
 	require.Error(t, err)
 	require.Contains(t, combined, "is reported to trail")
 	require.Contains(t, combined, "missing Jira issues from references found in commit message or branch name")
 	require.Contains(t, combined, "EX-1: issue not found")
-	// A credential that verified says nothing to warn about.
-	require.NotContains(t, combined, "could not verify the Jira credential")
+	require.Equal(t, int32(1), reported.Load(), "the attestation must still be reported")
+	// A credential Jira accepted leaves nothing to warn about.
+	require.NotContains(t, stderr, "Jira credential")
+	require.NotContains(t, stderr, "not accepted by Jira")
 }
 
 func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {

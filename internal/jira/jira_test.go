@@ -2,6 +2,7 @@ package jira
 
 import (
 	"fmt"
+	"net"
 	"regexp"
 	"testing"
 
@@ -366,7 +367,10 @@ func TestGetJiraIssueInfo(t *testing.T) {
 		assert.Contains(t, err.Error(), issueID)
 	})
 
-	t.Run("a server error is an error, not a missing issue", func(t *testing.T) {
+	// go-jira's own message for a 5xx is "request failed. Please analyze the request body
+	// for more details. Status code: 500", which names neither the Jira nor the issue: in CI
+	// output there is no way to tell which of the two Jira calls produced it.
+	t.Run("a server error names the issue and the Jira it was looked up in", func(t *testing.T) {
 		fake := httpfake.New()
 		defer fake.Close()
 		fake.NewHandler().
@@ -378,6 +382,10 @@ func TestGetJiraIssueInfo(t *testing.T) {
 		result, err := jc.GetJiraIssueInfo(issueID, "")
 		require.Error(t, err)
 		assert.False(t, result.IssueExists)
+		assert.Contains(t, err.Error(), issueID)
+		assert.Contains(t, err.Error(), fake.Server.URL)
+		// and go-jira's own text is kept, not replaced
+		assert.Contains(t, err.Error(), "500")
 	})
 
 	// The transport failure is the other half of the same bug: go-jira returns a nil
@@ -389,15 +397,21 @@ func TestGetJiraIssueInfo(t *testing.T) {
 		require.Error(t, err)
 		assert.False(t, result.IssueExists)
 		assert.Contains(t, err.Error(), unreachableJira)
+		assert.Contains(t, err.Error(), issueID)
+		// Wrapped, so a caller can still tell a timeout from a refused connection.
+		var opErr *net.OpError
+		assert.ErrorAs(t, err, &opErr, "the transport error must stay unwrappable")
 	})
 }
 
-// TestVerifyCredentials pins the check that tells a stale credential apart from a
-// genuinely missing issue. Jira answers a request it cannot authenticate with 404 on
-// the issue endpoint - it will not confirm that an issue exists to someone who may not
-// see it - so the issue lookup alone cannot distinguish the two, and an expired API
-// token reads as "every referenced issue is missing". Asking who we are is the question
-// that does come back with a straight answer.
+// TestVerifyCredentials pins the check that explains a stale credential rather than leaving
+// it looking like a set of missing issues. Jira answers a request it cannot authenticate
+// with 404 on the issue endpoint - it will not confirm that an issue exists to someone who
+// may not see it - so the lookup alone cannot tell the two apart, and an expired API token
+// reads as "every referenced issue is missing".
+//
+// Its result is diagnostic only: the caller warns on every outcome and never fails, so what
+// each branch owes is an accurate message. Nothing here should be treated as a verdict.
 func TestVerifyCredentials(t *testing.T) {
 	t.Run("a working credential verifies", func(t *testing.T) {
 		fake := httpfake.New()
@@ -411,10 +425,11 @@ func TestVerifyCredentials(t *testing.T) {
 		require.NoError(t, jc.VerifyCredentials())
 	})
 
-	// 401 and 403 are the answers that single out the credential, so the error both wraps
-	// the sentinel and says which credential to go and check.
+	// Every failure here is reported rather than acted on, so what each one has to get
+	// right is the wording: 401 and 403 are the two where Jira saw the credential and said
+	// no, so those name the credential and nothing else.
 	for _, status := range []int{401, 403} {
-		t.Run(fmt.Sprintf("a credential rejected with %d is reported as rejected", status), func(t *testing.T) {
+		t.Run(fmt.Sprintf("a credential refused with %d names the credential", status), func(t *testing.T) {
 			fake := httpfake.New()
 			defer fake.Close()
 			fake.NewHandler().
@@ -425,19 +440,19 @@ func TestVerifyCredentials(t *testing.T) {
 			jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
 			err := jc.VerifyCredentials()
 			require.Error(t, err)
-			var rejected *CredentialRejectedError
-			require.ErrorAs(t, err, &rejected)
-			assert.Equal(t, status, rejected.StatusCode)
+			assert.Contains(t, err.Error(), "was not accepted by Jira")
 			assert.Contains(t, err.Error(), "user@example.com")
 			assert.Contains(t, err.Error(), fake.Server.URL)
+			assert.Contains(t, err.Error(), fmt.Sprintf("HTTP %d", status))
 		})
 	}
 
-	// A 404 is neither a rejection nor verification. Everything that realistically answers
-	// /myself with 404 is a misconfiguration rather than a credential, so it names the base
-	// URL alongside the credential and does NOT count as a rejection: a proxy that starts
-	// 404ing unknown paths must not fail a run over an issue that really is missing.
-	t.Run("a 404 on the identity endpoint names the base URL and is not a rejection", func(t *testing.T) {
+	// A 404 is not Jira refusing the credential. Everything that realistically answers
+	// /myself that way is a misconfiguration - a base URL that is not a Jira, one missing a
+	// Data Center context path, a proxy that 404s what it does not recognise - so the
+	// message has to offer the base URL as a candidate too, or it sends the reader off to
+	// rotate a token that was never the problem.
+	t.Run("a 404 on the identity endpoint names the base URL as well as the credential", func(t *testing.T) {
 		fake := httpfake.New()
 		defer fake.Close()
 		fake.NewHandler().
@@ -448,25 +463,25 @@ func TestVerifyCredentials(t *testing.T) {
 		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
 		err := jc.VerifyCredentials()
 		require.Error(t, err)
-		var rejected *CredentialRejectedError
-		assert.NotErrorAs(t, err, &rejected)
 		assert.Contains(t, err.Error(), "user@example.com")
 		assert.Contains(t, err.Error(), "--jira-base-url")
+		// Not phrased as a refusal, because Jira may never have seen the credential.
+		assert.NotContains(t, err.Error(), "was not accepted by Jira")
 	})
 
-	// The failures below say nothing about the credential either, so they must not be
-	// rejections: a caller that hard-fails on rejection would otherwise abort a good run
-	// every time a verification call happens to blip.
-	t.Run("an unreachable Jira is a failure to verify, not a rejection", func(t *testing.T) {
+	// The two below say nothing about the credential at all, and wrap their cause so that a
+	// caller can still ask what kind of failure it was.
+	t.Run("an unreachable Jira names the Jira and wraps the cause", func(t *testing.T) {
 		jc := NewJiraConfig(unreachableJira, "user@example.com", "token", "")
 		err := jc.VerifyCredentials()
 		require.Error(t, err)
-		var rejected *CredentialRejectedError
-		assert.NotErrorAs(t, err, &rejected)
 		assert.Contains(t, err.Error(), unreachableJira)
+		assert.NotContains(t, err.Error(), "was not accepted by Jira")
+		var opErr *net.OpError
+		assert.ErrorAs(t, err, &opErr, "the transport error must stay unwrappable")
 	})
 
-	t.Run("a server error is a failure to verify, not a rejection", func(t *testing.T) {
+	t.Run("a server error names the Jira and is not phrased as a refusal", func(t *testing.T) {
 		fake := httpfake.New()
 		defer fake.Close()
 		fake.NewHandler().
@@ -477,8 +492,8 @@ func TestVerifyCredentials(t *testing.T) {
 		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
 		err := jc.VerifyCredentials()
 		require.Error(t, err)
-		var rejected *CredentialRejectedError
-		assert.NotErrorAs(t, err, &rejected)
+		assert.Contains(t, err.Error(), fake.Server.URL)
+		assert.NotContains(t, err.Error(), "was not accepted by Jira")
 	})
 }
 

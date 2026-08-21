@@ -73,33 +73,22 @@ func (jc *JiraConfig) credentialDescription() string {
 	return "personal access token"
 }
 
-// CredentialRejectedError reports that Jira looked at the configured credential and
-// refused it. It is the one outcome that says something about the credential itself.
-//
-// Callers match it with errors.As to tell it apart from a check that did not conclude -
-// an unreachable Jira, a 5xx, a 404 from something that may not even be a Jira - none of
-// which say anything either way. It is a type rather than a sentinel so that the status
-// travels with the error and the message is not forced to embed a sentinel's wording.
-type CredentialRejectedError struct {
-	StatusCode int
-	msg        string
-}
-
-func (e *CredentialRejectedError) Error() string { return e.msg }
-
 // VerifyCredentials checks that Jira accepts the configured credential, by asking it
-// who we are.
+// who we are. It returns nil if Jira accepted it, and otherwise an error saying what to
+// go and look at.
 //
 // It exists because a 404 from the issue endpoint is ambiguous: Jira will not confirm
 // that an issue exists to a caller who may not see it, so it answers "not found" both
 // for an issue that is absent and for a credential that has expired or lost access. A
-// caller that has just been told an issue is missing can use this to find out which of
-// the two it is looking at, and report a stale token as a stale token rather than as a
-// commit whose Jira references do not exist.
+// caller that has just been told an issue is missing can use this to explain which of the
+// two it is probably looking at.
 //
-// A refusal is a *CredentialRejectedError. Every other failure - an unreachable Jira, a
-// 5xx, a 404 - is a plain error: the check did not conclude, which is not the same as an
-// answer and must not be treated as one.
+// The result is diagnostic, not a verdict: every outcome here is something the caller
+// reports, never something it fails on, so the statuses differ only in wording. 401 and
+// 403 name the credential, because Jira saw it and said no. A 404 names the base URL as
+// well, because everything that realistically answers /myself that way is shaped like a
+// misconfiguration rather than a credential - a base URL that is not a Jira, one missing a
+// Data Center context path, a proxy that 404s paths it does not recognise.
 func (jc *JiraConfig) VerifyCredentials() error {
 	jiraClient, err := jc.NewJiraClient()
 	if err != nil {
@@ -111,25 +100,15 @@ func (jc *JiraConfig) VerifyCredentials() error {
 		return nil
 	}
 	if response == nil {
-		return fmt.Errorf("failed to reach Jira at %s: %s", jc.BaseURL, err)
+		return fmt.Errorf("failed to reach Jira at %s: %w", jc.BaseURL, err)
 	}
 	switch response.StatusCode {
 	case http.StatusUnauthorized, http.StatusForbidden:
-		// The only statuses that single out the credential: Jira saw it and said no.
-		return &CredentialRejectedError{
-			StatusCode: response.StatusCode,
-			msg:        fmt.Sprintf("failed to authenticate with Jira at %s: check the %s (Jira answered HTTP %d)", jc.BaseURL, jc.credentialDescription(), response.StatusCode),
-		}
+		return fmt.Errorf("the %s was not accepted by Jira at %s (HTTP %d)", jc.credentialDescription(), jc.BaseURL, response.StatusCode)
 	case http.StatusNotFound:
-		// Not a rejection, and not verification either. Everything that realistically
-		// answers /myself with 404 is shaped like a misconfiguration rather than a
-		// credential: a base URL that is not a Jira, one missing a Data Center context
-		// path, or a proxy that 404s paths it does not recognise. So it names the base URL
-		// alongside the credential, and stays a plain error - a proxy that starts 404ing
-		// must not fail a pipeline over an issue that really is missing.
-		return fmt.Errorf("failed to verify the Jira credential at %s: check the %s, and that --jira-base-url points at your Jira (Jira answered HTTP 404)", jc.BaseURL, jc.credentialDescription())
+		return fmt.Errorf("could not check the %s at %s: verify the credential, and that --jira-base-url points at your Jira (HTTP 404)", jc.credentialDescription(), jc.BaseURL)
 	}
-	return fmt.Errorf("failed to verify the Jira credential at %s: %s", jc.BaseURL, err)
+	return fmt.Errorf("could not check the Jira credential at %s: %w", jc.BaseURL, err)
 }
 
 // GetJiraIssueInfo retrieve Jira issue information
@@ -169,7 +148,7 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 		if response == nil {
 			// no response at all: DNS, TLS, timeout, connection refused. Nothing was
 			// learned about the issue, so this must not read as "the issue is missing".
-			return result, fmt.Errorf("failed to reach Jira at %s: %s", jc.BaseURL, err)
+			return result, fmt.Errorf("failed to reach Jira at %s while looking up issue %s: %w", jc.BaseURL, issueID, err)
 		}
 		switch response.StatusCode {
 		case http.StatusNotFound:
@@ -183,7 +162,10 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 		case http.StatusForbidden:
 			return result, fmt.Errorf("not permitted to view Jira issue %s at %s: check that the %s has the Browse Projects permission (Jira answered HTTP 403)", issueID, jc.BaseURL, jc.credentialDescription())
 		default:
-			return result, err
+			// go-jira's message carries the status and the response body but names neither
+			// the Jira nor the issue, so on a 5xx it reads as an unattributable "request
+			// failed" in CI output. Say which call it was.
+			return result, fmt.Errorf("failed to look up Jira issue %s at %s: %w", issueID, jc.BaseURL, err)
 		}
 	}
 
