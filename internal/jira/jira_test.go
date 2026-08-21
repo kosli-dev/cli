@@ -389,6 +389,65 @@ func TestGetJiraIssueInfo(t *testing.T) {
 	})
 }
 
+// TestVerifyCredentials pins the check that tells a stale credential apart from a
+// genuinely missing issue. Jira answers a request it cannot authenticate with 404 on
+// the issue endpoint - it will not confirm that an issue exists to someone who may not
+// see it - so the issue lookup alone cannot distinguish the two, and an expired API
+// token reads as "every referenced issue is missing". Asking who we are is the question
+// that does come back with a straight answer.
+func TestVerifyCredentials(t *testing.T) {
+	t.Run("a working credential verifies", func(t *testing.T) {
+		fake := httpfake.New()
+		defer fake.Close()
+		fake.NewHandler().
+			Get("/rest/api/2/myself").
+			Reply(200).
+			BodyString(`{"accountId":"1234","emailAddress":"user@example.com","displayName":"A User"}`)
+
+		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+		require.NoError(t, jc.VerifyCredentials())
+	})
+
+	t.Run("a rejected credential is named in the error", func(t *testing.T) {
+		fake := httpfake.New()
+		defer fake.Close()
+		fake.NewHandler().
+			Get("/rest/api/2/myself").
+			Reply(401).
+			BodyString(`{"errorMessages":["Client must be authenticated to access this resource."],"errors":{}}`)
+
+		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+		err := jc.VerifyCredentials()
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "authenticate")
+		assert.Contains(t, err.Error(), "user@example.com")
+		assert.Contains(t, err.Error(), fake.Server.URL)
+	})
+
+	// Jira Cloud answers /myself with 404 rather than 401 for some rejected
+	// credentials, so a 404 here cannot be waved through as "no such user".
+	t.Run("a 404 on the identity endpoint is still a failure to verify", func(t *testing.T) {
+		fake := httpfake.New()
+		defer fake.Close()
+		fake.NewHandler().
+			Get("/rest/api/2/myself").
+			Reply(404).
+			BodyString(`{"errorMessages":["Not found"],"errors":{}}`)
+
+		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+		require.Error(t, jc.VerifyCredentials())
+	})
+
+	t.Run("an unreachable Jira is a failure to verify", func(t *testing.T) {
+		fake := httpfake.New()
+		fake.Close() // nothing is listening on this address any more
+		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+		err := jc.VerifyCredentials()
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), fake.Server.URL)
+	})
+}
+
 func BenchmarkFindJiraIssueKeys(b *testing.B) {
 	text := "EX-1 fixes the regression reported in EX-2, see also branch bugfix/EX-3"
 	b.Run("default pattern", func(b *testing.B) {

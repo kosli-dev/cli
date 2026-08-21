@@ -73,6 +73,36 @@ func (jc *JiraConfig) credentialDescription() string {
 	return "personal access token"
 }
 
+// VerifyCredentials checks that Jira accepts the configured credential, by asking it
+// who we are.
+//
+// It exists because a 404 from the issue endpoint is ambiguous: Jira will not confirm
+// that an issue exists to a caller who may not see it, so it answers "not found" both
+// for an issue that is absent and for a credential that has expired or lost access. A
+// caller that has just been told an issue is missing can use this to find out which of
+// the two it is looking at, and report a stale token as a stale token rather than as a
+// commit whose Jira references do not exist.
+func (jc *JiraConfig) VerifyCredentials() error {
+	jiraClient, err := jc.NewJiraClient()
+	if err != nil {
+		return err
+	}
+
+	_, response, err := jiraClient.User.GetSelf()
+	if err == nil {
+		return nil
+	}
+	if response == nil {
+		return fmt.Errorf("failed to reach Jira at %s: %s", jc.BaseURL, err)
+	}
+	// Unlike the issue endpoint, a 404 here is not an answer about an issue, so it is
+	// not waved through: whatever Jira means by it, the credential did not verify.
+	if response.StatusCode == http.StatusUnauthorized || response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("failed to authenticate with Jira at %s: check the %s (Jira answered HTTP %d)", jc.BaseURL, jc.credentialDescription(), response.StatusCode)
+	}
+	return fmt.Errorf("failed to verify the Jira credential at %s: %s", jc.BaseURL, err)
+}
+
 // GetJiraIssueInfo retrieve Jira issue information
 // if issue is not found, we still return a JiraIssueInfo object with IssueExists set to false.
 // Every other failure - an unreachable Jira, a rejected credential, a server error - is

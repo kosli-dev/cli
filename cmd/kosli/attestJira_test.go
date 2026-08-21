@@ -9,6 +9,7 @@ import (
 	git "github.com/go-git/go-git/v5"
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/testHelpers"
+	"github.com/maxcnunes/httpfake"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -60,7 +61,33 @@ func (suite *AttestJiraCommandTestSuite) TearDownSuite() {
 	require.NoError(suite.T(), err, "failed to remove temp dir %s", suite.tmpDir)
 }
 
+// stubJiraCredentials are passed explicitly to the case that runs against a stub, so
+// that it exercises the CLI's own behaviour without depending on the shared Jira
+// account. The username appears in the authentication error the stub provokes.
+const stubJiraCredentials = " --jira-username ci@example.com --jira-api-token stub-token"
+
+// newStubJiraWithStaleCredential serves what Jira answers a credential it will not
+// accept: 404 from the issue endpoint, because it does not confirm that an issue exists
+// to a caller who may not see it, and 401 from the identity endpoint. Reading the first
+// without the second is what made an expired API token look like a commit whose Jira
+// references had all disappeared.
+func newStubJiraWithStaleCredential(issueKey string) *httpfake.HTTPFake {
+	fake := httpfake.New()
+	fake.NewHandler().
+		Get("/rest/api/2/myself").
+		Reply(401).
+		BodyString(`{"errorMessages":["Client must be authenticated to access this resource."],"errors":{}}`)
+	fake.NewHandler().
+		Get("/rest/api/2/issue/" + issueKey).
+		Reply(404).
+		BodyString(`{"errorMessages":["Issue does not exist or you do not have permission to see it."],"errors":{}}`)
+	return fake
+}
+
 func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
+	staleCredentialJira := newStubJiraWithStaleCredential("EX-1")
+	defer staleCredentialJira.Close()
+
 	tests := []cmdTestCase{
 		{
 			wantError: true,
@@ -320,9 +347,26 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			name: "23 assert works and exits with zero code if issue exists",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
-					--repo-root %s 
+					--repo-root %s
 					--assert %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			// A stale credential must be named as one. Before, the 404 Jira returns for
+			// an issue the caller may not see was reported as a missing issue, so an
+			// expired API token failed the assert by pointing at the commit's Jira
+			// references instead. No attestation is reported: issue_exists=false is not a
+			// fact we established, so it does not belong in the trail.
+			wantError: true,
+			name:      "23a a stale Jira credential is reported as one, not as a missing issue",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url %s%s
+					--repo-root %s
+					--assert %s`, staleCredentialJira.Server.URL, stubJiraCredentials, suite.tmpDir, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("Error: failed to authenticate with Jira at %s: check the API token of user ci@example.com (Jira answered HTTP 401)\n", staleCredentialJira.Server.URL),
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
 			},

@@ -323,6 +323,18 @@ func (o *attestJiraOptions) run(args []string) error {
 		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, issueExistLog)
 	}
 
+	// Jira answers a credential it will not accept with 404 on the issue endpoint - it
+	// does not confirm that an issue exists to a caller who may not see it - so a
+	// not-found issue may be an expired token rather than a missing issue. Ask who we
+	// are before believing it, and report a stale credential as one. Only asked when
+	// something was not found: where every reference resolved, the credential has
+	// already proved itself, and the extra call would be pure overhead.
+	if issueFoundCount != len(issueIDs) {
+		if err := jc.VerifyCredentials(); err != nil {
+			return err
+		}
+	}
+
 	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
 		return err
