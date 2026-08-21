@@ -22,6 +22,7 @@ type SonarConfig struct {
 	projectKey  string
 	serverURL   string
 	pullRequest string
+	branch      string
 	maxWait     int
 }
 
@@ -135,7 +136,7 @@ type Error struct {
 	Msg string `json:"msg"`
 }
 
-func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision, pullRequest string, maxWait int) *SonarConfig {
+func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision, pullRequest, branch string, maxWait int) *SonarConfig {
 	return &SonarConfig{
 		APIToken:    apiToken,
 		WorkingDir:  workingDir,
@@ -144,6 +145,7 @@ func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revi
 		projectKey:  projectKey,
 		serverURL:   serverURL,
 		pullRequest: pullRequest,
+		branch:      branch,
 		maxWait:     maxWait,
 	}
 }
@@ -156,6 +158,18 @@ func sonarURL(serverURL, apiPath string, params url.Values) (string, error) {
 	u = u.JoinPath(apiPath)
 	u.RawQuery = params.Encode()
 	return u.String(), nil
+}
+
+// analysesSearchURL scopes the search to the branch when we know it; SonarQube
+// otherwise searches only the project's main branch (#861, #1116). ps is SonarQube's
+// maximum: the endpoint returns the 100 newest analyses by default, which can leave
+// an older revision unmatched, and we search these results by revision.
+func analysesSearchURL(sonarResults *SonarResults, project *Project) (string, error) {
+	params := url.Values{"project": {project.Key}, "ps": {"500"}}
+	if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
+		params.Set("branch", sonarResults.Branch.Name)
+	}
+	return sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", params)
 }
 
 func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error) {
@@ -197,6 +211,11 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			project.Key = sc.projectKey
 			sonarResults.ServerUrl = sc.serverURL
 			sonarResults.Revision = sc.revision
+			// No CE task on this path, so the branch can only come from the user.
+			// A pull request scan is not a branch scan (#1116).
+			if sc.branch != "" && sc.pullRequest == "" {
+				sonarResults.Branch = &Branch{Name: sc.branch}
+			}
 			project.Url, err = sonarURL(sonarResults.ServerUrl, "dashboard", url.Values{"id": {project.Key}})
 			if err != nil {
 				return nil, err
@@ -380,7 +399,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *SonarResults, project *Project, revision string, logger *log.Logger) (string, error) {
 	var analysisID string
 
-	projectAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", url.Values{"project": {project.Key}})
+	projectAnalysesURL, err := analysesSearchURL(sonarResults, project)
 	if err != nil {
 		return "", err
 	}
@@ -418,19 +437,20 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	}
 
 	if sonarResults.AnalysedAt == "" {
-		return "", fmt.Errorf("analysis for revision %s of project %s not found. Check the revision is correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key)
+		scope := "only the project's main branch was searched, because no --sonar-branch was given"
+		advice := "Check the revision is correct, and pass --sonar-branch if the scan ran on another branch."
+		if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
+			scope = fmt.Sprintf("branch %s was searched", sonarResults.Branch.Name)
+			advice = "Check the revision and the branch are correct. Only the most recent analyses are searched, so an older scan may not be listed."
+		}
+		return "", fmt.Errorf("analysis for revision %s of project %s not found: %s. %s \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key, scope, advice)
 	}
 
 	return analysisID, nil
 }
 
 func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID string) error {
-	// Forward branch to find analyses on non-default branches (#861).
-	params := url.Values{"project": {project.Key}}
-	if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
-		params.Set("branch", sonarResults.Branch.Name)
-	}
-	projectAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", params)
+	projectAnalysesURL, err := analysesSearchURL(sonarResults, project)
 	if err != nil {
 		return err
 	}

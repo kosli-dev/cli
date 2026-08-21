@@ -136,6 +136,7 @@
  "show-input": "output",
  "show-unchanged": "output",
  "sonar-api-token": "credentials",
+ "sonar-branch": "identity",
  "sonar-ce-task-url": "location",
  "sonar-project-key": "identity",
  "sonar-revision": "identity",

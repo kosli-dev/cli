@@ -25,6 +25,7 @@ type attestSonarOptions struct {
 	serverURL   string
 	revision    string
 	pullRequest string
+	branch      string
 	maxWait     int
 	payload     SonarAttestationPayload
 }
@@ -48,6 +49,8 @@ exponential backoff between retries. Once the results are available they are att
 2. Providing the Sonar project key and either the revision or the pull-request ID of the scan (plus the SonarQube server URL if relevant).
 For branch scans: if running the Kosli CLI in some CI/CD pipeline, the revision is defaulted to the commit SHA. If you are running the command locally,
 or have overriden the revision in SonarQube via parameters to the Sonar scanner, you can provide the correct revision using the ^--sonar-revision^ flag.
+If the scan ran on a branch other than the project's main branch in SonarQube, also provide the branch name using the ^--sonar-branch^ flag:
+SonarQube searches only the main branch unless it is told otherwise, so without it the scan cannot be found.
 For pull request scans: provide the pull-request ID using the ^--pull-request^ flag instead of the revision.
 Kosli then finds the scan results for the specified project key and revision or pull-request ID.
 
@@ -101,6 +104,18 @@ kosli attest sonar \
 	--sonar-server-url yourSonarServerURL \
 	--sonar-project-key yourSonarProjectKey \
 	--sonar-revision yourSonarRevision \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+
+# report a SonarQube Cloud attestation about a trail using key/revision for a scan on a non-main branch:
+kosli attest sonar \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--sonar-api-token yourSonarAPIToken \
+	--sonar-project-key yourSonarProjectKey \
+	--sonar-revision yourSonarRevision \
+	--sonar-branch yourSonarBranchName \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
@@ -176,6 +191,11 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			err = MuXRequiredFlags(cmd, []string{"sonar-branch", "pull-request"}, false)
+			if err != nil {
+				return err
+			}
+
 			err = ValidateAttestationArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
@@ -199,6 +219,7 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.serverURL, "sonar-server-url", "https://sonarcloud.io", sonarServerURLFlag)
 	cmd.Flags().StringVar(&o.revision, "sonar-revision", o.commitSHA, sonarRevisionFlag)
 	cmd.Flags().StringVar(&o.pullRequest, "pull-request", "", sonarPRFlag)
+	cmd.Flags().StringVar(&o.branch, "sonar-branch", "", sonarBranchFlag)
 	cmd.Flags().StringVar(&o.ceTaskURL, "sonar-ce-task-url", "", sonarCETaskURLFlag)
 	cmd.Flags().IntVar(&o.maxWait, "max-wait", 30, sonarMaxWaitFlag)
 
@@ -221,7 +242,7 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir, o.ceTaskURL, o.projectKey, o.serverURL, o.revision, o.pullRequest, o.maxWait)
+	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir, o.ceTaskURL, o.projectKey, o.serverURL, o.revision, o.pullRequest, o.branch, o.maxWait)
 
 	o.payload.SonarResults, err = sc.GetSonarResults(logger)
 	if err != nil {
