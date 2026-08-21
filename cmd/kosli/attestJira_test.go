@@ -183,9 +183,55 @@ func TestAttestJiraStaleCredential(t *testing.T) {
 	require.Equal(t, int32(1), reported.Load(), "the attestation must still be reported")
 }
 
-// TestAttestJiraUnverifiableCredential covers the check not completing at all - Jira
-// answered, but with a 503 - where the warning must not claim the credential was refused,
-// since nothing about the credential was learned.
+// TestAttestJiraUnreachable covers a Jira that answers nothing at all: neither the issue
+// lookup nor the credential check gets a response.
+//
+// This is the case where the exit code matters most. Before any of this existed, an
+// unreachable Jira meant the issues were quietly reported as not found and the run passed,
+// so it still has to pass - a Jira outage must not fail a pipeline that would otherwise have
+// succeeded. What is new is that it says so, twice, on stderr.
+func TestAttestJiraUnreachable(t *testing.T) {
+	kosliStub, reported := newStubKosliAttestation(t)
+	defer kosliStub.Close()
+
+	tmpDir, err := os.MkdirTemp("", "testDir")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tmpDir))
+	}()
+
+	_, workTree, fs, err := testHelpers.InitializeGitRepo(tmpDir)
+	require.NoError(t, err)
+	commitSha, err := testHelpers.CommitToRepo(workTree, fs, "EX-1 test commit")
+	require.NoError(t, err)
+
+	global = &GlobalOpts{
+		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
+		Org:      "docs-cmd-test-user",
+		Host:     kosliStub.Server.URL,
+	}
+	// Port 0 can have no listener behind it, so the connection fails immediately.
+	cmd := fmt.Sprintf(`attest jira --name bar
+			--jira-base-url http://127.0.0.1:0%s
+			--repo-root %s
+			--commit %s
+			--flow attest-jira --trail test-123 --host %s --org %s --api-token %s`,
+		stubJiraCredentials, tmpDir, commitSha,
+		global.Host, global.Org, global.ApiToken)
+
+	_, combined, _, stderr, err := executeCommandC(cmd)
+	require.NoError(t, err, "an unreachable Jira must not fail the run")
+	require.Contains(t, combined, "is reported to trail")
+	require.Equal(t, int32(1), reported.Load(), "the attestation must still be reported")
+	require.Contains(t, stderr, "failed to reach Jira at http://127.0.0.1:0 while looking up issue EX-1")
+	// And the credential check is skipped: Jira answered nothing, so there is no ambiguous
+	// 404 to explain, and asking again would only repeat that it could not be reached.
+	require.NotContains(t, stderr, "credential")
+}
+
+// TestAttestJiraUnverifiableCredential covers the credential check not completing while the
+// issue lookup did - Jira answered the lookup, but 503s /myself - where the warning must not
+// claim the credential was refused, since nothing about the credential was learned.
 //
 // The exit code and the attestation are the same as in the stale-credential case: this call
 // only ever adds a line to stderr, so a blip on it cannot fail a run either.

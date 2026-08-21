@@ -67,8 +67,8 @@ If you want to restrict the Jira issue matching to a specific project, use the
 If the ^--ignore-branch-match^ is set, the branch name is not parsed for a match.
 
 The found issue references will be checked against Jira to confirm their existence.
-The attestation is reported whenever Jira answers, and its compliance status depends on
-referencing existing Jira issues.
+The attestation is reported in all cases, and its compliance status depends on referencing
+existing Jira issues.
 If your Jira credentials are wrong, or ^--jira-base-url^ does not point at your Jira, the
 issues are reported as non existing. This is because Jira returns the same 404 whether an
 issue does not exist or your credentials may not see it.
@@ -76,10 +76,10 @@ When that happens a warning naming the likely cause is written to stderr, so a r
 issues all came back missing says whether the credentials were the reason. The warning does
 not change the exit code; ^--assert^ still fails on the issues that were not found.
 
-If Jira cannot be reached at all, or answers the issue lookup with an error rather than a
-404, the command fails instead of reporting those issues as non existing: a lookup that was
-never answered is not evidence that an issue is missing. This means ^attest jira^ can exit
-non-zero on a Jira outage even without ^--assert^.
+If Jira cannot be reached at all, the issues it did not answer for are reported as non
+existing, as before, with a warning on stderr saying that the lookup never got an answer.
+If Jira answers the lookup with an error instead - a rejected credential, a server error -
+the command fails, as it has always done for those.
 
 The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
 are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you
@@ -318,32 +318,45 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	issueLog := ""
 	issueFoundCount := 0
+	// Issues Jira answered for, and said it does not have. These are the ambiguous ones: a
+	// 404 is also what it returns for an issue the credential may not see.
+	answeredNotFound := 0
 	for _, issueID := range issueIDs {
 		result, err := jc.GetJiraIssueInfo(issueID, o.issueFields)
 		if err != nil {
 			return err
 		}
 		o.payload.JiraResults = append(o.payload.JiraResults, result)
+		// A lookup Jira never answered is still counted as not found, as it always has
+		// been, but it is no longer silent about it.
+		if result.LookupFailure != nil {
+			logger.Warn("%s. It is reported as not found", result.LookupFailure)
+		}
 		issueExistLog := "issue not found"
 		if result.IssueExists {
 			issueExistLog = "issue found"
 			issueFoundCount++
+		} else if result.LookupFailure == nil {
+			answeredNotFound++
 		}
 		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, issueExistLog)
 	}
 
 	// Jira answers a credential it will not accept with 404 on the issue endpoint - it does
-	// not confirm that an issue exists to a caller who may not see it - so a not-found
-	// issue may be an expired token rather than a missing issue. Ask who we are, so that
-	// the output can say which. Only asked when something was not found: where every
-	// reference resolved, the credential has already proved itself and the extra call would
-	// be pure overhead.
+	// not confirm that an issue exists to a caller who may not see it - so an issue it says
+	// it does not have may be an expired token rather than a missing issue. Ask who we are,
+	// so that the output can say which.
+	//
+	// Only asked when Jira actually answered "not found" for something: where every
+	// reference resolved the credential has already proved itself, and where the lookup got
+	// no answer at all there is no ambiguity to resolve - only a second way to say that Jira
+	// could not be reached.
 	//
 	// This only ever adds a warning. The attestation is still reported and the exit code is
-	// unchanged, so a stale token cannot fail a pipeline that would have passed, and
-	// neither can a blip on this call. --assert still fails on the issues that were not
-	// found, as it did before - with the warning now explaining why they were not.
-	if issueFoundCount != len(issueIDs) {
+	// unchanged, so a stale token cannot fail a pipeline that would have passed, and neither
+	// can a blip on this call. --assert still fails on the issues that were not found, as it
+	// did before - with the warning now explaining why they were not.
+	if answeredNotFound > 0 {
 		if err := jc.VerifyCredentials(); err != nil {
 			logger.Warn("%s. Issues Jira did not return are reported as not found", err)
 		}

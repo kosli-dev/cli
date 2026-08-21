@@ -23,6 +23,15 @@ type JiraIssueInfo struct {
 	IssueURL    string            `json:"issue_url"`
 	IssueExists bool              `json:"issue_exists"`
 	IssueFields *jira.IssueFields `json:"issue_fields,omitempty"`
+
+	// LookupFailure is set when Jira never answered the lookup at all, so IssueExists is
+	// false because nothing was learned rather than because the issue is absent. It is
+	// reported rather than returned as an error, so that an unreachable Jira cannot fail a
+	// run that would otherwise have passed - the exit code stays what it was before this
+	// distinction existed. Excluded from the payload: it describes this attempt, not the
+	// issue, and the cause stays wrapped so a caller can still tell a timeout from a
+	// refused connection.
+	LookupFailure error `json:"-"`
 }
 
 // NewJiraConfig returns a new JiraConfig
@@ -113,9 +122,12 @@ func (jc *JiraConfig) VerifyCredentials() error {
 
 // GetJiraIssueInfo retrieve Jira issue information
 // if issue is not found, we still return a JiraIssueInfo object with IssueExists set to false.
-// Every other failure - an unreachable Jira, a rejected credential, a server error - is
-// returned as an error rather than as a missing issue, so that a caller asserting on
-// Jira references fails on what actually went wrong.
+//
+// A Jira that answers with something other than 404 - a rejected credential, a server error
+// - is returned as an error rather than as a missing issue, so that a caller asserting on
+// Jira references fails on what actually went wrong. A Jira that does not answer at all is
+// reported through JiraIssueInfo.LookupFailure instead, which keeps the exit code of such a
+// run what it has always been.
 func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*JiraIssueInfo, error) {
 	issueUrl, err := url.Parse(jc.BaseURL)
 	if err != nil {
@@ -146,9 +158,12 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 	issue, response, err := jiraClient.Issue.Get(issueID, &queryOptions)
 	if err != nil {
 		if response == nil {
-			// no response at all: DNS, TLS, timeout, connection refused. Nothing was
-			// learned about the issue, so this must not read as "the issue is missing".
-			return result, fmt.Errorf("failed to reach Jira at %s while looking up issue %s: %w", jc.BaseURL, issueID, err)
+			// No response at all: DNS, TLS, timeout, connection refused. Nothing was learned
+			// about the issue, so IssueExists stays false but the reason travels with the
+			// result rather than becoming an error - a Jira outage must not fail a run that
+			// would have passed before this distinction was drawn.
+			result.LookupFailure = fmt.Errorf("failed to reach Jira at %s while looking up issue %s: %w", jc.BaseURL, issueID, err)
+			return result, nil
 		}
 		switch response.StatusCode {
 		case http.StatusNotFound:

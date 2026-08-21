@@ -388,19 +388,39 @@ func TestGetJiraIssueInfo(t *testing.T) {
 		assert.Contains(t, err.Error(), "500")
 	})
 
-	// The transport failure is the other half of the same bug: go-jira returns a nil
-	// response there, so the status switch never runs and the old guard fell through
-	// to IssueExists=false with no error.
-	t.Run("an unreachable Jira is an error, not a missing issue", func(t *testing.T) {
+	// A Jira that never answers is the case the old guard fell through silently: go-jira
+	// returns a nil response, so the status switch never ran and IssueExists=false came back
+	// with no error and no explanation. It still must not fail the caller - that would give a
+	// Jira outage the power to fail runs that used to pass - so the reason rides along on the
+	// result instead of becoming an error.
+	t.Run("an unreachable Jira reports why, without failing", func(t *testing.T) {
 		jc := NewJiraConfig(unreachableJira, "user@example.com", "token", "")
 		result, err := jc.GetJiraIssueInfo(issueID, "")
-		require.Error(t, err)
+		require.NoError(t, err, "an unanswered lookup must not fail the caller")
 		assert.False(t, result.IssueExists)
-		assert.Contains(t, err.Error(), unreachableJira)
-		assert.Contains(t, err.Error(), issueID)
+		require.Error(t, result.LookupFailure)
+		assert.Contains(t, result.LookupFailure.Error(), unreachableJira)
+		assert.Contains(t, result.LookupFailure.Error(), issueID)
 		// Wrapped, so a caller can still tell a timeout from a refused connection.
 		var opErr *net.OpError
-		assert.ErrorAs(t, err, &opErr, "the transport error must stay unwrappable")
+		assert.ErrorAs(t, result.LookupFailure, &opErr, "the transport error must stay unwrappable")
+	})
+
+	// Every other outcome leaves LookupFailure clear, so a caller can use it as "was this
+	// answered at all" without also having to check the error.
+	t.Run("an answered lookup records no lookup failure", func(t *testing.T) {
+		fake := httpfake.New()
+		defer fake.Close()
+		fake.NewHandler().
+			Get("/rest/api/2/issue/" + issueID).
+			Reply(404).
+			BodyString(`{"errorMessages":["Issue does not exist or you do not have permission to see it."],"errors":{}}`)
+
+		jc := NewJiraConfig(fake.Server.URL, "user@example.com", "token", "")
+		result, err := jc.GetJiraIssueInfo(issueID, "")
+		require.NoError(t, err)
+		assert.False(t, result.IssueExists)
+		assert.NoError(t, result.LookupFailure)
 	})
 }
 
