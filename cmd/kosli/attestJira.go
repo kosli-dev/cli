@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/gitview"
@@ -311,7 +312,8 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	issueLog := ""
 	issueFoundCount := 0
-	issueUnconfirmedCount := 0
+	unconfirmedIDs := []string{}
+	unconfirmedReasons := []string{}
 	for _, issueID := range issueIDs {
 		result, err := jc.GetJiraIssueInfo(issueID, o.issueFields, logger)
 		if err != nil {
@@ -322,11 +324,17 @@ func (o *attestJiraOptions) run(args []string) error {
 		case jira.IssueFound:
 			issueFoundCount++
 		case jira.LookupUnverified:
-			issueUnconfirmedCount++
-			logger.Warn("could not confirm Jira issue %s: %s. The attestation is reported with the issue counted as not found.",
-				issueID, result.LookupReason)
+			unconfirmedIDs = append(unconfirmedIDs, issueID)
+			// deduplicated, because the cause is a run-level condition that every issue
+			// in the run reports identically
+			if !slices.Contains(unconfirmedReasons, result.LookupReason) {
+				unconfirmedReasons = append(unconfirmedReasons, result.LookupReason)
+			}
 		}
 		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, jiraIssueLogLine(result))
+	}
+	if len(unconfirmedIDs) > 0 {
+		logger.Warn("%s", jiraUnconfirmedWarning(unconfirmedIDs, unconfirmedReasons))
 	}
 
 	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
@@ -367,8 +375,12 @@ func (o *attestJiraOptions) run(args []string) error {
 		if err != nil {
 			errString = fmt.Sprintf("%s\nError: ", err.Error())
 		}
-		err = fmt.Errorf("%s%s from references found in commit message or branch name%s",
-			errString, jiraAssertHeadline(len(issueIDs)-issueFoundCount-issueUnconfirmedCount, issueUnconfirmedCount), issueLog)
+		reasonLog := ""
+		for _, reason := range unconfirmedReasons {
+			reasonLog += fmt.Sprintf("\n\t%s", reason)
+		}
+		err = fmt.Errorf("%s%s from references found in commit message or branch name%s%s", errString,
+			jiraAssertHeadline(len(issueIDs)-issueFoundCount-len(unconfirmedIDs), len(unconfirmedIDs)), issueLog, reasonLog)
 	}
 	return wrapAttestationError(err)
 }
@@ -388,16 +400,26 @@ func jiraAssertHeadline(missing, unconfirmed int) string {
 	}
 }
 
+// jiraUnconfirmedWarning builds the one warning covering every lookup Jira did not answer.
+// The cause is a run-level condition - an expired token, an unreachable host - that every
+// lookup in the run reports identically, so warning per issue would repeat one sentence
+// once per issue key in the commit message.
+func jiraUnconfirmedWarning(issueIDs, reasons []string) string {
+	return fmt.Sprintf("could not confirm %s in Jira: %s. Unconfirmed issues are counted as not found in the attestation.",
+		strings.Join(issueIDs, ", "), strings.Join(reasons, "; "))
+}
+
 // jiraIssueLogLine describes one lookup for the per-issue list in the log and in the
-// --assert error. A lookup that was not answered is listed as not confirmed, with the
-// reason, rather than as a missing issue. It still counts as not found everywhere else, so
-// compliance and the --assert exit code are unchanged.
+// --assert error. A lookup that was not answered is listed as not confirmed rather than as
+// a missing issue; the reason is reported once for the run, not on every line. It still
+// counts as not found everywhere else, so compliance and the --assert exit code are
+// unchanged.
 func jiraIssueLogLine(result *jira.JiraIssueInfo) string {
 	switch result.LookupStatus {
 	case jira.IssueFound:
 		return "issue found"
 	case jira.LookupUnverified:
-		return fmt.Sprintf("issue not confirmed: %s", result.LookupReason)
+		return "issue not confirmed"
 	default:
 		return "issue not found"
 	}

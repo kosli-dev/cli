@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	billy "github.com/go-git/go-billy/v5"
@@ -422,6 +423,18 @@ func TestJiraAssertHeadline(t *testing.T) {
 	}
 }
 
+func TestJiraUnconfirmedWarning(t *testing.T) {
+	// three issue keys sharing one cause, which is what an expired token looks like: the
+	// reason is stated once, not once per key
+	warning := jiraUnconfirmedWarning(
+		[]string{"EX-1", "EX-2", "EX-3"},
+		[]string{"Jira did not accept the username user@example.com and API token"})
+
+	require.Equal(t, "could not confirm EX-1, EX-2, EX-3 in Jira: Jira did not accept the username user@example.com and API token."+
+		" Unconfirmed issues are counted as not found in the attestation.", warning)
+	require.Equal(t, 1, strings.Count(warning, "did not accept"))
+}
+
 // TestAttestJiraWarnsOnUnconfirmedIssue covers the wiring from a lookup Jira did not answer
 // to the warning the user sees, which the suite tests cannot reach: it runs against a fake
 // Jira in dry-run mode, so it needs neither Jira credentials nor a Kosli server.
@@ -438,7 +451,9 @@ func TestAttestJiraWarnsOnUnconfirmedIssue(t *testing.T) {
 
 	tmpDir, err := os.MkdirTemp("", "testDir")
 	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tmpDir), "failed to remove temp dir %s", tmpDir)
+	}()
 
 	_, workTree, fs, err := testHelpers.InitializeGitRepo(tmpDir)
 	require.NoError(t, err)
@@ -450,7 +465,7 @@ func TestAttestJiraWarnsOnUnconfirmedIssue(t *testing.T) {
 		--jira-base-url %s --jira-username user@example.com --jira-api-token secret`,
 		tmpDir, commitSha, jiraServer.URL))
 	require.NoError(t, err)
-	require.Contains(t, errOut, "could not confirm Jira issue EX-1")
+	require.Contains(t, errOut, "could not confirm EX-1 in Jira")
 	require.Contains(t, errOut, "user@example.com")
 	require.NotContains(t, errOut, "secret", "the API token must not appear in the warning")
 }
@@ -472,9 +487,10 @@ func TestJiraIssueLogLine(t *testing.T) {
 			want:   "issue not found",
 		},
 		{
-			name:   "an unverified lookup carries its reason instead of claiming the issue is missing",
+			// the reason is reported once for the run, so it is not repeated per line
+			name:   "an unanswered lookup is not claimed to be missing",
 			result: &jira.JiraIssueInfo{LookupStatus: jira.LookupUnverified, LookupReason: "no response from Jira at https://example.atlassian.net: timeout"},
-			want:   "issue not confirmed: no response from Jira at https://example.atlassian.net: timeout",
+			want:   "issue not confirmed",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

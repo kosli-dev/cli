@@ -152,7 +152,11 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string, log *
 		if response.StatusCode == http.StatusUnauthorized || response.StatusCode == http.StatusForbidden {
 			message += "; the credentials may have expired or been revoked"
 		}
-		return result, fmt.Errorf("%s: %s", message, errorDetail(err))
+		// Set on the result as well as returned, so that LookupUnverified never carries an
+		// empty reason. Today's caller stops on the error and never reads the result, but
+		// a caller that does read it must not find an unexplained status.
+		result.LookupReason = fmt.Sprintf("%s: %s", message, errorDetail(err))
+		return result, errors.New(result.LookupReason)
 	}
 
 	return result, nil

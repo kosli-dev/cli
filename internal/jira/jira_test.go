@@ -414,6 +414,7 @@ func TestGetJiraIssueInfo(t *testing.T) {
 					assert.Contains(t, err.Error(), want)
 				}
 				assert.NotContains(t, err.Error(), "\n", "an error built from a Jira response body must stay on one line")
+				assert.Equal(t, err.Error(), result.LookupReason, "an unverified status must never carry an empty reason")
 				return
 			}
 
