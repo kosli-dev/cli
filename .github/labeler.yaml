@@ -7,7 +7,7 @@ documentation:
 go:
   - changed-files:
       - any-glob-to-any-file:
-          - '*.go'
+          - '**/*.go'
 
 github-actions:
   - changed-files:
