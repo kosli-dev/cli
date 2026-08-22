@@ -2,6 +2,7 @@ package jira
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	jira "github.com/andygrunwald/go-jira"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -427,6 +429,61 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestGetJiraIssueInfoWithoutCredentials covers the path that fails before Jira is
+// reached. The command validates the credential flags first, so it is unreachable from the
+// CLI today, but the result must still say why it could not verify the issue.
+func TestGetJiraIssueInfoWithoutCredentials(t *testing.T) {
+	jc := NewJiraConfig("https://example.atlassian.net", "", "", "")
+	result, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, io.Discard, false))
+
+	require.Error(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, LookupUnverified, result.LookupStatus)
+	assert.Equal(t, err.Error(), result.LookupReason)
+}
+
+// TestGetJiraIssueInfoErrorUnwraps covers a caller inspecting the returned error: the
+// message is the flattened one built for the reader, and what Jira's client returned is
+// still reachable underneath it.
+func TestGetJiraIssueInfoErrorUnwraps(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"errorMessages":["Client must be authenticated to access this resource."]}`))
+	}))
+	defer server.Close()
+
+	jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+	_, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, io.Discard, false))
+
+	require.Error(t, err)
+	var jiraErr *jira.Error
+	require.True(t, errors.As(err, &jiraErr), "the error from Jira's client must stay reachable")
+	assert.Contains(t, err.Error(), "the credentials may have expired or been revoked")
+	assert.NotContains(t, err.Error(), "Status code: 401", "go-jira's generic sentence only repeats the status")
+}
+
+// TestGetJiraIssueInfoUnreadableAnswer covers a 2xx whose body cannot be decoded: Jira did
+// answer, so the message must not read as if it answered with a failing status.
+func TestGetJiraIssueInfoUnreadableAnswer(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("<html>not json</html>"))
+	}))
+	defer server.Close()
+
+	jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+	result, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, io.Discard, false))
+
+	// still an abort, as it was before the status was classified at all
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "could not read Jira's answer for issue EX-1")
+	assert.NotContains(t, err.Error(), "returned 200 OK")
+	assert.Equal(t, LookupUnverified, result.LookupStatus)
+	assert.Equal(t, err.Error(), result.LookupReason)
+	assert.False(t, result.IssueExists)
 }
 
 // TestGetJiraIssueInfoWithoutLogger covers a caller that passes no logger. The parameter is

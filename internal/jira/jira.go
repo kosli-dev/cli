@@ -110,6 +110,9 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string, log *
 
 	jiraClient, err := jc.NewJiraClient()
 	if err != nil {
+		// same reason as on the abort path below: LookupUnverified is the zero value, so
+		// every path that returns a result must say why it could not verify
+		result.LookupReason = err.Error()
 		return result, err
 	}
 
@@ -146,6 +149,13 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string, log *
 		} else {
 			result.LookupStatus = IssueMissing
 		}
+	case response.StatusCode >= 200 && response.StatusCode <= 299:
+		// Do returns a decode failure alongside the 2xx it could not read, so Jira did
+		// answer here; describing that as "returned 200 OK: invalid character" would read
+		// as nonsense.
+		result.LookupReason = fmt.Sprintf("could not read Jira's answer for issue %s at %s (status %s): %s",
+			issueID, jc.BaseURL, response.Status, errorDetail(err))
+		return result, &lookupError{message: result.LookupReason, cause: err}
 	default:
 		message := fmt.Sprintf("looking up Jira issue %s at %s using %s returned %s",
 			issueID, jc.BaseURL, jc.authDescription(), response.Status)
@@ -156,7 +166,7 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string, log *
 		// empty reason. Today's caller stops on the error and never reads the result, but
 		// a caller that does read it must not find an unexplained status.
 		result.LookupReason = fmt.Sprintf("%s: %s", message, errorDetail(err))
-		return result, errors.New(result.LookupReason)
+		return result, &lookupError{message: result.LookupReason, cause: err}
 	}
 
 	return result, nil
@@ -203,6 +213,19 @@ func (jc *JiraConfig) authDescription() string {
 	}
 	return "personal access token"
 }
+
+// lookupError carries a message built for the reader while keeping the error Jira's client
+// returned reachable through errors.Is and errors.As. fmt.Errorf with %w cannot do both:
+// it appends the wrapped error's own text, which would undo the flattening and truncation
+// that errorDetail and oneLine apply.
+type lookupError struct {
+	message string
+	cause   error
+}
+
+func (e *lookupError) Error() string { return e.message }
+
+func (e *lookupError) Unwrap() error { return e.cause }
 
 // errorDetail extracts what Jira itself said, for a message that already names the status.
 // go-jira parses a JSON error body into jira.Error and renders it together with a generic
