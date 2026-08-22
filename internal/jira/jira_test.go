@@ -322,7 +322,7 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			wantDebug:  "status 200",
 		},
 		{
-			name: "a 404 with no evidence of rejected credentials is a missing issue",
+			name: "a 404 whose headers show the credentials accepted is a missing issue",
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.Header().Set("X-AUSERNAME", "user@example.com")
@@ -332,6 +332,19 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			},
 			wantStatus: IssueMissing,
 			wantDebug:  "status 404",
+		},
+		{
+			// the shape Jira Cloud is likeliest to answer with, and the costly one to get
+			// wrong: absence is not evidence, or every missing issue turns unverified
+			name: "a 404 carrying neither header is a missing issue",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"errorMessages":["Issue does not exist or you do not have permission to see it."]}`))
+			},
+			wantStatus: IssueMissing,
+			// %q renders an absent header as "", so this pins that neither was sent
+			wantDebug: `status 404 (X-AUSERNAME: "", X-Seraph-LoginReason: "")`,
 		},
 		{
 			name: "a 404 handled as anonymous is unverified, not missing",
