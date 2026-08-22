@@ -1,6 +1,7 @@
 package jira
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -9,6 +10,20 @@ import (
 	"strings"
 
 	jira "github.com/andygrunwald/go-jira"
+	"github.com/kosli-dev/cli/internal/logger"
+)
+
+// LookupStatus records what a lookup established, which IssueExists cannot: Jira answers
+// 404 both for an issue that does not exist and for one the caller may not view, and a
+// caller whose credentials Jira rejected may not view any issue. LookupUnverified is the
+// zero value, so a path that never reached Jira cannot report an issue as found.
+type LookupStatus int
+
+const (
+	LookupUnverified LookupStatus = iota
+	IssueFound
+	// IssueMissing means Jira answered 404 and nothing indicates the credentials were rejected.
+	IssueMissing
 )
 
 type JiraConfig struct {
@@ -23,6 +38,11 @@ type JiraIssueInfo struct {
 	IssueURL    string            `json:"issue_url"`
 	IssueExists bool              `json:"issue_exists"`
 	IssueFields *jira.IssueFields `json:"issue_fields,omitempty"`
+
+	// LookupReason always explains a LookupUnverified status, and is empty otherwise.
+	// Both fields carry json:"-": the attestation payload stays what the API accepts today.
+	LookupStatus LookupStatus `json:"-"`
+	LookupReason string       `json:"-"`
 }
 
 // NewJiraConfig returns a new JiraConfig
@@ -66,7 +86,11 @@ func (jc *JiraConfig) NewJiraClient() (*jira.Client, error) {
 
 // GetJiraIssueInfo retrieve Jira issue information
 // if issue is not found, we still return a JiraIssueInfo object with IssueExists set to false
-func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*JiraIssueInfo, error) {
+//
+// An error is returned in exactly the cases it was before LookupStatus existed - a status
+// other than 200 or 404 - because callers stop on it. Everything else is reported through
+// LookupStatus and LookupReason.
+func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string, log *logger.Logger) (*JiraIssueInfo, error) {
 	issueUrl, err := url.Parse(jc.BaseURL)
 	if err != nil {
 		return nil, err
@@ -81,6 +105,7 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 
 	jiraClient, err := jc.NewJiraClient()
 	if err != nil {
+		result.LookupReason = err.Error()
 		return result, err
 	}
 
@@ -94,17 +119,151 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 	}
 
 	issue, response, err := jiraClient.Issue.Get(issueID, &queryOptions)
-	if err != nil && response != nil && response.StatusCode != http.StatusNotFound {
-		return result, err
-	}
+	logLookup(log, issueID, jc.BaseURL, response)
 
-	if issue != nil {
+	switch {
+	case err == nil:
+		result.LookupStatus = IssueFound
 		result.IssueExists = true
-		if issue.Fields != nil {
+		if issue != nil && issue.Fields != nil {
 			result.IssueFields = issue.Fields
 		}
+	case response == nil:
+		// go-jira returns no response both when it could not build the request - an unusable
+		// base URL - and when the request never completed. The wrapped error says which.
+		result.LookupReason = fmt.Sprintf("no response from Jira at %s: %s", jc.BaseURL, transportDetail(err))
+	case response.StatusCode == http.StatusNotFound:
+		if reason, rejected := credentialsRejected(response.Header); rejected {
+			result.LookupReason = fmt.Sprintf("Jira did not accept the %s for %s (%s), so it answered 404 for every issue; the credentials may have expired or been revoked",
+				jc.authDescription(), jc.BaseURL, reason)
+		} else {
+			result.LookupStatus = IssueMissing
+		}
+	case response.StatusCode >= 200 && response.StatusCode <= 299:
+		// a decode failure comes back alongside the 2xx it could not read, so Jira did answer
+		result.LookupReason = withDetail(fmt.Sprintf("could not read Jira's answer for issue %s at %s (status %s)",
+			issueID, jc.BaseURL, response.Status), errorDetail(err, response))
+		return result, &lookupError{message: result.LookupReason, cause: err}
+	default:
+		message := fmt.Sprintf("looking up Jira issue %s at %s using %s returned %s",
+			issueID, jc.BaseURL, jc.authDescription(), response.Status)
+		if response.StatusCode == http.StatusUnauthorized || response.StatusCode == http.StatusForbidden {
+			message += "; the credentials may have expired or been revoked"
+		}
+		result.LookupReason = withDetail(message, errorDetail(err, response))
+		return result, &lookupError{message: result.LookupReason, cause: err}
 	}
+
 	return result, nil
+}
+
+// logLookup records a lookup at debug level, with the headers that say what the status
+// code cannot: whether Jira accepted the credentials.
+func logLookup(log *logger.Logger, issueID, baseURL string, response *jira.Response) {
+	if log == nil {
+		return
+	}
+	if response == nil {
+		log.Debug("looking up Jira issue %s at %s got no response", issueID, baseURL)
+		return
+	}
+	log.Debug("looking up Jira issue %s at %s returned status %d (X-AUSERNAME: %q, X-Seraph-LoginReason: %q)",
+		issueID, baseURL, response.StatusCode, response.Header.Get("X-AUSERNAME"), response.Header.Get("X-Seraph-LoginReason"))
+}
+
+// credentialsRejected reports whether a response carries positive evidence that Jira did
+// not accept the credentials, and a reason to quote in a message.
+//
+// These headers are Seraph-era: Jira Server and Data Center set them, Jira Cloud has
+// historically set them but does not document them as API contract. Their presence is
+// trustworthy and their absence proves nothing, so a missing one changes no classification.
+func credentialsRejected(header http.Header) (string, bool) {
+	if reason := header.Get("X-Seraph-LoginReason"); reason != "" && !strings.EqualFold(reason, "OK") {
+		return "X-Seraph-LoginReason: " + reason, true
+	}
+	if strings.EqualFold(header.Get("X-AUSERNAME"), "anonymous") {
+		return "the request was handled as anonymous", true
+	}
+	return "", false
+}
+
+// authDescription names the credentials to renew. The username is included deliberately -
+// it is the account the reader has to go and fix - the token and the PAT never are.
+func (jc *JiraConfig) authDescription() string {
+	if jc.Username != "" && jc.APIToken != "" {
+		return fmt.Sprintf("username %s and API token", jc.Username)
+	}
+	return "personal access token"
+}
+
+// lookupError keeps the error Jira's client returned reachable through errors.Is and As
+// while presenting a message built for the reader. %w cannot do both: it appends the
+// wrapped text, undoing the flattening errorDetail and oneLine apply.
+type lookupError struct {
+	message string
+	cause   error
+}
+
+func (e *lookupError) Error() string { return e.message }
+
+func (e *lookupError) Unwrap() error { return e.cause }
+
+// transportDetail reports the cause inside the *url.Error the HTTP client returns, rather
+// than its text, which embeds the per-issue request URL. That URL would give every issue in
+// a run a different reason for one run-level cause, defeating a caller deduplicating them.
+func transportDetail(err error) string {
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) && urlErr.Err != nil {
+		return oneLine(urlErr.Err.Error())
+	}
+	return oneLine(err.Error())
+}
+
+// errorDetail extracts what Jira itself said, or "" when it said nothing beyond the status
+// the caller already names.
+//
+// When it cannot quote Jira - an HTML login page, an empty body, JSON that carries no
+// messages or does not parse - go-jira reports a generic "request failed ... Status code: N"
+// sentence, and for a decode failure the closed-body error too. These land in the message
+// text rather than the error chain, out of reach of errors.As, so they are trimmed off it.
+// Each trim is a no-op when it misses, so an unrecognised shape costs only a noisier message.
+func errorDetail(err error, response *jira.Response) string {
+	var jiraErr *jira.Error
+	if errors.As(err, &jiraErr) && len(jiraErr.ErrorMessages) > 0 {
+		return oneLine(strings.Join(jiraErr.ErrorMessages, "; "))
+	}
+	// go-jira puts the sentence behind "<status>: <body>: ", in front of a JSON parse
+	// failure, or bare - so it comes off either end, and without the separator
+	generic := fmt.Sprintf("request failed. Please analyze the request body for more details. Status code: %d",
+		response.StatusCode)
+	detail := strings.TrimPrefix(strings.TrimSuffix(err.Error(), generic), generic)
+	// the closed-body error is at the bottom of the chain, and net/http keeps it unexported
+	cause := err
+	for next := errors.Unwrap(cause); next != nil; next = errors.Unwrap(cause) {
+		cause = next
+	}
+	detail = strings.TrimSuffix(detail, ": "+cause.Error())
+	detail = strings.TrimRight(strings.TrimSpace(detail), ": ")
+	return oneLine(strings.TrimLeft(strings.TrimPrefix(detail, response.Status), ": "))
+}
+
+func withDetail(message, detail string) string {
+	if detail == "" {
+		return message
+	}
+	return message + ": " + detail
+}
+
+// oneLine flattens and truncates text taken from a Jira error. go-jira embeds the whole
+// response body in the errors it builds, and Jira can answer with an HTML login page.
+func oneLine(text string) string {
+	flattened := strings.Join(strings.Fields(text), " ")
+	const maxRunes = 200
+	runes := []rune(flattened)
+	if len(runes) > maxRunes {
+		return string(runes[:maxRunes]) + "..."
+	}
+	return flattened
 }
 
 const defaultJiraIssueKeyPattern = `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`
