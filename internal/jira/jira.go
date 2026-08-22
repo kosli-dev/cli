@@ -222,21 +222,21 @@ func transportDetail(err error) string {
 // errorDetail extracts what Jira itself said, or "" when it said nothing beyond the status
 // the caller already names.
 //
-// When it cannot quote Jira - an HTML login page, an empty body, JSON carrying no messages -
-// go-jira reports a generic "request failed ... Status code: N" sentence, and for a decode
-// failure the closed-body error too. errors.Wrap puts both underneath the message, out of
-// reach of errors.As, so they come off the text instead. Each trim is a no-op when it does
-// not match, so an unrecognised shape costs a noisier message and nothing more.
+// When it cannot quote Jira - an HTML login page, an empty body, JSON that carries no
+// messages or does not parse - go-jira reports a generic "request failed ... Status code: N"
+// sentence, and for a decode failure the closed-body error too. These land in the message
+// text rather than the error chain, out of reach of errors.As, so they are trimmed off it.
+// Each trim is a no-op when it misses, so an unrecognised shape costs only a noisier message.
 func errorDetail(err error, response *jira.Response) string {
 	var jiraErr *jira.Error
 	if errors.As(err, &jiraErr) && len(jiraErr.ErrorMessages) > 0 {
 		return oneLine(strings.Join(jiraErr.ErrorMessages, "; "))
 	}
-	// without the separator: go-jira renders the sentence bare when the body parsed but
-	// carried nothing, and behind "<status>: <body>: " otherwise
+	// go-jira puts the sentence behind "<status>: <body>: ", in front of a JSON parse
+	// failure, or bare - so it comes off either end, and without the separator
 	generic := fmt.Sprintf("request failed. Please analyze the request body for more details. Status code: %d",
 		response.StatusCode)
-	detail := strings.TrimSuffix(err.Error(), generic)
+	detail := strings.TrimPrefix(strings.TrimSuffix(err.Error(), generic), generic)
 	// the closed-body error is at the bottom of the chain, and net/http keeps it unexported
 	cause := err
 	for next := errors.Unwrap(cause); next != nil; next = errors.Unwrap(cause) {

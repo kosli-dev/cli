@@ -407,6 +407,19 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			wantDebug: "status 403",
 		},
 		{
+			// go-jira puts its generic sentence in front of the parse failure in this shape,
+			// not behind it
+			name: "a 401 whose JSON body does not parse says so",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+			},
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com and API token" +
+				" returned 401 Unauthorized; the credentials may have expired or been revoked:" +
+				" could not parse JSON",
+			wantDebug: "status 401",
+		},
+		{
 			name: "a 500 aborts without blaming the credentials",
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
