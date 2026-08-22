@@ -3,6 +3,7 @@ package jira
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -292,9 +293,9 @@ func TestFindJiraIssueKeys(t *testing.T) {
 	}
 }
 
-// TestGetJiraIssueInfo covers how a lookup is classified. The abort paths are part of the
-// contract and are asserted here: a returned error means the attest command stops before
-// reporting the attestation, so a case that returns no error today must not start doing so.
+// TestGetJiraIssueInfo covers how a lookup is classified. Whether an error is returned is
+// part of the contract - the caller stops on it, before reporting the attestation - so each
+// case asserts that too.
 func TestGetJiraIssueInfo(t *testing.T) {
 	for _, tt := range []struct {
 		name string
@@ -304,8 +305,11 @@ func TestGetJiraIssueInfo(t *testing.T) {
 		wantStatus LookupStatus
 		wantExists bool
 		wantErr    []string // substrings of the returned error; empty means no error
-		wantReason []string // substrings of LookupReason
-		wantDebug  string
+		// wantErrExact pins the whole message, which Contains cannot. {{url}} stands in for
+		// the test server's URL.
+		wantErrExact string
+		wantReason   []string // substrings of LookupReason
+		wantDebug    string
 	}{
 		{
 			name: "an existing issue is found",
@@ -360,7 +364,9 @@ func TestGetJiraIssueInfo(t *testing.T) {
 				w.WriteHeader(http.StatusUnauthorized)
 				_, _ = w.Write([]byte(`{"errorMessages":["Client must be authenticated"]}`))
 			},
-			wantErr:   []string{"EX-1", "401", "username user@example.com and API token", "may have expired"},
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com and API token" +
+				" returned 401 Unauthorized; the credentials may have expired or been revoked:" +
+				" Client must be authenticated",
 			wantDebug: "status 401",
 		},
 		{
@@ -368,7 +374,36 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusForbidden)
 			},
-			wantErr:   []string{"403", "may have expired"},
+			// an empty body is a shape a rejected token answers with, and go-jira has nothing
+			// to report for it beyond the status
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com and API token" +
+				" returned 403 Forbidden; the credentials may have expired or been revoked",
+			wantDebug: "status 403",
+		},
+		{
+			// Jira Cloud answers with this, and a bare {} renders the same way: go-jira
+			// parses it into a jira.Error carrying nothing, then reports its generic
+			// sentence with no separator in front of it
+			name: "a 403 whose JSON body carries no messages says nothing beyond the status",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = w.Write([]byte(`{"errorMessages":[],"errors":{}}`))
+			},
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com and API token" +
+				" returned 403 Forbidden; the credentials may have expired or been revoked",
+			wantDebug: "status 403",
+		},
+		{
+			name: "a 403 reporting a field error quotes it",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = w.Write([]byte(`{"errors":{"issuekey":"Issue does not exist"}}`))
+			},
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com and API token" +
+				" returned 403 Forbidden; the credentials may have expired or been revoked:" +
+				" issuekey - Issue does not exist",
 			wantDebug: "status 403",
 		},
 		{
@@ -376,7 +411,8 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 			},
-			wantErr:   []string{"500"},
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com" +
+				" and API token returned 500 Internal Server Error",
 			wantDebug: "status 500",
 		},
 		{
@@ -405,15 +441,18 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			assert.Equal(t, "EX-1", result.IssueID)
 			assert.Contains(t, debug.String(), tt.wantDebug)
 
-			// asserted for the abort cases too: a caller that inspects the result after an
-			// error must not read it as a found issue
+			// asserted for the abort cases too: a result read after an error must not
+			// look like a found issue
 			assert.Equal(t, tt.wantStatus, result.LookupStatus)
 			assert.Equal(t, tt.wantExists, result.IssueExists)
 
-			if len(tt.wantErr) > 0 {
+			if len(tt.wantErr) > 0 || tt.wantErrExact != "" {
 				require.Error(t, err)
 				for _, want := range tt.wantErr {
 					assert.Contains(t, err.Error(), want)
+				}
+				if tt.wantErrExact != "" {
+					assert.Equal(t, strings.ReplaceAll(tt.wantErrExact, "{{url}}", server.URL), err.Error())
 				}
 				assert.NotContains(t, err.Error(), "\n", "an error built from a Jira response body must stay on one line")
 				assert.Equal(t, err.Error(), result.LookupReason, "an unverified status must never carry an empty reason")
@@ -431,9 +470,31 @@ func TestGetJiraIssueInfo(t *testing.T) {
 	}
 }
 
-// TestGetJiraIssueInfoWithoutCredentials covers the path that fails before Jira is
-// reached. The command validates the credential flags first, so it is unreachable from the
-// CLI today, but the result must still say why it could not verify the issue.
+// TestGetJiraIssueInfoTransportReasonIsIssueIndependent covers the property the caller
+// deduplicates on: a failure that produced no response is run-level, so every issue in that
+// run must report it identically. The HTTP client's *url.Error carries the per-issue URL.
+func TestGetJiraIssueInfoTransportReasonIsIssueIndependent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	server.Close() // nothing is listening on that port now, so no request completes
+
+	jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+	log := logger.NewLogger(io.Discard, io.Discard, false)
+
+	first, err := jc.GetJiraIssueInfo("EX-1", "", log)
+	require.NoError(t, err)
+	second, err := jc.GetJiraIssueInfo("EX-2", "", log)
+	require.NoError(t, err)
+
+	assert.Equal(t, LookupUnverified, first.LookupStatus)
+	assert.Equal(t, first.LookupReason, second.LookupReason)
+	assert.NotContains(t, first.LookupReason, "EX-1")
+	assert.NotContains(t, first.LookupReason, "rest/api/2/issue")
+	assert.Contains(t, first.LookupReason, "connect")
+}
+
+// TestGetJiraIssueInfoWithoutCredentials covers the path that fails before Jira is reached.
+// The command validates the credential flags first, so this is unreachable from the CLI
+// today, but the result must still say why it could not verify the issue.
 func TestGetJiraIssueInfoWithoutCredentials(t *testing.T) {
 	jc := NewJiraConfig("https://example.atlassian.net", "", "", "")
 	result, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, io.Discard, false))
@@ -445,8 +506,7 @@ func TestGetJiraIssueInfoWithoutCredentials(t *testing.T) {
 }
 
 // TestGetJiraIssueInfoErrorUnwraps covers a caller inspecting the returned error: the
-// message is the flattened one built for the reader, and what Jira's client returned is
-// still reachable underneath it.
+// message is the one built for the reader, with Jira's own error reachable underneath.
 func TestGetJiraIssueInfoErrorUnwraps(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -466,7 +526,7 @@ func TestGetJiraIssueInfoErrorUnwraps(t *testing.T) {
 }
 
 // TestGetJiraIssueInfoUnreadableAnswer covers a 2xx whose body cannot be decoded: Jira did
-// answer, so the message must not read as if it answered with a failing status.
+// answer, so the message must not read as if the status were the problem.
 func TestGetJiraIssueInfoUnreadableAnswer(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -479,16 +539,15 @@ func TestGetJiraIssueInfoUnreadableAnswer(t *testing.T) {
 
 	// still an abort, as it was before the status was classified at all
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "could not read Jira's answer for issue EX-1")
-	assert.NotContains(t, err.Error(), "returned 200 OK")
+	assert.Equal(t, fmt.Sprintf("could not read Jira's answer for issue EX-1 at %s (status 200 OK):"+
+		" invalid character '<' looking for beginning of value", server.URL), err.Error())
 	assert.Equal(t, LookupUnverified, result.LookupStatus)
 	assert.Equal(t, err.Error(), result.LookupReason)
 	assert.False(t, result.IssueExists)
 }
 
-// TestGetJiraIssueInfoWithoutLogger covers a caller that passes no logger. The parameter is
-// new, so nil is the easy mistake to make on an exported function, and a lookup must report
-// its outcome rather than panic.
+// TestGetJiraIssueInfoWithoutLogger covers a caller that passes no logger: the parameter is
+// new on an exported function, so nil is the easy mistake to make.
 func TestGetJiraIssueInfoWithoutLogger(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -504,9 +563,8 @@ func TestGetJiraIssueInfoWithoutLogger(t *testing.T) {
 	assert.True(t, result.IssueExists)
 }
 
-// TestGetJiraIssueInfoFlattensResponseBody guards the message enrichment against Jira
-// answering with a non-JSON body: NewJiraError embeds the whole body in the error it
-// builds, and a login page must not end up in a log line.
+// TestGetJiraIssueInfoFlattensResponseBody guards against a non-JSON body: go-jira embeds
+// the whole body in the error it builds, and a login page must not reach a log line.
 func TestGetJiraIssueInfoFlattensResponseBody(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
@@ -521,6 +579,9 @@ func TestGetJiraIssueInfoFlattensResponseBody(t *testing.T) {
 	require.Error(t, err)
 	assert.NotContains(t, err.Error(), "\n")
 	assert.Less(t, len(err.Error()), 500)
+	// a non-JSON body reaches errorDetail's fallback, which trims the generic sentence
+	assert.NotContains(t, err.Error(), "request failed")
+	assert.Equal(t, 1, strings.Count(err.Error(), "401 Unauthorized"))
 }
 
 func BenchmarkFindJiraIssueKeys(b *testing.B) {

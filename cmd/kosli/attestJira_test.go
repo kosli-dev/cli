@@ -399,8 +399,7 @@ func TestJiraAssertHeadline(t *testing.T) {
 		want        string
 	}{
 		{
-			// every lookup was answered, so the wording this command has always used
-			// is the accurate one
+			// every lookup was answered, so the long-standing wording is the accurate one
 			name:    "all missing",
 			missing: 2,
 			want:    "missing Jira issues",
@@ -424,8 +423,7 @@ func TestJiraAssertHeadline(t *testing.T) {
 }
 
 func TestJiraUnconfirmedWarning(t *testing.T) {
-	// three issue keys sharing one cause, which is what an expired token looks like: the
-	// reason is stated once, not once per key
+	// three keys sharing one cause, as an expired token produces: stated once, not per key
 	warning := jiraUnconfirmedWarning(
 		[]string{"EX-1", "EX-2", "EX-3"},
 		[]string{"Jira did not accept the username user@example.com and API token"})
@@ -435,9 +433,9 @@ func TestJiraUnconfirmedWarning(t *testing.T) {
 	require.Equal(t, 1, strings.Count(warning, "did not accept"))
 }
 
-// TestAttestJiraWarnsOnUnconfirmedIssue covers the wiring from a lookup Jira did not answer
-// to the warning the user sees, which the suite tests cannot reach: it runs against a fake
-// Jira in dry-run mode, so it needs neither Jira credentials nor a Kosli server.
+// TestAttestJiraWarnsOnUnconfirmedIssue covers the wiring from an unanswered lookup to the
+// warning the user sees. It runs against a fake Jira in dry-run mode, so it needs neither
+// Jira credentials nor a Kosli server.
 func TestAttestJiraWarnsOnUnconfirmedIssue(t *testing.T) {
 	// a 404 that says the request was handled as anonymous, which is what Jira answers
 	// once the API token has expired
