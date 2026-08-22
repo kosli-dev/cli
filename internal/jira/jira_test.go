@@ -381,7 +381,7 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			name:       "a transport failure is unverified rather than silently missing",
 			handler:    nil,
 			wantStatus: LookupUnverified,
-			wantReason: []string{"could not reach Jira at"},
+			wantReason: []string{"no response from Jira at"},
 			wantDebug:  "no response",
 		},
 	} {
@@ -403,6 +403,11 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			assert.Equal(t, "EX-1", result.IssueID)
 			assert.Contains(t, debug.String(), tt.wantDebug)
 
+			// asserted for the abort cases too: a caller that inspects the result after an
+			// error must not read it as a found issue
+			assert.Equal(t, tt.wantStatus, result.LookupStatus)
+			assert.Equal(t, tt.wantExists, result.IssueExists)
+
 			if len(tt.wantErr) > 0 {
 				require.Error(t, err)
 				for _, want := range tt.wantErr {
@@ -413,8 +418,6 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantStatus, result.LookupStatus)
-			assert.Equal(t, tt.wantExists, result.IssueExists)
 			for _, want := range tt.wantReason {
 				assert.Contains(t, result.LookupReason, want)
 			}
@@ -423,6 +426,24 @@ func TestGetJiraIssueInfo(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestGetJiraIssueInfoWithoutLogger covers a caller that passes no logger. The parameter is
+// new, so nil is the easy mistake to make on an exported function, and a lookup must report
+// its outcome rather than panic.
+func TestGetJiraIssueInfoWithoutLogger(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"key":"EX-1"}`))
+	}))
+	defer server.Close()
+
+	jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+	result, err := jc.GetJiraIssueInfo("EX-1", "", nil)
+
+	require.NoError(t, err)
+	assert.Equal(t, IssueFound, result.LookupStatus)
+	assert.True(t, result.IssueExists)
 }
 
 // TestGetJiraIssueInfoFlattensResponseBody guards the message enrichment against Jira

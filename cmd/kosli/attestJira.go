@@ -311,6 +311,7 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	issueLog := ""
 	issueFoundCount := 0
+	issueUnconfirmedCount := 0
 	for _, issueID := range issueIDs {
 		result, err := jc.GetJiraIssueInfo(issueID, o.issueFields, logger)
 		if err != nil {
@@ -321,6 +322,7 @@ func (o *attestJiraOptions) run(args []string) error {
 		case jira.IssueFound:
 			issueFoundCount++
 		case jira.LookupUnverified:
+			issueUnconfirmedCount++
 			logger.Warn("could not confirm Jira issue %s: %s. The attestation is reported with the issue counted as not found.",
 				issueID, result.LookupReason)
 		}
@@ -365,18 +367,31 @@ func (o *attestJiraOptions) run(args []string) error {
 		if err != nil {
 			errString = fmt.Sprintf("%s\nError: ", err.Error())
 		}
-		err = fmt.Errorf("%smissing Jira issues from references found in commit message or branch name%s", errString, issueLog)
+		err = fmt.Errorf("%s%s from references found in commit message or branch name%s",
+			errString, jiraAssertHeadline(len(issueIDs)-issueFoundCount-issueUnconfirmedCount, issueUnconfirmedCount), issueLog)
 	}
 	return wrapAttestationError(err)
 }
 
-// jiraIssueLogLine describes one lookup for the per-issue list that goes into the log and
-// into the --assert error.
-//
-// A lookup that could not be completed is listed as not confirmed, with the reason, rather
-// than as a missing issue: reporting an expired Jira token as "issue not found" is what
-// sent users looking for a missing issue. It still counts as not found everywhere else, so
-// the attestation, its compliance status and the --assert exit code are unchanged.
+// jiraAssertHeadline names what went wrong in the first line of an --assert failure, which
+// is the line users read. A lookup Jira never answered is not evidence of a missing issue,
+// so a run that hit one must not announce missing issues; when every lookup was answered
+// the wording is the one this command has always used.
+func jiraAssertHeadline(missing, unconfirmed int) string {
+	switch {
+	case unconfirmed == 0:
+		return "missing Jira issues"
+	case missing == 0:
+		return "unconfirmed Jira issues"
+	default:
+		return "missing or unconfirmed Jira issues"
+	}
+}
+
+// jiraIssueLogLine describes one lookup for the per-issue list in the log and in the
+// --assert error. A lookup that was not answered is listed as not confirmed, with the
+// reason, rather than as a missing issue. It still counts as not found everywhere else, so
+// compliance and the --assert exit code are unchanged.
 func jiraIssueLogLine(result *jira.JiraIssueInfo) string {
 	switch result.LookupStatus {
 	case jira.IssueFound:

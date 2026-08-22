@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -388,6 +390,71 @@ func execJiraTestCase(test cmdTestCase, suite *AttestJiraCommandTestSuite) {
 	runTestCmd(suite.T(), []cmdTestCase{test})
 }
 
+func TestJiraAssertHeadline(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		missing     int
+		unconfirmed int
+		want        string
+	}{
+		{
+			// every lookup was answered, so the wording this command has always used
+			// is the accurate one
+			name:    "all missing",
+			missing: 2,
+			want:    "missing Jira issues",
+		},
+		{
+			name:        "none answered",
+			unconfirmed: 2,
+			want:        "unconfirmed Jira issues",
+		},
+		{
+			name:        "some missing, some unanswered",
+			missing:     1,
+			unconfirmed: 1,
+			want:        "missing or unconfirmed Jira issues",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, jiraAssertHeadline(tc.missing, tc.unconfirmed))
+		})
+	}
+}
+
+// TestAttestJiraWarnsOnUnconfirmedIssue covers the wiring from a lookup Jira did not answer
+// to the warning the user sees, which the suite tests cannot reach: it runs against a fake
+// Jira in dry-run mode, so it needs neither Jira credentials nor a Kosli server.
+func TestAttestJiraWarnsOnUnconfirmedIssue(t *testing.T) {
+	// a 404 that says the request was handled as anonymous, which is what Jira answers
+	// once the API token has expired
+	jiraServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-AUSERNAME", "anonymous")
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"errorMessages":["Issue does not exist or you do not have permission to see it."]}`))
+	}))
+	defer jiraServer.Close()
+
+	tmpDir, err := os.MkdirTemp("", "testDir")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	_, workTree, fs, err := testHelpers.InitializeGitRepo(tmpDir)
+	require.NoError(t, err)
+	commitSha, err := testHelpers.CommitToRepo(workTree, fs, "EX-1 fix the thing")
+	require.NoError(t, err)
+
+	_, _, _, errOut, err := executeCommandC(fmt.Sprintf(`attest jira --name foo --flow flow --trail trail
+		--org org --api-token DRY_RUN --repo-root %s --commit %s
+		--jira-base-url %s --jira-username user@example.com --jira-api-token secret`,
+		tmpDir, commitSha, jiraServer.URL))
+	require.NoError(t, err)
+	require.Contains(t, errOut, "could not confirm Jira issue EX-1")
+	require.Contains(t, errOut, "user@example.com")
+	require.NotContains(t, errOut, "secret", "the API token must not appear in the warning")
+}
+
 func TestJiraIssueLogLine(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -406,8 +473,8 @@ func TestJiraIssueLogLine(t *testing.T) {
 		},
 		{
 			name:   "an unverified lookup carries its reason instead of claiming the issue is missing",
-			result: &jira.JiraIssueInfo{LookupStatus: jira.LookupUnverified, LookupReason: "could not reach Jira at https://example.atlassian.net: timeout"},
-			want:   "issue not confirmed: could not reach Jira at https://example.atlassian.net: timeout",
+			result: &jira.JiraIssueInfo{LookupStatus: jira.LookupUnverified, LookupReason: "no response from Jira at https://example.atlassian.net: timeout"},
+			want:   "issue not confirmed: no response from Jira at https://example.atlassian.net: timeout",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
