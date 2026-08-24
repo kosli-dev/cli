@@ -1,10 +1,20 @@
 package jira
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"regexp"
+	"strings"
 	"testing"
 
+	jira "github.com/andygrunwald/go-jira"
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMakeJiraIssueKey(t *testing.T) {
@@ -281,6 +291,333 @@ func TestFindJiraIssueKeys(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+// TestGetJiraIssueInfo covers how a lookup is classified. Whether an error is returned is
+// part of the contract - the caller stops on it, before reporting the attestation - so each
+// case asserts that too.
+func TestGetJiraIssueInfo(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		// handler serves the issue endpoint. When nil the server is closed before the
+		// lookup, so the request fails at the transport level.
+		handler    http.HandlerFunc
+		wantStatus LookupStatus
+		wantExists bool
+		// wantErrExact pins the whole message, and empty means no error is expected.
+		// {{url}} stands in for the test server's URL.
+		wantErrExact string
+		wantReason   []string // substrings of LookupReason
+		wantDebug    string
+	}{
+		{
+			name: "an existing issue is found",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"key":"EX-1"}`))
+			},
+			wantStatus: IssueFound,
+			wantExists: true,
+			wantDebug:  "status 200",
+		},
+		{
+			name: "a 404 whose headers show the credentials accepted is a missing issue",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("X-AUSERNAME", "user@example.com")
+				w.Header().Set("X-Seraph-LoginReason", "OK")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"errorMessages":["Issue does not exist"]}`))
+			},
+			wantStatus: IssueMissing,
+			wantDebug:  "status 404",
+		},
+		{
+			// the shape Jira Cloud is likeliest to answer with, and the costly one to get
+			// wrong: absence is not evidence, or every missing issue turns unverified
+			name: "a 404 carrying neither header is a missing issue",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"errorMessages":["Issue does not exist or you do not have permission to see it."]}`))
+			},
+			wantStatus: IssueMissing,
+			// %q renders an absent header as "", so this pins that neither was sent
+			wantDebug: `status 404 (X-AUSERNAME: "", X-Seraph-LoginReason: "")`,
+		},
+		{
+			name: "a 404 handled as anonymous is unverified, not missing",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("X-AUSERNAME", "anonymous")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"errorMessages":["Issue does not exist"]}`))
+			},
+			wantStatus: LookupUnverified,
+			wantReason: []string{"username user@example.com and API token", "anonymous", "may have expired"},
+			wantDebug:  "status 404",
+		},
+		{
+			name: "a 404 with a failed login reason is unverified, not missing",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("X-Seraph-LoginReason", "AUTHENTICATED_FAILED")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"errorMessages":["Issue does not exist"]}`))
+			},
+			wantStatus: LookupUnverified,
+			wantReason: []string{"AUTHENTICATED_FAILED", "may have expired"},
+			wantDebug:  "status 404",
+		},
+		{
+			name: "a 401 aborts, naming the base URL and the credentials",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write([]byte(`{"errorMessages":["Client must be authenticated"]}`))
+			},
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com and API token" +
+				" returned 401 Unauthorized; the credentials may have expired or been revoked:" +
+				" Client must be authenticated",
+			wantDebug: "status 401",
+		},
+		{
+			name: "a 403 aborts, naming the base URL and the credentials",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusForbidden)
+			},
+			// an empty body is a shape a rejected token answers with, and go-jira has nothing
+			// to report for it beyond the status
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com and API token" +
+				" returned 403 Forbidden; the credentials may have expired or been revoked",
+			wantDebug: "status 403",
+		},
+		{
+			// Jira Cloud answers with this, and a bare {} renders the same way: go-jira
+			// parses it into a jira.Error carrying nothing, then reports its generic
+			// sentence with no separator in front of it
+			name: "a 403 whose JSON body carries no messages says nothing beyond the status",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = w.Write([]byte(`{"errorMessages":[],"errors":{}}`))
+			},
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com and API token" +
+				" returned 403 Forbidden; the credentials may have expired or been revoked",
+			wantDebug: "status 403",
+		},
+		{
+			// two fields, because (*jira.Error).Error() returns from inside a range over the
+			// map: one arbitrary field, and a different one from run to run
+			name: "a 403 reporting field errors quotes them all in a stable order",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = w.Write([]byte(`{"errors":{"summary":"Field required","issuekey":"Issue does not exist"}}`))
+			},
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com and API token" +
+				" returned 403 Forbidden; the credentials may have expired or been revoked:" +
+				" issuekey - Issue does not exist; summary - Field required",
+			wantDebug: "status 403",
+		},
+		{
+			// go-jira puts its generic sentence in front of the parse failure in this shape,
+			// not behind it
+			name: "a 401 whose JSON body does not parse says so",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+			},
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com and API token" +
+				" returned 401 Unauthorized; the credentials may have expired or been revoked:" +
+				" could not parse JSON",
+			wantDebug: "status 401",
+		},
+		{
+			// a redirect to an SSO login page arrives as a 200 with HTML, which says as little
+			// about the issue as the 404 a rejected token produces
+			name: "a 200 login page reached with rejected credentials names them",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/html")
+				w.Header().Set("X-AUSERNAME", "anonymous")
+				_, _ = w.Write([]byte("<html>login</html>"))
+			},
+			wantErrExact: "Jira did not accept the username user@example.com and API token for {{url}}" +
+				" (the request was handled as anonymous), so its answer is a page rather than the" +
+				" issue; the credentials may have expired or been revoked",
+			wantDebug: "status 200",
+		},
+		{
+			name: "a 500 aborts without blaming the credentials",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			},
+			wantErrExact: "looking up Jira issue EX-1 at {{url}} using username user@example.com" +
+				" and API token returned 500 Internal Server Error",
+			wantDebug: "status 500",
+		},
+		{
+			name:       "a transport failure is unverified rather than silently missing",
+			handler:    nil,
+			wantStatus: LookupUnverified,
+			wantReason: []string{"no response from Jira at"},
+			wantDebug:  "no response",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				tt.handler(w, r)
+			}))
+			if tt.handler == nil {
+				server.Close()
+			} else {
+				defer server.Close()
+			}
+
+			debug := new(bytes.Buffer)
+			jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+			result, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, debug, true))
+
+			require.NotNil(t, result)
+			assert.Equal(t, "EX-1", result.IssueID)
+			assert.Contains(t, debug.String(), tt.wantDebug)
+
+			// asserted for the abort cases too: a result read after an error must not
+			// look like a found issue
+			assert.Equal(t, tt.wantStatus, result.LookupStatus)
+			assert.Equal(t, tt.wantExists, result.IssueExists)
+
+			if tt.wantErrExact != "" {
+				require.Error(t, err)
+				assert.Equal(t, strings.ReplaceAll(tt.wantErrExact, "{{url}}", server.URL), err.Error())
+				assert.NotContains(t, err.Error(), "\n", "an error built from a Jira response body must stay on one line")
+				assert.Equal(t, err.Error(), result.LookupReason, "an unverified status must never carry an empty reason")
+				return
+			}
+
+			require.NoError(t, err)
+			for _, want := range tt.wantReason {
+				assert.Contains(t, result.LookupReason, want)
+			}
+			if len(tt.wantReason) == 0 {
+				assert.Empty(t, result.LookupReason)
+			}
+		})
+	}
+}
+
+// TestGetJiraIssueInfoTransportReasonIsIssueIndependent covers the property the caller
+// deduplicates on: a failure that produced no response is run-level, so every issue in that
+// run must report it identically. The HTTP client's *url.Error carries the per-issue URL.
+func TestGetJiraIssueInfoTransportReasonIsIssueIndependent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	server.Close() // nothing is listening on that port now, so no request completes
+
+	jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+	log := logger.NewLogger(io.Discard, io.Discard, false)
+
+	first, err := jc.GetJiraIssueInfo("EX-1", "", log)
+	require.NoError(t, err)
+	second, err := jc.GetJiraIssueInfo("EX-2", "", log)
+	require.NoError(t, err)
+
+	assert.Equal(t, LookupUnverified, first.LookupStatus)
+	assert.Equal(t, first.LookupReason, second.LookupReason)
+	assert.NotContains(t, first.LookupReason, "EX-1")
+	assert.NotContains(t, first.LookupReason, "rest/api/2/issue")
+	assert.Contains(t, first.LookupReason, "connect")
+}
+
+// TestGetJiraIssueInfoWithoutCredentials covers the path that fails before Jira is reached.
+// The command validates the credential flags first, so this is unreachable from the CLI
+// today, but the result must still say why it could not verify the issue.
+func TestGetJiraIssueInfoWithoutCredentials(t *testing.T) {
+	jc := NewJiraConfig("https://example.atlassian.net", "", "", "")
+	result, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, io.Discard, false))
+
+	require.Error(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, LookupUnverified, result.LookupStatus)
+	assert.Equal(t, err.Error(), result.LookupReason)
+}
+
+// TestGetJiraIssueInfoErrorUnwraps covers a caller inspecting the returned error: the
+// message is the one built for the reader, with Jira's own error reachable underneath.
+func TestGetJiraIssueInfoErrorUnwraps(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"errorMessages":["Client must be authenticated to access this resource."]}`))
+	}))
+	defer server.Close()
+
+	jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+	_, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, io.Discard, false))
+
+	require.Error(t, err)
+	var jiraErr *jira.Error
+	require.True(t, errors.As(err, &jiraErr), "the error from Jira's client must stay reachable")
+	assert.Contains(t, err.Error(), "the credentials may have expired or been revoked")
+	assert.NotContains(t, err.Error(), "Status code: 401", "go-jira's generic sentence only repeats the status")
+}
+
+// TestGetJiraIssueInfoUnreadableAnswer covers a 2xx whose body cannot be decoded: Jira did
+// answer, so the message must not read as if the status were the problem.
+func TestGetJiraIssueInfoUnreadableAnswer(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("<html>not json</html>"))
+	}))
+	defer server.Close()
+
+	jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+	result, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, io.Discard, false))
+
+	// still an abort, as it was before the status was classified at all
+	require.Error(t, err)
+	assert.Equal(t, fmt.Sprintf("could not read Jira's answer for issue EX-1 at %s (status 200 OK):"+
+		" invalid character '<' looking for beginning of value", server.URL), err.Error())
+	assert.Equal(t, LookupUnverified, result.LookupStatus)
+	assert.Equal(t, err.Error(), result.LookupReason)
+	assert.False(t, result.IssueExists)
+}
+
+// TestGetJiraIssueInfoWithoutLogger covers a caller that passes no logger: the parameter is
+// new on an exported function, so nil is the easy mistake to make.
+func TestGetJiraIssueInfoWithoutLogger(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"key":"EX-1"}`))
+	}))
+	defer server.Close()
+
+	jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+	result, err := jc.GetJiraIssueInfo("EX-1", "", nil)
+
+	require.NoError(t, err)
+	assert.Equal(t, IssueFound, result.LookupStatus)
+	assert.True(t, result.IssueExists)
+}
+
+// TestGetJiraIssueInfoFlattensResponseBody guards against a non-JSON body: go-jira embeds
+// the whole body in the error it builds, and a login page must not reach a log line.
+func TestGetJiraIssueInfoFlattensResponseBody(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte("<html>\n<body>\n" + strings.Repeat("login page ", 200) + "\n</body>\n</html>"))
+	}))
+	defer server.Close()
+
+	jc := NewJiraConfig(server.URL, "user@example.com", "token", "")
+	_, err := jc.GetJiraIssueInfo("EX-1", "", logger.NewLogger(io.Discard, io.Discard, false))
+
+	require.Error(t, err)
+	assert.NotContains(t, err.Error(), "\n")
+	assert.Less(t, len(err.Error()), 500)
+	// a non-JSON body reaches errorDetail's fallback, which trims the generic sentence
+	assert.NotContains(t, err.Error(), "request failed")
+	assert.Equal(t, 1, strings.Count(err.Error(), "401 Unauthorized"))
 }
 
 func BenchmarkFindJiraIssueKeys(b *testing.B) {
