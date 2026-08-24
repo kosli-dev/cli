@@ -247,6 +247,7 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoURLExplicit = cmd.Flags().Changed("repo-url")
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
+			o.commitSHAExplicit = cmd.Flags().Changed("commit")
 			return o.run(args)
 		},
 	}
@@ -290,6 +291,10 @@ func (o *attestJiraOptions) run(args []string) error {
 	err = o.validateJiraProjectKeys()
 	if err != nil {
 		return err
+	}
+
+	if o.payload.Commit == nil {
+		return fmt.Errorf("failed to get commit info, which is required to search for Jira issue keys. Pass --commit and point --repo-root at a repository containing it")
 	}
 
 	gv, err := gitview.New(o.srcRepoRoot)

@@ -143,6 +143,7 @@ func newAttestGitlabPRCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoURLExplicit = cmd.Flags().Changed("repo-url")
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
+			o.commitSHAExplicit = cmd.Flags().Changed("commit")
 			// GitlabConfig.Repository is the short project name (CI_PROJECT_NAME);
 			// combined with Org (CI_PROJECT_NAMESPACE) it forms the API ProjectID.
 			// This is separate from repo_info.name, which uses the full CI_PROJECT_PATH.

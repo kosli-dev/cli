@@ -148,6 +148,7 @@ func newAttestAzurePRCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoURLExplicit = cmd.Flags().Changed("repo-url")
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
+			o.commitSHAExplicit = cmd.Flags().Changed("commit")
 			o.retriever = azUtils.NewAzureConfig(azureFlagsValues.Token,
 				azureFlagsValues.OrgUrl, azureFlagsValues.Project, o.repoName)
 			return o.run(args)
