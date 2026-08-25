@@ -397,7 +397,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-trailer Jira
 					--assert
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "jira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in commit message or branch name\n",
+			golden: "jira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in trailer 'Jira'\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "fix: some change with no jira trailer",
 			},

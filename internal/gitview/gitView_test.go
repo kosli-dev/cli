@@ -531,6 +531,18 @@ func (suite *GitViewTestSuite) TestGetTrailerValues() {
 			key:      "Jira",
 			expected: []string{"BX-123"},
 		},
+		{
+			name:     "leading whitespace on line is tolerated",
+			message:  "fix: something\n\n    Jira: BX-123",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "key supplied with trailing colon still matches",
+			message:  "fix: something\n\nJira: BX-123",
+			key:      "Jira:",
+			expected: []string{"BX-123"},
+		},
 	} {
 		suite.Run(tt.name, func() {
 			result := GetTrailerValues(tt.message, tt.key)

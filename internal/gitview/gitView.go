@@ -321,10 +321,11 @@ func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA, s
 // have the format "<key>: <value>". Returns an empty (non-nil) slice if none are found.
 func GetTrailerValues(message, key string) []string {
 	result := []string{}
-	prefix := strings.ToLower(key) + ":"
+	prefix := strings.ToLower(strings.TrimRight(key, ":")) + ":"
 	for _, line := range strings.Split(message, "\n") {
-		if strings.HasPrefix(strings.ToLower(line), prefix) {
-			value := strings.TrimSpace(line[len(prefix):])
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(strings.ToLower(trimmed), prefix) {
+			value := strings.TrimSpace(trimmed[len(prefix):])
 			if value != "" {
 				result = append(result, value)
 			}
