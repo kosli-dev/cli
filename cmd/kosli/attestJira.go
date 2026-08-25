@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/gitview"
@@ -70,7 +71,9 @@ The found issue references will be checked against Jira to confirm their existen
 The attestation is reported in all cases, and its compliance status depends on referencing
 existing Jira issues.  
 If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
-This is because Jira returns same 404 error code in all cases.
+This is because Jira returns same 404 error code in all cases. When Jira's response shows that it did not
+accept the credentials, a warning naming them is printed and the issue is reported as not confirmed rather
+than silently as missing; run with ^--debug^ to see the status Jira returned for each issue.
 
 The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
 are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you
@@ -309,18 +312,30 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	issueLog := ""
 	issueFoundCount := 0
+	unconfirmedIDs := []string{}
+	unconfirmedReasons := []string{}
 	for _, issueID := range issueIDs {
-		result, err := jc.GetJiraIssueInfo(issueID, o.issueFields)
+		result, err := jc.GetJiraIssueInfo(issueID, o.issueFields, logger)
 		if err != nil {
 			return err
 		}
 		o.payload.JiraResults = append(o.payload.JiraResults, result)
-		issueExistLog := "issue not found"
-		if result.IssueExists {
-			issueExistLog = "issue found"
+		switch result.LookupStatus {
+		case jira.IssueFound:
 			issueFoundCount++
+		case jira.LookupUnverified:
+			unconfirmedIDs = append(unconfirmedIDs, issueID)
+			// deduplicated: every issue in a run reports the same run-level cause
+			if !slices.Contains(unconfirmedReasons, result.LookupReason) {
+				unconfirmedReasons = append(unconfirmedReasons, result.LookupReason)
+			}
+		case jira.IssueMissing:
+			// counted as neither, and listed as not found below
 		}
-		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, issueExistLog)
+		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, jiraIssueLogLine(result))
+	}
+	if len(unconfirmedIDs) > 0 {
+		logger.Warn("%s", jiraUnconfirmedWarning(unconfirmedIDs, unconfirmedReasons))
 	}
 
 	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
@@ -361,9 +376,51 @@ func (o *attestJiraOptions) run(args []string) error {
 		if err != nil {
 			errString = fmt.Sprintf("%s\nError: ", err.Error())
 		}
-		err = fmt.Errorf("%smissing Jira issues from references found in commit message or branch name%s", errString, issueLog)
+		// prefixed, so it does not read as another entry in the issue list it follows
+		reasonLog := ""
+		for _, reason := range unconfirmedReasons {
+			reasonLog += fmt.Sprintf("\n\treason: %s", reason)
+		}
+		err = fmt.Errorf("%s%s from references found in commit message or branch name%s%s", errString,
+			jiraAssertHeadline(len(issueIDs)-issueFoundCount-len(unconfirmedIDs), len(unconfirmedIDs)), issueLog, reasonLog)
 	}
 	return wrapAttestationError(err)
+}
+
+// jiraAssertHeadline names what went wrong in the first line of an --assert failure. A
+// lookup Jira never answered is not evidence of a missing issue; when every lookup was
+// answered the wording is unchanged.
+func jiraAssertHeadline(missing, unconfirmed int) string {
+	switch {
+	case unconfirmed == 0:
+		return "missing Jira issues"
+	case missing == 0:
+		return "unconfirmed Jira issues"
+	default:
+		return "missing or unconfirmed Jira issues"
+	}
+}
+
+// jiraUnconfirmedWarning builds the one warning covering every lookup Jira did not answer.
+// The cause is run-level - an expired token, an unreachable host - so warning per issue would
+// repeat one sentence per issue key.
+func jiraUnconfirmedWarning(issueIDs, reasons []string) string {
+	return fmt.Sprintf("could not confirm %s in Jira: %s. Unconfirmed issues are counted as not found in the attestation.",
+		strings.Join(issueIDs, ", "), strings.Join(reasons, "; "))
+}
+
+// jiraIssueLogLine describes one lookup for the per-issue list in the log and the --assert
+// error. An unanswered lookup reads as not confirmed but still counts as not found
+// everywhere else, so compliance and the --assert exit code are unchanged.
+func jiraIssueLogLine(result *jira.JiraIssueInfo) string {
+	switch result.LookupStatus {
+	case jira.IssueFound:
+		return "issue found"
+	case jira.LookupUnverified:
+		return "issue not confirmed"
+	default:
+		return "issue not found"
+	}
 }
 
 // jiraSearchText joins the texts that are searched for Jira issue keys: the commit
