@@ -25,3 +25,7 @@ junit-test-results/.
 .claude/settings.local.json
 client_reference/
 __pycache__/
+# The empty-flag audit's evidence sidecar: whole request and response bodies for
+# every replay, so it is large and changes on every run. results-api.tsv is the
+# artefact worth committing and diffing.
+hack/empty-flag-audit/results-api-evidence.jsonl

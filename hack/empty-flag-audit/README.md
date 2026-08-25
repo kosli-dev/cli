@@ -25,6 +25,58 @@ sending it again with one field emptied. It is a separate script rather than a
 third mode because it measures something else: `--ci` produces rows that line up
 with the plain run's, and these do not.
 
+**`results-api.tsv` is an answer about the server it ran against, not a permanent
+fact.** The checked-in file was taken on 2026-08-19 against a server built from
+kosli-dev/server master at b9e213d9, which is the first to refuse an empty
+`filename` and an empty `template` attestation name. `make test_setup` otherwise
+pulls a published image, so a row can change without anything in this directory
+changing. Re-run before quoting it, and say which server the run was against.
+
+Running it against a locally built server takes two extra steps, because
+`docker-compose.yml` pins `platform: linux/amd64`: build the server image for
+amd64 (`docker image build --platform linux/amd64 --target test ...`, since an
+arm64 image makes compose try to pull an amd64 one that does not exist), then pass
+it in with `KOSLI_SERVER_IMAGE=<tag> ./bin/reset-or-start-server.sh` rather than
+`make test_setup`. It runs emulated, so expect the run to take minutes rather than
+seconds.
+
+`replay.py` asks two questions of each field, and the second one is only worth
+asking when the first says the server accepts the value:
+
+| Column | Question |
+|---|---|
+| `verdict` | does the server refuse an emptied field? |
+| `stored` | when it accepts one, does the empty value reach the record? |
+
+The `stored` answer is `reaches the record` or `does not reach the record`, or a
+sentence saying why the row is neither. It is measured by replaying the emptied
+payload **without** freshening the name, so the request names the resource the
+`set` run created, and by reading that resource back through the spec's own
+`verify` steps before and after. A fresh name every time leaves no record holding
+a value for the empty one to reach, which is why the freshening that keeps the
+`verdict` question honest would destroy this one.
+
+The wording is deliberately about the record rather than about a stored value
+being replaced, because the two are not the same event. `create flow` writes its
+description in place; the `attest` and `report` commands append a document and a
+read answers with the most recent one, destroying nothing. Both show up here as
+the empty value reaching the record. What the column is for is deciding whether
+the endpoint should accept an empty value for that field at all, and that
+question does not depend on which of the two mechanisms is underneath.
+
+Each run also writes `results-api-evidence.jsonl` beside the results, which is
+gitignored. Its first line names what the run was against: UTC time, the server
+container's image id and start time, the CLI binary's sha256, the audit's git
+commit and which of its files were uncommitted. Every line after that is one
+replayed request - the label naming its row and role, the method, the url, the
+payload as sent, the status, and the whole response body.
+
+The results file keeps only the first 120 characters of an answer, so that a
+column holding a whole listing cannot stop the file being diffed. The sidecar is
+where an answer that surprises you is read in full, and where "was it even the
+same server?" is answered without a rebuild. Both questions cost a day the first
+time they were asked without it.
+
 Narrower runs, for working on one entry:
 
 ```bash
@@ -126,6 +178,12 @@ commands, hidden commands, and flags hidden by deprecation.
 **Global flags** are declared once on the root command and behave the same
 wherever they appear, so they are audited once, on `archive flow`, rather than on
 every command.
+
+**It repeats.** Two `replay.py` runs against one server image, a day apart, gave
+identical verdicts for 416 of 417 rows. That is what makes a row that does change
+worth investigating rather than shrugging at - and one row did, `list flows
+--name`, whose cause is still unknown. Comparing runs is only meaningful because
+the rest of the file holds still.
 
 ## Known gaps
 
