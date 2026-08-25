@@ -371,6 +371,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
+					--assert
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "jira attestation 'bar' is reported to trail: test-123\n",
 			additionalConfig: jiraTestsAdditionalConfig{
