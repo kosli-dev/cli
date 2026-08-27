@@ -404,7 +404,13 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		},
 		{
 			wantError: true,
-			name:      "30 --jira-trailer does not scan branch name even when it contains a Jira key",
+			name:      "30 --jira-trailer and --jira-secondary-source are mutually exclusive",
+			cmd:       fmt.Sprintf("attest jira --name bar --jira-base-url https://kosli-test.atlassian.net --jira-trailer Jira --jira-secondary-source foo --commit HEAD --repo-root %s %s", suite.tmpDir, suite.defaultKosliArguments),
+			golden:    "Error: only one of --jira-trailer, --jira-secondary-source is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "31 --jira-trailer does not scan branch name even when branch contains a Jira key",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
