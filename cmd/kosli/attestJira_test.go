@@ -402,6 +402,20 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 				commitMessage: "fix: some change with no jira trailer",
 			},
 		},
+		{
+			wantError: true,
+			name:      "30 --jira-trailer does not scan branch name even when it contains a Jira key",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-trailer Jira
+					--assert
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in trailer 'Jira'\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				branchName:    "EX-1-some-feature",
+				commitMessage: "fix: some change with no jira trailer",
+			},
+		},
 	}
 
 	for _, test := range tests {
