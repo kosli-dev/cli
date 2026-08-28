@@ -1,6 +1,7 @@
 # Deny-list: list only git-ignored artefacts. The build reads the version and
 # tree state from git, so a *tracked* path excluded here reads as a deletion and
-# makes images report GitTreeState:"dirty" (#1133). .git/ is required.
+# makes images report GitTreeState:"dirty" (#1133); an untracked file left in
+# the workspace does the same. .git/ is required.
 # Careful: bin/ and npm/wrapper/bin/kosli are tracked.
 
 # Local build outputs
