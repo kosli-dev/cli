@@ -5,6 +5,8 @@
 
 # Local build outputs
 kosli
+reporter
+merkely
 dist
 licenses
 npm/cli*/bin
@@ -19,9 +21,13 @@ junit.xml
 junit-test-results
 smoke-test-results.json
 
-# Scratch, editor and tooling state
+# Local config (may hold an API token) and scratch, editor and tooling state
+kosli.yaml
+merkely.yaml
+pipe.json
 tmp
 client_reference
+**/*~
 TODO.md
 release_notes.md
 .claude/settings.local.json

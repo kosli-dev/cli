@@ -59,15 +59,24 @@ run_case() {
 # entry to the CASES array further down — no CI workflow changes needed.
 
 # Asserts the image reports the release it was published as, built from a clean
-# tree — the two halves of #1133. EXPECTED_VERSION is the exact version required;
-# unset for non-release builds, which are tagged with a sha and report dev+<sha>.
+# tree at the built commit — the two halves of #1133. EXPECTED_VERSION is the
+# exact version required; unset for non-release builds, which are tagged with a
+# sha and report dev+<sha>.
 test_version() {
-  local full short
+  local full short commit
   full="$(docker run --rm -e KOSLI_NO_UPDATE_CHECK=1 "${IMAGE}:${TAG}" version)" || return 1
   echo "$full"
 
   if ! grep -q 'GitTreeState:"clean"' <<< "$full"; then
     echo "expected GitTreeState:\"clean\"" >&2
+    return 1
+  fi
+
+  # This job checks out the same ref the build job did, so HEAD is the commit
+  # the image was built from.
+  commit="$(git -C "$REPO_ROOT" rev-parse HEAD)" || return 1
+  if ! grep -q "GitCommit:\"${commit}\"" <<< "$full"; then
+    echo "expected GitCommit:\"${commit}\"" >&2
     return 1
   fi
 
