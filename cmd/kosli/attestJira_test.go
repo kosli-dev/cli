@@ -437,8 +437,20 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
+			name: "34 --ignore-branch-match warns that it has no effect in trailer mode",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-trailer Jira
+					--ignore-branch-match
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "[warning] --ignore-branch-match has no effect when --jira-trailer is set\njira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "fix: some change\n\nJira: EX-1",
+			},
+		},
+		{
 			wantError: true,
-			name:      "34 --jira-trailer does not scan branch name even when branch contains a Jira key",
+			name:      "35 --jira-trailer does not scan branch name even when branch contains a Jira key",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
