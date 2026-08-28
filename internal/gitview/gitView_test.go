@@ -549,6 +549,12 @@ func (suite *GitViewTestSuite) TestGetTrailerValues() {
 			key:      "  Jira  ",
 			expected: []string{"BX-123"},
 		},
+		{
+			name:     "line with empty value is skipped",
+			message:  "fix: something\n\nJira:",
+			key:      "Jira",
+			expected: []string{},
+		},
 	} {
 		suite.Run(tt.name, func() {
 			result := GetTrailerValues(tt.message, tt.key)

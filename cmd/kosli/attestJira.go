@@ -269,6 +269,10 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			if cmd.Flags().Changed("jira-trailer") && strings.TrimRight(strings.TrimSpace(o.trailerKey), ":") == "" {
+				return fmt.Errorf("--jira-trailer cannot be empty")
+			}
+
 			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
 			if err != nil {
 				return fmt.Errorf("%s for --redact-commit-info", err.Error())

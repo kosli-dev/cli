@@ -410,7 +410,13 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		},
 		{
 			wantError: true,
-			name:      "31 --jira-trailer does not scan branch name even when branch contains a Jira key",
+			name:      "31 --jira-trailer with a blank-ish value is rejected",
+			cmd:       fmt.Sprintf("attest jira --name bar --jira-base-url https://kosli-test.atlassian.net --jira-trailer : --commit HEAD --repo-root %s %s", suite.tmpDir, suite.defaultKosliArguments),
+			golden:    "Error: --jira-trailer cannot be empty\n",
+		},
+		{
+			wantError: true,
+			name:      "32 --jira-trailer does not scan branch name even when it contains a Jira key",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
