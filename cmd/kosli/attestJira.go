@@ -269,8 +269,8 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			if cmd.Flags().Changed("jira-trailer") && strings.TrimRight(strings.TrimSpace(o.trailerKey), ":") == "" {
-				return fmt.Errorf("--jira-trailer cannot be empty")
+			if cmd.Flags().Changed("jira-trailer") && gitview.NormalizeTrailerKey(o.trailerKey) == "" {
+				return fmt.Errorf("flag '--jira-trailer' was given an empty value")
 			}
 
 			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)

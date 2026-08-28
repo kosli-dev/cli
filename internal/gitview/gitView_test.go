@@ -555,6 +555,12 @@ func (suite *GitViewTestSuite) TestGetTrailerValues() {
 			key:      "Jira",
 			expected: []string{},
 		},
+		{
+			name:     "key whose lowercase is shorter than the original still extracts correct value",
+			message:  "fix: something\n\nİ: BX-123",
+			key:      "İ",
+			expected: []string{"BX-123"},
+		},
 	} {
 		suite.Run(tt.name, func() {
 			result := GetTrailerValues(tt.message, tt.key)

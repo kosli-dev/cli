@@ -412,7 +412,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			wantError: true,
 			name:      "31 --jira-trailer with a blank-ish value is rejected",
 			cmd:       fmt.Sprintf("attest jira --name bar --jira-base-url https://kosli-test.atlassian.net --jira-trailer : --commit HEAD --repo-root %s %s", suite.tmpDir, suite.defaultKosliArguments),
-			golden:    "Error: --jira-trailer cannot be empty\n",
+			golden:    "Error: flag '--jira-trailer' was given an empty value\n",
 		},
 		{
 			wantError: true,

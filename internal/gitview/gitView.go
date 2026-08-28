@@ -316,16 +316,28 @@ func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA, s
 	return matches, commitInfo, nil
 }
 
-// GetTrailerValues extracts the values of all trailer lines in a commit message
-// that match the given key. The key comparison is case-insensitive. Trailer lines
-// have the format "<key>: <value>". Returns an empty (non-nil) slice if none are found.
+// NormalizeTrailerKey strips surrounding whitespace and a trailing colon from key,
+// returning the canonical form used for matching and validation.
+func NormalizeTrailerKey(key string) string {
+	return strings.TrimRight(strings.TrimSpace(key), ":")
+}
+
+// GetTrailerValues returns the values of every line in a commit message of the form
+// "<key>: <value>" that matches the given key. The key comparison is case-insensitive;
+// surrounding whitespace on both the key and the line is ignored, and a trailing ":"
+// on the key is tolerated. Lines with an empty value are skipped — a bare "Jira:" line
+// produces no entry and does not trigger caller-side warnings that check for a non-empty
+// result. Note: this scans every line in the message, not only lines in the final
+// paragraph as git interpret-trailers defines them. Returns an empty (non-nil) slice
+// if none are found.
 func GetTrailerValues(message, key string) []string {
 	result := []string{}
-	prefix := strings.ToLower(strings.TrimRight(strings.TrimSpace(key), ":")) + ":"
+	prefix := strings.ToLower(NormalizeTrailerKey(key)) + ":"
 	for _, line := range strings.Split(message, "\n") {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(strings.ToLower(trimmed), prefix) {
-			value := strings.TrimSpace(trimmed[len(prefix):])
+			colonIdx := strings.IndexByte(trimmed, ':')
+			value := strings.TrimSpace(trimmed[colonIdx+1:])
 			if value != "" {
 				result = append(result, value)
 			}
