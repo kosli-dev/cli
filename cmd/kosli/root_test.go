@@ -317,11 +317,15 @@ func (suite *RootCommandTestSuite) TestKosliIgnoreDocumented() {
 	cmd, err := newRootCmd(io.Discard, io.Discard, []string{})
 	suite.Require().NoError(err)
 
-	// snapshot azure always fingerprints zip-deployed apps as directories
-	// under the hood and has no --artifact-type flag to detect that by, so
-	// it must be listed here explicitly.
+	// These commands always fingerprint directories under the hood and have
+	// no --artifact-type flag to detect that by, so they must be listed here
+	// explicitly.
 	extraCommandPaths := map[string]bool{
-		"kosli snapshot azure": true,
+		"kosli snapshot azure":  true,
+		"kosli snapshot path":   true,
+		"kosli snapshot paths":  true,
+		"kosli snapshot s3":     true,
+		"kosli snapshot server": true,
 	}
 
 	var walk func(*cobra.Command)
