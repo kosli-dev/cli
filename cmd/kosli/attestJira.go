@@ -346,17 +346,20 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	// Find Jira issue keys either from a named git trailer or by scanning the
 	// commit message, branch name, and secondary source.
+	trailerKey := gitview.NormalizeTrailerKey(o.trailerKey)
 	var issueIDs []string
-	if o.trailerKey != "" {
+	issueSource := "commit message or branch name"
+	if trailerKey != "" {
+		issueSource = fmt.Sprintf("trailer '%s'", trailerKey)
 		if o.ignoreBranchMatch {
 			logger.Warn("--ignore-branch-match has no effect when --jira-trailer is set")
 		}
-		trailerValues := gitview.GetTrailerValues(commitInfo.Message, o.trailerKey)
+		trailerValues := gitview.GetTrailerValues(commitInfo.Message, trailerKey)
 		combinedTrailerText := strings.Join(trailerValues, "\n")
 		issueIDs = jira.FindJiraIssueKeys(combinedTrailerText, o.projectKeys)
-		logger.Debug("Checked for Jira issue references in trailer '%s' of Git commit %s: %v", o.trailerKey, commitInfo.Sha1, trailerValues)
-		if gitview.TrailerKeyExists(commitInfo.Message, o.trailerKey) && len(issueIDs) == 0 {
-			logger.Warn("trailer '%s' was found but contained no valid Jira issue keys: %v", o.trailerKey, trailerValues)
+		logger.Debug("Checked for Jira issue references in trailer '%s' of Git commit %s: %v", trailerKey, commitInfo.Sha1, trailerValues)
+		if gitview.TrailerKeyExists(commitInfo.Message, trailerKey) && len(issueIDs) == 0 {
+			logger.Warn("trailer '%s' was found but contained no valid Jira issue keys: %v", trailerKey, trailerValues)
 		}
 	} else {
 		searchTexts := []string{commitInfo.Message}
@@ -371,11 +374,6 @@ func (o *attestJiraOptions) run(args []string) error {
 		logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
 	}
 	logger.Debug("the following Jira references are found: %v", issueIDs)
-
-	issueSource := "commit message or branch name"
-	if o.trailerKey != "" {
-		issueSource = fmt.Sprintf("trailer '%s'", o.trailerKey)
-	}
 
 	issueLog := ""
 	issueFoundCount := 0
