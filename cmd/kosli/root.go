@@ -167,7 +167,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	jiraPATFlag                     = "Jira personal access token (for self-hosted Jira)"
 	jiraProjectKeyFlag              = "[optional] Jira project key to match against. Can be repeated, or given as a comma-separated list. Defaults to matching any jira project key."
 	jiraIssueFieldFlag              = "[optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields."
-	jiraSecondarySourceFlag         = "[optional] An optional string to search for Jira ticket reference, e.g. '--jira-secondary-source ${{ github.head_ref }}'"
+	jiraSecondarySourceFlag         = "[optional] An optional string to search for Jira ticket reference, e.g. '--jira-secondary-source ${{ github.head_ref }}'. Mutually exclusive with --jira-trailer."
 	ignoreBranchMatchFlag           = "Ignore branch name when searching for Jira ticket reference."
 	jiraTrailerFlag                 = "[optional] The git trailer key to use as the sole source of Jira issue references (e.g. '--jira-trailer Jira' extracts the value of 'Jira: <issue-key>' lines from the commit message). When set, the commit message body and branch name are not scanned. Mutually exclusive with --jira-secondary-source."
 	envDescriptionFlag              = "[optional] The environment description."
