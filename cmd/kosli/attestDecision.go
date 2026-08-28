@@ -35,6 +35,8 @@ pipeline — whether it was satisfied or not — attached to a specific trail wi
 This decision is the evidence that a governance requirement was assessed.
 ` + attestationBindingDesc + `
 
+` + kosliIgnoreDesc + `
+
 ` + commitDescription
 
 const attestDecisionExample = `

@@ -33,7 +33,9 @@ to a specific flow. Without ^--flow^, all flows containing the artifact
 
 const assertArtifactLongDesc = assertArtifactShortDesc + `
 Exits with zero code if the artifact has compliant status,
-non-zero code if non-compliant status.`
+non-zero code if non-compliant status.
+
+` + kosliIgnoreDesc
 
 const assertArtifactExample = `
 # assert that an artifact meets all compliance requirements for an environment

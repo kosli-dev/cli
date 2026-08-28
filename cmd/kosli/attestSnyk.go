@@ -36,6 +36,8 @@ By default, the ^--scan-results^ .json file is also uploaded to Kosli's evidence
 You can disable that by setting ^--upload-results=false^
 ` + attestationBindingDesc + `
 
+` + kosliIgnoreDesc + `
+
 ` + commitDescription
 
 const attestSnykExample = `

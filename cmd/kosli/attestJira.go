@@ -81,6 +81,8 @@ the complete list so you can select the once you need. The issue fields uses the
 https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-get-request
 ` + attestationBindingDesc + `
 
+` + kosliIgnoreDesc + `
+
 ` + commitDescription
 
 const attestJiraExample = `

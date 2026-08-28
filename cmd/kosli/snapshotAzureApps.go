@@ -21,7 +21,10 @@ content of the zip file. This is the same as unzipping the file and then running
 When doing zip deployment the WEBSITE_RUN_FROM_PACKAGE must NOT be set to 1. This will cause the azure
 API calls to not return the content of what is running on the server and fingerprint calculations
 will not match. See 
-https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings#website_run_from_package` + azureAuthDesc
+https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings#website_run_from_package
+
+` + kosliIgnoreDesc + `
+` + azureAuthDesc
 
 const snapshotAzureAppsExample = `
 # Use Azure Container Registry to get the digests for artifacts in a snapshot
