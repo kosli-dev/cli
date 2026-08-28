@@ -309,6 +309,34 @@ func (suite *RootCommandTestSuite) TestInnerMainAcceptsSpaceSeparatedBoolFlag() 
 	suite.Equal("1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01\n", out.String())
 }
 
+// TestKosliIgnoreDocumented guards against the drift found while auditing
+// https://github.com/kosli-dev/server/issues/2270: a command gains directory
+// fingerprinting (--artifact-type dir, or an equivalent hardcoded path like
+// `snapshot azure`'s zip deployments) but its help text never says so.
+func (suite *RootCommandTestSuite) TestKosliIgnoreDocumented() {
+	cmd, err := newRootCmd(io.Discard, io.Discard, []string{})
+	suite.Require().NoError(err)
+
+	// snapshot azure always fingerprints zip-deployed apps as directories
+	// under the hood and has no --artifact-type flag to detect that by, so
+	// it must be listed here explicitly.
+	extraCommandPaths := map[string]bool{
+		"kosli snapshot azure": true,
+	}
+
+	var walk func(*cobra.Command)
+	walk = func(c *cobra.Command) {
+		if c.Flags().Lookup("artifact-type") != nil || extraCommandPaths[c.CommandPath()] {
+			suite.Contains(c.Long, ".kosli_ignore",
+				"%q supports directory fingerprinting but its Long help does not mention .kosli_ignore", c.CommandPath())
+		}
+		for _, sub := range c.Commands() {
+			walk(sub)
+		}
+	}
+	walk(cmd)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestRootCommandTestSuite(t *testing.T) {
