@@ -208,8 +208,9 @@ kosli attest jira \
 	--org yourOrgName
 
 # read the jira issue key exclusively from a git trailer line (e.g. "Jira: PROJ-42")
-# bypasses commit message and branch scanning entirely — useful when project keys
-# collide with patterns like CVE identifiers
+# confines scanning to the trailer value — useful when project keys collide with
+# patterns like CVE identifiers; write the issue key alone (e.g. "Jira: CVE-42"),
+# not embedded in a longer hyphenated string ("Jira: CVE-2026-41284" is still filtered)
 kosli attest jira \
 	--name yourAttestationName \
 	--flow yourFlowName \
