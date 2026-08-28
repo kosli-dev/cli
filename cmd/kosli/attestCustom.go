@@ -30,6 +30,8 @@ The name of the custom attestation type is specified using the ^--type^ flag.
 The path to the JSON file the custom type will evaluate is specified using the ^--attestation-data^ flag.
 ` + attestationBindingDesc + `
 
+` + kosliIgnoreDesc + `
+
 ` + commitDescription
 
 const attestCustomExample = `

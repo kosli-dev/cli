@@ -34,6 +34,8 @@ The xml files are automatically uploaded as ^--attachments^ via the ^--upload-re
 
 const attestJunitLongDesc = attestJunitShortDesc + attestationBindingDesc + `
 
+` + kosliIgnoreDesc + `
+
 ` + commitDescription
 
 const attestJunitExample = `

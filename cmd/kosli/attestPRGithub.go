@@ -12,7 +12,9 @@ const attestPRGithubShortDesc = `Report a Github pull request attestation to an 
 
 const attestPRGithubLongDesc = attestPRGithubShortDesc + `
 It checks if a pull request exists for a given merge commit and reports the pull-request attestation to Kosli.
-` + attestationBindingDesc
+` + attestationBindingDesc + `
+
+` + kosliIgnoreDesc
 
 const attestPRGithubExample = `
 # report a Github pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint):

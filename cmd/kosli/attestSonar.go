@@ -60,7 +60,9 @@ run in different containers that do not share a filesystem, making the ^report-t
 
 Note that if your project is very large and you are using SonarQube Cloud's automatic analysis, it is possible for the attest sonar command to run before the SonarQube Cloud scan is completed.
 In this case, we recommend using Kosli's Sonar webhook integration ( https://docs.kosli.com/integrations/sonar/ ) rather than the CLI to attest the scan results.
-` + attestationBindingDesc
+` + attestationBindingDesc + `
+
+` + kosliIgnoreDesc
 
 const attestSonarExample = `
 # report a SonarQube Cloud attestation about a trail using SonarQube's metadata, with no retries:

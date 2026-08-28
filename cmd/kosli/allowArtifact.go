@@ -25,7 +25,7 @@ type AllowlistPayload struct {
 const allowArtifactShortDesc = `Add an artifact to an environment's allowlist.  `
 
 const allowArtifactLongDesc = allowArtifactShortDesc + `
-` + fingerprintDesc
+` + fingerprintDesc + kosliIgnoreDesc
 
 func newAllowArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(allowArtifactOptions)

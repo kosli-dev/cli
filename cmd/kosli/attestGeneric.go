@@ -25,6 +25,8 @@ const attestGenericShortDesc = `Report a generic attestation to an artifact or a
 
 const attestGenericLongDesc = attestGenericShortDesc + attestationBindingDesc + `
 
+` + kosliIgnoreDesc + `
+
 ` + commitDescription
 
 const attestGenericExample = `

@@ -29,6 +29,8 @@ Use this command to record a manual override of a previously reported attestatio
 compliance status and captures the reason as part of the audit trail.
 ` + attestationBindingDesc + `
 
+` + kosliIgnoreDesc + `
+
 ` + commitDescription
 
 const attestOverrideExample = `
