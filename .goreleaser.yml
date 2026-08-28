@@ -8,7 +8,7 @@ before:
 builds:
   - id: kosli
     binary: kosli
-    ldflags: 
+    ldflags:
       - -w -s
       - -X github.com/kosli-dev/cli/internal/version.version={{ .Tag }}
       - -X github.com/kosli-dev/cli/internal/version.gitCommit={{ .FullCommit }}
