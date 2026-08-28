@@ -569,6 +569,45 @@ func (suite *GitViewTestSuite) TestGetTrailerValues() {
 	}
 }
 
+func (suite *GitViewTestSuite) TestTrailerKeyExists() {
+	for _, tt := range []struct {
+		name     string
+		message  string
+		key      string
+		expected bool
+	}{
+		{
+			name:     "key present with value",
+			message:  "fix: something\n\nJira: BX-123",
+			key:      "Jira",
+			expected: true,
+		},
+		{
+			name:     "key present with empty value",
+			message:  "fix: something\n\nJira:",
+			key:      "Jira",
+			expected: true,
+		},
+		{
+			name:     "key absent",
+			message:  "fix: something\n\nsome body text",
+			key:      "Jira",
+			expected: false,
+		},
+		{
+			name:     "key match is case-insensitive",
+			message:  "fix: something\n\njira: BX-123",
+			key:      "Jira",
+			expected: true,
+		},
+	} {
+		suite.Run(tt.name, func() {
+			result := TrailerKeyExists(tt.message, tt.key)
+			require.Equal(suite.T(), tt.expected, result)
+		})
+	}
+}
+
 func TestGitViewTestSuite(t *testing.T) {
 	suite.Run(t, new(GitViewTestSuite))
 }

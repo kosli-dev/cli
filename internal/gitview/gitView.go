@@ -322,14 +322,26 @@ func NormalizeTrailerKey(key string) string {
 	return strings.TrimRight(strings.TrimSpace(key), ":")
 }
 
+// TrailerKeyExists reports whether any line in the commit message matches the given key,
+// regardless of whether the value is empty. Use this alongside GetTrailerValues to
+// distinguish "key not present" from "key present but value empty".
+func TrailerKeyExists(message, key string) bool {
+	prefix := strings.ToLower(NormalizeTrailerKey(key)) + ":"
+	for _, line := range strings.Split(message, "\n") {
+		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(line)), prefix) {
+			return true
+		}
+	}
+	return false
+}
+
 // GetTrailerValues returns the values of every line in a commit message of the form
 // "<key>: <value>" that matches the given key. The key comparison is case-insensitive;
 // surrounding whitespace on both the key and the line is ignored, and a trailing ":"
-// on the key is tolerated. Lines with an empty value are skipped — a bare "Jira:" line
-// produces no entry and does not trigger caller-side warnings that check for a non-empty
-// result. Note: this scans every line in the message, not only lines in the final
-// paragraph as git interpret-trailers defines them. Returns an empty (non-nil) slice
-// if none are found.
+// on the key is tolerated. Lines with an empty value are skipped — use TrailerKeyExists
+// to detect a key that is present but has no value. Note: this scans every line in the
+// message, not only lines in the final paragraph as git interpret-trailers defines them.
+// Returns an empty (non-nil) slice if none are found.
 func GetTrailerValues(message, key string) []string {
 	result := []string{}
 	prefix := strings.ToLower(NormalizeTrailerKey(key)) + ":"

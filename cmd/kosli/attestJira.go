@@ -355,7 +355,7 @@ func (o *attestJiraOptions) run(args []string) error {
 		combinedTrailerText := strings.Join(trailerValues, "\n")
 		issueIDs = jira.FindJiraIssueKeys(combinedTrailerText, o.projectKeys)
 		logger.Debug("Checked for Jira issue references in trailer '%s' of Git commit %s: %v", o.trailerKey, commitInfo.Sha1, trailerValues)
-		if len(trailerValues) > 0 && len(issueIDs) == 0 {
+		if gitview.TrailerKeyExists(commitInfo.Message, o.trailerKey) && len(issueIDs) == 0 {
 			logger.Warn("trailer '%s' was found but contained no valid Jira issue keys: %v", o.trailerKey, trailerValues)
 		}
 	} else {
