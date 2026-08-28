@@ -415,8 +415,19 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			golden:    "Error: flag '--jira-trailer' was given an empty value\n",
 		},
 		{
+			name: "32 --jira-trailer warns when trailer value is present but not a valid Jira key",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-trailer Jira
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "[warning] trailer 'Jira' was found but contained no valid Jira issue keys: [not-a-key]\njira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "fix: some change\n\nJira: not-a-key",
+			},
+		},
+		{
 			wantError: true,
-			name:      "32 --jira-trailer does not scan branch name even when it contains a Jira key",
+			name:      "33 --jira-trailer does not scan branch name even when branch contains a Jira key",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
