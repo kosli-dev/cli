@@ -117,6 +117,8 @@ func (MintlifyFormatter) ExampleUseCases(commandName, example string) string {
 			exampleLines := all[i]
 			title := strings.Trim(exampleLines[0], ":")
 			if len(title) > 0 {
+				// A raw caret reaches the rendered accordion title verbatim, use supported backticks.
+				title = strings.ReplaceAll(title, "^", "`")
 				// Double quotes would terminate the JSX title attribute and break the MDX build.
 				title = strings.ReplaceAll(title, "\"", "'")
 				fmt.Fprintf(&b, "<Accordion title=\"%s\">\n", strings.TrimSpace(title[1:]))
