@@ -20,10 +20,10 @@ For Azure Function apps or Web apps which uses zip deployment the fingerprint is
 content of the zip file. This is the same as unzipping the file and then running ^kosli fingerprint -t dir yourDirName^.
 When doing zip deployment the WEBSITE_RUN_FROM_PACKAGE must NOT be set to 1. This will cause the azure
 API calls to not return the content of what is running on the server and fingerprint calculations
-will not match. See 
+will not match. See
 https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings#website_run_from_package
 
-For zip-deployed apps, the fingerprint honours a ^.kosli_ignore^ file at the root of the deployed package.
+For zip-deployed apps, the fingerprint respects ^.kosli_ignore^ file at the root of the deployed package.
 ` + kosliIgnoreDesc + azureAuthDesc
 
 const snapshotAzureAppsExample = `

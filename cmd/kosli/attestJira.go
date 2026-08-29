@@ -69,11 +69,11 @@ If the ^--ignore-branch-match^ is set, the branch name is not parsed for a match
 
 The found issue references will be checked against Jira to confirm their existence.
 The attestation is reported in all cases, and its compliance status depends on referencing
-existing Jira issues.  
-If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
-This is because Jira returns same 404 error code in all cases. When Jira's response shows that it did not
-accept the credentials, a warning naming them is printed and the issue is reported as not confirmed rather
-than silently as missing; run with ^--debug^ to see the status Jira returned for each issue.
+existing Jira issues.
+
+A wrong base URL still surfaces as a non-existent issue because Jira returns 404 either way,
+but a credential rejection is detected and reported as not confirmed, with a warning identifying
+the credentials. Use ^--debug^ to see the status Jira returned per issue.
 
 The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
 are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you

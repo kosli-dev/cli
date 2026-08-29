@@ -175,6 +175,27 @@ func TestMintlifyExampleUseCasesEscapesQuotesInTitle(t *testing.T) {
 	}
 }
 
+func TestMintlifyExampleUseCasesReplacesCaretsInTitle(t *testing.T) {
+	f := MintlifyFormatter{}
+	example := "# create a type with schema and ^jq^ evaluation rules:\nkosli create attestation-type foo"
+	got := f.ExampleUseCases("kosli create attestation-type", example)
+	if !strings.Contains(got, "<Accordion title=\"create a type with schema and `jq` evaluation rules\">") {
+		t.Errorf("expected carets in title to be replaced with backticks, got:\n%s", got)
+	}
+	if strings.Contains(got, "^jq^") {
+		t.Errorf("expected no raw carets inside the title attribute, got:\n%s", got)
+	}
+}
+
+func TestMintlifyExampleUseCasesKeepsCaretsInExampleBody(t *testing.T) {
+	f := MintlifyFormatter{}
+	example := "# filter lines starting with foo:\nkosli list flows | grep '^foo'"
+	got := f.ExampleUseCases("kosli list flows", example)
+	if !strings.Contains(got, "grep '^foo'") {
+		t.Errorf("expected carets in the shell example body to be left alone, got:\n%s", got)
+	}
+}
+
 func TestMintlifyLinkHandler(t *testing.T) {
 	f := MintlifyFormatter{}
 	got := f.LinkHandler("kosli_attest_snyk.md")

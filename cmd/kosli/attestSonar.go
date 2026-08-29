@@ -49,8 +49,8 @@ exponential backoff between retries. Once the results are available they are att
 2. Providing the Sonar project key and either the revision or the pull-request ID of the scan (plus the SonarQube server URL if relevant).
 For branch scans: if running the Kosli CLI in some CI/CD pipeline, the revision is defaulted to the commit SHA. If you are running the command locally,
 or have overriden the revision in SonarQube via parameters to the Sonar scanner, you can provide the correct revision using the ^--sonar-revision^ flag.
-If the scan ran on a branch other than the project's main branch in SonarQube, also provide the branch name using the ^--sonar-branch^ flag:
-SonarQube searches only the main branch unless it is told otherwise, so without it the scan cannot be found.
+If the scan ran on a branch other than the project's main branch in SonarQube, also provide the branch name using the ^--sonar-branch^ flag.
+By default SonarQube only searches the main branch, unless it is told otherwise.
 For pull request scans: provide the pull-request ID using the ^--pull-request^ flag instead of the revision.
 Kosli then finds the scan results for the specified project key and revision or pull-request ID.
 
