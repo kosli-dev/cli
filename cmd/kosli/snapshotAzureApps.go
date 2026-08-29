@@ -23,7 +23,7 @@ API calls to not return the content of what is running on the server and fingerp
 will not match. See
 https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings#website_run_from_package
 
-For zip-deployed apps, the fingerprint respects ^.kosli_ignore^ file at the root of the deployed package.
+For zip-deployed apps, the fingerprint respects a ^.kosli_ignore^ file at the root of the deployed package.
 ` + kosliIgnoreDesc + azureAuthDesc
 
 const snapshotAzureAppsExample = `
