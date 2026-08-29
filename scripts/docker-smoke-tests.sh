@@ -64,6 +64,15 @@ run_case() {
 # unset means a non-release build, which must report dev+<sha>.
 test_version() {
   local full short commit
+
+  # EXPECTED_VERSION and the baked-in version share one workflow output, so a
+  # misclassification there would have both agree on the wrong answer.
+  # Re-derive from the image tag: a release tag must carry its own version.
+  if [[ "$TAG" =~ ^v[0-9] ]] && [ "${EXPECTED_VERSION:-}" != "$TAG" ]; then
+    echo "release tag ${TAG} but the build baked '${EXPECTED_VERSION:-}'" >&2
+    return 1
+  fi
+
   full="$(docker run --rm -e KOSLI_NO_UPDATE_CHECK=1 "${IMAGE}:${TAG}" version)" || return 1
   echo "$full"
 

@@ -105,8 +105,11 @@ jobs:
         env:
           TAG: ${{ inputs.tag }}
         run: |
+          # Strict because the value reaches single-quoted ldflags. The smoke
+          # test tripwires on the looser ^v[0-9], so a tag rejected here fails
+          # loudly there instead of publishing a release image as dev+<sha>.
           VERSION=""
-          if [[ "$TAG" =~ ^v[0-9] ]]; then
+          if [[ "$TAG" =~ ^v[0-9][A-Za-z0-9.+_-]*$ ]]; then
             VERSION="$TAG"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
