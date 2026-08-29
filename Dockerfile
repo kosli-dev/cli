@@ -3,9 +3,8 @@
 ARG GO_VERSION="1.26"
 ARG ALPINE_VERSION="3.23"
 
-# The release version the binary reports; empty builds dev+<sha>. Passed in
-# rather than read from git tags so the image depends on the build request,
-# not on which tags the checkout has (#1133). `make docker` passes it for you.
+# The version the binary reports; empty builds dev+<sha>. Passed in rather than
+# read from git tags, so the image cannot depend on the checkout's tags (#1133).
 ARG VERSION=""
 
 

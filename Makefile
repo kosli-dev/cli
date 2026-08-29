@@ -23,10 +23,10 @@ FAKE_CI_ENV = GITHUB_RUN_NUMBER=1 GITHUB_SERVER_URL=https://github.com GITHUB_RE
 
 # VERSION is the version the binary reports. Unset, we fall back to the tag at
 # HEAD so a local `make build` in a checked-out release still reports it; passed
-# on the command line it wins outright, which is how CI stamps the image tag it
-# publishes under (#1133). Only a command-line assignment counts, so an ambient
-# VERSION cannot stamp a release: `origin` yields multi-word strings ("command
-# line", "environment override"), so filter-out is correct where filter is not.
+# on the command line it wins outright, which is how CI stamps the version it
+# resolved for the build (#1133). Only a command-line assignment counts, so an
+# ambient VERSION cannot stamp a release: `origin` yields multi-word strings
+# ("command line", "environment override"), so filter-out, not filter.
 ifneq ($(filter-out command line override,$(origin VERSION)),)
 	BINARY_VERSION = $(GIT_TAG)
 else
@@ -38,7 +38,7 @@ ifneq ($(BINARY_VERSION),)
 	LDFLAGS += -X github.com/kosli-dev/cli/internal/version.version=${BINARY_VERSION}
 endif
 
-# Release builds report their version alone; others append the short sha.
+# With a version, report it alone; without one, "dev" plus the short sha.
 VERSION_METADATA = $(GIT_SHA)
 ifneq ($(BINARY_VERSION),)
 	VERSION_METADATA =
