@@ -114,6 +114,12 @@ Follow a strict Red-Green-Refactor loop for every change:
 
 Repeat steps 2–7 until the slice is complete, then commit any remaining cleanup.
 
+Also make sure to:
+- **Follow good practices** — follow industry practices and existing patterns in the codebase.
+- **Keep code comments minimal** — comment on *why*, not *what*; the code already says what it
+  does. Add a comment only for non-obvious intent, constraints, or workarounds. Keep godoc
+  comments on exported identifiers.
+
 ### Test list discipline
 
 Maintain the test list in `TODO.md` under the active slice (see Thin Vertical Slices below). Before writing code, brainstorm the tests you expect to write. During the loop, add new tests as you discover them. The list is a living document — it grows and shrinks as understanding deepens.
