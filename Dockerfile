@@ -3,6 +3,11 @@
 ARG GO_VERSION="1.26"
 ARG ALPINE_VERSION="3.23"
 
+# The release version the binary reports; empty builds dev+<sha>. Passed in
+# rather than read from git tags so the image depends on the build request,
+# not on which tags the checkout has (#1133). `make docker` passes it for you.
+ARG VERSION=""
+
 
 ### Go Builder ###
 FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
@@ -15,7 +20,9 @@ WORKDIR /go/src/kosli
 
 COPY . .
 
-RUN make build
+# Re-declare inside the stage — a global ARG is not in scope in a build stage.
+ARG VERSION
+RUN make build VERSION="${VERSION}"
 
 RUN mkdir -p /image-tmp
 

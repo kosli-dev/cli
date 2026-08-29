@@ -21,19 +21,25 @@ GOTESTSUM  = $(shell which gotestsum || echo "~/go/bin/gotestsum")
 # These are only used when running tests locally (real CI already sets them).
 FAKE_CI_ENV = GITHUB_RUN_NUMBER=1 GITHUB_SERVER_URL=https://github.com GITHUB_REPOSITORY=kosli-dev/cli GITHUB_REPOSITORY_ID=123456
 
-ifdef VERSION
+# VERSION is the release version the binary reports. Unset, it falls back to
+# the tag at HEAD, so a local `make build` in a checked-out release still
+# reports it. Set — including to the empty string, meaning "not a release" —
+# it wins outright, which is how CI keeps a build from depending on whichever
+# tags the checkout happens to have (#1133).
+ifeq ($(origin VERSION),undefined)
+	BINARY_VERSION = $(GIT_TAG)
+else
 	BINARY_VERSION = $(VERSION)
 endif
-BINARY_VERSION ?= ${GIT_TAG}
 
-# Only set Version if building a tag or VERSION is set
+# Only set Version if we have one; otherwise the binary keeps its "dev" default
 ifneq ($(BINARY_VERSION),)
 	LDFLAGS += -X github.com/kosli-dev/cli/internal/version.version=${BINARY_VERSION}
 endif
 
+# Release builds report their version alone; others append the short sha.
 VERSION_METADATA = $(GIT_SHA)
-# Clear the short-sha BuildMetadata for tagged releases
-ifneq ($(GIT_TAG),)
+ifneq ($(BINARY_VERSION),)
 	VERSION_METADATA =
 endif
 
@@ -180,8 +186,9 @@ follow_integration_test_server:
 enter_integration_test_server:
 	@docker exec -it --workdir / cli_kosli_server bash
 
+# The image never reads git tags itself, so pass the tag at HEAD in.
 docker: ## Build CLI Docker image
-	@docker build -t kosli-cli .
+	@docker build -t kosli-cli --build-arg VERSION="$(GIT_TAG)" .
 
 licenses: ## Update licenses
 	@rm -rf licenses || true

@@ -60,8 +60,8 @@ run_case() {
 
 # Asserts the image reports the release it was published as, built from a clean
 # tree at the built commit — the two halves of #1133. EXPECTED_VERSION is the
-# exact version required; unset for non-release builds, which are tagged with a
-# sha and report dev+<sha>.
+# exact version required — the same value CI baked into the binary; empty or
+# unset means a non-release build, which must report dev+<sha>.
 test_version() {
   local full short commit
   full="$(docker run --rm -e KOSLI_NO_UPDATE_CHECK=1 "${IMAGE}:${TAG}" version)" || return 1
