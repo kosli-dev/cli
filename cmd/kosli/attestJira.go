@@ -71,9 +71,10 @@ The found issue references will be checked against Jira to confirm their existen
 The attestation is reported in all cases, and its compliance status depends on referencing
 existing Jira issues.
 
-A wrong base URL still surfaces as a non-existent issue because Jira returns 404 either way,
-but a credential rejection is detected and reported as not confirmed, with a warning identifying
-the credentials. Use ^--debug^ to see the status Jira returned per issue.
+An unreachable or wrong base URL still surfaces as a non-existent issue, because Jira answers 404
+both for an issue that does not exist and for one you may not view. A credential rejection, however,
+is detected and reported as not confirmed, with a warning identifying the credentials.
+Use ^--debug^ to see the status Jira returned per issue.
 
 The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
 are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you
