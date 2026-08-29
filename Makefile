@@ -25,9 +25,10 @@ FAKE_CI_ENV = GITHUB_RUN_NUMBER=1 GITHUB_SERVER_URL=https://github.com GITHUB_RE
 # the tag at HEAD, so a local `make build` in a checked-out release still
 # reports it. Passed on the command line — empty string included, meaning "not
 # a release" — it wins, which is how CI keeps a build off the checkout's tags
-# (#1133). Only a command-line assignment counts: an inherited environment
-# VERSION must not silently stamp a release. ("command line" is two words.)
-ifeq ($(filter command line override,$(origin VERSION)),)
+# (#1133). Only a command-line assignment counts, so an inherited environment
+# VERSION cannot silently stamp a release: `origin` yields multi-word strings
+# ("command line", "environment override"), and filter-out cannot confuse them.
+ifneq ($(filter-out command line override,$(origin VERSION)),)
 	BINARY_VERSION = $(GIT_TAG)
 else
 	BINARY_VERSION = $(VERSION)

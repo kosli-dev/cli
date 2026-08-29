@@ -63,13 +63,16 @@ run_case() {
 # exact version required — the same value CI baked into the binary; empty or
 # unset means a non-release build, which must report dev+<sha>.
 test_version() {
-  local full short commit
+  local full short commit from_tag
 
   # EXPECTED_VERSION and the baked-in version share one workflow output, so a
-  # misclassification there would have both agree on the wrong answer.
-  # Re-derive from the image tag: a release tag must carry its own version.
-  if [[ "$TAG" =~ ^v[0-9] ]] && [ "${EXPECTED_VERSION:-}" != "$TAG" ]; then
-    echo "release tag ${TAG} but the build baked '${EXPECTED_VERSION:-}'" >&2
+  # misclassification there would have both agree on the wrong answer. Derive
+  # the expectation from the image tag instead and compare: a release tag must
+  # carry its own version, and a sha tag must carry none.
+  from_tag=""
+  [[ "$TAG" =~ ^v[0-9] ]] && from_tag="$TAG"
+  if [ "${EXPECTED_VERSION:-}" != "$from_tag" ]; then
+    echo "image tag ${TAG} implies '${from_tag}' but the build baked '${EXPECTED_VERSION:-}'" >&2
     return 1
   fi
 
