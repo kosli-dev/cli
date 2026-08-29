@@ -1,6 +1,38 @@
-*
-!cmd/
-!internal/
-!Makefile
-!go.*
-!.git/
+# Deny-list: list only git-ignored artefacts. The build reads the version and
+# tree state from git, so a *tracked* path excluded here reads as a deletion and
+# makes images report GitTreeState:"dirty" (#1133); an untracked file left in
+# the workspace does the same. .git/ is required.
+# Careful: bin/ and npm/wrapper/bin/kosli are tracked.
+
+# Local build outputs
+kosli
+reporter
+merkely
+dist
+licenses
+npm/cli*/bin
+npm/*/kosli*.tgz
+**/*.tar.gz
+
+# Test and coverage output
+coverage.out
+cover.out
+coverage.html
+junit.xml
+junit-test-results
+smoke-test-results.json
+
+# Local config (may hold an API token) and scratch, editor and tooling state
+kosli.yaml
+merkely.yaml
+pipe.json
+tmp
+client_reference
+**/*~
+TODO.md
+release_notes.md
+.claude/settings.local.json
+.idea
+.vscode
+**/__pycache__
+**/.DS_Store

@@ -3,7 +3,8 @@
 # outcome to $RESULTS_FILE for the CI workflow to report as a Kosli
 # attestation.
 #
-# Usage: IMAGE=... TAG=... RESULTS_FILE=... ./scripts/docker-smoke-tests.sh
+# Usage: IMAGE=... TAG=... RESULTS_FILE=... [EXPECTED_VERSION=...] \
+#          ./scripts/docker-smoke-tests.sh
 set -uo pipefail
 
 IMAGE="${IMAGE:?IMAGE is required}"
@@ -57,6 +58,42 @@ run_case() {
 # Add a new smoke test by writing a test_* function below and adding one
 # entry to the CASES array further down — no CI workflow changes needed.
 
+# Asserts the image reports the release it was published as, built from a clean
+# tree at the built commit — the two halves of #1133. EXPECTED_VERSION is the
+# exact version required; unset for non-release builds, which are tagged with a
+# sha and report dev+<sha>.
+test_version() {
+  local full short commit
+  full="$(docker run --rm -e KOSLI_NO_UPDATE_CHECK=1 "${IMAGE}:${TAG}" version)" || return 1
+  echo "$full"
+
+  if ! grep -q 'GitTreeState:"clean"' <<< "$full"; then
+    echo "expected GitTreeState:\"clean\"" >&2
+    return 1
+  fi
+
+  # This job checks out the same ref the build job did, so HEAD is the commit
+  # the image was built from.
+  commit="$(git -C "$REPO_ROOT" rev-parse HEAD)" || return 1
+  if ! grep -q "GitCommit:\"${commit}\"" <<< "$full"; then
+    echo "expected GitCommit:\"${commit}\"" >&2
+    return 1
+  fi
+
+  short="$(docker run --rm -e KOSLI_NO_UPDATE_CHECK=1 "${IMAGE}:${TAG}" version --short)" || return 1
+  echo "version --short: ${short}"
+
+  if [ -n "${EXPECTED_VERSION:-}" ]; then
+    if [ "$short" != "$EXPECTED_VERSION" ]; then
+      echo "expected version ${EXPECTED_VERSION}, got ${short}" >&2
+      return 1
+    fi
+  elif ! grep -qE '^dev\+[0-9a-f]{7,}$' <<< "$short"; then
+    echo "expected dev+<sha> for a non-release build, got ${short}" >&2
+    return 1
+  fi
+}
+
 test_attest_artifact_dir() {
   local commit_sha
   commit_sha="$(git -C "$REPO_ROOT" rev-parse HEAD)" || return 1
@@ -93,8 +130,11 @@ test_attest_artifact_dir() {
 
 # --- Run all cases ------------------------------------------------------
 # Add a case by adding one entry here alongside its test_* function above.
+# Entries are "<case-name>:<test-function>" — the name labels the case in the
+# CI log and the results file; neither field may contain a colon.
 
 CASES=(
+  "version:test_version"
   "attest-artifact-dir:test_attest_artifact_dir"
 )
 
