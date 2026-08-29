@@ -3,13 +3,14 @@
 # outcome to $RESULTS_FILE for the CI workflow to report as a Kosli
 # attestation.
 #
-# Usage: IMAGE=... TAG=... RESULTS_FILE=... [EXPECTED_VERSION=...] \
+# Usage: IMAGE=... TAG=... RESULTS_FILE=... EXPECTED_VERSION=... \
 #          ./scripts/docker-smoke-tests.sh
 set -uo pipefail
 
 IMAGE="${IMAGE:?IMAGE is required}"
 TAG="${TAG:?TAG is required}"
 RESULTS_FILE="${RESULTS_FILE:?RESULTS_FILE is required}"
+EXPECTED_VERSION="${EXPECTED_VERSION:?EXPECTED_VERSION is required}"
 
 REPO_ROOT="${GITHUB_WORKSPACE:-$(git rev-parse --show-toplevel)}"
 if [ -z "$REPO_ROOT" ]; then
@@ -58,23 +59,10 @@ run_case() {
 # Add a new smoke test by writing a test_* function below and adding one
 # entry to the CASES array further down — no CI workflow changes needed.
 
-# Asserts the image reports the release it was published as, built from a clean
-# tree at the built commit — the two halves of #1133. EXPECTED_VERSION is the
-# exact version required — the same value CI baked into the binary; empty or
-# unset means a non-release build, which must report dev+<sha>.
+# Asserts the image reports the version it ships as, built from a clean tree at
+# the built commit — the two halves of #1133. EXPECTED_VERSION is what CI baked in.
 test_version() {
-  local full short commit from_tag
-
-  # EXPECTED_VERSION and the baked-in version share one workflow output, so a
-  # misclassification there would have both agree on the wrong answer. Derive
-  # the expectation from the image tag instead and compare: a release tag must
-  # carry its own version, and a sha tag must carry none.
-  from_tag=""
-  [[ "$TAG" =~ ^v[0-9] ]] && from_tag="$TAG"
-  if [ "${EXPECTED_VERSION:-}" != "$from_tag" ]; then
-    echo "image tag ${TAG} implies '${from_tag}' but the build baked '${EXPECTED_VERSION:-}'" >&2
-    return 1
-  fi
+  local full short commit
 
   full="$(docker run --rm -e KOSLI_NO_UPDATE_CHECK=1 "${IMAGE}:${TAG}" version)" || return 1
   echo "$full"
@@ -95,13 +83,8 @@ test_version() {
   short="$(docker run --rm -e KOSLI_NO_UPDATE_CHECK=1 "${IMAGE}:${TAG}" version --short)" || return 1
   echo "version --short: ${short}"
 
-  if [ -n "${EXPECTED_VERSION:-}" ]; then
-    if [ "$short" != "$EXPECTED_VERSION" ]; then
-      echo "expected version ${EXPECTED_VERSION}, got ${short}" >&2
-      return 1
-    fi
-  elif ! grep -qE '^dev\+[0-9a-f]{7,}$' <<< "$short"; then
-    echo "expected dev+<sha> for a non-release build, got ${short}" >&2
+  if [ "$short" != "$EXPECTED_VERSION" ]; then
+    echo "expected version ${EXPECTED_VERSION}, got ${short}" >&2
     return 1
   fi
 }

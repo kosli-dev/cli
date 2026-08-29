@@ -49,8 +49,7 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Job 1: Resolve the platforms input into a JSON matrix, and resolve the
-  # version the built binary must report.
+  # Job 1: Resolve the platforms input into a JSON matrix.
   #
   # Why a separate job: workflow-level matrix entries must be static or come
   # from job outputs; they cannot be computed inline from an input string.
@@ -62,7 +61,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      version: ${{ steps.set-version.outputs.version }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
@@ -96,23 +94,6 @@ jobs:
                 )
               ')
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
-
-      # The one place that decides whether this is a release build: the build
-      # job bakes this into the binary and the smoke test asserts the image
-      # reports it. Empty means "not a release" — the binary reports dev+<sha>.
-      - name: Resolve the version to build
-        id: set-version
-        env:
-          TAG: ${{ inputs.tag }}
-        run: |
-          # Strict because the value reaches single-quoted ldflags. The smoke
-          # test tripwires on the looser ^v[0-9], so a tag rejected here fails
-          # loudly there instead of publishing a release image as dev+<sha>.
-          VERSION=""
-          if [[ "$TAG" =~ ^v[0-9][A-Za-z0-9.+_-]*$ ]]; then
-            VERSION="$TAG"
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
 
   # ---------------------------------------------------------------------------
@@ -169,8 +150,10 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          # The image reports the tag it is published under — a release version
+          # or a sha. Nothing infers which, so the two cannot disagree (#1133).
           build-args: |
-            VERSION=${{ needs.prepare.outputs.version }}
+            VERSION=${{ inputs.tag }}
           # Push without a tag — the merge job creates the final manifest.
           platforms: ${{ matrix.platform }}
           outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
@@ -203,7 +186,7 @@ jobs:
   merge:
     name: Docker Merge & Attest
     runs-on: ubuntu-latest
-    needs: [prepare, build]
+    needs: [build]
     permissions:
       id-token: write
       contents: write
@@ -369,7 +352,7 @@ jobs:
           IMAGE: ${{ env.IMAGE }}
           TAG: ${{ inputs.tag }}
           # The same value the build job baked in.
-          EXPECTED_VERSION: ${{ needs.prepare.outputs.version }}
+          EXPECTED_VERSION: ${{ inputs.tag }}
         run: ./scripts/docker-smoke-tests.sh
 
       - name: Report Docker smoke test attestation to Kosli

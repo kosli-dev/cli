@@ -73,6 +73,15 @@ func TestCheckForUpdate_DevBuildWithMetadata(t *testing.T) {
 	assert.Empty(t, notice)
 }
 
+func TestCheckForUpdate_ShaTaggedBuild(t *testing.T) {
+	// Branch containers report their short sha — skip without any HTTP call.
+	for _, version := range []string{"2cd8d803", "12345678"} {
+		notice, err := checkForUpdateWithURL(version, "http://should-not-be-called")
+		assert.NoError(t, err)
+		assert.Empty(t, notice)
+	}
+}
+
 func TestCheckForUpdate_NetworkError(t *testing.T) {
 	notice, err := checkForUpdateWithURL("v0.1.0", "http://localhost:1") // nothing listening
 	assert.NoError(t, err)                                               // must be silent

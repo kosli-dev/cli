@@ -65,8 +65,9 @@ func checkForUpdateWithURL(currentVersion string, apiURL string) (string, error)
 	if os.Getenv("KOSLI_NO_UPDATE_CHECK") != "" {
 		return "", nil
 	}
-	// dev build — skip
-	if currentVersion == "" || strings.HasPrefix(currentVersion, "dev") {
+	// Not a release build — skip. Releases are v-prefixed; dev builds report
+	// "dev"/"dev+<sha>" and branch containers report their short sha.
+	if !strings.HasPrefix(currentVersion, "v") {
 		return "", nil
 	}
 

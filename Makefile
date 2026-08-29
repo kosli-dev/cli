@@ -21,13 +21,12 @@ GOTESTSUM  = $(shell which gotestsum || echo "~/go/bin/gotestsum")
 # These are only used when running tests locally (real CI already sets them).
 FAKE_CI_ENV = GITHUB_RUN_NUMBER=1 GITHUB_SERVER_URL=https://github.com GITHUB_REPOSITORY=kosli-dev/cli GITHUB_REPOSITORY_ID=123456
 
-# VERSION is the release version the binary reports. Without it we fall back to
-# the tag at HEAD, so a local `make build` in a checked-out release still
-# reports it. Passed on the command line — empty string included, meaning "not
-# a release" — it wins, which is how CI keeps a build off the checkout's tags
-# (#1133). Only a command-line assignment counts, so an inherited environment
-# VERSION cannot silently stamp a release: `origin` yields multi-word strings
-# ("command line", "environment override"), and filter-out cannot confuse them.
+# VERSION is the version the binary reports. Unset, we fall back to the tag at
+# HEAD so a local `make build` in a checked-out release still reports it; passed
+# on the command line it wins outright, which is how CI stamps the image tag it
+# publishes under (#1133). Only a command-line assignment counts, so an ambient
+# VERSION cannot stamp a release: `origin` yields multi-word strings ("command
+# line", "environment override"), so filter-out is correct where filter is not.
 ifneq ($(filter-out command line override,$(origin VERSION)),)
 	BINARY_VERSION = $(GIT_TAG)
 else
