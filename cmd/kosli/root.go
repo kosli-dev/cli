@@ -297,7 +297,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	attachPolicyEnvFlag             = "the list of environment names to attach the policy to"
 	detachPolicyEnvFlag             = "the list of environment names to detach the policy from"
 	sonarAPITokenFlag               = "[required] SonarQube API token."
-	sonarWorkingDirFlag             = "[conditional] The base directory of the repo scanned by SonarQube. Only required if you have overridden the default in the sonar scanner or you are running the CLI locally in a separate folder from the repo."
+	sonarWorkingDirFlag             = "[conditional] The base directory of the repo scanned by SonarQube. Only required if you have overridden the default in the Sonar scanner or you are running the CLI locally in a separate folder from the repo."
 	sonarProjectKeyFlag             = "[conditional] The project key of the SonarQube project. Only required if you want to use the project key/revision/pull-request to get the scan results rather than using Sonar's metadata file."
 	sonarServerURLFlag              = "[conditional] The URL of your SonarQube server. Only required if you are using SonarQube Server and not using SonarQube's metadata file to get scan results."
 	sonarRevisionFlag               = "[conditional] The revision of the SonarQube project. Only required if you want to use the project key/revision to get the scan results rather than using Sonar's metadata file and you have overridden the default revision, or you aren't using a CI. Defaults to the value of the git commit flag. Cannot be used with --pull-request."
