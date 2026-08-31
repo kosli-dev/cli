@@ -166,7 +166,6 @@ jobs:
 
       # GoReleaser puts RELEASE_HEADER above the changelog it generates.
       - name: Export release notes from tag
-        id: get-tag-notes
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           # %(contents:body) would drop the first paragraph as a "subject",
@@ -178,12 +177,14 @@ jobs:
           if [ "$(printf '%s' "$BODY" | tr -d '[:space:]')" = "$TAG" ]; then
             BODY=""
           fi
-          # Always define it — the header template errors on a missing key.
           # $GITHUB_ENV, not a step output: multi-line values break `env:`.
+          # Random delimiter — a fixed one appearing in the body would break the
+          # write, or let the body define env vars of its own.
+          DELIM="EOF_$(openssl rand -hex 16)"
           {
-            echo "RELEASE_HEADER<<KOSLI_NOTES_EOF"
+            echo "RELEASE_HEADER<<$DELIM"
             printf '%s\n' "$BODY"
-            echo "KOSLI_NOTES_EOF"
+            echo "$DELIM"
           } >> "$GITHUB_ENV"
 
       - name: Run GoReleaser

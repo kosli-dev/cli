@@ -121,9 +121,11 @@ release:
   prerelease: auto
   draft: false
   disable: false
-  # Release notes from the tag body, exported by the release workflow.
+  # Release notes from the tag body, exported by the release workflow. `index`,
+  # not `.Env.RELEASE_HEADER`: templates run with missingkey=error, so the dot
+  # form fails a local `make build_release`, where the var is unset.
   header: |
-    {{ .Env.RELEASE_HEADER }}
+    {{ index .Env "RELEASE_HEADER" }}
 
 changelog:
   # GitHub's "What's Changed" PR list. Ignores sort/filters/groups — ordering
