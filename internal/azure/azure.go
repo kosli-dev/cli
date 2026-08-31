@@ -169,7 +169,9 @@ func (c *AzureConfig) GetPullRequestCommits(pr git.GitPullRequest) ([]types.Comm
 		Project:       &c.Project,
 	}, defaultMaxPages)
 	if err != nil {
-		return commits, err
+		// fetchAzurePRCommits cannot name the PR without risking a nil
+		// dereference, so the identity is added here.
+		return commits, fmt.Errorf("draining commits for pull request %d: %w", *pr.PullRequestId, err)
 	}
 
 	for _, commit := range prCommits {

@@ -109,6 +109,12 @@ type prRef struct {
 	Number int
 }
 
+// String renders ref the way GitHub writes a pull request reference, so the
+// errors wrapping a drain can name it.
+func (r prRef) String() string {
+	return fmt.Sprintf("%s/%s#%d", r.Owner, r.Repo, r.Number)
+}
+
 // owns reports whether ref names the configured repository. GitHub owner and
 // repo names are case-insensitive, so a differently-cased config value still
 // names the same repo.
@@ -133,7 +139,7 @@ func pageVariables(ref prRef, after graphql.String) map[string]any {
 // so draining one connection never re-fetches the other.
 func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, ref prRef,
 	seed []graphqlCommitNode, first pageInfo) ([]graphqlCommitNode, error) {
-	return paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlCommitNode, pageInfo, error) {
+	commits, err := paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlCommitNode, pageInfo, error) {
 		var q struct {
 			Repository struct {
 				PullRequest struct {
@@ -147,15 +153,19 @@ func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, r
 		if err := run(ctx, &q, pageVariables(ref, after)); err != nil {
 			return nil, pageInfo{}, err
 		}
-		commits := q.Repository.PullRequest.Commits
-		return commits.Nodes, commits.PageInfo, nil
+		page := q.Repository.PullRequest.Commits
+		return page.Nodes, page.PageInfo, nil
 	})
+	if err != nil {
+		return nil, fmt.Errorf("draining commits for %s: %w", ref, err)
+	}
+	return commits, nil
 }
 
 // allPRReviews returns every approved review on prNumber, seeded as above.
 func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, ref prRef,
 	seed []graphqlReviewNode, first pageInfo) ([]graphqlReviewNode, error) {
-	return paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlReviewNode, pageInfo, error) {
+	reviews, err := paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlReviewNode, pageInfo, error) {
 		var q struct {
 			Repository struct {
 				PullRequest struct {
@@ -169,7 +179,11 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, r
 		if err := run(ctx, &q, pageVariables(ref, after)); err != nil {
 			return nil, pageInfo{}, err
 		}
-		reviews := q.Repository.PullRequest.Reviews
-		return reviews.Nodes, reviews.PageInfo, nil
+		page := q.Repository.PullRequest.Reviews
+		return page.Nodes, page.PageInfo, nil
 	})
+	if err != nil {
+		return nil, fmt.Errorf("draining approvals for %s: %w", ref, err)
+	}
+	return reviews, nil
 }

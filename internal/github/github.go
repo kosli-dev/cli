@@ -26,9 +26,9 @@ type GithubConfig struct {
 	Repository string
 	Debug      bool
 	// Sleep replaces the wait between GraphQL retries — every retry, including
-	// the follow-up page queries of both PR-evidence entry points. Nil means a
-	// real time.Sleep that honours context cancellation; setting it bypasses
-	// that, so leave it nil to exercise the cancellation path.
+	// the follow-up page queries of both PR-evidence entry points. Nil means an
+	// interruptible wait that returns as soon as the context is cancelled;
+	// setting it bypasses that, so leave it nil to exercise cancellation.
 	Sleep func(time.Duration)
 }
 

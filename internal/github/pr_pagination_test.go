@@ -317,3 +317,32 @@ func TestPREvidenceForCommitV2_DoesNotRetryCrossRepoFollowUp(t *testing.T) {
 	require.Error(t, err)
 	require.Len(t, ts.bodies, 2, "a cross-repo follow-up must not be retried")
 }
+
+// A stuck cursor is a hard failure now, so the message is the whole
+// user-facing surface of the change — it has to say which PR gave up.
+func TestPREvidenceForCommitV2_DrainErrorNamesThePullRequest(t *testing.T) {
+	ts := newGraphQLTestServer(t,
+		forCommitResponse(v2PRNodeInRepoJSON("upstream-org", "upstream-repo", 42,
+			connectionJSON([]string{commitNodeJSON("sha1")}, "stuck"),
+			connectionJSON(nil, ""))),
+		commitsPageResponse([]string{commitNodeJSON("sha2")}, "stuck"),
+	)
+
+	_, err := newPaginationConfig(ts).PREvidenceForCommitV2("merge-sha")
+	require.ErrorContains(t, err, "upstream-org/upstream-repo#42")
+	require.ErrorContains(t, err, "commits")
+	require.ErrorContains(t, err, "did not advance", "the cause must survive the wrap")
+}
+
+func TestPREvidenceByPRNumber_ApprovalDrainErrorNamesThePullRequest(t *testing.T) {
+	ts := newGraphQLTestServer(t,
+		byPRNumberResponse(
+			connectionJSON([]string{commitNodeJSON("sha1")}, ""),
+			connectionJSON([]string{reviewNodeJSON("ada")}, "stuck")),
+		reviewsPageResponse([]string{reviewNodeJSON("grace")}, "stuck"),
+	)
+
+	_, err := newPaginationConfig(ts).PREvidenceByPRNumber(7)
+	require.ErrorContains(t, err, "test-org/test-repo#7")
+	require.ErrorContains(t, err, "approvals")
+}
