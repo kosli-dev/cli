@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -225,6 +226,9 @@ func TestListMergeRequestsForCommit_ErrorsWhenNextPageDoesNotAdvance(t *testing.
 
 	_, err := newPaginationConfig(ts.URL).MergeRequestsForCommit("abc123")
 	require.ErrorContains(t, err, "did not advance")
+	// Unwrap, not ErrorContains: the message survives %v too, so only the
+	// chain distinguishes a wrapped cause from an interpolated one.
+	require.ErrorContains(t, errors.Unwrap(err), "did not advance", "the cause must stay unwrappable")
 	// page starts at 1, so "next is 1" is already non-advancing: it fails on
 	// the first response rather than burning maxPages round trips.
 	require.Equal(t, 1, calls)

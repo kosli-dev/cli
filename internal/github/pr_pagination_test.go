@@ -1,6 +1,7 @@
 package github
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -331,7 +332,9 @@ func TestPREvidenceForCommitV2_DrainErrorNamesThePullRequest(t *testing.T) {
 	_, err := newPaginationConfig(ts).PREvidenceForCommitV2("merge-sha")
 	require.ErrorContains(t, err, "upstream-org/upstream-repo#42")
 	require.ErrorContains(t, err, "commits")
-	require.ErrorContains(t, err, "did not advance", "the cause must survive the wrap")
+	// Unwrap, not ErrorContains: the message survives %v too, so only the chain
+	// distinguishes a wrapped cause from an interpolated one.
+	require.ErrorContains(t, errors.Unwrap(err), "did not advance", "the cause must stay unwrappable")
 }
 
 func TestPREvidenceByPRNumber_ApprovalDrainErrorNamesThePullRequest(t *testing.T) {
