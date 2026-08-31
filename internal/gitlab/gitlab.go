@@ -13,9 +13,6 @@ type GitlabConfig struct {
 	BaseURL    string
 	Org        string
 	Repository string
-	// MaxPages bounds pagination loops; zero means defaultMaxPages. Set it in
-	// tests to keep the stuck-cursor cases cheap.
-	MaxPages int
 }
 
 // GetClientOptFns creates a list of ClientOptionFunc
@@ -190,7 +187,7 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 	if err != nil {
 		return commits, err
 	}
-	glCommits, err := c.listMergeRequestCommits(client, mr.IID, c.maxPages())
+	glCommits, err := c.listMergeRequestCommits(client, mr.IID, defaultMaxPages)
 	if err != nil {
 		return commits, err
 	}

@@ -8,8 +8,15 @@ import (
 	"github.com/shurcooL/graphql"
 )
 
-// defaultMaxPages bounds pagination when a caller does not set MaxPages.
-const defaultMaxPages = 100
+const (
+	// defaultMaxPages bounds every pagination loop. It is a guard against an
+	// API that keeps reporting more results, not a tunable limit: at 100 pages
+	// of 100 items it sits far beyond any real pull request.
+	defaultMaxPages = 100
+	// restPageSize is GitHub's REST maximum. The zero-valued list options used
+	// before sent no per_page at all, so the API's default of 30 applied (#1082).
+	restPageSize = 100
+)
 
 // pageInfo is the cursor block shared by every paginated GraphQL connection.
 type pageInfo struct {
@@ -17,22 +24,18 @@ type pageInfo struct {
 	EndCursor   graphql.String
 }
 
-// maxPages resolves the configured page cap, falling back to the default.
-func (c *GithubConfig) maxPages() int {
-	if c.MaxPages > 0 {
-		return c.MaxPages
-	}
-	return defaultMaxPages
-}
-
 // paginate follows cursors from first onwards, appending each page to seed.
 // It errors rather than returning early when the cap is hit or a cursor
 // repeats: silently stopping is the truncation bug this fixes (#1082).
+//
+// The counter starts at 1 because seed is already the first page, so maxPages
+// means the same "at most N pages of results" here as in the REST, GitLab and
+// Azure loops, which count their first request inside the budget.
 func paginate[T any](seed []T, first pageInfo, maxPages int,
 	fetch func(after graphql.String) ([]T, pageInfo, error)) ([]T, error) {
 	all := seed
 	page := first
-	for pages := 0; page.HasNextPage; pages++ {
+	for pages := 1; page.HasNextPage; pages++ {
 		if pages >= maxPages {
 			return nil, fmt.Errorf("aborting after %d pages: the API keeps reporting more results", maxPages)
 		}
@@ -92,7 +95,7 @@ func (c *GithubConfig) pageVariables(prNumber int, after graphql.String) map[str
 // so draining one connection never re-fetches the other.
 func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, prNumber int,
 	seed []graphqlCommitNode, first pageInfo) ([]graphqlCommitNode, error) {
-	return paginate(seed, first, c.maxPages(), func(after graphql.String) ([]graphqlCommitNode, pageInfo, error) {
+	return paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlCommitNode, pageInfo, error) {
 		var q struct {
 			Repository struct {
 				PullRequest struct {
@@ -114,7 +117,7 @@ func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, p
 // allPRReviews returns every approved review on prNumber, seeded as above.
 func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, prNumber int,
 	seed []graphqlReviewNode, first pageInfo) ([]graphqlReviewNode, error) {
-	return paginate(seed, first, c.maxPages(), func(after graphql.String) ([]graphqlReviewNode, pageInfo, error) {
+	return paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlReviewNode, pageInfo, error) {
 		var q struct {
 			Repository struct {
 				PullRequest struct {
@@ -132,7 +135,3 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, p
 		return reviews.Nodes, reviews.PageInfo, nil
 	})
 }
-
-// restPageSize is GitHub's REST maximum. The zero-valued list options used
-// before sent no per_page at all, so the API's default of 30 applied (#1082).
-const restPageSize = 100

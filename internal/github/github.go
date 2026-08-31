@@ -28,9 +28,6 @@ type GithubConfig struct {
 	// Sleep is called between retries in PREvidenceByPRNumber. Defaults to
 	// time.Sleep when nil. Override in tests to avoid real delays.
 	Sleep func(time.Duration)
-	// MaxPages bounds pagination loops; zero means defaultMaxPages. Set it in
-	// tests to keep the stuck-cursor cases cheap.
-	MaxPages int
 }
 
 type GithubFlagsTempValueHolder struct {
@@ -583,7 +580,7 @@ func (c *GithubConfig) PullRequestsForCommit(commit string) ([]*gh.PullRequest, 
 
 	opts := &gh.PullRequestListOptions{ListOptions: gh.ListOptions{PerPage: restPageSize}}
 	all := []*gh.PullRequest{}
-	for pages := 0; pages < c.maxPages(); pages++ {
+	for pages := 0; pages < defaultMaxPages; pages++ {
 		pullrequests, resp, err := client.PullRequests.ListPullRequestsWithCommit(ctx, c.Org, c.Repository,
 			commit, opts)
 		if err != nil {
@@ -595,7 +592,7 @@ func (c *GithubConfig) PullRequestsForCommit(commit string) ([]*gh.PullRequest, 
 		}
 		opts.Page = resp.NextPage
 	}
-	return all, fmt.Errorf("aborting after %d pages of pull requests for commit %s", c.maxPages(), commit)
+	return all, fmt.Errorf("aborting after %d pages of pull requests for commit %s", defaultMaxPages, commit)
 }
 
 // GetPullRequestApprovers returns a list of approvers for a given pull request
@@ -610,7 +607,7 @@ func (c *GithubConfig) GetPullRequestApprovers(number int) ([]string, error) {
 	// APPROVED filter below must run over all pages: an approval past page one
 	// was previously dropped outright (#1082).
 	opts := &gh.ListOptions{PerPage: restPageSize}
-	for pages := 0; pages < c.maxPages(); pages++ {
+	for pages := 0; pages < defaultMaxPages; pages++ {
 		reviews, resp, err := client.PullRequests.ListReviews(ctx, c.Org, c.Repository, number, opts)
 		if err != nil {
 			return approvers, err
@@ -625,7 +622,7 @@ func (c *GithubConfig) GetPullRequestApprovers(number int) ([]string, error) {
 		}
 		opts.Page = resp.NextPage
 	}
-	return approvers, fmt.Errorf("aborting after %d pages of reviews for pull request %d", c.maxPages(), number)
+	return approvers, fmt.Errorf("aborting after %d pages of reviews for pull request %d", defaultMaxPages, number)
 }
 
 func (c *GithubConfig) newPRGithubEvidence(pr *gh.PullRequest) (*types.PREvidence, error) {

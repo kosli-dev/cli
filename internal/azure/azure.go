@@ -158,21 +158,21 @@ func (c *AzureConfig) GetPullRequestCommits(pr git.GitPullRequest) ([]types.Comm
 	commits := []types.Commit{}
 
 	ctx := context.Background()
-	client, err := NewAzureClientFromToken(ctx, c.Token, c.OrgURL)
+	client, err := newPRCommitsClient(ctx, c.Token, c.OrgURL)
 	if err != nil {
 		return commits, err
 	}
 
-	prCommitsResponse, err := client.GetPullRequestCommits(ctx, git.GetPullRequestCommitsArgs{
+	prCommits, err := fetchAzurePRCommits(ctx, client, git.GetPullRequestCommitsArgs{
 		RepositoryId:  &c.Repository,
 		PullRequestId: pr.PullRequestId,
 		Project:       &c.Project,
-	})
+	}, defaultMaxPages)
 	if err != nil {
 		return commits, err
 	}
 
-	for _, commit := range prCommitsResponse.Value {
+	for _, commit := range prCommits {
 		commits = append(commits, commitFromAzureCommit(commit, *pr.SourceRefName))
 	}
 

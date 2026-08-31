@@ -72,7 +72,7 @@ func TestPaginate_ErrorsPastMaxPages(t *testing.T) {
 		})
 
 	require.ErrorContains(t, err, "2 pages")
-	require.Equal(t, 2, calls, "should stop at the cap")
+	require.Equal(t, 1, calls, "seed is page 1, so a cap of 2 allows one fetch")
 }
 
 func TestPaginate_PropagatesFetchError(t *testing.T) {
@@ -83,9 +83,4 @@ func TestPaginate_PropagatesFetchError(t *testing.T) {
 		})
 
 	require.ErrorIs(t, err, wantErr)
-}
-
-func TestMaxPages_DefaultsWhenUnset(t *testing.T) {
-	require.Equal(t, defaultMaxPages, (&GithubConfig{}).maxPages())
-	require.Equal(t, 3, (&GithubConfig{MaxPages: 3}).maxPages())
 }

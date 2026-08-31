@@ -7,20 +7,13 @@ import (
 )
 
 const (
-	// defaultMaxPages bounds pagination when a caller does not set MaxPages.
+	// defaultMaxPages bounds every pagination loop. It guards against an API
+	// that keeps reporting more results; it is not a tunable limit.
 	defaultMaxPages = 100
 	// listPageSize is GitLab's maximum. The zero-valued options used before
 	// sent no per_page, so GitLab's default of 20 applied (#1082).
 	listPageSize = 100
 )
-
-// maxPages resolves the configured page cap, falling back to the default.
-func (c *GitlabConfig) maxPages() int {
-	if c.MaxPages > 0 {
-		return c.MaxPages
-	}
-	return defaultMaxPages
-}
 
 // listMergeRequestCommits returns every commit on an MR. GitLab's default page
 // size is 20, which silently truncated the commit list on larger MRs (#1082).
