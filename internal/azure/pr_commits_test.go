@@ -136,3 +136,21 @@ func TestGetPullRequestCommits_MapsEveryPage(t *testing.T) {
 	require.Equal(t, sourceRef, commits[0].Branch)
 	require.Equal(t, "Ada <ada@example.com>", commits[0].Author)
 }
+
+// A nil PullRequestId is the one input the SDK rejects outright
+// (git/client.go:3434), so it is also the only input that reaches the error
+// wrap without an id — which must therefore not dereference it.
+func TestGetPullRequestCommits_NilPullRequestIDReturnsErrorNotPanic(t *testing.T) {
+	client := &fakePRCommitsClient{err: errors.New("args.PullRequestId")}
+	original := newPRCommitsClient
+	newPRCommitsClient = func(context.Context, string, string) (prCommitsClient, error) { return client, nil }
+	t.Cleanup(func() { newPRCommitsClient = original })
+
+	sourceRef := "refs/heads/feature"
+	config := &AzureConfig{Token: "t", OrgURL: "https://dev.azure.com/o", Project: "p", Repository: "r"}
+
+	_, err := config.GetPullRequestCommits(git.GitPullRequest{SourceRefName: &sourceRef})
+
+	require.ErrorContains(t, err, "args.PullRequestId", "the SDK's reason must survive")
+	require.ErrorContains(t, err, "pull request", "the wrap must still say what failed")
+}

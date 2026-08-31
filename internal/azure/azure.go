@@ -169,9 +169,13 @@ func (c *AzureConfig) GetPullRequestCommits(pr git.GitPullRequest) ([]types.Comm
 		Project:       &c.Project,
 	}, defaultMaxPages)
 	if err != nil {
-		// fetchAzurePRCommits cannot name the PR without risking a nil
-		// dereference, so the identity is added here.
-		return commits, fmt.Errorf("draining commits for pull request %d: %w", *pr.PullRequestId, err)
+		// A nil id is the one input the SDK rejects outright, so it is also the
+		// only one that reaches here without an id to name.
+		prID := "with no id"
+		if pr.PullRequestId != nil {
+			prID = strconv.Itoa(*pr.PullRequestId)
+		}
+		return commits, fmt.Errorf("draining commits for pull request %s: %w", prID, err)
 	}
 
 	for _, commit := range prCommits {
