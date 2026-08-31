@@ -121,7 +121,13 @@ release:
   prerelease: auto
   draft: false
   disable: false
+  # Release notes from the tag body, exported by the release workflow. `index`,
+  # not `.Env.RELEASE_HEADER`: templates run with missingkey=error, so the dot
+  # form errors on any run where the var is unset (e.g. a local goreleaser run).
+  header: |
+    {{ index .Env "RELEASE_HEADER" }}
 
 changelog:
-  use: git # github(-native)
-  sort: asc
+  # GitHub's "What's Changed" PR list. Ignores sort/filters/groups — ordering
+  # and exclusions live in .github/release.yml.
+  use: github-native

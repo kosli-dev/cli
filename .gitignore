@@ -19,7 +19,6 @@ npm/*/kosli*.tgz
 *~
 /.idea
 tmp/
-release_notes.md
 junit.xml
 junit-test-results/.
 .claude/settings.local.json

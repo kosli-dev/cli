@@ -30,7 +30,6 @@ tmp
 client_reference
 **/*~
 TODO.md
-release_notes.md
 .claude/settings.local.json
 .idea
 .vscode

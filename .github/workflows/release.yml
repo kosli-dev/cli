@@ -164,34 +164,35 @@ jobs:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
-      # Use release notes from the tag body when present (set by interactive `make release` or `make release tag=vX.Y.Z` with dist/release_notes.md). Otherwise GoReleaser uses its default changelog.
-      # Write to repo root so GoReleaser's --clean (which removes dist/) does not delete the file before it is read.
-      - name: Get release notes from tag
-        id: get-tag-notes
+      # GoReleaser puts RELEASE_HEADER above the changelog it generates.
+      - name: Export release notes from tag
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          # %(contents), not %(contents:body): the latter drops the tag message's
-          # first paragraph as a "subject", silently swallowing the first heading
-          # or bullet of the release notes. Unlike %(contents:body), %(contents)
-          # keeps the signature of a signed tag, so cut it off at its marker.
+          # %(contents:body) would drop the first paragraph as a "subject",
+          # swallowing the first heading; %(contents) keeps a signed tag's
+          # signature, so cut that off instead.
           BODY=$(git tag -l --format='%(contents)' "$TAG" \
             | sed '/^-----BEGIN [A-Z ]*SIGNATURE-----$/,$d')
-          # `make release tag=vX.Y.Z` with no dist/release_notes.md tags with the
-          # version as the whole message; that is not release notes.
+          # `make release tag=vX.Y.Z` with no notes tags with the version alone.
           if [ "$(printf '%s' "$BODY" | tr -d '[:space:]')" = "$TAG" ]; then
             BODY=""
           fi
-          if [ -n "$BODY" ]; then
-            printf '%s' "$BODY" > release_notes.md
-            echo "args=--release-notes=release_notes.md" >> $GITHUB_OUTPUT
-          fi
+          # $GITHUB_ENV, not a step output: multi-line values break `env:`.
+          # Random delimiter — a fixed one appearing in the body would break the
+          # write, or let the body define env vars of its own.
+          DELIM="EOF_$(openssl rand -hex 16)"
+          {
+            echo "RELEASE_HEADER<<$DELIM"
+            printf '%s\n' "$BODY"
+            echo "$DELIM"
+          } >> "$GITHUB_ENV"
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser-pro
           version: '~> v2' # latest
-          args: release --clean ${{ steps.get-tag-notes.outputs.args }}
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
