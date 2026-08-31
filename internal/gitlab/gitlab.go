@@ -13,6 +13,9 @@ type GitlabConfig struct {
 	BaseURL    string
 	Org        string
 	Repository string
+	// MaxPages bounds pagination loops; zero means defaultMaxPages. Set it in
+	// tests to keep the stuck-cursor cases cheap.
+	MaxPages int
 }
 
 // GetClientOptFns creates a list of ClientOptionFunc
@@ -187,11 +190,12 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 	if err != nil {
 		return commits, err
 	}
-	glCommits, _, err := client.MergeRequests.GetMergeRequestCommits(c.ProjectID(), mr.IID,
-		&gitlab.GetMergeRequestCommitsOptions{})
+	glCommits, err := c.listMergeRequestCommits(client, mr.IID, c.maxPages())
 	if err != nil {
 		return commits, err
 	}
+	// One signature lookup per commit: pagination multiplies this, but GitLab
+	// has no batch signature endpoint.
 	for _, commit := range glCommits {
 		mappedCommit := commitFromGitlabCommit(commit, mr.SourceBranch)
 		verified, signatureState, err := resolveGitlabSignature(
