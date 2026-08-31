@@ -1,0 +1,6 @@
+# Release notes GitHub generates, requested by .goreleaser.yml's github-native
+# changelog.
+changelog:
+  exclude:
+    labels:
+      - dependencies # Dependabot labels every PR it opens; see dependabot.yml

@@ -45,7 +45,16 @@ make release
 
 1. A script uses Claude to suggest the next semver and draft release notes from the **git diff** (no commit messages). It reads the API key from 1Password via `op` using a default secret reference (vault/item/field); you can override with `OP_ANTHROPIC_API_KEY_REF` if your item lives elsewhere.
 2. You see the suggested tag and release notes. You can press Enter to open your editor and edit `dist/release_notes.md`, or Enter to skip.
-3. You are prompted: **Create tag vX.Y.Z and push? [y/N]**. On **y**, an annotated tag is created with the release notes as the tag body and pushed. The `release.yml` workflow runs on GitHub; it reads the notes from the tag body and passes them to GoReleaser for the GitHub Release. On **n**, nothing is pushed.
+3. You are prompted: **Create tag vX.Y.Z and push? [y/N]**. On **y**, an annotated tag is created with the release notes as the tag body and pushed. The `release.yml` workflow runs on GitHub; it reads the notes from the tag body and passes them to GoReleaser, which puts them at the top of the GitHub Release. On **n**, nothing is pushed.
+
+### Release body layout
+
+The release body has two parts:
+
+1. The notes carried in the tag body — AI-drafted, edited by you, describing user-facing CLI changes.
+2. GitHub's **What's Changed** list of merged PRs and the **Full Changelog** compare link, from GoReleaser's `github-native` changelog. Dependency bumps are filtered out by `.github/release.yml`.
+
+A tag with no notes gets part 2 only.
 
 ### Fallback: release with an explicit tag
 
@@ -55,7 +64,7 @@ If you don’t want the AI flow (e.g. 1Password/`op` not available or the sugges
 make release tag=v2.x.y
 ```
 
-This checks the branch is up to date, creates an annotated tag (using `dist/release_notes.md` as the tag body if that file exists, otherwise the version string), and pushes it. No prompt. The release workflow runs as above; if the tag has no body, GoReleaser uses its default changelog on the GitHub Release.
+This checks the branch is up to date, creates an annotated tag (using `dist/release_notes.md` as the tag body if that file exists, otherwise the version string), and pushes it. No prompt. The release workflow runs as above; if the tag has no notes, the release body is the auto-generated **What's Changed** list alone.
 
 ### 1. Pre-build
 

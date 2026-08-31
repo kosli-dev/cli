@@ -121,7 +121,11 @@ release:
   prerelease: auto
   draft: false
   disable: false
+  # Release notes from the tag body, exported by the release workflow.
+  header: |
+    {{ .Env.RELEASE_HEADER }}
 
 changelog:
-  use: git # github(-native)
-  sort: asc
+  # GitHub's "What's Changed" PR list. Ignores sort/filters/groups — ordering
+  # and exclusions live in .github/release.yml.
+  use: github-native
