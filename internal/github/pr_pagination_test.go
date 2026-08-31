@@ -204,9 +204,11 @@ func v2PRNodeInRepoJSON(owner, repo string, number int, commits, reviews string)
 		number, repo, owner, owner, repo, number, commits, reviews)
 }
 
+// forCommitResponse carries no pageInfo for the PR connection: the query does
+// not select one, and shurcooL's decoder rejects fields the struct lacks.
 func forCommitResponse(prNodes ...string) string {
-	return fmt.Sprintf(`{"data":{"repository":{"object":{"associatedPullRequests":%s}}}}`,
-		connectionJSON(prNodes, ""))
+	return fmt.Sprintf(`{"data":{"repository":{"object":{"associatedPullRequests":{"nodes":[%s]}}}}}`,
+		strings.Join(prNodes, ","))
 }
 
 func TestPREvidenceForCommitV2_FollowsCommitPagesPerPR(t *testing.T) {

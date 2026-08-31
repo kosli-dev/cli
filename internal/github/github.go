@@ -508,11 +508,11 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 								PageInfo pageInfo
 							} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
 						}
-						// Intentionally not paginated: a commit with more than 100
-						// associated PRs is not a realistic case, and draining it
-						// would mean nesting a page walk per PR page (#1082).
-						PageInfo pageInfo
-					} `graphql:"associatedPullRequests(first: 100, after: $prCursor)"`
+						// Intentionally not paginated, so no cursor is selected: a
+						// commit with more than 100 associated PRs is not a realistic
+						// case, and draining it would mean nesting a page walk per
+						// PR page (#1082).
+					} `graphql:"associatedPullRequests(first: 100)"`
 				} `graphql:"... on Commit"`
 			} `graphql:"object(oid: $commitSHA)"`
 		} `graphql:"repository(owner: $owner, name: $repo)"`
@@ -522,7 +522,6 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		"owner":        graphql.String(c.Org),
 		"repo":         graphql.String(c.Repository),
 		"commitSHA":    GitObjectID(commit),
-		"prCursor":     (*graphql.String)(nil),
 		"commitCursor": (*graphql.String)(nil),
 		"reviewCursor": (*graphql.String)(nil),
 	}

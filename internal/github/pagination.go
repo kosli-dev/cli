@@ -35,7 +35,9 @@ type pageInfo struct {
 // Azure loops, which count their first request inside the budget.
 func paginate[T any](seed []T, first pageInfo, maxPages int,
 	fetch func(after graphql.String) ([]T, pageInfo, error)) ([]T, error) {
-	all := seed
+	// Cap the seed at its length so the first append allocates instead of
+	// writing into spare capacity the caller still owns.
+	all := seed[:len(seed):len(seed)]
 	page := first
 	for pages := 1; page.HasNextPage; pages++ {
 		if pages >= maxPages {

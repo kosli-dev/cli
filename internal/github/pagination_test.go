@@ -156,3 +156,21 @@ func TestQueryWithRetry_CancellationKeepsUnderlyingError(t *testing.T) {
 	require.ErrorIs(t, err, context.Canceled, "cancellation must stay detectable")
 	require.ErrorContains(t, err, "500", "the server error must survive too")
 }
+
+// A seed with spare capacity must not be written through by paginate: the
+// caller still owns that array, and a second consumer of it would see the
+// appended nodes appear in its own tail.
+func TestPaginate_DoesNotWriteIntoSeedSpareCapacity(t *testing.T) {
+	backing := make([]string, 1, 4)
+	backing[0] = "a"
+	other := backing[:4] // a second view over the same array
+
+	got, err := paginate(backing, page("c1"), defaultMaxPages,
+		func(after graphql.String) ([]string, pageInfo, error) {
+			return []string{"b"}, lastPage, nil
+		})
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b"}, got)
+	require.Empty(t, other[1], "paginate must not write into the caller's array")
+}
