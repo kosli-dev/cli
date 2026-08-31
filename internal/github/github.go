@@ -28,6 +28,9 @@ type GithubConfig struct {
 	// Sleep is called between retries in PREvidenceByPRNumber. Defaults to
 	// time.Sleep when nil. Override in tests to avoid real delays.
 	Sleep func(time.Duration)
+	// MaxPages bounds pagination loops; zero means defaultMaxPages. Set it in
+	// tests to keep the stuck-cursor cases cheap.
+	MaxPages int
 }
 
 type GithubFlagsTempValueHolder struct {
@@ -407,17 +410,11 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 				}
 				Commits struct {
 					Nodes    []graphqlCommitNode
-					PageInfo struct {
-						HasNextPage graphql.Boolean
-						EndCursor   graphql.String
-					}
+					PageInfo pageInfo
 				} `graphql:"commits(first: 100, after: $commitCursor)"`
 				Reviews struct {
 					Nodes    []graphqlReviewNode
-					PageInfo struct {
-						HasNextPage graphql.Boolean
-						EndCursor   graphql.String
-					}
+					PageInfo pageInfo
 				} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
 			} `graphql:"pullRequest(number: $prNumber)"`
 		} `graphql:"repository(owner: $owner, name: $repo)"`
@@ -431,21 +428,8 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 		"reviewCursor": (*graphql.String)(nil),
 	}
 
-	sleep := c.Sleep
-	if sleep == nil {
-		sleep = time.Sleep
-	}
-	delays := []time.Duration{0, 10 * time.Second, 20 * time.Second, 30 * time.Second}
-	for _, delay := range delays {
-		if delay > 0 {
-			sleep(delay)
-		}
-		err = client.Query(ctx, &query, variables)
-		if err == nil {
-			break
-		}
-	}
-	if err != nil {
+	run := c.queryWithRetry(client)
+	if err := run(ctx, &query, variables); err != nil {
 		return nil, err
 	}
 
@@ -459,10 +443,19 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 		mergeCommit = string(pr.MergeCommit.Oid)
 	}
 
+	commits, err := c.allPRCommits(ctx, run, prNumber, pr.Commits.Nodes, pr.Commits.PageInfo)
+	if err != nil {
+		return nil, err
+	}
+	reviews, err := c.allPRReviews(ctx, run, prNumber, pr.Reviews.Nodes, pr.Reviews.PageInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	return buildPREvidence(
 		string(pr.URL), mergeCommit, string(pr.State), string(pr.Author.Login),
 		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
-		pr.Commits.Nodes, pr.Reviews.Nodes,
+		commits, reviews,
 	)
 }
 
@@ -499,24 +492,15 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 
 							Commits struct {
 								Nodes    []graphqlCommitNode
-								PageInfo struct {
-									HasNextPage graphql.Boolean
-									EndCursor   graphql.String
-								}
+								PageInfo pageInfo
 							} `graphql:"commits(first: 100, after: $commitCursor)"`
 
 							Reviews struct {
 								Nodes    []graphqlReviewNode
-								PageInfo struct {
-									HasNextPage graphql.Boolean
-									EndCursor   graphql.String
-								}
+								PageInfo pageInfo
 							} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
 						}
-						PageInfo struct {
-							HasNextPage graphql.Boolean
-							EndCursor   graphql.String
-						}
+						PageInfo pageInfo
 					} `graphql:"associatedPullRequests(first: 100, after: $prCursor)"`
 				} `graphql:"... on Commit"`
 			} `graphql:"object(oid: $commitSHA)"`
@@ -532,18 +516,29 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		"reviewCursor": (*graphql.String)(nil),
 	}
 
-	err = client.Query(context.Background(), &query, variables)
-	if err != nil {
+	if err := client.Query(ctx, &query, variables); err != nil {
 		return pullRequestsEvidence, err
 	}
 
+	// Only the follow-up pages retry; the initial query keeps its fail-fast
+	// behaviour, which callers already depend on.
+	run := c.queryWithRetry(client)
 	for _, pr := range query.Repository.Object.Commit.AssociatedPullRequests.Nodes {
+		prNumber := int(pr.Number)
+		commits, err := c.allPRCommits(ctx, run, prNumber, pr.Commits.Nodes, pr.Commits.PageInfo)
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
+		reviews, err := c.allPRReviews(ctx, run, prNumber, pr.Reviews.Nodes, pr.Reviews.PageInfo)
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
 		// MergeCommit is set to the queried commit SHA — V2 queries by commit SHA
 		// so the commit is by definition the merge commit.
 		evidence, err := buildPREvidence(
 			string(pr.URL), commit, string(pr.State), string(pr.Author.Login),
 			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
-			pr.Commits.Nodes, pr.Reviews.Nodes,
+			commits, reviews,
 		)
 		if err != nil {
 			return pullRequestsEvidence, err
