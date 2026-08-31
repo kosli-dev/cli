@@ -132,3 +132,7 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, p
 		return reviews.Nodes, reviews.PageInfo, nil
 	})
 }
+
+// restPageSize is GitHub's REST maximum. The zero-valued list options used
+// before sent no per_page at all, so the API's default of 30 applied (#1082).
+const restPageSize = 100
