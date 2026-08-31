@@ -2,7 +2,9 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/shurcooL/graphql"
@@ -61,14 +63,15 @@ type graphqlQueryFunc func(ctx context.Context, q any, variables map[string]any)
 // commit list (#1082).
 func (c *GithubConfig) queryWithRetry(client *graphql.Client) graphqlQueryFunc {
 	return func(ctx context.Context, q any, variables map[string]any) error {
-		sleep := c.Sleep
-		if sleep == nil {
-			sleep = time.Sleep
-		}
 		var err error
 		for _, delay := range []time.Duration{0, 10 * time.Second, 20 * time.Second, 30 * time.Second} {
 			if delay > 0 {
-				sleep(delay)
+				// A wait only happens after a failed attempt, so err holds the
+				// reason every attempt failed. Join keeps it alongside the
+				// cancellation, so neither side loses its errors.Is.
+				if waitErr := c.wait(ctx, delay); waitErr != nil {
+					return errors.Join(err, waitErr)
+				}
 			}
 			if err = client.Query(ctx, q, variables); err == nil {
 				return nil
@@ -78,14 +81,47 @@ func (c *GithubConfig) queryWithRetry(client *graphql.Client) graphqlQueryFunc {
 	}
 }
 
+// wait pauses between retries. It honours ctx cancellation so a caller with a
+// deadline is not held for the full ladder; c.Sleep bypasses that, and exists
+// only so tests need not sleep for real.
+func (c *GithubConfig) wait(ctx context.Context, d time.Duration) error {
+	if c.Sleep != nil {
+		c.Sleep(d)
+		return nil
+	}
+	select {
+	case <-time.After(d):
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// prRef identifies the pull request a follow-up page query must resolve. The
+// repo is carried explicitly because a follow-up is a separate query: resolving
+// pullRequest(number:) against the configured repo would silently return the
+// wrong PR, or none, for any node that is not in it.
+type prRef struct {
+	Owner  string
+	Repo   string
+	Number int
+}
+
+// owns reports whether ref names the configured repository. GitHub owner and
+// repo names are case-insensitive, so a differently-cased config value still
+// names the same repo.
+func (c *GithubConfig) owns(ref prRef) bool {
+	return strings.EqualFold(ref.Owner, c.Org) && strings.EqualFold(ref.Repo, c.Repository)
+}
+
 // pageVariables are the query variables shared by both follow-up page queries.
 // The cursor is a plain graphql.String — the initial queries pass a nil
 // *graphql.String, so they declare `String` where these declare `String!`.
-func (c *GithubConfig) pageVariables(prNumber int, after graphql.String) map[string]any {
+func pageVariables(ref prRef, after graphql.String) map[string]any {
 	return map[string]any{
-		"owner":    graphql.String(c.Org),
-		"repo":     graphql.String(c.Repository),
-		"prNumber": graphql.Int(prNumber),
+		"owner":    graphql.String(ref.Owner),
+		"repo":     graphql.String(ref.Repo),
+		"prNumber": graphql.Int(ref.Number),
 		"cursor":   after,
 	}
 }
@@ -93,7 +129,7 @@ func (c *GithubConfig) pageVariables(prNumber int, after graphql.String) map[str
 // allPRCommits returns every commit on prNumber, seeded with the nodes the
 // caller's first query already returned. Follow-up pages select only commits,
 // so draining one connection never re-fetches the other.
-func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, prNumber int,
+func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, ref prRef,
 	seed []graphqlCommitNode, first pageInfo) ([]graphqlCommitNode, error) {
 	return paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlCommitNode, pageInfo, error) {
 		var q struct {
@@ -106,7 +142,7 @@ func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, p
 				} `graphql:"pullRequest(number: $prNumber)"`
 			} `graphql:"repository(owner: $owner, name: $repo)"`
 		}
-		if err := run(ctx, &q, c.pageVariables(prNumber, after)); err != nil {
+		if err := run(ctx, &q, pageVariables(ref, after)); err != nil {
 			return nil, pageInfo{}, err
 		}
 		commits := q.Repository.PullRequest.Commits
@@ -115,7 +151,7 @@ func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, p
 }
 
 // allPRReviews returns every approved review on prNumber, seeded as above.
-func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, prNumber int,
+func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, ref prRef,
 	seed []graphqlReviewNode, first pageInfo) ([]graphqlReviewNode, error) {
 	return paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlReviewNode, pageInfo, error) {
 		var q struct {
@@ -128,7 +164,7 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, p
 				} `graphql:"pullRequest(number: $prNumber)"`
 			} `graphql:"repository(owner: $owner, name: $repo)"`
 		}
-		if err := run(ctx, &q, c.pageVariables(prNumber, after)); err != nil {
+		if err := run(ctx, &q, pageVariables(ref, after)); err != nil {
 			return nil, pageInfo{}, err
 		}
 		reviews := q.Repository.PullRequest.Reviews

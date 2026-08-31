@@ -2,6 +2,9 @@ package gitlab
 
 import (
 	"fmt"
+	"strconv"
+
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
@@ -30,7 +33,7 @@ func (c *GitlabConfig) listMergeRequestCommits(client *gitlab.Client, mrIID int6
 			return nil, err
 		}
 		all = append(all, glCommits...)
-		if resp == nil || resp.NextPage == 0 {
+		if resp.NextPage == 0 {
 			return all, nil
 		}
 		if resp.NextPage <= opts.Page {
@@ -40,4 +43,42 @@ func (c *GitlabConfig) listMergeRequestCommits(client *gitlab.Client, mrIID int6
 		opts.Page = resp.NextPage
 	}
 	return nil, fmt.Errorf("aborting after %d pages of commits for merge request %d", maxPages, mrIID)
+}
+
+// withPage sets the offset-pagination query params. ListMergeRequestsByCommit
+// takes no list options struct, so they go straight onto the request.
+func withPage(page, perPage int64) gitlab.RequestOptionFunc {
+	return func(req *retryablehttp.Request) error {
+		q := req.URL.Query()
+		q.Set("page", strconv.FormatInt(page, 10))
+		q.Set("per_page", strconv.FormatInt(perPage, 10))
+		req.URL.RawQuery = q.Encode()
+		return nil
+	}
+}
+
+// listMergeRequestsForCommit returns every MR associated with a commit. Sending
+// no pagination params left this at GitLab's default of 20, the same truncation
+// as listMergeRequestCommits above and in the same PREvidenceForCommitV2 path
+// (#1082).
+func (c *GitlabConfig) listMergeRequestsForCommit(client *gitlab.Client, commit string, maxPages int) ([]*gitlab.BasicMergeRequest, error) {
+	all := []*gitlab.BasicMergeRequest{}
+	page := int64(1)
+	for pages := 0; pages < maxPages; pages++ {
+		mrs, resp, err := client.Commits.ListMergeRequestsByCommit(c.ProjectID(), commit,
+			withPage(page, listPageSize))
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, mrs...)
+		if resp.NextPage == 0 {
+			return all, nil
+		}
+		if resp.NextPage <= page {
+			return nil, fmt.Errorf("next page %d did not advance past page %d for commit %s",
+				resp.NextPage, page, commit)
+		}
+		page = resp.NextPage
+	}
+	return nil, fmt.Errorf("aborting after %d pages of merge requests for commit %s", maxPages, commit)
 }

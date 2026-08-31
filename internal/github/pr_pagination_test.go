@@ -190,10 +190,18 @@ func TestPREvidenceByPRNumber_ErrorsWhenCursorDoesNotAdvance(t *testing.T) {
 // v2PRNodeJSON is one associatedPullRequests node. Unlike the by-number query
 // it carries the PR number and has no mergeCommit.
 func v2PRNodeJSON(number int, commits, reviews string) string {
-	return fmt.Sprintf(`{"number":%d,"title":"A PR","state":"MERGED","headRefName":"feature",`+
-		`"baseRefName":"main","url":"https://github.com/o/r/pull/%d",`+
+	return v2PRNodeInRepoJSON("test-org", "test-repo", number, commits, reviews)
+}
+
+// v2PRNodeInRepoJSON is an associatedPullRequests node belonging to owner/repo,
+// which need not be the configured repository.
+func v2PRNodeInRepoJSON(owner, repo string, number int, commits, reviews string) string {
+	return fmt.Sprintf(`{"number":%d,"repository":{"name":%q,"owner":{"login":%q}},`+
+		`"title":"A PR","state":"MERGED","headRefName":"feature",`+
+		`"baseRefName":"main","url":"https://github.com/%s/%s/pull/%d",`+
 		`"createdAt":"2026-03-01T11:00:00Z","mergedAt":"2026-03-01T14:00:00Z",`+
-		`"author":{"login":"ada"},"commits":%s,"reviews":%s}`, number, number, commits, reviews)
+		`"author":{"login":"ada"},"commits":%s,"reviews":%s}`,
+		number, repo, owner, owner, repo, number, commits, reviews)
 }
 
 func forCommitResponse(prNodes ...string) string {
@@ -256,4 +264,54 @@ func shasIn(evidence *types.PREvidence) []string {
 		shas = append(shas, c.SHA)
 	}
 	return shas
+}
+
+// A commit's associated PRs are not guaranteed to live in the configured repo.
+// The follow-up page query resolves pullRequest(number:) in a separate request,
+// so it must target the repo the node came from — otherwise it silently reads a
+// different PR's commits, or none.
+func TestPREvidenceForCommitV2_FollowUpTargetsTheNodesOwnRepo(t *testing.T) {
+	ts := newGraphQLTestServer(t,
+		forCommitResponse(v2PRNodeInRepoJSON("upstream-org", "upstream-repo", 7,
+			connectionJSON([]string{commitNodeJSON("sha1")}, "c1"),
+			connectionJSON(nil, ""))),
+		commitsPageResponse([]string{commitNodeJSON("sha2")}, ""),
+	)
+
+	prs, err := newPaginationConfig(ts).PREvidenceForCommitV2("merge-sha")
+	require.NoError(t, err)
+	require.Equal(t, []string{"sha1", "sha2"}, shasIn(prs[0]))
+	require.Contains(t, ts.bodies[1], `"owner":"upstream-org"`)
+	require.Contains(t, ts.bodies[1], `"repo":"upstream-repo"`)
+}
+
+// PREvidenceByPRNumber is given a number for the configured repo, so its
+// follow-up pages must keep using it.
+func TestPREvidenceByPRNumber_FollowUpUsesConfiguredRepo(t *testing.T) {
+	ts := newGraphQLTestServer(t,
+		byPRNumberResponse(
+			connectionJSON([]string{commitNodeJSON("sha1")}, "c1"),
+			connectionJSON(nil, "")),
+		commitsPageResponse([]string{commitNodeJSON("sha2")}, ""),
+	)
+
+	_, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Contains(t, ts.bodies[1], `"owner":"test-org"`)
+	require.Contains(t, ts.bodies[1], `"repo":"test-repo"`)
+}
+
+// A node's PR can live in a repo the token cannot read. That query fails
+// permanently, so retrying it only delays the failure by the full ladder.
+func TestPREvidenceForCommitV2_DoesNotRetryCrossRepoFollowUp(t *testing.T) {
+	ts := newGraphQLTestServer(t,
+		forCommitResponse(v2PRNodeInRepoJSON("upstream-org", "upstream-repo", 7,
+			connectionJSON([]string{commitNodeJSON("sha1")}, "c1"),
+			connectionJSON(nil, ""))),
+		"500",
+	)
+
+	_, err := newPaginationConfig(ts).PREvidenceForCommitV2("merge-sha")
+	require.Error(t, err)
+	require.Len(t, ts.bodies, 2, "a cross-repo follow-up must not be retried")
 }

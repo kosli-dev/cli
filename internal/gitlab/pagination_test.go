@@ -122,3 +122,110 @@ func TestListMergeRequestCommits_ErrorsPastMaxPages(t *testing.T) {
 	require.ErrorContains(t, err, "2 pages")
 	require.Equal(t, 2, calls)
 }
+
+// mrListServer serves paged MRs-for-commit, setting X-Next-Page as GitLab does.
+// alwaysAdvance keeps advertising a next page, so only the cap stops it.
+func mrListServer(t *testing.T, alwaysAdvance bool, pages ...[]int64) (*httptest.Server, *int) {
+	t.Helper()
+	calls := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.Header().Set("Content-Type", "application/json")
+		if alwaysAdvance {
+			w.Header().Set("X-Next-Page", strconv.Itoa(calls+1))
+			_, _ = fmt.Fprint(w, mrsJSON(pages[0]))
+			return
+		}
+		i := calls - 1
+		if i >= len(pages) {
+			t.Errorf("unexpected request %d", calls)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if i < len(pages)-1 {
+			w.Header().Set("X-Next-Page", strconv.Itoa(i+2))
+		}
+		_, _ = fmt.Fprint(w, mrsJSON(pages[i]))
+	}))
+	t.Cleanup(ts.Close)
+	return ts, &calls
+}
+
+func mrsJSON(iids []int64) string {
+	items := []string{}
+	for _, iid := range iids {
+		items = append(items, fmt.Sprintf(`{"iid":%d,"source_branch":"feature","web_url":"https://gitlab.com/o/r/-/merge_requests/%d"}`, iid, iid))
+	}
+	return "[" + strings.Join(items, ",") + "]"
+}
+
+func iidsOf(mrs []*gitlab.BasicMergeRequest) []int64 {
+	iids := []int64{}
+	for _, mr := range mrs {
+		iids = append(iids, mr.IID)
+	}
+	return iids
+}
+
+func TestMergeRequestsForCommit_FollowsNextPage(t *testing.T) {
+	ts, calls := mrListServer(t, false, []int64{1, 2}, []int64{3})
+
+	mrs, err := newPaginationConfig(ts.URL).MergeRequestsForCommit("abc123")
+	require.NoError(t, err)
+	require.Equal(t, []int64{1, 2, 3}, iidsOf(mrs))
+	require.Equal(t, 2, *calls)
+}
+
+func TestMergeRequestsForCommit_SingleRequestWhenNoNextPage(t *testing.T) {
+	ts, calls := mrListServer(t, false, []int64{1})
+
+	mrs, err := newPaginationConfig(ts.URL).MergeRequestsForCommit("abc123")
+	require.NoError(t, err)
+	require.Len(t, mrs, 1)
+	require.Equal(t, 1, *calls)
+}
+
+func TestListMergeRequestsForCommit_ErrorsPastMaxPages(t *testing.T) {
+	ts, calls := mrListServer(t, true, []int64{1})
+	config := newPaginationConfig(ts.URL)
+	client, err := config.NewGitlabClientFromToken()
+	require.NoError(t, err)
+
+	got, err := config.listMergeRequestsForCommit(client, "abc123", 2)
+	require.ErrorContains(t, err, "2 pages")
+	require.Nil(t, got)
+	require.Equal(t, 2, *calls)
+}
+
+func TestListMergeRequestsForCommit_SendsPageParams(t *testing.T) {
+	queries := []string{}
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		queries = append(queries, r.URL.RawQuery)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, mrsJSON([]int64{1}))
+	}))
+	defer ts.Close()
+
+	_, err := newPaginationConfig(ts.URL).MergeRequestsForCommit("abc123")
+	require.NoError(t, err)
+	require.Len(t, queries, 1)
+	require.Contains(t, queries[0], "per_page=100")
+	require.Contains(t, queries[0], "page=1")
+}
+
+func TestListMergeRequestsForCommit_ErrorsWhenNextPageDoesNotAdvance(t *testing.T) {
+	calls := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Next-Page", "1")
+		_, _ = fmt.Fprint(w, mrsJSON([]int64{1}))
+	}))
+	defer ts.Close()
+
+	_, err := newPaginationConfig(ts.URL).MergeRequestsForCommit("abc123")
+	require.ErrorContains(t, err, "did not advance")
+	// page starts at 1, so "next is 1" is already non-advancing: it fails on
+	// the first response rather than burning maxPages round trips.
+	require.Equal(t, 1, calls)
+}

@@ -148,7 +148,7 @@ func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.BasicMer
 		return mrs, err
 	}
 
-	mrs, _, err = client.Commits.ListMergeRequestsByCommit(c.ProjectID(), commit)
+	mrs, err = c.listMergeRequestsForCommit(client, commit, defaultMaxPages)
 	if err != nil {
 		return mrs, fmt.Errorf("failed to list merge requests for commit %s: %v", commit, err)
 	}

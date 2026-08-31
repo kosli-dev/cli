@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -92,4 +93,89 @@ func TestPullRequestsForCommit_ReturnsErrorFromSecondPage(t *testing.T) {
 
 	_, err := newRestConfig(ts.URL).PullRequestsForCommit("abc123")
 	require.Error(t, err)
+}
+
+func TestGetPullRequestApprovers_DeduplicatesRepeatApprovals(t *testing.T) {
+	// A reviewer can approve, request changes, then approve again. These
+	// entries carry no timestamp, so the repeat is noise.
+	ts := newRestTestServer(t, "/api/v3/repos/test-org/test-repo/pulls/5/reviews",
+		`[{"state":"APPROVED","user":{"login":"ada"}},{"state":"CHANGES_REQUESTED","user":{"login":"ada"}}]`,
+		`[{"state":"APPROVED","user":{"login":"ada"}},{"state":"APPROVED","user":{"login":"grace"}}]`,
+	)
+
+	approvers, err := newRestConfig(ts.URL).GetPullRequestApprovers(5)
+	require.NoError(t, err)
+	require.Equal(t, []string{"ada", "grace"}, approvers)
+}
+
+func TestGetPullRequestApprovers_ErrorsWhenNextPageDoesNotAdvance(t *testing.T) {
+	// Without the guard a server pinning NextPage re-reads the same page until
+	// the cap fires, accumulating duplicate work rather than failing.
+	calls := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.Header().Set("Link", `<https://example.invalid/x?page=1>; rel="next"`)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `[{"state":"APPROVED","user":{"login":"ada"}}]`)
+	}))
+	defer ts.Close()
+
+	_, err := newRestConfig(ts.URL).GetPullRequestApprovers(5)
+	require.ErrorContains(t, err, "did not advance")
+	require.Equal(t, 1, calls)
+}
+
+// alwaysMorePages advertises a next page forever, so only the cap stops it.
+func alwaysMorePages(t *testing.T, body string) (*httptest.Server, *int) {
+	t.Helper()
+	calls := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.Header().Set("Link", fmt.Sprintf(`<https://example.invalid/x?page=%d>; rel="next"`, calls+1))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, body)
+	}))
+	t.Cleanup(ts.Close)
+	return ts, &calls
+}
+
+func TestListPullRequestsForCommit_ErrorsPastMaxPages(t *testing.T) {
+	ts, calls := alwaysMorePages(t, `[{"number":1}]`)
+	config := newRestConfig(ts.URL)
+	client, err := NewGithubClientFromToken(context.Background(), config.Token, config.BaseURL, false)
+	require.NoError(t, err)
+
+	got, err := config.listPullRequestsForCommit(context.Background(), client, "abc123", 2)
+	require.ErrorContains(t, err, "2 pages")
+	require.Nil(t, got, "no partial result on an error path")
+	require.Equal(t, 2, *calls)
+}
+
+func TestListApprovers_ErrorsPastMaxPages(t *testing.T) {
+	ts, calls := alwaysMorePages(t, `[{"state":"APPROVED","user":{"login":"ada"}}]`)
+	config := newRestConfig(ts.URL)
+	client, err := NewGithubClientFromToken(context.Background(), config.Token, config.BaseURL, false)
+	require.NoError(t, err)
+
+	got, err := config.listApprovers(context.Background(), client, 5, 2)
+	require.ErrorContains(t, err, "2 pages")
+	require.Nil(t, got, "no partial result on an error path")
+	require.Equal(t, 2, *calls)
+}
+
+// Mirror of TestGetPullRequestApprovers_ErrorsWhenNextPageDoesNotAdvance for
+// the identical guard in the PRs-for-commit loop.
+func TestPullRequestsForCommit_ErrorsWhenNextPageDoesNotAdvance(t *testing.T) {
+	calls := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.Header().Set("Link", `<https://example.invalid/x?page=1>; rel="next"`)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `[{"number":1}]`)
+	}))
+	defer ts.Close()
+
+	_, err := newRestConfig(ts.URL).PullRequestsForCommit("abc123")
+	require.ErrorContains(t, err, "did not advance")
+	require.Equal(t, 1, calls)
 }

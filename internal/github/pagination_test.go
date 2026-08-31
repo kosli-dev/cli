@@ -1,8 +1,13 @@
 package github
 
 import (
+	"context"
 	"errors"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/shurcooL/graphql"
 	"github.com/stretchr/testify/require"
@@ -83,4 +88,71 @@ func TestPaginate_PropagatesFetchError(t *testing.T) {
 		})
 
 	require.ErrorIs(t, err, wantErr)
+}
+
+// GitHub owner and repo names are case-insensitive, so a config carrying a
+// differently-cased name still names the same repo — and must keep its retries.
+func TestOwns_IsCaseInsensitive(t *testing.T) {
+	config := &GithubConfig{Org: "kosli-dev", Repository: "cli"}
+
+	require.True(t, config.owns(prRef{Owner: "Kosli-Dev", Repo: "CLI", Number: 1}))
+	require.True(t, config.owns(prRef{Owner: "kosli-dev", Repo: "cli", Number: 1}))
+	require.False(t, config.owns(prRef{Owner: "upstream-org", Repo: "cli", Number: 1}))
+	require.False(t, config.owns(prRef{Owner: "kosli-dev", Repo: "other", Number: 1}))
+}
+
+// The retry ladder must not sit out a cancelled context. Sleep is left unset so
+// the production wait path is exercised.
+func TestQueryWithRetry_StopsOnContextCancellation(t *testing.T) {
+	ts := newGraphQLTestServer(t, "500", "500", "500", "500")
+	config := &GithubConfig{Token: "t", BaseURL: ts.URL, Org: "o", Repository: "r"}
+	client := graphql.NewClient(graphqlEndpoint(ts.URL), nil)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	start := time.Now()
+	err := config.queryWithRetry(client)(ctx, &struct{}{}, map[string]any{})
+	require.Error(t, err)
+	require.Less(t, time.Since(start), 5*time.Second, "must not wait out the ladder")
+}
+
+// failThenCancelTransport answers with a 500 and cancels the context before
+// returning, so the ladder's first wait always sees an already-cancelled
+// context while the server error is already in hand. Cancelling any later —
+// from the handler, or on a timer — races the client's body read, and losing
+// that race aborts the request itself so the 500 never reaches the caller.
+type failThenCancelTransport struct {
+	cancel context.CancelFunc
+	calls  int
+}
+
+func (t *failThenCancelTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	t.calls++
+	t.cancel()
+	return &http.Response{
+		StatusCode: http.StatusInternalServerError,
+		Status:     "500 Internal Server Error",
+		Body:       io.NopCloser(strings.NewReader("boom")),
+		Header:     make(http.Header),
+	}, nil
+}
+
+// Cancellation stops the ladder, but the error that caused every attempt to
+// fail is the useful one — it must not be replaced by "context canceled".
+func TestQueryWithRetry_CancellationKeepsUnderlyingError(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	transport := &failThenCancelTransport{cancel: cancel}
+
+	config := &GithubConfig{Token: "t", Org: "o", Repository: "r"}
+	client := graphql.NewClient("http://example.invalid/api/graphql",
+		&http.Client{Transport: transport})
+
+	err := config.queryWithRetry(client)(ctx, &struct{}{}, map[string]any{})
+
+	require.Error(t, err)
+	require.Equal(t, 1, transport.calls, "the ladder must stop at the first wait")
+	require.ErrorIs(t, err, context.Canceled, "cancellation must stay detectable")
+	require.ErrorContains(t, err, "500", "the server error must survive too")
 }
