@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Suggest next semver and changelog by sending the git diff to Claude.
-# Does not rely on commit messages. Changelog is suitable for GoReleaser --release-notes.
+# Does not rely on commit messages. Changelog will be attached as a header to release Changelog.
 #
 # Auth (first non-empty wins):
 #   - ANTHROPIC_API_KEY: call Claude directly.

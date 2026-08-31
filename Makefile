@@ -99,7 +99,7 @@ add_test_tag:
 
 build_release: check_dirty add_test_tag
 	rm -rf dist/
-	goreleaser release --skip-publish --debug
+	goreleaser release --skip=publish,changelog --verbose
 	@git tag -d v0.0.99 2> /dev/null || true
 
 clean: ## Clean build artefacts
@@ -215,7 +215,7 @@ docs: build ## Generate CLI reference docs (use CMD="attest snyk" for one comman
 	@echo "Docs written to client_reference/"
 
 # Suggest next semver and changelog using Claude.
-# Writes changelog to dist/release_notes.md for use with goreleaser --release-notes.
+# Writes changelog to dist/release_notes.md, used as the annotated tag's body.
 # Requires: jq, curl, op (1Password CLI). API key from 1Password via op.
 # Usage: make suggest-version-ai [BASE_REF=v1.2.3]
 suggest-version-ai: ## Suggest next version using AI

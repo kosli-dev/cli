@@ -123,7 +123,7 @@ release:
   disable: false
   # Release notes from the tag body, exported by the release workflow. `index`,
   # not `.Env.RELEASE_HEADER`: templates run with missingkey=error, so the dot
-  # form fails a local `make build_release`, where the var is unset.
+  # form errors on any run where the var is unset (e.g. a local goreleaser run).
   header: |
     {{ index .Env "RELEASE_HEADER" }}
 
