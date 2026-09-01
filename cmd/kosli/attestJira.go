@@ -45,7 +45,7 @@ By default, parses the given commit's message, current branch name, or the conte
 Use ^--jira-trailer^ to read issue keys exclusively from a named git trailer line instead
 (e.g. ^Jira: PROJ-42^); only the last block of lines in the commit message is scanned
 (everything after the final blank line, or the whole message if there is no blank line).
-The commit message body and branch name are not scanned.
+The rest of the commit message and branch name are not scanned.
 ^--jira-trailer^ and ^--jira-secondary-source^ are mutually exclusive.
 
 Jira issue references have the form:
