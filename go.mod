@@ -319,8 +319,6 @@ replace k8s.io/kubectl => k8s.io/kubectl v0.37.0
 
 replace k8s.io/kubelet => k8s.io/kubelet v0.37.0
 
-replace k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.30.3
-
 replace k8s.io/metrics => k8s.io/metrics v0.37.0
 
 replace k8s.io/mount-utils => k8s.io/mount-utils v0.37.0
