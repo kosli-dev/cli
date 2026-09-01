@@ -338,14 +338,13 @@ func trailerBlock(message string) string {
 	return strings.Join(lines[start:end], "\n")
 }
 
-// scanTrailer does one pass over the trailer block of the commit message,
-// returning all non-empty values for lines matching key and whether any
-// matching line was found at all (including lines with an empty value).
-// Both GetTrailerValues and TrailerKeyExists delegate here so they always
-// agree on what "matching" means.
-func scanTrailer(message, key string) (values []string, found bool) {
+// scanLines does one pass over lines, returning all non-empty values for lines
+// matching key and whether any matching line was found at all (including lines
+// with an empty value). All exported trailer helpers delegate here so they
+// always agree on what "matching" means.
+func scanLines(lines []string, key string) (values []string, found bool) {
 	prefix := strings.ToLower(NormalizeTrailerKey(key)) + ":"
-	for _, line := range strings.Split(trailerBlock(message), "\n") {
+	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(strings.ToLower(trimmed), prefix) {
 			found = true
@@ -356,6 +355,13 @@ func scanTrailer(message, key string) (values []string, found bool) {
 		}
 	}
 	return
+}
+
+// scanTrailer does one pass over the trailer block of the commit message.
+// Both GetTrailerValues and TrailerKeyExists delegate here so they always
+// agree on what "matching" means.
+func scanTrailer(message, key string) ([]string, bool) {
+	return scanLines(strings.Split(trailerBlock(message), "\n"), key)
 }
 
 // TrailerKeyExists reports whether any line in the final paragraph of the commit
@@ -372,13 +378,8 @@ func TrailerKeyExists(message, key string) bool {
 // alongside TrailerKeyExists to distinguish "key absent entirely" from "key
 // present but not in the final paragraph".
 func TrailerKeyExistsAnywhere(message, key string) bool {
-	prefix := strings.ToLower(NormalizeTrailerKey(key)) + ":"
-	for _, line := range strings.Split(message, "\n") {
-		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(line)), prefix) {
-			return true
-		}
-	}
-	return false
+	_, found := scanLines(strings.Split(message, "\n"), key)
+	return found
 }
 
 // GetTrailerValues returns the values of every line in the last block of a commit

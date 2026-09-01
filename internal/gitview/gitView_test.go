@@ -612,9 +612,48 @@ func (suite *GitViewTestSuite) TestTrailerKeyExists() {
 			key:      "Jira",
 			expected: true,
 		},
+		{
+			name:     "key present outside last block is not matched",
+			message:  "fix: something\n\nJira: BX-123\n\n* address review",
+			key:      "Jira",
+			expected: false,
+		},
 	} {
 		suite.Run(tt.name, func() {
 			result := TrailerKeyExists(tt.message, tt.key)
+			require.Equal(suite.T(), tt.expected, result)
+		})
+	}
+}
+
+func (suite *GitViewTestSuite) TestTrailerKeyExistsAnywhere() {
+	for _, tt := range []struct {
+		name     string
+		message  string
+		key      string
+		expected bool
+	}{
+		{
+			name:     "key in last block",
+			message:  "fix: something\n\nJira: BX-123",
+			key:      "Jira",
+			expected: true,
+		},
+		{
+			name:     "key outside last block",
+			message:  "fix: something\n\nJira: BX-123\n\n* address review",
+			key:      "Jira",
+			expected: true,
+		},
+		{
+			name:     "key absent entirely",
+			message:  "fix: something with no trailer",
+			key:      "Jira",
+			expected: false,
+		},
+	} {
+		suite.Run(tt.name, func() {
+			result := TrailerKeyExistsAnywhere(tt.message, tt.key)
 			require.Equal(suite.T(), tt.expected, result)
 		})
 	}
