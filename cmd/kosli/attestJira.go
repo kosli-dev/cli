@@ -271,7 +271,10 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("jira-trailer") && gitview.NormalizeTrailerKey(o.trailerKey) == "" {
-				return fmt.Errorf("flag '--jira-trailer' was given an empty value")
+				return emptyFlagValueError("jira-trailer")
+			}
+			if cmd.Flags().Changed("jira-trailer") && strings.ContainsAny(gitview.NormalizeTrailerKey(o.trailerKey), ": ") {
+				return fmt.Errorf("flag '--jira-trailer' is not a valid trailer key: trailer keys cannot contain colons or spaces")
 			}
 
 			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)

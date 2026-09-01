@@ -561,6 +561,12 @@ func (suite *GitViewTestSuite) TestGetTrailerValues() {
 			key:      "İ",
 			expected: []string{"BX-123"},
 		},
+		{
+			name:     "key in commit body but not final paragraph is not matched",
+			message:  "fix: something\n\nJira: BX-123\n\nsome body text",
+			key:      "Jira",
+			expected: []string{},
+		},
 	} {
 		suite.Run(tt.name, func() {
 			result := GetTrailerValues(tt.message, tt.key)

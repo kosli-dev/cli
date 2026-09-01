@@ -415,7 +415,13 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			golden:    "Error: flag '--jira-trailer' was given an empty value\n",
 		},
 		{
-			name: "32 --jira-trailer warns when trailer key is present but value is empty",
+			wantError: true,
+			name:      "32 --jira-trailer with an internal colon is rejected",
+			cmd:       fmt.Sprintf("attest jira --name bar --jira-base-url https://kosli-test.atlassian.net --jira-trailer A:B --commit HEAD --repo-root %s %s", suite.tmpDir, suite.defaultKosliArguments),
+			golden:    "Error: flag '--jira-trailer' is not a valid trailer key: trailer keys cannot contain colons or spaces\n",
+		},
+		{
+			name: "33 --jira-trailer warns when trailer key is present but value is empty",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
@@ -426,7 +432,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "33 --jira-trailer warns when trailer value is present but not a valid Jira key",
+			name: "34 --jira-trailer warns when trailer value is present but not a valid Jira key",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
@@ -437,7 +443,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "34 --ignore-branch-match warns that it has no effect in trailer mode",
+			name: "35 --ignore-branch-match warns that it has no effect in trailer mode",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
@@ -450,7 +456,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		},
 		{
 			wantError: true,
-			name:      "35 --jira-trailer does not scan branch name even when branch contains a Jira key",
+			name:      "36 --jira-trailer does not scan branch name even when branch contains a Jira key",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira

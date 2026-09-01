@@ -495,6 +495,13 @@ func refuseEmptyFlagValues(cmd *cobra.Command) {
 }
 
 // reportEmptyFlagValue gives every flag one wording for an empty value. pflag
+// emptyFlagValueError returns the canonical error for a flag that was given an
+// empty value, used by both the flag-error hook and any manual validation that
+// catches forms the hook cannot see (e.g. whitespace-only strings).
+func emptyFlagValueError(name string) error {
+	return fmt.Errorf("flag '--%s' was given an empty value", name)
+}
+
 // reports a refused value in its own words and wraps the cause, so the cause is
 // what says whether this is the empty-value rule speaking.
 func reportEmptyFlagValue(cmd *cobra.Command, err error) error {
@@ -503,7 +510,7 @@ func reportEmptyFlagValue(cmd *cobra.Command, err error) error {
 	}
 	var invalid *pflag.InvalidValueError
 	if errors.As(err, &invalid) {
-		return fmt.Errorf("flag '--%s' was given an empty value", invalid.GetFlag().Name)
+		return emptyFlagValueError(invalid.GetFlag().Name)
 	}
 	return err
 }
