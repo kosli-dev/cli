@@ -3264,9 +3264,26 @@
           "{flow}",
           "--use-empty-template"
         ]
+      },
+      {
+        "argv": [
+          "tag",
+          "flow",
+          "{flow}",
+          "--set",
+          "probe-unset=probe-value"
+        ]
       }
     ],
-    "verify": []
+    "verify": [
+      [
+        "get",
+        "flow",
+        "{flow}",
+        "--output",
+        "json"
+      ]
+    ]
   },
   "unarchive control": {
     "args": [
@@ -4617,7 +4634,15 @@
         ]
       }
     ],
-    "verify": []
+    "verify": [
+      [
+        "get",
+        "artifact",
+        "{flow}@1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+        "--output",
+        "json"
+      ]
+    ]
   },
   "snapshot server": {
     "args": [
