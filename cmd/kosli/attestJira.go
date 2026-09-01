@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"unicode"
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/jira"
@@ -272,11 +273,14 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			if cmd.Flags().Changed("jira-trailer") && gitview.NormalizeTrailerKey(o.trailerKey) == "" {
-				return emptyFlagValueError("jira-trailer")
-			}
-			if cmd.Flags().Changed("jira-trailer") && strings.ContainsAny(gitview.NormalizeTrailerKey(o.trailerKey), ": ") {
-				return fmt.Errorf("flag '--jira-trailer' is not a valid trailer key: trailer keys cannot contain colons or spaces")
+			if cmd.Flags().Changed("jira-trailer") {
+				normalizedKey := gitview.NormalizeTrailerKey(o.trailerKey)
+				if normalizedKey == "" {
+					return emptyFlagValueError("jira-trailer")
+				}
+				if strings.Contains(normalizedKey, ":") || strings.IndexFunc(normalizedKey, unicode.IsSpace) >= 0 {
+					return fmt.Errorf("flag '--jira-trailer' is not a valid trailer key: trailer keys cannot contain colons or whitespace")
+				}
 			}
 
 			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
@@ -364,8 +368,16 @@ func (o *attestJiraOptions) run(args []string) error {
 		combinedTrailerText := strings.Join(trailerValues, "\n")
 		issueIDs = jira.FindJiraIssueKeys(combinedTrailerText, o.projectKeys)
 		logger.Debug("Checked for Jira issue references in trailer '%s' of Git commit %s: %v", trailerKey, commitInfo.Sha1, trailerValues)
-		if gitview.TrailerKeyExists(commitInfo.Message, trailerKey) && len(issueIDs) == 0 {
-			logger.Warn("trailer '%s' was found but contained no valid Jira issue keys: %v", trailerKey, trailerValues)
+		if !gitview.TrailerKeyExists(commitInfo.Message, trailerKey) {
+			logger.Warn("trailer '%s' was not found in the last paragraph of the commit message", trailerKey)
+		} else if len(trailerValues) == 0 {
+			logger.Warn("trailer '%s' was found but had no value", trailerKey)
+		} else if len(issueIDs) == 0 {
+			if len(o.projectKeys) > 0 {
+				logger.Warn("trailer '%s' values %v did not match project filter %v", trailerKey, trailerValues, o.projectKeys)
+			} else {
+				logger.Warn("trailer '%s' values %v did not contain valid Jira issue keys", trailerKey, trailerValues)
+			}
 		}
 	} else {
 		searchTexts := []string{commitInfo.Message}

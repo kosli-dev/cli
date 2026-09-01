@@ -384,7 +384,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			golden: "[warning] trailer 'Jira' was not found in the last paragraph of the commit message\njira attestation 'bar' is reported to trail: test-123\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "fix: some change with no jira trailer",
 			},
@@ -418,7 +418,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			wantError: true,
 			name:      "32 --jira-trailer with an internal colon is rejected",
 			cmd:       fmt.Sprintf("attest jira --name bar --jira-base-url https://kosli-test.atlassian.net --jira-trailer A:B --commit HEAD --repo-root %s %s", suite.tmpDir, suite.defaultKosliArguments),
-			golden:    "Error: flag '--jira-trailer' is not a valid trailer key: trailer keys cannot contain colons or spaces\n",
+			golden:    "Error: flag '--jira-trailer' is not a valid trailer key: trailer keys cannot contain colons or whitespace\n",
 		},
 		{
 			name: "33 --jira-trailer warns when trailer key is present but value is empty",
@@ -426,7 +426,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "[warning] trailer 'Jira' was found but contained no valid Jira issue keys: []\njira attestation 'bar' is reported to trail: test-123\n",
+			golden: "[warning] trailer 'Jira' was found but had no value\njira attestation 'bar' is reported to trail: test-123\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "fix: some change\n\nJira:",
 			},
@@ -437,7 +437,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "[warning] trailer 'Jira' was found but contained no valid Jira issue keys: [not-a-key]\njira attestation 'bar' is reported to trail: test-123\n",
+			golden: "[warning] trailer 'Jira' values [not-a-key] did not contain valid Jira issue keys\njira attestation 'bar' is reported to trail: test-123\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "fix: some change\n\nJira: not-a-key",
 			},
@@ -462,10 +462,22 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-trailer Jira
 					--assert
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "jira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in trailer 'Jira'\n",
+			golden: "[warning] trailer 'Jira' was not found in the last paragraph of the commit message\njira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in trailer 'Jira'\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				branchName:    "EX-1-some-feature",
 				commitMessage: "fix: some change with no jira trailer",
+			},
+		},
+		{
+			name: "37 --jira-trailer warns when trailer value does not match --jira-project-key filter",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-trailer Jira
+					--jira-project-key ABC
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "[warning] trailer 'Jira' values [EX-1] did not match project filter [ABC]\njira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "fix: some change\n\nJira: EX-1",
 			},
 		},
 	}
