@@ -25,8 +25,10 @@ type GithubConfig struct {
 	Org        string
 	Repository string
 	Debug      bool
-	// Sleep is called between retries in PREvidenceByPRNumber. Defaults to
-	// time.Sleep when nil. Override in tests to avoid real delays.
+	// Sleep replaces the wait between GraphQL retries — every retry, including
+	// the follow-up page queries of both PR-evidence entry points. Nil means an
+	// interruptible wait that returns as soon as the context is cancelled;
+	// setting it bypasses that, so leave it nil to exercise cancellation.
 	Sleep func(time.Duration)
 }
 
@@ -407,17 +409,11 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 				}
 				Commits struct {
 					Nodes    []graphqlCommitNode
-					PageInfo struct {
-						HasNextPage graphql.Boolean
-						EndCursor   graphql.String
-					}
+					PageInfo pageInfo
 				} `graphql:"commits(first: 100, after: $commitCursor)"`
 				Reviews struct {
 					Nodes    []graphqlReviewNode
-					PageInfo struct {
-						HasNextPage graphql.Boolean
-						EndCursor   graphql.String
-					}
+					PageInfo pageInfo
 				} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
 			} `graphql:"pullRequest(number: $prNumber)"`
 		} `graphql:"repository(owner: $owner, name: $repo)"`
@@ -431,21 +427,8 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 		"reviewCursor": (*graphql.String)(nil),
 	}
 
-	sleep := c.Sleep
-	if sleep == nil {
-		sleep = time.Sleep
-	}
-	delays := []time.Duration{0, 10 * time.Second, 20 * time.Second, 30 * time.Second}
-	for _, delay := range delays {
-		if delay > 0 {
-			sleep(delay)
-		}
-		err = client.Query(ctx, &query, variables)
-		if err == nil {
-			break
-		}
-	}
-	if err != nil {
+	run := c.queryWithRetry(client)
+	if err := run(ctx, &query, variables); err != nil {
 		return nil, err
 	}
 
@@ -459,10 +442,20 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 		mergeCommit = string(pr.MergeCommit.Oid)
 	}
 
+	ref := prRef{Owner: c.Org, Repo: c.Repository, Number: prNumber}
+	commits, err := c.allPRCommits(ctx, run, ref, pr.Commits.Nodes, pr.Commits.PageInfo)
+	if err != nil {
+		return nil, err
+	}
+	reviews, err := c.allPRReviews(ctx, run, ref, pr.Reviews.Nodes, pr.Reviews.PageInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	return buildPREvidence(
 		string(pr.URL), mergeCommit, string(pr.State), string(pr.Author.Login),
 		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
-		pr.Commits.Nodes, pr.Reviews.Nodes,
+		commits, reviews,
 	)
 }
 
@@ -484,7 +477,15 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 				Commit struct {
 					AssociatedPullRequests struct {
 						Nodes []struct {
-							Number      graphql.Int
+							Number graphql.Int
+							// Follow-up page queries resolve the PR by number, so they
+							// need the repo it actually lives in, not the configured one.
+							Repository struct {
+								Name  graphql.String
+								Owner struct {
+									Login graphql.String
+								}
+							}
 							Title       graphql.String
 							State       graphql.String
 							HeadRefName graphql.String
@@ -499,25 +500,19 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 
 							Commits struct {
 								Nodes    []graphqlCommitNode
-								PageInfo struct {
-									HasNextPage graphql.Boolean
-									EndCursor   graphql.String
-								}
+								PageInfo pageInfo
 							} `graphql:"commits(first: 100, after: $commitCursor)"`
 
 							Reviews struct {
 								Nodes    []graphqlReviewNode
-								PageInfo struct {
-									HasNextPage graphql.Boolean
-									EndCursor   graphql.String
-								}
+								PageInfo pageInfo
 							} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
 						}
-						PageInfo struct {
-							HasNextPage graphql.Boolean
-							EndCursor   graphql.String
-						}
-					} `graphql:"associatedPullRequests(first: 100, after: $prCursor)"`
+						// Intentionally not paginated, so no cursor is selected: a
+						// commit with more than 100 associated PRs is not a realistic
+						// case, and draining it would mean nesting a page walk per
+						// PR page (#1082).
+					} `graphql:"associatedPullRequests(first: 100)"`
 				} `graphql:"... on Commit"`
 			} `graphql:"object(oid: $commitSHA)"`
 		} `graphql:"repository(owner: $owner, name: $repo)"`
@@ -527,23 +522,45 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		"owner":        graphql.String(c.Org),
 		"repo":         graphql.String(c.Repository),
 		"commitSHA":    GitObjectID(commit),
-		"prCursor":     (*graphql.String)(nil),
 		"commitCursor": (*graphql.String)(nil),
 		"reviewCursor": (*graphql.String)(nil),
 	}
 
-	err = client.Query(context.Background(), &query, variables)
-	if err != nil {
+	if err := client.Query(ctx, &query, variables); err != nil {
 		return pullRequestsEvidence, err
 	}
 
+	// Only the follow-up pages retry; the initial query keeps its fail-fast
+	// behaviour, which callers already depend on.
+	retrying := c.queryWithRetry(client)
 	for _, pr := range query.Repository.Object.Commit.AssociatedPullRequests.Nodes {
+		ref := prRef{
+			Owner:  string(pr.Repository.Owner.Login),
+			Repo:   string(pr.Repository.Name),
+			Number: int(pr.Number),
+		}
+		// A node can live in a repo this token cannot read. That failure is
+		// permanent, and it is the likely one here, so cross-repo pages trade
+		// the retry ladder away rather than spend 60s reaching it — at the
+		// cost of not retrying a genuine blip on those pages either.
+		run := retrying
+		if !c.owns(ref) {
+			run = client.Query
+		}
+		commits, err := c.allPRCommits(ctx, run, ref, pr.Commits.Nodes, pr.Commits.PageInfo)
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
+		reviews, err := c.allPRReviews(ctx, run, ref, pr.Reviews.Nodes, pr.Reviews.PageInfo)
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
 		// MergeCommit is set to the queried commit SHA — V2 queries by commit SHA
 		// so the commit is by definition the merge commit.
 		evidence, err := buildPREvidence(
 			string(pr.URL), commit, string(pr.State), string(pr.Author.Login),
 			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
-			pr.Commits.Nodes, pr.Reviews.Nodes,
+			commits, reviews,
 		)
 		if err != nil {
 			return pullRequestsEvidence, err
@@ -586,9 +603,34 @@ func (c *GithubConfig) PullRequestsForCommit(commit string) ([]*gh.PullRequest, 
 		return []*gh.PullRequest{}, err
 	}
 
-	pullrequests, _, err := client.PullRequests.ListPullRequestsWithCommit(ctx, c.Org, c.Repository,
-		commit, &gh.PullRequestListOptions{})
-	return pullrequests, err
+	return c.listPullRequestsForCommit(ctx, client, commit, defaultMaxPages)
+}
+
+// listPullRequestsForCommit drains the PRs-for-commit endpoint. maxPages is a
+// parameter so the cap is testable without 100 round trips.
+func (c *GithubConfig) listPullRequestsForCommit(ctx context.Context, client *gh.Client,
+	commit string, maxPages int) ([]*gh.PullRequest, error) {
+	// Page starts at 1, not the zero value: at 0 the non-advancing guard below
+	// cannot fire on the first response. page=1 is the server default anyway.
+	opts := &gh.PullRequestListOptions{ListOptions: gh.ListOptions{PerPage: restPageSize, Page: 1}}
+	all := []*gh.PullRequest{}
+	for pages := 0; pages < maxPages; pages++ {
+		pullrequests, resp, err := client.PullRequests.ListPullRequestsWithCommit(ctx, c.Org, c.Repository,
+			commit, opts)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, pullrequests...)
+		if resp.NextPage == 0 {
+			return all, nil
+		}
+		if resp.NextPage <= opts.Page {
+			return nil, fmt.Errorf("next page %d did not advance past page %d for commit %s",
+				resp.NextPage, opts.Page, commit)
+		}
+		opts.Page = resp.NextPage
+	}
+	return nil, fmt.Errorf("aborting after %d pages of pull requests for commit %s", maxPages, commit)
 }
 
 // GetPullRequestApprovers returns a list of approvers for a given pull request
@@ -599,16 +641,46 @@ func (c *GithubConfig) GetPullRequestApprovers(number int) ([]string, error) {
 	if err != nil {
 		return approvers, err
 	}
-	reviews, _, err := client.PullRequests.ListReviews(ctx, c.Org, c.Repository, number, &gh.ListOptions{})
-	if err != nil {
-		return approvers, err
-	}
-	for _, r := range reviews {
-		if r.GetState() == "APPROVED" {
-			approvers = append(approvers, r.GetUser().GetLogin())
+	return c.listApprovers(ctx, client, number, defaultMaxPages)
+}
+
+// listApprovers drains the reviews endpoint, keeping the logins that approved.
+// maxPages is a parameter so the cap is testable without 100 round trips.
+//
+// ListReviews returns every review event, not just approvals, so the APPROVED
+// filter has to run over all pages: an approval past page one was previously
+// dropped outright (#1082).
+func (c *GithubConfig) listApprovers(ctx context.Context, client *gh.Client,
+	number, maxPages int) ([]string, error) {
+	approvers := []string{}
+	// Page starts at 1 for the same reason as above: the guard needs a floor it
+	// can compare against on the first response.
+	opts := &gh.ListOptions{PerPage: restPageSize, Page: 1}
+	// A reviewer can approve more than once. These entries carry no timestamp,
+	// so a repeated login adds nothing and is dropped.
+	seen := map[string]bool{}
+	for pages := 0; pages < maxPages; pages++ {
+		reviews, resp, err := client.PullRequests.ListReviews(ctx, c.Org, c.Repository, number, opts)
+		if err != nil {
+			return nil, err
 		}
+		for _, r := range reviews {
+			login := r.GetUser().GetLogin()
+			if r.GetState() == "APPROVED" && !seen[login] {
+				seen[login] = true
+				approvers = append(approvers, login)
+			}
+		}
+		if resp.NextPage == 0 {
+			return approvers, nil
+		}
+		if resp.NextPage <= opts.Page {
+			return nil, fmt.Errorf("next page %d did not advance past page %d for pull request %d",
+				resp.NextPage, opts.Page, number)
+		}
+		opts.Page = resp.NextPage
 	}
-	return approvers, nil
+	return nil, fmt.Errorf("aborting after %d pages of reviews for pull request %d", maxPages, number)
 }
 
 func (c *GithubConfig) newPRGithubEvidence(pr *gh.PullRequest) (*types.PREvidence, error) {

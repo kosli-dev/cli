@@ -148,9 +148,9 @@ func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.BasicMer
 		return mrs, err
 	}
 
-	mrs, _, err = client.Commits.ListMergeRequestsByCommit(c.ProjectID(), commit)
+	mrs, err = c.listMergeRequestsForCommit(client, commit, defaultMaxPages)
 	if err != nil {
-		return mrs, fmt.Errorf("failed to list merge requests for commit %s: %v", commit, err)
+		return mrs, fmt.Errorf("failed to list merge requests for commit %s: %w", commit, err)
 	}
 	return mrs, nil
 }
@@ -187,11 +187,12 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 	if err != nil {
 		return commits, err
 	}
-	glCommits, _, err := client.MergeRequests.GetMergeRequestCommits(c.ProjectID(), mr.IID,
-		&gitlab.GetMergeRequestCommitsOptions{})
+	glCommits, err := c.listMergeRequestCommits(client, mr.IID, defaultMaxPages)
 	if err != nil {
 		return commits, err
 	}
+	// One signature lookup per commit: pagination multiplies this, but GitLab
+	// has no batch signature endpoint.
 	for _, commit := range glCommits {
 		mappedCommit := commitFromGitlabCommit(commit, mr.SourceBranch)
 		verified, signatureState, err := resolveGitlabSignature(
