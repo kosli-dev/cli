@@ -384,7 +384,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-trailer Jira
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "[warning] trailer 'Jira' was not found in the last paragraph of the commit message\njira attestation 'bar' is reported to trail: test-123\n",
+			golden: "[warning] trailer 'Jira' was not found in the commit message\njira attestation 'bar' is reported to trail: test-123\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "fix: some change with no jira trailer",
 			},
@@ -397,7 +397,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-trailer Jira
 					--assert
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "jira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in trailer 'Jira'\n",
+			golden: "[warning] trailer 'Jira' was not found in the commit message\njira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in trailer 'Jira'\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "fix: some change with no jira trailer",
 			},
@@ -462,7 +462,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-trailer Jira
 					--assert
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "[warning] trailer 'Jira' was not found in the last paragraph of the commit message\njira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in trailer 'Jira'\n",
+			golden: "[warning] trailer 'Jira' was not found in the commit message\njira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in trailer 'Jira'\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				branchName:    "EX-1-some-feature",
 				commitMessage: "fix: some change with no jira trailer",
@@ -478,6 +478,17 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			golden: "[warning] trailer 'Jira' values [EX-1] did not match project filter [ABC]\njira attestation 'bar' is reported to trail: test-123\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "fix: some change\n\nJira: EX-1",
+			},
+		},
+		{
+			name: "38 --jira-trailer warns when trailer key exists outside the last block",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-trailer Jira
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "[warning] a 'Jira' line was found outside the last block of the commit message and was ignored\njira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "feat: thing (#123)\n\n* wip\n\nJira: EX-1\n\n* address review",
 			},
 		},
 	}

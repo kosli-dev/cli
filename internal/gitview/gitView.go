@@ -367,6 +367,20 @@ func TrailerKeyExists(message, key string) bool {
 	return found
 }
 
+// TrailerKeyExistsAnywhere reports whether any line in the whole commit message
+// matches the given key, regardless of which paragraph it is in. Use this
+// alongside TrailerKeyExists to distinguish "key absent entirely" from "key
+// present but not in the final paragraph".
+func TrailerKeyExistsAnywhere(message, key string) bool {
+	prefix := strings.ToLower(NormalizeTrailerKey(key)) + ":"
+	for _, line := range strings.Split(message, "\n") {
+		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(line)), prefix) {
+			return true
+		}
+	}
+	return false
+}
+
 // GetTrailerValues returns the values of every line in the last block of a commit
 // message of the form "<key>: <value>" that matches the given key. Only the last
 // block of lines is scanned — everything after the final blank line, or the whole

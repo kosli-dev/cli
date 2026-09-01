@@ -369,7 +369,11 @@ func (o *attestJiraOptions) run(args []string) error {
 		issueIDs = jira.FindJiraIssueKeys(combinedTrailerText, o.projectKeys)
 		logger.Debug("Checked for Jira issue references in trailer '%s' of Git commit %s: %v", trailerKey, commitInfo.Sha1, trailerValues)
 		if !gitview.TrailerKeyExists(commitInfo.Message, trailerKey) {
-			logger.Warn("trailer '%s' was not found in the last paragraph of the commit message", trailerKey)
+			if gitview.TrailerKeyExistsAnywhere(commitInfo.Message, trailerKey) {
+				logger.Warn("a '%s' line was found outside the last block of the commit message and was ignored", trailerKey)
+			} else {
+				logger.Warn("trailer '%s' was not found in the commit message", trailerKey)
+			}
 		} else if len(trailerValues) == 0 {
 			logger.Warn("trailer '%s' was found but had no value", trailerKey)
 		} else if len(issueIDs) == 0 {
