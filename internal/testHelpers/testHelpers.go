@@ -53,10 +53,15 @@ func GithubPRNumber() int {
 }
 
 func CloneGitRepo(url, cloneTo string) (*git.Repository, error) {
+	// Resolved for the same reason as in InitializeGitRepo below.
+	resolvedCloneTo, err := filepath.EvalSymlinks(cloneTo)
+	if err != nil {
+		return nil, err
+	}
 	// the repo worktree filesystem. It has to be osfs so that we can give it a path
-	fs := osfs.New(cloneTo)
+	fs := osfs.New(resolvedCloneTo)
 	// the filesystem for git database
-	storerFS := osfs.New(filepath.Join(cloneTo, ".git"))
+	storerFS := osfs.New(filepath.Join(resolvedCloneTo, ".git"))
 	storer := filesystem.NewStorage(storerFS, cache.NewObjectLRUDefault())
 	return git.Clone(storer, fs, &git.CloneOptions{URL: url})
 }
