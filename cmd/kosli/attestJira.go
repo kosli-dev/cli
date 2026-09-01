@@ -42,7 +42,9 @@ const attestJiraLongDesc = attestJiraShortDesc + `
 By default, parses the given commit's message, current branch name, or the content of the
 ^--jira-secondary-source^ argument for Jira issue references.
 Use ^--jira-trailer^ to read issue keys exclusively from a named git trailer line instead
-(e.g. ^Jira: PROJ-42^); when set, the commit message body and branch name are not scanned.
+(e.g. ^Jira: PROJ-42^); only the last block of lines in the commit message is scanned
+(everything after the final blank line, or the whole message if there is no blank line).
+The commit message body and branch name are not scanned.
 ^--jira-trailer^ and ^--jira-secondary-source^ are mutually exclusive.
 
 Jira issue references have the form:

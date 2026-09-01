@@ -367,9 +367,10 @@ func TrailerKeyExists(message, key string) bool {
 	return found
 }
 
-// GetTrailerValues returns the values of every line in the final paragraph of a
-// commit message of the form "<key>: <value>" that matches the given key, matching
-// the semantics of git interpret-trailers. The key comparison is case-insensitive;
+// GetTrailerValues returns the values of every line in the last block of a commit
+// message of the form "<key>: <value>" that matches the given key. Only the last
+// block of lines is scanned — everything after the final blank line, or the whole
+// message if there is no blank line. The key comparison is case-insensitive;
 // surrounding whitespace on both the key and the line is ignored, and a trailing ":"
 // on the key is tolerated. Lines with an empty value are skipped — use TrailerKeyExists
 // to detect a key that is present but has no value.

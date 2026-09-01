@@ -567,6 +567,12 @@ func (suite *GitViewTestSuite) TestGetTrailerValues() {
 			key:      "Jira",
 			expected: []string{},
 		},
+		{
+			name:     "single-paragraph message (subject only) is matched",
+			message:  "Jira: BX-123",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
 	} {
 		suite.Run(tt.name, func() {
 			result := GetTrailerValues(tt.message, tt.key)
