@@ -65,7 +65,7 @@ In other CI systems, set them explicitly to capture repository metadata.
 | `-R`, `--scan-results` | string | The path to Snyk scan SARIF results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault. |
 | `-T`, `--trail` | string | The Kosli trail name. |
 | `--upload-results` | bool | [defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not. (default true) |
-| `-u`, `--user-data` | string | [optional] The path to a JSON file containing additional data you would like to attach to the attestation. |
+| `-u`, `--user-data` | string | [optional] The path to a JSON file containing additional data you would like to attach to the attestation. The maximum json payload size is 1MB. |
 
 
 ## Examples Use Cases
