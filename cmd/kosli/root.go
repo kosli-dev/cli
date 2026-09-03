@@ -265,7 +265,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	attestationCompliantFlag        = "[defaulted] Whether the attestation is compliant or not."
 	attestationRepoRootFlag         = "[defaulted] The directory where the source git repository is available. Only used if --commit is used or defaulted in CI, see https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables ."
 	attestationCustomTypeNameFlag   = "The name of the custom attestation type."
-	attestationCustomDataFileFlag   = "The filepath of a json file containing the custom attestation data. The maximum JSON payload size is 1MB."
+	attestationCustomDataFileFlag   = "The filepath of a JSON file containing the custom attestation data. The maximum JSON payload size is 1MB."
 	uploadJunitResultsFlag          = "[defaulted] Whether to upload the provided Junit results directory as an attachment to Kosli or not."
 	uploadSnykResultsFlag           = "[defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not."
 	attestationAssertFlag           = "[optional] Exit with non-zero code if the attestation is non-compliant"
