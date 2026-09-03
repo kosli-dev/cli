@@ -177,7 +177,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	templateFileFlag                = "[optional] The path to a yaml template file. Cannot be used together with --use-empty-template"
 	templateFileSimpleFlag          = "[optional] The path to a yaml template file."
 	useEmptyTemplateFlag            = "Use an empty template for the flow creation without specifying a file. Cannot be used together with --template or --template-file"
-	attestationUserDataFlag         = "[optional] The path to a JSON file containing additional data you would like to attach to the attestation. The maximum json payload size is 1MB."
+	attestationUserDataFlag         = "[optional] The path to a JSON file containing additional data you would like to attach to the attestation. The maximum JSON payload size is 1MB."
 	trailUserDataFlag               = "[optional] The path to a JSON file containing additional data you would like to attach to the flow trail."
 	gitCommitFlag                   = "[defaulted] The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/integrations/ci_cd, otherwise defaults to HEAD )."
 	buildUrlFlag                    = "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/integrations/ci_cd )."
