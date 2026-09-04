@@ -488,6 +488,177 @@ func initializeRepoAndCommit(repoPath string, commitsNumber int) (*git.Repositor
 	return repo, w, nil
 }
 
+func (suite *GitViewTestSuite) TestGetTrailerValues() {
+	for _, tt := range []struct {
+		name     string
+		message  string
+		key      string
+		expected []string
+	}{
+		{
+			name:     "no trailers returns empty slice",
+			message:  "fix: something\n\nsome body text",
+			key:      "Jira",
+			expected: []string{},
+		},
+		{
+			name:     "single matching trailer",
+			message:  "fix: something\n\nJira: BX-123",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "key match is case-insensitive",
+			message:  "fix: something\n\njira: BX-123",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "multiple occurrences of same key",
+			message:  "fix: something\n\nJira: BX-123\nJira: BX-456",
+			key:      "Jira",
+			expected: []string{"BX-123", "BX-456"},
+		},
+		{
+			name:     "non-matching trailers are ignored",
+			message:  "fix: something\n\nJira: BX-123\nOna-Environment-Id: ONA-456",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "whitespace trimmed from value",
+			message:  "fix: something\n\nJira:   BX-123  ",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "leading whitespace on line is tolerated",
+			message:  "fix: something\n\n    Jira: BX-123",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "key supplied with trailing colon still matches",
+			message:  "fix: something\n\nJira: BX-123",
+			key:      "Jira:",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "key with surrounding whitespace still matches",
+			message:  "fix: something\n\nJira: BX-123",
+			key:      "  Jira  ",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "line with empty value is skipped",
+			message:  "fix: something\n\nJira:",
+			key:      "Jira",
+			expected: []string{},
+		},
+		{
+			name:     "key whose lowercase is shorter than the original still extracts correct value",
+			message:  "fix: something\n\nİ: BX-123",
+			key:      "İ",
+			expected: []string{"BX-123"},
+		},
+		{
+			name:     "key in commit body but not final paragraph is not matched",
+			message:  "fix: something\n\nJira: BX-123\n\nsome body text",
+			key:      "Jira",
+			expected: []string{},
+		},
+		{
+			name:     "single-paragraph message (subject only) is matched",
+			message:  "Jira: BX-123",
+			key:      "Jira",
+			expected: []string{"BX-123"},
+		},
+	} {
+		suite.Run(tt.name, func() {
+			result := GetTrailerValues(tt.message, tt.key)
+			require.Equal(suite.T(), tt.expected, result)
+		})
+	}
+}
+
+func (suite *GitViewTestSuite) TestTrailerKeyExists() {
+	for _, tt := range []struct {
+		name     string
+		message  string
+		key      string
+		expected bool
+	}{
+		{
+			name:     "key present with value",
+			message:  "fix: something\n\nJira: BX-123",
+			key:      "Jira",
+			expected: true,
+		},
+		{
+			name:     "key present with empty value",
+			message:  "fix: something\n\nJira:",
+			key:      "Jira",
+			expected: true,
+		},
+		{
+			name:     "key absent",
+			message:  "fix: something\n\nsome body text",
+			key:      "Jira",
+			expected: false,
+		},
+		{
+			name:     "key match is case-insensitive",
+			message:  "fix: something\n\njira: BX-123",
+			key:      "Jira",
+			expected: true,
+		},
+		{
+			name:     "key present outside last block is not matched",
+			message:  "fix: something\n\nJira: BX-123\n\n* address review",
+			key:      "Jira",
+			expected: false,
+		},
+	} {
+		suite.Run(tt.name, func() {
+			result := TrailerKeyExists(tt.message, tt.key)
+			require.Equal(suite.T(), tt.expected, result)
+		})
+	}
+}
+
+func (suite *GitViewTestSuite) TestTrailerKeyExistsAnywhere() {
+	for _, tt := range []struct {
+		name     string
+		message  string
+		key      string
+		expected bool
+	}{
+		{
+			name:     "key in last block",
+			message:  "fix: something\n\nJira: BX-123",
+			key:      "Jira",
+			expected: true,
+		},
+		{
+			name:     "key outside last block",
+			message:  "fix: something\n\nJira: BX-123\n\n* address review",
+			key:      "Jira",
+			expected: true,
+		},
+		{
+			name:     "key absent entirely",
+			message:  "fix: something with no trailer",
+			key:      "Jira",
+			expected: false,
+		},
+	} {
+		suite.Run(tt.name, func() {
+			result := TrailerKeyExistsAnywhere(tt.message, tt.key)
+			require.Equal(suite.T(), tt.expected, result)
+		})
+	}
+}
+
 func TestGitViewTestSuite(t *testing.T) {
 	suite.Run(t, new(GitViewTestSuite))
 }

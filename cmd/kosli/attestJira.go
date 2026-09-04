@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"unicode"
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/jira"
@@ -30,6 +31,7 @@ type attestJiraOptions struct {
 	projectKeys       []string
 	issueFields       string
 	secondarySource   string
+	trailerKey        string
 	ignoreBranchMatch bool
 	assert            bool
 	payload           JiraAttestationPayload
@@ -38,8 +40,15 @@ type attestJiraOptions struct {
 const attestJiraShortDesc = `Report a jira attestation to an artifact or a trail in a Kosli flow.  `
 
 const attestJiraLongDesc = attestJiraShortDesc + `
-Parses the given commit's message, current branch name or the content of the ^--jira-secondary-source^
-argument for Jira issue references of the form:
+By default, parses the given commit's message, current branch name, or the content of the
+^--jira-secondary-source^ argument for Jira issue references.
+Use ^--jira-trailer^ to read issue keys exclusively from a named git trailer line instead
+(e.g. ^Jira: PROJ-42^); only the last block of lines in the commit message is scanned
+(everything after the final blank line, or the whole message if there is no blank line).
+The rest of the commit message and branch name are not scanned.
+^--jira-trailer^ and ^--jira-secondary-source^ are mutually exclusive.
+
+Jira issue references have the form:
 'at least 2 characters long, starting with an uppercase letter project key followed by
 dash and one or more digits'.
 
@@ -59,13 +68,19 @@ because ^CVE-2026^ would be followed by ^-4^. This applies across all parsed sou
 (commit message, branch name, and secondary source).
 Note: if your Jira project key collides with this pattern (e.g. a project key of ^CVE^), an
 issue reference that happens to be the prefix of a longer hyphenated number (such as a CVE
-identifier) will be filtered out. Use ^--jira-secondary-source^ with a different identifier
-format as a workaround.
+identifier) will be filtered out. Use ^--jira-trailer^ to read issue keys from a dedicated
+git trailer line (e.g. ^Jira: CVE-42^), which confines scanning to the trailer value and
+removes collisions caused by surrounding commit text; write the issue key alone in the
+trailer value, not embedded in a longer hyphenated string (e.g. ^Jira: CVE-2026-41284^
+would still be filtered out). Alternatively, use ^--jira-secondary-source^ with a different
+identifier format.
 
 If you want to restrict the Jira issue matching to a specific project, use the
 ^--jira-project-key^ flag to specify your own project key. You can specify multiple project keys if needed.
 
 If the ^--ignore-branch-match^ is set, the branch name is not parsed for a match.
+^--ignore-branch-match^ has no effect when ^--jira-trailer^ is set, since the branch is
+never scanned in trailer mode.
 
 The found issue references will be checked against Jira to confirm their existence.
 The attestation is reported in all cases, and its compliance status depends on referencing
@@ -194,6 +209,21 @@ kosli attest jira \
 	--jira-api-token yourJiraAPIToken \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# read the jira issue key exclusively from a git trailer line (e.g. "Jira: PROJ-42")
+# confines scanning to the trailer value — useful when project keys collide with
+# patterns like CVE identifiers; write the issue key alone (e.g. "Jira: CVE-42"),
+# not embedded in a longer hyphenated string ("Jira: CVE-2026-41284" is still filtered)
+kosli attest jira \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-trailer Jira \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 func newAttestJiraCmd(out io.Writer) *cobra.Command {
@@ -238,6 +268,21 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			err = MuXRequiredFlags(cmd, []string{"jira-trailer", "jira-secondary-source"}, false)
+			if err != nil {
+				return err
+			}
+
+			if cmd.Flags().Changed("jira-trailer") {
+				normalizedKey := gitview.NormalizeTrailerKey(o.trailerKey)
+				if normalizedKey == "" {
+					return emptyFlagValueError("jira-trailer")
+				}
+				if strings.Contains(normalizedKey, ":") || strings.IndexFunc(normalizedKey, unicode.IsSpace) >= 0 {
+					return fmt.Errorf("flag '--jira-trailer' is not a valid trailer key: trailer keys cannot contain colons or whitespace")
+				}
+			}
+
 			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
 			if err != nil {
 				return fmt.Errorf("%s for --redact-commit-info", err.Error())
@@ -267,6 +312,7 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVar(&o.projectKeys, "jira-project-key", []string{}, jiraProjectKeyFlag)
 	cmd.Flags().StringVar(&o.issueFields, "jira-issue-fields", "", jiraIssueFieldFlag)
 	cmd.Flags().StringVar(&o.secondarySource, "jira-secondary-source", "", jiraSecondarySourceFlag)
+	cmd.Flags().StringVar(&o.trailerKey, "jira-trailer", "", jiraTrailerFlag)
 	cmd.Flags().BoolVar(&o.ignoreBranchMatch, "ignore-branch-match", false, ignoreBranchMatchFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, attestationAssertFlag)
 
@@ -308,11 +354,40 @@ func (o *attestJiraOptions) run(args []string) error {
 		return err
 	}
 
-	// Search commit message, branch name, and secondary source for Jira issue keys,
-	// filtering out false positives from multi-segment identifiers like CVE-2026-41284.
-	issueIDs := jira.FindJiraIssueKeys(jiraSearchText(commitInfo, o.secondarySource, o.ignoreBranchMatch), o.projectKeys)
-	logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
-	logger.Debug("the following Jira references are found in commit message or branch name: %v", issueIDs)
+	// Find Jira issue keys either from a named git trailer or by scanning the
+	// commit message, branch name, and secondary source.
+	trailerKey := gitview.NormalizeTrailerKey(o.trailerKey)
+	var issueIDs []string
+	issueSource := "commit message or branch name"
+	if trailerKey != "" {
+		issueSource = fmt.Sprintf("trailer '%s'", trailerKey)
+		if o.ignoreBranchMatch {
+			logger.Warn("--ignore-branch-match has no effect when --jira-trailer is set")
+		}
+		trailerValues := gitview.GetTrailerValues(commitInfo.Message, trailerKey)
+		combinedTrailerText := strings.Join(trailerValues, "\n")
+		issueIDs = jira.FindJiraIssueKeys(combinedTrailerText, o.projectKeys)
+		logger.Debug("Checked for Jira issue references in trailer '%s' of Git commit %s: %v", trailerKey, commitInfo.Sha1, trailerValues)
+		if !gitview.TrailerKeyExists(commitInfo.Message, trailerKey) {
+			if gitview.TrailerKeyExistsAnywhere(commitInfo.Message, trailerKey) {
+				logger.Warn("a '%s' line was found outside the last block of the commit message and was ignored", trailerKey)
+			} else {
+				logger.Warn("trailer '%s' was not found in the commit message", trailerKey)
+			}
+		} else if len(trailerValues) == 0 {
+			logger.Warn("trailer '%s' was found but had no value", trailerKey)
+		} else if len(issueIDs) == 0 {
+			if len(o.projectKeys) > 0 {
+				logger.Warn("trailer '%s' values %v did not match project filter %v", trailerKey, trailerValues, o.projectKeys)
+			} else {
+				logger.Warn("trailer '%s' values %v did not contain valid Jira issue keys", trailerKey, trailerValues)
+			}
+		}
+	} else {
+		issueIDs = jira.FindJiraIssueKeys(jiraSearchText(commitInfo, o.secondarySource, o.ignoreBranchMatch), o.projectKeys)
+		logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
+	}
+	logger.Debug("the following Jira references are found: %v", issueIDs)
 
 	issueLog := ""
 	issueFoundCount := 0
@@ -372,7 +447,7 @@ func (o *attestJiraOptions) run(args []string) error {
 		if err != nil {
 			errString = fmt.Sprintf("%s\nError: ", err.Error())
 		}
-		err = fmt.Errorf("%sno Jira references are found in commit message or branch name", errString)
+		err = fmt.Errorf("%sno Jira references are found in %s", errString, issueSource)
 	}
 
 	if issueFoundCount != len(issueIDs) && o.assert && !global.DryRun {
@@ -385,8 +460,8 @@ func (o *attestJiraOptions) run(args []string) error {
 		for _, reason := range unconfirmedReasons {
 			reasonLog += fmt.Sprintf("\n\treason: %s", reason)
 		}
-		err = fmt.Errorf("%s%s from references found in commit message or branch name%s%s", errString,
-			jiraAssertHeadline(len(issueIDs)-issueFoundCount-len(unconfirmedIDs), len(unconfirmedIDs)), issueLog, reasonLog)
+		err = fmt.Errorf("%s%s from references found in %s%s%s", errString,
+			jiraAssertHeadline(len(issueIDs)-issueFoundCount-len(unconfirmedIDs), len(unconfirmedIDs)), issueSource, issueLog, reasonLog)
 	}
 	return wrapAttestationError(err)
 }

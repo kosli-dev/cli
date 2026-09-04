@@ -276,6 +276,88 @@ func getCommitURL(repoURL, commitHash string) string {
 	}
 }
 
+// NormalizeTrailerKey strips surrounding whitespace and a trailing colon from key,
+// returning the canonical form used for matching and validation.
+func NormalizeTrailerKey(key string) string {
+	return strings.TrimRight(strings.TrimSpace(key), ":")
+}
+
+// trailerBlock returns the final paragraph of a commit message — the contiguous
+// block of non-blank lines at the end, which is where git interpret-trailers
+// looks for trailer lines.
+func trailerBlock(message string) string {
+	lines := strings.Split(message, "\n")
+	end := len(lines)
+	for end > 0 && strings.TrimSpace(lines[end-1]) == "" {
+		end--
+	}
+	start := end
+	for start > 0 && strings.TrimSpace(lines[start-1]) != "" {
+		start--
+	}
+	return strings.Join(lines[start:end], "\n")
+}
+
+// scanLines does one pass over lines, returning all non-empty values for lines
+// matching key and whether any matching line was found at all (including lines
+// with an empty value). All exported trailer helpers delegate here so they
+// always agree on what "matching" means.
+func scanLines(lines []string, key string) (values []string, found bool) {
+	prefix := strings.ToLower(NormalizeTrailerKey(key)) + ":"
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(strings.ToLower(trimmed), prefix) {
+			found = true
+			colonIdx := strings.IndexByte(trimmed, ':')
+			if value := strings.TrimSpace(trimmed[colonIdx+1:]); value != "" {
+				values = append(values, value)
+			}
+		}
+	}
+	return
+}
+
+// scanTrailer does one pass over the trailer block of the commit message.
+// Both GetTrailerValues and TrailerKeyExists delegate here so they always
+// agree on what "matching" means.
+func scanTrailer(message, key string) ([]string, bool) {
+	return scanLines(strings.Split(trailerBlock(message), "\n"), key)
+}
+
+// TrailerKeyExists reports whether any line in the final paragraph of the commit
+// message matches the given key, regardless of whether the value is empty.
+// Use this alongside GetTrailerValues to distinguish "key not present" from
+// "key present but value empty".
+func TrailerKeyExists(message, key string) bool {
+	_, found := scanTrailer(message, key)
+	return found
+}
+
+// TrailerKeyExistsAnywhere reports whether any line in the whole commit message
+// matches the given key, regardless of which paragraph it is in. Use this
+// alongside TrailerKeyExists to distinguish "key absent entirely" from "key
+// present but not in the final paragraph".
+func TrailerKeyExistsAnywhere(message, key string) bool {
+	_, found := scanLines(strings.Split(message, "\n"), key)
+	return found
+}
+
+// GetTrailerValues returns the values of every line in the last block of a commit
+// message of the form "<key>: <value>" that matches the given key. Only the last
+// block of lines is scanned — everything after the final blank line, or the whole
+// message if there is no blank line. The key comparison is case-insensitive;
+// surrounding whitespace on both the key and the line is ignored, and a trailing ":"
+// on the key is tolerated. Lines with an empty value are skipped — use TrailerKeyExists
+// to detect a key that is present but has no value.
+// Returns an empty (non-nil) slice if none are found.
+func GetTrailerValues(message, key string) []string {
+	values, _ := scanTrailer(message, key)
+	if values == nil {
+		return []string{}
+	}
+	return values
+}
+
 // ResolveRevision returns an explicit commit SHA1 from commit SHA or ref (e.g. HEAD~2)
 func (gv *GitView) ResolveRevision(commitSHAOrRef string) (string, error) {
 	hash, err := gv.repository.ResolveRevision(plumbing.Revision(commitSHAOrRef))
