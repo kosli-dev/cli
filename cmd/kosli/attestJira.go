@@ -384,15 +384,7 @@ func (o *attestJiraOptions) run(args []string) error {
 			}
 		}
 	} else {
-		searchTexts := []string{commitInfo.Message}
-		if !o.ignoreBranchMatch {
-			searchTexts = append(searchTexts, commitInfo.Branch)
-		}
-		if o.secondarySource != "" {
-			searchTexts = append(searchTexts, o.secondarySource)
-		}
-		combinedText := strings.Join(searchTexts, "\n")
-		issueIDs = jira.FindJiraIssueKeys(combinedText, o.projectKeys)
+		issueIDs = jira.FindJiraIssueKeys(jiraSearchText(commitInfo, o.secondarySource, o.ignoreBranchMatch), o.projectKeys)
 		logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
 	}
 	logger.Debug("the following Jira references are found: %v", issueIDs)
