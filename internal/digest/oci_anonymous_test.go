@@ -1,10 +1,15 @@
 package digest
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/containers/image/v5/docker"
 
 	"github.com/containers/image/v5/types"
 	godigest "github.com/opencontainers/go-digest"
@@ -24,14 +29,27 @@ func fakeRegistry(t *testing.T, contentDigest string) string {
 		w.WriteHeader(http.StatusOK)
 	}))
 	t.Cleanup(srv.Close)
-	return strings.TrimPrefix(srv.URL, "https://")
+	parsed, err := url.Parse(srv.URL)
+	require.NoError(t, err)
+	return parsed.Host
 }
 
-func insecureAnonymousContext() *types.SystemContext {
-	return &types.SystemContext{
-		DockerAuthConfig:            &types.DockerAuthConfig{},
-		DockerInsecureSkipTLSVerify: types.OptionalBoolTrue,
+// insecureAnonymousLookup mirrors OciSha256Anonymous against a fake TLS
+// registry. Production does not skip TLS verification, so the flag is set here
+// rather than in credentialContext.
+func insecureAnonymousLookup(artifactName string) (string, error) {
+	sysCtx := credentialContext(noCredentials, "", "")
+	sysCtx.DockerInsecureSkipTLSVerify = types.OptionalBoolTrue
+
+	ref, err := docker.ParseReference("//" + artifactName)
+	if err != nil {
+		return "", err
 	}
+	remoteDigest, err := docker.GetDigest(context.Background(), sysCtx, ref)
+	if err != nil {
+		return "", fmt.Errorf("failed to get digest: %w", err)
+	}
+	return Sha256Fingerprint(remoteDigest)
 }
 
 // TestOciSha256RejectsNonSha256RegistryDigest covers a registry answering with
@@ -48,7 +66,7 @@ func TestOciSha256RejectsNonSha256RegistryDigest(t *testing.T) {
 		t.Run(tc.algorithm, func(t *testing.T) {
 			host := fakeRegistry(t, tc.contentDigest)
 
-			fingerprint, err := ociSha256(host+"/repo:tag", insecureAnonymousContext())
+			fingerprint, err := insecureAnonymousLookup(host + "/repo:tag")
 
 			require.Error(t, err)
 			require.Empty(t, fingerprint)
@@ -62,21 +80,82 @@ func TestOciSha256ReturnsTheSha256Fingerprint(t *testing.T) {
 	want := strings.Repeat("a", 64)
 	host := fakeRegistry(t, "sha256:"+want)
 
-	fingerprint, err := ociSha256(host+"/repo:tag", insecureAnonymousContext())
+	fingerprint, err := insecureAnonymousLookup(host + "/repo:tag")
 
 	require.NoError(t, err)
 	require.Equal(t, want, fingerprint)
 }
 
-// TestOciSha256AnonymousPresentsNoStoredCredential guards the credential
-// boundary: a nil DockerAuthConfig makes containers/image fall back to
-// credential discovery, so the anonymous helper must set a non-nil empty one.
-func TestOciSha256AnonymousPresentsNoStoredCredential(t *testing.T) {
-	sysCtx := anonymousSystemContext()
-	require.NotNil(t, sysCtx.DockerAuthConfig, "a nil DockerAuthConfig falls back to credential discovery")
-	require.Empty(t, sysCtx.DockerAuthConfig.Username)
-	require.Empty(t, sysCtx.DockerAuthConfig.Password)
-	require.Empty(t, sysCtx.DockerAuthConfig.IdentityToken)
+// TestCredentialContext pins the credential decision itself, which is the
+// load-bearing property of the anonymous lookup: containers/image falls back to
+// credential discovery from auth files and helpers whenever DockerAuthConfig is
+// nil, so the anonymous source must produce a non-nil empty one.
+func TestCredentialContext(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		source         credentialSource
+		username       string
+		password       string
+		wantAuthConfig bool
+		wantUsername   string
+		wantPassword   string
+	}{
+		{
+			name:           "no credentials presents an empty config, not discovery",
+			source:         noCredentials,
+			wantAuthConfig: true,
+		},
+		{
+			name:           "no credentials ignores any credentials passed alongside it",
+			source:         noCredentials,
+			username:       "user",
+			password:       "pass",
+			wantAuthConfig: true,
+		},
+		{
+			name:           "caller credentials are presented",
+			source:         callerOrHostCredentials,
+			username:       "user",
+			password:       "pass",
+			wantAuthConfig: true,
+			wantUsername:   "user",
+			wantPassword:   "pass",
+		},
+		{
+			name:           "caller credentials, password only",
+			source:         callerOrHostCredentials,
+			password:       "pass",
+			wantAuthConfig: true,
+			wantPassword:   "pass",
+		},
+		{
+			// A nil config is what enables discovery, and this path wants it.
+			name:           "no caller credentials leaves discovery enabled",
+			source:         callerOrHostCredentials,
+			wantAuthConfig: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			sysCtx := credentialContext(tc.source, tc.username, tc.password)
+
+			if !tc.wantAuthConfig {
+				require.Nil(t, sysCtx.DockerAuthConfig, "a nil config enables credential discovery")
+				return
+			}
+			require.NotNil(t, sysCtx.DockerAuthConfig, "a nil config would enable credential discovery")
+			require.Equal(t, tc.wantUsername, sysCtx.DockerAuthConfig.Username)
+			require.Equal(t, tc.wantPassword, sysCtx.DockerAuthConfig.Password)
+			require.Empty(t, sysCtx.DockerAuthConfig.IdentityToken)
+		})
+	}
+}
+
+// TestNoCredentialsIsTheZeroValue means a lookup that fails to state its
+// credential source presents nothing rather than the host's credentials.
+func TestNoCredentialsIsTheZeroValue(t *testing.T) {
+	var unset credentialSource
+	require.Equal(t, noCredentials, unset)
+	require.NotNil(t, credentialContext(unset, "", "").DockerAuthConfig)
 }
 
 func TestSha256FingerprintFromDigest(t *testing.T) {

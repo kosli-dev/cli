@@ -41,6 +41,9 @@ type AzureStaticCredentials struct {
 type AzureClient struct {
 	Credentials       AzureStaticCredentials
 	AppServiceFactory *armappservice.ClientFactory
+	// acrClientOptions is nil in production. Tests set it so the ACR arm can be
+	// driven against a fake registry without package-level state.
+	acrClientOptions *azcontainerregistry.ClientOptions
 }
 
 // AppData represents the harvested Azure service app and function app data
@@ -271,7 +274,7 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 	destDir := filepath.Join(tmpDir, "extracted")
 	err = unzip(packagePath, destDir, logger)
 	if err != nil {
-		return AppData{}, fmt.Errorf("failed to unzip downloaded package for app [%s]: %v", *app.Name, err)
+		return AppData{}, fmt.Errorf("failed to unzip the downloaded package: %v", err)
 	}
 
 	//  fingerprint the downloaded and unzipped package
@@ -410,19 +413,6 @@ func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site
 // the token audience per cloud, not the login-server suffix.
 var acrLoginServerSuffixes = []string{".azurecr.io", ".azurecr.cn", ".azurecr.us"}
 
-// imageFingerprintSource is how an image reference is resolved to a fingerprint.
-type imageFingerprintSource int
-
-const (
-	// fingerprintFromAnonymousRegistry reads the fingerprint from a registry with
-	// no credential attached. It is the zero value deliberately: an unset or
-	// partially built plan must never select the credential-bearing arm.
-	fingerprintFromAnonymousRegistry imageFingerprintSource = iota
-	// fingerprintFromACR reads it from Azure Container Registry, authenticated
-	// with the Azure credential.
-	fingerprintFromACR
-)
-
 // isACRLoginServer reports whether domain is an Azure Container Registry login
 // server, matching on a whole label so that "azurecr.io.example.com" is not one.
 func isACRLoginServer(domain string) bool {
@@ -442,7 +432,6 @@ func isACRLoginServer(domain string) bool {
 // before anything is contacted, so a test can assert every value that crosses
 // the boundary rather than only which resolver ran.
 type fingerprintPlan struct {
-	source imageFingerprintSource
 	// domain is the registry the reference names, as the parser reports it.
 	domain string
 	// reference is the canonical form handed to a resolver. Classification and
@@ -465,9 +454,9 @@ type fingerprintPlan struct {
 // registry component but resolves to attacker.example as a URL. The parser
 // rejects it.
 //
-// Only fingerprintFromACR attaches the Azure credential, so the classification
-// here is what keeps that credential away from a registry named in an app's own
-// configuration.
+// Only an Azure Container Registry login server gets the Azure credential, so
+// the domain this reports is what keeps that credential away from a registry
+// named in an app's own configuration.
 func planImageFingerprint(imageName string) (fingerprintPlan, error) {
 	named, err := reference.ParseNormalizedNamed(imageName)
 	if err != nil {
@@ -503,10 +492,6 @@ func planImageFingerprint(imageName string) (fingerprintPlan, error) {
 	plan.domain = reference.Domain(named)
 	plan.repoPath = reference.Path(named)
 	plan.reference = named.String()
-	plan.source = fingerprintFromAnonymousRegistry
-	if isACRLoginServer(plan.domain) {
-		plan.source = fingerprintFromACR
-	}
 
 	return plan, nil
 }
@@ -522,8 +507,8 @@ func (azureClient *AzureClient) GetImageFingerprint(imageName string, logger *lo
 	}
 
 	var fingerprint string
-	if plan.source == fingerprintFromACR {
-		fingerprint, err = azureClient.acrImageFingerprint(plan, nil, logger)
+	if isACRLoginServer(plan.domain) {
+		fingerprint, err = azureClient.acrImageFingerprint(plan, azureClient.acrClientOptions, logger)
 	} else {
 		fingerprint, err = anonymousImageFingerprint(plan, logger)
 	}
@@ -561,6 +546,13 @@ func (azureClient *AzureClient) acrImageFingerprint(plan fingerprintPlan, client
 		&azcontainerregistry.ClientGetManifestOptions{Accept: to.Ptr("application/vnd.docker.distribution.manifest.v2+json")})
 	if err != nil {
 		return "", err
+	}
+	if manifestRes.ManifestData != nil {
+		defer func() {
+			if err := manifestRes.ManifestData.Close(); err != nil {
+				logger.Warn("failed to close the manifest response for image %s: %v", plan.reference, err)
+			}
+		}()
 	}
 	if manifestRes.DockerContentDigest == nil {
 		return "", fmt.Errorf("no digest returned for image [%s]", plan.reference)

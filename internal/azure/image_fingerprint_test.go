@@ -4,12 +4,16 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
+	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +31,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 			name:      "acr image with a tag authenticates to acr",
 			imageName: "myregistry.azurecr.io/myrepo/myapp:1.0",
 			want: fingerprintPlan{
-				source: fingerprintFromACR, domain: "myregistry.azurecr.io",
+				domain:    "myregistry.azurecr.io",
 				reference: "myregistry.azurecr.io/myrepo/myapp:1.0",
 				repoPath:  "myrepo/myapp", tagOrDigest: "1.0",
 			},
@@ -38,7 +42,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 			name:      "acr image pinned to a digest keeps the sha256 prefix",
 			imageName: "myregistry.azurecr.io/myapp@sha256:" + sha,
 			want: fingerprintPlan{
-				source: fingerprintFromACR, domain: "myregistry.azurecr.io",
+				domain:    "myregistry.azurecr.io",
 				reference: "myregistry.azurecr.io/myapp@sha256:" + sha,
 				repoPath:  "myapp", tagOrDigest: "sha256:" + sha,
 				pinnedFingerprint: sha,
@@ -50,7 +54,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 			name:      "tag and digest together drops the tag",
 			imageName: "ghcr.io/owner/app:v1@sha256:" + sha,
 			want: fingerprintPlan{
-				source: fingerprintFromAnonymousRegistry, domain: "ghcr.io",
+				domain:    "ghcr.io",
 				reference: "ghcr.io/owner/app@sha256:" + sha,
 				repoPath:  "owner/app", tagOrDigest: "sha256:" + sha,
 				pinnedFingerprint: sha,
@@ -60,7 +64,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 			name:      "image without a tag defaults to latest",
 			imageName: "myregistry.azurecr.io/myapp",
 			want: fingerprintPlan{
-				source: fingerprintFromACR, domain: "myregistry.azurecr.io",
+				domain:    "myregistry.azurecr.io",
 				reference: "myregistry.azurecr.io/myapp:latest",
 				repoPath:  "myapp", tagOrDigest: "latest",
 			},
@@ -69,7 +73,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 			name:      "acr host with a port authenticates to acr",
 			imageName: "myregistry.azurecr.io:443/myapp:v1",
 			want: fingerprintPlan{
-				source: fingerprintFromACR, domain: "myregistry.azurecr.io:443",
+				domain:    "myregistry.azurecr.io:443",
 				reference: "myregistry.azurecr.io:443/myapp:v1",
 				repoPath:  "myapp", tagOrDigest: "v1",
 			},
@@ -78,7 +82,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 			name:      "third party registry resolves anonymously",
 			imageName: "ghcr.io/owner/app:v2",
 			want: fingerprintPlan{
-				source: fingerprintFromAnonymousRegistry, domain: "ghcr.io",
+				domain:    "ghcr.io",
 				reference: "ghcr.io/owner/app:v2", repoPath: "owner/app", tagOrDigest: "v2",
 			},
 		},
@@ -86,7 +90,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 			name:      "attacker controlled host resolves anonymously",
 			imageName: "attacker.example/repo:latest",
 			want: fingerprintPlan{
-				source: fingerprintFromAnonymousRegistry, domain: "attacker.example",
+				domain:    "attacker.example",
 				reference: "attacker.example/repo:latest", repoPath: "repo", tagOrDigest: "latest",
 			},
 		},
@@ -94,7 +98,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 			name:      "acr lookalike host resolves anonymously",
 			imageName: "azurecr.io.attacker.example/repo:latest",
 			want: fingerprintPlan{
-				source: fingerprintFromAnonymousRegistry, domain: "azurecr.io.attacker.example",
+				domain:    "azurecr.io.attacker.example",
 				reference: "azurecr.io.attacker.example/repo:latest", repoPath: "repo", tagOrDigest: "latest",
 			},
 		},
@@ -102,7 +106,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 			name:      "docker hub short form is normalised",
 			imageName: "nginx:latest",
 			want: fingerprintPlan{
-				source: fingerprintFromAnonymousRegistry, domain: "docker.io",
+				domain:    "docker.io",
 				reference: "docker.io/library/nginx:latest", repoPath: "library/nginx", tagOrDigest: "latest",
 			},
 		},
@@ -110,7 +114,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 			name:      "docker hub user image is normalised",
 			imageName: "myuser/myimage:tag",
 			want: fingerprintPlan{
-				source: fingerprintFromAnonymousRegistry, domain: "docker.io",
+				domain:    "docker.io",
 				reference: "docker.io/myuser/myimage:tag", repoPath: "myuser/myimage", tagOrDigest: "tag",
 			},
 		},
@@ -282,6 +286,12 @@ func TestGetImageFingerprintHoldsTheRegistryToAPinnedDigest(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "is pinned to digest sha256:"+pinned)
 
+	// A near miss, so a comparison of only part of the digest cannot pass.
+	stubAnonymousFingerprint(t, strings.Repeat("a", 63)+"b", nil)
+	_, err = client.GetImageFingerprint("ghcr.io/owner/app@sha256:"+pinned, logger.NewStandardLogger())
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "is pinned to digest sha256:"+pinned)
+
 	stubAnonymousFingerprint(t, pinned, nil)
 	fingerprint, err := client.GetImageFingerprint("ghcr.io/owner/app@sha256:"+pinned, logger.NewStandardLogger())
 	require.NoError(t, err)
@@ -299,41 +309,136 @@ func TestAnonymousImageFingerprintWrapsTheUnderlyingError(t *testing.T) {
 	require.Contains(t, err.Error(), "--digests-source logs")
 }
 
-// fakeACR answers the manifest request with a chosen Docker-Content-Digest, or
-// omits the header entirely when contentDigest is empty.
-func fakeACR(t *testing.T, contentDigest string) (fingerprintPlan, *azcontainerregistry.ClientOptions) {
+// hostRewritingTransport sends every request to addr regardless of the host in
+// the URL, so a reference naming a real ACR login server can be resolved against
+// a fake registry.
+// It records the host it was asked for first, so a test can still assert which
+// registry the client was pointed at even though the request is redirected.
+type hostRewritingTransport struct {
+	addr       string
+	inner      http.RoundTripper
+	hostsAsked *[]string
+}
+
+func (t hostRewritingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	*t.hostsAsked = append(*t.hostsAsked, req.URL.Host)
+	rewritten := req.Clone(req.Context())
+	rewritten.URL.Host = t.addr
+	return t.inner.RoundTrip(rewritten)
+}
+
+// fakeACR stands up a registry that answers the manifest request with the given
+// digest header and status, and records the paths it was asked for.
+func fakeACR(t *testing.T, contentDigest string, status int) (*azcontainerregistry.ClientOptions, *[]string, *[]string) {
 	t.Helper()
+	var paths []string
+	var hostsAsked []string
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// EscapedPath is what actually went on the wire; URL.Path is decoded.
+		paths = append(paths, r.URL.EscapedPath())
 		if contentDigest != "" {
 			w.Header().Set("Docker-Content-Digest", contentDigest)
 		}
 		w.Header().Set("Content-Type", "application/vnd.docker.distribution.manifest.v2+json")
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(status)
 		_, _ = w.Write([]byte(`{"schemaVersion":2}`))
 	}))
 	t.Cleanup(srv.Close)
 
-	plan := fingerprintPlan{
-		source: fingerprintFromACR, domain: strings.TrimPrefix(srv.URL, "https://"),
-		reference: "fake/app:v1", repoPath: "app", tagOrDigest: "v1",
-	}
+	parsed, err := url.Parse(srv.URL)
+	require.NoError(t, err)
 	options := &azcontainerregistry.ClientOptions{
-		ClientOptions: azcore.ClientOptions{Transport: srv.Client()},
+		ClientOptions: azcore.ClientOptions{
+			Transport: &http.Client{Transport: hostRewritingTransport{
+				addr: parsed.Host, inner: srv.Client().Transport, hostsAsked: &hostsAsked,
+			}},
+		},
 	}
-	return plan, options
+	return options, &paths, &hostsAsked
 }
 
-// TestACRImageFingerprintRejectsUnusableDigests covers the ACR arm's own error
-// branches, which have no coverage otherwise because the client talks to a
-// registry. The digest rule itself lives in internal/digest; this asserts the
-// arm is actually wired to it.
-func TestACRImageFingerprintRejectsUnusableDigests(t *testing.T) {
-	client := &AzureClient{Credentials: AzureStaticCredentials{
-		TenantId:     "00000000-0000-0000-0000-000000000000",
-		ClientId:     "00000000-0000-0000-0000-000000000000",
-		ClientSecret: "not-a-real-secret",
-	}}
+func acrTestClient(t *testing.T, options *azcontainerregistry.ClientOptions) *AzureClient {
+	t.Helper()
+	return &AzureClient{
+		Credentials: AzureStaticCredentials{
+			TenantId:     "00000000-0000-0000-0000-000000000000",
+			ClientId:     "00000000-0000-0000-0000-000000000000",
+			ClientSecret: "not-a-real-secret",
+		},
+		acrClientOptions: options,
+	}
+}
 
+// TestGetImageFingerprintDrivesTheACRArmEndToEnd resolves an ACR reference all
+// the way through GetImageFingerprint, which is what proves the parsed domain,
+// repo path and tag actually reach the registry client. Without it, replacing
+// plan.domain inside the arm with a hand-rolled split of the image name goes
+// unnoticed.
+func TestGetImageFingerprintDrivesTheACRArmEndToEnd(t *testing.T) {
+	want := strings.Repeat("a", 64)
+	options, paths, hostsAsked := fakeACR(t, "sha256:"+want, http.StatusOK)
+	client := acrTestClient(t, options)
+
+	fingerprint, err := client.GetImageFingerprint("myregistry.azurecr.io/team/app:v1", logger.NewStandardLogger())
+
+	require.NoError(t, err)
+	require.Equal(t, want, fingerprint)
+	require.Contains(t, *paths, "/v2/team%2Fapp/manifests/v1",
+		"the parsed repo path and tag must reach the registry, in that order")
+	require.Contains(t, *hostsAsked, "myregistry.azurecr.io",
+		"the client must be pointed at the domain the parser reported")
+}
+
+// TestGetImageFingerprintACRArmRequestsThePinnedDigest is the same for a pinned
+// reference: the digest must reach the registry with its algorithm prefix.
+func TestGetImageFingerprintACRArmRequestsThePinnedDigest(t *testing.T) {
+	pinned := strings.Repeat("a", 64)
+	options, paths, hostsAsked := fakeACR(t, "sha256:"+pinned, http.StatusOK)
+	client := acrTestClient(t, options)
+
+	fingerprint, err := client.GetImageFingerprint("myregistry.azurecr.io/app@sha256:"+pinned, logger.NewStandardLogger())
+
+	require.NoError(t, err)
+	require.Equal(t, pinned, fingerprint)
+	require.Contains(t, *paths, "/v2/app/manifests/sha256:"+pinned,
+		"a bare hex digest would be read as a tag by the registry")
+	require.Contains(t, *hostsAsked, "myregistry.azurecr.io",
+		"the client must be pointed at the domain the parser reported")
+}
+
+// TestGetImageFingerprintACRArmHoldsTheRegistryToAPinnedDigest exercises the
+// cross-check on the credential-bearing arm, and with a digest differing in one
+// character so a partial comparison cannot pass.
+func TestGetImageFingerprintACRArmHoldsTheRegistryToAPinnedDigest(t *testing.T) {
+	pinned := strings.Repeat("a", 64)
+	nearMiss := strings.Repeat("a", 63) + "b"
+	options, _, _ := fakeACR(t, "sha256:"+nearMiss, http.StatusOK)
+	client := acrTestClient(t, options)
+
+	_, err := client.GetImageFingerprint("myregistry.azurecr.io/app@sha256:"+pinned, logger.NewStandardLogger())
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "is pinned to digest sha256:"+pinned)
+	require.Contains(t, err.Error(), "reported sha256:"+nearMiss)
+}
+
+// TestGetImageFingerprintACRArmReportsRegistryErrors keeps the registry's own
+// failure rather than degrading to the missing-header message.
+func TestGetImageFingerprintACRArmReportsRegistryErrors(t *testing.T) {
+	options, _, _ := fakeACR(t, "", http.StatusNotFound)
+	client := acrTestClient(t, options)
+
+	_, err := client.GetImageFingerprint("myregistry.azurecr.io/app:v1", logger.NewStandardLogger())
+
+	require.Error(t, err)
+	require.NotContains(t, err.Error(), "no digest returned",
+		"a 404 must surface as the registry error, not as a missing digest header")
+}
+
+// TestGetImageFingerprintACRArmRejectsUnusableDigests covers the ACR arm's own
+// error branches through the full path, which need a registry and so have no
+// coverage otherwise.
+func TestGetImageFingerprintACRArmRejectsUnusableDigests(t *testing.T) {
 	for _, tc := range []struct {
 		name          string
 		contentDigest string
@@ -345,9 +450,10 @@ func TestACRImageFingerprintRejectsUnusableDigests(t *testing.T) {
 		{name: "missing digest header", contentDigest: "", wantErrText: "no digest returned"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			plan, options := fakeACR(t, tc.contentDigest)
+			options, _, _ := fakeACR(t, tc.contentDigest, http.StatusOK)
+			client := acrTestClient(t, options)
 
-			fingerprint, err := client.acrImageFingerprint(plan, options, logger.NewStandardLogger())
+			fingerprint, err := client.GetImageFingerprint("myregistry.azurecr.io/app:v1", logger.NewStandardLogger())
 
 			require.Error(t, err)
 			require.Empty(t, fingerprint)
@@ -356,25 +462,55 @@ func TestACRImageFingerprintRejectsUnusableDigests(t *testing.T) {
 	}
 }
 
-func TestACRImageFingerprintReturnsTheSha256Hex(t *testing.T) {
-	client := &AzureClient{Credentials: AzureStaticCredentials{
-		TenantId:     "00000000-0000-0000-0000-000000000000",
-		ClientId:     "00000000-0000-0000-0000-000000000000",
-		ClientSecret: "not-a-real-secret",
-	}}
-	want := strings.Repeat("a", 64)
-	plan, options := fakeACR(t, "sha256:"+want)
-
-	fingerprint, err := client.acrImageFingerprint(plan, options, logger.NewStandardLogger())
-
-	require.NoError(t, err)
-	require.Equal(t, want, fingerprint)
+// TestAnonymousFingerprintIsTheCredentialFreeResolver pins what the variable
+// points at in production. Every other test replaces it, so swapping it for the
+// credential-discovering OciSha256 would otherwise go unnoticed.
+func TestAnonymousFingerprintIsTheCredentialFreeResolver(t *testing.T) {
+	require.Equal(t,
+		reflect.ValueOf(digest.OciSha256Anonymous).Pointer(),
+		reflect.ValueOf(anonymousFingerprint).Pointer(),
+		"anonymousFingerprint must be digest.OciSha256Anonymous, not a resolver that discovers host credentials")
 }
 
-// TestZeroValueSourceIsAnonymous is a fail-closed guarantee: the field that
-// decides whether the Azure credential is sent must not default to sending it.
-func TestZeroValueSourceIsAnonymous(t *testing.T) {
-	var unset fingerprintPlan
-	require.Equal(t, fingerprintFromAnonymousRegistry, unset.source,
-		"an unset plan must not select the credential-bearing arm")
+// TestFingerprintDockerServiceUsesTheACRSource covers the only production caller
+// of GetImageFingerprint. Without it, inverting the digests-source condition, or
+// replacing the resolver call with a constant, goes unnoticed.
+func TestFingerprintDockerServiceUsesTheACRSource(t *testing.T) {
+	want := strings.Repeat("a", 64)
+	options, paths, _ := fakeACR(t, "sha256:"+want, http.StatusOK)
+	client := acrTestClient(t, options)
+	client.Credentials.DigestsSource = "acr"
+
+	appName, appKind := "payments-api", "app"
+	imageName := "myregistry.azurecr.io/team/app:v1"
+
+	appData, err := client.fingerprintDockerService(
+		&armappservice.Site{Name: &appName, Kind: &appKind}, logger.NewStandardLogger(), imageName)
+
+	require.NoError(t, err)
+	require.Equal(t, AppData{
+		AppName:       appName,
+		AppKind:       appKind,
+		DigestsSource: "acr",
+		Digests:       map[string]string{imageName: want},
+		StartedAt:     0,
+	}, appData)
+	require.NotEmpty(t, *paths, "the acr source must actually contact the registry")
+}
+
+// TestFingerprintDockerServicePropagatesResolverErrors keeps the resolver's error
+// rather than reporting an app with no fingerprint.
+func TestFingerprintDockerServicePropagatesResolverErrors(t *testing.T) {
+	options, _, _ := fakeACR(t, "sha512:"+strings.Repeat("c", 128), http.StatusOK)
+	client := acrTestClient(t, options)
+	client.Credentials.DigestsSource = "acr"
+
+	appName, appKind := "payments-api", "app"
+
+	_, err := client.fingerprintDockerService(
+		&armappservice.Site{Name: &appName, Kind: &appKind}, logger.NewStandardLogger(),
+		"myregistry.azurecr.io/team/app:v1")
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "algorithm is sha512")
 }
