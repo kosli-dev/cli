@@ -77,3 +77,35 @@ func TestOciSha256AnonymousPresentsNoStoredCredential(t *testing.T) {
 	require.Empty(t, sysCtx.DockerAuthConfig.Password)
 	require.Empty(t, sysCtx.DockerAuthConfig.IdentityToken)
 }
+
+func TestSha256FingerprintFromDigest(t *testing.T) {
+	validHex := strings.Repeat("a", 64)
+
+	for _, tc := range []struct {
+		name        string
+		digest      string
+		want        string
+		wantErrText string
+	}{
+		{name: "sha256 digest yields its hex", digest: "sha256:" + validHex, want: validHex},
+		{name: "sha384 is rejected", digest: "sha384:" + strings.Repeat("b", 96), wantErrText: "algorithm is sha384"},
+		{name: "sha512 is rejected", digest: "sha512:" + strings.Repeat("c", 128), wantErrText: "algorithm is sha512"},
+		{name: "empty is rejected", digest: "", wantErrText: "unparseable digest"},
+		{name: "bare hex without an algorithm is rejected", digest: validHex, wantErrText: "unparseable digest"},
+		{name: "non hex is rejected", digest: "sha256:" + strings.Repeat("z", 64), wantErrText: "unparseable digest"},
+		{name: "uppercase hex is rejected", digest: "sha256:" + strings.Repeat("A", 64), wantErrText: "unparseable digest"},
+		{name: "wrong length is rejected", digest: "sha256:" + strings.Repeat("a", 63), wantErrText: "unparseable digest"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := Sha256FingerprintFromDigest(tc.digest)
+			if tc.wantErrText != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.wantErrText)
+				require.Empty(t, got)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
+}

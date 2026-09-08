@@ -2,8 +2,13 @@ package azure
 
 import (
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/require"
@@ -135,7 +140,7 @@ func TestPlanImageFingerprint(t *testing.T) {
 		{
 			name:        "a non sha256 pin cannot produce a kosli fingerprint",
 			imageName:   "ghcr.io/owner/app@sha512:" + strings.Repeat("c", 128),
-			wantErrText: "pinned to a sha512 digest",
+			wantErrText: "pinned to a digest Kosli cannot use",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -292,4 +297,76 @@ func TestAnonymousImageFingerprintWrapsTheUnderlyingError(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorIs(t, err, sentinel)
 	require.Contains(t, err.Error(), "--digests-source logs")
+}
+
+// fakeACR answers the manifest request with a chosen Docker-Content-Digest, or
+// omits the header entirely when contentDigest is empty.
+func fakeACR(t *testing.T, contentDigest string) (fingerprintPlan, *azcontainerregistry.ClientOptions) {
+	t.Helper()
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if contentDigest != "" {
+			w.Header().Set("Docker-Content-Digest", contentDigest)
+		}
+		w.Header().Set("Content-Type", "application/vnd.docker.distribution.manifest.v2+json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"schemaVersion":2}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	plan := fingerprintPlan{
+		source: fingerprintFromACR, domain: strings.TrimPrefix(srv.URL, "https://"),
+		reference: "fake/app:v1", repoPath: "app", tagOrDigest: "v1",
+	}
+	options := &azcontainerregistry.ClientOptions{
+		ClientOptions: azcore.ClientOptions{Transport: srv.Client()},
+	}
+	return plan, options
+}
+
+// TestACRImageFingerprintRejectsUnusableDigests covers the ACR arm's own error
+// branches, which have no coverage otherwise because the client talks to a
+// registry. The digest rule itself lives in internal/digest; this asserts the
+// arm is actually wired to it.
+func TestACRImageFingerprintRejectsUnusableDigests(t *testing.T) {
+	client := &AzureClient{Credentials: AzureStaticCredentials{
+		TenantId:     "00000000-0000-0000-0000-000000000000",
+		ClientId:     "00000000-0000-0000-0000-000000000000",
+		ClientSecret: "not-a-real-secret",
+	}}
+
+	for _, tc := range []struct {
+		name          string
+		contentDigest string
+		wantErrText   string
+	}{
+		{name: "sha512 digest", contentDigest: "sha512:" + strings.Repeat("c", 128), wantErrText: "algorithm is sha512"},
+		{name: "sha384 digest", contentDigest: "sha384:" + strings.Repeat("b", 96), wantErrText: "algorithm is sha384"},
+		{name: "unparseable digest", contentDigest: "not-a-digest", wantErrText: "unparseable digest"},
+		{name: "missing digest header", contentDigest: "", wantErrText: "no digest returned"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			plan, options := fakeACR(t, tc.contentDigest)
+
+			fingerprint, err := client.acrImageFingerprint(plan, options, logger.NewStandardLogger())
+
+			require.Error(t, err)
+			require.Empty(t, fingerprint)
+			require.Contains(t, err.Error(), tc.wantErrText)
+		})
+	}
+}
+
+func TestACRImageFingerprintReturnsTheSha256Hex(t *testing.T) {
+	client := &AzureClient{Credentials: AzureStaticCredentials{
+		TenantId:     "00000000-0000-0000-0000-000000000000",
+		ClientId:     "00000000-0000-0000-0000-000000000000",
+		ClientSecret: "not-a-real-secret",
+	}}
+	want := strings.Repeat("a", 64)
+	plan, options := fakeACR(t, "sha256:"+want)
+
+	fingerprint, err := client.acrImageFingerprint(plan, options, logger.NewStandardLogger())
+
+	require.NoError(t, err)
+	require.Equal(t, want, fingerprint)
 }

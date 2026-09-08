@@ -26,7 +26,6 @@ import (
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/server"
-	godigest "github.com/opencontainers/go-digest"
 )
 
 type AzureStaticCredentials struct {
@@ -474,12 +473,12 @@ func planImageFingerprint(imageName string) (fingerprintPlan, error) {
 	var plan fingerprintPlan
 
 	if digested, ok := named.(reference.Digested); ok {
-		// Kosli fingerprints are sha256, so a reference pinned to any other
-		// algorithm can never produce one.
-		if digested.Digest().Algorithm() != godigest.SHA256 {
-			return fingerprintPlan{}, fmt.Errorf("image [%s] is pinned to a %s digest; Kosli fingerprints are sha256", imageName, digested.Digest().Algorithm())
+		// A reference pinned to an algorithm Kosli cannot fingerprint can never
+		// match, so reject it here rather than after a pointless round trip.
+		plan.pinnedFingerprint, err = digest.Sha256Fingerprint(digested.Digest())
+		if err != nil {
+			return fingerprintPlan{}, fmt.Errorf("image [%s] is pinned to a digest Kosli cannot use: %w", imageName, err)
 		}
-		plan.pinnedFingerprint = digested.Digest().Encoded()
 		// A digest is authoritative when a reference carries both, and
 		// containers/image refuses a reference holding a tag and a digest
 		// together, so drop the tag.
@@ -520,7 +519,7 @@ func (azureClient *AzureClient) GetImageFingerprint(imageName string, logger *lo
 
 	var fingerprint string
 	if plan.source == fingerprintFromACR {
-		fingerprint, err = azureClient.acrImageFingerprint(plan, logger)
+		fingerprint, err = azureClient.acrImageFingerprint(plan, nil, logger)
 	} else {
 		fingerprint, err = anonymousImageFingerprint(plan, logger)
 	}
@@ -540,14 +539,16 @@ func (azureClient *AzureClient) GetImageFingerprint(imageName string, logger *lo
 
 // acrImageFingerprint reads a fingerprint from Azure Container Registry using
 // the Azure credential supplied to Kosli.
-func (azureClient *AzureClient) acrImageFingerprint(plan fingerprintPlan, logger *logger.Logger) (string, error) {
+// clientOptions is nil in production; tests pass options carrying a transport
+// pointed at a fake registry, so the arm is exercised without package-level state.
+func (azureClient *AzureClient) acrImageFingerprint(plan fingerprintPlan, clientOptions *azcontainerregistry.ClientOptions, logger *logger.Logger) (string, error) {
 	credentials, err := azidentity.NewClientSecretCredential(azureClient.Credentials.TenantId,
 		azureClient.Credentials.ClientId, azureClient.Credentials.ClientSecret, nil)
 	if err != nil {
 		return "", err
 	}
 
-	acrClient, err := azcontainerregistry.NewClient("https://"+plan.domain, credentials, nil)
+	acrClient, err := azcontainerregistry.NewClient("https://"+plan.domain, credentials, clientOptions)
 	if err != nil {
 		return "", err
 	}
@@ -561,18 +562,9 @@ func (azureClient *AzureClient) acrImageFingerprint(plan fingerprintPlan, logger
 		return "", fmt.Errorf("no digest returned for image [%s]", plan.reference)
 	}
 
-	// The header is a raw string from the SDK, so parse it rather than trimming a
-	// prefix off it: a registry chooses the algorithm it answers with.
-	returnedDigest, err := godigest.Parse(*manifestRes.DockerContentDigest)
+	fingerprint, err := digest.Sha256FingerprintFromDigest(*manifestRes.DockerContentDigest)
 	if err != nil {
-		return "", fmt.Errorf("registry reported an unparseable digest for image [%s]: %w", plan.reference, err)
-	}
-	if returnedDigest.Algorithm() != godigest.SHA256 {
-		return "", fmt.Errorf("registry reported a %s digest for image [%s]; Kosli fingerprints are sha256", returnedDigest.Algorithm(), plan.reference)
-	}
-	fingerprint := returnedDigest.Encoded()
-	if err := digest.ValidateDigest(fingerprint); err != nil {
-		return "", err
+		return "", fmt.Errorf("registry reported a digest Kosli cannot use for image [%s]: %w", plan.reference, err)
 	}
 
 	logger.Debug("For image '%s' got fingerprint '%s' from ACR", plan.reference, fingerprint)

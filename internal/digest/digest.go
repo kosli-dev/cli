@@ -108,6 +108,29 @@ func OciSha256Anonymous(artifactName string) (string, error) {
 	return ociSha256(artifactName, anonymousSystemContext())
 }
 
+// Sha256FingerprintFromDigest turns a registry-supplied digest string into the
+// hex fingerprint Kosli uses, rejecting any algorithm other than sha256. A
+// registry chooses the algorithm it answers with, so this is the single place
+// that rule is applied.
+func Sha256FingerprintFromDigest(digestString string) (string, error) {
+	parsed, err := godigest.Parse(digestString)
+	if err != nil {
+		return "", fmt.Errorf("unparseable digest %q: %w", digestString, err)
+	}
+	return Sha256Fingerprint(parsed)
+}
+
+// Sha256Fingerprint is the same rule for a digest that is already parsed, so a
+// typed value does not have to be turned back into a string to be checked.
+func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
+	if parsed.Algorithm() != godigest.SHA256 {
+		return "", fmt.Errorf("digest algorithm is %s, but Kosli fingerprints are sha256", parsed.Algorithm())
+	}
+	// godigest.Parse has already validated the charset and length, so the
+	// encoded portion is exactly 64 lowercase hex characters here.
+	return parsed.Encoded(), nil
+}
+
 // anonymousSystemContext presents no credential. The empty DockerAuthConfig is
 // deliberately non-nil: a nil one makes containers/image fall back to credential
 // discovery from auth files and credential helpers.
@@ -133,13 +156,11 @@ func ociSha256(artifactName string, sysCtx *types.SystemContext) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("failed to get digest for %s: %w", imageName, err)
 	}
-	// A registry chooses the algorithm it answers with, and go-digest accepts
-	// sha384 and sha512 as well as sha256. Kosli fingerprints are sha256, so
-	// reject anything else rather than mangling it.
-	if remoteDigest.Algorithm() != godigest.SHA256 {
-		return "", fmt.Errorf("registry reported a %s digest for %s; Kosli fingerprints are sha256", remoteDigest.Algorithm(), imageName)
+	fingerprint, err := Sha256Fingerprint(remoteDigest)
+	if err != nil {
+		return "", fmt.Errorf("registry reported a digest Kosli cannot use for %s: %w", imageName, err)
 	}
-	return remoteDigest.Encoded(), nil
+	return fingerprint, nil
 }
 
 // calculateDirContentSha256 calculates a sha256 digest for a directory content
