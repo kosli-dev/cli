@@ -38,6 +38,10 @@ func (o *attestPROptions) run(args []string) error {
 		return err
 	}
 
+	if o.payload.Commit == nil {
+		return fmt.Errorf("failed to get commit info, which is required to find pull requests. Pass --commit and point --repo-root at a repository containing it")
+	}
+
 	label := ""
 	o.payload.GitProvider, label = o.getRetriever().ProviderAndLabel()
 

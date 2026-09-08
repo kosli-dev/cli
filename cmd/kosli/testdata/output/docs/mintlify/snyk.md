@@ -42,7 +42,7 @@ In other CI systems, set them explicitly to capture repository metadata.
 | `--annotate` | stringToString | [optional] Annotate the attestation with data using key=value. |
 | `-t`, `--artifact-type` | string | The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '`--fingerprint`' on commands that allow it). |
 | `--attachments` | strings | [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault. |
-| `-g`, `--commit` | string | [conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: [docs](/integrations/ci_cd) ). |
+| `-g`, `--commit` | string | [conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: [docs](/integrations/ci_cd) ). When it is defaulted from the CI environment and no git repository is available at `--repo-root`, the attestation is sent without commit info. |
 | `--description` | string | [optional] attestation description |
 | `-D`, `--dry-run` | bool | [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors. |
 | `-x`, `--exclude` | strings | [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for `--artifact-type` dir. |
