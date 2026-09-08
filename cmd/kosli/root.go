@@ -369,18 +369,57 @@ func (r *RealConfigGetter) defaultConfigFilePath() string {
 		return filepath.Join(home, defaultConfigFilename)
 
 	}
-	return "kosli" // for backward compatibility with old default config location
+	// With no resolvable home directory there is no default config file. A bare
+	// name here would make viper search the current working directory, which is
+	// the whole problem getConfigFileFlagDefault exists to avoid.
+	return ""
 }
 
 // defaultConfigFilePathFunc is a variable holding the implementation of defaultConfigFilePath
 var defaultConfigFilePathFunc = (&RealConfigGetter{}).defaultConfigFilePath
 
-func getConfigFileFlagDefault() string {
-	defaultPath := defaultConfigFilePathFunc()
-	if _, err := os.Stat(defaultPath); err == nil {
-		return defaultPath
+// workingDirConfigNames are the config file names the CLI used to load
+// implicitly from the current working directory, before that became
+// kosli-dev/server#6778 and #6779.
+var workingDirConfigNames = []string{"kosli.yaml", "kosli.yml", "kosli.json", "kosli.toml"}
+
+// warnAboutIgnoredWorkingDirConfig reports a config file in the current working
+// directory that an earlier CLI would have loaded, so that the change does not
+// break a pipeline silently.
+//
+// Only a file that sets a global setting is reported. A kosli.yml in a
+// repository root is far more often a flow template, which was never loaded as
+// CLI config, and warning about those would be pure noise.
+func warnAboutIgnoredWorkingDirConfig() {
+	for _, name := range workingDirConfigNames {
+		if _, err := os.Stat(name); err != nil {
+			continue
+		}
+
+		v := viper.New()
+		v.SetConfigFile(name)
+		if err := v.ReadInConfig(); err != nil {
+			continue
+		}
+		if !v.IsSet("org") && !v.IsSet("api-token") && !v.IsSet("host") {
+			continue
+		}
+
+		logger.Warn("config file [%s] in the current directory is no longer loaded automatically. To keep using it, pass --config-file %s or set KOSLI_CONFIG_FILE=%s. To apply its settings to every command, move them to your home config file with 'kosli config'.", name, name, name)
+		return
 	}
-	return "kosli" // for backward compatibility with old default config location
+}
+
+// getConfigFileFlagDefault returns the default --config-file value, which is
+// always the home config file whether or not that file exists. It used to fall
+// back to the bare name "kosli", which viper resolves against the current
+// working directory: a repository could then set host, http-proxy or kubeconfig
+// for a command run with a real API token, redirecting the bearer token or
+// executing a kubeconfig credential plugin (kosli-dev/server#6778, #6779).
+// A config file in the working directory is now loaded only when the user names
+// it with --config-file or KOSLI_CONFIG_FILE.
+func getConfigFileFlagDefault() string {
+	return defaultConfigFilePathFunc()
 }
 
 func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
@@ -530,38 +569,50 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	// we load the config file before we bind env vars to flags,
 	// so we check for the config file env var separately here
 	configFlag := cmd.Flags().Lookup("config-file")
+	namedByUser := configFlag.Changed
 	if !configFlag.Changed {
 		// A variable set to the empty string reports as present, but it names no
 		// file. Overriding the default with it loads no config file at all,
 		// silently dropping org, api-token and every other configured default.
 		if path, exists := os.LookupEnv("KOSLI_CONFIG_FILE"); exists && path != "" {
 			global.ConfigFile = path
+			namedByUser = true
 		}
 	}
-	dir, file := filepath.Split(global.ConfigFile)
-	file = strings.TrimSuffix(file, filepath.Ext(file))
 
-	// Set the base name of the config file, without the file extension.
-	v.SetConfigName(file)
+	if global.ConfigFile != "" {
+		dir, file := filepath.Split(global.ConfigFile)
+		file = strings.TrimSuffix(file, filepath.Ext(file))
 
-	// Set as many paths as you like where viper should look for the
-	// config file. By default, we are looking in the current working directory.
-	if dir == "" {
-		dir = "."
-	}
-	v.AddConfigPath(dir)
+		// Set the base name of the config file, without the file extension.
+		v.SetConfigName(file)
 
-	// Attempt to read the config file, gracefully ignoring errors
-	// caused by a config file not being found. Return an error
-	// if we cannot parse the config file.
-	logger.Debug("processing config file [%s]", global.ConfigFile)
-	if err := v.ReadInConfig(); err != nil {
-		// It's okay if there isn't a config file
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return fmt.Errorf("failed to parse config file [%s] : %v", global.ConfigFile, err)
-		} else {
-			logger.Debug("config file [%s] not found. Skipping.", global.ConfigFile)
+		// A relative path is resolved against the current working directory,
+		// which is what a user asks for by naming one. The default is absolute,
+		// so it never reaches that case.
+		if dir == "" {
+			dir = "."
 		}
+		v.AddConfigPath(dir)
+
+		// Attempt to read the config file, gracefully ignoring errors
+		// caused by a config file not being found. Return an error
+		// if we cannot parse the config file.
+		logger.Debug("processing config file [%s]", global.ConfigFile)
+		if err := v.ReadInConfig(); err != nil {
+			// It's okay if there isn't a config file
+			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+				return fmt.Errorf("failed to parse config file [%s] : %v", global.ConfigFile, err)
+			} else {
+				logger.Debug("config file [%s] not found. Skipping.", global.ConfigFile)
+			}
+		}
+	} else {
+		logger.Debug("no default config file location could be determined. Skipping.")
+	}
+
+	if !namedByUser {
+		warnAboutIgnoredWorkingDirConfig()
 	}
 	// When we bind flags to environment variables expect that the
 	// environment variables are prefixed, e.g. a flag like --namespace
