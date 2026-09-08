@@ -22,6 +22,7 @@ import (
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/moby/moby/client"
+	godigest "github.com/opencontainers/go-digest"
 	"github.com/yargevad/filepathx"
 )
 
@@ -104,7 +105,14 @@ func OciSha256(artifactName string, registryUsername string, registryPassword st
 // what stops containers/image falling back to credential discovery, so no
 // credential the host happens to hold is presented to the registry.
 func OciSha256Anonymous(artifactName string) (string, error) {
-	return ociSha256(artifactName, &types.SystemContext{DockerAuthConfig: &types.DockerAuthConfig{}})
+	return ociSha256(artifactName, anonymousSystemContext())
+}
+
+// anonymousSystemContext presents no credential. The empty DockerAuthConfig is
+// deliberately non-nil: a nil one makes containers/image fall back to credential
+// discovery from auth files and credential helpers.
+func anonymousSystemContext() *types.SystemContext {
+	return &types.SystemContext{DockerAuthConfig: &types.DockerAuthConfig{}}
 }
 
 func ociSha256(artifactName string, sysCtx *types.SystemContext) (string, error) {
@@ -121,11 +129,17 @@ func ociSha256(artifactName string, sysCtx *types.SystemContext) (string, error)
 	}
 
 	// Compute digest
-	digest, err := docker.GetDigest(ctx, sysCtx, ref)
+	remoteDigest, err := docker.GetDigest(ctx, sysCtx, ref)
 	if err != nil {
 		return "", fmt.Errorf("failed to get digest for %s: %w", imageName, err)
 	}
-	return strings.Split(digest.String(), "sha256:")[1], nil
+	// A registry chooses the algorithm it answers with, and go-digest accepts
+	// sha384 and sha512 as well as sha256. Kosli fingerprints are sha256, so
+	// reject anything else rather than mangling it.
+	if remoteDigest.Algorithm() != godigest.SHA256 {
+		return "", fmt.Errorf("registry reported a %s digest for %s; Kosli fingerprints are sha256", remoteDigest.Algorithm(), imageName)
+	}
+	return remoteDigest.Encoded(), nil
 }
 
 // calculateDirContentSha256 calculates a sha256 digest for a directory content
