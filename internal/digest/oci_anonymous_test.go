@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/containers/image/v5/types"
+	godigest "github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -108,4 +109,28 @@ func TestSha256FingerprintFromDigest(t *testing.T) {
 			require.Equal(t, tc.want, got)
 		})
 	}
+}
+
+// TestSha256FingerprintValidatesWhatItIsHanded covers the exported typed entry
+// point. godigest.Digest is a string type, so an unvalidated value must not be
+// split into a fingerprint.
+func TestSha256FingerprintValidatesWhatItIsHanded(t *testing.T) {
+	for _, tc := range []struct{ name, digest string }{
+		{name: "non hex encoded portion", digest: "sha256:hello"},
+		{name: "empty encoded portion", digest: "sha256:"},
+		{name: "uppercase encoded portion", digest: "sha256:" + strings.Repeat("A", 64)},
+		{name: "wrong length", digest: "sha256:abc"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := Sha256Fingerprint(godigest.Digest(tc.digest))
+			require.Error(t, err)
+			require.Empty(t, got)
+			require.Contains(t, err.Error(), "invalid digest")
+		})
+	}
+
+	valid := strings.Repeat("a", 64)
+	got, err := Sha256Fingerprint(godigest.Digest("sha256:" + valid))
+	require.NoError(t, err)
+	require.Equal(t, valid, got)
 }

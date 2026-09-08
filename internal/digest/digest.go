@@ -123,6 +123,11 @@ func Sha256FingerprintFromDigest(digestString string) (string, error) {
 // Sha256Fingerprint is the same rule for a digest that is already parsed, so a
 // typed value does not have to be turned back into a string to be checked.
 func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
+	// godigest.Digest is a string type, so a caller can hand over an unvalidated
+	// one and Algorithm()/Encoded() would just split it on the colon.
+	if err := parsed.Validate(); err != nil {
+		return "", fmt.Errorf("invalid digest %q: %w", parsed.String(), err)
+	}
 	if parsed.Algorithm() != godigest.SHA256 {
 		return "", fmt.Errorf("digest algorithm is %s, but Kosli fingerprints are sha256", parsed.Algorithm())
 	}

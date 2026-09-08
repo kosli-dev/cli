@@ -102,6 +102,9 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 
 			data, err := azureClient.NewAppData(app, logger)
 			if err != nil {
+				// One app's error cancels the run, so say which app it was. Wrapped
+				// here rather than at each return so every path is covered once.
+				err = fmt.Errorf("app [%s]: %w", *app.Name, err)
 				select {
 				case errs <- err:
 				default:
@@ -411,12 +414,13 @@ var acrLoginServerSuffixes = []string{".azurecr.io", ".azurecr.cn", ".azurecr.us
 type imageFingerprintSource int
 
 const (
-	// fingerprintFromACR reads the fingerprint from Azure Container Registry,
-	// authenticated with the Azure credential.
-	fingerprintFromACR imageFingerprintSource = iota
-	// fingerprintFromAnonymousRegistry reads it from any other registry with no
-	// credential attached.
-	fingerprintFromAnonymousRegistry
+	// fingerprintFromAnonymousRegistry reads the fingerprint from a registry with
+	// no credential attached. It is the zero value deliberately: an unset or
+	// partially built plan must never select the credential-bearing arm.
+	fingerprintFromAnonymousRegistry imageFingerprintSource = iota
+	// fingerprintFromACR reads it from Azure Container Registry, authenticated
+	// with the Azure credential.
+	fingerprintFromACR
 )
 
 // isACRLoginServer reports whether domain is an Azure Container Registry login
@@ -531,7 +535,7 @@ func (azureClient *AzureClient) GetImageFingerprint(imageName string, logger *lo
 	// resolver checks the digest it is given against the one it gets back, so
 	// hold the registry to it here.
 	if plan.pinnedFingerprint != "" && fingerprint != plan.pinnedFingerprint {
-		return "", fmt.Errorf("image [%s] is pinned to digest sha256:%s but [%s] reported sha256:%s", imageName, plan.pinnedFingerprint, plan.domain, fingerprint)
+		return "", fmt.Errorf("image [%s] is pinned to digest sha256:%s but [%s] reported sha256:%s", plan.reference, plan.pinnedFingerprint, plan.domain, fingerprint)
 	}
 
 	return fingerprint, nil

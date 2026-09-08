@@ -370,3 +370,11 @@ func TestACRImageFingerprintReturnsTheSha256Hex(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, want, fingerprint)
 }
+
+// TestZeroValueSourceIsAnonymous is a fail-closed guarantee: the field that
+// decides whether the Azure credential is sent must not default to sending it.
+func TestZeroValueSourceIsAnonymous(t *testing.T) {
+	var unset fingerprintPlan
+	require.Equal(t, fingerprintFromAnonymousRegistry, unset.source,
+		"an unset plan must not select the credential-bearing arm")
+}
