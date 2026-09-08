@@ -84,8 +84,6 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 
 // OciSha256 gets the digest of a docker/OCI image from its registry
 func OciSha256(artifactName string, registryUsername string, registryPassword string) (string, error) {
-	imageName := fmt.Sprintf("//%s", artifactName)
-	ctx := context.Background()
 	sysCtx := &types.SystemContext{}
 	// Only set explicit credentials when provided. When DockerAuthConfig is nil,
 	// the containers/image library falls back to credential discovery from auth
@@ -98,6 +96,20 @@ func OciSha256(artifactName string, registryUsername string, registryPassword st
 			Password: registryPassword,
 		}
 	}
+	return ociSha256(artifactName, sysCtx)
+}
+
+// OciSha256Anonymous gets the digest of a docker/OCI image from its registry
+// without presenting any credential. A non-nil but empty DockerAuthConfig is
+// what stops containers/image falling back to credential discovery, so no
+// credential the host happens to hold is presented to the registry.
+func OciSha256Anonymous(artifactName string) (string, error) {
+	return ociSha256(artifactName, &types.SystemContext{DockerAuthConfig: &types.DockerAuthConfig{}})
+}
+
+func ociSha256(artifactName string, sysCtx *types.SystemContext) (string, error) {
+	imageName := fmt.Sprintf("//%s", artifactName)
+	ctx := context.Background()
 
 	// Parse image reference
 	ref, err := docker.ParseReference(imageName)

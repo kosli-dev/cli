@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 	smithyTime "github.com/aws/smithy-go/time"
+	"github.com/distribution/reference"
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/server"
@@ -410,22 +411,20 @@ var acrLoginServerSuffixes = []string{".azurecr.io", ".azurecr.cn", ".azurecr.us
 type imageFingerprintSource int
 
 const (
-	// fingerprintFromPinnedDigest takes the fingerprint from the reference itself.
-	fingerprintFromPinnedDigest imageFingerprintSource = iota
-	// fingerprintFromACR reads it from Azure Container Registry, authenticated
-	// with the Azure credential.
-	fingerprintFromACR
+	// fingerprintFromACR reads the fingerprint from Azure Container Registry,
+	// authenticated with the Azure credential.
+	fingerprintFromACR imageFingerprintSource = iota
 	// fingerprintFromAnonymousRegistry reads it from any other registry with no
 	// credential attached.
 	fingerprintFromAnonymousRegistry
 )
 
-// isACRLoginServer reports whether host is an Azure Container Registry login
+// isACRLoginServer reports whether domain is an Azure Container Registry login
 // server, matching on a whole label so that "azurecr.io.example.com" is not one.
-func isACRLoginServer(host string) bool {
-	h := strings.ToLower(host)
+func isACRLoginServer(domain string) bool {
+	h := strings.TrimSuffix(strings.ToLower(domain), ".")
 	if hostWithoutPort, _, err := net.SplitHostPort(h); err == nil {
-		h = hostWithoutPort
+		h = strings.TrimSuffix(hostWithoutPort, ".")
 	}
 	for _, suffix := range acrLoginServerSuffixes {
 		if len(h) > len(suffix) && strings.HasSuffix(h, suffix) {
@@ -435,54 +434,72 @@ func isACRLoginServer(host string) bool {
 	return false
 }
 
-// pinnedDigest returns the fingerprint of a digest-pinned reference, whose tag
-// parseImageName returns as "sha256:<hex>".
-func pinnedDigest(tag string) (string, bool) {
-	fingerprint, pinned := strings.CutPrefix(tag, "sha256:")
-	if !pinned {
-		return "", false
-	}
-	if err := digest.ValidateDigest(fingerprint); err != nil {
-		return "", false
-	}
-	return fingerprint, true
-}
-
 // classifyImageReference decides how a reference is resolved. Only
 // fingerprintFromACR attaches the Azure credential, so this is the boundary that
-// keeps that credential away from a registry host taken from an app's own
+// keeps that credential away from a registry taken from an app's own
 // configuration.
-func classifyImageReference(registryHost, tag string) imageFingerprintSource {
-	if _, pinned := pinnedDigest(tag); pinned {
-		return fingerprintFromPinnedDigest
-	}
-	if isACRLoginServer(registryHost) {
+func classifyImageReference(domain string) imageFingerprintSource {
+	if isACRLoginServer(domain) {
 		return fingerprintFromACR
 	}
 	return fingerprintFromAnonymousRegistry
 }
 
+// parseImageReference splits an App Service image reference into its registry
+// domain, repository path, canonical form, and pinned digest if it has one.
+//
+// It uses the same normalising parser as the registry clients rather than
+// splitting the string by hand, because a hand-rolled split can be talked into
+// disagreeing with the client about which host it named:
+// "reg.azurecr.io:443@attacker.example/repo:tag" passes a suffix check on the
+// registry component but resolves to attacker.example as a URL. The parser
+// rejects it.
+func parseImageReference(imageName string) (domain, path, canonical, pinnedDigest string, err error) {
+	named, err := reference.ParseNormalizedNamed(imageName)
+	if err != nil {
+		return "", "", "", "", fmt.Errorf("failed to parse the image name [%s]: %w", imageName, err)
+	}
+
+	if digested, ok := named.(reference.Digested); ok {
+		pinnedDigest = strings.TrimPrefix(digested.Digest().String(), "sha256:")
+	}
+
+	named = reference.TagNameOnly(named)
+
+	return reference.Domain(named), reference.Path(named), named.String(), pinnedDigest, nil
+}
+
 // GetImageFingerprint resolves the fingerprint of a container image referenced
-// by a Web App. The registry host comes from the app's own configuration, which
+// by a Web App. The registry comes from the app's own configuration, which
 // anyone with write access to that app controls, so the Azure credential is
 // attached only for an Azure Container Registry login server.
 func (azureClient *AzureClient) GetImageFingerprint(imageName string, logger *logger.Logger) (string, error) {
-	registryUrl, repoName, tag := parseImageName(imageName)
-	if registryUrl == "" {
-		return "", fmt.Errorf("image name [%s] does not name a registry host", imageName)
+	domain, path, canonical, pinnedDigest, err := parseImageReference(imageName)
+	if err != nil {
+		return "", err
 	}
-	registryHost := strings.TrimPrefix(registryUrl, "https://")
 
-	switch classifyImageReference(registryHost, tag) {
-	case fingerprintFromPinnedDigest:
-		fingerprint, _ := pinnedDigest(tag)
-		logger.Debug("For image '%s' took fingerprint '%s' from the pinned digest", imageName, fingerprint)
-		return fingerprint, nil
-	case fingerprintFromACR:
-		return azureClient.acrImageFingerprint(imageName, registryUrl, repoName, tag, logger)
-	default:
-		return anonymousImageFingerprint(imageName, registryHost, logger)
+	// The reference handed to a resolver is the one that was classified, so the
+	// two cannot disagree about which registry is contacted.
+	tagOrDigest := canonical[strings.LastIndexAny(canonical, ":@")+1:]
+
+	var fingerprint string
+	if classifyImageReference(domain) == fingerprintFromACR {
+		fingerprint, err = azureClient.acrImageFingerprint(canonical, "https://"+domain, path, tagOrDigest, logger)
+	} else {
+		fingerprint, err = anonymousImageFingerprint(canonical, domain, logger)
 	}
+	if err != nil {
+		return "", err
+	}
+
+	// A pinned reference is a claim about which image is deployed, so hold the
+	// registry to it rather than reporting whichever digest it returned.
+	if pinnedDigest != "" && fingerprint != pinnedDigest {
+		return "", fmt.Errorf("image [%s] is pinned to digest sha256:%s but [%s] reported sha256:%s", imageName, pinnedDigest, domain, fingerprint)
+	}
+
+	return fingerprint, nil
 }
 
 // acrImageFingerprint reads a fingerprint from Azure Container Registry using
@@ -518,44 +535,21 @@ func (azureClient *AzureClient) acrImageFingerprint(imageName, registryUrl, repo
 	return fingerprint, nil
 }
 
+// anonymousFingerprint resolves a fingerprint with no credential presented. It
+// is a variable so tests can assert the reference the resolver is handed.
+var anonymousFingerprint = digest.OciSha256Anonymous
+
 // anonymousImageFingerprint reads a fingerprint from a registry outside Azure
-// Container Registry without attaching any credential.
-func anonymousImageFingerprint(imageName, registryHost string, logger *logger.Logger) (string, error) {
-	fingerprint, err := digest.OciSha256(imageName, "", "")
+// Container Registry, presenting no credential.
+func anonymousImageFingerprint(imageName, domain string, logger *logger.Logger) (string, error) {
+	fingerprint, err := anonymousFingerprint(imageName)
 	if err != nil {
-		return "", fmt.Errorf("failed to get the fingerprint of image [%s] from [%s]: %s. Azure credentials are only sent to Azure Container Registry, so a registry needing other credentials cannot be read here. Use --digests-source logs to report this app", imageName, registryHost, err)
+		return "", fmt.Errorf("failed to get the fingerprint of image [%s] from [%s]: %w. Azure credentials are only sent to Azure Container Registry; use --digests-source logs for this app", imageName, domain, err)
 	}
 
-	logger.Debug("For image '%s' got fingerprint '%s' from '%s' without credentials", imageName, fingerprint, registryHost)
+	logger.Debug("For image '%s' got fingerprint '%s' from '%s' with no credentials", imageName, fingerprint, domain)
 
 	return fingerprint, nil
-}
-
-func parseImageName(imageName string) (registryUrl, repoName, tag string) {
-	// Parse the image name to extract the repository name and tag
-	// Example: tookyregistry.azurecr.io/tooky/sha256:latest
-	splitFullImageName := strings.SplitN(imageName, "/", 2)
-	if len(splitFullImageName) != 2 {
-		return "", "", ""
-	}
-
-	registryUrl = fmt.Sprintf("https://%s", splitFullImageName[0])
-
-	if strings.Contains(splitFullImageName[1], "@sha256:") {
-		// Example: tookyregistry.azurecr.io/tooky@sha256:cb29a6..7
-		imageNameAndTag := strings.SplitN(splitFullImageName[1], "@", 2)
-		repoName = imageNameAndTag[0]
-		tag = imageNameAndTag[1]
-	} else if strings.Contains(splitFullImageName[1], ":") {
-		imageNameAndTag := strings.SplitN(splitFullImageName[1], ":", 2)
-		repoName = imageNameAndTag[0]
-		tag = imageNameAndTag[1]
-	} else {
-		repoName = splitFullImageName[1]
-		tag = "latest"
-	}
-
-	return registryUrl, repoName, tag
 }
 
 func (app *AppData) IsEmpty() bool {
