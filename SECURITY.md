@@ -14,7 +14,7 @@ Please send all reports to security@kosli.com and include:
 
 Please report privately by email rather than opening a public issue or pull request, and give us reasonable time to ship a fix before disclosing publicly. This repository is public, so anything raised here is disclosed to everyone at the same moment it reaches us.
 
-## Bug bounty
+## Bug Bounty
 
 **There is no bug bounty for the Kosli CLI, and reports against it do not qualify for a payment.** The CLI is an open source client that runs in your environment rather than ours, so CLI findings sit outside the scope of our paid program.
 
