@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 	smithyTime "github.com/aws/smithy-go/time"
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/server"
 )
@@ -377,7 +379,7 @@ func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site
 
 	if azureClient.Credentials.DigestsSource == "acr" {
 		fingerprintSource = "acr"
-		fingerprint, err = azureClient.GetImageFingerprintFromRegistry(imageName, logger)
+		fingerprint, err = azureClient.GetImageFingerprint(imageName, logger)
 		// Handle exception when image is not found in the registry but is found in the environment
 		if err != nil {
 			return AppData{}, err
@@ -399,34 +401,132 @@ func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site
 	return AppData{*app.Name, *app.Kind, fingerprintSource, map[string]string{imageName: fingerprint}, startedAt}, nil
 }
 
-func (azureClient *AzureClient) GetImageFingerprintFromRegistry(imageName string, logger *logger.Logger) (fingerprint string, err error) {
-	registryUrl, repoName, tag := parseImageName(imageName)
+// acrLoginServerSuffixes are the Azure Container Registry login-server suffixes
+// for the public, China and US Government clouds. The Azure SDK publishes only
+// the token audience per cloud, not the login-server suffix.
+var acrLoginServerSuffixes = []string{".azurecr.io", ".azurecr.cn", ".azurecr.us"}
 
+// imageFingerprintSource is how an image reference is resolved to a fingerprint.
+type imageFingerprintSource int
+
+const (
+	// fingerprintFromPinnedDigest takes the fingerprint from the reference itself.
+	fingerprintFromPinnedDigest imageFingerprintSource = iota
+	// fingerprintFromACR reads it from Azure Container Registry, authenticated
+	// with the Azure credential.
+	fingerprintFromACR
+	// fingerprintFromAnonymousRegistry reads it from any other registry with no
+	// credential attached.
+	fingerprintFromAnonymousRegistry
+)
+
+// isACRLoginServer reports whether host is an Azure Container Registry login
+// server, matching on a whole label so that "azurecr.io.example.com" is not one.
+func isACRLoginServer(host string) bool {
+	h := strings.ToLower(host)
+	if hostWithoutPort, _, err := net.SplitHostPort(h); err == nil {
+		h = hostWithoutPort
+	}
+	for _, suffix := range acrLoginServerSuffixes {
+		if len(h) > len(suffix) && strings.HasSuffix(h, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+// pinnedDigest returns the fingerprint of a digest-pinned reference, whose tag
+// parseImageName returns as "sha256:<hex>".
+func pinnedDigest(tag string) (string, bool) {
+	fingerprint, pinned := strings.CutPrefix(tag, "sha256:")
+	if !pinned {
+		return "", false
+	}
+	if err := digest.ValidateDigest(fingerprint); err != nil {
+		return "", false
+	}
+	return fingerprint, true
+}
+
+// classifyImageReference decides how a reference is resolved. Only
+// fingerprintFromACR attaches the Azure credential, so this is the boundary that
+// keeps that credential away from a registry host taken from an app's own
+// configuration.
+func classifyImageReference(registryHost, tag string) imageFingerprintSource {
+	if _, pinned := pinnedDigest(tag); pinned {
+		return fingerprintFromPinnedDigest
+	}
+	if isACRLoginServer(registryHost) {
+		return fingerprintFromACR
+	}
+	return fingerprintFromAnonymousRegistry
+}
+
+// GetImageFingerprint resolves the fingerprint of a container image referenced
+// by a Web App. The registry host comes from the app's own configuration, which
+// anyone with write access to that app controls, so the Azure credential is
+// attached only for an Azure Container Registry login server.
+func (azureClient *AzureClient) GetImageFingerprint(imageName string, logger *logger.Logger) (string, error) {
+	registryUrl, repoName, tag := parseImageName(imageName)
+	if registryUrl == "" {
+		return "", fmt.Errorf("image name [%s] does not name a registry host", imageName)
+	}
+	registryHost := strings.TrimPrefix(registryUrl, "https://")
+
+	switch classifyImageReference(registryHost, tag) {
+	case fingerprintFromPinnedDigest:
+		fingerprint, _ := pinnedDigest(tag)
+		logger.Debug("For image '%s' took fingerprint '%s' from the pinned digest", imageName, fingerprint)
+		return fingerprint, nil
+	case fingerprintFromACR:
+		return azureClient.acrImageFingerprint(imageName, registryUrl, repoName, tag, logger)
+	default:
+		return anonymousImageFingerprint(imageName, registryHost, logger)
+	}
+}
+
+// acrImageFingerprint reads a fingerprint from Azure Container Registry using
+// the Azure credential supplied to Kosli.
+func (azureClient *AzureClient) acrImageFingerprint(imageName, registryUrl, repoName, tag string, logger *logger.Logger) (string, error) {
 	credentials, err := azidentity.NewClientSecretCredential(azureClient.Credentials.TenantId,
 		azureClient.Credentials.ClientId, azureClient.Credentials.ClientSecret, nil)
 	if err != nil {
 		return "", err
 	}
 
-	AcrClient, err := azcontainerregistry.NewClient(registryUrl, credentials, nil)
+	acrClient, err := azcontainerregistry.NewClient(registryUrl, credentials, nil)
 	if err != nil {
 		return "", err
 	}
 
-	manifestRes, err := AcrClient.GetManifest(context.TODO(), repoName, tag,
+	manifestRes, err := acrClient.GetManifest(context.TODO(), repoName, tag,
 		&azcontainerregistry.ClientGetManifestOptions{Accept: to.Ptr("application/vnd.docker.distribution.manifest.v2+json")})
 	if err != nil {
 		return "", err
 	}
+	if manifestRes.DockerContentDigest == nil {
+		return "", fmt.Errorf("no digest returned for image [%s]", imageName)
+	}
 
-	manifestPropsRes, err := AcrClient.GetManifestProperties(context.TODO(), repoName, *manifestRes.DockerContentDigest, nil)
-	if err != nil {
+	fingerprint := strings.TrimPrefix(*manifestRes.DockerContentDigest, "sha256:")
+	if err := digest.ValidateDigest(fingerprint); err != nil {
 		return "", err
 	}
 
-	fingerprint = strings.TrimPrefix(*manifestPropsRes.Manifest.Digest, "sha256:")
-
 	logger.Debug("For image '%s' got fingerprint '%s' from ACR", imageName, fingerprint)
+
+	return fingerprint, nil
+}
+
+// anonymousImageFingerprint reads a fingerprint from a registry outside Azure
+// Container Registry without attaching any credential.
+func anonymousImageFingerprint(imageName, registryHost string, logger *logger.Logger) (string, error) {
+	fingerprint, err := digest.OciSha256(imageName, "", "")
+	if err != nil {
+		return "", fmt.Errorf("failed to get the fingerprint of image [%s] from [%s]: %s. Azure credentials are only sent to Azure Container Registry, so a registry needing other credentials cannot be read here. Use --digests-source logs to report this app", imageName, registryHost, err)
+	}
+
+	logger.Debug("For image '%s' got fingerprint '%s' from '%s' without credentials", imageName, fingerprint, registryHost)
 
 	return fingerprint, nil
 }
