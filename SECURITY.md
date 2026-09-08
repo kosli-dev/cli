@@ -16,7 +16,7 @@ Please report privately by email rather than opening a public issue or pull requ
 
 ## Bug Bounty
 
-**There is no bug bounty for the Kosli CLI, and reports against it do not qualify for a payment.** The CLI is an open source client that runs in your environment rather than ours, so CLI findings sit outside the scope of our paid program.
+**There is no bug bounty for the Kosli CLI, and reports against it do not qualify for a payment.** 
 
 We do run a paid bug bounty for our production platform, **app.kosli.com** and its supporting APIs, and for **www.kosli.com**. The scope, testing guidelines, eligibility criteria and bounty rates are published here:
 
