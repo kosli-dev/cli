@@ -3,6 +3,8 @@ package aws
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 	"time"
@@ -1248,6 +1250,161 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientRejectsKeysWithDotDotSegments(
 	_, err := getS3DataFromClient(poisoned, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
 	require.Error(suite.T(), err, "a key containing a \"..\" segment must fail the snapshot instead of silently overwriting another object's download")
 	require.Contains(suite.T(), err.Error(), "uploads/user-a/../../protected/release.bin")
+}
+
+// TestLocalPathForS3Key pins the containment rule from the plan's vector
+// table. Windows-only-reject keys (reserved names, drive-looking segments)
+// are asserted as accepted here because CI runs on Linux; filepath.IsLocal
+// only rejects them on Windows.
+//
+// Accept rows compare the joined path rather than the raw returned rel,
+// because localPathForS3Key deliberately returns the key uncleaned (per
+// slice A) - filepath.Join, not this helper, is what collapses "a//b" or
+// "./a.txt" to the path a bucket snapshot landed on before this change.
+func (suite *AWSTestSuite) TestLocalPathForS3Key() {
+	for _, t := range []struct {
+		name       string
+		key        string
+		wantPath   string // accept: the path filepath.Join(dir, key) produced before this change
+		wantErr    bool
+		wantErrMsg string
+	}{
+		{name: "an ordinary nested key", key: "protected/release.bin", wantPath: "protected/release.bin"},
+		{name: "a plain filename", key: "a.txt", wantPath: "a.txt"},
+		{name: "a short nested key", key: "a/z", wantPath: "a/z"},
+		{name: "a dotfile", key: ".kosli_ignore", wantPath: ".kosli_ignore"},
+		{name: "a key with spaces", key: "file with spaces.txt", wantPath: "file with spaces.txt"},
+		{name: "a key with punctuation", key: "weird!*'().txt", wantPath: "weird!*'().txt"},
+		{name: "a unicode key", key: "ünïcödé/файл.txt", wantPath: "ünïcödé/файл.txt"},
+		{name: "three dots is not a \"..\" segment", key: "...", wantPath: "..."},
+		{name: "three dots as a nested segment", key: "a/.../b", wantPath: "a/.../b"},
+		{name: "a backslash key is a literal filename on this OS", key: `dir\file.txt`, wantPath: `dir\file.txt`},
+		{name: "a leading slash is trimmed", key: "/etc/passwd", wantPath: "etc/passwd"},
+		{name: "doubled leading slashes are trimmed", key: "//x", wantPath: "x"},
+		{name: "a leading dot segment is dropped by Join", key: "./a.txt", wantPath: "a.txt"},
+		{name: "a doubled interior slash is collapsed by Join", key: "a//b", wantPath: "a/b"},
+		{name: "a dot segment is dropped by Join", key: "a/./b", wantPath: "a/b"},
+		{name: "a reserved Windows name is only rejected on Windows", key: "CON", wantPath: "CON"},
+		{name: "a drive-looking segment is only rejected on Windows", key: "C:evil", wantPath: "C:evil"},
+		{name: "a colon segment is only rejected on Windows", key: "a:b", wantPath: "a:b"},
+		{
+			name:       "a traversing key is rejected",
+			key:        "uploads/user-a/../../protected/release.bin",
+			wantErr:    true,
+			wantErrMsg: `contains a ".." segment`,
+		},
+		{
+			name:       "a backslash-separated traversal is rejected",
+			key:        `uploads/user-a/..\..\..\..\Users\Public\kosli-poc.txt`,
+			wantErr:    true,
+			wantErrMsg: `contains a ".." segment`,
+		},
+		{
+			name:       "a short backslash-separated traversal is rejected",
+			key:        `uploads/user-a/..\x`,
+			wantErr:    true,
+			wantErrMsg: `contains a ".." segment`,
+		},
+		{name: "a bare \"..\" is rejected", key: "..", wantErr: true, wantErrMsg: `contains a ".." segment`},
+		{name: "a trailing \"..\" segment is rejected", key: "a/..", wantErr: true, wantErrMsg: `contains a ".." segment`},
+		{name: "an empty key is rejected", key: "", wantErr: true, wantErrMsg: "names no file"},
+		{name: "a bare slash is rejected", key: "/", wantErr: true, wantErrMsg: "names no file"},
+		{name: "doubled slashes with nothing else are rejected", key: "//", wantErr: true, wantErrMsg: "names no file"},
+		{name: "a bare dot is rejected", key: ".", wantErr: true, wantErrMsg: "names no file"},
+	} {
+		suite.Run(t.name, func() {
+			got, err := localPathForS3Key(t.key)
+			if t.wantErr {
+				require.Error(suite.T(), err)
+				require.Contains(suite.T(), err.Error(), t.key)
+				require.Contains(suite.T(), err.Error(), t.wantErrMsg)
+				return
+			}
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), filepath.Join("base", t.wantPath), filepath.Join("base", got))
+		})
+	}
+}
+
+// TestDownloadFileFromBucketRefusesToOverwrite asserts the O_EXCL half of the
+// containment fix: a destination file that already exists (however it got
+// there) is never silently truncated and replaced.
+func (suite *AWSTestSuite) TestDownloadFileFromBucketRefusesToOverwrite() {
+	tempDir := suite.T().TempDir()
+	preexisting := filepath.Join(tempDir, "README.md")
+	require.NoError(suite.T(), os.WriteFile(preexisting, []byte("pre-existing content\n"), 0666))
+
+	client := &FakeS3Client{
+		Bucket: fakeS3TestBucketName,
+		Objects: map[string][]byte{
+			"README.md": []byte(fakeReadmeBody),
+		},
+	}
+
+	err := downloadFileFromBucket(client, tempDir, "README.md", fakeS3TestBucketName, logger.NewStandardLogger())
+	require.Error(suite.T(), err)
+
+	content, readErr := os.ReadFile(preexisting)
+	require.NoError(suite.T(), readErr)
+	require.Equal(suite.T(), "pre-existing content\n", string(content),
+		"the pre-existing file must be left untouched, not truncated")
+}
+
+// TestGetS3DataFromClientCollidingKeysAreAnError covers the case rule 1 does
+// not catch: two distinct S3 keys ("a//b" and "a/b") that both land on the
+// same local file. localPathForS3Key accepts both (neither contains a ".."
+// segment), so O_EXCL is what turns the second download into an error
+// instead of a silent overwrite.
+func (suite *AWSTestSuite) TestGetS3DataFromClientCollidingKeysAreAnError() {
+	client := &FakeS3Client{
+		Bucket: fakeS3TestBucketName,
+		Objects: map[string][]byte{
+			"a//b": []byte(fakeReadmeBody),
+			"a/b":  []byte(fakeTemplateBody),
+		},
+	}
+
+	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.Error(suite.T(), err)
+}
+
+// TestGetS3DataFromClientKeepsTodaysLayoutForUnusualKeys pins that accepted
+// odd-shaped keys still land exactly where filepath.Join put them before
+// this change, so buckets that snapshot cleanly today keep the same
+// fingerprint. Comparing fingerprints (rather than the temp dir layout
+// directly) is the same technique TestGetS3DataFromClientFilterEquivalence
+// uses above.
+func (suite *AWSTestSuite) TestGetS3DataFromClientKeepsTodaysLayoutForUnusualKeys() {
+	unusualBody := []byte("unusual key content\n")
+	otherBody := []byte("other content\n")
+	thirdBody := []byte("third content\n")
+
+	unusual := &FakeS3Client{
+		Bucket: fakeS3TestBucketName,
+		Objects: map[string][]byte{
+			"/lead.txt": unusualBody,
+			"a//b":      otherBody,
+			"./c.txt":   thirdBody,
+			`d\e.txt`:   []byte(fakeNotesBody),
+		},
+	}
+	today := &FakeS3Client{
+		Bucket: fakeS3TestBucketName,
+		Objects: map[string][]byte{
+			"lead.txt": unusualBody,
+			"a/b":      otherBody,
+			"c.txt":    thirdBody,
+			`d\e.txt`:  []byte(fakeNotesBody),
+		},
+	}
+
+	unusualData, err := getS3DataFromClient(unusual, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	todayData, err := getS3DataFromClient(today, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+
+	require.Equal(suite.T(), todayData[0].Digests, unusualData[0].Digests,
+		"odd-shaped keys accepted by the containment rule must still fingerprint identically to the plain keys they land on")
 }
 
 func skipIfCredsUnset(T *testing.T, requireEnvVars bool, creds *AWSStaticCreds) {
