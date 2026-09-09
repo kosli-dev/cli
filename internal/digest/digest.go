@@ -22,6 +22,7 @@ import (
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/moby/moby/client"
+	godigest "github.com/opencontainers/go-digest"
 	"github.com/yargevad/filepathx"
 )
 
@@ -82,22 +83,62 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	return FileSha256(digestsFile.Name(), logger)
 }
 
-// OciSha256 gets the digest of a docker/OCI image from its registry
-func OciSha256(artifactName string, registryUsername string, registryPassword string) (string, error) {
-	imageName := fmt.Sprintf("//%s", artifactName)
-	ctx := context.Background()
-	sysCtx := &types.SystemContext{}
-	// Only set explicit credentials when provided. When DockerAuthConfig is nil,
-	// the containers/image library falls back to credential discovery from auth
-	// files (~/.docker/config.json, ~/.config/containers/auth.json) and credential
-	// helpers (e.g. docker-credential-ecr-login), which is needed when Docker is
+// credentialSource says which credentials a registry lookup may present.
+//
+// It is a typed choice rather than a caller-supplied SystemContext so that a
+// lookup cannot be handed the wrong credential policy by mistake: containers/image
+// falls back to credential discovery whenever DockerAuthConfig is nil, and that
+// fallback must not reach a registry named by an untrusted source.
+type credentialSource int
+
+const (
+	// noCredentials presents nothing. It is the zero value deliberately, so a
+	// lookup that forgets to say what it wants does not present host credentials.
+	noCredentials credentialSource = iota
+	// callerOrHostCredentials presents the caller's credentials when it supplied
+	// any, and otherwise lets containers/image discover them from auth files
+	// (~/.docker/config.json, ~/.config/containers/auth.json) and credential
+	// helpers such as docker-credential-ecr-login, which is needed when Docker is
 	// not installed or when using Podman with a private registry like ECR.
-	if registryUsername != "" || registryPassword != "" {
-		sysCtx.DockerAuthConfig = &types.DockerAuthConfig{
-			Username: registryUsername,
-			Password: registryPassword,
+	callerOrHostCredentials
+)
+
+// credentialContext builds the containers/image context for a credential source.
+func credentialContext(source credentialSource, registryUsername, registryPassword string) *types.SystemContext {
+	sysCtx := &types.SystemContext{}
+	switch source {
+	case noCredentials:
+		// A non-nil but empty config is what stops the discovery fallback. A nil
+		// one silently enables it.
+		sysCtx.DockerAuthConfig = &types.DockerAuthConfig{}
+	case callerOrHostCredentials:
+		if registryUsername != "" || registryPassword != "" {
+			sysCtx.DockerAuthConfig = &types.DockerAuthConfig{
+				Username: registryUsername,
+				Password: registryPassword,
+			}
 		}
 	}
+	return sysCtx
+}
+
+// OciSha256 gets the digest of a docker/OCI image from its registry, presenting
+// the given credentials, or those the host holds when none are given.
+func OciSha256(artifactName string, registryUsername string, registryPassword string) (string, error) {
+	return ociSha256(artifactName, callerOrHostCredentials, registryUsername, registryPassword)
+}
+
+// OciSha256Anonymous gets the digest of a docker/OCI image from its registry
+// without presenting any credential, so no credential the host happens to hold
+// is offered to a registry the caller does not control.
+func OciSha256Anonymous(artifactName string) (string, error) {
+	return ociSha256(artifactName, noCredentials, "", "")
+}
+
+func ociSha256(artifactName string, source credentialSource, registryUsername, registryPassword string) (string, error) {
+	imageName := fmt.Sprintf("//%s", artifactName)
+	ctx := context.Background()
+	sysCtx := credentialContext(source, registryUsername, registryPassword)
 
 	// Parse image reference
 	ref, err := docker.ParseReference(imageName)
@@ -109,11 +150,47 @@ func OciSha256(artifactName string, registryUsername string, registryPassword st
 	}
 
 	// Compute digest
-	digest, err := docker.GetDigest(ctx, sysCtx, ref)
+	remoteDigest, err := docker.GetDigest(ctx, sysCtx, ref)
 	if err != nil {
 		return "", fmt.Errorf("failed to get digest for %s: %w", imageName, err)
 	}
-	return strings.Split(digest.String(), "sha256:")[1], nil
+
+	fingerprint, err := Sha256Fingerprint(remoteDigest)
+	if err != nil {
+		return "", fmt.Errorf("registry reported a digest Kosli cannot use for %s: %w", imageName, err)
+	}
+	return fingerprint, nil
+}
+
+// Sha256FingerprintFromDigest turns a registry-supplied digest string into the
+// hex fingerprint Kosli uses, rejecting any algorithm other than sha256, because
+// a registry chooses the algorithm it answers with.
+//
+// This is the rule for the OCI and Azure Container Registry lookups. The older
+// DockerImageSha256 and RemoteDockerImageSha256 paths still parse digests by
+// hand and are not covered by it.
+func Sha256FingerprintFromDigest(digestString string) (string, error) {
+	parsed, err := godigest.Parse(digestString)
+	if err != nil {
+		return "", fmt.Errorf("unparseable digest %q: %w", digestString, err)
+	}
+	return Sha256Fingerprint(parsed)
+}
+
+// Sha256Fingerprint is the same rule for a digest that is already parsed, so a
+// typed value does not have to be turned back into a string to be checked.
+func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
+	// godigest.Digest is a string type, so a caller can hand over an unvalidated
+	// one and Algorithm()/Encoded() would just split it on the colon.
+	if err := parsed.Validate(); err != nil {
+		return "", fmt.Errorf("invalid digest %q: %w", parsed.String(), err)
+	}
+	if parsed.Algorithm() != godigest.SHA256 {
+		return "", fmt.Errorf("digest algorithm is %s, but Kosli fingerprints are sha256", parsed.Algorithm())
+	}
+	// Validate above has checked the charset and length, so the encoded portion
+	// is exactly 64 lowercase hex characters here.
+	return parsed.Encoded(), nil
 }
 
 // calculateDirContentSha256 calculates a sha256 digest for a directory content

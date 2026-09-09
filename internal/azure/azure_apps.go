@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,6 +22,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 	smithyTime "github.com/aws/smithy-go/time"
+	"github.com/distribution/reference"
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/server"
 )
@@ -38,6 +41,9 @@ type AzureStaticCredentials struct {
 type AzureClient struct {
 	Credentials       AzureStaticCredentials
 	AppServiceFactory *armappservice.ClientFactory
+	// acrClientOptions is nil in production. Tests set it so the ACR arm can be
+	// driven against a fake registry without package-level state.
+	acrClientOptions *azcontainerregistry.ClientOptions
 }
 
 // AppData represents the harvested Azure service app and function app data
@@ -99,6 +105,9 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 
 			data, err := azureClient.NewAppData(app, logger)
 			if err != nil {
+				// One app's error cancels the run, so say which app it was. Wrapped
+				// here rather than at each return so every path is covered once.
+				err = fmt.Errorf("app [%s]: %w", *app.Name, err)
 				select {
 				case errs <- err:
 				default:
@@ -265,7 +274,7 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 	destDir := filepath.Join(tmpDir, "extracted")
 	err = unzip(packagePath, destDir, logger)
 	if err != nil {
-		return AppData{}, fmt.Errorf("failed to unzip downloaded package for app [%s]: %v", *app.Name, err)
+		return AppData{}, fmt.Errorf("failed to unzip the downloaded package: %v", err)
 	}
 
 	//  fingerprint the downloaded and unzipped package
@@ -377,7 +386,7 @@ func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site
 
 	if azureClient.Credentials.DigestsSource == "acr" {
 		fingerprintSource = "acr"
-		fingerprint, err = azureClient.GetImageFingerprintFromRegistry(imageName, logger)
+		fingerprint, err = azureClient.GetImageFingerprint(imageName, logger)
 		// Handle exception when image is not found in the registry but is found in the environment
 		if err != nil {
 			return AppData{}, err
@@ -399,63 +408,181 @@ func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site
 	return AppData{*app.Name, *app.Kind, fingerprintSource, map[string]string{imageName: fingerprint}, startedAt}, nil
 }
 
-func (azureClient *AzureClient) GetImageFingerprintFromRegistry(imageName string, logger *logger.Logger) (fingerprint string, err error) {
-	registryUrl, repoName, tag := parseImageName(imageName)
+// acrLoginServerSuffixes are the Azure Container Registry login-server suffixes
+// for the public, China and US Government clouds. The Azure SDK publishes only
+// the token audience per cloud, not the login-server suffix.
+var acrLoginServerSuffixes = []string{".azurecr.io", ".azurecr.cn", ".azurecr.us"}
 
+// isACRLoginServer reports whether domain is an Azure Container Registry login
+// server, matching on a whole label so that "azurecr.io.example.com" is not one.
+func isACRLoginServer(domain string) bool {
+	h := strings.ToLower(domain)
+	if hostWithoutPort, _, err := net.SplitHostPort(h); err == nil {
+		h = hostWithoutPort
+	}
+	for _, suffix := range acrLoginServerSuffixes {
+		if len(h) > len(suffix) && strings.HasSuffix(h, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+// fingerprintPlan is how one image reference will be resolved. It is decided
+// before anything is contacted, so a test can assert every value that crosses
+// the boundary rather than only which resolver ran.
+type fingerprintPlan struct {
+	// domain is the registry the reference names, as the parser reports it.
+	domain string
+	// reference is the canonical form handed to a resolver. Classification and
+	// resolution use this same value, so they cannot disagree about the host.
+	reference string
+	// repoPath and tagOrDigest address the manifest on the ACR arm.
+	repoPath    string
+	tagOrDigest string
+	// pinnedFingerprint is the sha256 hex a digest-pinned reference claims, or
+	// empty when the reference is not pinned.
+	pinnedFingerprint string
+}
+
+// planImageFingerprint decides how an App Service image reference is resolved.
+//
+// The reference is parsed with the same normalising parser the registry clients
+// use rather than being split by hand, because a hand-rolled split can be talked
+// into disagreeing with the client about which host it named:
+// "reg.azurecr.io:443@attacker.example/repo:tag" passes a suffix check on the
+// registry component but resolves to attacker.example as a URL. The parser
+// rejects it.
+//
+// Only an Azure Container Registry login server gets the Azure credential, so
+// the domain this reports is what keeps that credential away from a registry
+// named in an app's own configuration.
+func planImageFingerprint(imageName string) (fingerprintPlan, error) {
+	named, err := reference.ParseNormalizedNamed(imageName)
+	if err != nil {
+		return fingerprintPlan{}, fmt.Errorf("failed to parse the image name [%s]: %w", imageName, err)
+	}
+
+	var plan fingerprintPlan
+
+	if digested, ok := named.(reference.Digested); ok {
+		// A reference pinned to an algorithm Kosli cannot fingerprint can never
+		// match, so reject it here rather than after a pointless round trip.
+		plan.pinnedFingerprint, err = digest.Sha256Fingerprint(digested.Digest())
+		if err != nil {
+			return fingerprintPlan{}, fmt.Errorf("image [%s] is pinned to a digest Kosli cannot use: %w", imageName, err)
+		}
+		// A digest is authoritative when a reference carries both, and
+		// containers/image refuses a reference holding a tag and a digest
+		// together, so drop the tag.
+		named, err = reference.WithDigest(reference.TrimNamed(named), digested.Digest())
+		if err != nil {
+			return fingerprintPlan{}, fmt.Errorf("failed to normalise the image name [%s]: %w", imageName, err)
+		}
+		plan.tagOrDigest = digested.Digest().String()
+	} else {
+		named = reference.TagNameOnly(named)
+		tagged, ok := named.(reference.Tagged)
+		if !ok {
+			return fingerprintPlan{}, fmt.Errorf("image [%s] names neither a tag nor a digest", imageName)
+		}
+		plan.tagOrDigest = tagged.Tag()
+	}
+
+	plan.domain = reference.Domain(named)
+	plan.repoPath = reference.Path(named)
+	plan.reference = named.String()
+
+	return plan, nil
+}
+
+// GetImageFingerprint resolves the fingerprint of a container image referenced
+// by a Web App. The registry comes from the app's own configuration, which
+// anyone with write access to that app controls, so the Azure credential is
+// attached only for an Azure Container Registry login server.
+func (azureClient *AzureClient) GetImageFingerprint(imageName string, logger *logger.Logger) (string, error) {
+	plan, err := planImageFingerprint(imageName)
+	if err != nil {
+		return "", err
+	}
+
+	var fingerprint string
+	if isACRLoginServer(plan.domain) {
+		fingerprint, err = azureClient.acrImageFingerprint(plan, azureClient.acrClientOptions, logger)
+	} else {
+		fingerprint, err = anonymousImageFingerprint(plan, logger)
+	}
+	if err != nil {
+		return "", err
+	}
+
+	// A pinned reference is a claim about which image is deployed, and neither
+	// resolver checks the digest it is given against the one it gets back, so
+	// hold the registry to it here.
+	if plan.pinnedFingerprint != "" && fingerprint != plan.pinnedFingerprint {
+		return "", fmt.Errorf("image [%s] is pinned to digest sha256:%s but [%s] reported sha256:%s", plan.reference, plan.pinnedFingerprint, plan.domain, fingerprint)
+	}
+
+	return fingerprint, nil
+}
+
+// acrImageFingerprint reads a fingerprint from Azure Container Registry using
+// the Azure credential supplied to Kosli.
+// clientOptions is nil in production; tests pass options carrying a transport
+// pointed at a fake registry, so the arm is exercised without package-level state.
+func (azureClient *AzureClient) acrImageFingerprint(plan fingerprintPlan, clientOptions *azcontainerregistry.ClientOptions, logger *logger.Logger) (string, error) {
 	credentials, err := azidentity.NewClientSecretCredential(azureClient.Credentials.TenantId,
 		azureClient.Credentials.ClientId, azureClient.Credentials.ClientSecret, nil)
 	if err != nil {
 		return "", err
 	}
 
-	AcrClient, err := azcontainerregistry.NewClient(registryUrl, credentials, nil)
+	acrClient, err := azcontainerregistry.NewClient("https://"+plan.domain, credentials, clientOptions)
 	if err != nil {
 		return "", err
 	}
 
-	manifestRes, err := AcrClient.GetManifest(context.TODO(), repoName, tag,
+	manifestRes, err := acrClient.GetManifest(context.TODO(), plan.repoPath, plan.tagOrDigest,
 		&azcontainerregistry.ClientGetManifestOptions{Accept: to.Ptr("application/vnd.docker.distribution.manifest.v2+json")})
 	if err != nil {
 		return "", err
 	}
-
-	manifestPropsRes, err := AcrClient.GetManifestProperties(context.TODO(), repoName, *manifestRes.DockerContentDigest, nil)
-	if err != nil {
-		return "", err
+	if manifestRes.ManifestData != nil {
+		defer func() {
+			if err := manifestRes.ManifestData.Close(); err != nil {
+				logger.Warn("failed to close the manifest response for image %s: %v", plan.reference, err)
+			}
+		}()
+	}
+	if manifestRes.DockerContentDigest == nil {
+		return "", fmt.Errorf("no digest returned for image [%s]", plan.reference)
 	}
 
-	fingerprint = strings.TrimPrefix(*manifestPropsRes.Manifest.Digest, "sha256:")
+	fingerprint, err := digest.Sha256FingerprintFromDigest(*manifestRes.DockerContentDigest)
+	if err != nil {
+		return "", fmt.Errorf("registry reported a digest Kosli cannot use for image [%s]: %w", plan.reference, err)
+	}
 
-	logger.Debug("For image '%s' got fingerprint '%s' from ACR", imageName, fingerprint)
+	logger.Debug("For image '%s' got fingerprint '%s' from ACR", plan.reference, fingerprint)
 
 	return fingerprint, nil
 }
 
-func parseImageName(imageName string) (registryUrl, repoName, tag string) {
-	// Parse the image name to extract the repository name and tag
-	// Example: tookyregistry.azurecr.io/tooky/sha256:latest
-	splitFullImageName := strings.SplitN(imageName, "/", 2)
-	if len(splitFullImageName) != 2 {
-		return "", "", ""
+// anonymousFingerprint resolves a fingerprint with no credential presented. It
+// is a variable so tests can assert the reference the resolver is handed.
+var anonymousFingerprint = digest.OciSha256Anonymous
+
+// anonymousImageFingerprint reads a fingerprint from a registry outside Azure
+// Container Registry, presenting no credential.
+func anonymousImageFingerprint(plan fingerprintPlan, logger *logger.Logger) (string, error) {
+	fingerprint, err := anonymousFingerprint(plan.reference)
+	if err != nil {
+		return "", fmt.Errorf("failed to get the fingerprint of image [%s] from [%s]: %w. Azure credentials are only sent to Azure Container Registry; use --digests-source logs for this app", plan.reference, plan.domain, err)
 	}
 
-	registryUrl = fmt.Sprintf("https://%s", splitFullImageName[0])
+	logger.Debug("For image '%s' got fingerprint '%s' from '%s' with no credentials", plan.reference, fingerprint, plan.domain)
 
-	if strings.Contains(splitFullImageName[1], "@sha256:") {
-		// Example: tookyregistry.azurecr.io/tooky@sha256:cb29a6..7
-		imageNameAndTag := strings.SplitN(splitFullImageName[1], "@", 2)
-		repoName = imageNameAndTag[0]
-		tag = imageNameAndTag[1]
-	} else if strings.Contains(splitFullImageName[1], ":") {
-		imageNameAndTag := strings.SplitN(splitFullImageName[1], ":", 2)
-		repoName = imageNameAndTag[0]
-		tag = imageNameAndTag[1]
-	} else {
-		repoName = splitFullImageName[1]
-		tag = "latest"
-	}
-
-	return registryUrl, repoName, tag
+	return fingerprint, nil
 }
 
 func (app *AppData) IsEmpty() bool {

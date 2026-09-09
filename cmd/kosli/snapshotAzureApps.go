@@ -24,6 +24,13 @@ will not match. See
 https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings#website_run_from_package
 
 For zip-deployed apps, the fingerprint respects a ^.kosli_ignore^ file at the root of the deployed package.
+
+With ^--digests-source acr^, the registry is taken from each app's own container configuration. Azure
+credentials are only ever sent to an Azure Container Registry login server. An app whose image comes
+from any other registry is read without credentials, which works for a public image but not a private
+one; report those apps with ^--digests-source logs^ instead.
+
+^--dry-run^ suppresses only the request to Kosli. Azure discovery and registry lookups still run.
 ` + kosliIgnoreDesc + azureAuthDesc
 
 const snapshotAzureAppsExample = `
