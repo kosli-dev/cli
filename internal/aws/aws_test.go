@@ -1369,6 +1369,10 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientCollidingKeysAreAnError() {
 
 	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
+	// FakeS3Client lists lexicographically and '/' sorts before 'b', so "a//b"
+	// downloads first and "a/b" is the key that collides.
+	require.Contains(suite.T(), err.Error(), "object key [a/b]", "the error must name the key that collided")
+	require.Contains(suite.T(), err.Error(), "--exclude-regex")
 }
 
 // TestGetS3DataFromClientKeepsTodaysLayoutForUnusualKeys pins that accepted
@@ -1405,6 +1409,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientKeepsTodaysLayoutForUnusualKey
 	require.NoError(suite.T(), err)
 	todayData, err := getS3DataFromClient(today, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
+	require.Len(suite.T(), unusualData, 1)
+	require.Len(suite.T(), todayData, 1)
 
 	require.Equal(suite.T(), todayData[0].Digests, unusualData[0].Digests,
 		"odd-shaped keys accepted by the containment rule must still fingerprint identically to the plain keys they land on")

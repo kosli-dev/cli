@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -563,8 +564,6 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 // is accepted and lands exactly where filepath.Join put it before this
 // change, so buckets that snapshot cleanly today keep the same fingerprint.
 func localPathForS3Key(key string) (string, error) {
-	const reason = "object key [%s] cannot be used as a local path: %s; exclude it with --exclude-regex"
-
 	// Segments are split on both '/' and '\' so a key can't smuggle a ".."
 	// past the check using the separator this OS doesn't treat specially.
 	// Windows drops trailing spaces and dots from a name, so ".. " and "..."
@@ -572,19 +571,25 @@ func localPathForS3Key(key string) (string, error) {
 	segments := strings.FieldsFunc(key, func(r rune) bool { return r == '/' || r == '\\' })
 	for _, segment := range segments {
 		if strings.HasPrefix(segment, "..") && strings.TrimRight(segment, ". ") == "" {
-			return "", fmt.Errorf(reason, key, `contains a ".." segment`)
+			return "", unusableS3KeyError(key, errors.New(`contains a ".." segment`))
 		}
 	}
 
 	rel := strings.TrimLeft(key, "/")
 	if filepath.Clean(rel) == "." {
-		return "", fmt.Errorf(reason, key, "names no file")
+		return "", unusableS3KeyError(key, errors.New("names no file"))
 	}
 	if !filepath.IsLocal(rel) {
-		return "", fmt.Errorf(reason, key, "is not a local path")
+		return "", unusableS3KeyError(key, errors.New("is not a local path"))
 	}
 
 	return rel, nil
+}
+
+// unusableS3KeyError names the object key so the operator can act on it; the
+// temp-dir path inside a filesystem error means nothing to them.
+func unusableS3KeyError(key string, cause error) error {
+	return fmt.Errorf("object key [%s] cannot be stored as a local file: %w; exclude it with --exclude-regex", key, cause)
 }
 
 func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket string, logger *logger.Logger) error {
@@ -594,7 +599,7 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 	}
 	dest := filepath.Join(dirName, rel)
 	if err := os.MkdirAll(filepath.Dir(dest), 0770); err != nil {
-		return err
+		return unusableS3KeyError(key, err)
 	}
 	// O_EXCL is the second half of the containment fix: two keys that map to
 	// the same local file (a doubled slash vs a single one, a leading slash
@@ -605,7 +610,7 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 	// as they did before this change.
 	file, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
-		return err
+		return unusableS3KeyError(key, err)
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
