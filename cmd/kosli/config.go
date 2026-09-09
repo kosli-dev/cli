@@ -18,15 +18,18 @@ type configOptions struct {
 	unSetKeys []string
 }
 
-const configShortDesc = `Config global Kosli flags values and store them in $HOME/.kosli .  `
+const configShortDesc = `Config global Kosli flags values and store them in $HOME/.kosli.yml .  `
 
 const configLongDesc = configShortDesc + `
 
 Flag values are determined in the following order (highest precedence first):
 - command line flags on each executed command.
 - environment variables.
-- custom config file provided with --config-file flag.
-- default config file in $HOME/.kosli
+- custom config file provided with the --config-file flag or the KOSLI_CONFIG_FILE env var.
+- default config file in $HOME/.kosli.yml
+
+A config file in the directory a command runs from is never read unless it is named
+with --config-file or KOSLI_CONFIG_FILE.
 
 You can configure global Kosli flags (the ones that apply to all/most commands) using their dedicated
 convenience flags (e.g. --org). 

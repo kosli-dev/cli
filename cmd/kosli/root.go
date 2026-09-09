@@ -122,7 +122,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	httpProxyFlag                   = "[optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'"
 	dryRunFlag                      = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
 	maxAPIRetryFlag                 = "[defaulted] How many times should API calls be retried when the API host is not reachable."
-	configFileFlag                  = "[optional] The Kosli config file path."
+	configFileFlag                  = "[optional] The Kosli config file path. Config is read from this path or the default only, never implicitly from the current directory."
 	debugFlag                       = "[optional] Print debug logs to stdout."
 	quietFlag                       = "[optional] Suppress non-critical warning messages. Errors and normal output are not affected. If both --quiet and --debug are set, --debug wins."
 	artifactTypeFlag                = "The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it)."
