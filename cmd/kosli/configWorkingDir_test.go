@@ -283,8 +283,10 @@ func (suite *WorkingDirConfigTestSuite) TestNonRegularWorkingDirConfigIsNotParse
 	}
 	suite.stubHomeConfig()
 	dir := suite.T().TempDir()
-	suite.Require().NoError(os.Symlink(os.DevNull, filepath.Join(dir, "kosli.json")))
-	suite.Require().NoError(os.Symlink("/dev/zero", filepath.Join(dir, "kosli.yml")))
+	// /dev/zero must sit on the first name in viper's SupportedExts order,
+	// because the loop stops at the first existing name: with the IsRegular
+	// guard gone this is the read that never returns.
+	suite.Require().NoError(os.Symlink("/dev/zero", filepath.Join(dir, "kosli.json")))
 	suite.T().Chdir(dir)
 
 	type result struct {
@@ -384,6 +386,26 @@ func (suite *WorkingDirConfigTestSuite) TestOnlyTheFileViperWouldHaveLoadedIsRep
 		"the file viper loaded was the template, and a template is not a broken pipeline")
 	suite.NotContains(stderr, "kosli.yml",
 		"kosli.yml was never the loaded file, and --config-file kosli.yml would load the template anyway")
+}
+
+// TestDirectoryNamedLikeAConfigFileIsSkipped pins viper's existence rule, which
+// is !stat.IsDir() rather than a successful stat: a directory of that name was
+// never the file viper loaded, so the search carried on past it. Stopping there
+// instead would drop a real config below it in silence.
+func (suite *WorkingDirConfigTestSuite) TestDirectoryNamedLikeAConfigFileIsSkipped() {
+	suite.stubHomeConfig()
+	dir := suite.T().TempDir()
+	suite.Require().NoError(os.Mkdir(filepath.Join(dir, "kosli.json"), 0700))
+	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "kosli.yml"),
+		[]byte("org: some-org\n"), 0600))
+	suite.T().Chdir(dir)
+
+	_, _, _, stderr, err := executeCommandC("version")
+
+	suite.Require().NoError(err)
+	suite.Contains(stderr, "no longer loaded automatically")
+	suite.Contains(stderr, "kosli.yml",
+		"viper skipped the directory and loaded this file, so this is the one that was lost")
 }
 
 func TestWorkingDirConfigTestSuite(t *testing.T) {

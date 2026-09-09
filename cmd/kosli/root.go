@@ -442,8 +442,14 @@ func warnAboutIgnoredWorkingDirConfig(cmd *cobra.Command) {
 			continue
 		}
 
+		// viper's existence check is !stat.IsDir(), so a directory of this name
+		// was not the file it loaded. Keep looking, as it did.
+		if info.IsDir() {
+			continue
+		}
+
 		// Only a regular file's Size says how much there is to read. os.Stat
-		// follows symlinks, and a checkout can ship kosli.yml -> /dev/zero,
+		// follows symlinks, and a checkout can ship kosli.json -> /dev/zero,
 		// which reports IsDir false and Size 0 with an unbounded read behind it.
 		if !info.Mode().IsRegular() || info.Size() > maxWorkingDirConfigSize {
 			return
