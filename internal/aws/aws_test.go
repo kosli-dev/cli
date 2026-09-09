@@ -1420,15 +1420,22 @@ func (suite *AWSTestSuite) TestDownloadFileFromBucketNamesTheKeyWithoutAdviceOnF
 	client := &FakeS3Client{
 		Bucket: fakeS3TestBucketName,
 		Objects: map[string][]byte{
-			"README.md": []byte(fakeReadmeBody),
+			"README.md":     []byte(fakeReadmeBody),
+			"sub/README.md": []byte(fakeReadmeBody),
 		},
 	}
 
-	err := downloadFileFromBucket(client, tempDir, "README.md", fakeS3TestBucketName, logger.NewStandardLogger())
-	require.Error(suite.T(), err)
-	require.ErrorIs(suite.T(), err, fs.ErrPermission)
-	require.Contains(suite.T(), err.Error(), "object key [README.md]")
-	require.NotContains(suite.T(), err.Error(), "--exclude-regex")
+	// A bare key fails in OpenFile; a nested one fails in MkdirAll, since only
+	// then is there a directory left to create. Both wraps must behave alike.
+	for _, key := range []string{"README.md", "sub/README.md"} {
+		suite.Run(key, func() {
+			err := downloadFileFromBucket(client, tempDir, key, fakeS3TestBucketName, logger.NewStandardLogger())
+			require.Error(suite.T(), err)
+			require.ErrorIs(suite.T(), err, fs.ErrPermission)
+			require.Contains(suite.T(), err.Error(), fmt.Sprintf("object key [%s]", key))
+			require.NotContains(suite.T(), err.Error(), "--exclude-regex")
+		})
+	}
 }
 
 // TestGetS3DataFromClientKeepsTodaysLayoutForUnusualKeys pins that accepted
