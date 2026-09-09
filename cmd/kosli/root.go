@@ -122,7 +122,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	httpProxyFlag                   = "[optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'"
 	dryRunFlag                      = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
 	maxAPIRetryFlag                 = "[defaulted] How many times should API calls be retried when the API host is not reachable."
-	configFileFlag                  = "[optional] The Kosli config file path."
+	configFileFlag                  = "[optional] The Kosli config file path. Config is read from this path or the default only, never implicitly from the current directory."
 	debugFlag                       = "[optional] Print debug logs to stdout."
 	quietFlag                       = "[optional] Suppress non-critical warning messages. Errors and normal output are not affected. If both --quiet and --debug are set, --debug wins."
 	artifactTypeFlag                = "The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it)."
@@ -369,18 +369,125 @@ func (r *RealConfigGetter) defaultConfigFilePath() string {
 		return filepath.Join(home, defaultConfigFilename)
 
 	}
-	return "kosli" // for backward compatibility with old default config location
+	// With no resolvable home directory there is no default config file. A bare
+	// name here would make viper search the current working directory, which is
+	// the whole problem getConfigFileFlagDefault exists to avoid.
+	return ""
 }
 
 // defaultConfigFilePathFunc is a variable holding the implementation of defaultConfigFilePath
 var defaultConfigFilePathFunc = (&RealConfigGetter{}).defaultConfigFilePath
 
-func getConfigFileFlagDefault() string {
-	defaultPath := defaultConfigFilePathFunc()
-	if _, err := os.Stat(defaultPath); err == nil {
-		return defaultPath
+// workingDirConfigNames are the config file names the CLI used to load
+// implicitly from the current working directory, before that became
+// kosli-dev/server#6778 and #6779. viper searched a "kosli" config name in
+// every extension it supports and loaded the first match, so the list is
+// derived from viper, in viper's own order.
+var workingDirConfigNames = func() []string {
+	names := make([]string, 0, len(viper.SupportedExts))
+	for _, ext := range viper.SupportedExts {
+		names = append(names, "kosli."+ext)
 	}
-	return "kosli" // for backward compatibility with old default config location
+	return names
+}()
+
+// isFlowTemplate reports whether a parsed file is a flow template rather than
+// CLI config. A template is passed with --template-file and was never loaded as
+// CLI config, so an ignored one is not a broken pipeline. The shapes tell them
+// apart rather than the key names, because trail and artifacts are CLI flags
+// too: a template's trail is a mapping and its artifacts a sequence, where the
+// flags of those names take a string, so `trail: my-trail` is config and warns.
+func isFlowTemplate(v *viper.Viper) bool {
+	if _, ok := v.Get("trail").(map[string]any); ok {
+		return true
+	}
+	_, ok := v.Get("artifacts").([]any)
+	return ok
+}
+
+// maxWorkingDirConfigSize caps what the warning is willing to parse. The file is
+// repository-controlled and read on every command run in that directory, and no
+// real config file comes close to this.
+const maxWorkingDirConfigSize = 1 << 20
+
+// warnAboutIgnoredWorkingDirConfig reports a config file in the current working
+// directory that an earlier CLI would have loaded, so that the change does not
+// break a pipeline silently.
+//
+// Every parseable file is reported except a flow template. Reporting on the file
+// rather than on a chosen set of keys is deliberate: any key set narrow enough
+// to be worth writing down would let some real config break in silence, which is
+// the one thing this warning exists to prevent.
+func warnAboutIgnoredWorkingDirConfig(cmd *cobra.Command) {
+	// snapshot k8s declares its own --config-file for namespace selectors, and
+	// cobra's flag merge drops the root's, the -c shorthand with it. Neither
+	// --config-file nor KOSLI_CONFIG_FILE can name the Kosli config file there,
+	// so naming them would send the user into runMultiEnv with this file.
+	// Tested for the shadow rather than for the root flag, so that a caller
+	// reaching here before the flag merge gets the message true of every other
+	// command instead of one claiming a flag this command does not declare.
+	shadowed := false
+	if f := cmd.Flags().Lookup("config-file"); f != nil && f != cmd.Root().PersistentFlags().Lookup("config-file") {
+		shadowed = true
+	}
+
+	for _, name := range workingDirConfigNames {
+		// viper loaded the first existing name in this order and stopped, so a
+		// later name was never the file it read. Everything below therefore
+		// decides whether to warn about this one, never whether to move on:
+		// skipping ahead would warn about a file that was never loaded, and name
+		// a remedy that resolves back to the file skipped over.
+		info, err := os.Stat(name)
+		if err != nil {
+			continue
+		}
+
+		// viper's existence check is !stat.IsDir(), so a directory of this name
+		// was not the file it loaded. Keep looking, as it did.
+		if info.IsDir() {
+			continue
+		}
+
+		// Only a regular file's Size says how much there is to read. os.Stat
+		// follows symlinks, and a checkout can ship kosli.json -> /dev/zero,
+		// which reports IsDir false and Size 0 with an unbounded read behind it.
+		if !info.Mode().IsRegular() || info.Size() > maxWorkingDirConfigSize {
+			return
+		}
+
+		v := viper.New()
+		v.SetConfigFile(name)
+		// An unparseable file made every command fail outright before this
+		// change, so there is no behaviour to migrate.
+		if err := v.ReadInConfig(); err != nil {
+			return
+		}
+		if len(v.AllKeys()) == 0 {
+			return
+		}
+		if isFlowTemplate(v) {
+			return
+		}
+
+		if shadowed {
+			logger.Warn("config file [%s] in the current directory is no longer loaded automatically. This command declares its own --config-file, so move its settings to your home config file with 'kosli config'.", name)
+		} else {
+			logger.Warn("config file [%s] in the current directory is no longer loaded automatically. To keep using it, pass --config-file %s or set KOSLI_CONFIG_FILE=%s. To apply its settings to every command, move them to your home config file with 'kosli config'.", name, name, name)
+		}
+		return
+	}
+}
+
+// getConfigFileFlagDefault returns the default --config-file value, which is
+// always the home config file whether or not that file exists. It used to fall
+// back to the bare name "kosli", which viper resolves against the current
+// working directory: a repository could then set host, http-proxy or kubeconfig
+// for a command run with a real API token, redirecting the bearer token or
+// executing a kubeconfig credential plugin (kosli-dev/server#6778, #6779).
+// A config file in the working directory is now loaded only when the user names
+// it with --config-file or KOSLI_CONFIG_FILE.
+func getConfigFileFlagDefault() string {
+	return defaultConfigFilePathFunc()
 }
 
 func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
@@ -529,40 +636,64 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	// handle passing the config file as an env variable.
 	// we load the config file before we bind env vars to flags,
 	// so we check for the config file env var separately here
-	configFlag := cmd.Flags().Lookup("config-file")
+	// Asked of the root rather than of cmd, because snapshot k8s declares a
+	// local --config-file for its namespace selectors, and cobra's flag merge
+	// keeps the local one. Looking it up on cmd there answers about the wrong
+	// flag: it reports the Kosli config file as named when it was not, dropping
+	// KOSLI_CONFIG_FILE and suppressing the working-directory warning.
+	configFlag := cmd.Root().PersistentFlags().Lookup("config-file")
+	namedByUser := configFlag.Changed
 	if !configFlag.Changed {
 		// A variable set to the empty string reports as present, but it names no
 		// file. Overriding the default with it loads no config file at all,
 		// silently dropping org, api-token and every other configured default.
 		if path, exists := os.LookupEnv("KOSLI_CONFIG_FILE"); exists && path != "" {
 			global.ConfigFile = path
+			namedByUser = true
 		}
 	}
-	dir, file := filepath.Split(global.ConfigFile)
-	file = strings.TrimSuffix(file, filepath.Ext(file))
 
-	// Set the base name of the config file, without the file extension.
-	v.SetConfigName(file)
+	if global.ConfigFile != "" {
+		dir, file := filepath.Split(global.ConfigFile)
+		file = strings.TrimSuffix(file, filepath.Ext(file))
 
-	// Set as many paths as you like where viper should look for the
-	// config file. By default, we are looking in the current working directory.
-	if dir == "" {
-		dir = "."
-	}
-	v.AddConfigPath(dir)
+		// Set the base name of the config file, without the file extension.
+		v.SetConfigName(file)
 
-	// Attempt to read the config file, gracefully ignoring errors
-	// caused by a config file not being found. Return an error
-	// if we cannot parse the config file.
-	logger.Debug("processing config file [%s]", global.ConfigFile)
-	if err := v.ReadInConfig(); err != nil {
-		// It's okay if there isn't a config file
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return fmt.Errorf("failed to parse config file [%s] : %v", global.ConfigFile, err)
-		} else {
-			logger.Debug("config file [%s] not found. Skipping.", global.ConfigFile)
+		// A relative path is resolved against the current working directory,
+		// which is what a user asks for by naming one. The default is absolute,
+		// so it never reaches that case.
+		if dir == "" {
+			dir = "."
 		}
+		v.AddConfigPath(dir)
+
+		// Attempt to read the config file, gracefully ignoring errors
+		// caused by a config file not being found. Return an error
+		// if we cannot parse the config file.
+		logger.Debug("processing config file [%s]", global.ConfigFile)
+		if err := v.ReadInConfig(); err != nil {
+			// It's okay if there isn't a config file
+			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+				return fmt.Errorf("failed to parse config file [%s] : %v", global.ConfigFile, err)
+			} else {
+				logger.Debug("config file [%s] not found. Skipping.", global.ConfigFile)
+			}
+		}
+	} else {
+		logger.Debug("no default config file location could be determined. Skipping.")
 	}
+
+	// The old default fell back to the working directory only while no home
+	// config file existed, so only that population lost behaviour. A user whose
+	// home config was loaded never loaded the working-directory file, and
+	// passing --config-file would replace their home config rather than restore
+	// anything. Asked of viper rather than stat'ed, because the read above
+	// matches a config name: ~/.kosli.json is a home config too. Evaluated here
+	// because bindFlags can overwrite global.ConfigFile from a config file of
+	// its own. An unresolvable home directory reads nothing, and did fall back.
+	workingDirConfigWasLoadable := !namedByUser && v.ConfigFileUsed() == ""
+
 	// When we bind flags to environment variables expect that the
 	// environment variables are prefixed, e.g. a flag like --namespace
 	// binds to an environment variable KOSLI_NAMESPACE. This helps
@@ -590,6 +721,12 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	logger.QuietEnabled = global.Quiet && !global.Debug
 	if global.Quiet && global.Debug {
 		logger.Debug("--quiet is ignored because --debug is set")
+	}
+
+	// Warned after the flag binding above so that KOSLI_QUIET suppresses this
+	// message exactly as --quiet does.
+	if workingDirConfigWasLoadable {
+		warnAboutIgnoredWorkingDirConfig(cmd)
 	}
 
 	var err error
