@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/docgen"
@@ -392,10 +391,19 @@ var workingDirConfigNames = func() []string {
 	return names
 }()
 
-// flowTemplateKeys are top-level keys that identify a flow template rather than
-// a CLI config file. A template is passed with --template-file and was never
-// loaded as CLI config, so an ignored one is not a broken pipeline.
-var flowTemplateKeys = []string{"trail", "artifacts"}
+// isFlowTemplate reports whether a parsed file is a flow template rather than
+// CLI config. A template is passed with --template-file and was never loaded as
+// CLI config, so an ignored one is not a broken pipeline. The shapes tell them
+// apart rather than the key names, because trail and artifacts are CLI flags
+// too: a template's trail is a mapping and its artifacts a sequence, where the
+// flags of those names take a string, so `trail: my-trail` is config and warns.
+func isFlowTemplate(v *viper.Viper) bool {
+	if _, ok := v.Get("trail").(map[string]any); ok {
+		return true
+	}
+	_, ok := v.Get("artifacts").([]any)
+	return ok
+}
 
 // maxWorkingDirConfigSize caps what the warning is willing to parse. The file is
 // repository-controlled and read on every command run in that directory, and no
@@ -425,7 +433,7 @@ func warnAboutIgnoredWorkingDirConfig() {
 		if len(v.AllKeys()) == 0 {
 			continue
 		}
-		if slices.ContainsFunc(flowTemplateKeys, v.IsSet) {
+		if isFlowTemplate(v) {
 			continue
 		}
 
@@ -635,6 +643,19 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 		logger.Debug("no default config file location could be determined. Skipping.")
 	}
 
+	// The old default fell back to the working directory only while the home
+	// config file was absent, so only that population lost behaviour. A user who
+	// has one never loaded the working-directory file, and passing --config-file
+	// would replace their home config rather than restore anything. Evaluated
+	// here because bindFlags can overwrite global.ConfigFile from a config file
+	// of its own. An unresolvable home directory leaves the path empty, which
+	// does not stat, and did fall back.
+	workingDirConfigWasLoadable := false
+	if !namedByUser {
+		_, err := os.Stat(global.ConfigFile)
+		workingDirConfigWasLoadable = err != nil
+	}
+
 	// When we bind flags to environment variables expect that the
 	// environment variables are prefixed, e.g. a flag like --namespace
 	// binds to an environment variable KOSLI_NAMESPACE. This helps
@@ -666,7 +687,7 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 
 	// Warned after the flag binding above so that KOSLI_QUIET suppresses this
 	// message exactly as --quiet does.
-	if !namedByUser {
+	if workingDirConfigWasLoadable {
 		warnAboutIgnoredWorkingDirConfig()
 	}
 

@@ -134,6 +134,10 @@ func (suite *WorkingDirConfigTestSuite) TestWarnsAboutIgnoredWorkingDirConfig() 
 		{name: "http proxy only", content: "http-proxy: http://proxy:8080\n", wantWarn: true},
 		{name: "kubeconfig only", content: "kubeconfig: ./some-kubeconfig.yml\n", wantWarn: true},
 		{name: "flow only", content: "flow: some-flow\n", wantWarn: true},
+		// trail and artifacts are CLI flags as well as template keys. As a
+		// scalar they are config, so they must warn.
+		{name: "trail as a scalar", content: "trail: my-trail\n", wantWarn: true},
+		{name: "artifacts as a scalar", content: "artifacts: my-artifact\n", wantWarn: true},
 		// A kosli.yml in a repository root is far more often a flow template,
 		// which was never loaded as CLI config, so it must stay silent.
 		{name: "flow template shape", content: "version: 1\ntrail:\n  attestations:\n    - name: pull-request\n", wantWarn: false},
@@ -243,6 +247,27 @@ func (suite *WorkingDirConfigTestSuite) TestUndecodableWorkingDirConfigIsSilent(
 
 	suite.Require().NoError(err, "an undecodable file must no longer fail the command")
 	suite.NotContains(stderr, "no longer loaded automatically")
+}
+
+// TestNoWarningWhenHomeConfigExists pins that the warning is limited to the
+// population that actually lost behaviour. The old default fell back to the
+// working directory only when the home config file was absent, so a user who
+// has one never loaded the working-directory file, and telling them to pass
+// --config-file would replace their home config rather than restore anything.
+func (suite *WorkingDirConfigTestSuite) TestNoWarningWhenHomeConfigExists() {
+	path := filepath.Join(suite.T().TempDir(), defaultConfigFilename)
+	suite.Require().NoError(os.WriteFile(path, []byte("host: https://home.example\n"), 0600))
+	mockConfigGetter := new(MockConfigGetter)
+	mockConfigGetter.Mock.On("defaultConfigFilePath").Return(path)
+	defaultConfigFilePathFunc = mockConfigGetter.defaultConfigFilePath
+	suite.chdirWithConfig("kosli.yml", "org: some-org\n")
+
+	_, _, _, stderr, err := executeCommandC("version")
+
+	suite.Require().NoError(err)
+	suite.Equal("https://home.example", global.Host)
+	suite.NotContains(stderr, "no longer loaded automatically",
+		"a user with a home config file never loaded the working-directory file")
 }
 
 func TestWorkingDirConfigTestSuite(t *testing.T) {
