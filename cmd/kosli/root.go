@@ -418,7 +418,19 @@ const maxWorkingDirConfigSize = 1 << 20
 // rather than on a chosen set of keys is deliberate: any key set narrow enough
 // to be worth writing down would let some real config break in silence, which is
 // the one thing this warning exists to prevent.
-func warnAboutIgnoredWorkingDirConfig() {
+func warnAboutIgnoredWorkingDirConfig(cmd *cobra.Command) {
+	// snapshot k8s declares its own --config-file for namespace selectors, and
+	// cobra's flag merge drops the root's, the -c shorthand with it. Neither
+	// --config-file nor KOSLI_CONFIG_FILE can name the Kosli config file there,
+	// so naming them would send the user into runMultiEnv with this file.
+	// Tested for the shadow rather than for the root flag, so that a caller
+	// reaching here before the flag merge gets the message true of every other
+	// command instead of one claiming a flag this command does not declare.
+	shadowed := false
+	if f := cmd.Flags().Lookup("config-file"); f != nil && f != cmd.Root().PersistentFlags().Lookup("config-file") {
+		shadowed = true
+	}
+
 	for _, name := range workingDirConfigNames {
 		// Only a regular file's Size says how much there is to read. os.Stat
 		// follows symlinks, and a checkout can ship kosli.yml -> /dev/zero,
@@ -440,7 +452,11 @@ func warnAboutIgnoredWorkingDirConfig() {
 			continue
 		}
 
-		logger.Warn("config file [%s] in the current directory is no longer loaded automatically. To keep using it, pass --config-file %s or set KOSLI_CONFIG_FILE=%s. To apply its settings to every command, move them to your home config file with 'kosli config'.", name, name, name)
+		if shadowed {
+			logger.Warn("config file [%s] in the current directory is no longer loaded automatically. This command declares its own --config-file, so move its settings to your home config file with 'kosli config'.", name)
+		} else {
+			logger.Warn("config file [%s] in the current directory is no longer loaded automatically. To keep using it, pass --config-file %s or set KOSLI_CONFIG_FILE=%s. To apply its settings to every command, move them to your home config file with 'kosli config'.", name, name, name)
+		}
 		return
 	}
 }
@@ -693,7 +709,7 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	// Warned after the flag binding above so that KOSLI_QUIET suppresses this
 	// message exactly as --quiet does.
 	if workingDirConfigWasLoadable {
-		warnAboutIgnoredWorkingDirConfig()
+		warnAboutIgnoredWorkingDirConfig(cmd)
 	}
 
 	var err error

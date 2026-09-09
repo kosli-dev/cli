@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -277,6 +278,9 @@ func (suite *WorkingDirConfigTestSuite) TestNoWarningWhenHomeConfigExists() {
 // unbounded read waits behind it. The run is bounded so that a regression fails
 // here instead of hanging the package.
 func (suite *WorkingDirConfigTestSuite) TestNonRegularWorkingDirConfigIsNotParsed() {
+	if runtime.GOOS == "windows" {
+		suite.T().Skip("/dev/zero and os.Symlink are POSIX-only")
+	}
 	suite.stubHomeConfig()
 	dir := suite.T().TempDir()
 	suite.Require().NoError(os.Symlink(os.DevNull, filepath.Join(dir, "kosli.json")))
@@ -298,7 +302,10 @@ func (suite *WorkingDirConfigTestSuite) TestNonRegularWorkingDirConfigIsNotParse
 		suite.Require().NoError(got.err)
 		suite.NotContains(got.stderr, "no longer loaded automatically")
 	case <-time.After(30 * time.Second):
-		suite.Fail("reading a non-regular config file did not terminate")
+		// FailNow, not Fail: the goroutine is still inside the unbounded read,
+		// and letting the test continue would restore the working directory
+		// from under a live command.
+		suite.FailNow("reading a non-regular config file did not terminate")
 	}
 }
 
@@ -349,6 +356,9 @@ func (suite *WorkingDirConfigTestSuite) TestWarnsWhenAnotherCommandShadowsTheCon
 	suite.Require().Error(err, "the run must stop at the kubeconfig, never reaching a cluster")
 	suite.Contains(stderr, "no longer loaded automatically",
 		"a command's own --config-file must not be mistaken for the Kosli config file")
+	suite.Contains(stderr, "This command declares its own --config-file",
+		"on this command --config-file, -c and KOSLI_CONFIG_FILE all name something else, so none may be offered as the fix")
+	suite.NotContains(stderr, "pass --config-file kosli.yml")
 	suite.Equal(defaultHost, global.Host)
 }
 
