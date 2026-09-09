@@ -362,6 +362,30 @@ func (suite *WorkingDirConfigTestSuite) TestWarnsWhenAnotherCommandShadowsTheCon
 	suite.Equal(defaultHost, global.Host)
 }
 
+// TestOnlyTheFileViperWouldHaveLoadedIsReported pins that the loop stops where
+// viper stopped. viper took the first existing name in SupportedExts order, so
+// with a kosli.json template beside a real kosli.yml it loaded the template and
+// never read the yml. Skipping ahead to the yml would claim it was loaded when
+// it never was, and the remedy would resolve back to the template, since
+// --config-file strips the extension and searches the name again.
+func (suite *WorkingDirConfigTestSuite) TestOnlyTheFileViperWouldHaveLoadedIsReported() {
+	suite.stubHomeConfig()
+	dir := suite.T().TempDir()
+	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "kosli.json"),
+		[]byte(`{"trail": {"artifacts": [{"name": "nginx"}]}}`), 0600))
+	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "kosli.yml"),
+		[]byte("org: some-org\n"), 0600))
+	suite.T().Chdir(dir)
+
+	_, _, _, stderr, err := executeCommandC("version")
+
+	suite.Require().NoError(err)
+	suite.NotContains(stderr, "no longer loaded automatically",
+		"the file viper loaded was the template, and a template is not a broken pipeline")
+	suite.NotContains(stderr, "kosli.yml",
+		"kosli.yml was never the loaded file, and --config-file kosli.yml would load the template anyway")
+}
+
 func TestWorkingDirConfigTestSuite(t *testing.T) {
 	suite.Run(t, new(WorkingDirConfigTestSuite))
 }

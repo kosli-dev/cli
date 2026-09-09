@@ -432,24 +432,35 @@ func warnAboutIgnoredWorkingDirConfig(cmd *cobra.Command) {
 	}
 
 	for _, name := range workingDirConfigNames {
+		// viper loaded the first existing name in this order and stopped, so a
+		// later name was never the file it read. Everything below therefore
+		// decides whether to warn about this one, never whether to move on:
+		// skipping ahead would warn about a file that was never loaded, and name
+		// a remedy that resolves back to the file skipped over.
+		info, err := os.Stat(name)
+		if err != nil {
+			continue
+		}
+
 		// Only a regular file's Size says how much there is to read. os.Stat
 		// follows symlinks, and a checkout can ship kosli.yml -> /dev/zero,
 		// which reports IsDir false and Size 0 with an unbounded read behind it.
-		info, err := os.Stat(name)
-		if err != nil || !info.Mode().IsRegular() || info.Size() > maxWorkingDirConfigSize {
-			continue
+		if !info.Mode().IsRegular() || info.Size() > maxWorkingDirConfigSize {
+			return
 		}
 
 		v := viper.New()
 		v.SetConfigFile(name)
+		// An unparseable file made every command fail outright before this
+		// change, so there is no behaviour to migrate.
 		if err := v.ReadInConfig(); err != nil {
-			continue
+			return
 		}
 		if len(v.AllKeys()) == 0 {
-			continue
+			return
 		}
 		if isFlowTemplate(v) {
-			continue
+			return
 		}
 
 		if shadowed {
