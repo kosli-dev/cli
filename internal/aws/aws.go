@@ -563,23 +563,23 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 // is accepted and lands exactly where filepath.Join put it before this
 // change, so buckets that snapshot cleanly today keep the same fingerprint.
 func localPathForS3Key(key string) (string, error) {
-	const reason = "object key [%s] cannot be used as a local path: %s; exclude it with --exclude"
+	const reason = "object key [%s] cannot be used as a local path: %s; exclude it with --exclude-regex"
 
 	// Segments are split on both '/' and '\' so a key can't smuggle a ".."
 	// past the check using the separator this OS doesn't treat specially.
+	// Windows drops trailing spaces and dots from a name, so ".. " and "..."
+	// can resolve as "..", which is why the comparison trims them first.
 	segments := strings.FieldsFunc(key, func(r rune) bool { return r == '/' || r == '\\' })
 	for _, segment := range segments {
-		if segment == ".." {
+		if strings.HasPrefix(segment, "..") && strings.TrimRight(segment, ". ") == "" {
 			return "", fmt.Errorf(reason, key, `contains a ".." segment`)
 		}
 	}
 
 	rel := strings.TrimLeft(key, "/")
-	if rel == "" || rel == "." {
+	if filepath.Clean(rel) == "." {
 		return "", fmt.Errorf(reason, key, "names no file")
 	}
-
-	rel = filepath.FromSlash(rel)
 	if !filepath.IsLocal(rel) {
 		return "", fmt.Errorf(reason, key, "is not a local path")
 	}
@@ -598,8 +598,11 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 	}
 	// O_EXCL is the second half of the containment fix: two keys that map to
 	// the same local file (a doubled slash vs a single one, a leading slash
-	// vs none, a case-only clash on a case-insensitive filesystem) now fail
-	// loudly instead of the later download silently overwriting the earlier.
+	// vs none, two filenames differing only in case on a case-insensitive
+	// filesystem) now fail loudly instead of the later download silently
+	// overwriting the earlier. Directories are not covered: on a
+	// case-insensitive filesystem "A/x" and "a/y" still share one directory,
+	// as they did before this change.
 	file, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
 		return err

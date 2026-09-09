@@ -1252,15 +1252,14 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientRejectsKeysWithDotDotSegments(
 	require.Contains(suite.T(), err.Error(), "uploads/user-a/../../protected/release.bin")
 }
 
-// TestLocalPathForS3Key pins the containment rule from the plan's vector
-// table. Windows-only-reject keys (reserved names, drive-looking segments)
-// are asserted as accepted here because CI runs on Linux; filepath.IsLocal
-// only rejects them on Windows.
+// TestLocalPathForS3Key pins the containment rule. Windows-only-reject keys
+// (reserved names, drive-looking segments) are asserted as accepted here
+// because CI runs on Linux; filepath.IsLocal only rejects them on Windows.
 //
 // Accept rows compare the joined path rather than the raw returned rel,
-// because localPathForS3Key deliberately returns the key uncleaned (per
-// slice A) - filepath.Join, not this helper, is what collapses "a//b" or
-// "./a.txt" to the path a bucket snapshot landed on before this change.
+// because the helper returns the key uncleaned: filepath.Join, not the
+// helper, is what collapses "a//b" or "./a.txt" to the path a bucket
+// snapshot landed on before this change.
 func (suite *AWSTestSuite) TestLocalPathForS3Key() {
 	for _, t := range []struct {
 		name       string
@@ -1276,8 +1275,8 @@ func (suite *AWSTestSuite) TestLocalPathForS3Key() {
 		{name: "a key with spaces", key: "file with spaces.txt", wantPath: "file with spaces.txt"},
 		{name: "a key with punctuation", key: "weird!*'().txt", wantPath: "weird!*'().txt"},
 		{name: "a unicode key", key: "ünïcödé/файл.txt", wantPath: "ünïcödé/файл.txt"},
-		{name: "three dots is not a \"..\" segment", key: "...", wantPath: "..."},
-		{name: "three dots as a nested segment", key: "a/.../b", wantPath: "a/.../b"},
+		{name: "a dot followed by a space is a literal name", key: ". ", wantPath: ". "},
+		{name: "a name that merely starts with two dots", key: "..hidden", wantPath: "..hidden"},
 		{name: "a backslash key is a literal filename on this OS", key: `dir\file.txt`, wantPath: `dir\file.txt`},
 		{name: "a leading slash is trimmed", key: "/etc/passwd", wantPath: "etc/passwd"},
 		{name: "doubled leading slashes are trimmed", key: "//x", wantPath: "x"},
@@ -1306,6 +1305,10 @@ func (suite *AWSTestSuite) TestLocalPathForS3Key() {
 			wantErrMsg: `contains a ".." segment`,
 		},
 		{name: "a bare \"..\" is rejected", key: "..", wantErr: true, wantErrMsg: `contains a ".." segment`},
+		// Windows drops trailing spaces and dots from a name, so these resolve as "..".
+		{name: "a \"..\" with a trailing space is rejected", key: "a/.. /x", wantErr: true, wantErrMsg: `contains a ".." segment`},
+		{name: "three dots are rejected", key: "a/.../b", wantErr: true, wantErrMsg: `contains a ".." segment`},
+		{name: "a bare \"./.\" is rejected", key: "./.", wantErr: true, wantErrMsg: "names no file"},
 		{name: "a trailing \"..\" segment is rejected", key: "a/..", wantErr: true, wantErrMsg: `contains a ".." segment`},
 		{name: "an empty key is rejected", key: "", wantErr: true, wantErrMsg: "names no file"},
 		{name: "a bare slash is rejected", key: "/", wantErr: true, wantErrMsg: "names no file"},
