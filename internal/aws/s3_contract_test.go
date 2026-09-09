@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -41,6 +42,21 @@ func runS3ContractTests(t *testing.T, client S3API, bucket, existingKey string) 
 			require.NotEmpty(t, *object.Key)
 			require.NotNil(t, object.LastModified, "LastModified should be present")
 		}
+	})
+
+	// Two tests in aws_test.go assert which of two colliding keys an error
+	// names, which follows from the listing order, so the order is a checked
+	// contract rather than an implementation detail of the fake.
+	t.Run("ListObjectsV2 returns keys in lexicographic order", func(t *testing.T) {
+		out, err := client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+			Bucket: aws.String(bucket),
+		})
+		require.NoError(t, err)
+		keys := make([]string, 0, len(out.Contents))
+		for _, object := range out.Contents {
+			keys = append(keys, *object.Key)
+		}
+		require.True(t, slices.IsSorted(keys), "S3 returns keys in UTF-8 binary order: %v", keys)
 	})
 
 	t.Run("ListObjectsV2 with MaxKeys paginates via ContinuationToken", func(t *testing.T) {
