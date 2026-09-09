@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -571,25 +572,30 @@ func localPathForS3Key(key string) (string, error) {
 	segments := strings.FieldsFunc(key, func(r rune) bool { return r == '/' || r == '\\' })
 	for _, segment := range segments {
 		if strings.HasPrefix(segment, "..") && strings.TrimRight(segment, ". ") == "" {
-			return "", unusableS3KeyError(key, errors.New(`contains a ".." segment`))
+			return "", unusableS3KeyError(key, `contains a ".." segment`)
 		}
 	}
 
+	// Only leading '/' is trimmed, mirroring what filepath.Join did before.
+	// A leading '\' is left for filepath.IsLocal, which rejects it as rooted
+	// on Windows and accepts it as a literal filename elsewhere.
 	rel := strings.TrimLeft(key, "/")
 	if filepath.Clean(rel) == "." {
-		return "", unusableS3KeyError(key, errors.New("names no file"))
+		return "", unusableS3KeyError(key, "names no file")
 	}
 	if !filepath.IsLocal(rel) {
-		return "", unusableS3KeyError(key, errors.New("is not a local path"))
+		return "", unusableS3KeyError(key, "is not a local path")
 	}
 
 	return rel, nil
 }
 
-// unusableS3KeyError names the object key so the operator can act on it; the
-// temp-dir path inside a filesystem error means nothing to them.
-func unusableS3KeyError(key string, cause error) error {
-	return fmt.Errorf("object key [%s] cannot be stored as a local file: %w; exclude it with --exclude-regex", key, cause)
+// unusableS3KeyError is for failures the key itself causes, so the advice to
+// exclude it is sound. A filesystem error about the machine (disk full, a
+// read-only temp dir) must not carry that advice: excluding a legitimate
+// object on it would record a snapshot with the object silently missing.
+func unusableS3KeyError(key, reason string) error {
+	return fmt.Errorf("object key [%s] cannot be stored as a local file: %s; exclude it with --exclude-regex", key, reason)
 }
 
 func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket string, logger *logger.Logger) error {
@@ -599,7 +605,7 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 	}
 	dest := filepath.Join(dirName, rel)
 	if err := os.MkdirAll(filepath.Dir(dest), 0770); err != nil {
-		return unusableS3KeyError(key, err)
+		return fmt.Errorf("object key [%s]: %w", key, err)
 	}
 	// O_EXCL is the second half of the containment fix: two keys that map to
 	// the same local file (a doubled slash vs a single one, a leading slash
@@ -609,8 +615,11 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 	// case-insensitive filesystem "A/x" and "a/y" still share one directory,
 	// as they did before this change.
 	file, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+	if errors.Is(err, fs.ErrExist) {
+		return unusableS3KeyError(key, "another object already downloaded to the same local path")
+	}
 	if err != nil {
-		return unusableS3KeyError(key, err)
+		return fmt.Errorf("object key [%s]: %w", key, err)
 	}
 	defer func() {
 		if err := file.Close(); err != nil {

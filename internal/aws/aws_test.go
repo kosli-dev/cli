@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -1373,6 +1374,53 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientCollidingKeysAreAnError() {
 	// downloads first and "a/b" is the key that collides.
 	require.Contains(suite.T(), err.Error(), "object key [a/b]", "the error must name the key that collided")
 	require.Contains(suite.T(), err.Error(), "--exclude-regex")
+}
+
+// TestGetS3DataFromClientObjectAndPrefixCollideAreAnError covers a bucket
+// holding both an object "a" and objects under the prefix "a/": legal in S3,
+// impossible on a filesystem. "a" downloads first and becomes a file, so
+// MkdirAll for "a/b" fails. The error must name "a/b" but must not tell the
+// operator to exclude it, because the failure is not the key's fault alone.
+func (suite *AWSTestSuite) TestGetS3DataFromClientObjectAndPrefixCollideAreAnError() {
+	client := &FakeS3Client{
+		Bucket: fakeS3TestBucketName,
+		Objects: map[string][]byte{
+			"a":   []byte(fakeReadmeBody),
+			"a/b": []byte(fakeTemplateBody),
+		},
+	}
+
+	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "object key [a/b]")
+	require.NotContains(suite.T(), err.Error(), "--exclude-regex")
+}
+
+// TestDownloadFileFromBucketNamesTheKeyWithoutAdviceOnFilesystemErrors pins
+// that an error about the machine rather than the key (here an unwritable
+// download directory) names the key for context but does not suggest
+// excluding it: following that advice would record a snapshot with a
+// legitimate object silently missing.
+func (suite *AWSTestSuite) TestDownloadFileFromBucketNamesTheKeyWithoutAdviceOnFilesystemErrors() {
+	if os.Getuid() == 0 {
+		suite.T().Skip("root ignores directory permissions")
+	}
+	tempDir := suite.T().TempDir()
+	require.NoError(suite.T(), os.Chmod(tempDir, 0500))
+	suite.T().Cleanup(func() { _ = os.Chmod(tempDir, 0700) })
+
+	client := &FakeS3Client{
+		Bucket: fakeS3TestBucketName,
+		Objects: map[string][]byte{
+			"README.md": []byte(fakeReadmeBody),
+		},
+	}
+
+	err := downloadFileFromBucket(client, tempDir, "README.md", fakeS3TestBucketName, logger.NewStandardLogger())
+	require.Error(suite.T(), err)
+	require.ErrorIs(suite.T(), err, fs.ErrPermission)
+	require.Contains(suite.T(), err.Error(), "object key [README.md]")
+	require.NotContains(suite.T(), err.Error(), "--exclude-regex")
 }
 
 // TestGetS3DataFromClientKeepsTodaysLayoutForUnusualKeys pins that accepted
