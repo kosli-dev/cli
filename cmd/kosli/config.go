@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -17,15 +18,18 @@ type configOptions struct {
 	unSetKeys []string
 }
 
-const configShortDesc = `Config global Kosli flags values and store them in $HOME/.kosli .  `
+const configShortDesc = `Config global Kosli flags values and store them in $HOME/.kosli.yml .  `
 
 const configLongDesc = configShortDesc + `
 
 Flag values are determined in the following order (highest precedence first):
 - command line flags on each executed command.
 - environment variables.
-- custom config file provided with --config-file flag.
-- default config file in $HOME/.kosli
+- custom config file provided with the --config-file flag or the KOSLI_CONFIG_FILE env var.
+- default config file in $HOME/.kosli.yml
+
+A config file in the directory a command runs from is never read unless it is named
+with --config-file or KOSLI_CONFIG_FILE.
 
 You can configure global Kosli flags (the ones that apply to all/most commands) using their dedicated
 convenience flags (e.g. --org). 
@@ -79,6 +83,12 @@ func newConfigCmd(out io.Writer) *cobra.Command {
 
 func (o *configOptions) run() error {
 	path := defaultConfigFilePathFunc()
+	// An empty path means no home directory could be resolved. Continuing would
+	// write the config into the current working directory, which is never where
+	// the default config file belongs.
+	if path == "" {
+		return errors.New("setting default config failed. Could not determine your home directory. Set HOME, or pass --config-file to the commands you run")
+	}
 	home := filepath.Dir(path)
 	configFileName := filepath.Base(path)
 	permissions := os.FileMode(0600)
