@@ -338,8 +338,15 @@ func (suite *WorkingDirConfigTestSuite) TestWarnsWhenAnotherCommandShadowsTheCon
 		[]byte("environments:\n  - name: prod-env\n    namespaces: [default]\n"), 0600))
 	suite.T().Chdir(dir)
 
-	_, _, _, stderr, _ := executeCommandC("snapshot k8s --config-file k8s-envs.yml --api-token DRY_RUN --org some-org")
+	// The warning is emitted in PersistentPreRunE, which does not stop the run,
+	// and --api-token DRY_RUN suppresses only the Kosli request, not the cluster
+	// read. A kubeconfig that cannot exist stops it before any cluster is
+	// reached, on a developer machine with a current context as well as in CI.
+	_, _, _, stderr, err := executeCommandC(
+		"snapshot k8s --config-file k8s-envs.yml --kubeconfig " +
+			filepath.Join(dir, "no-such-kubeconfig") + " --api-token DRY_RUN --org some-org")
 
+	suite.Require().Error(err, "the run must stop at the kubeconfig, never reaching a cluster")
 	suite.Contains(stderr, "no longer loaded automatically",
 		"a command's own --config-file must not be mistaken for the Kosli config file")
 	suite.Equal(defaultHost, global.Host)
