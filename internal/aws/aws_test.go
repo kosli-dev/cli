@@ -1379,8 +1379,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientCollidingKeysAreAnError() {
 // TestGetS3DataFromClientObjectAndPrefixCollideAreAnError covers a bucket
 // holding both an object "a" and objects under the prefix "a/": legal in S3,
 // impossible on a filesystem. "a" downloads first and becomes a file, so
-// MkdirAll for "a/b" fails. The error must name "a/b" but must not tell the
-// operator to exclude it, because the failure is not the key's fault alone.
+// MkdirAll for "a/b" fails with ENOTDIR. That is a property of the bucket, not
+// the machine, so the error names "a/b" and advises excluding one of the two.
 func (suite *AWSTestSuite) TestGetS3DataFromClientObjectAndPrefixCollideAreAnError() {
 	client := &FakeS3Client{
 		Bucket: fakeS3TestBucketName,
@@ -1393,7 +1393,7 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientObjectAndPrefixCollideAreAnErr
 	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), "object key [a/b]")
-	require.NotContains(suite.T(), err.Error(), "--exclude-regex")
+	require.Contains(suite.T(), err.Error(), "--exclude-regex")
 }
 
 // TestDownloadFileFromBucketNamesTheKeyWithoutAdviceOnFilesystemErrors pins

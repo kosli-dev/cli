@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -595,7 +596,7 @@ func localPathForS3Key(key string) (string, error) {
 // read-only temp dir) must not carry that advice: excluding a legitimate
 // object on it would record a snapshot with the object silently missing.
 func unusableS3KeyError(key, reason string) error {
-	return fmt.Errorf("object key [%s] cannot be stored as a local file: %s; exclude it with --exclude-regex, or narrow --include", key, reason)
+	return fmt.Errorf("object key [%s] cannot be stored as a local file: %s; exclude it with --exclude-regex, or narrow the include filter if one is set", key, reason)
 }
 
 func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket string, logger *logger.Logger) error {
@@ -604,7 +605,12 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 		return err
 	}
 	dest := filepath.Join(dirName, rel)
-	if err := os.MkdirAll(filepath.Dir(dest), 0770); err != nil {
+	err = os.MkdirAll(filepath.Dir(dest), 0770)
+	if errors.Is(err, syscall.ENOTDIR) {
+		// Legal in S3, impossible on disk: an object "a" and a key under "a/".
+		return unusableS3KeyError(key, "one of its parent prefixes has already been downloaded as an object")
+	}
+	if err != nil {
 		return fmt.Errorf("object key [%s]: %w", key, err)
 	}
 	// O_EXCL is the second half of the containment fix: two keys that map to
@@ -633,7 +639,7 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 		WriterAt: file,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to download object key [%s]: %w", key, err)
 	}
 	if result.ContentLength != nil {
 		logger.Debug("downloaded", file.Name(), *result.ContentLength, "bytes")
