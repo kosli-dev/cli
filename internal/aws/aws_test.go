@@ -1254,9 +1254,9 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientRejectsKeysWithDotDotSegments(
 	require.Contains(suite.T(), err.Error(), "uploads/user-a/../../protected/release.bin")
 }
 
-// TestLocalPathForS3Key pins the containment rule. Windows-only-reject keys
-// (reserved names, drive-looking segments) are asserted as accepted here
-// because CI runs on Linux; filepath.IsLocal only rejects them on Windows.
+// TestLocalPathForS3Key pins the containment rule. The Windows-only rejections
+// (reserved names, colons) are asserted per OS, so the table is the only
+// Windows-side coverage filepath.IsLocal has; CI itself runs on Linux.
 //
 // Accept rows compare the joined path rather than the raw returned rel,
 // because the helper returns the key uncleaned: filepath.Join, not the
@@ -1285,9 +1285,11 @@ func (suite *AWSTestSuite) TestLocalPathForS3Key() {
 		{name: "a leading dot segment is dropped by Join", key: "./a.txt", wantPath: "a.txt"},
 		{name: "a doubled interior slash is collapsed by Join", key: "a//b", wantPath: "a/b"},
 		{name: "a dot segment is dropped by Join", key: "a/./b", wantPath: "a/b"},
-		{name: "a reserved Windows name is only rejected on Windows", key: "CON", wantPath: "CON"},
-		{name: "a drive-looking segment is only rejected on Windows", key: "C:evil", wantPath: "C:evil"},
-		{name: "a colon segment is only rejected on Windows", key: "a:b", wantPath: "a:b"},
+		// filepath.IsLocal rejects reserved device names and colons on Windows
+		// only; elsewhere these are ordinary filenames.
+		{name: "a reserved Windows name", key: "CON", wantPath: "CON", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
+		{name: "a drive-looking segment", key: "C:evil", wantPath: "C:evil", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
+		{name: "a colon segment", key: "a:b", wantPath: "a:b", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
 		{
 			name:       "a traversing key is rejected",
 			key:        "uploads/user-a/../../protected/release.bin",
