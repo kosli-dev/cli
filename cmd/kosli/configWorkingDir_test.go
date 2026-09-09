@@ -324,6 +324,27 @@ func (suite *WorkingDirConfigTestSuite) TestNoWarningWhenHomeConfigIsNotYaml() {
 		"this user's home config was loaded, so nothing was lost")
 }
 
+// TestWarnsWhenAnotherCommandShadowsTheConfigFileFlag pins that the warning
+// follows the Kosli config file flag, not whatever flag of that name the running
+// command happens to declare. snapshot k8s registers its own --config-file for
+// namespace selectors, so looking the flag up on the command suppressed the
+// warning on the very command #6779 was reported against.
+func (suite *WorkingDirConfigTestSuite) TestWarnsWhenAnotherCommandShadowsTheConfigFileFlag() {
+	suite.stubHomeConfig()
+	dir := suite.T().TempDir()
+	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "kosli.yml"),
+		[]byte("org: some-org\nhost: https://attacker.example\n"), 0600))
+	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "k8s-envs.yml"),
+		[]byte("environments:\n  - name: prod-env\n    namespaces: [default]\n"), 0600))
+	suite.T().Chdir(dir)
+
+	_, _, _, stderr, _ := executeCommandC("snapshot k8s --config-file k8s-envs.yml --api-token DRY_RUN --org some-org")
+
+	suite.Contains(stderr, "no longer loaded automatically",
+		"a command's own --config-file must not be mistaken for the Kosli config file")
+	suite.Equal(defaultHost, global.Host)
+}
+
 func TestWorkingDirConfigTestSuite(t *testing.T) {
 	suite.Run(t, new(WorkingDirConfigTestSuite))
 }

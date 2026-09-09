@@ -603,7 +603,12 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	// handle passing the config file as an env variable.
 	// we load the config file before we bind env vars to flags,
 	// so we check for the config file env var separately here
-	configFlag := cmd.Flags().Lookup("config-file")
+	// Asked of the root rather than of cmd, because snapshot k8s declares a
+	// local --config-file for its namespace selectors, and cobra's flag merge
+	// keeps the local one. Looking it up on cmd there answers about the wrong
+	// flag: it reports the Kosli config file as named when it was not, dropping
+	// KOSLI_CONFIG_FILE and suppressing the working-directory warning.
+	configFlag := cmd.Root().PersistentFlags().Lookup("config-file")
 	namedByUser := configFlag.Changed
 	if !configFlag.Changed {
 		// A variable set to the empty string reports as present, but it names no
