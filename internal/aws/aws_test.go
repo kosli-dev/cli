@@ -1231,12 +1231,6 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientFilterEquivalence() {
 	}
 }
 
-// TestGetS3DataFromClientRejectsKeysWithDotDotSegments reproduces the
-// unfixed bug: an S3 key containing a ".." segment normalises, via
-// filepath.Join, to the same local path as another key. FakeS3Client lists
-// keys in lexicographic order, so "protected/release.bin" downloads first
-// and the traversing key overwrites it with attacker-controlled content
-// before fingerprinting, with no error raised.
 func (suite *AWSTestSuite) TestGetS3DataFromClientRejectsKeysWithDotDotSegments() {
 	trustedBody := []byte("trusted release content\n")
 	attackerBody := []byte("attacker controlled content\n")
@@ -1254,14 +1248,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientRejectsKeysWithDotDotSegments(
 	require.Contains(suite.T(), err.Error(), "uploads/user-a/../../protected/release.bin")
 }
 
-// TestLocalPathForS3Key pins the containment rule. The Windows-only rejections
-// (reserved names, colons) are asserted per OS, so the table is the only
-// Windows-side coverage filepath.IsLocal has; CI itself runs on Linux.
-//
-// Accept rows compare the joined path rather than the raw returned rel,
-// because the helper returns the key uncleaned: filepath.Join, not the
-// helper, is what collapses "a//b" or "./a.txt" to the path a bucket
-// snapshot landed on before this change.
+// Accept rows compare joined paths because the helper returns the key
+// uncleaned; filepath.Join is what collapses "a//b" and "./a.txt".
 func (suite *AWSTestSuite) TestLocalPathForS3Key() {
 	for _, t := range []struct {
 		name       string
@@ -1285,8 +1273,7 @@ func (suite *AWSTestSuite) TestLocalPathForS3Key() {
 		{name: "a leading dot segment is dropped by Join", key: "./a.txt", wantPath: "a.txt"},
 		{name: "a doubled interior slash is collapsed by Join", key: "a//b", wantPath: "a/b"},
 		{name: "a dot segment is dropped by Join", key: "a/./b", wantPath: "a/b"},
-		// filepath.IsLocal rejects reserved device names and colons on Windows
-		// only; elsewhere these are ordinary filenames.
+		// filepath.IsLocal rejects reserved device names and colons on Windows only.
 		{name: "a reserved Windows name", key: "CON", wantPath: "CON", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
 		{name: "a drive-looking segment", key: "C:evil", wantPath: "C:evil", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
 		{name: "a colon segment", key: "a:b", wantPath: "a:b", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
@@ -1333,9 +1320,6 @@ func (suite *AWSTestSuite) TestLocalPathForS3Key() {
 	}
 }
 
-// TestDownloadFileFromBucketRefusesToOverwrite asserts the O_EXCL half of the
-// containment fix: a destination file that already exists (however it got
-// there) is never silently truncated and replaced.
 func (suite *AWSTestSuite) TestDownloadFileFromBucketRefusesToOverwrite() {
 	tempDir := suite.T().TempDir()
 	preexisting := filepath.Join(tempDir, "README.md")
@@ -1359,11 +1343,7 @@ func (suite *AWSTestSuite) TestDownloadFileFromBucketRefusesToOverwrite() {
 		"the pre-existing file must be left untouched, not truncated")
 }
 
-// TestGetS3DataFromClientCollidingKeysAreAnError covers the case rule 1 does
-// not catch: two distinct S3 keys ("a//b" and "a/b") that both land on the
-// same local file. localPathForS3Key accepts both (neither contains a ".."
-// segment), so O_EXCL is what turns the second download into an error
-// instead of a silent overwrite.
+// Neither key holds a ".." segment, so O_EXCL is what catches this pair.
 func (suite *AWSTestSuite) TestGetS3DataFromClientCollidingKeysAreAnError() {
 	client := &FakeS3Client{
 		Bucket: fakeS3TestBucketName,
@@ -1375,17 +1355,13 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientCollidingKeysAreAnError() {
 
 	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
-	// FakeS3Client lists lexicographically and '/' sorts before 'b', so "a//b"
-	// downloads first and "a/b" is the key that collides.
+	// '/' sorts before 'b', so "a//b" downloads first and "a/b" collides.
 	require.Contains(suite.T(), err.Error(), "object key [a/b]", "the error must name the key that collided")
 	require.Contains(suite.T(), err.Error(), "--exclude-regex")
 }
 
-// TestGetS3DataFromClientObjectAndPrefixCollideAreAnError covers a bucket
-// holding both an object "a" and objects under the prefix "a/": legal in S3,
-// impossible on a filesystem. "a" downloads first and becomes a file, so
-// MkdirAll for "a/b" fails with ENOTDIR. That is a property of the bucket, not
-// the machine, so the error names "a/b" and advises excluding one of the two.
+// An object "a" alongside the prefix "a/" is legal in S3 and impossible on a
+// filesystem, so MkdirAll fails with ENOTDIR once "a" lands first.
 func (suite *AWSTestSuite) TestGetS3DataFromClientObjectAndPrefixCollideAreAnError() {
 	client := &FakeS3Client{
 		Bucket: fakeS3TestBucketName,
@@ -1401,11 +1377,6 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientObjectAndPrefixCollideAreAnErr
 	require.Contains(suite.T(), err.Error(), "--exclude-regex")
 }
 
-// TestDownloadFileFromBucketNamesTheKeyWithoutAdviceOnFilesystemErrors pins
-// that an error about the machine rather than the key (here an unwritable
-// download directory) names the key for context but does not suggest
-// excluding it: following that advice would record a snapshot with a
-// legitimate object silently missing.
 func (suite *AWSTestSuite) TestDownloadFileFromBucketNamesTheKeyWithoutAdviceOnFilesystemErrors() {
 	if runtime.GOOS == "windows" {
 		suite.T().Skip("chmod on a directory does not block file creation on Windows")
@@ -1425,8 +1396,8 @@ func (suite *AWSTestSuite) TestDownloadFileFromBucketNamesTheKeyWithoutAdviceOnF
 		},
 	}
 
-	// A bare key fails in OpenFile; a nested one fails in MkdirAll, since only
-	// then is there a directory left to create. Both wraps must behave alike.
+	// A bare key fails in OpenFile; a nested one has a directory left to
+	// create, so it fails in MkdirAll.
 	for _, key := range []string{"README.md", "sub/README.md"} {
 		suite.Run(key, func() {
 			err := downloadFileFromBucket(client, tempDir, key, fakeS3TestBucketName, logger.NewStandardLogger())
@@ -1438,12 +1409,8 @@ func (suite *AWSTestSuite) TestDownloadFileFromBucketNamesTheKeyWithoutAdviceOnF
 	}
 }
 
-// TestGetS3DataFromClientKeepsTodaysLayoutForUnusualKeys pins that accepted
-// odd-shaped keys still land exactly where filepath.Join put them before
-// this change, so buckets that snapshot cleanly today keep the same
-// fingerprint. Comparing fingerprints (rather than the temp dir layout
-// directly) is the same technique TestGetS3DataFromClientFilterEquivalence
-// uses above.
+// Equal fingerprints mean the odd-shaped keys landed on the same paths as the
+// plain ones.
 func (suite *AWSTestSuite) TestGetS3DataFromClientKeepsTodaysLayoutForUnusualKeys() {
 	unusualBody := []byte("unusual key content\n")
 	otherBody := []byte("other content\n")

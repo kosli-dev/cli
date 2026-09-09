@@ -44,12 +44,8 @@ func runS3ContractTests(t *testing.T, client S3API, bucket, existingKey string) 
 		}
 	})
 
-	// Two tests in aws_test.go assert which of two colliding keys an error
-	// names, which follows from the listing order, so the order is a checked
-	// contract rather than an implementation detail of the fake.
-	// Walked through the paginator so the order is checked across pages, which
-	// is how getS3DataFromClient consumes the listing; a single page from the
-	// fake holds one key and would pass vacuously.
+	// Which of two colliding keys fails a snapshot follows from this order.
+	// Paginated because a single page can hold one key, sorted either way.
 	t.Run("ListObjectsV2 returns keys in lexicographic order", func(t *testing.T) {
 		var keys []string
 		paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{

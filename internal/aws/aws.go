@@ -555,21 +555,12 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 	return s3Data, nil
 }
 
-// localPathForS3Key turns an S3 object key into a path relative to the
-// download directory, or rejects the key. S3 keys are not filesystem paths:
-// they can contain ".." segments and backslashes that a naive filepath.Join
-// would resolve differently than the key names, letting one key's download
-// overwrite another's or, on Windows, escape the download directory.
-//
-// Only what is load-bearing for security is rejected here; everything else
-// (doubled slashes, leading slashes, backslash-containing literal filenames)
-// is accepted and lands exactly where filepath.Join put it before this
-// change, so buckets that snapshot cleanly today keep the same fingerprint.
+// localPathForS3Key turns an S3 object key into a path under the download
+// directory, or rejects it. A key holding a ".." segment resolves onto a path
+// it does not name, taking another key's place or leaving the directory.
 func localPathForS3Key(key string) (string, error) {
-	// Segments are split on both '/' and '\' so a key can't smuggle a ".."
-	// past the check using the separator this OS doesn't treat specially.
-	// Windows drops trailing spaces and dots from a name, so ".. " and "..."
-	// can resolve as "..", which is why the comparison trims them first.
+	// Windows separates on '\\' and drops trailing dots and spaces from a
+	// name, so ".. " and "..." resolve as ".." there.
 	segments := strings.FieldsFunc(key, func(r rune) bool { return r == '/' || r == '\\' })
 	for _, segment := range segments {
 		if strings.HasPrefix(segment, "..") && strings.TrimRight(segment, ". ") == "" {
@@ -577,9 +568,8 @@ func localPathForS3Key(key string) (string, error) {
 		}
 	}
 
-	// Only leading '/' is trimmed, mirroring what filepath.Join did before.
-	// A leading '\' is left for filepath.IsLocal, which rejects it as rooted
-	// on Windows and accepts it as a literal filename elsewhere.
+	// A leading '\\' is left for filepath.IsLocal: rooted on Windows, an
+	// ordinary filename elsewhere.
 	rel := strings.TrimLeft(key, "/")
 	if filepath.Clean(rel) == "." {
 		return "", unusableS3KeyError(key, "names no file")
@@ -591,10 +581,9 @@ func localPathForS3Key(key string) (string, error) {
 	return rel, nil
 }
 
-// unusableS3KeyError is for failures the key itself causes, so the advice to
-// exclude it is sound. A filesystem error about the machine (disk full, a
-// read-only temp dir) must not carry that advice: excluding a legitimate
-// object on it would record a snapshot with the object silently missing.
+// unusableS3KeyError is only for failures the key itself causes. Advising
+// exclusion on a machine fault such as a full disk would drop a legitimate
+// object from the snapshot.
 func unusableS3KeyError(key, reason string) error {
 	return fmt.Errorf("object key [%s] cannot be stored as a local file: %s; exclude it with --exclude-regex, or narrow the include filter if one is set", key, reason)
 }
@@ -613,13 +602,9 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 	if err != nil {
 		return fmt.Errorf("object key [%s]: %w", key, err)
 	}
-	// O_EXCL is the second half of the containment fix: two keys that map to
-	// the same local file (a doubled slash vs a single one, a leading slash
-	// vs none, two filenames differing only in case on a case-insensitive
-	// filesystem) now fail loudly instead of the later download silently
-	// overwriting the earlier. Directories are not covered: on a
-	// case-insensitive filesystem "A/x" and "a/y" still share one directory,
-	// as they did before this change.
+	// O_EXCL fails the snapshot when two keys map to one file rather than
+	// letting the second overwrite the first. Directories are not covered:
+	// "A/x" and "a/y" share one on a case-insensitive filesystem.
 	file, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if errors.Is(err, fs.ErrExist) {
 		return unusableS3KeyError(key, "another object already downloaded to the same local path")
