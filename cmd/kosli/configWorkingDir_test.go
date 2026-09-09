@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -268,6 +269,59 @@ func (suite *WorkingDirConfigTestSuite) TestNoWarningWhenHomeConfigExists() {
 	suite.Equal("https://home.example", global.Host)
 	suite.NotContains(stderr, "no longer loaded automatically",
 		"a user with a home config file never loaded the working-directory file")
+}
+
+// TestNonRegularWorkingDirConfigIsNotParsed pins that the size ceiling cannot
+// be walked around with a symlink. os.Stat follows one, and a checkout can ship
+// kosli.yml -> /dev/zero, which reports IsDir false and Size 0 while an
+// unbounded read waits behind it. The run is bounded so that a regression fails
+// here instead of hanging the package.
+func (suite *WorkingDirConfigTestSuite) TestNonRegularWorkingDirConfigIsNotParsed() {
+	suite.stubHomeConfig()
+	dir := suite.T().TempDir()
+	suite.Require().NoError(os.Symlink(os.DevNull, filepath.Join(dir, "kosli.json")))
+	suite.Require().NoError(os.Symlink("/dev/zero", filepath.Join(dir, "kosli.yml")))
+	suite.T().Chdir(dir)
+
+	type result struct {
+		stderr string
+		err    error
+	}
+	done := make(chan result, 1)
+	go func() {
+		_, _, _, stderr, err := executeCommandC("version")
+		done <- result{stderr, err}
+	}()
+
+	select {
+	case got := <-done:
+		suite.Require().NoError(got.err)
+		suite.NotContains(got.stderr, "no longer loaded automatically")
+	case <-time.After(30 * time.Second):
+		suite.Fail("reading a non-regular config file did not terminate")
+	}
+}
+
+// TestNoWarningWhenHomeConfigIsNotYaml pins that the gate follows the config
+// name the read above uses, not one filename. A home config is loaded from
+// ~/.kosli.json just as happily as ~/.kosli.yml, and warning that user would
+// tell them to replace a config file that was loaded moments earlier.
+func (suite *WorkingDirConfigTestSuite) TestNoWarningWhenHomeConfigIsNotYaml() {
+	home := suite.T().TempDir()
+	suite.Require().NoError(os.WriteFile(filepath.Join(home, ".kosli.json"),
+		[]byte(`{"host": "https://home.example"}`), 0600))
+	mockConfigGetter := new(MockConfigGetter)
+	mockConfigGetter.Mock.On("defaultConfigFilePath").Return(filepath.Join(home, defaultConfigFilename))
+	defaultConfigFilePathFunc = mockConfigGetter.defaultConfigFilePath
+	suite.chdirWithConfig("kosli.yml", "org: some-org\n")
+
+	_, _, _, stderr, err := executeCommandC("version")
+
+	suite.Require().NoError(err)
+	suite.Equal("https://home.example", global.Host,
+		"a home config file is loaded by config name, so .json counts")
+	suite.NotContains(stderr, "no longer loaded automatically",
+		"this user's home config was loaded, so nothing was lost")
 }
 
 func TestWorkingDirConfigTestSuite(t *testing.T) {

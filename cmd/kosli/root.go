@@ -420,8 +420,11 @@ const maxWorkingDirConfigSize = 1 << 20
 // the one thing this warning exists to prevent.
 func warnAboutIgnoredWorkingDirConfig() {
 	for _, name := range workingDirConfigNames {
+		// Only a regular file's Size says how much there is to read. os.Stat
+		// follows symlinks, and a checkout can ship kosli.yml -> /dev/zero,
+		// which reports IsDir false and Size 0 with an unbounded read behind it.
 		info, err := os.Stat(name)
-		if err != nil || info.IsDir() || info.Size() > maxWorkingDirConfigSize {
+		if err != nil || !info.Mode().IsRegular() || info.Size() > maxWorkingDirConfigSize {
 			continue
 		}
 
@@ -643,18 +646,15 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 		logger.Debug("no default config file location could be determined. Skipping.")
 	}
 
-	// The old default fell back to the working directory only while the home
-	// config file was absent, so only that population lost behaviour. A user who
-	// has one never loaded the working-directory file, and passing --config-file
-	// would replace their home config rather than restore anything. Evaluated
-	// here because bindFlags can overwrite global.ConfigFile from a config file
-	// of its own. An unresolvable home directory leaves the path empty, which
-	// does not stat, and did fall back.
-	workingDirConfigWasLoadable := false
-	if !namedByUser {
-		_, err := os.Stat(global.ConfigFile)
-		workingDirConfigWasLoadable = err != nil
-	}
+	// The old default fell back to the working directory only while no home
+	// config file existed, so only that population lost behaviour. A user whose
+	// home config was loaded never loaded the working-directory file, and
+	// passing --config-file would replace their home config rather than restore
+	// anything. Asked of viper rather than stat'ed, because the read above
+	// matches a config name: ~/.kosli.json is a home config too. Evaluated here
+	// because bindFlags can overwrite global.ConfigFile from a config file of
+	// its own. An unresolvable home directory reads nothing, and did fall back.
+	workingDirConfigWasLoadable := !namedByUser && v.ConfigFileUsed() == ""
 
 	// When we bind flags to environment variables expect that the
 	// environment variables are prefixed, e.g. a flag like --namespace
