@@ -595,7 +595,7 @@ func localPathForS3Key(key string) (string, error) {
 // read-only temp dir) must not carry that advice: excluding a legitimate
 // object on it would record a snapshot with the object silently missing.
 func unusableS3KeyError(key, reason string) error {
-	return fmt.Errorf("object key [%s] cannot be stored as a local file: %s; exclude it with --exclude-regex", key, reason)
+	return fmt.Errorf("object key [%s] cannot be stored as a local file: %s; exclude it with --exclude-regex, or narrow --include", key, reason)
 }
 
 func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket string, logger *logger.Logger) error {
