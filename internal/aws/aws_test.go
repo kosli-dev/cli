@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"testing"
 	"time"
 
@@ -1291,26 +1292,26 @@ func (suite *AWSTestSuite) TestLocalPathForS3Key() {
 			name:       "a traversing key is rejected",
 			key:        "uploads/user-a/../../protected/release.bin",
 			wantErr:    true,
-			wantErrMsg: `contains a ".." segment`,
+			wantErrMsg: `resolves to ".."`,
 		},
 		{
 			name:       "a backslash-separated traversal is rejected",
 			key:        `uploads/user-a/..\..\..\..\Users\Public\kosli-poc.txt`,
 			wantErr:    true,
-			wantErrMsg: `contains a ".." segment`,
+			wantErrMsg: `resolves to ".."`,
 		},
 		{
 			name:       "a short backslash-separated traversal is rejected",
 			key:        `uploads/user-a/..\x`,
 			wantErr:    true,
-			wantErrMsg: `contains a ".." segment`,
+			wantErrMsg: `resolves to ".."`,
 		},
-		{name: "a bare \"..\" is rejected", key: "..", wantErr: true, wantErrMsg: `contains a ".." segment`},
+		{name: "a bare \"..\" is rejected", key: "..", wantErr: true, wantErrMsg: `resolves to ".."`},
 		// Windows drops trailing spaces and dots from a name, so these resolve as "..".
-		{name: "a \"..\" with a trailing space is rejected", key: "a/.. /x", wantErr: true, wantErrMsg: `contains a ".." segment`},
-		{name: "three dots are rejected", key: "a/.../b", wantErr: true, wantErrMsg: `contains a ".." segment`},
+		{name: "a \"..\" with a trailing space is rejected", key: "a/.. /x", wantErr: true, wantErrMsg: `resolves to ".."`},
+		{name: "three dots are rejected", key: "a/.../b", wantErr: true, wantErrMsg: `resolves to ".."`},
 		{name: "a bare \"./.\" is rejected", key: "./.", wantErr: true, wantErrMsg: "names no file"},
-		{name: "a trailing \"..\" segment is rejected", key: "a/..", wantErr: true, wantErrMsg: `contains a ".." segment`},
+		{name: "a trailing \"..\" segment is rejected", key: "a/..", wantErr: true, wantErrMsg: `resolves to ".."`},
 		{name: "an empty key is rejected", key: "", wantErr: true, wantErrMsg: "names no file"},
 		{name: "a bare slash is rejected", key: "/", wantErr: true, wantErrMsg: "names no file"},
 		{name: "doubled slashes with nothing else are rejected", key: "//", wantErr: true, wantErrMsg: "names no file"},
@@ -1347,6 +1348,8 @@ func (suite *AWSTestSuite) TestDownloadFileFromBucketRefusesToOverwrite() {
 
 	err := downloadFileFromBucket(client, tempDir, "README.md", fakeS3TestBucketName, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "object key [README.md]")
+	require.Contains(suite.T(), err.Error(), "--exclude-regex")
 
 	content, readErr := os.ReadFile(preexisting)
 	require.NoError(suite.T(), readErr)
@@ -1402,6 +1405,9 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientObjectAndPrefixCollideAreAnErr
 // excluding it: following that advice would record a snapshot with a
 // legitimate object silently missing.
 func (suite *AWSTestSuite) TestDownloadFileFromBucketNamesTheKeyWithoutAdviceOnFilesystemErrors() {
+	if runtime.GOOS == "windows" {
+		suite.T().Skip("chmod on a directory does not block file creation on Windows")
+	}
 	if os.Getuid() == 0 {
 		suite.T().Skip("root ignores directory permissions")
 	}

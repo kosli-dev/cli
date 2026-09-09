@@ -573,7 +573,7 @@ func localPathForS3Key(key string) (string, error) {
 	segments := strings.FieldsFunc(key, func(r rune) bool { return r == '/' || r == '\\' })
 	for _, segment := range segments {
 		if strings.HasPrefix(segment, "..") && strings.TrimRight(segment, ". ") == "" {
-			return "", unusableS3KeyError(key, `contains a ".." segment`)
+			return "", unusableS3KeyError(key, `contains a segment that resolves to ".."`)
 		}
 	}
 
