@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -50,7 +51,7 @@ func (suite *WorkingDirConfigTestSuite) TestDefaultIsHomePathWhenHomeConfigIsAbs
 }
 
 func (suite *WorkingDirConfigTestSuite) TestWorkingDirConfigIsNotLoaded() {
-	for _, name := range []string{"kosli.yml", "kosli.yaml", "kosli.json", "kosli.toml"} {
+	for _, name := range []string{"kosli.yml", "kosli.yaml", "kosli.json", "kosli.toml", "kosli.properties", "kosli.env"} {
 		suite.Run(name, func() {
 			defer func() { global = new(GlobalOpts) }()
 			suite.stubHomeConfig()
@@ -60,6 +61,8 @@ func (suite *WorkingDirConfigTestSuite) TestWorkingDirConfigIsNotLoaded() {
 				content = `{"host": "https://attacker.example"}`
 			case ".toml":
 				content = `host = "https://attacker.example"`
+			case ".properties", ".env":
+				content = "host=https://attacker.example\n"
 			}
 			suite.chdirWithConfig(name, content)
 
@@ -126,10 +129,18 @@ func (suite *WorkingDirConfigTestSuite) TestWarnsAboutIgnoredWorkingDirConfig() 
 		{name: "org", content: "org: some-org\n", wantWarn: true},
 		{name: "api token", content: "api-token: abc123\n", wantWarn: true},
 		{name: "documented uppercase keys", content: "ORG: some-org\nAPI-TOKEN: abc123\n", wantWarn: true},
+		// The settings the advisories were about, and the ones a hand-picked
+		// key set was most likely to miss.
+		{name: "http proxy only", content: "http-proxy: http://proxy:8080\n", wantWarn: true},
+		{name: "kubeconfig only", content: "kubeconfig: ./some-kubeconfig.yml\n", wantWarn: true},
+		{name: "flow only", content: "flow: some-flow\n", wantWarn: true},
 		// A kosli.yml in a repository root is far more often a flow template,
 		// which was never loaded as CLI config, so it must stay silent.
-		{name: "flow template shape", content: "trail:\n  artifacts:\n    - name: nginx\n", wantWarn: false},
+		{name: "flow template shape", content: "version: 1\ntrail:\n  attestations:\n    - name: pull-request\n", wantWarn: false},
+		{name: "flow template without version", content: "trail:\n  artifacts:\n    - name: nginx\n", wantWarn: false},
+		{name: "artifacts only template", content: "artifacts:\n  - name: nginx\n", wantWarn: false},
 		{name: "unparsable file", content: "\tnot: [valid\n", wantWarn: false},
+		{name: "empty file", content: "", wantWarn: false},
 	}
 	for _, tc := range cases {
 		suite.Run(tc.name, func() {
@@ -152,10 +163,6 @@ func (suite *WorkingDirConfigTestSuite) TestWarnsAboutIgnoredWorkingDirConfig() 
 	}
 }
 
-func TestWorkingDirConfigTestSuite(t *testing.T) {
-	suite.Run(t, new(WorkingDirConfigTestSuite))
-}
-
 // TestConfigCommandFailsWithoutHomeDirectory pins the other side of an empty
 // default config path: `kosli config` must say so rather than silently writing
 // a config file into the current working directory.
@@ -171,4 +178,73 @@ func (suite *WorkingDirConfigTestSuite) TestConfigCommandFailsWithoutHomeDirecto
 	suite.Contains(err.Error(), "Could not determine your home directory")
 	_, statErr := os.Stat(defaultConfigFilename)
 	suite.Require().Error(statErr, "no config file may be written into the working directory")
+}
+
+// TestHomeConfigIsStillLoaded pins the primary load path. Every other test in
+// this suite stubs the default at a path that does not exist, so inverting the
+// guard around the config read would leave the rest of the suite green.
+func (suite *WorkingDirConfigTestSuite) TestHomeConfigIsStillLoaded() {
+	path := filepath.Join(suite.T().TempDir(), defaultConfigFilename)
+	suite.Require().NoError(os.WriteFile(path, []byte("host: https://home.example\n"), 0600))
+	mockConfigGetter := new(MockConfigGetter)
+	mockConfigGetter.Mock.On("defaultConfigFilePath").Return(path)
+	defaultConfigFilePathFunc = mockConfigGetter.defaultConfigFilePath
+
+	_, _, _, _, err := executeCommandC("version")
+
+	suite.Require().NoError(err)
+	suite.Equal("https://home.example", global.Host,
+		"the home config file must still be loaded without the user naming it")
+}
+
+// TestOversizedWorkingDirConfigIsNotParsed pins that the warning does not hand
+// an arbitrarily large repository-controlled file to a parser.
+func (suite *WorkingDirConfigTestSuite) TestOversizedWorkingDirConfigIsNotParsed() {
+	suite.stubHomeConfig()
+	padding := strings.Repeat("# padding\n", 200000)
+	suite.chdirWithConfig("kosli.yml", "org: some-org\n"+padding)
+
+	_, _, _, stderr, err := executeCommandC("version")
+
+	suite.Require().NoError(err)
+	suite.NotContains(stderr, "no longer loaded automatically",
+		"a file past the size ceiling must be skipped rather than parsed")
+}
+
+// TestWarnsAboutIgnoredDotEnvConfig covers the two extensions beyond YAML/JSON
+// that viper can actually decode. A kosli.env in the working directory was a
+// working redirect before this change, so it has to warn.
+func (suite *WorkingDirConfigTestSuite) TestWarnsAboutIgnoredDotEnvConfig() {
+	for _, name := range []string{"kosli.env", "kosli.dotenv"} {
+		suite.Run(name, func() {
+			defer func() { global = new(GlobalOpts) }()
+			suite.stubHomeConfig()
+			suite.chdirWithConfig(name, "host=https://attacker.example\n")
+
+			_, _, _, stderr, err := executeCommandC("version")
+
+			suite.Require().NoError(err)
+			suite.Equal(defaultHost, global.Host)
+			suite.Contains(stderr, name)
+			suite.Contains(stderr, "no longer loaded automatically")
+		})
+	}
+}
+
+// TestUndecodableWorkingDirConfigIsSilent pins that a format viper lists but has
+// no decoder for stays quiet. Before this change such a file made every command
+// fail with "failed to parse config file", so no pipeline can have depended on
+// it and there is nothing to warn about.
+func (suite *WorkingDirConfigTestSuite) TestUndecodableWorkingDirConfigIsSilent() {
+	suite.stubHomeConfig()
+	suite.chdirWithConfig("kosli.properties", "org=some-org\n")
+
+	_, _, _, stderr, err := executeCommandC("version")
+
+	suite.Require().NoError(err, "an undecodable file must no longer fail the command")
+	suite.NotContains(stderr, "no longer loaded automatically")
+}
+
+func TestWorkingDirConfigTestSuite(t *testing.T) {
+	suite.Run(t, new(WorkingDirConfigTestSuite))
 }

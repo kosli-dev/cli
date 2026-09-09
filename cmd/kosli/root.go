@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/docgen"
@@ -380,19 +381,39 @@ var defaultConfigFilePathFunc = (&RealConfigGetter{}).defaultConfigFilePath
 
 // workingDirConfigNames are the config file names the CLI used to load
 // implicitly from the current working directory, before that became
-// kosli-dev/server#6778 and #6779.
-var workingDirConfigNames = []string{"kosli.yaml", "kosli.yml", "kosli.json", "kosli.toml"}
+// kosli-dev/server#6778 and #6779. viper searched a "kosli" config name in
+// every extension it supports and loaded the first match, so the list is
+// derived from viper, in viper's own order.
+var workingDirConfigNames = func() []string {
+	names := make([]string, 0, len(viper.SupportedExts))
+	for _, ext := range viper.SupportedExts {
+		names = append(names, "kosli."+ext)
+	}
+	return names
+}()
+
+// flowTemplateKeys are top-level keys that identify a flow template rather than
+// a CLI config file. A template is passed with --template-file and was never
+// loaded as CLI config, so an ignored one is not a broken pipeline.
+var flowTemplateKeys = []string{"trail", "artifacts"}
+
+// maxWorkingDirConfigSize caps what the warning is willing to parse. The file is
+// repository-controlled and read on every command run in that directory, and no
+// real config file comes close to this.
+const maxWorkingDirConfigSize = 1 << 20
 
 // warnAboutIgnoredWorkingDirConfig reports a config file in the current working
 // directory that an earlier CLI would have loaded, so that the change does not
 // break a pipeline silently.
 //
-// Only a file that sets a global setting is reported. A kosli.yml in a
-// repository root is far more often a flow template, which was never loaded as
-// CLI config, and warning about those would be pure noise.
+// Every parseable file is reported except a flow template. Reporting on the file
+// rather than on a chosen set of keys is deliberate: any key set narrow enough
+// to be worth writing down would let some real config break in silence, which is
+// the one thing this warning exists to prevent.
 func warnAboutIgnoredWorkingDirConfig() {
 	for _, name := range workingDirConfigNames {
-		if _, err := os.Stat(name); err != nil {
+		info, err := os.Stat(name)
+		if err != nil || info.IsDir() || info.Size() > maxWorkingDirConfigSize {
 			continue
 		}
 
@@ -401,7 +422,10 @@ func warnAboutIgnoredWorkingDirConfig() {
 		if err := v.ReadInConfig(); err != nil {
 			continue
 		}
-		if !v.IsSet("org") && !v.IsSet("api-token") && !v.IsSet("host") {
+		if len(v.AllKeys()) == 0 {
+			continue
+		}
+		if slices.ContainsFunc(flowTemplateKeys, v.IsSet) {
 			continue
 		}
 
@@ -611,9 +635,6 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 		logger.Debug("no default config file location could be determined. Skipping.")
 	}
 
-	if !namedByUser {
-		warnAboutIgnoredWorkingDirConfig()
-	}
 	// When we bind flags to environment variables expect that the
 	// environment variables are prefixed, e.g. a flag like --namespace
 	// binds to an environment variable KOSLI_NAMESPACE. This helps
@@ -641,6 +662,12 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	logger.QuietEnabled = global.Quiet && !global.Debug
 	if global.Quiet && global.Debug {
 		logger.Debug("--quiet is ignored because --debug is set")
+	}
+
+	// Warned after the flag binding above so that KOSLI_QUIET suppresses this
+	// message exactly as --quiet does.
+	if !namedByUser {
+		warnAboutIgnoredWorkingDirConfig()
 	}
 
 	var err error

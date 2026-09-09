@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -83,7 +84,7 @@ func (o *configOptions) run() error {
 	// write the config into the current working directory, which is never where
 	// the default config file belongs.
 	if path == "" {
-		return fmt.Errorf("setting default config failed. Could not determine your home directory. Set HOME, or use --config-file on each command instead")
+		return errors.New("setting default config failed. Could not determine your home directory. Set HOME, or pass --config-file to the commands you run")
 	}
 	home := filepath.Dir(path)
 	configFileName := filepath.Base(path)
