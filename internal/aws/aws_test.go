@@ -1227,6 +1227,29 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientFilterEquivalence() {
 	}
 }
 
+// TestGetS3DataFromClientRejectsKeysWithDotDotSegments reproduces the
+// unfixed bug: an S3 key containing a ".." segment normalises, via
+// filepath.Join, to the same local path as another key. FakeS3Client lists
+// keys in lexicographic order, so "protected/release.bin" downloads first
+// and the traversing key overwrites it with attacker-controlled content
+// before fingerprinting, with no error raised.
+func (suite *AWSTestSuite) TestGetS3DataFromClientRejectsKeysWithDotDotSegments() {
+	trustedBody := []byte("trusted release content\n")
+	attackerBody := []byte("attacker controlled content\n")
+
+	poisoned := &FakeS3Client{
+		Bucket: fakeS3TestBucketName,
+		Objects: map[string][]byte{
+			"protected/release.bin":                      trustedBody,
+			"uploads/user-a/../../protected/release.bin": attackerBody,
+		},
+	}
+
+	_, err := getS3DataFromClient(poisoned, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.Error(suite.T(), err, "a key containing a \"..\" segment must fail the snapshot instead of silently overwriting another object's download")
+	require.Contains(suite.T(), err.Error(), "uploads/user-a/../../protected/release.bin")
+}
+
 func skipIfCredsUnset(T *testing.T, requireEnvVars bool, creds *AWSStaticCreds) {
 	if requireEnvVars {
 		// skips the test case if it requires env vars and they are not set

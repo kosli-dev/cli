@@ -25,7 +25,6 @@ import (
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
-	"github.com/kosli-dev/cli/internal/utils"
 )
 
 // EcsEnvRequest represents the PUT request body to be sent to kosli from ECS
@@ -553,8 +552,55 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 	return s3Data, nil
 }
 
+// localPathForS3Key turns an S3 object key into a path relative to the
+// download directory, or rejects the key. S3 keys are not filesystem paths:
+// they can contain ".." segments and backslashes that a naive filepath.Join
+// would resolve differently than the key names, letting one key's download
+// overwrite another's or, on Windows, escape the download directory.
+//
+// Only what is load-bearing for security is rejected here; everything else
+// (doubled slashes, leading slashes, backslash-containing literal filenames)
+// is accepted and lands exactly where filepath.Join put it before this
+// change, so buckets that snapshot cleanly today keep the same fingerprint.
+func localPathForS3Key(key string) (string, error) {
+	const reason = "object key [%s] cannot be used as a local path: %s; exclude it with --exclude"
+
+	// Segments are split on both '/' and '\' so a key can't smuggle a ".."
+	// past the check using the separator this OS doesn't treat specially.
+	segments := strings.FieldsFunc(key, func(r rune) bool { return r == '/' || r == '\\' })
+	for _, segment := range segments {
+		if segment == ".." {
+			return "", fmt.Errorf(reason, key, `contains a ".." segment`)
+		}
+	}
+
+	rel := strings.TrimLeft(key, "/")
+	if rel == "" || rel == "." {
+		return "", fmt.Errorf(reason, key, "names no file")
+	}
+
+	rel = filepath.FromSlash(rel)
+	if !filepath.IsLocal(rel) {
+		return "", fmt.Errorf(reason, key, "is not a local path")
+	}
+
+	return rel, nil
+}
+
 func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket string, logger *logger.Logger) error {
-	file, err := utils.CreateFile(filepath.Join(dirName, key))
+	rel, err := localPathForS3Key(key)
+	if err != nil {
+		return err
+	}
+	dest := filepath.Join(dirName, rel)
+	if err := os.MkdirAll(filepath.Dir(dest), 0770); err != nil {
+		return err
+	}
+	// O_EXCL is the second half of the containment fix: two keys that map to
+	// the same local file (a doubled slash vs a single one, a leading slash
+	// vs none, a case-only clash on a case-insensitive filesystem) now fail
+	// loudly instead of the later download silently overwriting the earlier.
+	file, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
 		return err
 	}
