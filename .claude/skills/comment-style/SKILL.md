@@ -43,6 +43,7 @@ A PR or issue ref as a pointer is fine (`# … (#5765)`) — but it supplements 
 does not replace stating it.
 
 ## Examples
+## Examples
 Bad — resemblance, no information about this code:
 `# Mirrors the deletability re-check pending box`
 
@@ -56,4 +57,4 @@ Good — same fact, stated precisely (ref kept as a pointer):
 `# when the client navigates away before the initiate response lands (#5765).`
 
 Good — non-obvious what:
-`# Returns -1 when the trail has no commits yet.`
+`// CommitsCount returns -1 when the trail has no commits yet.`
