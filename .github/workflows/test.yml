@@ -193,6 +193,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
+      security-events: write  # upload SARIF to GitHub code scanning
     steps:
 
     - name: Harden Runner
@@ -217,7 +218,19 @@ jobs:
       env:
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run:
-          snyk code test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
+          snyk code test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.sarif --prune-repeated-subdependencies
+
+    - name: Upload Snyk Code results to GitHub code scanning
+      # snyk exits non-zero when it finds issues, so upload on failure too.
+      # Branch pushes only: on pull_request_target (dependabot) github.ref is the
+      # base branch while the checkout is the PR head, so uploading there would
+      # attribute PR findings to main. Tag pushes (release.yml) are skipped - a
+      # release tag is not a useful code scanning baseline.
+      if: ${{ (success() || failure()) && github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/') }}
+      uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+      with:
+        sarif_file: snyk-code.sarif
+        category: snyk-code
 
     - name: Report Snyk Code to Kosli
       if:  ${{ (success() || failure()) && inputs.report_to_kosli != 'none' }}
@@ -227,7 +240,7 @@ jobs:
            --name snyk-code-test
            --flow ${{ inputs.FLOW_NAME }}
            --trail ${{ inputs.TRAIL_NAME }}
-           --scan-results  snyk-code.json
+           --scan-results  snyk-code.sarif
            --org ${{ inputs.KOSLI_ORG }}
 
   snyk-dependency-test:
