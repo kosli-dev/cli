@@ -99,7 +99,7 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 		return "", err
 	}
 	if len(ignoredPaths) > 0 {
-		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFilePath, ignoredPaths)
+		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFileInTree, ignoredPaths)
 		// Warn only once the file is known to carry rules. An empty or comment-only
 		// one that a flag excludes weakens nothing, and the message's subject is the
 		// paths it lists.
@@ -270,6 +270,14 @@ func ignoreFilePathInTree(dirPath string) (string, error) {
 		if folded == "" && strings.EqualFold(entry.Name(), ignoreFileName) {
 			folded = filepath.Join(dirPath, entry.Name())
 		}
+	}
+	if folded == "" {
+		// The Lstat above resolved, so the file whose rules will be read exists. Not
+		// finding it in the listing means the two reads disagree, and answering "none"
+		// would leave nothing protected while its entries are still applied. Refuse
+		// instead: a rename between the two calls is winnable by an attacker with
+		// write access to the tree, which is the adversary this protects against.
+		return "", fmt.Errorf("%s exists in %s but was not found in its directory listing", ignoreFileName, dirPath)
 	}
 	return folded, nil
 }
