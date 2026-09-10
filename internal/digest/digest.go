@@ -74,7 +74,10 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	// (kosli-dev/server#6785). It is protected at the point the walk decides what to
 	// skip, using the path the walk itself emits, so no reasoning about how a
 	// pattern happens to be spelled or normalised can get between the two.
-	ignoreFileInTree := ignoreFilePathInTree(dirPath)
+	ignoreFileInTree, err := ignoreFilePathInTree(dirPath)
+	if err != nil {
+		return "", err
+	}
 	protectedPath := ignoreFileInTree
 
 	pathsToExclude, err := resolveExcludePaths(dirPath, excludePaths)
@@ -244,24 +247,31 @@ func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
 // hold both spellings as two distinct files, and protecting the one that folds
 // first would leave the file whose entries are actually applied free to exclude
 // itself. Other spellings are ordinary files there, excludable like any other.
-func ignoreFilePathInTree(dirPath string) string {
+func ignoreFilePathInTree(dirPath string) (string, error) {
+	// Errors are returned rather than swallowed as "no ignore file". The rules are
+	// read separately by excludePathsFromFile, so answering "" on a failed read
+	// would let the two disagree: nothing protected while the file's entries are
+	// still applied, which is a self-excluding entry working again.
 	if _, err := os.Lstat(filepath.Join(dirPath, ignoreFileName)); err != nil {
-		return ""
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", nil
+		}
+		return "", err
 	}
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
-		return ""
+		return "", err
 	}
 	folded := ""
 	for _, entry := range entries {
 		if entry.Name() == ignoreFileName {
-			return filepath.Join(dirPath, entry.Name())
+			return filepath.Join(dirPath, entry.Name()), nil
 		}
 		if folded == "" && strings.EqualFold(entry.Name(), ignoreFileName) {
 			folded = filepath.Join(dirPath, entry.Name())
 		}
 	}
-	return folded
+	return folded, nil
 }
 
 // resolveExcludePaths expands exclusion patterns, relative to dirPath, into the
@@ -293,7 +303,8 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, pat
 
 		if utils.Contains(pathsToExclude, path) {
 			if path == protectedPath {
-				logger.Debug("keeping %s although an exclusion matches it: an exclusion list cannot exclude itself", path)
+				logger.Debug("keeping %s although an exclusion matches it: an exclusion list cannot exclude itself. "+
+					"Move its entries to --exclude and delete the file to recover the previous fingerprint.", path)
 			} else if info.IsDir() {
 				logger.Debug("skipping dir %s (and its contents) as it matches excluded paths", path)
 				return fs.SkipDir

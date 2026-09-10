@@ -564,6 +564,12 @@ func (suite *DigestTestSuite) TestDirSha256IgnoreFileCannotHideItself() {
 			ignore: "**/.kosli_ignore\napp/backdoor.js",
 		},
 		{
+			// Bare ** resolves to every path in the tree, so the deployed digest
+			// differs from the baseline whether or not the ignore file is protected.
+			// This case documents that the protection is indifferent to pattern
+			// shape; it does not pin it. The two globs above do, and so does the
+			// literal case - strip the protection and those three land exactly on the
+			// approved digest.
 			name:   "a bare ** cannot hide the ignore file",
 			ignore: "**\napp/backdoor.js",
 		},
@@ -597,6 +603,44 @@ func (suite *DigestTestSuite) TestDirSha256IgnoreFileCannotHideItself() {
 			}
 		})
 	}
+}
+
+// TestIgnoreFilePathInTreeFailsClosedOnAnUnreadableDir pins that a failed
+// directory read is an error rather than "no ignore file". Answering "" would
+// leave nothing protected while excludePathsFromFile still applied the file's
+// entries, which is a self-excluding entry working again. DirSha256 as a whole is
+// already safe against a persistent failure, since WalkDir reads the same
+// directory and surfaces the error, so this is only reachable transiently - which
+// is why it is pinned here rather than through a fingerprint.
+func (suite *DigestTestSuite) TestIgnoreFilePathInTreeFailsClosedOnAnUnreadableDir() {
+	dir := suite.createDirWithFiles("unreadable", map[string]string{".kosli_ignore": ".kosli_ignore"})
+	// Write and search but not read: Lstat still resolves the ignore file while
+	// ReadDir fails.
+	require.NoError(suite.T(), os.Chmod(dir, 0300))
+	defer func() { _ = os.Chmod(dir, 0700) }()
+
+	if _, err := os.ReadDir(dir); err == nil {
+		suite.T().Skip("directory is readable regardless of mode, probably running as root")
+	}
+
+	path, err := ignoreFilePathInTree(dir)
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), "", path)
+}
+
+// TestDirSha256LogsWhenTheIgnoreFileIsKept pins the only explanation available for
+// the common upgrade case. A tree whose .kosli_ignore excludes itself fingerprints
+// differently after this change, and the flag route warns while the tree route has
+// nothing but this debug line.
+func (suite *DigestTestSuite) TestDirSha256LogsWhenTheIgnoreFileIsKept() {
+	dir := suite.createDirWithFiles("kept", map[string]string{"app/index.js": "console.log(1)"})
+	suite.createFileWithContent(filepath.Join(dir, ".kosli_ignore"), ".kosli_ignore")
+
+	var out bytes.Buffer
+	_, err := DirSha256(dir, nil, logger.NewLogger(io.Discard, &out, true))
+	require.NoError(suite.T(), err)
+
+	assert.Contains(suite.T(), out.String(), "an exclusion list cannot exclude itself")
 }
 
 // TestDirSha256WarnsOnlyWhenAFlagExclusionWeakensTheFingerprint holds the warning
@@ -695,7 +739,9 @@ func (suite *DigestTestSuite) TestIgnoreFilePathInTree() {
 				suite.T().Skipf("filesystem is case-sensitive, so %s is not the ignore file", t.ignoreName)
 			}
 
-			assert.Equal(suite.T(), filepath.Join(dir, t.ignoreName), ignoreFilePathInTree(dir))
+			got, err := ignoreFilePathInTree(dir)
+			require.NoError(suite.T(), err)
+			assert.Equal(suite.T(), filepath.Join(dir, t.ignoreName), got)
 		})
 	}
 }
@@ -711,7 +757,9 @@ func (suite *DigestTestSuite) TestIgnoreFilePathInTreeWithBothSpellings() {
 	suite.createFileWithContent(filepath.Join(dir, ".kosli_ignore"), "logs")
 	suite.requireCaseSensitiveDir(dir)
 
-	assert.Equal(suite.T(), filepath.Join(dir, ".kosli_ignore"), ignoreFilePathInTree(dir))
+	got, err := ignoreFilePathInTree(dir)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), filepath.Join(dir, ".kosli_ignore"), got)
 }
 
 // TestDirSha256IgnoreFileCannotHideItselfBesideACaseVariant is the fingerprint-level
@@ -758,7 +806,9 @@ func (suite *DigestTestSuite) requireCaseSensitiveDir(dir string) {
 // protects nothing, rather than a path that does not exist.
 func (suite *DigestTestSuite) TestIgnoreFilePathInTreeWithoutIgnoreFile() {
 	dir := suite.createDirWithFiles("no-ignore", map[string]string{"app.js": "app"})
-	assert.Equal(suite.T(), "", ignoreFilePathInTree(dir))
+	got, err := ignoreFilePathInTree(dir)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), "", got)
 }
 
 // TestDirSha256IgnoreFileAliasesStayExcludable pins the scope of the refusal: only
