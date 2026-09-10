@@ -69,11 +69,8 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 			logger.Warn("failed to close digests file: %v", err)
 		}
 	}()
-	// The ignore file must stay in the fingerprint whatever the tree asks for, or a
-	// directory could add files and keep the approved fingerprint by listing them
-	// (kosli-dev/server#6785). It is protected at the point the walk decides what to
-	// skip, using the path the walk itself emits, so no reasoning about how a
-	// pattern happens to be spelled or normalised can get between the two.
+	// An exclusion list cannot exclude itself, or a tree could add files and keep the
+	// approved fingerprint by listing them.
 	ignoreFileInTree, err := ignoreFilePathInTree(dirPath)
 	if err != nil {
 		return "", err
@@ -85,25 +82,16 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 		return "", err
 	}
 
-	// An operator flag may still exclude it, which is the migration path off the
-	// old behaviour. That keeps the file out of the fingerprint while the entries it
-	// carries are still applied, so the tree decides what is measured again.
+	// A flag exclusion drops the file from the digest while its entries still apply,
+	// so the tree decides what is measured.
 	flagExcludesIgnoreFile := ignoreFileInTree != "" && utils.Contains(pathsToExclude, ignoreFileInTree)
 	if flagExcludesIgnoreFile {
 		protectedPath = ""
 	}
 
-	// The rules are read from the path that was located, not from one rebuilt out
-	// of ignoreFileName. Rebuilding it made "the file protected" and "the file whose
-	// rules are applied" two independently resolved names, and a rename between the
-	// two reads could make them disagree: rules applied with the wrong file, or no
-	// file, protected. Reading the located path makes them the same string, and the
-	// walk emits that same string by the same construction.
-	//
-	// One race is left and is not closable here: the rules are read before the file
-	// is hashed, so a tree that rewrites it in between has its old rules applied to
-	// newly hashed content. Closing that means hashing the bytes that were read,
-	// which is a larger change than this.
+	// Reading the located path makes the file protected, the file read and the file
+	// hashed one string. The rules are read before the file is hashed, so a tree that
+	// rewrites it in between has these rules applied to different content.
 	ignoredPaths := []string{}
 	if ignoreFileInTree != "" {
 		ignoredPaths, err = excludePathsFromFile(ignoreFileInTree)
@@ -113,9 +101,7 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	}
 	if len(ignoredPaths) > 0 {
 		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFileInTree, ignoredPaths)
-		// Warn only once the file is known to carry rules. An empty or comment-only
-		// one that a flag excludes weakens nothing, and the message's subject is the
-		// paths it lists.
+		// An empty or comment-only file that a flag excludes weakens nothing.
 		if flagExcludesIgnoreFile {
 			logger.Warn("%s is excluded by a flag, so the paths it lists are still applied while the file itself is not fingerprinted. "+
 				"A file added to the directory and listed in %s stays invisible. "+
@@ -246,34 +232,18 @@ func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
 	return parsed.Encoded(), nil
 }
 
-// ignoreFilePathInTree returns the tree's ignore file as filepath.WalkDir will
-// emit it, or "" when the tree has no ignore file.
+// ignoreFilePathInTree returns the tree's ignore file as filepath.WalkDir emits
+// it, or "" when there is none.
 //
-// The name comes from the directory listing rather than from ignoreFileName
-// because a case-insensitive filesystem (macOS, Windows) stores whatever name was
-// written, a ".KOSLI_IGNORE", while opening it under any case. The walk emits the
-// stored name, so this is the exact string the walk will compare, which is what
-// makes protecting the file independent of how an exclusion pattern is spelled.
+// The name comes from the directory listing because a case-insensitive filesystem
+// stores one spelling and opens any of them. Snapshotting S3 or Azure unzips the
+// tree onto the machine running the CLI, so that filesystem is the operator's.
 //
-// An exact match wins over a folded one to keep the meaning of the ignore file
-// stable, not for safety: since the caller reads the rules from whatever this
-// returns, either answer would protect the file it read. On a case-sensitive
-// filesystem a tree can hold both spellings as two distinct files, and every
-// release before this one read the rules from ignoreFileName byte-exact, so
-// returning the one that folds first would hand rule authority to a previously
-// inert ".KOSLI_IGNORE" and change the fingerprint with it. Other spellings are
-// ordinary files there, excludable like any other.
-//
-// Skipping directories interacts with that: where ignoreFileName is a directory
-// and another spelling is a file, the file is returned and its rules apply, where
-// before they were not read at all. Contrived, and the alternative is to protect a
-// path that can carry no rules.
+// An exact match wins over a folded one so that ignoreFileName owns the rules
+// where a case-sensitive filesystem holds both spellings as distinct files.
 func ignoreFilePathInTree(dirPath string) (string, error) {
-	// Errors are returned rather than swallowed as "no ignore file", because "" is
-	// also the answer for a tree that has none, and the caller reads the rules from
-	// whatever this returns. A failed read must not be indistinguishable from an
-	// absent file: that would fingerprint a tree whose exclusion list was never
-	// established.
+	// "" is also the answer for a tree with no ignore file, so a swallowed error
+	// would silently mean "no exclusions".
 	if _, err := os.Lstat(filepath.Join(dirPath, ignoreFileName)); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", nil
@@ -286,9 +256,7 @@ func ignoreFilePathInTree(dirPath string) (string, error) {
 	}
 	folded := ""
 	for _, entry := range entries {
-		// Only a file can carry rules, and protectedPath means "the file whose rules
-		// are read". A directory of this name yields no rules, so leaving it
-		// unprotected keeps it excludable like any other directory.
+		// A directory of this name carries no rules.
 		if entry.IsDir() {
 			continue
 		}
