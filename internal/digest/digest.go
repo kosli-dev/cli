@@ -82,11 +82,13 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 		return "", err
 	}
 
-	// A flag exclusion drops the file from the digest while its entries still apply,
-	// so the tree decides what is measured.
-	flagExcludesIgnoreFile := ignoreFileInTree != "" && utils.Contains(pathsToExclude, ignoreFileInTree)
-	if flagExcludesIgnoreFile {
+	// A flag exclusion drops the list's content from the digest, so the tree may
+	// supply any content on a later run whatever it holds now.
+	if ignoreFileInTree != "" && utils.Contains(pathsToExclude, ignoreFileInTree) {
 		protectedPath = ""
+		logger.Warn("%s is excluded by a flag, so its rules are applied while its content is not fingerprinted: "+
+			"the directory can change the list at any time, and files it comes to list stay invisible. "+
+			"Move the entries to --exclude and delete the file to get the same fingerprint without that.", ignoreFileInTree)
 	}
 
 	// Reading the located path makes the file protected, the file read and the file
@@ -101,12 +103,6 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	}
 	if len(ignoredPaths) > 0 {
 		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFileInTree, ignoredPaths)
-		// An empty or comment-only file that a flag excludes weakens nothing.
-		if flagExcludesIgnoreFile {
-			logger.Warn("%s is excluded by a flag, so the paths it lists are still applied while the file itself is not fingerprinted. "+
-				"A file added to the directory and listed in %s stays invisible. "+
-				"Move the entries to --exclude and delete the file to get the same fingerprint without that.", ignoreFileInTree, ignoreFileName)
-		}
 	}
 	resolvedIgnoredPaths, err := resolveExcludePaths(dirPath, ignoredPaths)
 	if err != nil {

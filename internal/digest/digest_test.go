@@ -642,14 +642,16 @@ func (suite *DigestTestSuite) TestDirSha256WarnsOnlyWhenAFlagExclusionWeakensThe
 			wantWarning:  true,
 		},
 		{
-			name:         "excluding an empty ignore file weakens nothing",
+			name:         "excluding an empty ignore file still weakens the fingerprint",
 			ignore:       "",
 			excludePaths: []string{".kosli_ignore"},
+			wantWarning:  true,
 		},
 		{
-			name:         "excluding a comment-only ignore file weakens nothing",
+			name:         "excluding a comment-only ignore file still weakens the fingerprint",
 			ignore:       "# nothing to see here",
 			excludePaths: []string{".kosli_ignore"},
+			wantWarning:  true,
 		},
 		{
 			// Silent because nothing is excluded at all: filepathx resolves this to
