@@ -231,30 +231,30 @@ func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
 // written, a ".KOSLI_IGNORE", while opening it under any case. The walk emits the
 // stored name, so this is the exact string the walk will compare, which is what
 // makes protecting the file independent of how an exclusion pattern is spelled.
+//
+// An exact match wins over a folded one because excludePathsFromFile reads the
+// rules from ignoreFileName byte-exact. On a case-sensitive filesystem a tree can
+// hold both spellings as two distinct files, and protecting the one that folds
+// first would leave the file whose entries are actually applied free to exclude
+// itself. Other spellings are ordinary files there, excludable like any other.
 func ignoreFilePathInTree(dirPath string) string {
-	info, err := os.Lstat(filepath.Join(dirPath, ignoreFileName))
-	if err != nil {
+	if _, err := os.Lstat(filepath.Join(dirPath, ignoreFileName)); err != nil {
 		return ""
 	}
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return ""
 	}
-	// Folding the name covers every filesystem in practice. The identity pass is a
-	// fallback so that a folding rule Go does not implement cannot leave a file the
-	// filesystem does treat as the ignore file unprotected.
+	folded := ""
 	for _, entry := range entries {
-		if strings.EqualFold(entry.Name(), ignoreFileName) {
+		if entry.Name() == ignoreFileName {
 			return filepath.Join(dirPath, entry.Name())
 		}
-	}
-	for _, entry := range entries {
-		path := filepath.Join(dirPath, entry.Name())
-		if other, err := os.Lstat(path); err == nil && os.SameFile(info, other) {
-			return path
+		if folded == "" && strings.EqualFold(entry.Name(), ignoreFileName) {
+			folded = filepath.Join(dirPath, entry.Name())
 		}
 	}
-	return ""
+	return folded
 }
 
 // resolveExcludePaths expands exclusion patterns, relative to dirPath, into the

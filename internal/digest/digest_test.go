@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/docker"
@@ -621,6 +622,60 @@ func (suite *DigestTestSuite) TestIgnoreFilePathInTree() {
 
 			assert.Equal(suite.T(), filepath.Join(dir, t.ignoreName), ignoreFilePathInTree(dir))
 		})
+	}
+}
+
+// TestIgnoreFilePathInTreeWithBothSpellings pins that the file whose rules are
+// read is the file protected. excludePathsFromFile opens ignoreFileName
+// byte-exact, so on a case-sensitive filesystem - which the CI runner is - a tree
+// holding both spellings must protect the exact one. Protecting the spelling that
+// folds first would leave the rules file free to exclude itself again.
+func (suite *DigestTestSuite) TestIgnoreFilePathInTreeWithBothSpellings() {
+	dir := suite.createDirWithFiles("both", map[string]string{"app.js": "app"})
+	suite.createFileWithContent(filepath.Join(dir, ".KOSLI_IGNORE"), "")
+	suite.createFileWithContent(filepath.Join(dir, ".kosli_ignore"), "logs")
+	suite.requireCaseSensitiveDir(dir)
+
+	assert.Equal(suite.T(), filepath.Join(dir, ".kosli_ignore"), ignoreFilePathInTree(dir))
+}
+
+// TestDirSha256IgnoreFileCannotHideItselfBesideACaseVariant is the fingerprint-level
+// form of the same thing. A decoy ".KOSLI_IGNORE" committed from a case-insensitive
+// machine must not shield the real ignore file from being fingerprinted.
+func (suite *DigestTestSuite) TestDirSha256IgnoreFileCannotHideItselfBesideACaseVariant() {
+	baseline := map[string]string{"app/index.js": "console.log(1)"}
+	approved := suite.createDirWithFiles("approved-decoy", baseline)
+	suite.createFileWithContent(filepath.Join(approved, ".KOSLI_IGNORE"), "")
+	suite.createFileWithContent(filepath.Join(approved, ".kosli_ignore"), ".kosli_ignore")
+	suite.requireCaseSensitiveDir(approved)
+
+	deployed := suite.createDirWithFiles("deployed-decoy", baseline)
+	suite.createFileWithContent(filepath.Join(deployed, ".KOSLI_IGNORE"), "")
+	suite.createFileWithContent(filepath.Join(deployed, ".kosli_ignore"), ".kosli_ignore\napp/backdoor.js")
+	suite.createFileWithContent(filepath.Join(deployed, "app/backdoor.js"), "BACKDOOR")
+
+	approvedSha, err := DirSha256(approved, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	deployedSha, err := DirSha256(deployed, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+
+	assert.NotEqual(suite.T(), approvedSha, deployedSha,
+		"the added file is invisible to the fingerprint")
+}
+
+// requireCaseSensitiveDir skips the test unless dir holds ".KOSLI_IGNORE" and
+// ".kosli_ignore" as two distinct files.
+func (suite *DigestTestSuite) requireCaseSensitiveDir(dir string) {
+	entries, err := os.ReadDir(dir)
+	require.NoError(suite.T(), err)
+	found := 0
+	for _, entry := range entries {
+		if strings.EqualFold(entry.Name(), ".kosli_ignore") {
+			found++
+		}
+	}
+	if found < 2 {
+		suite.T().Skip("filesystem is case-insensitive, so the two spellings are one file")
 	}
 }
 
