@@ -27,7 +27,9 @@ identifiers, for example — stay even when they restate the signature.
 1. **Information, not narration.** Does the comment state a fact the code can't show on its
    own — an invariant, constraint, non-obvious consequence, unit, or reason? If not, cut it.
 2. **The fact, not the story.** State what is true *now*, in as few words as it takes.
-   No "previously…", "without this…", "used to…", "now we…". History lives in git.
+   No "previously…", "used to…", "now we…" — history lives in git. A counterfactual is
+   fine when it *is* the reason ("without this, retries share one deadline"); not when
+   it recounts the edit that introduced the line.
 3. **This code, not other code.** Don't describe sibling code, UI, or behavior enforced
    elsewhere ("Mirrors the …") — that goes stale and says nothing about this line.
 4. **Why over what.** Prefer explaining *why*; a genuinely non-obvious *what* (surprising
