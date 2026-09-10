@@ -786,6 +786,21 @@ func (suite *DigestTestSuite) TestIgnoreFilePathInTreeIgnoresADirectory() {
 	assert.Equal(suite.T(), withoutDir, withDir)
 }
 
+// Without the resolved-directory guard this reaches excludePathsFromFile and
+// aborts the fingerprint with EISDIR.
+func (suite *DigestTestSuite) TestIgnoreFilePathInTreeIgnoresASymlinkToADirectory() {
+	dir := suite.createDirWithFiles("symlink-named-ignore", map[string]string{"app.js": "app"})
+	require.NoError(suite.T(), os.Mkdir(filepath.Join(dir, "realdir"), 0777))
+	require.NoError(suite.T(), os.Symlink(filepath.Join(dir, "realdir"), filepath.Join(dir, ".kosli_ignore")))
+
+	path, err := ignoreFilePathInTree(dir)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), "", path)
+
+	_, err = DirSha256(dir, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+}
+
 func (suite *DigestTestSuite) TestIgnoreFilePathInTreeWithoutIgnoreFile() {
 	dir := suite.createDirWithFiles("no-ignore", map[string]string{"app.js": "app"})
 	got, err := ignoreFilePathInTree(dir)
