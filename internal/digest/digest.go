@@ -32,6 +32,9 @@ var (
 		"has it been pushed to or pulled from a registry?")
 )
 
+// ignoreFileName is the exclusion list a directory artifact may carry at its root.
+const ignoreFileName = ".kosli_ignore"
+
 // DirSha256 returns sha256 digest of a directory
 func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (string, error) {
 	logger.Debug("calculating fingerprint for path [%s] -- excluding paths: %s", dirPath, excludePaths)
@@ -66,7 +69,29 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 			logger.Warn("failed to close digests file: %v", err)
 		}
 	}()
-	ignoreFilePath := filepath.Join(dirPath, ".kosli_ignore")
+	// The ignore file must stay in the fingerprint whatever the tree asks for, or a
+	// directory could add files and keep the approved fingerprint by listing them
+	// (kosli-dev/server#6785). It is protected at the point the walk decides what to
+	// skip, using the path the walk itself emits, so no reasoning about how a
+	// pattern happens to be spelled or normalised can get between the two.
+	protectedPath := ignoreFilePathInTree(dirPath)
+
+	pathsToExclude, err := resolveExcludePaths(dirPath, excludePaths)
+	if err != nil {
+		return "", err
+	}
+
+	// An operator flag may still exclude it, which is the migration path off the
+	// old behaviour. That keeps the file out of the fingerprint while the entries it
+	// carries are still applied, so the tree decides what is measured again.
+	if protectedPath != "" && utils.Contains(pathsToExclude, protectedPath) {
+		logger.Warn("%s is excluded by a flag, so the paths it lists are still applied while the file itself is not fingerprinted. "+
+			"A file added to the directory and listed in %s stays invisible. "+
+			"Move the entries to --exclude and delete the file to get the same fingerprint without that.", protectedPath, ignoreFileName)
+		protectedPath = ""
+	}
+
+	ignoreFilePath := filepath.Join(dirPath, ignoreFileName)
 	ignoredPaths, err := excludePathsFromFile(ignoreFilePath)
 	if err != nil {
 		return "", err
@@ -74,8 +99,13 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	if len(ignoredPaths) > 0 {
 		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFilePath, ignoredPaths)
 	}
-	excludePaths = append(excludePaths, ignoredPaths...)
-	err = calculateDirContentSha256(digestsFile, dirPath, tmpDir, excludePaths, logger)
+	resolvedIgnoredPaths, err := resolveExcludePaths(dirPath, ignoredPaths)
+	if err != nil {
+		return "", err
+	}
+	pathsToExclude = append(pathsToExclude, resolvedIgnoredPaths...)
+
+	err = calculateDirContentSha256(digestsFile, dirPath, tmpDir, pathsToExclude, protectedPath, logger)
 	if err != nil {
 		return "", err
 	}
@@ -193,17 +223,56 @@ func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
 	return parsed.Encoded(), nil
 }
 
-// calculateDirContentSha256 calculates a sha256 digest for a directory content
-func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, excludePaths []string, logger *logger.Logger) error {
+// ignoreFilePathInTree returns the tree's ignore file as filepath.WalkDir will
+// emit it, or "" when the tree has no ignore file.
+//
+// The name comes from the directory listing rather than from ignoreFileName
+// because a case-insensitive filesystem (macOS, Windows) stores whatever name was
+// written, a ".KOSLI_IGNORE", while opening it under any case. The walk emits the
+// stored name, so this is the exact string the walk will compare, which is what
+// makes protecting the file independent of how an exclusion pattern is spelled.
+func ignoreFilePathInTree(dirPath string) string {
+	info, err := os.Lstat(filepath.Join(dirPath, ignoreFileName))
+	if err != nil {
+		return ""
+	}
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		return ""
+	}
+	// Folding the name covers every filesystem in practice. The identity pass is a
+	// fallback so that a folding rule Go does not implement cannot leave a file the
+	// filesystem does treat as the ignore file unprotected.
+	for _, entry := range entries {
+		if strings.EqualFold(entry.Name(), ignoreFileName) {
+			return filepath.Join(dirPath, entry.Name())
+		}
+	}
+	for _, entry := range entries {
+		path := filepath.Join(dirPath, entry.Name())
+		if other, err := os.Lstat(path); err == nil && os.SameFile(info, other) {
+			return path
+		}
+	}
+	return ""
+}
+
+// resolveExcludePaths expands exclusion patterns, relative to dirPath, into the
+// paths they actually match.
+func resolveExcludePaths(dirPath string, excludePaths []string) ([]string, error) {
 	pathsToExclude := []string{}
 	for _, p := range excludePaths {
 		found, err := filepathx.Glob(filepath.Join(dirPath, p))
 		if err != nil {
-			return err
+			return nil, err
 		}
 		pathsToExclude = append(pathsToExclude, found...)
 	}
+	return pathsToExclude, nil
+}
 
+// calculateDirContentSha256 calculates a sha256 digest for a directory content
+func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, pathsToExclude []string, protectedPath string, logger *logger.Logger) error {
 	return filepath.WalkDir(dirPath, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -215,7 +284,7 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, exc
 			return nil
 		}
 
-		if utils.Contains(pathsToExclude, path) {
+		if path != protectedPath && utils.Contains(pathsToExclude, path) {
 			if info.IsDir() {
 				logger.Debug("skipping dir %s (and its contents) as it matches excluded paths", path)
 				return fs.SkipDir

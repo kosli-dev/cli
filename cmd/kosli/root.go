@@ -102,7 +102,7 @@ The service principal needs to have the following permissions:
 	`
 	kosliIgnoreDesc = `To specify paths in a directory artifact that should always be excluded from the SHA256 calculation, you can add a ^.kosli_ignore^ file to the root of the artifact.
 Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using ^#^.
-The ^.kosli_ignore^ will be treated as part of the artifact like any other file, unless it is explicitly ignored itself.`
+The ^.kosli_ignore^ file is always treated as part of the artifact: its own entries cannot exclude it, so a directory cannot hide files that have been added to it. Excluding the file with ^--exclude^ keeps it out of the fingerprint but still applies the paths it lists, which lets a writable directory hide files again; to drop the file from the fingerprint safely, move its entries to ^--exclude^ and delete it.`
 
 	// single source of truth for the env type lists shown in flag help texts;
 	// the server is the authority on which types are actually accepted
