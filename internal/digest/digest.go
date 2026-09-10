@@ -32,6 +32,9 @@ var (
 		"has it been pushed to or pulled from a registry?")
 )
 
+// ignoreFileName is the exclusion list a directory artifact may carry at its root.
+const ignoreFileName = ".kosli_ignore"
+
 // DirSha256 returns sha256 digest of a directory
 func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (string, error) {
 	logger.Debug("calculating fingerprint for path [%s] -- excluding paths: %s", dirPath, excludePaths)
@@ -66,16 +69,48 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 			logger.Warn("failed to close digests file: %v", err)
 		}
 	}()
-	ignoreFilePath := filepath.Join(dirPath, ".kosli_ignore")
-	ignoredPaths, err := excludePathsFromFile(ignoreFilePath)
+	// An exclusion list cannot exclude itself, or a tree could add files and keep the
+	// approved fingerprint by listing them.
+	ignoreFileInTree, err := ignoreFilePathInTree(dirPath)
 	if err != nil {
 		return "", err
 	}
-	if len(ignoredPaths) > 0 {
-		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFilePath, ignoredPaths)
+	protectedPath := ignoreFileInTree
+
+	pathsToExclude, err := resolveExcludePaths(dirPath, excludePaths)
+	if err != nil {
+		return "", err
 	}
-	excludePaths = append(excludePaths, ignoredPaths...)
-	err = calculateDirContentSha256(digestsFile, dirPath, tmpDir, excludePaths, logger)
+
+	// A flag exclusion drops the list's content from the digest, so the tree may
+	// supply any content on a later run whatever it holds now.
+	if ignoreFileInTree != "" && utils.Contains(pathsToExclude, ignoreFileInTree) {
+		protectedPath = ""
+		logger.Warn("%s is excluded by a flag, so its rules are applied while its content is not fingerprinted: "+
+			"the directory can change the list at any time, and files it comes to list stay invisible. "+
+			"Move the entries to --exclude and delete the file to get the same fingerprint without that.", ignoreFileInTree)
+	}
+
+	// Reading the located path makes the file protected, the file read and the file
+	// hashed one string. The rules are read before the file is hashed, so a tree that
+	// rewrites it in between has these rules applied to different content.
+	ignoredPaths := []string{}
+	if ignoreFileInTree != "" {
+		ignoredPaths, err = excludePathsFromFile(ignoreFileInTree)
+		if err != nil {
+			return "", err
+		}
+	}
+	if len(ignoredPaths) > 0 {
+		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFileInTree, ignoredPaths)
+	}
+	resolvedIgnoredPaths, err := resolveExcludePaths(dirPath, ignoredPaths)
+	if err != nil {
+		return "", err
+	}
+	pathsToExclude = append(pathsToExclude, resolvedIgnoredPaths...)
+
+	err = calculateDirContentSha256(digestsFile, dirPath, tmpDir, pathsToExclude, protectedPath, logger)
 	if err != nil {
 		return "", err
 	}
@@ -193,17 +228,69 @@ func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
 	return parsed.Encoded(), nil
 }
 
-// calculateDirContentSha256 calculates a sha256 digest for a directory content
-func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, excludePaths []string, logger *logger.Logger) error {
+// ignoreFilePathInTree returns the tree's ignore file as filepath.WalkDir emits
+// it, or "" when there is none.
+//
+// The name comes from the directory listing because a case-insensitive filesystem
+// stores one spelling and opens any of them. Snapshotting S3 or Azure unzips the
+// tree onto the machine running the CLI, so that filesystem is the operator's.
+//
+// An exact match wins over a folded one so that ignoreFileName owns the rules
+// where a case-sensitive filesystem holds both spellings as distinct files.
+func ignoreFilePathInTree(dirPath string) (string, error) {
+	// "" is also the answer for a tree with no ignore file, so a swallowed error
+	// would silently mean "no exclusions".
+	if _, err := os.Lstat(filepath.Join(dirPath, ignoreFileName)); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", nil
+		}
+		return "", err
+	}
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		return "", err
+	}
+	folded := ""
+	for _, entry := range entries {
+		if !strings.EqualFold(entry.Name(), ignoreFileName) {
+			continue
+		}
+		// Only a file can carry rules. The dirent type is not enough on its own: it
+		// reports a symlink to a directory as a link, and following that would fail
+		// the read where a plain directory of this name is skipped.
+		path := filepath.Join(dirPath, entry.Name())
+		if entry.IsDir() {
+			continue
+		}
+		if resolved, err := os.Stat(path); err == nil && resolved.IsDir() {
+			continue
+		}
+		if entry.Name() == ignoreFileName {
+			return path, nil
+		}
+		if folded == "" {
+			folded = path
+		}
+	}
+	return folded, nil
+}
+
+// resolveExcludePaths expands exclusion patterns, relative to dirPath, into the
+// paths they actually match.
+func resolveExcludePaths(dirPath string, excludePaths []string) ([]string, error) {
 	pathsToExclude := []string{}
 	for _, p := range excludePaths {
 		found, err := filepathx.Glob(filepath.Join(dirPath, p))
 		if err != nil {
-			return err
+			return nil, err
 		}
 		pathsToExclude = append(pathsToExclude, found...)
 	}
+	return pathsToExclude, nil
+}
 
+// calculateDirContentSha256 calculates a sha256 digest for a directory content
+func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, pathsToExclude []string, protectedPath string, logger *logger.Logger) error {
 	return filepath.WalkDir(dirPath, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -216,12 +303,16 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, exc
 		}
 
 		if utils.Contains(pathsToExclude, path) {
-			if info.IsDir() {
+			if path == protectedPath {
+				logger.Debug("keeping %s although an exclusion matches it: an exclusion list cannot exclude itself. "+
+					"Move its entries to --exclude and delete the file to recover the previous fingerprint.", path)
+			} else if info.IsDir() {
 				logger.Debug("skipping dir %s (and its contents) as it matches excluded paths", path)
 				return fs.SkipDir
+			} else {
+				logger.Debug("skipping %s as it matches excluded paths", path)
+				return nil
 			}
-			logger.Debug("skipping %s as it matches excluded paths", path)
-			return nil
 		}
 
 		// If it's a symlink, resolve the target
@@ -452,6 +543,11 @@ func excludePathsFromFile(path string) ([]string, error) {
 			if len(line) > 0 {
 				excludes = append(excludes, line)
 			}
+		}
+		// A stopped scan yields the entries read so far, so an unchecked error means
+		// fingerprinting against a rule set the file does not hold.
+		if err := scanner.Err(); err != nil {
+			return nil, fmt.Errorf("failed to read %s: %w", path, err)
 		}
 		return excludes, nil
 	} else if errors.Is(err, fs.ErrNotExist) {

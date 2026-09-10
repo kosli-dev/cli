@@ -16,7 +16,7 @@ const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc + `
 You can report the entire bucket content, or filter some of the content using ^--include^ / ^--exclude^ (literal prefix match) or ^--include-regex^ / ^--exclude-regex^ (Go regular expressions matched against the full object key).
 In all cases, the content is reported as one artifact. If you wish to report separate files/dirs within the same bucket as separate artifacts, you need to run the command twice.
 
-` + kosliIgnoreDesc
+` + kosliIgnoreDescNoExclude
 
 const snapshotS3Example = `
 # report the contents of an entire AWS S3 bucket (AWS auth provided in env variables):

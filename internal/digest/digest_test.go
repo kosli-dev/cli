@@ -1,9 +1,13 @@
 package digest
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/docker"
@@ -527,6 +531,398 @@ func (suite *DigestTestSuite) TestDirSha256() {
 	}
 }
 
+// Differential rather than golden: what matters is that the two trees differ.
+func (suite *DigestTestSuite) TestDirSha256IgnoreFileCannotHideItself() {
+	baseline := map[string]string{
+		"app/index.js":    "console.log(1)",
+		"app/lib/util.js": "exports.x = 1",
+	}
+	for i, t := range []struct {
+		name         string
+		ignore       string
+		excludePaths []string
+		wantEqual    bool
+	}{
+		{
+			name:   "a self-excluding ignore file cannot hide an added file",
+			ignore: ".kosli_ignore\napp/backdoor.js",
+		},
+		{
+			name:   "a glob matching the ignore file cannot hide it",
+			ignore: "*ignore*\napp/backdoor.js",
+		},
+		{
+			name:   "a dotted glob matching the ignore file cannot hide it",
+			ignore: ".kosli*\napp/backdoor.js",
+		},
+		{
+			// filepathx concatenates the pieces of a ** pattern, so this resolves to
+			// "dir//.kosli_ignore", which the walk never emits.
+			name:   "a ** glob matching the ignore file cannot hide it",
+			ignore: "**/.kosli_ignore\napp/backdoor.js",
+		},
+		{
+			// Bare ** excludes every path, so this differs from the baseline whether
+			// or not the ignore file is protected. It documents; the three cases above
+			// pin.
+			name:   "a bare ** cannot hide the ignore file",
+			ignore: "**\napp/backdoor.js",
+		},
+		{
+			// The entries still come from the tree, so a file listed there is hidden.
+			// Pinned as the migration path, not as a safety property.
+			name:         "--exclude of the ignore file keeps applying the entries it lists",
+			ignore:       "app/backdoor.js",
+			excludePaths: []string{".kosli_ignore"},
+			wantEqual:    true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			approved := suite.createDirWithFiles(fmt.Sprintf("approved%d", i), baseline)
+			deployed := suite.createDirWithFiles(fmt.Sprintf("deployed%d", i), baseline)
+			suite.createFileWithContent(filepath.Join(deployed, "app/backdoor.js"), "BACKDOOR")
+			suite.createFileWithContent(filepath.Join(deployed, ".kosli_ignore"), t.ignore)
+
+			approvedSha, err := DirSha256(approved, t.excludePaths, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			deployedSha, err := DirSha256(deployed, t.excludePaths, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+
+			if t.wantEqual {
+				assert.Equal(suite.T(), approvedSha, deployedSha)
+			} else {
+				assert.NotEqual(suite.T(), approvedSha, deployedSha,
+					"the added file is invisible to the fingerprint")
+			}
+		})
+	}
+}
+
+// Pinned at the function because DirSha256 cannot reach it: WalkDir reads the same
+// directory and surfaces a persistent failure itself.
+func (suite *DigestTestSuite) TestIgnoreFilePathInTreeFailsClosedOnAnUnreadableDir() {
+	dir := suite.createDirWithFiles("unreadable", map[string]string{".kosli_ignore": ".kosli_ignore"})
+	// Write and search but not read: Lstat resolves while ReadDir fails.
+	require.NoError(suite.T(), os.Chmod(dir, 0300))
+	defer func() { _ = os.Chmod(dir, 0700) }()
+
+	if _, err := os.ReadDir(dir); err == nil {
+		suite.T().Skip("directory is readable regardless of mode, probably running as root")
+	}
+
+	path, err := ignoreFilePathInTree(dir)
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), "", path)
+}
+
+func (suite *DigestTestSuite) TestDirSha256LogsWhenTheIgnoreFileIsKept() {
+	dir := suite.createDirWithFiles("kept", map[string]string{"app/index.js": "console.log(1)"})
+	suite.createFileWithContent(filepath.Join(dir, ".kosli_ignore"), ".kosli_ignore")
+
+	var out bytes.Buffer
+	_, err := DirSha256(dir, nil, logger.NewLogger(io.Discard, &out, true))
+	require.NoError(suite.T(), err)
+
+	assert.Contains(suite.T(), out.String(), "an exclusion list cannot exclude itself")
+}
+
+// The silent legs carry this test: the warning must speak only when the exclusion
+// reaches the walk.
+func (suite *DigestTestSuite) TestDirSha256WarnsOnlyWhenAFlagExclusionWeakensTheFingerprint() {
+	const warning = "is excluded by a flag"
+	for i, t := range []struct {
+		name         string
+		ignore       string
+		excludePaths []string
+		wantWarning  bool
+	}{
+		{
+			name:         "excluding an ignore file that carries rules",
+			ignore:       "logs",
+			excludePaths: []string{".kosli_ignore"},
+			wantWarning:  true,
+		},
+		{
+			name:         "excluding an empty ignore file still weakens the fingerprint",
+			ignore:       "",
+			excludePaths: []string{".kosli_ignore"},
+			wantWarning:  true,
+		},
+		{
+			name:         "excluding a comment-only ignore file still weakens the fingerprint",
+			ignore:       "# nothing to see here",
+			excludePaths: []string{".kosli_ignore"},
+			wantWarning:  true,
+		},
+		{
+			// Silent because nothing is excluded at all: filepathx resolves this to
+			// "dir//.kosli_ignore", which the walk never emits. Give ** patterns a
+			// path the walk emits and this case moves to wantWarning: true.
+			name:         "a ** spelling that never excludes anything stays silent",
+			ignore:       "logs",
+			excludePaths: []string{"**/.kosli_ignore"},
+			wantWarning:  false,
+		},
+		{
+			name:   "no flag exclusion at all",
+			ignore: "logs",
+		},
+		{
+			name:         "excluding an unrelated path",
+			ignore:       "logs",
+			excludePaths: []string{"app"},
+		},
+	} {
+		suite.Run(t.name, func() {
+			dir := suite.createDirWithFiles(fmt.Sprintf("warn%d", i), map[string]string{
+				"app/index.js": "console.log(1)",
+				"logs/a.log":   "noise",
+			})
+			suite.createFileWithContent(filepath.Join(dir, ".kosli_ignore"), t.ignore)
+
+			var warnings bytes.Buffer
+			_, err := DirSha256(dir, t.excludePaths, logger.NewLogger(io.Discard, &warnings, false))
+			require.NoError(suite.T(), err)
+
+			if t.wantWarning {
+				assert.Contains(suite.T(), warnings.String(), warning)
+			} else {
+				assert.NotContains(suite.T(), warnings.String(), warning)
+			}
+		})
+	}
+}
+
+func (suite *DigestTestSuite) TestIgnoreFilePathInTree() {
+	for i, t := range []struct {
+		name       string
+		ignoreName string
+	}{
+		{name: "the usual lower-case name", ignoreName: ".kosli_ignore"},
+		{name: "an upper-case name on a case-insensitive filesystem", ignoreName: ".KOSLI_IGNORE"},
+		{name: "a mixed-case name on a case-insensitive filesystem", ignoreName: ".Kosli_Ignore"},
+	} {
+		suite.Run(t.name, func() {
+			// The directory name must not embed ignoreName: on a case-insensitive
+			// filesystem the three cases would collapse into one directory.
+			dir := suite.createDirWithFiles(fmt.Sprintf("tree%d", i), map[string]string{"app.js": "app"})
+			suite.createFileWithContent(filepath.Join(dir, t.ignoreName), "logs")
+
+			if _, err := os.Stat(filepath.Join(dir, ".kosli_ignore")); err != nil {
+				suite.T().Skipf("filesystem is case-sensitive, so %s is not the ignore file", t.ignoreName)
+			}
+
+			got, err := ignoreFilePathInTree(dir)
+			require.NoError(suite.T(), err)
+			assert.Equal(suite.T(), filepath.Join(dir, t.ignoreName), got)
+		})
+	}
+}
+
+// The only test that fails under a folded-first mutation.
+func (suite *DigestTestSuite) TestIgnoreFilePathInTreeWithBothSpellings() {
+	dir := suite.createDirWithFiles("both", map[string]string{"app.js": "app"})
+	suite.createFileWithContent(filepath.Join(dir, ".KOSLI_IGNORE"), "")
+	suite.createFileWithContent(filepath.Join(dir, ".kosli_ignore"), "logs")
+	suite.requireCaseSensitiveDir(dir)
+
+	got, err := ignoreFilePathInTree(dir)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), filepath.Join(dir, ".kosli_ignore"), got)
+}
+
+// Documents rather than pins: a folded-first mutation locates the empty decoy, so
+// no rules are read and the trees differ regardless.
+func (suite *DigestTestSuite) TestDirSha256IgnoreFileCannotHideItselfBesideACaseVariant() {
+	baseline := map[string]string{"app/index.js": "console.log(1)"}
+	approved := suite.createDirWithFiles("approved-decoy", baseline)
+	suite.createFileWithContent(filepath.Join(approved, ".KOSLI_IGNORE"), "")
+	suite.createFileWithContent(filepath.Join(approved, ".kosli_ignore"), ".kosli_ignore")
+	suite.requireCaseSensitiveDir(approved)
+
+	deployed := suite.createDirWithFiles("deployed-decoy", baseline)
+	suite.createFileWithContent(filepath.Join(deployed, ".KOSLI_IGNORE"), "")
+	suite.createFileWithContent(filepath.Join(deployed, ".kosli_ignore"), ".kosli_ignore\napp/backdoor.js")
+	suite.createFileWithContent(filepath.Join(deployed, "app/backdoor.js"), "BACKDOOR")
+
+	approvedSha, err := DirSha256(approved, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	deployedSha, err := DirSha256(deployed, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+
+	assert.NotEqual(suite.T(), approvedSha, deployedSha,
+		"the added file is invisible to the fingerprint")
+}
+
+func (suite *DigestTestSuite) requireCaseSensitiveDir(dir string) {
+	entries, err := os.ReadDir(dir)
+	require.NoError(suite.T(), err)
+	found := 0
+	for _, entry := range entries {
+		if strings.EqualFold(entry.Name(), ".kosli_ignore") {
+			found++
+		}
+	}
+	if found < 2 {
+		suite.T().Skip("filesystem is case-insensitive, so the two spellings are one file")
+	}
+}
+
+func (suite *DigestTestSuite) TestIgnoreFilePathInTreeIgnoresADirectory() {
+	dir := suite.createDirWithFiles("dir-named-ignore", map[string]string{"app.js": "app"})
+	require.NoError(suite.T(), os.Mkdir(filepath.Join(dir, ".kosli_ignore"), 0777))
+	suite.createFileWithContent(filepath.Join(dir, ".kosli_ignore", "inside.txt"), "secret")
+
+	path, err := ignoreFilePathInTree(dir)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), "", path)
+
+	withDir, err := DirSha256(dir, []string{".kosli_ignore"}, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	withoutDir, err := DirSha256(
+		suite.createDirWithFiles("no-dir-named-ignore", map[string]string{"app.js": "app"}),
+		nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), withoutDir, withDir)
+}
+
+// Without the resolved-directory guard this reaches excludePathsFromFile and
+// aborts the fingerprint with EISDIR.
+func (suite *DigestTestSuite) TestIgnoreFilePathInTreeIgnoresASymlinkToADirectory() {
+	dir := suite.createDirWithFiles("symlink-named-ignore", map[string]string{"app.js": "app"})
+	require.NoError(suite.T(), os.Mkdir(filepath.Join(dir, "realdir"), 0777))
+	require.NoError(suite.T(), os.Symlink(filepath.Join(dir, "realdir"), filepath.Join(dir, ".kosli_ignore")))
+
+	path, err := ignoreFilePathInTree(dir)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), "", path)
+
+	_, err = DirSha256(dir, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+}
+
+func (suite *DigestTestSuite) TestIgnoreFilePathInTreeWithoutIgnoreFile() {
+	dir := suite.createDirWithFiles("no-ignore", map[string]string{"app.js": "app"})
+	got, err := ignoreFilePathInTree(dir)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), "", got)
+}
+
+// An alias is a distinct walk entry, so excluding it leaves the ignore file in the
+// digest.
+func (suite *DigestTestSuite) TestDirSha256IgnoreFileAliasesStayExcludable() {
+	baseline := map[string]string{"app/index.js": "console.log(1)"}
+	for i, t := range []struct {
+		name string
+		link func(ignorePath, aliasPath string) error
+	}{
+		{name: "a hard link of the ignore file can be excluded", link: os.Link},
+		{
+			name: "a symlink to the ignore file can be excluded",
+			link: func(ignorePath, aliasPath string) error { return os.Symlink(ignorePath, aliasPath) },
+		},
+	} {
+		suite.Run(t.name, func() {
+			withAlias := suite.createDirWithFiles(fmt.Sprintf("with-alias%d", i), baseline)
+			suite.createFileWithContent(filepath.Join(withAlias, ".kosli_ignore"), "alias")
+			require.NoError(suite.T(), t.link(
+				filepath.Join(withAlias, ".kosli_ignore"),
+				filepath.Join(withAlias, "alias"),
+			))
+
+			noAlias := suite.createDirWithFiles(fmt.Sprintf("no-alias%d", i), baseline)
+			suite.createFileWithContent(filepath.Join(noAlias, ".kosli_ignore"), "alias")
+
+			withAliasSha, err := DirSha256(withAlias, nil, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			noAliasSha, err := DirSha256(noAlias, nil, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+
+			assert.Equal(suite.T(), noAliasSha, withAliasSha,
+				"the alias is excluded, leaving the same digest as a tree without it")
+		})
+	}
+}
+
+// Only the root ignore file is read as an exclusion list.
+func (suite *DigestTestSuite) TestDirSha256NestedIgnoreFileIsExcludable() {
+	baseline := map[string]string{
+		"app.js":          "app",
+		"vendor/lib/v.js": "v",
+		".kosli_ignore":   "vendor/**/.kosli_ignore",
+	}
+	withNested := suite.createDirWithFiles("with-nested", baseline)
+	suite.createFileWithContent(filepath.Join(withNested, "vendor/lib/.kosli_ignore"), "nested-rules")
+	withoutNested := suite.createDirWithFiles("without-nested", baseline)
+
+	withNestedSha, err := DirSha256(withNested, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	withoutNestedSha, err := DirSha256(withoutNested, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), withoutNestedSha, withNestedSha,
+		"a nested .kosli_ignore is an ordinary file and the root list may exclude it")
+}
+
+// A case-insensitive filesystem lets the ignore file be named in one case and refer
+// to itself in another.
+func (suite *DigestTestSuite) TestDirSha256IgnoreFileCannotHideItselfCaseInsensitiveFS() {
+	for i, t := range []struct {
+		name       string
+		ignoreName string
+		ignore     string
+	}{
+		{
+			name:       "an upper-case ignore file naming itself cannot hide an added file",
+			ignoreName: ".KOSLI_IGNORE",
+			ignore:     ".KOSLI_IGNORE\napp/backdoor.js",
+		},
+		{
+			name:       "a mixed-case ignore file naming itself cannot hide an added file",
+			ignoreName: ".Kosli_Ignore",
+			ignore:     ".Kosli_Ignore\napp/backdoor.js",
+		},
+		{
+			name:       "an upper-case glob cannot hide an upper-case ignore file",
+			ignoreName: ".KOSLI_IGNORE",
+			ignore:     ".KOSLI*\napp/backdoor.js",
+		},
+	} {
+		suite.Run(t.name, func() {
+			baseline := map[string]string{
+				"app/index.js":    "console.log(1)",
+				"app/lib/util.js": "exports.x = 1",
+			}
+			approved := suite.createDirWithFiles(fmt.Sprintf("approved%d", i), baseline)
+			deployed := suite.createDirWithFiles(fmt.Sprintf("deployed%d", i), baseline)
+			suite.createFileWithContent(filepath.Join(deployed, "app/backdoor.js"), "BACKDOOR")
+			suite.createFileWithContent(filepath.Join(deployed, t.ignoreName), t.ignore)
+
+			if _, err := os.Stat(filepath.Join(deployed, ".kosli_ignore")); err != nil {
+				suite.T().Skipf("filesystem is case-sensitive, so %s is not read as an ignore file", t.ignoreName)
+			}
+
+			approvedSha, err := DirSha256(approved, nil, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			deployedSha, err := DirSha256(deployed, nil, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+
+			assert.NotEqual(suite.T(), approvedSha, deployedSha,
+				"the added file is invisible to the fingerprint")
+		})
+	}
+}
+
+func (suite *DigestTestSuite) createDirWithFiles(name string, files map[string]string) string {
+	dirPath := filepath.Join(suite.tmpDir, name)
+	err := os.MkdirAll(dirPath, 0777)
+	require.NoErrorf(suite.T(), err, "error creating test dir %s", dirPath)
+	for path, content := range files {
+		suite.createFileWithContent(filepath.Join(dirPath, path), content)
+	}
+	return dirPath
+}
+
 func (suite *DigestTestSuite) createNestedDir(path string, files []fileEntry, dirs []dirEntry) {
 	for _, f := range files {
 		filePath := filepath.Join(path, f.name)
@@ -880,6 +1276,17 @@ func (suite *DigestTestSuite) TestExtractImageDigestFromRepoDigest() {
 			}
 		})
 	}
+}
+
+// A stopped scan must not pass off the entries read so far as the file's rules.
+func (suite *DigestTestSuite) TestExcludePathsFromFileErrorsOnAStoppedScan() {
+	dir := suite.createDirWithFiles("stopped-scan", map[string]string{})
+	path := filepath.Join(dir, ".kosli_ignore")
+	suite.createFileWithContent(path, "#"+strings.Repeat("z", bufio.MaxScanTokenSize)+"\nlogs\n")
+
+	paths, err := excludePathsFromFile(path)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), paths)
 }
 
 func (suite *DigestTestSuite) TestGetExcludePathsFromIgnoreFile() {
