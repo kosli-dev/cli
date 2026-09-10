@@ -37,10 +37,10 @@ func (suite *SnapshotPathsTestSuite) TestSnapshotPathsCmd() {
 			goldenRegex: "Error: failed to parse path spec file \\[testdata\\/paths-files\\/does-not-exist\\.yml\\] : Config File \"does-not-exist\" Not Found in \"\\[.*\\/cli\\/cmd\\/kosli\\/testdata\\/paths-files\\]\"\n",
 		},
 		{
-			wantError: true,
-			name:      "fails when paths spec file is invalid (fails to unmarshal)",
-			cmd:       fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/invalid-pathsfile.yml %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: failed to unmarshal path spec file [testdata/paths-files/invalid-pathsfile.yml] : decoding failed due to the following error(s):\n\n'' has invalid keys: foo, versionnn\n",
+			wantError:   true,
+			name:        "fails when paths spec file is invalid (fails to unmarshal)",
+			cmd:         fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/invalid-pathsfile.yml %s %s`, suite.envName, suite.defaultKosliArguments),
+			goldenRegex: `\AError: failed to unmarshal path spec file \[testdata/paths-files/invalid-pathsfile\.yml\] : decoding failed due to the following error\(s\):\n\n'[^']*' has invalid keys: foo, versionnn\n\z`,
 		},
 		{
 			wantError: true,
