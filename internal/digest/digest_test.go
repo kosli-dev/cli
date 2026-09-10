@@ -1,7 +1,9 @@
 package digest
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -592,6 +594,74 @@ func (suite *DigestTestSuite) TestDirSha256IgnoreFileCannotHideItself() {
 			} else {
 				assert.NotEqual(suite.T(), approvedSha, deployedSha,
 					"the added file is invisible to the fingerprint")
+			}
+		})
+	}
+}
+
+// TestDirSha256WarnsOnlyWhenAFlagExclusionWeakensTheFingerprint holds the warning
+// itself, not just its effect on the digest. It is the only thing that tells an
+// operator they are in the weakened mode, it has been wrong twice - firing where
+// the exclusion was a no-op, and on a spelling the walk never matches - and it is
+// correct now only because it asks utils.Contains the same question the walk asks.
+// The silent legs are the ones that pin that.
+func (suite *DigestTestSuite) TestDirSha256WarnsOnlyWhenAFlagExclusionWeakensTheFingerprint() {
+	const warning = "is excluded by a flag"
+	for i, t := range []struct {
+		name         string
+		ignore       string
+		excludePaths []string
+		wantWarning  bool
+	}{
+		{
+			name:         "excluding an ignore file that carries rules",
+			ignore:       "logs",
+			excludePaths: []string{".kosli_ignore"},
+			wantWarning:  true,
+		},
+		{
+			name:         "excluding an empty ignore file weakens nothing",
+			ignore:       "",
+			excludePaths: []string{".kosli_ignore"},
+		},
+		{
+			name:         "excluding a comment-only ignore file weakens nothing",
+			ignore:       "# nothing to see here",
+			excludePaths: []string{".kosli_ignore"},
+		},
+		{
+			// filepathx resolves this to "dir//.kosli_ignore", which the walk's
+			// byte-exact comparison never matches, so nothing is excluded.
+			name:         "a ** spelling that never excludes anything stays silent",
+			ignore:       "logs",
+			excludePaths: []string{"**/.kosli_ignore"},
+			wantWarning:  false,
+		},
+		{
+			name:   "no flag exclusion at all",
+			ignore: "logs",
+		},
+		{
+			name:         "excluding an unrelated path",
+			ignore:       "logs",
+			excludePaths: []string{"app"},
+		},
+	} {
+		suite.Run(t.name, func() {
+			dir := suite.createDirWithFiles(fmt.Sprintf("warn%d", i), map[string]string{
+				"app/index.js": "console.log(1)",
+				"logs/a.log":   "noise",
+			})
+			suite.createFileWithContent(filepath.Join(dir, ".kosli_ignore"), t.ignore)
+
+			var warnings bytes.Buffer
+			_, err := DirSha256(dir, t.excludePaths, logger.NewLogger(io.Discard, &warnings, false))
+			require.NoError(suite.T(), err)
+
+			if t.wantWarning {
+				assert.Contains(suite.T(), warnings.String(), warning)
+			} else {
+				assert.NotContains(suite.T(), warnings.String(), warning)
 			}
 		})
 	}

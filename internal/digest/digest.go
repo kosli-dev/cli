@@ -74,7 +74,8 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	// (kosli-dev/server#6785). It is protected at the point the walk decides what to
 	// skip, using the path the walk itself emits, so no reasoning about how a
 	// pattern happens to be spelled or normalised can get between the two.
-	protectedPath := ignoreFilePathInTree(dirPath)
+	ignoreFileInTree := ignoreFilePathInTree(dirPath)
+	protectedPath := ignoreFileInTree
 
 	pathsToExclude, err := resolveExcludePaths(dirPath, excludePaths)
 	if err != nil {
@@ -84,10 +85,8 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	// An operator flag may still exclude it, which is the migration path off the
 	// old behaviour. That keeps the file out of the fingerprint while the entries it
 	// carries are still applied, so the tree decides what is measured again.
-	if protectedPath != "" && utils.Contains(pathsToExclude, protectedPath) {
-		logger.Warn("%s is excluded by a flag, so the paths it lists are still applied while the file itself is not fingerprinted. "+
-			"A file added to the directory and listed in %s stays invisible. "+
-			"Move the entries to --exclude and delete the file to get the same fingerprint without that.", protectedPath, ignoreFileName)
+	flagExcludesIgnoreFile := ignoreFileInTree != "" && utils.Contains(pathsToExclude, ignoreFileInTree)
+	if flagExcludesIgnoreFile {
 		protectedPath = ""
 	}
 
@@ -98,6 +97,14 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	}
 	if len(ignoredPaths) > 0 {
 		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFilePath, ignoredPaths)
+		// Warn only once the file is known to carry rules. An empty or comment-only
+		// one that a flag excludes weakens nothing, and the message's subject is the
+		// paths it lists.
+		if flagExcludesIgnoreFile {
+			logger.Warn("%s is excluded by a flag, so the paths it lists are still applied while the file itself is not fingerprinted. "+
+				"A file added to the directory and listed in %s stays invisible. "+
+				"Move the entries to --exclude and delete the file to get the same fingerprint without that.", ignoreFileInTree, ignoreFileName)
+		}
 	}
 	resolvedIgnoredPaths, err := resolveExcludePaths(dirPath, ignoredPaths)
 	if err != nil {
