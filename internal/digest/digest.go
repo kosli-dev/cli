@@ -98,6 +98,15 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	if err != nil {
 		return "", err
 	}
+	// Locating the file and reading its rules are two reads of the same path, so
+	// they can disagree: a rename between them leaves nothing protected while the
+	// rules are still applied, which is a self-excluding entry working again. That
+	// race is winnable by an attacker with write access to the tree, the adversary
+	// this protects against, so refuse rather than fingerprint unprotected.
+	if ignoreFileInTree == "" && len(ignoredPaths) > 0 {
+		return "", fmt.Errorf("%s was not in the listing of %s but its rules were read, "+
+			"so refusing to fingerprint with the exclusion list unprotected", ignoreFileName, dirPath)
+	}
 	if len(ignoredPaths) > 0 {
 		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFileInTree, ignoredPaths)
 		// Warn only once the file is known to carry rules. An empty or comment-only
@@ -264,20 +273,18 @@ func ignoreFilePathInTree(dirPath string) (string, error) {
 	}
 	folded := ""
 	for _, entry := range entries {
+		// Only a file can carry rules, and protectedPath means "the file whose rules
+		// are read". A directory of this name yields no rules, so leaving it
+		// unprotected keeps it excludable like any other directory.
+		if entry.IsDir() {
+			continue
+		}
 		if entry.Name() == ignoreFileName {
 			return filepath.Join(dirPath, entry.Name()), nil
 		}
 		if folded == "" && strings.EqualFold(entry.Name(), ignoreFileName) {
 			folded = filepath.Join(dirPath, entry.Name())
 		}
-	}
-	if folded == "" {
-		// The Lstat above resolved, so the file whose rules will be read exists. Not
-		// finding it in the listing means the two reads disagree, and answering "none"
-		// would leave nothing protected while its entries are still applied. Refuse
-		// instead: a rename between the two calls is winnable by an attacker with
-		// write access to the tree, which is the adversary this protects against.
-		return "", fmt.Errorf("%s exists in %s but was not found in its directory listing", ignoreFileName, dirPath)
 	}
 	return folded, nil
 }

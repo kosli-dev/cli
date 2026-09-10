@@ -802,6 +802,28 @@ func (suite *DigestTestSuite) requireCaseSensitiveDir(dir string) {
 	}
 }
 
+// TestIgnoreFilePathInTreeIgnoresADirectory pins that protectedPath means "the
+// file whose rules are read". A directory of that name carries no rules, so
+// protecting it would only stop it being excluded like any other directory.
+func (suite *DigestTestSuite) TestIgnoreFilePathInTreeIgnoresADirectory() {
+	dir := suite.createDirWithFiles("dir-named-ignore", map[string]string{"app.js": "app"})
+	require.NoError(suite.T(), os.Mkdir(filepath.Join(dir, ".kosli_ignore"), 0777))
+	suite.createFileWithContent(filepath.Join(dir, ".kosli_ignore", "inside.txt"), "secret")
+
+	path, err := ignoreFilePathInTree(dir)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), "", path)
+
+	// And it stays excludable: the digest matches a tree without it.
+	withDir, err := DirSha256(dir, []string{".kosli_ignore"}, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	withoutDir, err := DirSha256(
+		suite.createDirWithFiles("no-dir-named-ignore", map[string]string{"app.js": "app"}),
+		nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), withoutDir, withDir)
+}
+
 // TestIgnoreFilePathInTreeWithoutIgnoreFile pins that a tree with no ignore file
 // protects nothing, rather than a path that does not exist.
 func (suite *DigestTestSuite) TestIgnoreFilePathInTreeWithoutIgnoreFile() {
