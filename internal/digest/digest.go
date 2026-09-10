@@ -93,19 +93,23 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 		protectedPath = ""
 	}
 
-	ignoreFilePath := filepath.Join(dirPath, ignoreFileName)
-	ignoredPaths, err := excludePathsFromFile(ignoreFilePath)
-	if err != nil {
-		return "", err
-	}
-	// Locating the file and reading its rules are two reads of the same path, so
-	// they can disagree: a rename between them leaves nothing protected while the
-	// rules are still applied, which is a self-excluding entry working again. That
-	// race is winnable by an attacker with write access to the tree, the adversary
-	// this protects against, so refuse rather than fingerprint unprotected.
-	if ignoreFileInTree == "" && len(ignoredPaths) > 0 {
-		return "", fmt.Errorf("%s was not in the listing of %s but its rules were read, "+
-			"so refusing to fingerprint with the exclusion list unprotected", ignoreFileName, dirPath)
+	// The rules are read from the path that was located, not from one rebuilt out
+	// of ignoreFileName. Rebuilding it made "the file protected" and "the file whose
+	// rules are applied" two independently resolved names, and a rename between the
+	// two reads could make them disagree: rules applied with the wrong file, or no
+	// file, protected. Reading the located path makes them the same string, and the
+	// walk emits that same string by the same construction.
+	//
+	// One race is left and is not closable here: the rules are read before the file
+	// is hashed, so a tree that rewrites it in between has its old rules applied to
+	// newly hashed content. Closing that means hashing the bytes that were read,
+	// which is a larger change than this.
+	ignoredPaths := []string{}
+	if ignoreFileInTree != "" {
+		ignoredPaths, err = excludePathsFromFile(ignoreFileInTree)
+		if err != nil {
+			return "", err
+		}
 	}
 	if len(ignoredPaths) > 0 {
 		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFileInTree, ignoredPaths)
