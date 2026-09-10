@@ -746,11 +746,13 @@ func (suite *DigestTestSuite) TestIgnoreFilePathInTree() {
 	}
 }
 
-// TestIgnoreFilePathInTreeWithBothSpellings pins that the file whose rules are
-// read is the file protected. excludePathsFromFile opens ignoreFileName
-// byte-exact, so on a case-sensitive filesystem - which the CI runner is - a tree
-// holding both spellings must protect the exact one. Protecting the spelling that
-// folds first would leave the rules file free to exclude itself again.
+// TestIgnoreFilePathInTreeWithBothSpellings pins which file the tree's rules are
+// taken from. On a case-sensitive filesystem - which the CI runner is - a tree can
+// hold both spellings as two distinct files, and every release before this one read
+// the rules from ".kosli_ignore" byte-exact. Returning the spelling that folds
+// first would hand rule authority to a previously inert ".KOSLI_IGNORE" and change
+// the fingerprint with it. Since the located path is now also the path whose rules
+// are read, this is the only test that fails under a folded-first mutation.
 func (suite *DigestTestSuite) TestIgnoreFilePathInTreeWithBothSpellings() {
 	dir := suite.createDirWithFiles("both", map[string]string{"app.js": "app"})
 	suite.createFileWithContent(filepath.Join(dir, ".KOSLI_IGNORE"), "")
@@ -762,9 +764,15 @@ func (suite *DigestTestSuite) TestIgnoreFilePathInTreeWithBothSpellings() {
 	assert.Equal(suite.T(), filepath.Join(dir, ".kosli_ignore"), got)
 }
 
-// TestDirSha256IgnoreFileCannotHideItselfBesideACaseVariant is the fingerprint-level
-// form of the same thing. A decoy ".KOSLI_IGNORE" committed from a case-insensitive
-// machine must not shield the real ignore file from being fingerprinted.
+// TestDirSha256IgnoreFileCannotHideItselfBesideACaseVariant exercises the same tree
+// end to end: a decoy ".KOSLI_IGNORE" committed from a case-insensitive machine
+// must not shield the real ignore file from being fingerprinted.
+//
+// It documents rather than pins. Once the rules are read from the located path, a
+// folded-first mutation locates the empty decoy, so no rules are read and the
+// deployed tree differs from the baseline anyway - verified on a case-sensitive
+// APFS volume, where this passes under that mutation and only the unit test above
+// fails. It pinned the rule before that change.
 func (suite *DigestTestSuite) TestDirSha256IgnoreFileCannotHideItselfBesideACaseVariant() {
 	baseline := map[string]string{"app/index.js": "console.log(1)"}
 	approved := suite.createDirWithFiles("approved-decoy", baseline)

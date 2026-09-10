@@ -255,16 +255,25 @@ func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
 // stored name, so this is the exact string the walk will compare, which is what
 // makes protecting the file independent of how an exclusion pattern is spelled.
 //
-// An exact match wins over a folded one because excludePathsFromFile reads the
-// rules from ignoreFileName byte-exact. On a case-sensitive filesystem a tree can
-// hold both spellings as two distinct files, and protecting the one that folds
-// first would leave the file whose entries are actually applied free to exclude
-// itself. Other spellings are ordinary files there, excludable like any other.
+// An exact match wins over a folded one to keep the meaning of the ignore file
+// stable, not for safety: since the caller reads the rules from whatever this
+// returns, either answer would protect the file it read. On a case-sensitive
+// filesystem a tree can hold both spellings as two distinct files, and every
+// release before this one read the rules from ignoreFileName byte-exact, so
+// returning the one that folds first would hand rule authority to a previously
+// inert ".KOSLI_IGNORE" and change the fingerprint with it. Other spellings are
+// ordinary files there, excludable like any other.
+//
+// Skipping directories interacts with that: where ignoreFileName is a directory
+// and another spelling is a file, the file is returned and its rules apply, where
+// before they were not read at all. Contrived, and the alternative is to protect a
+// path that can carry no rules.
 func ignoreFilePathInTree(dirPath string) (string, error) {
-	// Errors are returned rather than swallowed as "no ignore file". The rules are
-	// read separately by excludePathsFromFile, so answering "" on a failed read
-	// would let the two disagree: nothing protected while the file's entries are
-	// still applied, which is a self-excluding entry working again.
+	// Errors are returned rather than swallowed as "no ignore file", because "" is
+	// also the answer for a tree that has none, and the caller reads the rules from
+	// whatever this returns. A failed read must not be indistinguishable from an
+	// absent file: that would fingerprint a tree whose exclusion list was never
+	// established.
 	if _, err := os.Lstat(filepath.Join(dirPath, ignoreFileName)); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", nil
