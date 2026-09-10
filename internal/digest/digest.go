@@ -253,7 +253,7 @@ func ignoreFilePathInTree(dirPath string) (string, error) {
 	folded := ""
 	for _, entry := range entries {
 		// A directory of this name carries no rules; a symlink to one is matched by
-		// dirent type as a link, so it is not caught here and yields an empty list.
+		// dirent type as a link, so it is not caught here and fails the read instead.
 		if entry.IsDir() {
 			continue
 		}
@@ -535,6 +535,11 @@ func excludePathsFromFile(path string) ([]string, error) {
 			if len(line) > 0 {
 				excludes = append(excludes, line)
 			}
+		}
+		// A stopped scan yields the entries read so far, so an unchecked error means
+		// fingerprinting against a rule set the file does not hold.
+		if err := scanner.Err(); err != nil {
+			return nil, fmt.Errorf("failed to read %s: %w", path, err)
 		}
 		return excludes, nil
 	} else if errors.Is(err, fs.ErrNotExist) {

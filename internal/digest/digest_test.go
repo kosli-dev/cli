@@ -1,6 +1,7 @@
 package digest
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -1260,6 +1261,17 @@ func (suite *DigestTestSuite) TestExtractImageDigestFromRepoDigest() {
 			}
 		})
 	}
+}
+
+// A stopped scan must not pass off the entries read so far as the file's rules.
+func (suite *DigestTestSuite) TestExcludePathsFromFileErrorsOnAStoppedScan() {
+	dir := suite.createDirWithFiles("stopped-scan", map[string]string{})
+	path := filepath.Join(dir, ".kosli_ignore")
+	suite.createFileWithContent(path, "#"+strings.Repeat("z", bufio.MaxScanTokenSize)+"\nlogs\n")
+
+	paths, err := excludePathsFromFile(path)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), paths)
 }
 
 func (suite *DigestTestSuite) TestGetExcludePathsFromIgnoreFile() {
