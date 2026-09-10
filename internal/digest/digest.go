@@ -252,7 +252,8 @@ func ignoreFilePathInTree(dirPath string) (string, error) {
 	}
 	folded := ""
 	for _, entry := range entries {
-		// A directory of this name carries no rules.
+		// A directory of this name carries no rules; a symlink to one is matched by
+		// dirent type as a link, so it is not caught here and yields an empty list.
 		if entry.IsDir() {
 			continue
 		}
