@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -25,7 +28,6 @@ import (
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
-	"github.com/kosli-dev/cli/internal/utils"
 )
 
 // EcsEnvRequest represents the PUT request body to be sent to kosli from ECS
@@ -553,10 +555,62 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 	return s3Data, nil
 }
 
+// localPathForS3Key turns an S3 object key into a path under the download
+// directory, or rejects it. A key holding a ".." segment resolves onto a path
+// it does not name, taking another key's place or leaving the directory.
+func localPathForS3Key(key string) (string, error) {
+	// Windows separates on '\\' and drops trailing dots and spaces from a
+	// name, so ".. " and "..." resolve as ".." there.
+	segments := strings.FieldsFunc(key, func(r rune) bool { return r == '/' || r == '\\' })
+	for _, segment := range segments {
+		if strings.HasPrefix(segment, "..") && strings.TrimRight(segment, ". ") == "" {
+			return "", unusableS3KeyError(key, `contains a segment that resolves to ".."`)
+		}
+	}
+
+	// A leading '\\' is left for filepath.IsLocal: rooted on Windows, an
+	// ordinary filename elsewhere.
+	rel := strings.TrimLeft(key, "/")
+	if filepath.Clean(rel) == "." {
+		return "", unusableS3KeyError(key, "names no file")
+	}
+	if !filepath.IsLocal(rel) {
+		return "", unusableS3KeyError(key, "is not a local path")
+	}
+
+	return rel, nil
+}
+
+// unusableS3KeyError is only for failures the key itself causes. Advising
+// exclusion on a machine fault such as a full disk would drop a legitimate
+// object from the snapshot.
+func unusableS3KeyError(key, reason string) error {
+	return fmt.Errorf("object key [%s] cannot be stored as a local file: %s; exclude it with --exclude-regex, or narrow the include filter if one is set", key, reason)
+}
+
 func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket string, logger *logger.Logger) error {
-	file, err := utils.CreateFile(filepath.Join(dirName, key))
+	rel, err := localPathForS3Key(key)
 	if err != nil {
 		return err
+	}
+	dest := filepath.Join(dirName, rel)
+	err = os.MkdirAll(filepath.Dir(dest), 0770)
+	if errors.Is(err, syscall.ENOTDIR) {
+		// Legal in S3, impossible on disk: an object "a" and a key under "a/".
+		return unusableS3KeyError(key, "one of its parent prefixes has already been downloaded as an object")
+	}
+	if err != nil {
+		return fmt.Errorf("object key [%s]: %w", key, err)
+	}
+	// O_EXCL fails the snapshot when two keys map to one file rather than
+	// letting the second overwrite the first. Directories are not covered:
+	// "A/x" and "a/y" share one on a case-insensitive filesystem.
+	file, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+	if errors.Is(err, fs.ErrExist) {
+		return unusableS3KeyError(key, "another object already downloaded to the same local path")
+	}
+	if err != nil {
+		return fmt.Errorf("object key [%s]: %w", key, err)
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
@@ -570,7 +624,7 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 		WriterAt: file,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to download object key [%s]: %w", key, err)
 	}
 	if result.ContentLength != nil {
 		logger.Debug("downloaded", file.Name(), *result.ContentLength, "bytes")

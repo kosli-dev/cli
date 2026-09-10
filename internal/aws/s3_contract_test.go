@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -41,6 +42,24 @@ func runS3ContractTests(t *testing.T, client S3API, bucket, existingKey string) 
 			require.NotEmpty(t, *object.Key)
 			require.NotNil(t, object.LastModified, "LastModified should be present")
 		}
+	})
+
+	// Which of two colliding keys fails a snapshot follows from this order.
+	// Paginated because a single page can hold one key, sorted either way.
+	t.Run("ListObjectsV2 returns keys in lexicographic order", func(t *testing.T) {
+		var keys []string
+		paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
+			Bucket: aws.String(bucket),
+		})
+		for paginator.HasMorePages() {
+			page, err := paginator.NextPage(context.TODO())
+			require.NoError(t, err)
+			for _, object := range page.Contents {
+				keys = append(keys, *object.Key)
+			}
+		}
+		require.GreaterOrEqual(t, len(keys), 2, "the bucket must hold at least two objects for order to be checked")
+		require.True(t, slices.IsSorted(keys), "S3 returns keys in UTF-8 binary order: %v", keys)
 	})
 
 	t.Run("ListObjectsV2 with MaxKeys paginates via ContinuationToken", func(t *testing.T) {
