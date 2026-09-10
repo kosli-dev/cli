@@ -42,8 +42,8 @@ func (suite *SnapshotPathsTestSuite) TestSnapshotPathsCmd() {
 			wantError: true,
 			name:      "fails when paths spec file is invalid (fails to unmarshal)",
 			cmd:       fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/invalid-pathsfile.yml %s %s`, suite.envName, suite.defaultKosliArguments),
-			// the quoted decode-path name is '' at the root today, but varies
-			// across viper/mapstructure versions — match it loosely and pin everything else
+			// Quoted decode-path name is '' at the root today, but varies across
+			// viper/mapstructure versions — match it loosely and pin everything else
 			goldenRegex: `\AError: failed to unmarshal path spec file \[testdata/paths-files/invalid-pathsfile\.yml\] : decoding failed due to the following error\(s\):\n\n'[^']*' has invalid keys: foo, versionnn\n\z`,
 		},
 		{
