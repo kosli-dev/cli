@@ -90,6 +90,11 @@ jobs:
       KOSLI_ORG: kosli-public
       checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
       report_to_kosli: ${{ needs.pre-build.outputs.report_to_kosli }}
+      # Push events only. This workflow also runs on pull_request_target, where
+      # github.ref is the base branch while checkout_ref is the PR head, so an
+      # upload there would attribute PR findings to main. Tags never reach this
+      # workflow (see branches-ignore above); release.yml leaves this unset.
+      upload_sarif: ${{ github.event_name == 'push' }}
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
