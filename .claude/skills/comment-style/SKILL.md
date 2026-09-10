@@ -43,7 +43,6 @@ A PR or issue ref as a pointer is fine (`# … (#5765)`) — but it supplements 
 does not replace stating it.
 
 ## Examples
-## Examples
 Bad — resemblance, no information about this code:
 `# Mirrors the deletability re-check pending box`
 
