@@ -26,6 +26,13 @@ on:
         required: false
         type: boolean
         default: true
+      upload_sarif:
+        # Upload the Snyk Code SARIF report to GitHub code scanning. Off by
+        # default: only a caller triggered by a push to a branch can attribute
+        # the results to the right ref, so the decision belongs at the call site.
+        required: false
+        type: boolean
+        default: false
       report_to_kosli:
         required: false
         type: string
@@ -221,12 +228,15 @@ jobs:
           snyk code test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.sarif --prune-repeated-subdependencies
 
     - name: Upload Snyk Code results to GitHub code scanning
-      # snyk exits non-zero when it finds issues, so upload on failure too.
-      # Branch pushes only: on pull_request_target (dependabot) github.ref is the
-      # base branch while the checkout is the PR head, so uploading there would
-      # attribute PR findings to main. Tag pushes (release.yml) are skipped - a
-      # release tag is not a useful code scanning baseline.
-      if: ${{ (success() || failure()) && github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/') }}
+      # snyk exits non-zero when it finds issues, so upload on failure too;
+      # hashFiles guards the case where snyk (or an earlier step) died before
+      # writing the report, so the real error stays the visible one.
+      # Soft-failure on purpose: the Kosli attestation below is the gate, while
+      # `docker` in main.yml and `goreleaser`/`binary-provenance` in release.yml
+      # all need this workflow - a SARIF size limit or a GitHub 5xx should not
+      # block a publish over ancillary reporting.
+      if: ${{ (success() || failure()) && inputs.upload_sarif && hashFiles('snyk-code.sarif') != '' }}
+      continue-on-error: true
       uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
       with:
         sarif_file: snyk-code.sarif
@@ -274,7 +284,7 @@ jobs:
       env:
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run:
-          snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-dependency.json --prune-repeated-subdependencies
+          snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-dependency.sarif --prune-repeated-subdependencies
 
     - name: Report Snyk Test to Kosli
       if:  ${{ (success() || failure()) && inputs.report_to_kosli != 'none' }}
@@ -284,5 +294,5 @@ jobs:
            --name snyk-dependency-test
            --flow ${{ inputs.FLOW_NAME }}
            --trail ${{ inputs.TRAIL_NAME }}
-           --scan-results  snyk-dependency.json
+           --scan-results  snyk-dependency.sarif
            --org ${{ inputs.KOSLI_ORG }}
