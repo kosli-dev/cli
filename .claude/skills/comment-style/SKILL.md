@@ -14,8 +14,8 @@ description: >
 A comment must add information that is not already in the code. If deleting the comment
 loses no information, delete it. Default to no comment.
 
-Exception: doc comments a language's conventions require — Go godoc on exported
-identifiers, for example — stay even when they restate the signature.
+Exception: doc comments a language's conventions require (for example, Go godoc on exported
+identifiers) stay even when they restate the signature.
 
 ## When to Use This
 - Writing or editing inline comments, docstrings, or block comments
@@ -39,21 +39,21 @@ identifiers, for example — stay even when they restate the signature.
 One sentence carrying the load-bearing fact. When a comment sprawls, find the single thing
 a future reader actually needs and keep only that.
 
-A PR or issue ref as a pointer is fine (`# … (#5765)`) — but it supplements the fact, it
+A PR or issue ref as a pointer is fine (`// … (#5765)`) — but it supplements the fact, it
 does not replace stating it.
 
 ## Examples
 Bad — resemblance, no information about this code:
-`# Mirrors the deletability re-check pending box`
+`// Mirrors the deletability re-check pending box`
 
 Bad — history and justification burying one fact:
-`# Without this the analytics preflight only ran from the client-triggered background`
-`# check, so an operator who navigated away before the initiate response landed got a`
-`# plan with no analytics check recorded...`
+`// Without this the analytics preflight only ran from the client-triggered background`
+`// check, so an operator who navigated away before the initiate response landed got a`
+`// plan with no analytics check recorded...`
 
 Good — same fact, stated precisely (ref kept as a pointer):
-`# Record the analytics preflight here too — the post-initiate auto-run misses it`
-`# when the client navigates away before the initiate response lands (#5765).`
+`// Record the analytics preflight here too — the post-initiate auto-run misses it`
+`// when the client navigates away before the initiate response lands (#5765).`
 
 Good — non-obvious what:
 `// CommitsCount returns -1 when the trail has no commits yet.`
