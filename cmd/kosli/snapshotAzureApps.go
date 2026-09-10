@@ -31,7 +31,7 @@ from any other registry is read without credentials, which works for a public im
 one; report those apps with ^--digests-source logs^ instead.
 
 ^--dry-run^ suppresses only the request to Kosli. Azure discovery and registry lookups still run.
-` + kosliIgnoreDesc + azureAuthDesc
+` + kosliIgnoreDescNoExclude + azureAuthDesc
 
 const snapshotAzureAppsExample = `
 # Use Azure Container Registry to get the digests for artifacts in a snapshot

@@ -252,16 +252,24 @@ func ignoreFilePathInTree(dirPath string) (string, error) {
 	}
 	folded := ""
 	for _, entry := range entries {
-		// A directory of this name carries no rules; a symlink to one is matched by
-		// dirent type as a link, so it is not caught here and fails the read instead.
+		if !strings.EqualFold(entry.Name(), ignoreFileName) {
+			continue
+		}
+		// Only a file can carry rules. The dirent type is not enough on its own: it
+		// reports a symlink to a directory as a link, and following that would fail
+		// the read where a plain directory of this name is skipped.
+		path := filepath.Join(dirPath, entry.Name())
 		if entry.IsDir() {
 			continue
 		}
-		if entry.Name() == ignoreFileName {
-			return filepath.Join(dirPath, entry.Name()), nil
+		if resolved, err := os.Stat(path); err == nil && resolved.IsDir() {
+			continue
 		}
-		if folded == "" && strings.EqualFold(entry.Name(), ignoreFileName) {
-			folded = filepath.Join(dirPath, entry.Name())
+		if entry.Name() == ignoreFileName {
+			return path, nil
+		}
+		if folded == "" {
+			folded = path
 		}
 	}
 	return folded, nil
