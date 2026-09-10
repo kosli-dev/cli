@@ -291,13 +291,16 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, pat
 			return nil
 		}
 
-		if path != protectedPath && utils.Contains(pathsToExclude, path) {
-			if info.IsDir() {
+		if utils.Contains(pathsToExclude, path) {
+			if path == protectedPath {
+				logger.Debug("keeping %s although an exclusion matches it: an exclusion list cannot exclude itself", path)
+			} else if info.IsDir() {
 				logger.Debug("skipping dir %s (and its contents) as it matches excluded paths", path)
 				return fs.SkipDir
+			} else {
+				logger.Debug("skipping %s as it matches excluded paths", path)
+				return nil
 			}
-			logger.Debug("skipping %s as it matches excluded paths", path)
-			return nil
 		}
 
 		// If it's a symlink, resolve the target

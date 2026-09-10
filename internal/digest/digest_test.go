@@ -630,8 +630,13 @@ func (suite *DigestTestSuite) TestDirSha256WarnsOnlyWhenAFlagExclusionWeakensThe
 			excludePaths: []string{".kosli_ignore"},
 		},
 		{
-			// filepathx resolves this to "dir//.kosli_ignore", which the walk's
-			// byte-exact comparison never matches, so nothing is excluded.
+			// The property is that the warning is silent because nothing is excluded,
+			// not because of how this particular pattern fails to resolve. filepathx
+			// concatenates the pieces of a ** pattern, so this becomes
+			// "dir//.kosli_ignore", which the walk's byte-exact comparison never
+			// matches, making the flag a silent no-op - a separate pre-existing wart.
+			// If that is ever fixed, this case starts excluding the file and belongs
+			// in the wantWarning: true group.
 			name:         "a ** spelling that never excludes anything stays silent",
 			ignore:       "logs",
 			excludePaths: []string{"**/.kosli_ignore"},
