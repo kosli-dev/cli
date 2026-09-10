@@ -14,6 +14,9 @@ description: >
 A comment must add information that is not already in the code. If deleting the comment
 loses no information, delete it. Default to no comment.
 
+Exception: doc comments a language's conventions require — Go godoc on exported
+identifiers, for example — stay even when they restate the signature.
+
 ## When to Use This
 - Writing or editing inline comments, docstrings, or block comments
 - Deciding whether a line or block needs a comment at all
