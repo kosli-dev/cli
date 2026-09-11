@@ -31,16 +31,20 @@ func (suite *SnapshotPathsTestSuite) SetupSuite() {
 func (suite *SnapshotPathsTestSuite) TestSnapshotPathsCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError:   true,
-			name:        "fails when paths spec file does not exist",
-			cmd:         fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/does-not-exist.yml %s %s`, suite.envName, suite.defaultKosliArguments),
-			goldenRegex: "Error: failed to parse path spec file \\[testdata\\/paths-files\\/does-not-exist\\.yml\\] : Config File \"does-not-exist\" Not Found in \"\\[.*\\/cli\\/cmd\\/kosli\\/testdata\\/paths-files\\]\"\n",
+			wantError: true,
+			name:      "fails when paths spec file does not exist",
+			cmd:       fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/does-not-exist.yml %s %s`, suite.envName, suite.defaultKosliArguments),
+			// Anchored at both ends; the only loose part is the absolute path
+			// prefix of the search dir, which varies by checkout location.
+			goldenRegex: `\AError: failed to parse path spec file \[testdata/paths-files/does-not-exist\.yml\] : Config File "does-not-exist" Not Found in "\[[^"\]]*/cli/cmd/kosli/testdata/paths-files\]"\n\z`,
 		},
 		{
 			wantError: true,
 			name:      "fails when paths spec file is invalid (fails to unmarshal)",
 			cmd:       fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/invalid-pathsfile.yml %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: failed to unmarshal path spec file [testdata/paths-files/invalid-pathsfile.yml] : decoding failed due to the following error(s):\n\n'' has invalid keys: foo, versionnn\n",
+			// Quoted decode-path name is '' at the root today, but varies across
+			// viper/mapstructure versions — match it loosely and pin everything else
+			goldenRegex: `\AError: failed to unmarshal path spec file \[testdata/paths-files/invalid-pathsfile\.yml\] : decoding failed due to the following error\(s\):\n\n'[^']*' has invalid keys: foo, versionnn\n\z`,
 		},
 		{
 			wantError: true,
