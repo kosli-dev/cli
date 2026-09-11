@@ -304,20 +304,28 @@ func TestNullElementsInAnSPDX21DocumentDoNotCrash(t *testing.T) {
 	})
 }
 
-func TestTimestampFormsTheServerAcceptsAreNotRefusedHere(t *testing.T) {
-	// RFC 3339 permits a lowercase t and z (section 5.6) and a leap second. Go's
-	// time.Parse accepts neither, so checking with it would refuse a file the
-	// server would take — a rejection invented by the CLI.
-	for _, tc := range []struct{ name, file, want string }{
-		{"lowercase t and z", "cyclonedx-timestamp-lowercase-t-z.json", "2020-04-13t20:20:39z"},
-		{"leap second", "cyclonedx-timestamp-leap-second.json", "2020-04-13T23:59:60Z"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			got, err := ProcessSBOMFile(fixture(tc.file))
+func TestTimestampsAreJudgedAsTheServerJudgesThem(t *testing.T) {
+	// The server uppercases the value and matches rfc3339_validator, so the
+	// lowercase forms RFC 3339 permits are accepted while a leap second is not:
+	// that validator's own docstring says leap seconds are unsupported.
+	t.Run("lowercase t and z are accepted", func(t *testing.T) {
+		got, err := ProcessSBOMFile(fixture("cyclonedx-timestamp-lowercase-t-z.json"))
 
-			require.NoError(t, err)
-			require.NotNil(t, got.Document.CreatedAt)
-			assert.Equal(t, tc.want, *got.Document.CreatedAt)
+		require.NoError(t, err)
+		require.NotNil(t, got.Document.CreatedAt)
+		assert.Equal(t, "2020-04-13t20:20:39z", *got.Document.CreatedAt)
+	})
+
+	for _, tc := range []struct{ name, file, want string }{
+		{"leap second", "cyclonedx-timestamp-leap-second.json", "2020-04-13T23:59:60Z"},
+		{"year zero", "cyclonedx-timestamp-year-zero.json", "0000-01-01T00:00:00Z"},
+		{"day its month does not have", "cyclonedx-timestamp-day-out-of-range.json", "2020-02-30T20:20:39Z"},
+	} {
+		t.Run(tc.name+" is refused", func(t *testing.T) {
+			_, err := ProcessSBOMFile(fixture(tc.file))
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.want)
 		})
 	}
 }

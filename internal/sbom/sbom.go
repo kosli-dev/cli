@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	spdxjson "github.com/spdx/tools-golang/json"
@@ -61,7 +62,6 @@ var (
 	// block, which would otherwise be read as its own version.
 	tagValueTextBlock  = regexp.MustCompile(`(?s)<text>.*?</text>`)
 	cycloneDXNamespace = regexp.MustCompile(`^https?://cyclonedx\.org/schema/bom/(\d+\.\d+)$`)
-	rfc3339DateTime    = regexp.MustCompile(`(?i)^\d{4}-\d{2}-\d{2}t\d{2}:\d{2}:\d{2}(\.\d+)?(z|[+-]\d{2}:\d{2})$`)
 )
 
 // ProcessSBOMFile reads an SBOM file and returns its format and a normalised
@@ -203,10 +203,6 @@ func readSPDX(read func(r io.Reader) (*spdx.Document, error), content []byte, de
 	return &SBOMData{Format: "spdx-" + declaredVersion, Document: document}, nil
 }
 
-// safeSPDXRead guards the library call alone. A malformed document can make the
-// readers dereference a nil element rather than return an error, and a file the
-// user supplied must not end the process. Widening this to our own mapping code
-// would report a defect here as the user's file being bad.
 // normaliseNullElements gives every version the handling 2.2 and 2.3 get while
 // unmarshalling: they drop null relationships and reject a null package. The 2.1
 // model has no such hook, so nulls survive conversion and reach code that
@@ -227,6 +223,10 @@ func normaliseNullElements(doc *spdx.Document) error {
 	return nil
 }
 
+// safeSPDXRead guards the library call alone. A malformed document can make the
+// readers dereference a nil element rather than return an error, and a file the
+// user supplied must not end the process. Widening this to our own mapping code
+// would report a defect here as the user's file being bad.
 func safeSPDXRead(read func(r io.Reader) (*spdx.Document, error), content []byte) (doc *spdx.Document, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
@@ -255,15 +255,17 @@ func documentFromCycloneDX(bom *cdx.BOM) (*Document, error) {
 // schema types this field as a date-time, so a generator emitting a bare date or
 // a local time with no offset would fail there instead, after the upload.
 //
-// The check mirrors the server's validator rather than time.Parse, which is
-// stricter than RFC 3339 in three ways that matter here: the format permits a
-// lowercase t and z (section 5.6) and a leap second, and Go accepts neither.
-// Being stricter than the server would refuse a file the server would take.
+// The server validates by uppercasing the value and matching rfc3339_validator,
+// so uppercasing before time.Parse admits the lowercase t and z RFC 3339 permits
+// (section 5.6) while still refusing what that validator refuses: a leap second,
+// an hour of 24, an offset without a colon, and a day its month does not have.
+// Year zero is the one value the two disagree on, so it is checked here.
 func createdAt(timestamp string) (*string, error) {
 	if timestamp == "" {
 		return nil, nil
 	}
-	if !rfc3339DateTime.MatchString(timestamp) {
+	parsed, err := time.Parse(time.RFC3339, strings.ToUpper(timestamp))
+	if err != nil || parsed.Year() == 0 {
 		return nil, fmt.Errorf("the SBOM's creation timestamp %q is not an RFC 3339 date-time", timestamp)
 	}
 	return &timestamp, nil
