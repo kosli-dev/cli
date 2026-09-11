@@ -292,6 +292,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	newComplianceStatusFlag         = "The new compliance status to set on the attestation."
 	originalAttestationTypeFlag     = "The original attestation type being overridden (e.g. generic, snyk, junit, sonar, jira, pull_request, custom)."
 	attestationDecisionControlFlag  = "The control identifier being evaluated (e.g. RCTL-043)."
+	attestationSbomFileFlag         = "The path to the SBOM file. CycloneDX (JSON, XML) and SPDX (JSON, tag-value) are supported."
 	excludeScalingFlag              = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag              = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."
 	includedEnvironments            = "[optional] Comma separated list of environments to include in logical environment"
