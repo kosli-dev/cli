@@ -58,6 +58,9 @@ Kosli reads the format, the creation time, the tools that produced it, the
 subject it describes and how many packages it lists. Nothing is checked against
 the artifact; the SBOM is recorded as reported.
 
+^--attachments^ cannot be used with this command, for the same reason: a second
+attachment would trigger compression.
+
 The format and the file checksum are also added as the ^sbom_format^ and
 ^sbom_sha256^ annotations.
 ` + attestationBindingDesc + `
@@ -211,31 +214,38 @@ func (o *attestSbomOptions) run(args []string) error {
 	return wrapAttestationError(err)
 }
 
-// loadSbom checks the size before reading, because reading happens in one go
-// and a large file would otherwise be pulled into memory before the friendlier
-// error could be produced.
 func (o *attestSbomOptions) loadSbom() error {
-	info, err := os.Stat(o.sbomFilePath)
+	file, err := os.Open(o.sbomFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
 	}
-	// A directory or a pipe reports size 0 and would walk past the size check,
-	// then be read unbounded.
+	defer func() { _ = file.Close() }()
+
+	// Stat the open handle rather than the path, so the bytes measured are the
+	// bytes about to be read: a file still being written, or a symlink
+	// repointed in between, would otherwise walk past a stat on the path.
+	info, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
+	}
+	// Reading a directory fails with a message about file descriptors, and a
+	// fifo blocks until something writes to it. Neither is worth reaching.
 	if !info.Mode().IsRegular() {
 		return fmt.Errorf("SBOM file [%s] is not a regular file", o.sbomFilePath)
 	}
-	if info.Size() > maxSbomFileBytes {
-		return fmt.Errorf(
-			"SBOM file [%s] is %d bytes, above the %d byte limit for an SBOM attestation",
-			o.sbomFilePath, info.Size(), maxSbomFileBytes,
-		)
-	}
-
 	// One read for both, so the recorded fingerprint always describes the bytes
-	// the recorded summary was taken from.
-	content, err := os.ReadFile(o.sbomFilePath)
+	// the recorded summary was taken from. Reading one byte past the limit is
+	// what makes the limit a bound on memory rather than a claim about a size
+	// measured earlier: a file a build is still writing grows after the stat.
+	content, err := io.ReadAll(io.LimitReader(file, maxSbomFileBytes+1))
 	if err != nil {
 		return fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
+	}
+	if int64(len(content)) > maxSbomFileBytes {
+		return fmt.Errorf(
+			"SBOM file [%s] is above the %d byte limit for an SBOM attestation",
+			o.sbomFilePath, maxSbomFileBytes,
+		)
 	}
 	fingerprint := fmt.Sprintf("%x", sha256.Sum256(content))
 
@@ -249,7 +259,8 @@ func (o *attestSbomOptions) loadSbom() error {
 		OriginalFingerprint: fingerprint,
 		Document:            data.Document,
 	}
-	return o.annotate(data.Format, fingerprint)
+	o.annotate(data.Format, fingerprint)
+	return nil
 }
 
 // rejectReservedAnnotations runs in PreRunE: it needs nothing from the file, so
@@ -266,11 +277,12 @@ func (o *attestSbomOptions) rejectReservedAnnotations() error {
 	return nil
 }
 
-func (o *attestSbomOptions) annotate(format, fingerprint string) error {
+// annotate records what the file said about itself where a reader sees it on
+// the trail page. The same two values are carried inside attestation_data.
+func (o *attestSbomOptions) annotate(format, fingerprint string) {
 	if o.payload.Annotations == nil {
 		o.payload.Annotations = map[string]string{}
 	}
 	o.payload.Annotations[sbomFormatAnnotation] = format
 	o.payload.Annotations[sbomSha256Annotation] = fingerprint
-	return nil
 }

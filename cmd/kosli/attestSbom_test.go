@@ -32,18 +32,17 @@ func (suite *AttestSbomCommandTestSuite) SetupTest() {
 	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 }
 
-// oversizeSbom makes a file past the size ceiling without allocating it. The
-// guard only stats the file, so the content is never read.
-func (suite *AttestSbomCommandTestSuite) oversizeSbom() (string, int64) {
-	path := filepath.Join(suite.T().TempDir(), "oversize.json")
-	size := int64(maxSbomFileBytes + 1)
+// sizedSbom makes a file of the given size without allocating it: the bytes it
+// reads back are zeros the filesystem never stored.
+func (suite *AttestSbomCommandTestSuite) sizedSbom(name string, size int64) string {
+	path := filepath.Join(suite.T().TempDir(), name)
 	if err := os.WriteFile(path, nil, 0644); err != nil {
 		suite.T().Fatal(err)
 	}
 	if err := os.Truncate(path, size); err != nil {
 		suite.T().Fatal(err)
 	}
-	return path, size
+	return path
 }
 
 // The dry-run cases are what prove the payload this command builds. They need a
@@ -75,45 +74,54 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomRejectsBadInput() {
 			wantError: true,
 			name:      "fails when --sbom-file is missing",
 			cmd:       fmt.Sprintf("attest sbom --name my-sbom %s", suite.defaultKosliArguments),
-			golden:    "Error: [kosli attest sbom flow=attest-sbom trail=test-123] required flag(s) \"sbom-file\" not set\n",
+			golden:    "Error: required flag(s) \"sbom-file\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when --attachments is used too, because two attachments would be compressed",
 			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --attachments testdata/sbom/spdx.json %s", suite.defaultKosliArguments),
-			golden:    "Error: [kosli attest sbom flow=attest-sbom trail=test-123] only one of --sbom-file, --attachments is allowed\n",
+			golden:    "Error: only one of --sbom-file, --attachments is allowed\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when the file is not an SBOM, naming the file",
 			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/not-an-sbom.json --dry-run %s", suite.defaultKosliArguments),
-			golden:    "Error: [kosli attest sbom flow=attest-sbom trail=test-123] failed to parse SBOM file [testdata/sbom/not-an-sbom.json]: not a CycloneDX SBOM: bomFormat is \"\", expected \"CycloneDX\"\n",
+			golden:    "Error: failed to parse SBOM file [testdata/sbom/not-an-sbom.json]: not a CycloneDX SBOM: bomFormat is \"\", expected \"CycloneDX\"\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when a reserved annotation key is supplied",
 			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --annotate sbom_format=mine --dry-run %s", suite.defaultKosliArguments),
-			golden:    "Error: [kosli attest sbom flow=attest-sbom trail=test-123] annotation key 'sbom_format' is set by this command from the SBOM file and cannot be provided with --annotate\n",
+			golden:    "Error: annotation key 'sbom_format' is set by this command from the SBOM file and cannot be provided with --annotate\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when the path is a directory rather than a file",
 			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom --dry-run %s", suite.defaultKosliArguments),
-			golden:    "Error: [kosli attest sbom flow=attest-sbom trail=test-123] SBOM file [testdata/sbom] is not a regular file\n",
+			golden:    "Error: SBOM file [testdata/sbom] is not a regular file\n",
 		},
 	}
 	runTestCmd(suite.T(), tests)
 }
 
-func (suite *AttestSbomCommandTestSuite) TestAttestSbomRejectsAnOversizeFileBeforeReadingIt() {
-	path, size := suite.oversizeSbom()
+func (suite *AttestSbomCommandTestSuite) TestAttestSbomSizeLimit() {
+	over := suite.sizedSbom("oversize.json", maxSbomFileBytes+1)
+	atLimit := suite.sizedSbom("at-limit.json", maxSbomFileBytes)
 
 	runTestCmd(suite.T(), []cmdTestCase{
 		{
 			wantError: true,
-			name:      "fails locally with the actual size, rather than a bare 413 from the server",
-			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file %s --dry-run %s", path, suite.defaultKosliArguments),
-			golden:    fmt.Sprintf("Error: [kosli attest sbom flow=attest-sbom trail=test-123] SBOM file [%s] is %d bytes, above the %d byte limit for an SBOM attestation\n", path, size, maxSbomFileBytes),
+			name:      "fails locally on an oversize file, rather than with a bare 413 from the server",
+			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file %s --dry-run %s", over, suite.defaultKosliArguments),
+			golden:    fmt.Sprintf("Error: SBOM file [%s] is above the %d byte limit for an SBOM attestation\n", over, maxSbomFileBytes),
+		},
+		{
+			// Reaching the parser is the point: it proves the limit is the
+			// largest accepted size and not the smallest rejected one.
+			wantError:   true,
+			name:        "a file of exactly the limit gets past the size guard",
+			cmd:         fmt.Sprintf("attest sbom --name my-sbom --sbom-file %s --dry-run %s", atLimit, suite.defaultKosliArguments),
+			goldenRegex: `failed to parse SBOM file`,
 		},
 	})
 }

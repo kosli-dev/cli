@@ -82,10 +82,6 @@ func ProcessSBOMFile(file string) (*SBOMData, error) {
 // that must also fingerprint the file can do both from one read rather than
 // risk the two describing different bytes.
 func ProcessSBOM(content []byte) (*SBOMData, error) {
-	return processSBOM(content)
-}
-
-func processSBOM(content []byte) (*SBOMData, error) {
 	if bytes.HasPrefix(content, gzipMagic) {
 		return nil, fmt.Errorf("the file is gzip compressed; supply the uncompressed SBOM")
 	}
