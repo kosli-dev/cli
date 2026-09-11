@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -53,12 +54,12 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomBuildsTheRightRequest() {
 		{
 			name:        "posts to the system endpoint with type_name sbom and the CycloneDX summary",
 			cmd:         fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --dry-run %s", suite.defaultKosliArguments),
-			goldenRegex: `(?s)trail/test-123/system.*"type_name": "sbom".*"format": "cyclonedx-1\.6".*"original_fingerprint": "[a-f0-9]{64}".*"package_count": 1`,
+			goldenRegex: `(?s)trail/test-123/system.*"type_name": "sbom".*"format": "cyclonedx-1\.6".*"original_fingerprint": "db09ef115d88e48a5ef553b21a88ccdc15b3df700e0b7c3736e2ef1024d26d9c".*"package_count": 1`,
 		},
 		{
 			name:        "records the format and the file checksum as annotations",
 			cmd:         fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --dry-run %s", suite.defaultKosliArguments),
-			goldenRegex: `(?s)"sbom_format": "cyclonedx-1\.6".*"sbom_sha256": "[a-f0-9]{64}"`,
+			goldenRegex: `(?s)"sbom_format": "cyclonedx-1\.6".*"sbom_sha256": "db09ef115d88e48a5ef553b21a88ccdc15b3df700e0b7c3736e2ef1024d26d9c"`,
 		},
 		{
 			name:        "reads SPDX as well, and reports the version the file declares",
@@ -85,20 +86,20 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomRejectsBadInput() {
 		{
 			wantError: true,
 			name:      "fails when the file is not an SBOM, naming the file",
-			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/not-an-sbom.json --dry-run %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/not-an-sbom.json %s", suite.defaultKosliArguments),
 			golden:    "Error: failed to parse SBOM file [testdata/sbom/not-an-sbom.json]: not a CycloneDX SBOM: bomFormat is \"\", expected \"CycloneDX\"\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when a reserved annotation key is supplied",
-			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --annotate sbom_format=mine --dry-run %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --annotate sbom_format=mine %s", suite.defaultKosliArguments),
 			golden:    "Error: annotation key 'sbom_format' is set by this command from the SBOM file and cannot be provided with --annotate\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when the path is a directory rather than a file",
-			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom --dry-run %s", suite.defaultKosliArguments),
-			golden:    "Error: SBOM file [testdata/sbom] is not a regular file\n",
+			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom %s", suite.defaultKosliArguments),
+			golden:    "Error: SBOM file [testdata/sbom] is a directory; supply the SBOM file itself\n",
 		},
 	}
 	runTestCmd(suite.T(), tests)
@@ -112,7 +113,7 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomSizeLimit() {
 		{
 			wantError: true,
 			name:      "fails locally on an oversize file, rather than with a bare 413 from the server",
-			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file %s --dry-run %s", over, suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file %s %s", over, suite.defaultKosliArguments),
 			golden:    fmt.Sprintf("Error: SBOM file [%s] is above the %d byte limit for an SBOM attestation\n", over, maxSbomFileBytes),
 		},
 		{
@@ -120,7 +121,7 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomSizeLimit() {
 			// largest accepted size and not the smallest rejected one.
 			wantError:   true,
 			name:        "a file of exactly the limit gets past the size guard",
-			cmd:         fmt.Sprintf("attest sbom --name my-sbom --sbom-file %s --dry-run %s", atLimit, suite.defaultKosliArguments),
+			cmd:         fmt.Sprintf("attest sbom --name my-sbom --sbom-file %s %s", atLimit, suite.defaultKosliArguments),
 			goldenRegex: `failed to parse SBOM file`,
 		},
 	})
@@ -131,7 +132,7 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomRoundTrip() {
 	// yet carry the sbom system attestation type, so the POST comes back
 	// "System attestation type 'sbom' does not exist". Un-skip once staging has
 	// it; this is the only test that proves the command end to end.
-	suite.T().Skip("staging server does not yet know the sbom attestation type")
+	suite.T().Skip("staging server does not yet know the sbom attestation type (kosli-dev/server#6863)")
 
 	runTestCmd(suite.T(), []cmdTestCase{
 		{
@@ -140,6 +141,28 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomRoundTrip() {
 			golden: "sbom attestation 'my-sbom' is reported to trail: test-123\n",
 		},
 	})
+}
+
+// The recorded checksum is only verifiable by hand while the file goes up as
+// the customer supplied it. Two or more attachments are tarred and gzipped, and
+// nothing downstream fails when that happens -- sbom_sha256 simply stops
+// describing what was uploaded. The dry-run goldens cannot see this: a multipart
+// request logs only its JSON fields.
+func (suite *AttestSbomCommandTestSuite) TestSbomIsUploadedUncompressed() {
+	sbom := "testdata/sbom/cyclonedx.json"
+
+	path, cleanupNeeded, err := getPathOfEvidenceFileToUpload([]string{sbom})
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), sbom, path, "the SBOM itself must be uploaded, not a repackaged copy")
+	require.False(suite.T(), cleanupNeeded, "a tarred SBOM no longer matches the checksum recorded for it")
+
+	// Without this, the assertions above would still pass if packaging stopped
+	// happening at all, which would say nothing about the one-file case.
+	packed, cleanupNeeded, err := getPathOfEvidenceFileToUpload([]string{sbom, "testdata/sbom/spdx.json"})
+	require.NoError(suite.T(), err)
+	require.True(suite.T(), cleanupNeeded, "two attachments are expected to be packaged")
+	require.NotEqual(suite.T(), sbom, packed)
+	suite.T().Cleanup(func() { _ = os.Remove(packed) })
 }
 
 func TestAttestSbomCommandTestSuite(t *testing.T) {

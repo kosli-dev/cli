@@ -228,8 +228,12 @@ func (o *attestSbomOptions) loadSbom() error {
 	if err != nil {
 		return fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
 	}
-	// Reading a directory fails with a message about file descriptors, and a
-	// fifo blocks until something writes to it. Neither is worth reaching.
+	// A directory is what a user hits when tab-completion stops a path short,
+	// so it gets its own advice. Reading one fails with a message about file
+	// descriptors, and a fifo blocks until something writes to it.
+	if info.IsDir() {
+		return fmt.Errorf("SBOM file [%s] is a directory; supply the SBOM file itself", o.sbomFilePath)
+	}
 	if !info.Mode().IsRegular() {
 		return fmt.Errorf("SBOM file [%s] is not a regular file", o.sbomFilePath)
 	}
