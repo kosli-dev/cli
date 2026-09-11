@@ -368,3 +368,27 @@ func TestTheSPDXTimestampIsCheckedToo(t *testing.T) {
 	assert.Contains(t, err.Error(), `"2026-09-11"`)
 	assert.Contains(t, err.Error(), "RFC 3339")
 }
+
+func TestTheTagValueReaderPopulatesTheSameFields(t *testing.T) {
+	// Every other tag-value test asserts the format string only, so extraction
+	// was proven through the JSON reader alone. The two reach spdx.Document by
+	// different routes and differ in exactly these fields: a creator arrives as
+	// "Creator: Tool: x" lines the tag-value parser splits itself, and a checksum
+	// as "PackageChecksum: SHA256: <value>".
+	got, err := ProcessSBOMFile(fixture("spdx-2.3.spdx"))
+
+	require.NoError(t, err)
+	assert.Equal(t, []string{"LicenseFind-1.0"}, got.Document.Tools)
+	require.NotNil(t, got.Document.CreatedAt)
+	assert.Equal(t, "2010-01-29T18:30:22Z", *got.Document.CreatedAt)
+	assert.Greater(t, got.Document.PackageCount, 1)
+}
+
+func TestATagValueDocumentQuotingAYAMLHeaderIsStillReadable(t *testing.T) {
+	// The YAML probe and the tag-value probe must see the same stripped bytes.
+	// Reading the raw ones let a quoted header shadow the document's own.
+	got, err := ProcessSBOMFile(fixture("spdx-quoted-yaml-header.spdx"))
+
+	require.NoError(t, err)
+	assert.Equal(t, "spdx-2.3", got.Format)
+}

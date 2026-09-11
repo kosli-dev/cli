@@ -16,6 +16,7 @@ import (
 	"time"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/kosli-dev/cli/internal/digest"
 	spdxjson "github.com/spdx/tools-golang/json"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/spdx/v2/common"
@@ -64,9 +65,6 @@ var (
 	// block, which would otherwise be read as its own version.
 	tagValueTextBlock  = regexp.MustCompile(`(?s)<text>.*?</text>`)
 	cycloneDXNamespace = regexp.MustCompile(`^https?://cyclonedx\.org/schema/bom/(\d+\.\d+)$`)
-	// The pattern the server's schema puts on this field, and unlike its
-	// date-time rule this one is enforced in the production image.
-	sha256Hex = regexp.MustCompile(`^[a-f0-9]{64}$`)
 )
 
 // ProcessSBOMFile reads an SBOM file and returns its format and a normalised
@@ -119,10 +117,13 @@ func processSBOM(content []byte) (*SBOMData, error) {
 		}
 		return readCycloneDXJSON(content)
 	default:
-		if spdxVersionYAML.Match(content) {
+		// A tag-value document may quote another document's header inside a text
+		// block. Neither probe should read one, so both see the same stripped copy.
+		outsideTextBlocks := tagValueTextBlock.ReplaceAll(content, nil)
+		if spdxVersionYAML.Match(outsideTextBlocks) {
 			return nil, unsupportedSPDXForm("YAML")
 		}
-		if version := declaredSPDXVersion(spdxVersionTagValue, tagValueTextBlock.ReplaceAll(content, nil)); version != "" {
+		if version := declaredSPDXVersion(spdxVersionTagValue, outsideTextBlocks); version != "" {
 			return readSPDX(tagvalue.Read, content, version)
 		}
 	}
@@ -379,7 +380,10 @@ func sha256Digest(value string) (*string, error) {
 		return nil, nil
 	}
 	lowered := strings.ToLower(value)
-	if !sha256Hex.MatchString(lowered) {
+	// digest.ValidateDigest already holds the pattern the server's schema puts on
+	// this field, and unlike its date-time rule that one is enforced in the
+	// production image. Its message names a fingerprint, which this is not.
+	if err := digest.ValidateDigest(lowered); err != nil {
 		return nil, fmt.Errorf("the SBOM's subject SHA-256 %q is not 64 hex characters", value)
 	}
 	return &lowered, nil
