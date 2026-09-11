@@ -32,8 +32,10 @@ var (
 		"has it been pushed to or pulled from a registry?")
 )
 
-// ignoreFileName is the exclusion list a directory artifact may carry at its root.
-const ignoreFileName = ".kosli_ignore"
+// IgnoreFileName is the exclusion list a directory artifact may carry at its root.
+const IgnoreFileName = ".kosli_ignore"
+
+const ignoreFileName = IgnoreFileName
 
 // DirSha256 returns sha256 digest of a directory
 func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (string, error) {
