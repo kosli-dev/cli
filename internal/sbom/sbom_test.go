@@ -293,12 +293,13 @@ func TestNullElementsInAnSPDX21DocumentDoNotCrash(t *testing.T) {
 	})
 
 	t.Run("null relationship is dropped, as the 2.3 reader drops it", func(t *testing.T) {
+		// Two packages, so the described-package lookup actually walks the
+		// relationships: with one it returns that package without reading them,
+		// and a nil entry is never dereferenced.
 		got, err := ProcessSBOMFile(fixture("spdx-2.1-null-relationship.json"))
 
 		require.NoError(t, err)
 		assert.Equal(t, "spdx-2.1", got.Format)
-		// One package and no usable relationship: the spec makes DESCRIBES
-		// optional for a lone package, so it is still the subject.
 		require.NotNil(t, got.Document.Subject)
 		assert.Equal(t, "app", got.Document.Subject.Name)
 	})
@@ -328,4 +329,14 @@ func TestTimestampsAreJudgedAsTheServerJudgesThem(t *testing.T) {
 			assert.Contains(t, err.Error(), tc.want)
 		})
 	}
+}
+
+func TestAKeyOfTheWrongTypeIsNotCalledInvalidJSON(t *testing.T) {
+	// A numeric spdxVersion is well-formed JSON that the routing probe cannot
+	// unmarshal. Reporting that as a malformed file would be the same
+	// misattribution, from the other side; the file is CycloneDX and reads as it.
+	got, err := ProcessSBOMFile(fixture("cyclonedx-numeric-spdxversion.json"))
+
+	require.NoError(t, err)
+	assert.Equal(t, "cyclonedx-1.6", got.Format)
 }

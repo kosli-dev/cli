@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -95,8 +96,14 @@ func processSBOM(content []byte) (*SBOMData, error) {
 			SPDXVersion string          `json:"spdxVersion"`
 			Context     json.RawMessage `json:"@context"`
 		}
+		// A type mismatch on one of these fields is not a malformed file, so only
+		// a syntax error is reported as one; anything else falls through to the
+		// CycloneDX reader, which names what it actually found.
 		if err := json.Unmarshal(content, &probe); err != nil {
-			return nil, fmt.Errorf("the file is not valid JSON: %w", err)
+			var syntaxError *json.SyntaxError
+			if errors.As(err, &syntaxError) {
+				return nil, fmt.Errorf("the file is not valid JSON: %w", err)
+			}
 		}
 		if bytes.Contains(probe.Context, []byte("spdx.org")) {
 			return nil, unsupportedSPDXForm("3.x JSON-LD")
@@ -260,6 +267,10 @@ func documentFromCycloneDX(bom *cdx.BOM) (*Document, error) {
 // (section 5.6) while still refusing what that validator refuses: a leap second,
 // an hour of 24, an offset without a colon, and a day its month does not have.
 // Year zero is the one value the two disagree on, so it is checked here.
+//
+// The value is recorded as the SBOM wrote it. Rewriting it to a canonical form
+// would drop sub-second precision, which time.RFC3339 does not carry, and this
+// field is a record of what the document said rather than of the instant.
 func createdAt(timestamp string) (*string, error) {
 	if timestamp == "" {
 		return nil, nil
