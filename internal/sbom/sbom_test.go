@@ -127,7 +127,7 @@ func TestUnreadableInputFailsClearly(t *testing.T) {
 		wantErr string
 	}{
 		{"gzipped", "gzipped.json.gz", "gzip compressed"},
-		{"truncated", "truncated.json", "could not parse"},
+		{"truncated", "truncated.json", "not valid JSON"},
 		{"binary", "binary.bin", "unrecognised file"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -302,4 +302,22 @@ func TestNullElementsInAnSPDX21DocumentDoNotCrash(t *testing.T) {
 		require.NotNil(t, got.Document.Subject)
 		assert.Equal(t, "app", got.Document.Subject.Name)
 	})
+}
+
+func TestTimestampFormsTheServerAcceptsAreNotRefusedHere(t *testing.T) {
+	// RFC 3339 permits a lowercase t and z (section 5.6) and a leap second. Go's
+	// time.Parse accepts neither, so checking with it would refuse a file the
+	// server would take — a rejection invented by the CLI.
+	for _, tc := range []struct{ name, file, want string }{
+		{"lowercase t and z", "cyclonedx-timestamp-lowercase-t-z.json", "2020-04-13t20:20:39z"},
+		{"leap second", "cyclonedx-timestamp-leap-second.json", "2020-04-13T23:59:60Z"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ProcessSBOMFile(fixture(tc.file))
+
+			require.NoError(t, err)
+			require.NotNil(t, got.Document.CreatedAt)
+			assert.Equal(t, tc.want, *got.Document.CreatedAt)
+		})
+	}
 }

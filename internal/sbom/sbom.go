@@ -11,7 +11,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	spdxjson "github.com/spdx/tools-golang/json"
@@ -62,6 +61,7 @@ var (
 	// block, which would otherwise be read as its own version.
 	tagValueTextBlock  = regexp.MustCompile(`(?s)<text>.*?</text>`)
 	cycloneDXNamespace = regexp.MustCompile(`^https?://cyclonedx\.org/schema/bom/(\d+\.\d+)$`)
+	rfc3339DateTime    = regexp.MustCompile(`(?i)^\d{4}-\d{2}-\d{2}t\d{2}:\d{2}:\d{2}(\.\d+)?(z|[+-]\d{2}:\d{2})$`)
 )
 
 // ProcessSBOMFile reads an SBOM file and returns its format and a normalised
@@ -95,7 +95,9 @@ func processSBOM(content []byte) (*SBOMData, error) {
 			SPDXVersion string          `json:"spdxVersion"`
 			Context     json.RawMessage `json:"@context"`
 		}
-		_ = json.Unmarshal(content, &probe)
+		if err := json.Unmarshal(content, &probe); err != nil {
+			return nil, fmt.Errorf("the file is not valid JSON: %w", err)
+		}
 		if bytes.Contains(probe.Context, []byte("spdx.org")) {
 			return nil, unsupportedSPDXForm("3.x JSON-LD")
 		}
@@ -252,11 +254,16 @@ func documentFromCycloneDX(bom *cdx.BOM) (*Document, error) {
 // createdAt rejects a timestamp the attestation could not carry. The server's
 // schema types this field as a date-time, so a generator emitting a bare date or
 // a local time with no offset would fail there instead, after the upload.
+//
+// The check mirrors the server's validator rather than time.Parse, which is
+// stricter than RFC 3339 in three ways that matter here: the format permits a
+// lowercase t and z (section 5.6) and a leap second, and Go accepts neither.
+// Being stricter than the server would refuse a file the server would take.
 func createdAt(timestamp string) (*string, error) {
 	if timestamp == "" {
 		return nil, nil
 	}
-	if _, err := time.Parse(time.RFC3339, timestamp); err != nil {
+	if !rfc3339DateTime.MatchString(timestamp) {
 		return nil, fmt.Errorf("the SBOM's creation timestamp %q is not an RFC 3339 date-time", timestamp)
 	}
 	return &timestamp, nil
