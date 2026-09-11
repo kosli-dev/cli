@@ -57,10 +57,13 @@ func SingleVirtualFile(files []VirtualFile) (VirtualFile, bool) {
 // Sorting the flat path list instead of the tree produces a different digest
 // whenever a directory shares a name prefix with a sibling file.
 //
-// .kosli_ignore is deliberately not handled here: reading it needs the file's
-// content, which the caller may not have, so exclusions stay the caller's
-// concern.
-func VirtualDirSha256(files []VirtualFile, logger *logger.Logger) (string, error) {
+// ignoreRules are the entries of the tree's root .kosli_ignore, as
+// ParseIgnoreRules returns them. They are resolved against the tree exactly as
+// DirSha256 resolves them against a directory (see virtualFS), and the root
+// .kosli_ignore itself is never excluded by them, so a tree cannot change its
+// exclusion list without changing its fingerprint. Callers that hold the file's
+// content pass its rules here; the file is an ordinary entry of files.
+func VirtualDirSha256(files []VirtualFile, ignoreRules []string, logger *logger.Logger) (string, error) {
 	if len(files) == 0 {
 		return "", fmt.Errorf("cannot calculate a fingerprint: no files were provided")
 	}
@@ -70,9 +73,14 @@ func VirtualDirSha256(files []VirtualFile, logger *logger.Logger) (string, error
 		return "", err
 	}
 
-	logger.Debug("calculating fingerprint for a virtual tree of %d files", len(files))
+	excluded, err := virtualFS{root: root}.excludedPaths(ignoreRules)
+	if err != nil {
+		return "", err
+	}
+
+	logger.Debug("calculating fingerprint for a virtual tree of %d files -- excluding %d paths", len(files), len(excluded))
 	hasher := sha256.New()
-	root.writeDigests(hasher, logger)
+	root.writeDigests(hasher, virtualRoot, excluded, path.Join(virtualRoot, ignoreFileName), logger)
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
@@ -127,16 +135,29 @@ func buildVirtualTree(files []VirtualFile) (*virtualNode, error) {
 	return root, nil
 }
 
-// writeDigests appends this node's children to the hash in WalkDir order.
-func (n *virtualNode) writeDigests(hasher hash.Hash, logger *logger.Logger) {
+// writeDigests appends this node's children to the hash in WalkDir order,
+// skipping excluded entries as calculateDirContentSha256 does: an excluded
+// directory takes its subtree with it, and the protected path is kept whatever
+// the rules say.
+func (n *virtualNode) writeDigests(hasher hash.Hash, dir string, excluded map[string]bool, protected string, logger *logger.Logger) {
 	for _, name := range n.sortedChildNames() {
 		child := n.children[name]
+		childPath := path.Join(dir, name)
+		if excluded[childPath] {
+			if childPath == protected {
+				logger.Debug("keeping %s although an exclusion matches it: an exclusion list cannot exclude itself", childPath)
+			} else {
+				logger.Debug("skipping %s as it matches excluded paths", childPath)
+				continue
+			}
+		}
+
 		nameSha256 := sha256OfString(child.name)
 		hasher.Write([]byte(nameSha256)) //nolint:errcheck // hash.Hash never returns an error
 
 		if child.isDir {
 			logger.Debug("dir: %s -- dirname digest: %s", child.name, nameSha256)
-			child.writeDigests(hasher, logger)
+			child.writeDigests(hasher, childPath, excluded, protected, logger)
 			continue
 		}
 		logger.Debug("file: %s -- filename digest: %s -- content digest: %s",

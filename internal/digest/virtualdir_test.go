@@ -96,7 +96,7 @@ func (suite *VirtualDirTestSuite) TestVirtualDirSha256MatchesDirSha256() {
 			want, err := DirSha256(root, []string{}, logger.NewStandardLogger())
 			require.NoError(suite.T(), err)
 
-			got, err := VirtualDirSha256(virtualFiles, logger.NewStandardLogger())
+			got, err := VirtualDirSha256(virtualFiles, nil, logger.NewStandardLogger())
 			require.NoError(suite.T(), err)
 
 			require.Equal(suite.T(), want, got,
@@ -119,9 +119,9 @@ func (suite *VirtualDirTestSuite) TestVirtualDirSha256IgnoresInputOrder() {
 		reversed[len(files)-1-i] = f
 	}
 
-	first, err := VirtualDirSha256(files, logger.NewStandardLogger())
+	first, err := VirtualDirSha256(files, nil, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
-	second, err := VirtualDirSha256(reversed, logger.NewStandardLogger())
+	second, err := VirtualDirSha256(reversed, nil, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 
 	require.Equal(suite.T(), first, second)
@@ -205,7 +205,7 @@ func (suite *VirtualDirTestSuite) TestVirtualDirSha256Errors() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			_, err := VirtualDirSha256(t.files, logger.NewStandardLogger())
+			_, err := VirtualDirSha256(t.files, nil, logger.NewStandardLogger())
 			require.Error(suite.T(), err)
 			require.Contains(suite.T(), err.Error(), t.wantErrMsg)
 		})
