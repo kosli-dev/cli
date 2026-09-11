@@ -1,0 +1,9 @@
+{
+  "spdxVersion": "SPDX-2.1",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "null-package-2.1",
+  "documentNamespace": "https://example.com/null-package-2.1",
+  "creationInfo": { "created": "2026-09-11T10:00:00Z", "creators": ["Tool: syft-1.0"] },
+  "packages": [null]
+}

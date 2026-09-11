@@ -1,0 +1,12 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "components": [
+    { "type": "library", "name": "openssl", "version": "3.0.2" },
+    { "type": "library", "name": "zlib", "version": "1.2.11" },
+    { "type": "file", "name": "/usr/bin/env" },
+    { "type": "file", "name": "/etc/hosts" },
+    { "type": "file", "name": "/usr/lib/libc.so" }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "components": [
+    {
+      "type": "application",
+      "name": "top",
+      "version": "1.0.0",
+      "components": [
+        { "type": "library", "name": "inner-a" },
+        { "type": "library", "name": "inner-b" },
+        { "type": "file", "name": "inner-file" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+  "@graph": [
+    { "type": "SpdxDocument", "spdxId": "https://example.com/doc", "name": "example" }
+  ]
+}
