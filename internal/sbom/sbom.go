@@ -60,7 +60,7 @@ var (
 	spdxVersionTagValue = regexp.MustCompile(`(?m)^\s*SPDXVersion:\s*SPDX-(\d+\.\d+)\s*$`)
 	// A top-level YAML key sits at column zero, which is what separates this
 	// from the same word appearing inside a value.
-	spdxVersionYAML = regexp.MustCompile(`(?m)^spdxVersion:\s*"?SPDX-`)
+	spdxVersionYAML = regexp.MustCompile(`(?m)^spdxVersion:\s*['"]?SPDX-`)
 	// A tag-value document may quote another document's header inside a text
 	// block, which would otherwise be read as its own version.
 	tagValueTextBlock  = regexp.MustCompile(`(?s)<text>.*?</text>`)
@@ -360,11 +360,11 @@ func subjectFromComponent(component *cdx.Component) (*Subject, error) {
 	if component.Hashes != nil {
 		for _, hash := range *component.Hashes {
 			if hash.Algorithm == cdx.HashAlgoSHA256 {
-				digest, err := sha256Digest(hash.Value)
+				sum, err := sha256Digest(hash.Value)
 				if err != nil {
 					return nil, err
 				}
-				subject.Sha256 = digest
+				subject.Sha256 = sum
 				break
 			}
 		}
@@ -433,11 +433,11 @@ func subjectFromSPDX(doc *spdx.Document) (*Subject, error) {
 		}
 		for _, checksum := range pkg.PackageChecksums {
 			if checksum.Algorithm == common.SHA256 {
-				digest, err := sha256Digest(checksum.Value)
+				sum, err := sha256Digest(checksum.Value)
 				if err != nil {
 					return nil, err
 				}
-				subject.Sha256 = digest
+				subject.Sha256 = sum
 				break
 			}
 		}

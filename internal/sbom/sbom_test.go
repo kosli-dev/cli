@@ -233,6 +233,7 @@ func TestUnsupportedSPDXFormsSayWhatTheyAre(t *testing.T) {
 	for _, tc := range []struct{ name, file, wantErr string }{
 		{"rdf", "spdx-rdf.rdf", "SPDX RDF document"},
 		{"yaml", "spdx-yaml.yaml", "SPDX YAML document"},
+		{"yaml single-quoted", "spdx-yaml-single-quoted.yaml", "SPDX YAML document"},
 		{"3.x json-ld", "spdx3-jsonld.json", "SPDX 3.x JSON-LD document"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -370,11 +371,9 @@ func TestTheSPDXTimestampIsCheckedToo(t *testing.T) {
 }
 
 func TestTheTagValueReaderPopulatesTheSameFields(t *testing.T) {
-	// Every other tag-value test asserts the format string only, so extraction
-	// was proven through the JSON reader alone. The two reach spdx.Document by
-	// different routes and differ in exactly these fields: a creator arrives as
-	// "Creator: Tool: x" lines the tag-value parser splits itself, and a checksum
-	// as "PackageChecksum: SHA256: <value>".
+	// Creators arrive as "Creator: Tool: x" lines the tag-value parser splits
+	// itself, which the JSON model does differently. This document describes two
+	// packages, so it has no subject; the subject fields are covered separately.
 	got, err := ProcessSBOMFile(fixture("spdx-2.3.spdx"))
 
 	require.NoError(t, err)
@@ -391,4 +390,26 @@ func TestATagValueDocumentQuotingAYAMLHeaderIsStillReadable(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "spdx-2.3", got.Format)
+}
+
+func TestTheTagValueReaderPopulatesTheSubjectToo(t *testing.T) {
+	// The other tag-value fixtures describe two packages, so they have no subject
+	// and never reach the package lookup, the purl scan or the checksum loop —
+	// the branch where the digest guard runs. This one describes exactly one.
+	got, err := ProcessSBOMFile(fixture("spdx-tv-subject.spdx"))
+
+	require.NoError(t, err)
+	require.NotNil(t, got.Document.Subject)
+	assert.Equal(t, "app", got.Document.Subject.Name)
+	require.NotNil(t, got.Document.Subject.Purl)
+	assert.Equal(t, "pkg:generic/app@1.2.3", *got.Document.Subject.Purl)
+	require.NotNil(t, got.Document.Subject.Sha256)
+	assert.Equal(t, "3f786850e387550fdab836ed7e6dc881de23001b3f786850e387550fdab836ed", *got.Document.Subject.Sha256)
+}
+
+func TestTheDigestGuardRunsOnATagValueChecksum(t *testing.T) {
+	_, err := ProcessSBOMFile(fixture("spdx-tv-prefixed-digest.spdx"))
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "64 hex characters")
 }

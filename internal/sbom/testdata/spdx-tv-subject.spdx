@@ -1,0 +1,20 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: tag-value-subject
+DocumentNamespace: https://example.com/tag-value-subject
+Creator: Tool: syft-1.50.0
+Created: 2026-09-11T10:00:00Z
+
+PackageName: app
+SPDXID: SPDXRef-Package-app
+PackageVersion: 1.2.3
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageChecksum: SHA256: 3F786850E387550FDAB836ED7E6DC881DE23001B3F786850E387550FDAB836ED
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/app@1.2.3
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-app
