@@ -413,3 +413,20 @@ func TestTheDigestGuardRunsOnATagValueChecksum(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "64 hex characters")
 }
+
+func TestTheXMLReaderPopulatesTheSameFields(t *testing.T) {
+	// The XML and JSON readers reach cdx.BOM through separate hand-written
+	// unmarshallers — ToolsChoice has one of each — so proving extraction on the
+	// JSON path proves nothing here. The two official fixtures are not the same
+	// document: the XML one carries a third component and types the first
+	// differently, so the counts legitimately differ.
+	got, err := ProcessSBOMFile(fixture("cyclonedx-1.6.xml"))
+
+	require.NoError(t, err)
+	assert.Equal(t, []string{"Awesome Tool 9.1.2"}, got.Document.Tools)
+	require.NotNil(t, got.Document.CreatedAt)
+	assert.Equal(t, "2020-04-07T07:01:00Z", *got.Document.CreatedAt)
+	assert.Equal(t, 3, got.Document.PackageCount)
+	require.NotNil(t, got.Document.Subject)
+	assert.Equal(t, "Acme Application", got.Document.Subject.Name)
+}
