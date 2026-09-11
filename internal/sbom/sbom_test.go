@@ -340,3 +340,31 @@ func TestAKeyOfTheWrongTypeIsNotCalledInvalidJSON(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "cyclonedx-1.6", got.Format)
 }
+
+func TestADigestTheAttestationCannotCarryIsRejected(t *testing.T) {
+	// Neither format constrains this field in practice, and the server's schema
+	// does — its hex pattern, unlike its date-time rule, is enforced in
+	// production. Both call sites are covered: one is not evidence for the other.
+	for _, tc := range []struct{ name, file, want string }{
+		{"spdx oci-style prefix", "spdx-prefixed-digest.json", "sha256:3f786850"},
+		{"cyclonedx truncated", "cyclonedx-short-digest.json", "3f786850e387550f"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := ProcessSBOMFile(fixture(tc.file))
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.want)
+			assert.Contains(t, err.Error(), "64 hex characters")
+		})
+	}
+}
+
+func TestTheSPDXTimestampIsCheckedToo(t *testing.T) {
+	// The CycloneDX call site had a test and this one did not, so deleting it
+	// left the suite green.
+	_, err := ProcessSBOMFile(fixture("spdx-bad-timestamp.json"))
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `"2026-09-11"`)
+	assert.Contains(t, err.Error(), "RFC 3339")
+}

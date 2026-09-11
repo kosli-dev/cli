@@ -1,0 +1,48 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "described-by-example",
+  "documentNamespace": "https://example.com/described-by",
+  "creationInfo": {
+    "created": "2026-09-11T10:00:00Z",
+    "creators": [
+      "Tool: syft-1.50.0"
+    ]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-app",
+      "name": "app",
+      "versionInfo": "1.2.3",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "sha256:3f786850e387550fdab836ed7e6dc881de23001b3f786850e387550fdab836ed"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/app@1.2.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-lib",
+      "name": "lib",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-Package-app",
+      "relatedSpdxElement": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBED_BY"
+    }
+  ]
+}

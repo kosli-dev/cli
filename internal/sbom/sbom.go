@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -63,6 +64,9 @@ var (
 	// block, which would otherwise be read as its own version.
 	tagValueTextBlock  = regexp.MustCompile(`(?s)<text>.*?</text>`)
 	cycloneDXNamespace = regexp.MustCompile(`^https?://cyclonedx\.org/schema/bom/(\d+\.\d+)$`)
+	// The pattern the server's schema puts on this field, and unlike its
+	// date-time rule this one is enforced in the production image.
+	sha256Hex = regexp.MustCompile(`^[a-f0-9]{64}$`)
 )
 
 // ProcessSBOMFile reads an SBOM file and returns its format and a normalised
@@ -220,6 +224,12 @@ func normaliseNullElements(doc *spdx.Document) error {
 			return fmt.Errorf("could not parse the file as an SPDX SBOM: a null entry in its package list")
 		}
 	}
+	if !slices.Contains(doc.Relationships, nil) {
+		// Left alone rather than copied: a syft document carries a relationship
+		// per file, and a nil among them is rare. This also keeps a nil slice
+		// nil, which the described-package lookup treats differently from empty.
+		return nil
+	}
 	relationships := make([]*spdx.Relationship, 0, len(doc.Relationships))
 	for _, relationship := range doc.Relationships {
 		if relationship != nil {
@@ -254,7 +264,11 @@ func documentFromCycloneDX(bom *cdx.BOM) (*Document, error) {
 	}
 	doc.CreatedAt = createdAt
 	doc.Tools = toolsFromCycloneDX(bom.Metadata.Tools)
-	doc.Subject = subjectFromComponent(bom.Metadata.Component)
+	subject, err := subjectFromComponent(bom.Metadata.Component)
+	if err != nil {
+		return nil, err
+	}
+	doc.Subject = subject
 	return doc, nil
 }
 
@@ -333,9 +347,9 @@ func nameAndVersion(name, version string) string {
 	return name + " " + version
 }
 
-func subjectFromComponent(component *cdx.Component) *Subject {
+func subjectFromComponent(component *cdx.Component) (*Subject, error) {
 	if component == nil {
-		return nil
+		return nil, nil
 	}
 	subject := &Subject{
 		Name:    component.Name,
@@ -345,12 +359,30 @@ func subjectFromComponent(component *cdx.Component) *Subject {
 	if component.Hashes != nil {
 		for _, hash := range *component.Hashes {
 			if hash.Algorithm == cdx.HashAlgoSHA256 {
-				subject.Sha256 = nullIfEmpty(strings.ToLower(hash.Value))
+				digest, err := sha256Digest(hash.Value)
+				if err != nil {
+					return nil, err
+				}
+				subject.Sha256 = digest
 				break
 			}
 		}
 	}
-	return subject
+	return subject, nil
+}
+
+// sha256Digest refuses a value the attestation could not carry. Neither format
+// constrains the field in practice, so a generator emitting an OCI-style
+// "sha256:..." digest would otherwise reach the server and fail its pattern.
+func sha256Digest(value string) (*string, error) {
+	if value == "" {
+		return nil, nil
+	}
+	lowered := strings.ToLower(value)
+	if !sha256Hex.MatchString(lowered) {
+		return nil, fmt.Errorf("the SBOM's subject SHA-256 %q is not 64 hex characters", value)
+	}
+	return &lowered, nil
 }
 
 func documentFromSPDX(doc *spdx.Document) (*Document, error) {
@@ -367,7 +399,11 @@ func documentFromSPDX(doc *spdx.Document) (*Document, error) {
 			}
 		}
 	}
-	out.Subject = subjectFromSPDX(doc)
+	subject, err := subjectFromSPDX(doc)
+	if err != nil {
+		return nil, err
+	}
+	out.Subject = subject
 	return out, nil
 }
 
@@ -375,12 +411,12 @@ func documentFromSPDX(doc *spdx.Document) (*Document, error) {
 // one package. Describing several is normal and legitimate, and picking one of
 // them would be a guess. A lone package needs no DESCRIBES relationship: the
 // spec makes one mandatory only when a document holds more than one package.
-func subjectFromSPDX(doc *spdx.Document) *Subject {
+func subjectFromSPDX(doc *spdx.Document) (*Subject, error) {
 	described, err := spdxlib.GetDescribedPackageIDs(doc)
 	// Every error here means the described package cannot be determined, which
 	// is the same answer as describing several.
 	if err != nil || len(described) != 1 {
-		return nil
+		return nil, nil
 	}
 	for _, pkg := range doc.Packages {
 		if pkg == nil || pkg.PackageSPDXIdentifier != described[0] {
@@ -393,13 +429,17 @@ func subjectFromSPDX(doc *spdx.Document) *Subject {
 		}
 		for _, checksum := range pkg.PackageChecksums {
 			if checksum.Algorithm == common.SHA256 {
-				subject.Sha256 = nullIfEmpty(strings.ToLower(checksum.Value))
+				digest, err := sha256Digest(checksum.Value)
+				if err != nil {
+					return nil, err
+				}
+				subject.Sha256 = digest
 				break
 			}
 		}
-		return subject
+		return subject, nil
 	}
-	return nil
+	return nil, nil
 }
 
 func purlFromSPDX(pkg *spdx.Package) *string {
