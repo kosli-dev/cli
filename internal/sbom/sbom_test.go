@@ -279,3 +279,27 @@ func TestToolsAreNullWhenTheSBOMRecordsNone(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(encoded), `"tools":null`)
 }
+
+func TestNullElementsInAnSPDX21DocumentDoNotCrash(t *testing.T) {
+	// Only the 2.2 and 2.3 models normalise null elements while unmarshalling, so
+	// in a 2.1 document they survive into code that dereferences them — including
+	// the library's own described-package lookup, which runs outside the guard
+	// around the reader.
+	t.Run("null package is rejected", func(t *testing.T) {
+		_, err := ProcessSBOMFile(fixture("spdx-2.1-null-package.json"))
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "null entry in its package list")
+	})
+
+	t.Run("null relationship is dropped, as the 2.3 reader drops it", func(t *testing.T) {
+		got, err := ProcessSBOMFile(fixture("spdx-2.1-null-relationship.json"))
+
+		require.NoError(t, err)
+		assert.Equal(t, "spdx-2.1", got.Format)
+		// One package and no usable relationship: the spec makes DESCRIBES
+		// optional for a lone package, so it is still the subject.
+		require.NotNil(t, got.Document.Subject)
+		assert.Equal(t, "app", got.Document.Subject.Name)
+	})
+}

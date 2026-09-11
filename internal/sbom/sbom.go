@@ -191,6 +191,9 @@ func readSPDX(read func(r io.Reader) (*spdx.Document, error), content []byte, de
 	if doc.SPDXIdentifier == "" {
 		return nil, fmt.Errorf("not an SPDX SBOM: no SPDXID")
 	}
+	if err := normaliseNullElements(doc); err != nil {
+		return nil, err
+	}
 	document, err := documentFromSPDX(doc)
 	if err != nil {
 		return nil, err
@@ -202,6 +205,26 @@ func readSPDX(read func(r io.Reader) (*spdx.Document, error), content []byte, de
 // readers dereference a nil element rather than return an error, and a file the
 // user supplied must not end the process. Widening this to our own mapping code
 // would report a defect here as the user's file being bad.
+// normaliseNullElements gives every version the handling 2.2 and 2.3 get while
+// unmarshalling: they drop null relationships and reject a null package. The 2.1
+// model has no such hook, so nulls survive conversion and reach code that
+// dereferences them, the library's own described-package lookup included.
+func normaliseNullElements(doc *spdx.Document) error {
+	for _, pkg := range doc.Packages {
+		if pkg == nil {
+			return fmt.Errorf("could not parse the file as an SPDX SBOM: a null entry in its package list")
+		}
+	}
+	relationships := make([]*spdx.Relationship, 0, len(doc.Relationships))
+	for _, relationship := range doc.Relationships {
+		if relationship != nil {
+			relationships = append(relationships, relationship)
+		}
+	}
+	doc.Relationships = relationships
+	return nil
+}
+
 func safeSPDXRead(read func(r io.Reader) (*spdx.Document, error), content []byte) (doc *spdx.Document, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
