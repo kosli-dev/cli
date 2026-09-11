@@ -1,13 +1,13 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 
-	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/sbom"
 	"github.com/spf13/cobra"
@@ -94,6 +94,7 @@ func newAttestSbomCmd(out io.Writer) *cobra.Command {
 		},
 		payload: SbomAttestationPayload{
 			CommonAttestationPayload: &CommonAttestationPayload{},
+			TypeName:                 "sbom",
 		},
 	}
 	cmd := &cobra.Command{
@@ -123,6 +124,11 @@ func newAttestSbomCmd(out io.Writer) *cobra.Command {
 			// and gzipped before upload, which would compress the SBOM and break
 			// the checksum recorded against it.
 			err = MuXRequiredFlags(cmd, []string{"sbom-file", "attachments"}, false)
+			if err != nil {
+				return err
+			}
+
+			err = o.rejectReservedAnnotations()
 			if err != nil {
 				return err
 			}
@@ -172,7 +178,6 @@ func (o *attestSbomOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.TypeName = "sbom"
 	err = o.loadSbom()
 	if err != nil {
 		return err
@@ -214,6 +219,11 @@ func (o *attestSbomOptions) loadSbom() error {
 	if err != nil {
 		return fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
 	}
+	// A directory or a pipe reports size 0 and would walk past the size check,
+	// then be read unbounded.
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("SBOM file [%s] is not a regular file", o.sbomFilePath)
+	}
 	if info.Size() > maxSbomFileBytes {
 		return fmt.Errorf(
 			"SBOM file [%s] is %d bytes, above the %d byte limit for an SBOM attestation",
@@ -221,12 +231,15 @@ func (o *attestSbomOptions) loadSbom() error {
 		)
 	}
 
-	fingerprint, err := digest.FileSha256(o.sbomFilePath, logger)
+	// One read for both, so the recorded fingerprint always describes the bytes
+	// the recorded summary was taken from.
+	content, err := os.ReadFile(o.sbomFilePath)
 	if err != nil {
-		return fmt.Errorf("failed to fingerprint SBOM file [%s]: %s", o.sbomFilePath, err)
+		return fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
 	}
+	fingerprint := fmt.Sprintf("%x", sha256.Sum256(content))
 
-	data, err := sbom.ProcessSBOMFile(o.sbomFilePath)
+	data, err := sbom.ProcessSBOM(content)
 	if err != nil {
 		return fmt.Errorf("failed to parse SBOM file [%s]: %s", o.sbomFilePath, err)
 	}
@@ -239,20 +252,23 @@ func (o *attestSbomOptions) loadSbom() error {
 	return o.annotate(data.Format, fingerprint)
 }
 
-// annotate refuses to overwrite a value the caller supplied, rather than
-// silently replacing it: the two keys are derived from the file and a caller
-// setting them is asking for something this command cannot honour.
-func (o *attestSbomOptions) annotate(format, fingerprint string) error {
-	if o.payload.Annotations == nil {
-		o.payload.Annotations = map[string]string{}
-	}
+// rejectReservedAnnotations runs in PreRunE: it needs nothing from the file, so
+// a typo should not cost a repository walk and a pass over nine megabytes first.
+func (o *attestSbomOptions) rejectReservedAnnotations() error {
 	for _, reserved := range []string{sbomFormatAnnotation, sbomSha256Annotation} {
-		if _, taken := o.payload.Annotations[reserved]; taken {
+		if _, taken := o.annotations[reserved]; taken {
 			return fmt.Errorf(
 				"annotation key '%s' is set by this command from the SBOM file and cannot be provided with --annotate",
 				reserved,
 			)
 		}
+	}
+	return nil
+}
+
+func (o *attestSbomOptions) annotate(format, fingerprint string) error {
+	if o.payload.Annotations == nil {
+		o.payload.Annotations = map[string]string{}
 	}
 	o.payload.Annotations[sbomFormatAnnotation] = format
 	o.payload.Annotations[sbomSha256Annotation] = fingerprint

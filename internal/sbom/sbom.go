@@ -75,6 +75,13 @@ func ProcessSBOMFile(file string) (*SBOMData, error) {
 	if err != nil {
 		return nil, err
 	}
+	return ProcessSBOM(content)
+}
+
+// ProcessSBOM is ProcessSBOMFile for content already in memory, so a caller
+// that must also fingerprint the file can do both from one read rather than
+// risk the two describing different bytes.
+func ProcessSBOM(content []byte) (*SBOMData, error) {
 	return processSBOM(content)
 }
 
