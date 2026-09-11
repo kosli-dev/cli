@@ -3,11 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
-	"io/fs"
-	"os"
-	"path/filepath"
 	"regexp"
-	"runtime"
 	"testing"
 	"time"
 
@@ -1248,102 +1244,7 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientRejectsKeysWithDotDotSegments(
 	require.Contains(suite.T(), err.Error(), "uploads/user-a/../../protected/release.bin")
 }
 
-// Accept rows compare joined paths because the helper returns the key
-// uncleaned; filepath.Join is what collapses "a//b" and "./a.txt".
-func (suite *AWSTestSuite) TestLocalPathForS3Key() {
-	for _, t := range []struct {
-		name       string
-		key        string
-		wantPath   string // accept: the path filepath.Join(dir, key) produced before this change
-		wantErr    bool
-		wantErrMsg string
-	}{
-		{name: "an ordinary nested key", key: "protected/release.bin", wantPath: "protected/release.bin"},
-		{name: "a plain filename", key: "a.txt", wantPath: "a.txt"},
-		{name: "a short nested key", key: "a/z", wantPath: "a/z"},
-		{name: "a dotfile", key: ".kosli_ignore", wantPath: ".kosli_ignore"},
-		{name: "a key with spaces", key: "file with spaces.txt", wantPath: "file with spaces.txt"},
-		{name: "a key with punctuation", key: "weird!*'().txt", wantPath: "weird!*'().txt"},
-		{name: "a unicode key", key: "ünïcödé/файл.txt", wantPath: "ünïcödé/файл.txt"},
-		{name: "a dot followed by a space is a literal name", key: ". ", wantPath: ". "},
-		{name: "a name that merely starts with two dots", key: "..hidden", wantPath: "..hidden"},
-		{name: "a backslash key is a literal filename on this OS", key: `dir\file.txt`, wantPath: `dir\file.txt`},
-		{name: "a leading slash is trimmed", key: "/etc/passwd", wantPath: "etc/passwd"},
-		{name: "doubled leading slashes are trimmed", key: "//x", wantPath: "x"},
-		{name: "a leading dot segment is dropped by Join", key: "./a.txt", wantPath: "a.txt"},
-		{name: "a doubled interior slash is collapsed by Join", key: "a//b", wantPath: "a/b"},
-		{name: "a dot segment is dropped by Join", key: "a/./b", wantPath: "a/b"},
-		// filepath.IsLocal rejects reserved device names and colons on Windows only.
-		{name: "a reserved Windows name", key: "CON", wantPath: "CON", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
-		{name: "a drive-looking segment", key: "C:evil", wantPath: "C:evil", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
-		{name: "a colon segment", key: "a:b", wantPath: "a:b", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
-		{
-			name:       "a traversing key is rejected",
-			key:        "uploads/user-a/../../protected/release.bin",
-			wantErr:    true,
-			wantErrMsg: `resolves to ".."`,
-		},
-		{
-			name:       "a backslash-separated traversal is rejected",
-			key:        `uploads/user-a/..\..\..\..\Users\Public\kosli-poc.txt`,
-			wantErr:    true,
-			wantErrMsg: `resolves to ".."`,
-		},
-		{
-			name:       "a short backslash-separated traversal is rejected",
-			key:        `uploads/user-a/..\x`,
-			wantErr:    true,
-			wantErrMsg: `resolves to ".."`,
-		},
-		{name: "a bare \"..\" is rejected", key: "..", wantErr: true, wantErrMsg: `resolves to ".."`},
-		// Windows drops trailing spaces and dots from a name, so these resolve as "..".
-		{name: "a \"..\" with a trailing space is rejected", key: "a/.. /x", wantErr: true, wantErrMsg: `resolves to ".."`},
-		{name: "three dots are rejected", key: "a/.../b", wantErr: true, wantErrMsg: `resolves to ".."`},
-		{name: "a bare \"./.\" is rejected", key: "./.", wantErr: true, wantErrMsg: "names no file"},
-		{name: "a trailing \"..\" segment is rejected", key: "a/..", wantErr: true, wantErrMsg: `resolves to ".."`},
-		{name: "an empty key is rejected", key: "", wantErr: true, wantErrMsg: "names no file"},
-		{name: "a bare slash is rejected", key: "/", wantErr: true, wantErrMsg: "names no file"},
-		{name: "doubled slashes with nothing else are rejected", key: "//", wantErr: true, wantErrMsg: "names no file"},
-		{name: "a bare dot is rejected", key: ".", wantErr: true, wantErrMsg: "names no file"},
-	} {
-		suite.Run(t.name, func() {
-			got, err := localPathForS3Key(t.key)
-			if t.wantErr {
-				require.Error(suite.T(), err)
-				require.Contains(suite.T(), err.Error(), t.key)
-				require.Contains(suite.T(), err.Error(), t.wantErrMsg)
-				return
-			}
-			require.NoError(suite.T(), err)
-			require.Equal(suite.T(), filepath.Join("base", t.wantPath), filepath.Join("base", got))
-		})
-	}
-}
-
-func (suite *AWSTestSuite) TestDownloadFileFromBucketRefusesToOverwrite() {
-	tempDir := suite.T().TempDir()
-	preexisting := filepath.Join(tempDir, "README.md")
-	require.NoError(suite.T(), os.WriteFile(preexisting, []byte("pre-existing content\n"), 0666))
-
-	client := &FakeS3Client{
-		Bucket: fakeS3TestBucketName,
-		Objects: map[string][]byte{
-			"README.md": []byte(fakeReadmeBody),
-		},
-	}
-
-	err := downloadFileFromBucket(client, tempDir, "README.md", fakeS3TestBucketName, logger.NewStandardLogger())
-	require.Error(suite.T(), err)
-	require.Contains(suite.T(), err.Error(), "object key [README.md]")
-	require.Contains(suite.T(), err.Error(), "--exclude-regex")
-
-	content, readErr := os.ReadFile(preexisting)
-	require.NoError(suite.T(), readErr)
-	require.Equal(suite.T(), "pre-existing content\n", string(content),
-		"the pre-existing file must be left untouched, not truncated")
-}
-
-// Neither key holds a ".." segment, so O_EXCL is what catches this pair.
+// Neither key holds a ".." segment; both fold onto one virtual path.
 func (suite *AWSTestSuite) TestGetS3DataFromClientCollidingKeysAreAnError() {
 	client := &FakeS3Client{
 		Bucket: fakeS3TestBucketName,
@@ -1355,13 +1256,13 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientCollidingKeysAreAnError() {
 
 	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
-	// '/' sorts before 'b', so "a//b" downloads first and "a/b" collides.
-	require.Contains(suite.T(), err.Error(), "object key [a/b]", "the error must name the key that collided")
+	require.Contains(suite.T(), err.Error(), "[a//b]", "the error must name both colliding keys")
+	require.Contains(suite.T(), err.Error(), "[a/b]", "the error must name both colliding keys")
 	require.Contains(suite.T(), err.Error(), "--exclude-regex")
 }
 
-// An object "a" alongside the prefix "a/" is legal in S3 and impossible on a
-// filesystem, so MkdirAll fails with ENOTDIR once "a" lands first.
+// An object "a" alongside the prefix "a/" is legal in S3 and impossible in a
+// directory tree.
 func (suite *AWSTestSuite) TestGetS3DataFromClientObjectAndPrefixCollideAreAnError() {
 	client := &FakeS3Client{
 		Bucket: fakeS3TestBucketName,
@@ -1373,40 +1274,9 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientObjectAndPrefixCollideAreAnErr
 
 	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
-	require.Contains(suite.T(), err.Error(), "object key [a/b]")
+	require.Contains(suite.T(), err.Error(), "object key [a]", "the error must name the object")
+	require.Contains(suite.T(), err.Error(), "object key [a/b]", "the error must name an object under the prefix")
 	require.Contains(suite.T(), err.Error(), "--exclude-regex")
-}
-
-func (suite *AWSTestSuite) TestDownloadFileFromBucketNamesTheKeyWithoutAdviceOnFilesystemErrors() {
-	if runtime.GOOS == "windows" {
-		suite.T().Skip("chmod on a directory does not block file creation on Windows")
-	}
-	if os.Getuid() == 0 {
-		suite.T().Skip("root ignores directory permissions")
-	}
-	tempDir := suite.T().TempDir()
-	require.NoError(suite.T(), os.Chmod(tempDir, 0500))
-	suite.T().Cleanup(func() { _ = os.Chmod(tempDir, 0700) })
-
-	client := &FakeS3Client{
-		Bucket: fakeS3TestBucketName,
-		Objects: map[string][]byte{
-			"README.md":     []byte(fakeReadmeBody),
-			"sub/README.md": []byte(fakeReadmeBody),
-		},
-	}
-
-	// A bare key fails in OpenFile; a nested one has a directory left to
-	// create, so it fails in MkdirAll.
-	for _, key := range []string{"README.md", "sub/README.md"} {
-		suite.Run(key, func() {
-			err := downloadFileFromBucket(client, tempDir, key, fakeS3TestBucketName, logger.NewStandardLogger())
-			require.Error(suite.T(), err)
-			require.ErrorIs(suite.T(), err, fs.ErrPermission)
-			require.Contains(suite.T(), err.Error(), fmt.Sprintf("object key [%s]", key))
-			require.NotContains(suite.T(), err.Error(), "--exclude-regex")
-		})
-	}
 }
 
 // Equal fingerprints mean the odd-shaped keys landed on the same paths as the

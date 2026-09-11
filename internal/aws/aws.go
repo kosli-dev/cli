@@ -4,15 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
-	"io/fs"
+	"io"
 	"os"
-	"path/filepath"
+	"path"
 	"regexp"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -420,30 +418,6 @@ func compilePathRegex(patterns []string) ([]*regexp.Regexp, error) {
 	return compiled, nil
 }
 
-// containsSingleFile checks if a path contains only a single file
-func containsSingleFile(directoryPath string) (bool, string, error) {
-	files, err := os.ReadDir(directoryPath)
-	if err != nil {
-		return false, "", err
-	}
-
-	if len(files) == 1 {
-		fileInfo := files[0]
-
-		if fileInfo.IsDir() {
-			// If it's a directory, recursively check inside
-			subDir := filepath.Join(directoryPath, fileInfo.Name())
-			return containsSingleFile(subDir)
-		}
-
-		// If it's a file, return information about it
-		path := filepath.Join(directoryPath, fileInfo.Name())
-		return true, path, nil
-	}
-
-	return false, "", nil
-}
-
 // objectMatchesFilter reports whether key matches any of the filter entries.
 // A key matches when it is prefixed by one of paths (literal prefix match)
 // or when one of patterns matches the full key.
@@ -487,134 +461,169 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 		return s3Data, err
 	}
 
-	tempDirName, err := os.MkdirTemp("", "bucketContent")
+	objects, err := listMatchingS3Objects(client, bucket, includePaths, includeRegexCompiled, excludePaths, excludeRegexCompiled)
 	if err != nil {
 		return s3Data, err
 	}
-	defer func() {
-		if err := os.RemoveAll(tempDirName); err != nil {
-			logger.Warn("failed to remove temp dir %s: %v", tempDirName, err)
-		}
-	}()
-
-	params := &s3.ListObjectsV2Input{
-		Bucket: aws.String(bucket),
-	}
-
-	var lastModifiedTime *time.Time
-	paginator := s3.NewListObjectsV2Paginator(client, params)
-	for paginator.HasMorePages() {
-		objects, err := paginator.NextPage(context.TODO())
-		if err != nil {
-			return s3Data, err
-		}
-
-		for _, object := range objects.Contents {
-			if strings.HasSuffix(*object.Key, "/") { // skip folders
-				continue
-			}
-			if shouldExcludePath(*object.Key, includePaths, includeRegexCompiled, excludePaths, excludeRegexCompiled) {
-				continue
-			}
-			err := downloadFileFromBucket(client, tempDirName, *object.Key, bucket, logger)
-			if err != nil {
-				return s3Data, err
-			}
-
-			if lastModifiedTime == nil || object.LastModified.After(*lastModifiedTime) {
-				lastModifiedTime = object.LastModified
-			}
-		}
-	}
-
-	if lastModifiedTime == nil {
+	if len(objects) == 0 {
 		return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
 	}
 
-	fileSnapshot, artifactPath, err := containsSingleFile(tempDirName)
-	if err != nil {
-		return s3Data, err
-	}
-	var sha256 string
-	artifactName := bucket
-	if fileSnapshot {
-		sha256, err = digest.FileSha256(artifactPath, logger)
-		if err != nil {
-			return s3Data, err
-		}
-		artifactName = filepath.Base(artifactPath)
-	} else {
-		sha256, err = digest.DirSha256(tempDirName, []string{}, logger)
-		if err != nil {
-			return s3Data, err
+	newest := objects[0].lastModified
+	for _, object := range objects {
+		if object.lastModified.After(newest) {
+			newest = object.lastModified
 		}
 	}
 
-	s3Data = append(s3Data, &S3Data{Digests: map[string]string{artifactName: sha256}, LastModifiedTimestamp: lastModifiedTime.Unix()})
+	artifactName, sha256, err := fingerprintS3Objects(client, bucket, objects, logger)
+	if err != nil {
+		return s3Data, err
+	}
+
+	s3Data = append(s3Data, &S3Data{Digests: map[string]string{artifactName: sha256}, LastModifiedTimestamp: newest.Unix()})
 
 	return s3Data, nil
 }
 
-// localPathForS3Key turns an S3 object key into a path under the download
-// directory, or rejects it. A key holding a ".." segment resolves onto a path
-// it does not name, taking another key's place or leaving the directory.
-func localPathForS3Key(key string) (string, error) {
-	// Windows separates on '\\' and drops trailing dots and spaces from a
-	// name, so ".. " and "..." resolve as ".." there.
-	segments := strings.FieldsFunc(key, func(r rune) bool { return r == '/' || r == '\\' })
-	for _, segment := range segments {
-		if strings.HasPrefix(segment, "..") && strings.TrimRight(segment, ". ") == "" {
-			return "", unusableS3KeyError(key, `contains a segment that resolves to ".."`)
+// s3Object is one listed object that survived the include and exclude filters.
+type s3Object struct {
+	key          string
+	lastModified time.Time
+}
+
+// listMatchingS3Objects lists the bucket, dropping folder markers and keys the
+// filters exclude, in the order S3 returns them.
+func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []string, includeRegex []*regexp.Regexp,
+	excludePaths []string, excludeRegex []*regexp.Regexp) ([]s3Object, error) {
+	objects := []s3Object{}
+	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return nil, err
+		}
+		for _, object := range page.Contents {
+			if strings.HasSuffix(*object.Key, "/") { // skip folders
+				continue
+			}
+			if shouldExcludePath(*object.Key, includePaths, includeRegex, excludePaths, excludeRegex) {
+				continue
+			}
+			objects = append(objects, s3Object{key: *object.Key, lastModified: *object.LastModified})
 		}
 	}
-
-	// A leading '\\' is left for filepath.IsLocal: rooted on Windows, an
-	// ordinary filename elsewhere.
-	rel := strings.TrimLeft(key, "/")
-	if filepath.Clean(rel) == "." {
-		return "", unusableS3KeyError(key, "names no file")
-	}
-	if !filepath.IsLocal(rel) {
-		return "", unusableS3KeyError(key, "is not a local path")
-	}
-
-	return rel, nil
+	return objects, nil
 }
 
-// unusableS3KeyError is only for failures the key itself causes. Advising
-// exclusion on a machine fault such as a full disk would drop a legitimate
-// object from the snapshot.
-func unusableS3KeyError(key, reason string) error {
-	return fmt.Errorf("object key [%s] cannot be stored as a local file: %s; exclude it with --exclude-regex, or narrow the include filter if one is set", key, reason)
-}
+// fingerprintS3Objects fingerprints the objects as the directory their keys
+// describe, without ever using a key as a local file name. Each object is
+// downloaded to an anonymous temp file, hashed and removed; the fingerprint is
+// then computed from the (key, sha256) pairs by digest.VirtualDirSha256, which
+// reproduces what digest.DirSha256 gives the same tree on disk. A single object
+// is fingerprinted as that file and named after it, as before.
+//
+// A root .kosli_ignore is downloaded first so its rules can be applied, and
+// objects the rules exclude are not downloaded at all.
+func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, logger *logger.Logger) (artifactName, sha256 string, err error) {
+	keys := make([]string, len(objects))
+	for i, object := range objects {
+		keys[i] = object.key
+	}
+	paths, err := virtualPathsForS3Keys(keys)
+	if err != nil {
+		return "", "", err
+	}
 
-func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket string, logger *logger.Logger) error {
-	rel, err := localPathForS3Key(key)
+	tempDir, err := os.MkdirTemp("", "bucketContent")
 	if err != nil {
-		return err
-	}
-	dest := filepath.Join(dirName, rel)
-	err = os.MkdirAll(filepath.Dir(dest), 0770)
-	if errors.Is(err, syscall.ENOTDIR) {
-		// Legal in S3, impossible on disk: an object "a" and a key under "a/".
-		return unusableS3KeyError(key, "one of its parent prefixes has already been downloaded as an object")
-	}
-	if err != nil {
-		return fmt.Errorf("object key [%s]: %w", key, err)
-	}
-	// O_EXCL fails the snapshot when two keys map to one file rather than
-	// letting the second overwrite the first. Directories are not covered:
-	// "A/x" and "a/y" share one on a case-insensitive filesystem.
-	file, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
-	if errors.Is(err, fs.ErrExist) {
-		return unusableS3KeyError(key, "another object already downloaded to the same local path")
-	}
-	if err != nil {
-		return fmt.Errorf("object key [%s]: %w", key, err)
+		return "", "", err
 	}
 	defer func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			logger.Warn("failed to remove temp dir %s: %v", tempDir, err)
+		}
+	}()
+
+	if len(objects) == 1 {
+		sha256, err := downloadAndHashS3Object(downloader, tempDir, bucket, keys[0], nil, logger)
+		if err != nil {
+			return "", "", err
+		}
+		return path.Base(paths[keys[0]]), sha256, nil
+	}
+
+	var rules []string
+	contentSha256 := map[string]string{}
+	for _, key := range keys {
+		if paths[key] != digest.IgnoreFileName {
+			continue
+		}
+		sha256, err := downloadAndHashS3Object(downloader, tempDir, bucket, key, func(file *os.File) error {
+			if _, err := file.Seek(0, io.SeekStart); err != nil {
+				return err
+			}
+			rules, err = digest.ParseIgnoreRules(file)
+			return err
+		}, logger)
+		if err != nil {
+			return "", "", err
+		}
+		contentSha256[key] = sha256
+		logger.Debug("object key [%s] is the bucket's %s -- excluding paths: %s", key, digest.IgnoreFileName, rules)
+	}
+
+	allPaths := make([]string, len(keys))
+	for i, key := range keys {
+		allPaths[i] = paths[key]
+	}
+	needed, err := digest.FilesNeedingContent(allPaths, rules)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid rule in the bucket's %s: %w", digest.IgnoreFileName, err)
+	}
+
+	files := make([]digest.VirtualFile, 0, len(keys))
+	for _, key := range keys {
+		virtualPath := paths[key]
+		sha256, downloaded := contentSha256[key]
+		switch {
+		case downloaded:
+		case needed[virtualPath]:
+			sha256, err = downloadAndHashS3Object(downloader, tempDir, bucket, key, nil, logger)
+			if err != nil {
+				return "", "", err
+			}
+		default:
+			logger.Debug("object key [%s] is excluded by %s and is not downloaded", key, digest.IgnoreFileName)
+		}
+		files = append(files, digest.VirtualFile{Path: virtualPath, Sha256: sha256})
+	}
+
+	sha256, err = digest.VirtualDirSha256(files, rules, logger)
+	if err != nil {
+		return "", "", err
+	}
+	return bucket, sha256, nil
+}
+
+// downloadAndHashS3Object fetches one object into a fresh temp file, lets
+// inspect read it when given, returns the sha256 of its content and removes the
+// file. The file's name comes from the OS, so nothing about the key reaches the
+// filesystem.
+func downloadAndHashS3Object(downloader S3DownloadAPI, tempDir, bucket, key string, inspect func(*os.File) error, logger *logger.Logger) (string, error) {
+	file, err := os.CreateTemp(tempDir, "object-*")
+	if err != nil {
+		return "", fmt.Errorf("object key [%s]: %w", key, err)
+	}
+	defer func() {
+		// Close before remove: Windows will not delete an open file.
 		if err := file.Close(); err != nil {
-			logger.Warn("failed to close file %s: %v", file.Name(), err)
+			logger.Warn("failed to close temp file for object key [%s]: %v", key, err)
+		}
+		if err := os.Remove(file.Name()); err != nil {
+			logger.Warn("failed to remove temp file for object key [%s]: %v", key, err)
 		}
 	}()
 
@@ -624,13 +633,18 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 		WriterAt: file,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to download object key [%s]: %w", key, err)
+		return "", fmt.Errorf("failed to download object key [%s]: %w", key, err)
 	}
 	if result.ContentLength != nil {
-		logger.Debug("downloaded", file.Name(), *result.ContentLength, "bytes")
+		logger.Debug("downloaded object key [%s]: %d bytes", key, *result.ContentLength)
 	}
 
-	return nil
+	if inspect != nil {
+		if err := inspect(file); err != nil {
+			return "", fmt.Errorf("object key [%s]: %w", key, err)
+		}
+	}
+	return digest.FileSha256(file.Name(), logger)
 }
 
 // getFilteredECSClusters fetches a filtered set of ECS clusters recursively (50 at a time) and returns a list of ecs Clusters

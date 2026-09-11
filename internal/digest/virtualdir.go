@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"hash"
 	"path"
 	"sort"
 	"strings"
@@ -80,8 +79,65 @@ func VirtualDirSha256(files []VirtualFile, ignoreRules []string, logger *logger.
 
 	logger.Debug("calculating fingerprint for a virtual tree of %d files -- excluding %d paths", len(files), len(excluded))
 	hasher := sha256.New()
-	root.writeDigests(hasher, virtualRoot, excluded, path.Join(virtualRoot, ignoreFileName), logger)
+	err = root.walkIncluded(virtualRoot, excluded, protectedVirtualPath(), logger, func(childPath string, child *virtualNode) error {
+		nameSha256 := sha256OfString(child.name)
+		hasher.Write([]byte(nameSha256)) //nolint:errcheck // hash.Hash never returns an error
+		if child.isDir {
+			logger.Debug("dir: %s -- dirname digest: %s", child.name, nameSha256)
+			return nil
+		}
+		if child.sha256 == "" {
+			return fmt.Errorf("no content digest for %q, whose content the fingerprint needs", relativeVirtualPath(childPath))
+		}
+		logger.Debug("file: %s -- filename digest: %s -- content digest: %s", child.name, nameSha256, child.sha256)
+		hasher.Write([]byte(child.sha256)) //nolint:errcheck // hash.Hash never returns an error
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
 	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+// FilesNeedingContent reports which of paths VirtualDirSha256 reads the content
+// digest of under these ignore rules. A file it leaves out is skipped by the
+// rules, so its content need not be fetched and it may be passed with an empty
+// Sha256 without changing the fingerprint. The two share one walk, so they
+// cannot disagree.
+func FilesNeedingContent(paths []string, ignoreRules []string) (map[string]bool, error) {
+	files := make([]VirtualFile, len(paths))
+	for i, p := range paths {
+		files[i] = VirtualFile{Path: p}
+	}
+	root, err := buildVirtualTree(files)
+	if err != nil {
+		return nil, err
+	}
+	excluded, err := virtualFS{root: root}.excludedPaths(ignoreRules)
+	if err != nil {
+		return nil, err
+	}
+	needed := map[string]bool{}
+	err = root.walkIncluded(virtualRoot, excluded, protectedVirtualPath(), nil, func(childPath string, child *virtualNode) error {
+		if !child.isDir {
+			needed[relativeVirtualPath(childPath)] = true
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return needed, nil
+}
+
+// protectedVirtualPath is the root ignore file, which its own rules never exclude.
+func protectedVirtualPath() string {
+	return path.Join(virtualRoot, ignoreFileName)
+}
+
+// relativeVirtualPath strips the synthetic root from a tree path.
+func relativeVirtualPath(p string) string {
+	return strings.TrimPrefix(p, virtualRoot+"/")
 }
 
 // virtualNode is a directory or a file in the virtual tree. Files are leaves
@@ -103,8 +159,12 @@ func buildVirtualTree(files []VirtualFile) (*virtualNode, error) {
 		if err := validateVirtualPath(file.Path); err != nil {
 			return nil, err
 		}
-		if err := ValidateDigest(file.Sha256); err != nil {
-			return nil, fmt.Errorf("invalid fingerprint for %q: %w", file.Path, err)
+		// An empty digest means the content was not read. That is only acceptable
+		// for a file the rules exclude, which writeDigests enforces when it gets there.
+		if file.Sha256 != "" {
+			if err := ValidateDigest(file.Sha256); err != nil {
+				return nil, fmt.Errorf("invalid fingerprint for %q: %w", file.Path, err)
+			}
 		}
 
 		segments := strings.Split(file.Path, "/")
@@ -135,35 +195,36 @@ func buildVirtualTree(files []VirtualFile) (*virtualNode, error) {
 	return root, nil
 }
 
-// writeDigests appends this node's children to the hash in WalkDir order,
-// skipping excluded entries as calculateDirContentSha256 does: an excluded
-// directory takes its subtree with it, and the protected path is kept whatever
-// the rules say.
-func (n *virtualNode) writeDigests(hasher hash.Hash, dir string, excluded map[string]bool, protected string, logger *logger.Logger) {
+// walkIncluded visits this node's children in WalkDir order, skipping excluded
+// entries as calculateDirContentSha256 does: an excluded directory takes its
+// subtree with it, and the protected path is kept whatever the rules say.
+// A nil logger is allowed for callers that only want the visits.
+func (n *virtualNode) walkIncluded(dir string, excluded map[string]bool, protected string, logger *logger.Logger,
+	visit func(childPath string, child *virtualNode) error) error {
 	for _, name := range n.sortedChildNames() {
 		child := n.children[name]
 		childPath := path.Join(dir, name)
 		if excluded[childPath] {
-			if childPath == protected {
-				logger.Debug("keeping %s although an exclusion matches it: an exclusion list cannot exclude itself", childPath)
-			} else {
-				logger.Debug("skipping %s as it matches excluded paths", childPath)
+			if childPath != protected {
+				if logger != nil {
+					logger.Debug("skipping %s as it matches excluded paths", childPath)
+				}
 				continue
 			}
+			if logger != nil {
+				logger.Debug("keeping %s although an exclusion matches it: an exclusion list cannot exclude itself", childPath)
+			}
 		}
-
-		nameSha256 := sha256OfString(child.name)
-		hasher.Write([]byte(nameSha256)) //nolint:errcheck // hash.Hash never returns an error
-
+		if err := visit(childPath, child); err != nil {
+			return err
+		}
 		if child.isDir {
-			logger.Debug("dir: %s -- dirname digest: %s", child.name, nameSha256)
-			child.writeDigests(hasher, childPath, excluded, protected, logger)
-			continue
+			if err := child.walkIncluded(childPath, excluded, protected, logger, visit); err != nil {
+				return err
+			}
 		}
-		logger.Debug("file: %s -- filename digest: %s -- content digest: %s",
-			child.name, nameSha256, child.sha256)
-		hasher.Write([]byte(child.sha256)) //nolint:errcheck // hash.Hash never returns an error
 	}
+	return nil
 }
 
 // sortedChildNames returns child names in the byte order os.ReadDir uses, so
