@@ -17,9 +17,9 @@ const rotateApiKeyShortDesc = `Rotate one or more API keys for a service account
 const rotateApiKeyLongDesc = rotateApiKeyShortDesc + `
 
 A new API key is generated immediately. The old key remains valid for a grace period to
-allow time to update dependent systems; the length of that grace period is server-managed
-unless overridden with ^--grace-period-hours^. The new key value is only returned once, so
-make sure to store it securely.`
+allow time to update dependent systems; that grace period has a standard length unless
+overridden with ^--grace-period-hours^. The new key value is only returned once, so make
+sure to store it securely.`
 
 const rotateApiKeyExample = `
 # rotate an API key for a service account:
@@ -78,7 +78,7 @@ func newRotateApiKeyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
-	cmd.Flags().StringVarP(&o.expiresAt, "expires-at", "e", "", apiKeyExpiresAtFlag)
+	cmd.Flags().StringVarP(&o.expiresAt, "expires-at", "e", "", rotateApiKeyExpiresAtFlag)
 	cmd.Flags().IntVarP(&o.gracePeriodHours, "grace-period-hours", "g", 0, apiKeyGracePeriodHoursFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	addDryRunFlag(cmd)
