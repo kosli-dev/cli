@@ -1,0 +1,10 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-11T10:00:00Z",
+    "tools": { "components": [] }
+  },
+  "components": [{ "type": "library", "name": "a" }]
+}

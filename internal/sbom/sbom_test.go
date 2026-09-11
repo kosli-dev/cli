@@ -41,11 +41,8 @@ func TestCycloneDXMustIdentifyItself(t *testing.T) {
 		file    string
 		wantErr string
 	}{
-		// The decoder returns an empty document rather than an error for any
-		// well-formed JSON, so these two checks are the only thing rejecting it.
 		{"no bomFormat", "not-an-sbom.json", `bomFormat is ""`},
 		{"no specVersion", "cyclonedx-no-spec-version.json", "no specVersion"},
-		// XML carries its identity in the namespace, not in bomFormat.
 		{"wrong xml namespace", "cyclonedx-wrong-namespace.xml", "expected a http://cyclonedx.org/schema/bom/ namespace"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -58,8 +55,6 @@ func TestCycloneDXMustIdentifyItself(t *testing.T) {
 }
 
 func TestSPDXVersionComesFromTheFileNotTheParser(t *testing.T) {
-	// The SPDX readers convert every document up to their newest model, so the
-	// parsed document reports 2.3 whatever the file said.
 	for _, file := range []string{"spdx-2.2.json", "spdx-2.2-no-snippet.spdx"} {
 		t.Run(file, func(t *testing.T) {
 			got, err := ProcessSBOMFile(fixture(file))
@@ -81,7 +76,6 @@ func TestSPDXTagValueSnippetGivesAnActionableError(t *testing.T) {
 }
 
 func TestPackageCountExcludesFiles(t *testing.T) {
-	// Syft emits one component per file in the scanned image; only packages count.
 	got, err := ProcessSBOMFile(fixture("cyclonedx-with-files.json"))
 
 	require.NoError(t, err)
@@ -119,7 +113,6 @@ func TestCycloneDXExtraction(t *testing.T) {
 }
 
 func TestSPDXSubjectIsNullWhenSeveralPackagesAreDescribed(t *testing.T) {
-	// Both official examples describe two packages; guessing one would be wrong.
 	got, err := ProcessSBOMFile(fixture("spdx-2.3.json"))
 
 	require.NoError(t, err)
@@ -154,8 +147,6 @@ func TestMissingFileFailsClearly(t *testing.T) {
 }
 
 func TestMalformedSPDXIsAnErrorNotAPanic(t *testing.T) {
-	// A null entry in the package list makes the SPDX reader dereference it. A
-	// file the user supplied must not take the process down.
 	_, err := ProcessSBOMFile(fixture("spdx-null-package.json"))
 
 	require.Error(t, err)
@@ -163,9 +154,8 @@ func TestMalformedSPDXIsAnErrorNotAPanic(t *testing.T) {
 }
 
 func TestADocumentCarryingBothIdentitiesIsRejected(t *testing.T) {
-	// A stray spdxVersion key routes the file to the SPDX reader, which accepts
-	// anything with a version and returns an empty document. Recording that as a
-	// successful SBOM would attest data the file never carried.
+	// The SPDX reader accepts anything carrying a version, so without the identity
+	// check this would attest an empty document as a successful SBOM.
 	_, err := ProcessSBOMFile(fixture("cyclonedx-hybrid-spdx-key.json"))
 
 	require.Error(t, err)
@@ -182,9 +172,8 @@ func TestPackageCountIncludesNestedComponents(t *testing.T) {
 }
 
 func TestSPDXSubjectFromDescribedByRelationship(t *testing.T) {
-	// DESCRIBED_BY is the inverse of DESCRIBES and names the subject just as
-	// well. The checksum is uppercase in the file and must be recorded lowercase,
-	// which is the only form the server's schema accepts.
+	// The checksum is uppercase in the file; lowercase is the only form the
+	// server's schema accepts.
 	got, err := ProcessSBOMFile(fixture("spdx-described-by.json"))
 
 	require.NoError(t, err)
@@ -215,9 +204,8 @@ func TestVersionIsNotReadFromAQuotedHeader(t *testing.T) {
 }
 
 func TestFieldsTheSBOMDoesNotCarryAreNull(t *testing.T) {
-	// The server's schema types every field inside document as nullable and
-	// enforces a date-time format and a hex pattern, so an empty string is
-	// rejected where an absent value is accepted.
+	// The server's schema enforces a hex pattern, which an empty string fails and
+	// an absent value does not.
 	got, err := ProcessSBOMFile(fixture("cyclonedx-1.6.json"))
 
 	require.NoError(t, err)
@@ -232,10 +220,62 @@ func TestFieldsTheSBOMDoesNotCarryAreNull(t *testing.T) {
 }
 
 func TestPrefixedXMLNamespaceIsRecognised(t *testing.T) {
-	// Binding the namespace to a prefix rather than defaulting it leaves the
-	// xmlns attribute empty, so the resolved name carries the namespace instead.
 	got, err := ProcessSBOMFile(fixture("cyclonedx-prefixed-namespace.xml"))
 
 	require.NoError(t, err)
 	assert.Equal(t, "cyclonedx-1.6", got.Format)
+}
+
+func TestUnsupportedSPDXFormsSayWhatTheyAre(t *testing.T) {
+	// Each of these is a valid SPDX document in a form this slice cannot read.
+	// Without recognising them the RDF file is reported as a broken CycloneDX
+	// file and the others as not an SBOM at all.
+	for _, tc := range []struct{ name, file, wantErr string }{
+		{"rdf", "spdx-rdf.rdf", "SPDX RDF document"},
+		{"yaml", "spdx-yaml.yaml", "SPDX YAML document"},
+		{"3.x json-ld", "spdx3-jsonld.json", "SPDX 3.x JSON-LD document"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := ProcessSBOMFile(fixture(tc.file))
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.wantErr)
+			assert.Contains(t, err.Error(), "SPDX JSON or tag-value")
+		})
+	}
+}
+
+func TestATimestampTheAttestationCannotCarryIsRejected(t *testing.T) {
+	// A bare date parses as CycloneDX but fails the server's date-time schema,
+	// so it is caught here rather than after the upload.
+	_, err := ProcessSBOMFile(fixture("cyclonedx-bad-timestamp.json"))
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `"2020-04-13"`)
+	assert.Contains(t, err.Error(), "RFC 3339")
+}
+
+func TestPackageCountExcludesTheSubject(t *testing.T) {
+	// CycloneDX keeps the subject in metadata.component, outside the component
+	// list, so it is not one of the packages counted.
+	got, err := ProcessSBOMFile(fixture("cyclonedx-1.6.json"))
+
+	require.NoError(t, err)
+	require.NotNil(t, got.Document.Subject)
+	assert.Equal(t, "Acme Application", got.Document.Subject.Name)
+	assert.Equal(t, 2, got.Document.PackageCount)
+}
+
+func TestToolsAreNullWhenTheSBOMRecordsNone(t *testing.T) {
+	// The fixture carries a tools block holding nothing, so the tool-reading path
+	// runs and still yields null: the server's schema types tools as nullable,
+	// and null distinguishes "none recorded" from "recorded as empty".
+	got, err := ProcessSBOMFile(fixture("cyclonedx-empty-tools.json"))
+
+	require.NoError(t, err)
+	assert.Nil(t, got.Document.Tools)
+
+	encoded, err := json.Marshal(got.Document)
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), `"tools":null`)
 }

@@ -4,11 +4,14 @@ package sbom
 
 import (
 	"bytes"
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	spdxjson "github.com/spdx/tools-golang/json"
@@ -47,12 +50,14 @@ var (
 	utf8BOM   = []byte{0xEF, 0xBB, 0xBF}
 )
 
-// The declared version is read from the bytes rather than the parsed document:
+// The declared version is read from the file rather than the parsed document:
 // the SPDX readers convert every document up to their newest model, so a 2.2
 // file reports itself as 2.3 once parsed.
 var (
-	spdxVersionJSON     = regexp.MustCompile(`"spdxVersion"\s*:\s*"SPDX-(\d+\.\d+)"`)
 	spdxVersionTagValue = regexp.MustCompile(`(?m)^\s*SPDXVersion:\s*SPDX-(\d+\.\d+)\s*$`)
+	// A top-level YAML key sits at column zero, which is what separates this
+	// from the same word appearing inside a value.
+	spdxVersionYAML = regexp.MustCompile(`(?m)^spdxVersion:\s*"?SPDX-`)
 	// A tag-value document may quote another document's header inside a text
 	// block, which would otherwise be read as its own version.
 	tagValueTextBlock  = regexp.MustCompile(`(?s)<text>.*?</text>`)
@@ -74,20 +79,36 @@ func processSBOM(content []byte) (*SBOMData, error) {
 	if bytes.HasPrefix(content, gzipMagic) {
 		return nil, fmt.Errorf("the file is gzip compressed; supply the uncompressed SBOM")
 	}
-	// Stripped from the content itself, not just from the detection: both
-	// parsers reject a byte-order mark as an unexpected character.
+	// Stripped from the content, not just the detection: both parsers reject a
+	// byte-order mark as an unexpected character.
 	content = bytes.TrimPrefix(content, utf8BOM)
 
 	trimmed := bytes.TrimLeft(content, " \t\r\n")
 	switch {
 	case bytes.HasPrefix(trimmed, []byte("<")):
+		if xmlRootElement(content) == "RDF" {
+			return nil, unsupportedSPDXForm("RDF")
+		}
 		return readCycloneDXXML(content)
 	case bytes.HasPrefix(trimmed, []byte("{")):
-		if version := declaredSPDXVersion(spdxVersionJSON, content); version != "" {
-			return readSPDX(spdxjson.Read, content, version)
+		var probe struct {
+			SPDXVersion string          `json:"spdxVersion"`
+			Context     json.RawMessage `json:"@context"`
+		}
+		_ = json.Unmarshal(content, &probe)
+		if bytes.Contains(probe.Context, []byte("spdx.org")) {
+			return nil, unsupportedSPDXForm("3.x JSON-LD")
+		}
+		if probe.SPDXVersion != "" {
+			// The declared text, not the parsed document's. The reader accepts
+			// only an exact SPDX-2.1/2.2/2.3, so nothing else reaches this.
+			return readSPDX(spdxjson.Read, content, strings.TrimPrefix(probe.SPDXVersion, "SPDX-"))
 		}
 		return readCycloneDXJSON(content)
 	default:
+		if spdxVersionYAML.Match(content) {
+			return nil, unsupportedSPDXForm("YAML")
+		}
 		if version := declaredSPDXVersion(spdxVersionTagValue, tagValueTextBlock.ReplaceAll(content, nil)); version != "" {
 			return readSPDX(tagvalue.Read, content, version)
 		}
@@ -116,10 +137,11 @@ func readCycloneDXJSON(content []byte) (*SBOMData, error) {
 	if bom.SpecVersion == 0 {
 		return nil, fmt.Errorf("not a CycloneDX SBOM: no specVersion")
 	}
-	return &SBOMData{
-		Format:   "cyclonedx-" + bom.SpecVersion.String(),
-		Document: documentFromCycloneDX(bom),
-	}, nil
+	document, err := documentFromCycloneDX(bom)
+	if err != nil {
+		return nil, err
+	}
+	return &SBOMData{Format: "cyclonedx-" + bom.SpecVersion.String(), Document: document}, nil
 }
 
 func readCycloneDXXML(content []byte) (*SBOMData, error) {
@@ -138,10 +160,11 @@ func readCycloneDXXML(content []byte) (*SBOMData, error) {
 	if match == nil {
 		return nil, fmt.Errorf("not a CycloneDX SBOM: xmlns is %q, expected a http://cyclonedx.org/schema/bom/ namespace", namespace)
 	}
-	return &SBOMData{
-		Format:   "cyclonedx-" + match[1],
-		Document: documentFromCycloneDX(bom),
-	}, nil
+	document, err := documentFromCycloneDX(bom)
+	if err != nil {
+		return nil, err
+	}
+	return &SBOMData{Format: "cyclonedx-" + match[1], Document: document}, nil
 }
 
 func decodeCycloneDX(content []byte, format cdx.BOMFileFormat) (*cdx.BOM, error) {
@@ -152,22 +175,12 @@ func decodeCycloneDX(content []byte, format cdx.BOMFileFormat) (*cdx.BOM, error)
 	return bom, nil
 }
 
-func readSPDX(read func(r io.Reader) (*spdx.Document, error), content []byte, declaredVersion string) (data *SBOMData, err error) {
-	// A malformed document can make the SPDX readers dereference a nil element
-	// rather than return an error; a file the user supplied must not end the
-	// process. A panic inside the reader means it could not handle this input.
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			data, err = nil, fmt.Errorf("could not parse the file as an SPDX SBOM: %v", recovered)
-		}
-	}()
-
-	doc, err := read(bytes.NewReader(content))
+func readSPDX(read func(r io.Reader) (*spdx.Document, error), content []byte, declaredVersion string) (*SBOMData, error) {
+	doc, err := safeSPDXRead(read, content)
 	if err != nil {
 		// The tag-value parser rejects a snippet section that follows a package,
 		// which SPDX's own 2.2 example does. The JSON form of the same document
-		// reads without complaint. The wording below is matched against the
-		// upstream error, and the test for it is what catches a reworded bump.
+		// reads without complaint.
 		if strings.Contains(err.Error(), "unknown tag Snippet") {
 			return nil, fmt.Errorf("this SPDX tag-value document has a snippet section, which the SPDX tag-value parser cannot read; supply the same SBOM in JSON form instead")
 		}
@@ -178,27 +191,61 @@ func readSPDX(read func(r io.Reader) (*spdx.Document, error), content []byte, de
 	if doc.SPDXIdentifier == "" {
 		return nil, fmt.Errorf("not an SPDX SBOM: no SPDXID")
 	}
-	return &SBOMData{
-		Format:   "spdx-" + declaredVersion,
-		Document: documentFromSPDX(doc),
-	}, nil
+	document, err := documentFromSPDX(doc)
+	if err != nil {
+		return nil, err
+	}
+	return &SBOMData{Format: "spdx-" + declaredVersion, Document: document}, nil
 }
 
-func documentFromCycloneDX(bom *cdx.BOM) *Document {
+// safeSPDXRead guards the library call alone. A malformed document can make the
+// readers dereference a nil element rather than return an error, and a file the
+// user supplied must not end the process. Widening this to our own mapping code
+// would report a defect here as the user's file being bad.
+func safeSPDXRead(read func(r io.Reader) (*spdx.Document, error), content []byte) (doc *spdx.Document, err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			doc, err = nil, fmt.Errorf("%v", recovered)
+		}
+	}()
+	return read(bytes.NewReader(content))
+}
+
+func documentFromCycloneDX(bom *cdx.BOM) (*Document, error) {
 	doc := &Document{PackageCount: packageCount(bom.Components)}
-	if bom.Metadata != nil {
-		doc.CreatedAt = nullIfEmpty(bom.Metadata.Timestamp)
-		doc.Tools = toolsFromCycloneDX(bom.Metadata.Tools)
-		doc.Subject = subjectFromComponent(bom.Metadata.Component)
+	if bom.Metadata == nil {
+		return doc, nil
 	}
-	return doc
+	createdAt, err := createdAt(bom.Metadata.Timestamp)
+	if err != nil {
+		return nil, err
+	}
+	doc.CreatedAt = createdAt
+	doc.Tools = toolsFromCycloneDX(bom.Metadata.Tools)
+	doc.Subject = subjectFromComponent(bom.Metadata.Component)
+	return doc, nil
+}
+
+// createdAt rejects a timestamp the attestation could not carry. The server's
+// schema types this field as a date-time, so a generator emitting a bare date or
+// a local time with no offset would fail there instead, after the upload.
+func createdAt(timestamp string) (*string, error) {
+	if timestamp == "" {
+		return nil, nil
+	}
+	if _, err := time.Parse(time.RFC3339, timestamp); err != nil {
+		return nil, fmt.Errorf("the SBOM's creation timestamp %q is not an RFC 3339 date-time", timestamp)
+	}
+	return &timestamp, nil
 }
 
 // packageCount counts every component that is not a file, at any depth. Some
 // generators, syft among them, emit one component per file in the scanned
 // image, which would otherwise outnumber the packages by an order of magnitude.
-// An assembly is itself a package, so it counts alongside what it contains;
-// SPDX counts a containing package the same way.
+// An assembly is itself a package, so it counts alongside what it contains. The
+// subject is not counted: CycloneDX holds it in metadata.component, outside this
+// list. SPDX has no such split, so its described package is counted, and the two
+// formats differ by one for the same logical SBOM.
 func packageCount(components *[]cdx.Component) int {
 	if components == nil {
 		return 0
@@ -263,10 +310,14 @@ func subjectFromComponent(component *cdx.Component) *Subject {
 	return subject
 }
 
-func documentFromSPDX(doc *spdx.Document) *Document {
+func documentFromSPDX(doc *spdx.Document) (*Document, error) {
 	out := &Document{PackageCount: len(doc.Packages)}
 	if doc.CreationInfo != nil {
-		out.CreatedAt = nullIfEmpty(doc.CreationInfo.Created)
+		created, err := createdAt(doc.CreationInfo.Created)
+		if err != nil {
+			return nil, err
+		}
+		out.CreatedAt = created
 		for _, creator := range doc.CreationInfo.Creators {
 			if creator.CreatorType == "Tool" {
 				out.Tools = append(out.Tools, creator.Creator)
@@ -274,7 +325,7 @@ func documentFromSPDX(doc *spdx.Document) *Document {
 		}
 	}
 	out.Subject = subjectFromSPDX(doc)
-	return out
+	return out, nil
 }
 
 // subjectFromSPDX returns a subject only when the document describes exactly
@@ -317,11 +368,26 @@ func purlFromSPDX(pkg *spdx.Package) *string {
 	return nil
 }
 
-// nullIfEmpty keeps a value the SBOM did not carry distinguishable from one it
-// carried as empty: the attestation records the former as null.
 func nullIfEmpty(value string) *string {
 	if value == "" {
 		return nil
 	}
 	return &value
+}
+
+func xmlRootElement(content []byte) string {
+	decoder := xml.NewDecoder(bytes.NewReader(content))
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return ""
+		}
+		if start, ok := token.(xml.StartElement); ok {
+			return start.Name.Local
+		}
+	}
+}
+
+func unsupportedSPDXForm(form string) error {
+	return fmt.Errorf("this is an SPDX %s document, which is not supported; supply the SBOM as SPDX JSON or tag-value", form)
 }
