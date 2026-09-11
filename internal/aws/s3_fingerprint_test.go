@@ -193,8 +193,10 @@ func (suite *S3FingerprintTestSuite) TestDownloadsExactlyTheContributingObjects(
 	require.Equal(suite.T(), []string{".kosli_ignore", "app.js", "lib/util.js"}, client.downloadedKeys())
 }
 
-// Objects are downloaded to files whose names owe nothing to the key, each is
-// removed once hashed, and the download directory is gone at the end.
+// Objects are downloaded to files whose names owe nothing to the key, every
+// file is removed once hashed, and the download directory is gone at the end.
+// Downloads overlap, so how many files exist at once is the byte budget's
+// concern (see S3ParallelTestSuite), not this test's.
 func (suite *S3FingerprintTestSuite) TestObjectsNeverLandUnderTheirKeyAndDoNotLinger() {
 	keys := []string{"alpha.bin", "beta/gamma.bin", "delta/epsilon/zeta.bin"}
 	objects := map[string][]byte{}
@@ -206,13 +208,6 @@ func (suite *S3FingerprintTestSuite) TestObjectsNeverLandUnderTheirKeyAndDoNotLi
 		require.NotNil(suite.T(), file, "the transfer manager must be handed a real file")
 		require.NotContains(suite.T(), filepath.Base(file.Name()), filepath.Base(key),
 			"the local file name must owe nothing to the key")
-		client.mu.Lock()
-		earlier := append([]string{}, client.files[:len(client.files)-1]...)
-		client.mu.Unlock()
-		for _, previous := range earlier {
-			_, err := os.Stat(previous)
-			require.ErrorIs(suite.T(), err, os.ErrNotExist, "an earlier object's file must be gone before the next download")
-		}
 	}
 
 	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
@@ -233,7 +228,8 @@ func (suite *S3FingerprintTestSuite) TestADownloadErrorNamesTheKey() {
 	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
 	require.ErrorIs(suite.T(), err, os.ErrDeadlineExceeded)
-	require.Contains(suite.T(), err.Error(), "object key [README.md]")
+	// Downloads overlap, so either object may be the first to fail.
+	require.Regexp(suite.T(), `object key \[(README\.md|notes\.txt)\]`, err.Error())
 	require.NotContains(suite.T(), err.Error(), "--exclude-regex", "a transport failure must not advise dropping the object")
 }
 
