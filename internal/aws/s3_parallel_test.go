@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -242,6 +243,29 @@ func (suite *S3ParallelTestSuite) TestLimitsReachTheDownloader() {
 			require.GreaterOrEqual(suite.T(), client.maxInFlight, 2)
 		}
 	}
+}
+
+// The fan-out must not park one goroutine per object: on a large bucket that
+// is hundreds of megabytes of stacks doing nothing. Goroutines in flight stay
+// within the concurrency bound plus a small fixed overhead, whatever the size
+// of the bucket.
+func (suite *S3ParallelTestSuite) TestGoroutinesDoNotScaleWithTheBucket() {
+	const objects, concurrency = 2000, 4
+	client, listing := bucketOf(objects, 8, 0)
+	before := runtime.NumGoroutine()
+	var peak int
+	client.hook = func(_ context.Context, _ string) error {
+		suite.mu().Lock()
+		peak = max(peak, runtime.NumGoroutine())
+		suite.mu().Unlock()
+		return nil
+	}
+
+	_, _, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, DownloadLimits{Concurrency: concurrency, BytesInFlight: 1 << 30}, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), client.calls, objects)
+	require.LessOrEqual(suite.T(), peak, before+concurrency+8,
+		"goroutines during the run must be bounded by the concurrency, not the object count")
 }
 
 func (suite *S3ParallelTestSuite) TestDefaultLimitsAreSane() {
