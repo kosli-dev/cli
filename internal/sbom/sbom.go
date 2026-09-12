@@ -67,6 +67,9 @@ var (
 	cycloneDXNamespace = regexp.MustCompile(`^https?://cyclonedx\.org/schema/bom/(\d+\.\d+)$`)
 )
 
+// ProcessSBOMFile reads the whole file with no size limit. A caller that needs
+// one, as the attest command does, reads the bytes itself and calls ProcessSBOM.
+//
 // ProcessSBOMFile reads an SBOM file and returns its format and a normalised
 // summary. It confirms the file identifies itself as the format it parses as;
 // it does not validate against the format's schema.

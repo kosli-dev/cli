@@ -46,7 +46,7 @@ type attestSbomOptions struct {
 	payload      SbomAttestationPayload
 }
 
-const attestSbomShortDesc = `Report a software bill of materials to an artifact or a trail in a Kosli flow. `
+const attestSbomShortDesc = `Report a software bill of materials to an artifact or a trail in a Kosli flow.  `
 
 const attestSbomLongDesc = attestSbomShortDesc + `
 The SBOM file is given with the ^--sbom-file^ flag. CycloneDX (JSON and XML) and
@@ -289,12 +289,18 @@ func (o *attestSbomOptions) rejectReservedAnnotations() error {
 //
 // It must run after CommonAttestationOptions.run, which assigns
 // payload.Annotations wholesale from the --annotate flag. Called before that,
-// both keys are silently discarded. The nil guard below reads as though the
-// order does not matter; it does.
+// both keys are discarded.
+//
+// It builds a new map rather than writing into that one. The two are the same
+// map -- processAnnotations returns its argument -- so writing would put these
+// keys into the --annotate map that rejectReservedAnnotations reads, and a
+// second run of the same options would be refused for a key nobody supplied.
 func (o *attestSbomOptions) annotate(format, fingerprint string) {
-	if o.payload.Annotations == nil {
-		o.payload.Annotations = map[string]string{}
+	merged := make(map[string]string, len(o.payload.Annotations)+2)
+	for key, value := range o.payload.Annotations {
+		merged[key] = value
 	}
-	o.payload.Annotations[sbomFormatAnnotation] = format
-	o.payload.Annotations[sbomSha256Annotation] = fingerprint
+	merged[sbomFormatAnnotation] = format
+	merged[sbomSha256Annotation] = fingerprint
+	o.payload.Annotations = merged
 }
