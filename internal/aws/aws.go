@@ -642,58 +642,62 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 }
 
 // downloadS3ObjectsInParallel fetches the objects at the given indexes and
-// writes each content digest into files at the same index. A slot channel
-// bounds the number of downloads and a weighted semaphore bounds their listed
-// bytes; the first error cancels the shared context so in-flight transfers
-// stop and no further one starts.
+// writes each content digest into files at the same index. A fixed pool of
+// workers bounds the number of downloads, so memory does not grow with the
+// bucket, and a weighted semaphore bounds their listed bytes. The first error
+// cancels the shared context: in-flight transfers stop, the producer stops
+// feeding, and the workers drain out.
 func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket string, objects []s3Object, indexes []int,
 	files []digest.VirtualFile, limits DownloadLimits, logger *logger.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	slots := make(chan struct{}, max(limits.Concurrency, 1))
 	budget := semaphore.NewWeighted(max(limits.BytesInFlight, 1))
 	firstErr := make(chan error, 1)
-	var wg sync.WaitGroup
-
-	for _, i := range indexes {
-		wg.Add(1)
-		go func(i int, object s3Object) {
-			defer wg.Done()
-
-			select {
-			case slots <- struct{}{}:
-			case <-ctx.Done():
-				return
-			}
-			defer func() { <-slots }()
-			// A slot and a cancellation can be ready together; never start a
-			// download once another has failed.
-			if ctx.Err() != nil {
-				return
-			}
-
-			// An object larger than the budget takes all of it and so runs alone.
-			weight := max(min(object.size, limits.BytesInFlight), 1)
-			if err := budget.Acquire(ctx, weight); err != nil {
-				return // cancelled while waiting
-			}
-			defer budget.Release(weight)
-
-			sha256, err := downloadAndHashS3Object(ctx, downloader, tempDir, bucket, object.key, nil, logger)
-			if err != nil {
-				select {
-				case firstErr <- err:
-				default: // an earlier failure is already recorded
-				}
-				cancel()
-				return
-			}
-			files[i].Sha256 = sha256
-		}(i, objects[i])
+	fail := func(err error) {
+		select {
+		case firstErr <- err:
+		default: // an earlier failure is already recorded
+		}
+		cancel()
 	}
 
+	work := make(chan int)
+	var wg sync.WaitGroup
+	for range max(limits.Concurrency, 1) {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range work {
+				object := objects[i]
+				// An object larger than the budget takes all of it and so runs alone.
+				weight := max(min(object.size, limits.BytesInFlight), 1)
+				if err := budget.Acquire(ctx, weight); err != nil {
+					return // cancelled while waiting
+				}
+				sha256, err := downloadAndHashS3Object(ctx, downloader, tempDir, bucket, object.key, nil, logger)
+				budget.Release(weight)
+				if err != nil {
+					fail(err)
+					return
+				}
+				files[i].Sha256 = sha256
+			}
+		}()
+	}
+
+	// Feed in listing order; stop as soon as a worker has failed.
+feed:
+	for _, i := range indexes {
+		select {
+		case work <- i:
+		case <-ctx.Done():
+			break feed
+		}
+	}
+	close(work)
 	wg.Wait()
+
 	select {
 	case err := <-firstErr:
 		return err
