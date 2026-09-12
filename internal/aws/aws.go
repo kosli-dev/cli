@@ -169,7 +169,7 @@ func defaultNewS3Client(creds *AWSStaticCreds) (S3API, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Objects download in parallel (see downloadLimits), and the transfer manager
+	// Objects download in parallel (see DownloadLimits), and the transfer manager
 	// fetches each object's parts in parallel on top of that. Its default of five
 	// parts per object times the object concurrency would open more connections
 	// than helps; three keeps the product modest while still splitting large objects.
@@ -447,16 +447,16 @@ func objectMatchesFilter(key string, paths []string, patterns []*regexp.Regexp) 
 // includePaths / excludePaths match object keys by literal prefix.
 // includeRegex / excludeRegex match object keys by Go regular expression.
 // Include and exclude filters are mutually exclusive (callers enforce this).
-func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, logger *logger.Logger) ([]*S3Data, error) {
+func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, logger *logger.Logger) ([]*S3Data, error) {
 	client, err := NewS3ClientFunc(staticCreds)
 	if err != nil {
 		return []*S3Data{}, err
 	}
-	return getS3DataFromClient(client, bucket, includePaths, includeRegex, excludePaths, excludeRegex, logger)
+	return getS3DataFromClient(client, bucket, includePaths, includeRegex, excludePaths, excludeRegex, limits, logger)
 }
 
 // getS3DataFromClient harvests bucket content using the provided S3API client.
-func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, logger *logger.Logger) ([]*S3Data, error) {
+func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, logger *logger.Logger) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
 
 	includeRegexCompiled, err := compilePathRegex(includeRegex)
@@ -483,7 +483,7 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 		}
 	}
 
-	artifactName, sha256, err := fingerprintS3Objects(client, bucket, objects, defaultDownloadLimits, logger)
+	artifactName, sha256, err := fingerprintS3Objects(client, bucket, objects, limits, logger)
 	if err != nil {
 		return s3Data, err
 	}
@@ -500,20 +500,21 @@ type s3Object struct {
 	size         int64
 }
 
-// downloadLimits bounds the object downloads in flight at once.
-type downloadLimits struct {
-	// concurrency is the number of objects downloading at the same time.
-	concurrency int
-	// bytesInFlight caps the sum of the listed sizes of the objects downloading
+// DownloadLimits bounds the object downloads in flight at once when
+// fingerprinting a bucket.
+type DownloadLimits struct {
+	// Concurrency is the number of objects downloading at the same time.
+	Concurrency int
+	// BytesInFlight caps the sum of the listed sizes of the objects downloading
 	// at the same time, and so the temp disk they occupy. An object larger than
 	// the whole budget downloads alone.
-	bytesInFlight int64
+	BytesInFlight int64
 }
 
-// defaultDownloadLimits keeps peak temp disk around half a gigabyte, which fits
+// DefaultDownloadLimits keeps peak temp disk around half a gigabyte, which fits
 // the default Lambda /tmp, and the connection count modest together with the
 // transfer manager's per-object part concurrency.
-var defaultDownloadLimits = downloadLimits{concurrency: 8, bytesInFlight: 512 << 20}
+var DefaultDownloadLimits = DownloadLimits{Concurrency: 8, BytesInFlight: 512 << 20}
 
 // listMatchingS3Objects lists the bucket, dropping folder markers and keys the
 // filters exclude, in the order S3 returns them.
@@ -555,7 +556,7 @@ func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []strin
 // A root .kosli_ignore is downloaded first so its rules can be applied, and
 // objects the rules exclude are not downloaded at all. The remaining objects
 // download in parallel within limits; the first failure cancels the rest.
-func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits downloadLimits, logger *logger.Logger) (artifactName, sha256 string, err error) {
+func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (artifactName, sha256 string, err error) {
 	keys := make([]string, len(objects))
 	for i, object := range objects {
 		keys[i] = object.key
@@ -646,12 +647,12 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 // bytes; the first error cancels the shared context so in-flight transfers
 // stop and no further one starts.
 func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket string, objects []s3Object, indexes []int,
-	files []digest.VirtualFile, limits downloadLimits, logger *logger.Logger) error {
+	files []digest.VirtualFile, limits DownloadLimits, logger *logger.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	slots := make(chan struct{}, max(limits.concurrency, 1))
-	budget := semaphore.NewWeighted(max(limits.bytesInFlight, 1))
+	slots := make(chan struct{}, max(limits.Concurrency, 1))
+	budget := semaphore.NewWeighted(max(limits.BytesInFlight, 1))
 	firstErr := make(chan error, 1)
 	var wg sync.WaitGroup
 
@@ -673,7 +674,7 @@ func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket strin
 			}
 
 			// An object larger than the budget takes all of it and so runs alone.
-			weight := max(min(object.size, limits.bytesInFlight), 1)
+			weight := max(min(object.size, limits.BytesInFlight), 1)
 			if err := budget.Acquire(ctx, weight); err != nil {
 				return // cancelled while waiting
 			}

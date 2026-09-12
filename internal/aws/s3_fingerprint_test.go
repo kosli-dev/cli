@@ -55,7 +55,7 @@ func (r *recordingDownloader) downloadedKeys() []string {
 
 func snapshotFake(t *testing.T, client S3API) (artifactName, fingerprint string) {
 	t.Helper()
-	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(t, err)
 	require.Len(t, data, 1)
 	require.Len(t, data[0].Digests, 1)
@@ -187,7 +187,7 @@ func (suite *S3FingerprintTestSuite) TestDownloadsExactlyTheContributingObjects(
 		"scratch.tmp":      []byte("tmp"),
 		"filtered/out.txt": []byte("out"),
 	}}}
-	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, []string{"filtered/"}, nil, logger.NewStandardLogger())
+	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, []string{"filtered/"}, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), data, 1)
 	require.Equal(suite.T(), []string{".kosli_ignore", "app.js", "lib/util.js"}, client.downloadedKeys())
@@ -210,7 +210,7 @@ func (suite *S3FingerprintTestSuite) TestObjectsNeverLandUnderTheirKeyAndDoNotLi
 			"the local file name must owe nothing to the key")
 	}
 
-	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), client.files, len(keys))
 	for _, file := range client.files {
@@ -225,7 +225,7 @@ func (suite *S3FingerprintTestSuite) TestADownloadErrorNamesTheKey() {
 	client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{
 		"README.md": []byte(fakeReadmeBody), "notes.txt": []byte(fakeNotesBody),
 	}, DownloadObjectErr: os.ErrDeadlineExceeded}
-	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
 	require.ErrorIs(suite.T(), err, os.ErrDeadlineExceeded)
 	// Downloads overlap, so either object may be the first to fail.

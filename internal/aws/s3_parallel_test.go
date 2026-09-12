@@ -93,7 +93,7 @@ func bucketOf(n int, size int, delay time.Duration) (*trackingDownloader, []s3Ob
 
 func (suite *S3ParallelTestSuite) TestMakesExactlyOneCallPerObject() {
 	client, listing := bucketOf(60, 8, 0)
-	_, parallel, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, downloadLimits{concurrency: 8, bytesInFlight: 1 << 30}, logger.NewStandardLogger())
+	_, parallel, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, DownloadLimits{Concurrency: 8, BytesInFlight: 1 << 30}, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), client.calls, 60)
 	for key, n := range client.calls {
@@ -101,14 +101,14 @@ func (suite *S3ParallelTestSuite) TestMakesExactlyOneCallPerObject() {
 	}
 
 	sequential, _ := bucketOf(60, 8, 0)
-	_, want, err := fingerprintS3Objects(sequential, fakeS3TestBucketName, listing, downloadLimits{concurrency: 1, bytesInFlight: 1 << 30}, logger.NewStandardLogger())
+	_, want, err := fingerprintS3Objects(sequential, fakeS3TestBucketName, listing, DownloadLimits{Concurrency: 1, BytesInFlight: 1 << 30}, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), want, parallel)
 }
 
 func (suite *S3ParallelTestSuite) TestRespectsTheConcurrencyBound() {
 	client, listing := bucketOf(40, 8, 5*time.Millisecond)
-	_, _, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, downloadLimits{concurrency: 4, bytesInFlight: 1 << 30}, logger.NewStandardLogger())
+	_, _, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, DownloadLimits{Concurrency: 4, BytesInFlight: 1 << 30}, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.LessOrEqual(suite.T(), client.maxInFlight, 4)
 	require.GreaterOrEqual(suite.T(), client.maxInFlight, 2, "downloads must actually overlap for the bound to be tested")
@@ -118,7 +118,7 @@ func (suite *S3ParallelTestSuite) TestRespectsTheConcurrencyBound() {
 // eight 100-byte objects, the budget allows two.
 func (suite *S3ParallelTestSuite) TestRespectsTheByteBudget() {
 	client, listing := bucketOf(20, 100, 5*time.Millisecond)
-	_, _, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, downloadLimits{concurrency: 8, bytesInFlight: 250}, logger.NewStandardLogger())
+	_, _, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, DownloadLimits{Concurrency: 8, BytesInFlight: 250}, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.LessOrEqual(suite.T(), client.maxBytesInFlight, int64(250))
 	require.LessOrEqual(suite.T(), client.maxInFlight, 2)
@@ -145,7 +145,7 @@ func (suite *S3ParallelTestSuite) TestAnObjectLargerThanTheBudgetRunsAlone() {
 		return nil
 	}
 
-	_, _, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, downloadLimits{concurrency: 8, bytesInFlight: 250}, logger.NewStandardLogger())
+	_, _, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, DownloadLimits{Concurrency: 8, BytesInFlight: 250}, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), 1, aloneChecks)
 	require.Equal(suite.T(), 1, client.calls[big])
@@ -185,7 +185,7 @@ func (suite *S3ParallelTestSuite) TestFingerprintIsIndependentOfCompletionOrder(
 			time.Sleep(d)
 			return nil
 		}
-		name, got, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, downloadLimits{concurrency: 8, bytesInFlight: 1 << 30}, logger.NewStandardLogger())
+		name, got, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, DownloadLimits{Concurrency: 8, BytesInFlight: 1 << 30}, logger.NewStandardLogger())
 		require.NoError(suite.T(), err)
 		require.Equal(suite.T(), fakeS3TestBucketName, name)
 		require.Equal(suite.T(), want, got, "round %d", round)
@@ -221,16 +221,32 @@ func (suite *S3ParallelTestSuite) TestATransportErrorStopsRemainingWork() {
 		}
 	}
 
-	_, _, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, downloadLimits{concurrency: 2, bytesInFlight: 1 << 30}, logger.NewStandardLogger())
+	_, _, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, DownloadLimits{Concurrency: 2, BytesInFlight: 1 << 30}, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
 	require.ErrorIs(suite.T(), err, errBoom)
 	require.Contains(suite.T(), err.Error(), fmt.Sprintf("object key [%s]", failingKey))
 	require.Len(suite.T(), client.calls, 2, "only the two downloads in flight at the failure may have started: %v", client.calls)
 }
 
+// The limits handed to getS3DataFromClient are the ones the fan-out obeys: the
+// same bucket runs one at a time under a limit of one and overlaps under four.
+func (suite *S3ParallelTestSuite) TestLimitsReachTheDownloader() {
+	for _, limit := range []int{1, 4} {
+		client, _ := bucketOf(12, 8, 3*time.Millisecond)
+		_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil,
+			DownloadLimits{Concurrency: limit, BytesInFlight: 1 << 30}, logger.NewStandardLogger())
+		require.NoError(suite.T(), err)
+		require.Len(suite.T(), client.calls, 12)
+		require.LessOrEqual(suite.T(), client.maxInFlight, limit)
+		if limit > 1 {
+			require.GreaterOrEqual(suite.T(), client.maxInFlight, 2)
+		}
+	}
+}
+
 func (suite *S3ParallelTestSuite) TestDefaultLimitsAreSane() {
-	require.GreaterOrEqual(suite.T(), defaultDownloadLimits.concurrency, 2)
-	require.GreaterOrEqual(suite.T(), defaultDownloadLimits.bytesInFlight, int64(64<<20))
+	require.GreaterOrEqual(suite.T(), DefaultDownloadLimits.Concurrency, 2)
+	require.GreaterOrEqual(suite.T(), DefaultDownloadLimits.BytesInFlight, int64(64<<20))
 }
 
 func TestS3ParallelTestSuite(t *testing.T) {

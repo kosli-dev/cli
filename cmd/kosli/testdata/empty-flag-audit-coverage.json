@@ -845,6 +845,8 @@
   "aws-region": "string",
   "aws-secret-key": "string",
   "bucket": "string",
+  "download-budget": "string",
+  "download-concurrency": "int",
   "dry-run": "bool",
   "exclude": "stringSlice",
   "exclude-regex": "stringSlice",
