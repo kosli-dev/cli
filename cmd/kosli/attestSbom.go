@@ -188,9 +188,10 @@ func (o *attestSbomOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	o.attachments = append(o.attachments, o.sbomFilePath)
-
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
+	// One attachment, built here rather than appended to o.attachments, so the
+	// count cannot be raised by anything that fills that field first. Two would
+	// be tarred and gzipped while sbom_sha256 still described the original.
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, []string{o.sbomFilePath})
 	if err != nil {
 		return err
 	}
