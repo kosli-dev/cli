@@ -26,6 +26,15 @@ type FormItem struct {
 	Content   interface{}
 }
 
+// FileBytes is the Content of a "file-bytes" FormItem: a file the caller has
+// already read. Uploading these bytes, rather than a path the body builder
+// would open again, is what lets a caller promise that a checksum it recorded
+// describes the bytes the server received.
+type FileBytes struct {
+	Name string
+	Data []byte
+}
+
 // HTTPResponse is a wrapper of http.Response with ready-extracted string body
 type HTTPResponse struct {
 	Body string
@@ -215,8 +224,10 @@ func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[st
 			jsonFields[item.FieldName] = jsonBytes
 
 		case "file":
-			// Handle file upload separately
-			filename := item.Content.(string)
+			filename, ok := item.Content.(string)
+			if !ok {
+				return "", body, nil, fmt.Errorf("form item %s: file content must be a path", item.FieldName)
+			}
 			file, err := os.Open(filename)
 			if err != nil {
 				return "", body, nil, err
@@ -237,6 +248,25 @@ func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[st
 			if err != nil {
 				return "", body, nil, err
 			}
+
+		case "file-bytes":
+			fb, ok := item.Content.(FileBytes)
+			if !ok {
+				return "", body, nil, fmt.Errorf("form item %s: file-bytes content must be a FileBytes", item.FieldName)
+			}
+			part, err := writer.CreateFormFile(item.FieldName, fb.Name)
+			if err != nil {
+				return "", body, nil, err
+			}
+			_, err = part.Write(fb.Data)
+			if err != nil {
+				return "", body, nil, err
+			}
+
+		default:
+			// Skipping silently would post a body with a part missing, and a
+			// caller that recorded a checksum for that part would never know.
+			return "", body, nil, fmt.Errorf("form item %s: unknown type %q", item.FieldName, item.Type)
 		}
 	}
 	contentType := writer.FormDataContentType()

@@ -1,0 +1,16 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "minimal",
+  "documentNamespace": "https://example.com/minimal",
+  "creationInfo": { "created": "2026-09-11T10:00:00Z", "creators": ["Tool: syft-1.50.0"] },
+  "packages": [
+    { "SPDXID": "SPDXRef-Package-app", "name": "app", "versionInfo": "1.2.3",
+      "downloadLocation": "NOASSERTION", "filesAnalyzed": false }
+  ],
+  "relationships": [
+    { "spdxElementId": "SPDXRef-DOCUMENT", "relatedSpdxElement": "SPDXRef-Package-app",
+      "relationshipType": "DESCRIBES" }
+  ]
+}

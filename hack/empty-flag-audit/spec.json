@@ -4676,5 +4676,101 @@
     "flag_values": {},
     "setup": [],
     "verify": []
+  },
+  "attest sbom": {
+    "args": [],
+    "flags": {
+      "flow": "{flow}",
+      "name": "{name}",
+      "sbom-file": "cmd/kosli/testdata/sbom/cyclonedx.json",
+      "trail": "{trail}"
+    },
+    "baseline_ok": true,
+    "baseline_exit": 0,
+    "baseline_output": "[warning] Repo information will not be reported as ID, Name and URL are required.\nsbom attestation '{name}' is reported to trail: {trail}",
+    "flags_to_test": [
+      "annotate",
+      "artifact-type",
+      "attachments",
+      "commit",
+      "description",
+      "dry-run",
+      "exclude",
+      "external-fingerprint",
+      "external-url",
+      "fingerprint",
+      "flow",
+      "name",
+      "origin-url",
+      "redact-commit-info",
+      "registry-password",
+      "registry-provider",
+      "registry-username",
+      "repo-id",
+      "repo-provider",
+      "repo-root",
+      "repo-url",
+      "repository",
+      "sbom-file",
+      "trail",
+      "user-data"
+    ],
+    "flag_values": {
+      "annotate": "probe=annotate",
+      "artifact-type": "file",
+      "attachments": "cmd/kosli/testdata/person-schema.json",
+      "commit": "HEAD",
+      "description": "probe-description",
+      "dry-run": "true",
+      "exclude": "probe-exclude",
+      "external-fingerprint": "probe=1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+      "external-url": "probe=http://example.com",
+      "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+      "flow": "{flow}",
+      "name": "{name}",
+      "origin-url": "http://example.com",
+      "redact-commit-info": "author",
+      "registry-password": "probe-registry-password",
+      "registry-provider": "probe-registry-provider",
+      "registry-username": "probe-registry-username",
+      "repo-id": "probe-repo-id",
+      "repo-provider": "github",
+      "repo-root": ".",
+      "repo-url": "http://example.com",
+      "repository": "probe-repository",
+      "sbom-file": "cmd/kosli/testdata/sbom/cyclonedx.json",
+      "trail": "{trail}",
+      "user-data": "cmd/kosli/testdata/person-schema.json"
+    },
+    "setup": [
+      {
+        "argv": [
+          "create",
+          "flow",
+          "{flow}",
+          "--use-empty-template"
+        ]
+      },
+      {
+        "argv": [
+          "begin",
+          "trail",
+          "{trail}",
+          "--flow",
+          "{flow}"
+        ]
+      }
+    ],
+    "verify": [
+      [
+        "get",
+        "trail",
+        "{trail}",
+        "--flow",
+        "{flow}",
+        "--output",
+        "json"
+      ]
+    ]
   }
 }

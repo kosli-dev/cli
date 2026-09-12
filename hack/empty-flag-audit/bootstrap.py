@@ -154,6 +154,7 @@ VALUES = {
     "paths-file": "hack/empty-flag-audit/paths.yml",
     "template-file": "cmd/kosli/testdata/valid_template.yml",
     "scan-results": "cmd/kosli/testdata/snyk_scan_example.json",
+    "sbom-file": "cmd/kosli/testdata/sbom/cyclonedx.json",
     "user-data": ARTIFACT_PATH,
     "input-file": ARTIFACT_PATH,
     "attestation-data": ARTIFACT_PATH,
@@ -567,7 +568,9 @@ def main():
         state = "ok  " if entry["baseline_ok"] else ("needs" if reason else "FAIL")
         print(f"{state}  {command}"
               + ("" if entry["baseline_ok"] else f"  {entry.get('error','')[:90]}"))
-    SPEC.write_text(json.dumps(spec, indent=1))
+    # indent=2 matches the committed file. At indent=1 every regeneration
+    # reindents all 4680 lines and buries the one entry that changed.
+    SPEC.write_text(json.dumps(spec, indent=2) + "\n")
     print(f"\nwrote {SPEC}")
 
 
