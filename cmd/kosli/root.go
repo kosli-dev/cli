@@ -258,6 +258,8 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	awsSecretKeyFlag                = "The AWS secret access key."
 	awsRegionFlag                   = "The AWS region."
 	bucketNameFlag                  = "The name of the S3 bucket."
+	downloadConcurrencyFlag         = "[optional] The number of S3 objects to download at the same time when fingerprinting the bucket."
+	downloadBudgetFlag              = "[optional] The maximum total size of the S3 objects downloading at the same time, which caps the temporary disk the snapshot uses. A bare number is megabytes; add K, M, G or T (optionally followed by B) to choose the unit, e.g. 512M or 8G. An object larger than the budget still downloads, on its own. Set TMPDIR to choose where objects are downloaded to."
 	bucketPathsFlag                 = "[optional] The comma separated list of file and/or directory paths in the S3 bucket to include when fingerprinting. Paths match by literal prefix. Cannot be used together with --exclude or --exclude-regex."
 	bucketPathsRegexFlag            = "[optional] The comma separated list of Go regular expressions matched against object keys in the S3 bucket to include when fingerprinting. Cannot be used together with --exclude or --exclude-regex."
 	excludeBucketPathsFlag          = "[optional] The comma separated list of file and/or directory paths in the S3 bucket to exclude when fingerprinting. Paths match by literal prefix. Cannot be used together with --include or --include-regex."

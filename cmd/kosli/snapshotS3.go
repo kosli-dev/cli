@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -71,12 +72,15 @@ kosli snapshot s3 yourEnvironmentName \
 `
 
 type snapshotS3Options struct {
-	bucket         string
-	includePaths   []string
-	includeRegex   []string
-	excludePaths   []string
-	excludeRegex   []string
-	awsStaticCreds *aws.AWSStaticCreds
+	bucket              string
+	includePaths        []string
+	includeRegex        []string
+	excludePaths        []string
+	excludeRegex        []string
+	downloadConcurrency int
+	downloadBudget      string
+	downloadLimits      aws.DownloadLimits
+	awsStaticCreds      *aws.AWSStaticCreds
 }
 
 func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
@@ -108,7 +112,7 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 				}
 			}
 
-			return nil
+			return o.resolveDownloadLimits()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -120,6 +124,8 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVar(&o.includeRegex, "include-regex", []string{}, bucketPathsRegexFlag)
 	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludeBucketPathsFlag)
 	cmd.Flags().StringSliceVar(&o.excludeRegex, "exclude-regex", []string{}, excludeBucketPathsRegexFlag)
+	cmd.Flags().IntVar(&o.downloadConcurrency, "download-concurrency", aws.DefaultDownloadLimits.Concurrency, downloadConcurrencyFlag)
+	cmd.Flags().StringVar(&o.downloadBudget, "download-budget", defaultDownloadBudget, downloadBudgetFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
 
@@ -143,7 +149,7 @@ func (o *snapshotS3Options) run(args []string) error {
 		return err
 	}
 
-	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, logger)
+	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, o.downloadLimits, logger)
 	if err != nil {
 		return err
 	}
@@ -163,4 +169,22 @@ func (o *snapshotS3Options) run(args []string) error {
 		logger.Info("bucket %s was reported to environment %s", o.bucket, envName)
 	}
 	return err
+}
+
+// defaultDownloadBudget spells aws.DefaultDownloadLimits.BytesInFlight the way
+// the flag reads it.
+const defaultDownloadBudget = "512M"
+
+// resolveDownloadLimits validates the download flags and turns them into the
+// limits the aws package takes.
+func (o *snapshotS3Options) resolveDownloadLimits() error {
+	if o.downloadConcurrency < 1 {
+		return fmt.Errorf("--download-concurrency must be at least 1, got %d", o.downloadConcurrency)
+	}
+	budget, err := parseByteSize(o.downloadBudget)
+	if err != nil {
+		return fmt.Errorf("invalid --download-budget: %v", err)
+	}
+	o.downloadLimits = aws.DownloadLimits{Concurrency: o.downloadConcurrency, BytesInFlight: budget}
+	return nil
 }
