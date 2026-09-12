@@ -62,6 +62,16 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomBuildsTheRightRequest() {
 			goldenRegex: `(?s)"sbom_format": "cyclonedx-1\.6".*"sbom_sha256": "db09ef115d88e48a5ef553b21a88ccdc15b3df700e0b7c3736e2ef1024d26d9c"`,
 		},
 		{
+			name:        "keeps the caller's own annotations alongside the two it derives",
+			cmd:         fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --annotate team=platform --dry-run %s", suite.defaultKosliArguments),
+			goldenRegex: `"team": "platform"`,
+		},
+		{
+			name:        "still derives its own annotations when the caller supplies one",
+			cmd:         fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --annotate team=platform --dry-run %s", suite.defaultKosliArguments),
+			goldenRegex: `"sbom_format": "cyclonedx-1\.6"`,
+		},
+		{
 			name:        "reads SPDX as well, and reports the version the file declares",
 			cmd:         fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/spdx.json --dry-run %s", suite.defaultKosliArguments),
 			goldenRegex: `(?s)"type_name": "sbom".*"format": "spdx-2\.3"`,
@@ -81,6 +91,20 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomRejectsBadInput() {
 			wantError: true,
 			name:      "fails when --attachments is used too, because two attachments would be compressed",
 			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --attachments testdata/sbom/spdx.json %s", suite.defaultKosliArguments),
+			golden:    "Error: only one of --sbom-file, --attachments is allowed\n",
+		},
+		{
+			// Restored after being dropped in review: the command wraps the
+			// parser's message, and only this exercises that wrapping.
+			wantError: true,
+			name:      "fails when the file is gzipped, because the format is read from it",
+			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/compressed.json.gz %s", suite.defaultKosliArguments),
+			golden:    "Error: failed to parse SBOM file [testdata/sbom/compressed.json.gz]: the file is gzip compressed; supply the uncompressed SBOM\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when more than one attachment is given, not just one",
+			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --attachments testdata/sbom/spdx.json --attachments testdata/sbom/not-an-sbom.json %s", suite.defaultKosliArguments),
 			golden:    "Error: only one of --sbom-file, --attachments is allowed\n",
 		},
 		{
@@ -148,21 +172,27 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomRoundTrip() {
 // nothing downstream fails when that happens -- sbom_sha256 simply stops
 // describing what was uploaded. The dry-run goldens cannot see this: a multipart
 // request logs only its JSON fields.
-func (suite *AttestSbomCommandTestSuite) TestSbomIsUploadedUncompressed() {
+//
+// Outside the suite on purpose. It asserts pure local logic, so it should still
+// report when no server is running, which is when you most want to know the
+// invariant holds.
+func TestSbomIsUploadedUncompressed(t *testing.T) {
 	sbom := "testdata/sbom/cyclonedx.json"
 
 	path, cleanupNeeded, err := getPathOfEvidenceFileToUpload([]string{sbom})
-	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), sbom, path, "the SBOM itself must be uploaded, not a repackaged copy")
-	require.False(suite.T(), cleanupNeeded, "a tarred SBOM no longer matches the checksum recorded for it")
+	require.NoError(t, err)
+	require.Equal(t, sbom, path, "the SBOM itself must be uploaded, not a repackaged copy")
+	require.False(t, cleanupNeeded, "a tarred SBOM no longer matches the checksum recorded for it")
 
 	// Without this, the assertions above would still pass if packaging stopped
 	// happening at all, which would say nothing about the one-file case.
 	packed, cleanupNeeded, err := getPathOfEvidenceFileToUpload([]string{sbom, "testdata/sbom/spdx.json"})
-	require.NoError(suite.T(), err)
-	require.True(suite.T(), cleanupNeeded, "two attachments are expected to be packaged")
-	require.NotEqual(suite.T(), sbom, packed)
-	suite.T().Cleanup(func() { _ = os.Remove(packed) })
+	// Registered before the assertions, so a failure between here and the end
+	// still removes the tar.
+	t.Cleanup(func() { _ = os.Remove(packed) })
+	require.NoError(t, err)
+	require.True(t, cleanupNeeded, "two attachments are expected to be packaged")
+	require.NotEqual(t, sbom, packed)
 }
 
 func TestAttestSbomCommandTestSuite(t *testing.T) {

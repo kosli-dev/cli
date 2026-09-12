@@ -15,7 +15,10 @@ import (
 
 // The API rejects a request body over 10MB, and the JSON payload is counted
 // alongside the file, so this leaves room for it rather than sitting on the
-// limit. Lifting the ceiling needs direct-to-S3 upload, tracked separately.
+// limit. The margin is a guess at a small payload, not a bound: --user-data
+// embeds an arbitrary JSON file in the same body and can push the total past
+// 10MB on its own. Lifting the ceiling needs direct-to-S3 upload, tracked
+// separately.
 const maxSbomFileBytes = 9 * 1024 * 1024
 
 // Both are also carried inside attestation_data, where the server's schema can
@@ -51,8 +54,8 @@ SPDX (JSON and tag-value) are supported.
 
 The file is uploaded as it is, so the recorded checksum is the checksum of the
 file you supplied and you can verify it by hand. It must be a single file: it is
-not compressed, and an already-compressed file is rejected, because the format
-and the summary below are read from it.
+not compressed, and a gzipped file is rejected, because the format and the
+summary below are read from it.
 
 Kosli reads the format, the creation time, the tools that produced it, the
 subject it describes and how many packages it lists. Nothing is checked against
@@ -283,6 +286,11 @@ func (o *attestSbomOptions) rejectReservedAnnotations() error {
 
 // annotate records what the file said about itself where a reader sees it on
 // the trail page. The same two values are carried inside attestation_data.
+//
+// It must run after CommonAttestationOptions.run, which assigns
+// payload.Annotations wholesale from the --annotate flag. Called before that,
+// both keys are silently discarded. The nil guard below reads as though the
+// order does not matter; it does.
 func (o *attestSbomOptions) annotate(format, fingerprint string) {
 	if o.payload.Annotations == nil {
 		o.payload.Annotations = map[string]string{}

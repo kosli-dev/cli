@@ -154,6 +154,7 @@ VALUES = {
     "paths-file": "hack/empty-flag-audit/paths.yml",
     "template-file": "cmd/kosli/testdata/valid_template.yml",
     "scan-results": "cmd/kosli/testdata/snyk_scan_example.json",
+    "sbom-file": "cmd/kosli/testdata/sbom/cyclonedx.json",
     "user-data": ARTIFACT_PATH,
     "input-file": ARTIFACT_PATH,
     "attestation-data": ARTIFACT_PATH,
