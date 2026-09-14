@@ -222,7 +222,6 @@ func TestAuthedClient_RedirectLoop_StopsAtLimit(t *testing.T) {
 // run forever.
 func TestAuthedClient_HangingRedirectTarget_TimesOut(t *testing.T) {
 	release := make(chan struct{})
-	t.Cleanup(func() { close(release) })
 	mux := http.NewServeMux()
 	mux.HandleFunc("/old", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/hang", http.StatusFound)
@@ -234,6 +233,9 @@ func TestAuthedClient_HangingRedirectTarget_TimesOut(t *testing.T) {
 		}
 	})
 	srv := newTestServer(t, mux)
+	// Cleanup runs LIFO and srv.Close blocks until handlers return, so the parked
+	// handler must be released before the server is closed.
+	t.Cleanup(func() { close(release) })
 
 	client := newAuthedClient("tok", schemeBearer)
 	if client.Timeout != sonarClientTimeout {
