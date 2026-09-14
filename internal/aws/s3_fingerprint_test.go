@@ -226,6 +226,22 @@ func (suite *S3FingerprintTestSuite) TestObjectsNeverLandUnderTheirKeyAndDoNotLi
 	}
 }
 
+// A malformed rule in the bucket's .kosli_ignore fails the snapshot and names
+// the file, even when the rule points under a prefix the bucket does not have.
+func (suite *S3FingerprintTestSuite) TestAMalformedIgnoreRuleFailsTheSnapshot() {
+	for _, rule := range []string{"[", "nonexistent/a["} {
+		suite.Run(rule, func() {
+			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{
+				".kosli_ignore": []byte(rule + "\n"), "app.js": []byte("app"),
+			}}
+			_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), "the bucket's .kosli_ignore holds a rule that cannot be applied")
+			require.Contains(suite.T(), err.Error(), rule)
+		})
+	}
+}
+
 func (suite *S3FingerprintTestSuite) TestADownloadErrorNamesTheKey() {
 	client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{
 		"README.md": []byte(fakeReadmeBody), "notes.txt": []byte(fakeNotesBody),

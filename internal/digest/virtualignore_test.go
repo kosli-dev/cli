@@ -1,6 +1,7 @@
 package digest
 
 import (
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -69,6 +70,9 @@ func (suite *VirtualIgnoreTestSuite) TestMatchesDirSha256() {
 		{name: "a doubled slash", ignore: "nested-dir//logs", hasEffect: true},
 		{name: "a parent segment that leaves the tree", ignore: "../logs"},
 		{name: "a rule that matches nothing", ignore: "does-not-exist"},
+		// The first piece matches nothing, so the malformed second piece is never
+		// evaluated, on disk or here.
+		{name: "a malformed pattern behind a double star that matches nothing", ignore: "nonexistent/**/a["},
 		{name: "a star alone", ignore: "*", hasEffect: true},
 		{name: "a character class", ignore: "app.[jl]?", hasEffect: true},
 		{name: "a question mark", ignore: "a/?", hasEffect: true},
@@ -104,17 +108,24 @@ func (suite *VirtualIgnoreTestSuite) TestMatchesDirSha256() {
 }
 
 // A malformed pattern fails DirSha256, so it must fail the virtual digest too
-// rather than silently excluding nothing.
+// rather than silently excluding nothing. filepath.Glob validates the pattern
+// before it looks at the filesystem, so this holds even for a rule under a
+// directory the tree does not have.
 func (suite *VirtualIgnoreTestSuite) TestMalformedRuleIsAnErrorOnBothSides() {
-	root := suite.T().TempDir()
-	files := suite.materialise(root, ignoreTestTree, "[")
+	for _, rule := range []string{"[", "nonexistent/a[", "logs/[", "a/**/["} {
+		suite.Run(rule, func() {
+			root := suite.T().TempDir()
+			files := suite.materialise(root, ignoreTestTree, rule)
 
-	_, err := DirSha256(root, nil, logger.NewStandardLogger())
-	require.Error(suite.T(), err)
+			_, err := DirSha256(root, nil, logger.NewStandardLogger())
+			require.Error(suite.T(), err, "DirSha256 must reject the rule")
 
-	_, err = VirtualDirSha256(files, []string{"["}, logger.NewStandardLogger())
-	require.Error(suite.T(), err)
-	require.Contains(suite.T(), err.Error(), "[")
+			_, err = VirtualDirSha256(files, []string{rule}, logger.NewStandardLogger())
+			require.Error(suite.T(), err, "VirtualDirSha256 must reject the rule")
+			require.ErrorIs(suite.T(), err, path.ErrBadPattern)
+			require.Contains(suite.T(), err.Error(), rule)
+		})
+	}
 }
 
 // Mirrors TestDirSha256IgnoreFileCannotHideItself: an ignore file that lists
@@ -233,7 +244,7 @@ func allPaths(tree map[string]string, withIgnoreFile bool) []string {
 		paths = append(paths, p)
 	}
 	if withIgnoreFile {
-		paths = append(paths, ignoreFileName)
+		paths = append(paths, IgnoreFileName)
 	}
 	sort.Strings(paths)
 	return paths
@@ -299,7 +310,7 @@ func (suite *VirtualIgnoreTestSuite) materialise(root string, tree map[string]st
 		require.NoError(suite.T(), utils.CreateFileWithContent(filepath.Join(root, filepath.FromSlash(p)), content))
 	}
 	if ignore != "" {
-		require.NoError(suite.T(), utils.CreateFileWithContent(filepath.Join(root, ignoreFileName), ignore))
+		require.NoError(suite.T(), utils.CreateFileWithContent(filepath.Join(root, IgnoreFileName), ignore))
 	}
 	return virtualFilesFor(tree, ignore)
 }
@@ -317,7 +328,7 @@ func virtualFilesFor(tree map[string]string, ignore string) []VirtualFile {
 		files = append(files, VirtualFile{Path: p, Sha256: sha256OfString(tree[p])})
 	}
 	if ignore != "" {
-		files = append(files, VirtualFile{Path: ignoreFileName, Sha256: sha256OfString(ignore)})
+		files = append(files, VirtualFile{Path: IgnoreFileName, Sha256: sha256OfString(ignore)})
 	}
 	return files
 }

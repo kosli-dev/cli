@@ -83,6 +83,11 @@ func (fs virtualFS) globDoubleStar(pattern string) ([]string, error) {
 
 // glob mirrors filepath.Glob on a Unix filesystem.
 func (fs virtualFS) glob(pattern string) ([]string, error) {
+	// filepath.Glob rejects a malformed pattern before it looks at the
+	// filesystem, so a bad rule fails even where nothing could match it.
+	if _, err := path.Match(pattern, ""); err != nil {
+		return nil, err
+	}
 	if !hasGlobMeta(pattern) {
 		// A literal pattern is returned as written, not cleaned.
 		if _, ok := fs.lookup(pattern); !ok {

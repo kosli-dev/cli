@@ -168,7 +168,7 @@ func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysReportsEveryBadKey() {
 	_, err := virtualPathsForS3Keys([]string{"ok.txt", "../one", "two/..", "", "dup", "./dup"})
 	require.Error(suite.T(), err)
 	msg := err.Error()
-	require.Contains(suite.T(), msg, "4 object keys cannot be fingerprinted")
+	require.Contains(suite.T(), msg, "4 problems prevent the bucket from being fingerprinted")
 	require.Contains(suite.T(), msg, "[../one]")
 	require.Contains(suite.T(), msg, "[two/..]")
 	require.Contains(suite.T(), msg, "object key []")
@@ -185,7 +185,7 @@ func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysCapsTheReport() {
 	_, err := virtualPathsForS3Keys(keys)
 	require.Error(suite.T(), err)
 	msg := err.Error()
-	require.Contains(suite.T(), msg, "13 object keys cannot be fingerprinted")
+	require.Contains(suite.T(), msg, "13 problems prevent the bucket from being fingerprinted")
 	require.Contains(suite.T(), msg, "(and 3 more)")
 	require.Equal(suite.T(), maxReportedS3KeyProblems, strings.Count(msg, "object key ["))
 }

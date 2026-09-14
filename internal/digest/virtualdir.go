@@ -132,7 +132,7 @@ func FilesNeedingContent(paths []string, ignoreRules []string) (map[string]bool,
 
 // protectedVirtualPath is the root ignore file, which its own rules never exclude.
 func protectedVirtualPath() string {
-	return path.Join(virtualRoot, ignoreFileName)
+	return path.Join(virtualRoot, IgnoreFileName)
 }
 
 // relativeVirtualPath strips the synthetic root from a tree path.

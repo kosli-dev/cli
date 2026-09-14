@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -527,7 +528,7 @@ func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []strin
 //
 // A root .kosli_ignore is downloaded first so its rules can be applied, and
 // objects the rules exclude are not downloaded at all.
-func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, logger *logger.Logger) (artifactName, sha256 string, err error) {
+func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, logger *logger.Logger) (string, string, error) {
 	keys := make([]string, len(objects))
 	for i, object := range objects {
 		keys[i] = object.key
@@ -565,8 +566,12 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 			if _, err := file.Seek(0, io.SeekStart); err != nil {
 				return err
 			}
-			rules, err = digest.ParseIgnoreRules(file)
-			return err
+			parsed, err := digest.ParseIgnoreRules(file)
+			if err != nil {
+				return err
+			}
+			rules = parsed
+			return nil
 		}, logger)
 		if err != nil {
 			return "", "", err
@@ -581,7 +586,7 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 	}
 	needed, err := digest.FilesNeedingContent(allPaths, rules)
 	if err != nil {
-		return "", "", fmt.Errorf("invalid rule in the bucket's %s: %w", digest.IgnoreFileName, err)
+		return "", "", ignoreRuleError(err)
 	}
 
 	files := make([]digest.VirtualFile, 0, len(keys))
@@ -601,11 +606,20 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 		files = append(files, digest.VirtualFile{Path: virtualPath, Sha256: sha256})
 	}
 
-	sha256, err = digest.VirtualDirSha256(files, rules, logger)
+	sha256, err := digest.VirtualDirSha256(files, rules, logger)
 	if err != nil {
-		return "", "", err
+		return "", "", ignoreRuleError(err)
 	}
 	return bucket, sha256, nil
+}
+
+// ignoreRuleError names the bucket's ignore file when one of its rules cannot
+// be applied, and leaves any other failure as it is.
+func ignoreRuleError(err error) error {
+	if errors.Is(err, path.ErrBadPattern) {
+		return fmt.Errorf("the bucket's %s holds a rule that cannot be applied: %w", digest.IgnoreFileName, err)
+	}
+	return err
 }
 
 // downloadAndHashS3Object fetches one object into a fresh temp file, lets

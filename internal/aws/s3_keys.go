@@ -124,7 +124,7 @@ func s3KeyProblemsError(problems []string) error {
 		shown = shown[:maxReportedS3KeyProblems]
 		suffix = fmt.Sprintf("\n(and %d more)", len(problems)-maxReportedS3KeyProblems)
 	}
-	return fmt.Errorf("%d object keys cannot be fingerprinted:\n%s%s\nexclude them with --exclude-regex, or narrow the include filter if one is set",
+	return fmt.Errorf("%d problems prevent the bucket from being fingerprinted:\n%s%s\nexclude the keys with --exclude-regex, or narrow the include filter if one is set",
 		len(problems), strings.Join(shown, "\n"), suffix)
 }
 
