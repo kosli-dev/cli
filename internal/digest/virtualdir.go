@@ -16,6 +16,7 @@ import (
 type VirtualFile struct {
 	// Path is relative to the tree root, slash-separated, with no leading or
 	// trailing slash and no "." or ".." segments (e.g. "dummy/template.yml").
+	// Its depth is bounded by globSeparatorsLimit; S3 keys stay far below it.
 	Path string
 	// Sha256 is the hex-encoded sha256 of the file content.
 	Sha256 string
@@ -250,6 +251,11 @@ func validateVirtualPath(p string) error {
 	if p == "" || p != path.Clean(p) || path.IsAbs(p) || strings.HasPrefix(p, "../") || p == ".." {
 		return fmt.Errorf("path %q is not a clean relative path: it must not be empty, absolute, "+
 			"or contain empty, \".\" or \"..\" segments", p)
+	}
+	// The walks recurse once per segment over a tree whose shape the bucket's
+	// writers control, so depth is bounded as filepath.Glob bounds a pattern.
+	if strings.Count(p, "/") >= globSeparatorsLimit {
+		return fmt.Errorf("path %q is too deep: at most %d segments are supported", p, globSeparatorsLimit)
 	}
 	return nil
 }

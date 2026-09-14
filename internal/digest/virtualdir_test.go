@@ -194,6 +194,13 @@ func (suite *VirtualDirTestSuite) TestVirtualDirSha256Errors() {
 			wantErrMsg: "not a clean relative path",
 		},
 		{
+			// The walks recurse once per segment over a tree the bucket's writers
+			// shape, so depth is bounded as filepath.Glob bounds a pattern.
+			name:       "a path deeper than the walk bound",
+			files:      []VirtualFile{{Path: strings.Repeat("d/", globSeparatorsLimit) + "x", Sha256: validSha}},
+			wantErrMsg: "too deep",
+		},
+		{
 			name:       "an invalid sha256",
 			files:      []VirtualFile{{Path: "a.txt", Sha256: "not-a-digest"}},
 			wantErrMsg: "not a valid SHA256 fingerprint",
