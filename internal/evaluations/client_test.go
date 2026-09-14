@@ -232,3 +232,32 @@ func keysOf(m map[string]interface{}) []string {
 	}
 	return keys
 }
+
+// A body carrying the message key with something that is not text has no
+// sentence to pass on. Reading one as a string used to panic the whole CLI,
+// which is a stack trace in place of the error it arrived with.
+func TestCreateSurvivesAMessageThatIsNotText(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		body string
+	}{
+		{name: "a null message", body: `{"message": null}`},
+		{name: "a numeric message", body: `{"message": 42}`},
+		{name: "an object message", body: `{"message": {"detail": "nested"}}`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			server, _ := newFakeServer(t, http.StatusForbidden, test.body)
+
+			require.NotPanics(t, func() {
+				_, err := newTestClient(t, server.URL, false).Create("my-org", aCreateRequest())
+				require.Error(t, err)
+
+				var apiError *requests.APIError
+				require.True(t, errors.As(err, &apiError))
+				require.Equal(t, http.StatusForbidden, apiError.StatusCode)
+				require.False(t, apiError.HasServerMessage,
+					"a message that is not text is no message to pass on")
+			})
+		})
+	}
+}

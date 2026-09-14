@@ -375,7 +375,7 @@ func serverSideRequestError(err error) error {
 	}
 
 	switch {
-	case apiError.StatusCode == http.StatusForbidden:
+	case apiError.StatusCode == http.StatusForbidden && apiError.HasServerMessage:
 		// The server's own words travel too: a refusal can come from a token
 		// without rights on the org rather than from the feature flag, and
 		// naming only the flag would send the reader after the wrong thing.
@@ -383,6 +383,14 @@ func serverSideRequestError(err error) error {
 			"It is gated on the is-server-side-evaluation-enabled feature flag; "+
 			"remove --server-side to evaluate on this machine instead",
 			global.Org, apiError.Message)
+
+	case apiError.StatusCode == http.StatusForbidden:
+		// A refusal from something in front of Kosli, such as a proxy, which
+		// has no sentence of the API's to pass on. Quoting what it did send
+		// would dress a decoder complaint as the server's reason.
+		return fmt.Errorf("server-side evaluation was refused for org '%s'. "+
+			"It is gated on the is-server-side-evaluation-enabled feature flag; "+
+			"remove --server-side to evaluate on this machine instead", global.Org)
 
 	// Not a sentence the API wrote, so this 404 came from something that does
 	// not serve the route at all: a server too old to have it, or a proxy in

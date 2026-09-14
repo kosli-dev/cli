@@ -99,6 +99,11 @@ func (c *Client) Get(org, id string) (*Evaluation, error) {
 // effect at the next turn of the loop.
 func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options WaitOptions) (*Evaluation, error) {
 	options = options.withDefaults()
+	// Measured rather than assumed: a read carries no deadline of its own, so
+	// the time actually spent can exceed the budget, and reporting the budget
+	// would understate the wait to the one person asking whether the platform
+	// met it.
+	started := time.Now()
 	expired := time.After(options.Timeout)
 	interval := options.Initial
 
@@ -123,7 +128,7 @@ func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options Wa
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		case <-expired:
-			return nil, &StillPendingError{Org: org, ID: id, Waited: options.Timeout}
+			return nil, &StillPendingError{Org: org, ID: id, Waited: time.Since(started)}
 		case <-time.After(interval):
 		}
 		interval = nextInterval(interval, options.Max)

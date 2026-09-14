@@ -511,6 +511,35 @@ func (suite *EvaluateServerSideTestSuite) TestAnOlderServerIsNamedAsSuch() {
 	}
 }
 
+// A refusal can arrive from something in front of Kosli, which has no sentence
+// of the API's to quote. Quoting what it did send would dress a decoder
+// complaint as the server's reason, exactly as the 404 branch once did.
+func (suite *EvaluateServerSideTestSuite) TestARefusalWithNothingToQuoteSaysOnlyWhatIsKnown() {
+	for _, test := range []struct {
+		name string
+		body string
+	}{
+		{name: "a proxy answering in html", body: `<html><body>403 Forbidden</body></html>`},
+		{name: "an answer with no body at all", body: ``},
+		{name: "an object with no message", body: `{"detail":"Forbidden"}`},
+		{name: "a bare string", body: `"Forbidden"`},
+	} {
+		suite.Run(test.name, func() {
+			server := newRefusingServer(suite.T(), http.StatusForbidden, test.body)
+
+			_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), "test-org")
+			require.Contains(suite.T(), err.Error(), "is-server-side-evaluation-enabled")
+			require.NotContains(suite.T(), err.Error(), "invalid character",
+				"no decoder complaint dressed as the server's reason")
+			require.NotContains(suite.T(), err.Error(), "unexpected end of JSON input")
+			require.NotContains(suite.T(), err.Error(), "map[")
+		})
+	}
+}
+
 // A refusal can come from a token without rights on the org rather than from
 // the feature flag, so the server's own reason has to travel with ours.
 func (suite *EvaluateServerSideTestSuite) TestARefusalKeepsTheServersOwnReason() {

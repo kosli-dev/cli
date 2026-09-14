@@ -386,6 +386,12 @@ A code review of the finished branch raised findings in two rounds. All but two 
 
     **Process note:** I only ever ran the evaluate suites in `cmd/kosli`, never the whole package, so this reached CI. Running the package once before pushing would have caught it in seconds.
 
+**Third review round**
+
+14. **The refusal branch had the very fault the 404 branch had just been fixed for.** It quoted the server's message unconditionally, so a refusal from a proxy in front of Kosli would have shown a decoder complaint dressed as the server's reason, alongside a feature-flag hint that was not the cause. It now reads the same recorded fact the 404 branch does, and four body shapes are pinned.
+15. **An expired wait reported the budget rather than the time spent.** The two can differ, as this code's own comments say, so a read that overran by ten seconds would have understated the wait to the one person asking whether the platform met its promise. It is measured now.
+16. **A non-text message panicked the whole CLI.** Pre-existing in the shared client, and confirmed by probe for a null, a number and an object. Only a message that is text is now read as one, which also makes the recorded fact honest: a body carrying the key with something unusable under it has no sentence to pass on. A stack trace in place of an error is worse than anything else on this list, and it was two lines.
+
 **Known limitations, recorded rather than fixed**
 
 11. **The wait budget governs the polling, not a single read.** A read carries no context and the shared HTTP client sets no overall deadline, so a very slow server can overrun the budget by one read, and cancelling stops the loop only at its next turn. Holding to the budget exactly means giving the read a deadline of its own, which needs `internal/requests` to accept a context. That is a change every command inherits, so it belongs in its own ticket rather than here. Stated on `WaitOptions` so nobody reads the budget as a hard bound.
