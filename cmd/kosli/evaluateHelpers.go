@@ -28,6 +28,11 @@ var policyFetchTimeout = 10 * time.Second
 // misconfigured server streaming an unbounded body. 5 * 2^20 (5*1MiB)
 const policyMaxBytes = 5 << 20 // 5 MiB
 
+// maxServerSideTrails mirrors the API's own ceiling. Checked here so that a
+// caller naming too many is told which limit they crossed, rather than reading
+// it out of a rejected request.
+const maxServerSideTrails = 100
+
 type commonEvaluateOptions struct {
 	flowName     string
 	policyRef    string
@@ -247,6 +252,11 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]in
 // prints the verdict it answers with. Nothing about the trails is read here:
 // the server assembles what the policy sees, which is the point of the flag.
 func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evaluations.TrailRef) error {
+	if len(trails) > maxServerSideTrails {
+		return fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
+			maxServerSideTrails, len(trails))
+	}
+
 	policySource, err := loadPolicy(o.policyRef)
 	if err != nil {
 		return err

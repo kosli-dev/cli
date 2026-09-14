@@ -90,11 +90,27 @@ func (suite *EvaluateServerSideTestSuite) serverSideCmd(host, extra string) stri
 // The flag is deliberately undocumented: it exists to run the two evaluation
 // paths against each other while neither is a contract anyone can rely on.
 func (suite *EvaluateServerSideTestSuite) TestTheFlagIsHiddenFromHelp() {
-	_, combined, _, _, err := executeCommandC("evaluate trail --help")
+	for _, command := range []string{"trail", "trails"} {
+		suite.Run(command, func() {
+			_, combined, _, _, err := executeCommandC("evaluate " + command + " --help")
 
-	require.NoError(suite.T(), err)
-	require.NotContains(suite.T(), combined, "--server-side")
-	require.Contains(suite.T(), combined, "--policy", "the rest of the help still renders")
+			require.NoError(suite.T(), err)
+			require.NotContains(suite.T(), combined, "--server-side")
+			require.Contains(suite.T(), combined, "--policy", "the rest of the help still renders")
+		})
+	}
+}
+
+// `evaluate input` names no trails, so there is no evaluation to create from
+// it and the flag must not be there to reach for.
+func (suite *EvaluateServerSideTestSuite) TestEvaluateInputHasNoSuchFlag() {
+	_, combined, _, _, err := executeCommandC(
+		"evaluate input --input-file testdata/evaluate/trail-input.json " +
+			"--policy testdata/policies/allow-all.rego --server-side")
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "unknown flag: --server-side")
+	require.NotContains(suite.T(), combined, "ALLOWED")
 }
 
 func (suite *EvaluateServerSideTestSuite) TestItSendsThePolicyAndTheTrailAndPrintsTheVerdict() {
@@ -218,6 +234,108 @@ func (suite *EvaluateServerSideTestSuite) TestItUploadsAPolicyTheLocalPathWouldR
 
 	files := fake.created[0]["policy"].(map[string]interface{})["files"].(map[string]interface{})
 	require.Contains(suite.T(), files, "no-package-policy.rego")
+}
+
+// Every trail resolves at one instant, which is only true if they travel in
+// one evaluation. One request per trail would smear the answer across however
+// long the reads took.
+func (suite *EvaluateServerSideTestSuite) TestEveryTrailGoesInOneEvaluation() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, combined, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate trails first second third --flow my-flow "+
+			"--policy testdata/policies/allow-all.rego --server-side "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.NoError(suite.T(), err)
+	require.Regexp(suite.T(), `RESULT:\s+ALLOWED`, combined)
+	require.Len(suite.T(), fake.created, 1, "one evaluation, however many trails")
+	require.Equal(suite.T(), 0, fake.trailReads)
+
+	context := fake.created[0]["context"].(map[string]interface{})
+	require.Equal(suite.T(), []interface{}{
+		map[string]interface{}{"flow": "my-flow", "trail": "first"},
+		map[string]interface{}{"flow": "my-flow", "trail": "second"},
+		map[string]interface{}{"flow": "my-flow", "trail": "third"},
+	}, context["trails"], "named in the order given")
+}
+
+func (suite *EvaluateServerSideTestSuite) TestManyTrailsDenyAndAssertTogether() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDenied)
+
+	_, combined, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate trails first second --flow my-flow "+
+			"--policy testdata/policies/allow-all.rego --server-side "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "policy denied")
+	require.Regexp(suite.T(), `RESULT:\s+DENIED`, combined)
+}
+
+func (suite *EvaluateServerSideTestSuite) TestManyTrailsCanBeAskedNotToAssert() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDenied)
+
+	_, combined, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate trails first second --flow my-flow "+
+			"--policy testdata/policies/allow-all.rego --server-side --no-assert "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.NoError(suite.T(), err)
+	require.Regexp(suite.T(), `RESULT:\s+DENIED`, combined)
+}
+
+// A repeat is stored once by the server rather than refused, so refusing it
+// here would be stricter than the thing we are calling.
+func (suite *EvaluateServerSideTestSuite) TestARepeatedTrailIsSentAsGiven() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate trails same same --flow my-flow "+
+			"--policy testdata/policies/allow-all.rego --server-side "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.NoError(suite.T(), err)
+	context := fake.created[0]["context"].(map[string]interface{})
+	require.Len(suite.T(), context["trails"], 2)
+}
+
+func (suite *EvaluateServerSideTestSuite) TestTheCeilingIsAHundredTrails() {
+	suite.Run("a hundred are accepted", func() {
+		server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+		_, _, _, _, err := executeCommandC(fmt.Sprintf(
+			"evaluate trails %s --flow my-flow "+
+				"--policy testdata/policies/allow-all.rego --server-side "+
+				"--host %s --org test-org --api-token test-token --max-api-retries 0",
+			trailNames(100), server.URL))
+
+		require.NoError(suite.T(), err)
+		require.Len(suite.T(), fake.created[0]["context"].(map[string]interface{})["trails"], 100)
+	})
+
+	suite.Run("a hundred and one are refused before anything is sent", func() {
+		server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+		_, _, _, _, err := executeCommandC(fmt.Sprintf(
+			"evaluate trails %s --flow my-flow "+
+				"--policy testdata/policies/allow-all.rego --server-side "+
+				"--host %s --org test-org --api-token test-token --max-api-retries 0",
+			trailNames(101), server.URL))
+
+		require.Error(suite.T(), err)
+		require.Contains(suite.T(), err.Error(), "at most 100 trails")
+		require.Contains(suite.T(), err.Error(), "101")
+		require.Empty(suite.T(), fake.created, "refused here, so the server is never asked")
+	})
+}
+
+func trailNames(count int) string {
+	names := make([]string, count)
+	for i := range names {
+		names[i] = fmt.Sprintf("trail-%d", i)
+	}
+	return strings.Join(names, " ")
 }
 
 func TestEvaluateServerSideTestSuite(t *testing.T) {

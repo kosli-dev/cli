@@ -1,7 +1,7 @@
 # Plan: `kosli evaluate trail|trails --server-side` (hidden flag)
 
 > **Ticket:** https://github.com/kosli-dev/server/issues/6700
-> **Status:** slices 0 to 3 done; slice 4 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
+> **Status:** slices 0 to 4 done; slice 5 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
 > **Audience:** the agent or engineer who implements this. Follow the repo's TDD and thin-slice workflow (`CLAUDE.md`). Create a `## feat(evaluate): --server-side` section in `TODO.md` from the slice list below before coding.
 > **Out of scope (moved to #6832):** shadow mode. Nothing here runs a server-side evaluation unless the flag is present.
 
@@ -269,14 +269,20 @@ A minimal guard for a `failed` evaluation landed here too, because a failure car
 
 ### Slice 4: `evaluate trails --server-side`
 
-Tests (`cmd/kosli/evaluateTrails_test.go`):
-- [ ] `evaluate trails T1 T2 --flow F --policy p.rego --server-side` → **one** POST with two `{flow: F, trail: Tn}` entries in argument order
-- [ ] 100 trail names → one POST with 100 entries, accepted
-- [ ] 101 trail names → client-side error before any request (`at most 100 trails per server-side evaluation`); pin the message
-- [ ] allow / deny / `--no-assert` behave as slice 3
-- [ ] duplicate trail names are sent as given (server dedupes); no client error
+**Done.** The trail ceiling is checked in the shared entry point rather than in the multi-trail command, so a limit that belongs to the API is stated once and cannot drift between the two commands.
 
-Files: `cmd/kosli/evaluateTrails.go`, tests.
+Tests (in the slice 3 suite):
+- [x] `evaluate trails T1 T2 T3 --flow F --policy p.rego --server-side` → **one** POST with the entries in argument order, and no trail read of our own
+- [x] 100 trail names → one POST with 100 entries, accepted
+- [x] 101 trail names → refused before anything is sent, naming the limit and the count
+- [x] allow, deny and `--no-assert` behave as slice 3
+- [x] duplicate trail names are sent as given, since the server stores a repeat once rather than refusing it
+- [x] the flag is hidden on **both** trail commands
+- [x] `evaluate input --server-side` is an unknown flag, since that command names no trails
+
+Files: `cmd/kosli/evaluateTrails.go`, `cmd/kosli/evaluateHelpers.go` (`maxServerSideTrails`), `cmd/kosli/evaluateServerSide_test.go`.
+
+Note that the last box was slice 5's, and is ticked here because the flag reaching `evaluate input` is a property of where the flag is registered, which this slice finished. Slice 5 still owns the combinations that need refusing.
 
 ### Slice 5: flag interaction validation
 

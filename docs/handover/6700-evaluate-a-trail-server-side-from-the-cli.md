@@ -38,7 +38,7 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 - [x] Slice 1 — new client package: create an evaluation, decode the accepted response and every error shape.
 - [x] Slice 2 — read an evaluation, and wait for a terminal status with backoff and a bounded budget.
 - [x] Slice 3 — the hidden flag on the single-trail command, happy path end to end.
-- [ ] Slice 4 — the same flag on the multi-trail command, all names in one evaluation.
+- [x] Slice 4 — the same flag on the multi-trail command, all names in one evaluation.
 - [ ] Slice 5 — refuse the flag combinations the server has no equivalent for.
 - [ ] Slice 6 — classified failures and server refusals, one test per failure kind.
 - [ ] Slice 7 — policy upload edge cases: remote policies, file naming, the size cap.
@@ -74,7 +74,7 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 
 ## Next Steps
 
-- [ ] Slice 4 next: the same flag on the multi-trail command, every name in one evaluation.
+- [ ] Slice 5 next: refuse the flag combinations the server has no answer for, which are attestation filtering and showing the policy input.
 - [ ] Confirm the four proposed exit-code values with the ticket owner before Slice 8; everything up to it is unaffected.
 - [ ] Decide what a server error should say, now that the server's own sentence is known to be unavailable. It falls due in Slice 6.
 - [ ] Run the two trail suites once the local test server is available; they are the only part of Slice 0 still unverified.
