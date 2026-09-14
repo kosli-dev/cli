@@ -3,6 +3,7 @@ package sbom
 import (
 	"encoding/json"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -452,6 +453,19 @@ func TestToolsFromAServiceEntry(t *testing.T) {
 	assert.Equal(t, []string{"Snyk SBOM Export API v1.131.1"}, got.Document.Tools)
 }
 
+// CycloneDX does not say whether a service name repeats its vendor, so both
+// conventions exist. The vendor is added when it is missing and left alone when
+// it is already there.
+func TestToolsDoNotRepeatTheVendor(t *testing.T) {
+	got, err := ProcessSBOMFile(fixture("cyclonedx-tools-services.json"))
+
+	require.NoError(t, err)
+	assert.Equal(t, []string{
+		"Snyk SBOM Export API v1.131.1",
+		"Anchore Enterprise 5.0",
+	}, got.Document.Tools)
+}
+
 func TestSubjectRecordsWhereTheComponentCameFrom(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
@@ -538,15 +552,22 @@ func TestVcsFromSPDXDownloadLocation(t *testing.T) {
 		{"short abbreviation counts", "git+https://example.com/r@9239aba", "https://example.com/r", "9239aba"},
 		{"six characters is too short", "git+https://example.com/r@9239ab", "https://example.com/r", ""},
 		{"subpath removed", "git+https://example.com/r@" + sha + "#src/a.go", "https://example.com/r", sha},
-		{"userinfo is not a revision", "git+https://user@example.com/r", "https://user@example.com/r", ""},
+		{"userinfo is removed, not recorded", "git+https://user@example.com/r", "https://example.com/r", ""},
 		{"a plain url is a direct download, not a repository", "https://example.com/r", "", ""},
 		{"a release tarball is not a repository", "https://registry.npmjs.org/left-pad/-/left-pad-1.0.0.tgz", "", ""},
 		{"a subversion revision is a counter, not an object id", "svn+https://example.com/r@1234567", "https://example.com/r", ""},
 		{"mercurial names revisions by object id", "hg+https://example.com/r@" + sha, "https://example.com/r", sha},
 		{"a plus in the path is not a tool prefix", "git+https://example.com/a+b@" + sha, "https://example.com/a+b", sha},
-		{"userinfo and a revision together", "git+https://user@example.com/r@" + sha, "https://user@example.com/r", sha},
-		{"no path, so the trailing @ stays in the url", "git+https://example.com@" + sha, "https://example.com@" + sha, ""},
+		{"userinfo and a revision together", "git+https://user@example.com/r@" + sha, "https://example.com/r", sha},
+		{"no path, so host and revision cannot be told apart", "git+https://example.com@" + sha, "", ""},
+		{"no path at all", "git+https://example.com", "", ""},
 		{"forty-eight hex characters is not an object id", "git+https://example.com/r@" + sha[:8] + sha, "https://example.com/r", ""},
+		{"a credential is not recorded", "git+https://oauth2:ghp_secret@example.com/r@" + sha, "https://example.com/r", sha},
+		{"a credential with no revision is not recorded", "git+https://oauth2:ghp_secret@example.com/r", "https://example.com/r", ""},
+		{"a bare git scheme is a repository", "git://git.myproject.org/MyProject", "git://git.myproject.org/MyProject", ""},
+		{"a bare svn scheme is a repository, but counts revisions", "svn://svn.myproject.org/svn/MyProject@1234567", "svn://svn.myproject.org/svn/MyProject", ""},
+		{"a bare git scheme with a revision", "git://example.com/r@" + sha, "git://example.com/r", sha},
+		{"an object id is recorded in lower case", "git+https://example.com/r@" + strings.ToUpper(sha), "https://example.com/r", sha},
 		{"a sha-256 object id is sixty-four", "git+https://example.com/r@" + sha[:24] + sha, "https://example.com/r", sha[:24] + sha},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

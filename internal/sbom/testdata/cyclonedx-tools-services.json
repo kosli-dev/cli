@@ -1,0 +1,55 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "services": [
+        {
+          "provider": {
+            "name": "Snyk"
+          },
+          "name": "SBOM Export API",
+          "version": "v1.131.1"
+        },
+        {
+          "provider": {
+            "name": "Anchore"
+          },
+          "name": "Anchore Enterprise",
+          "version": "5.0"
+        }
+      ]
+    },
+    "component": {
+      "type": "container",
+      "name": "example.com/app",
+      "version": "1.2.3",
+      "pedigree": {
+        "commits": [
+          {
+            "uid": "9239abaf0a78d08f7f9e63f94eec0e5b65c82b89",
+            "url": "https://github.com/kosli-dev/server/commit/9239abaf0a78d08f7f9e63f94eec0e5b65c82b89"
+          }
+        ]
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://example.com"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/kosli-dev/server"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "left-pad",
+      "version": "1.0.0"
+    }
+  ]
+}

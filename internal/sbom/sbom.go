@@ -356,7 +356,9 @@ func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 		for _, service := range *tools.Services {
 			name := service.Name
 			// "SBOM Export API" names no vendor. Snyk puts itself in provider.
-			if service.Provider != nil && service.Provider.Name != "" {
+			// Some vendors put it in both, so it is only added when absent.
+			if service.Provider != nil && service.Provider.Name != "" &&
+				!strings.HasPrefix(name, service.Provider.Name) {
 				name = service.Provider.Name + " " + name
 			}
 			names = append(names, nameAndVersion(name, service.Version))
@@ -498,13 +500,20 @@ func subjectFromSPDX(doc *spdx.Document) (*Subject, error) {
 	return nil, nil
 }
 
-// vcsFromSPDXDownloadLocation reads the VCS form SPDX 7.7 defines for
-// downloadLocation: "<tool>+<transport>://<host>/<path>[@<revision>][#<subpath>]".
+// vcsFromSPDXDownloadLocation reads the version control forms SPDX 7.7 defines
+// for downloadLocation, either "<tool>+<transport>://..." or a bare VCS scheme
+// such as "git://...". Both name the tool, which is what separates a repository
+// from the plain URL the same field uses for a direct download. Without that a
+// release tarball or a registry URL would be recorded as where the source lives.
 //
-// That field holds one of three shapes. This one, a plain URL for a direct
-// download, or NONE/NOASSERTION. Only the first names a repository, so the
-// "<tool>+" prefix is required: without it a release tarball or a registry URL
-// would be recorded as the place the source lives.
+// The scp-style form the spec also lists, "git+git@host:path", is not read. It
+// has no "://" and parsing it means handling a second shape for a case no
+// generator has been seen to produce.
+//
+// Userinfo is removed rather than recorded. A repository is identified by its
+// host and path, and a clone URL written by CI carries a token in that position,
+// which would otherwise be uploaded and stored for anyone who can read the
+// attestation.
 //
 // The revision is whatever the producer wrote, a tag or a branch as often as a
 // commit, so it is only reported as a commit when the tool names revisions by
@@ -516,32 +525,63 @@ func vcsFromSPDXDownloadLocation(location string) (vcsURL *string, commit *strin
 	if location == "" || location == "NOASSERTION" || location == "NONE" {
 		return nil, nil
 	}
-	plus := strings.Index(location, "+")
 	scheme := strings.Index(location, "://")
-	if plus == -1 || scheme == -1 || plus > scheme {
+	if scheme == -1 {
 		return nil, nil
 	}
-	tool := location[:plus]
-	location = location[plus+1:]
+	tool := ""
+	if plus := strings.Index(location, "+"); plus != -1 && plus < scheme {
+		tool = location[:plus]
+		location = location[plus+1:]
+	} else if isVCSScheme(location[:scheme]) {
+		tool = location[:scheme]
+	} else {
+		return nil, nil
+	}
 	if hash := strings.Index(location, "#"); hash != -1 {
 		location = location[:hash]
 	}
 
-	// Userinfo sits between "://" and the first "/", so only an "@" after the
-	// path begins can be a revision. "git+https://user@example.com/r" has none.
-	revision := ""
+	// Everything from here works on the authority, which runs from after "://"
+	// to the first "/". Userinfo lives inside it; a revision only ever follows it.
+	//
+	// Without a path the two are indistinguishable: in "https://example.com@abc"
+	// the "@" separates userinfo from a host as readily as a host from a
+	// revision. Nothing can be cloned from a URL with no path anyway, so it is
+	// refused rather than guessed at.
 	schemeEnd := strings.Index(location, "://") + len("://")
-	if slash := strings.Index(location[schemeEnd:], "/"); slash != -1 {
-		pathStart := schemeEnd + slash
-		if at := strings.LastIndex(location, "@"); at > pathStart {
-			revision = location[at+1:]
-			location = location[:at]
-		}
+	slash := strings.Index(location[schemeEnd:], "/")
+	if slash == -1 {
+		return nil, nil
 	}
+	authorityEnd := schemeEnd + slash
+	if at := strings.Index(location[schemeEnd:authorityEnd], "@"); at != -1 {
+		location = location[:schemeEnd] + location[schemeEnd+at+1:]
+		authorityEnd -= at + 1
+	}
+
+	revision := ""
+	if at := strings.LastIndex(location, "@"); at > authorityEnd {
+		revision = location[at+1:]
+		location = location[:at]
+	}
+	// Lowered to match the subject's sha256, which is lowered for the same
+	// reason: the comparison this exists for is made on the strings.
 	if revisionsAreObjectIDs(tool) && isHexObjectID(revision) {
-		commit = nullIfEmpty(revision)
+		commit = nullIfEmpty(strings.ToLower(revision))
 	}
 	return nullIfEmpty(location), commit
+}
+
+// isVCSScheme reports whether a scheme names a version control tool rather than
+// a transport. SPDX gives "git://host/project" as an example alongside the
+// "git+https://" form, and the scheme carries the same evidence as the prefix.
+func isVCSScheme(scheme string) bool {
+	switch scheme {
+	case "git", "hg", "svn", "bzr":
+		return true
+	}
+	return false
 }
 
 // revisionsAreObjectIDs reports whether a tool names revisions by content hash.
