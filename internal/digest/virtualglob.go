@@ -45,8 +45,10 @@ func (fs virtualFS) excludedPaths(rules []string) (map[string]bool, error) {
 			return nil, fmt.Errorf("ignore rule %q: %w", rule, err)
 		}
 		// On disk the root is a temp directory with an unguessable name, so a rule
-		// that resolves to the root or outside it cannot match anything there.
-		if pattern == virtualRoot || !strings.HasPrefix(pattern, virtualRoot+"/") {
+		// that resolves to the root or leaves it cannot match anything there, and
+		// naming the root cannot bring it back, which the cleaned pattern alone
+		// would not show ("../tree/x" cleans to "tree/x").
+		if pattern == virtualRoot || !strings.HasPrefix(pattern, virtualRoot+"/") || escapesVirtualRoot(rule) {
 			continue
 		}
 		matches, err := fs.globDoubleStar(pattern)
@@ -213,6 +215,27 @@ func (fs virtualFS) lookup(p string) (*virtualNode, bool) {
 // on Unix, where a backslash is an escape character.
 func hasGlobMeta(pattern string) bool {
 	return strings.ContainsAny(pattern, `*?[\`)
+}
+
+// escapesVirtualRoot reports whether the rule walks above the tree root before
+// it is cleaned. filepath.Join resolves ".." lexically, so counting segments
+// gives the same answer as the join does on disk, where anything above the
+// root is outside the tree whatever the rule names next.
+func escapesVirtualRoot(rule string) bool {
+	depth := 0
+	for _, segment := range strings.Split(rule, "/") {
+		switch segment {
+		case "", ".":
+		case "..":
+			if depth == 0 {
+				return true
+			}
+			depth--
+		default:
+			depth++
+		}
+	}
+	return false
 }
 
 // cleanGlobPath is filepath's helper of the same name: drop the trailing

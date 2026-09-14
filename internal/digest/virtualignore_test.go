@@ -67,6 +67,11 @@ func (suite *VirtualIgnoreTestSuite) TestMatchesDirSha256() {
 		{name: "a trailing slash", ignore: "logs/", hasEffect: true},
 		{name: "a leading slash", ignore: "/logs", hasEffect: true},
 		{name: "a leading dot segment", ignore: "./logs", hasEffect: true},
+		// On disk the root has an unguessable name, so a rule that leaves the
+		// tree cannot come back by naming it; a rule that only dips through a
+		// wildcard and returns still folds onto a real path.
+		{name: "a rule that leaves the tree and names the root", ignore: "../tree/app.js", hasEffect: false},
+		{name: "a rule that dips and returns through a wildcard", ignore: "*/../app.js", hasEffect: true},
 		{name: "a doubled slash", ignore: "nested-dir//logs", hasEffect: true},
 		{name: "a parent segment that leaves the tree", ignore: "../logs"},
 		{name: "a rule that matches nothing", ignore: "does-not-exist"},
@@ -114,7 +119,7 @@ func (suite *VirtualIgnoreTestSuite) TestMatchesDirSha256() {
 func (suite *VirtualIgnoreTestSuite) TestMalformedRuleIsAnErrorOnBothSides() {
 	// The last rule is a wildcard path deeper than filepath.Glob's recursion
 	// limit, which it rejects rather than descend.
-	for _, rule := range []string{"[", "nonexistent/a[", "logs/[", "a/**/[", "../a[", strings.Repeat("*/", globSeparatorsLimit+1) + "x"} {
+	for _, rule := range []string{"[", "nonexistent/a[", "logs/[", "a/**/[", "../a[", "../tree/a[", strings.Repeat("*/", globSeparatorsLimit+1) + "x"} {
 		suite.Run(rule, func() {
 			root := suite.T().TempDir()
 			files := suite.materialise(root, ignoreTestTree, rule)
