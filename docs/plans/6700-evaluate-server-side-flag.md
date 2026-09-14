@@ -182,7 +182,7 @@ Split `evaluateAndPrintResult` so the printing half takes an `*evaluate.Result` 
 
 ## 5. Slices
 
-Each slice is one PR-sized change, independently mergeable, with its own test list. Branch name suggestion: `6700-evaluate-server-side-<n>`. Mark the active slice in `TODO.md`.
+Each slice is one PR-sized change, independently mergeable, with its own test list. All slices share the branch `6700-evaluate-server-side`, one commit or more per slice, so the whole issue stays reviewable as one history. Mark the active slice in `TODO.md`, which is git-ignored and therefore local to your machine.
 
 ### Slice 0: refactor the printer seam (no behaviour change)
 
@@ -311,7 +311,7 @@ Files: `cmd/kosli/main.go`, `cmd/kosli/exitcode.go`, tests. This slice is option
 - [ ] Run `make lint`, `make test_integration`.
 - [ ] Manual check against **staging** with an org that has `is-server-side-evaluation-enabled`: allow, deny, `--no-assert`, broken policy, `trails` with several names. Record wall-clock for a many-attestation trail with and without the flag (first latency comparison the ticket asks for).
 - [ ] Update `docs/adr/20260302-client-side-policy-evaluation.md` with a short "Status 2026-09" note pointing at the flag and at §3 above.
-- [ ] Create `docs/handover/6700-evaluate-server-side-flag.md` via the `handover` skill; copy §3 and §4 into its Decisions section.
+- [ ] Create `docs/handover/6700-evaluate-a-trail-server-side-from-the-cli.md` via the `handover` skill; copy §3 and §4 into its Decisions section.
 - [ ] Remove the `TODO.md` section when the last slice merges.
 
 ---
@@ -340,7 +340,7 @@ Files: `cmd/kosli/main.go`, `cmd/kosli/exitcode.go`, tests. This slice is option
 | `cmd/kosli/main.go`, `cmd/kosli/exitcode.go` | slice 8 only |
 | `cmd/kosli/evaluateTrail_test.go`, `evaluateTrails_test.go`, `evaluateFake_test.go` | tests |
 | `docs/adr/20260302-client-side-policy-evaluation.md` | status note |
-| `docs/handover/6700-evaluate-server-side-flag.md` | via `handover` skill |
+| `docs/handover/6700-evaluate-a-trail-server-side-from-the-cli.md` | via `handover` skill |
 | `TODO.md` | slice tracking |
 
 No generated docs change: hidden flags are omitted by cobra and by `kosli docs`.
