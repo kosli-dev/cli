@@ -43,6 +43,14 @@ The fingerprint format itself is fixed. An S3 snapshot must match the fingerprin
 
 A throwaway equivalence test run on 2026-09-11 confirmed that `VirtualDirSha256` fed by rule 2 reproduces today's on-disk fingerprint for the #1155 unusual-keys bucket, the `a.txt` beside `a/z` ordering case, nested prefixes with folder markers, and the single-object case including its basename artifact name.
 
+## Guarantees
+
+The attest side is unchanged: `kosli attest artifact --artifact-type dir` still runs `DirSha256` on a real directory, and that defines the format. The snapshot side re-derives the same value from the bucket. Three guarantees follow, each with the test that holds it:
+
+- **Snapshot equals attestation.** `VirtualDirSha256` of the bucket's `(path, sha256)` pairs equals `DirSha256` of the directory those objects were uploaded from, and a single object equals `FileSha256` plus its basename. Held by the materialise-then-compare tests in `internal/digest` and an end-to-end test in `internal/aws` that hashes a directory, uploads its files to the fake bucket and snapshots it.
+- **Snapshot equals its own history.** Every bucket that snapshots successfully on `main` keeps its fingerprint and artifact name, because the fold rule is what `filepath.Join` did. Held by fingerprints recorded before the switch and by `TestGetS3DataFromClientKeepsTodaysLayoutForUnusualKeys`.
+- **No object is lost silently.** Every key S3 accepts is representable, whatever the operating system, because the key never becomes a path. The only rejections are keys that cannot form a directory tree at all: a `..` segment, two keys folding onto one path, and an object that is also a prefix. S3 permits those, no filesystem does, so no attested directory could match them. Each rejection fails the snapshot and names every key involved; the manifest is never shortened to make a fingerprint. Held by a generated-key representability test and a manifest-count invariant test.
+
 ## Alternatives considered
 
 - **Keep #1155's fenced layout and add rules for the remaining cases.** Each remaining case (case folding, Unicode normalisation, component length) needs another platform-specific rule and none can be exercised in Linux CI. The layout is the cause, so fencing it further does not converge.
