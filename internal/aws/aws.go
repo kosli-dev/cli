@@ -423,9 +423,9 @@ func compilePathRegex(patterns []string) ([]*regexp.Regexp, error) {
 // A key matches when it is prefixed by one of paths (literal prefix match)
 // or when one of patterns matches the full key.
 func objectMatchesFilter(key string, paths []string, patterns []*regexp.Regexp) bool {
-	for _, path := range paths {
-		path = strings.TrimLeft(path, "/")
-		if strings.HasPrefix(key, path) {
+	for _, prefix := range paths {
+		prefix = strings.TrimLeft(prefix, "/")
+		if strings.HasPrefix(key, prefix) {
 			return true
 		}
 	}
