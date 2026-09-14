@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -26,6 +27,7 @@ import (
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/server"
+	"github.com/kosli-dev/cli/internal/utils"
 )
 
 type AzureStaticCredentials struct {
@@ -274,7 +276,7 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 	destDir := filepath.Join(tmpDir, "extracted")
 	err = unzip(packagePath, destDir, logger)
 	if err != nil {
-		return AppData{}, fmt.Errorf("failed to unzip the downloaded package: %v", err)
+		return AppData{}, fmt.Errorf("failed to unzip the downloaded package: %w", err)
 	}
 
 	//  fingerprint the downloaded and unzipped package
@@ -329,53 +331,112 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 		}
 	}()
 
-	for _, f := range r.File {
-		filePath := filepath.Join(destDir, f.Name)
+	// Resolved path to the entry name that produced it, so a collision can name
+	// both sides.
+	extracted := make(map[string]string, len(r.File))
 
-		if f.FileInfo().IsDir() {
-			// Create directories
-			err := os.MkdirAll(filePath, os.ModePerm)
-			if err != nil {
-				return err
-			}
+	for _, f := range r.File {
+		// The entry name comes from the deployed package, which anyone able to
+		// deploy the app controls, so it must not be able to leave destDir.
+		filePath, err := utils.ContainedPath(destDir, f.Name)
+		if errors.Is(err, utils.ErrNamesNoFile) && f.FileInfo().IsDir() {
+			// A "./" entry names destDir itself; there is nothing to create.
 			continue
 		}
-
-		// Ensure the directory for the file exists
-		if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
-			return err
-		}
-
-		// Open the destination file
-		destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
-			return err
+			// One app's error cancels the whole run, snapshot azure has no exclude
+			// flag, and .kosli_ignore is only read after extraction, so the only
+			// remedy is a changed package.
+			return fmt.Errorf("zip entry %w; the package cannot be extracted safely, so no app in the environment is reported until this app is redeployed without that entry", err)
 		}
 
-		// Open the source file within the ZIP archive
-		zipFile, err := f.Open()
-		if err != nil {
-			return err
-		}
-
-		// Copy the file contents
-		_, err = io.Copy(destFile, zipFile)
-
-		// Close the open files
-		if closeErr := destFile.Close(); closeErr != nil {
-			// Log warning for cleanup error
-			logger.Warn("failed to close destination file %s: %v", filePath, closeErr)
-		}
-		if closeErr := zipFile.Close(); closeErr != nil {
-			// Log warning for cleanup error
-			logger.Warn("failed to close zip file: %v", closeErr)
-		}
-
-		if err != nil {
-			return err
+		if err := extractZipEntry(f, filePath, extracted, logger); err != nil {
+			return fmt.Errorf("zip entry [%s]: %w", f.Name, err)
 		}
 	}
 	return nil
+}
+
+// extractZipEntry writes one entry to filePath, which the caller has already
+// checked stays inside the destination directory, and records it in extracted.
+func extractZipEntry(f *zip.File, filePath string, extracted map[string]string, logger *logger.Logger) error {
+	isDir := f.FileInfo().IsDir()
+
+	// Legal in a zip, impossible on disk: one name as both a file and a
+	// directory. Checked up front so the message names this entry rather than
+	// whichever filesystem call happens to fail, and fails the same way on
+	// every platform.
+	if existing, statErr := os.Lstat(filePath); statErr == nil && existing.IsDir() != isDir {
+		if existing.IsDir() {
+			return errors.New("was already extracted as a directory")
+		}
+		return errors.New("was already extracted as a file")
+	}
+
+	dir := filePath
+	if !isDir {
+		dir = filepath.Dir(filePath)
+	}
+	err := os.MkdirAll(dir, 0o700)
+	if errors.Is(err, syscall.ENOTDIR) {
+		// A file "a" and an entry under "a/".
+		return errors.New("one of its parent directories was already extracted as a file")
+	}
+	if err != nil {
+		return err
+	}
+	if isDir {
+		return nil
+	}
+
+	// The tree is deleted once fingerprinted and the fingerprint never reads a
+	// mode, so a constant is safe: it keeps a zero-mode entry readable and
+	// drops setuid, setgid and sticky, which os.OpenFile would honour.
+	// Writing every entry through OpenFile, never os.Symlink, is what keeps a
+	// symlink entry from becoming a real symlink. Name containment does not
+	// survive one, since a later entry or the fingerprinter would follow it
+	// out of the destination.
+	// Legal in a zip, and containment collapses "x", "/x" and "./x" onto one
+	// path, but overwriting would fingerprint the package without the first
+	// entry. This fails the same way on every platform.
+	if first, dup := extracted[filePath]; dup {
+		return fmt.Errorf("resolves to the same local path as entry [%s]", first)
+	}
+	destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if errors.Is(err, os.ErrExist) {
+		// No recorded entry resolves here, so the filesystem itself equates two
+		// names: case, or Unicode form, on macOS and Windows. Moving the
+		// snapshot is the operator's only remedy.
+		return errors.New("collides with an earlier entry whose name this filesystem treats as the same, such as one differing only in case; run the snapshot on a case-sensitive filesystem")
+	}
+	if err != nil {
+		return err
+	}
+	extracted[filePath] = f.Name
+
+	zipFile, err := f.Open()
+	if err != nil {
+		if closeErr := destFile.Close(); closeErr != nil {
+			logger.Warn("failed to close destination file %s: %v", filePath, closeErr)
+		}
+		return err
+	}
+
+	_, err = io.Copy(destFile, zipFile)
+
+	// A write error can surface only at Close, and an entry truncated that
+	// way would be fingerprinted as if it were complete.
+	if closeErr := destFile.Close(); closeErr != nil {
+		logger.Warn("failed to close destination file %s: %v", filePath, closeErr)
+		if err == nil {
+			err = closeErr
+		}
+	}
+	if closeErr := zipFile.Close(); closeErr != nil {
+		logger.Warn("failed to close zip file: %v", closeErr)
+	}
+
+	return err
 }
 
 func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site, logger *logger.Logger, imageName string) (AppData, error) {

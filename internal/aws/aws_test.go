@@ -15,6 +15,7 @@ import (
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/testHelpers"
+	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -1318,6 +1319,12 @@ func (suite *AWSTestSuite) TestLocalPathForS3Key() {
 			require.Equal(suite.T(), filepath.Join("base", t.wantPath), filepath.Join("base", got))
 		})
 	}
+}
+
+func (suite *AWSTestSuite) TestLocalPathForS3KeyKeepsTheRejectionSentinel() {
+	_, err := localPathForS3Key("uploads/../protected/release.bin")
+	require.ErrorIs(suite.T(), err, utils.ErrPathTraversal)
+	require.Contains(suite.T(), err.Error(), "object key [uploads/../protected/release.bin]")
 }
 
 func (suite *AWSTestSuite) TestDownloadFileFromBucketRefusesToOverwrite() {
