@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"regexp"
 	"slices"
@@ -381,7 +382,7 @@ func subjectFromComponent(component *cdx.Component) (*Subject, error) {
 	subject := &Subject{
 		Name:    component.Name,
 		Version: nullIfEmpty(component.Version),
-		Purl:    nullIfEmpty(component.PackageURL),
+		Purl:    purlOrNil(component.PackageURL),
 	}
 	if component.Hashes != nil {
 		for _, hash := range *component.Hashes {
@@ -410,14 +411,14 @@ func subjectFromComponent(component *cdx.Component) (*Subject, error) {
 			}
 		}
 		if len(identified) == 1 {
-			subject.Commit = nullIfEmpty(identified[0].UID)
-			subject.CommitURL = nullIfEmpty(identified[0].URL)
+			subject.Commit = unambiguousObjectIDOrNil(identified[0].UID)
+			subject.CommitURL = nullIfEmpty(withoutUserinfo(identified[0].URL))
 		}
 	}
 	if component.ExternalReferences != nil {
 		for _, ref := range *component.ExternalReferences {
 			if ref.Type == cdx.ERTypeVCS {
-				subject.VcsURL = nullIfEmpty(ref.URL)
+				subject.VcsURL = nullIfEmpty(withoutUserinfo(ref.URL))
 				break
 			}
 		}
@@ -531,10 +532,16 @@ func vcsFromSPDXDownloadLocation(location string) (vcsURL *string, commit *strin
 	}
 	tool := ""
 	if plus := strings.Index(location, "+"); plus != -1 && plus < scheme {
-		tool = location[:plus]
+		// Checked against the same list as a bare scheme. Without that,
+		// "sha+https://host/app.tar.gz" names a tool nothing knows and the
+		// tarball this function exists to reject is recorded as a repository.
+		tool = strings.ToLower(location[:plus])
+		if !isVCSScheme(tool) {
+			return nil, nil
+		}
 		location = location[plus+1:]
-	} else if isVCSScheme(location[:scheme]) {
-		tool = location[:scheme]
+	} else if isVCSScheme(strings.ToLower(location[:scheme])) {
+		tool = strings.ToLower(location[:scheme])
 	} else {
 		return nil, nil
 	}
@@ -542,39 +549,124 @@ func vcsFromSPDXDownloadLocation(location string) (vcsURL *string, commit *strin
 		location = location[:hash]
 	}
 
-	// Everything from here works on the authority, which runs from after "://"
-	// to the first "/". Userinfo lives inside it; a revision only ever follows it.
-	//
-	// Without a path the two are indistinguishable: in "https://example.com@abc"
-	// the "@" separates userinfo from a host as readily as a host from a
-	// revision. Nothing can be cloned from a URL with no path anyway, so it is
-	// refused rather than guessed at.
+	// A revision follows the authority, which runs from after "://" to the
+	// first "/". Without a path the two are indistinguishable: in
+	// "https://example.com@abc" the "@" separates userinfo from a host as
+	// readily as a host from a revision. Nothing can be cloned from a URL with
+	// no path anyway, so it is refused rather than guessed at.
 	schemeEnd := strings.Index(location, "://") + len("://")
 	slash := strings.Index(location[schemeEnd:], "/")
 	if slash == -1 {
 		return nil, nil
 	}
-	authorityEnd := schemeEnd + slash
-	if at := strings.Index(location[schemeEnd:authorityEnd], "@"); at != -1 {
-		location = location[:schemeEnd] + location[schemeEnd+at+1:]
-		authorityEnd -= at + 1
-	}
-
 	revision := ""
-	if at := strings.LastIndex(location, "@"); at > authorityEnd {
+	if at := strings.LastIndex(location, "@"); at > schemeEnd+slash {
 		revision = location[at+1:]
 		location = location[:at]
 	}
-	// Lowered to match the subject's sha256, which is lowered for the same
-	// reason: the comparison this exists for is made on the strings.
-	if revisionsAreObjectIDs(tool) && isHexObjectID(revision) {
-		commit = nullIfEmpty(strings.ToLower(revision))
+	if revisionsAreObjectIDs(tool) {
+		commit = objectIDOrNil(revision)
 	}
-	return nullIfEmpty(location), commit
+	return nullIfEmpty(withoutUserinfo(location)), commit
 }
 
-// isVCSScheme reports whether a scheme names a version control tool rather than
-// a transport. SPDX gives "git://host/project" as an example alongside the
+// purlOrNil drops a purl whose qualifiers carry a credential. purl defines
+// repository_url, download_url and vcs_url as known qualifiers, and gives
+// vcs_url the same syntax SPDX uses, so a purl can hold the clone URL every
+// other field here is now stripped of.
+//
+// The purl is dropped rather than rewritten. Reassembling it means re-encoding
+// the qualifiers, which changes the identifier, and an identifier that no longer
+// matches is worse than none. Dropping loses it only for the purls that are
+// unsafe to record.
+func purlOrNil(raw string) *string {
+	if raw == "" {
+		return nil
+	}
+	qualifiers := raw
+	if hash := strings.Index(qualifiers, "#"); hash != -1 {
+		qualifiers = qualifiers[:hash]
+	}
+	mark := strings.Index(qualifiers, "?")
+	if mark == -1 {
+		return nullIfEmpty(raw)
+	}
+	values, err := url.ParseQuery(qualifiers[mark+1:])
+	if err != nil {
+		return nil
+	}
+	for _, found := range values {
+		for _, value := range found {
+			if !strings.Contains(value, "://") {
+				continue
+			}
+			// Any difference means userinfo was present, or the authority could
+			// not be resolved, which is the shape a secret hides in.
+			if withoutUserinfo(value) != value {
+				return nil
+			}
+		}
+	}
+	return nullIfEmpty(raw)
+}
+
+// withoutUserinfo removes any credential from a URL. A clone URL written by CI
+// carries a token where userinfo goes, and a generator copies that into an SBOM
+// verbatim, so recording it would upload the token and store it for anyone who
+// can read the attestation. A repository is identified by host and path.
+//
+// net/url does the parsing rather than this file, because the shapes that carry
+// a secret are the ones hand-written rules keep getting wrong: an unencoded "@"
+// or "/" inside a password, a query holding an "@", a bracketed IPv6 host, a
+// port. A string it cannot parse returns empty, which drops the field. The
+// callers treat empty as nothing to record, and a URL whose authority cannot be
+// resolved is exactly where a secret hides.
+func withoutUserinfo(rawURL string) string {
+	if rawURL == "" {
+		return ""
+	}
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+	parsed.User = nil
+	return parsed.String()
+}
+
+// unambiguousObjectIDOrNil is objectIDOrNil for a document that does not name
+// the tool, as a CycloneDX pedigree does not. Nothing there says whether a uid
+// is a hash or a counter, so a uid of digits alone is refused.
+//
+// That costs something, and the cost is not evenly spread. A full forty
+// character id of digits alone turns up about once in a hundred million, but a
+// seven character abbreviation is all digits roughly four times in a hundred.
+// It is the right way round: an abbreviation cannot match the full commit an
+// attestation records anyway, while a counter recorded as a commit looks like
+// one.
+//
+// This is also why the two readers differ on "1234567". An SPDX download
+// location names its tool, so there it is known to be a git abbreviation. Here
+// nothing says.
+func unambiguousObjectIDOrNil(uid string) *string {
+	if !strings.ContainsAny(strings.ToLower(uid), "abcdef") {
+		return nil
+	}
+	return objectIDOrNil(uid)
+}
+
+// objectIDOrNil returns a revision only when it reads as an object id, lowered.
+// Both halves matter to the same comparison: a Subversion counter is not a
+// commit, and git prints object ids in lower case, so an upper-case one would
+// silently never match the commit the attestation records.
+func objectIDOrNil(revision string) *string {
+	if !isHexObjectID(revision) {
+		return nil
+	}
+	return nullIfEmpty(strings.ToLower(revision))
+}
+
+// isVCSScheme reports whether a token names a version control tool rather than a
+// transport. SPDX gives "git://host/project" as an example alongside the
 // "git+https://" form, and the scheme carries the same evidence as the prefix.
 func isVCSScheme(scheme string) bool {
 	switch scheme {
@@ -611,7 +703,7 @@ func isHexObjectID(revision string) bool {
 func purlFromSPDX(pkg *spdx.Package) *string {
 	for _, ref := range pkg.PackageExternalReferences {
 		if ref != nil && ref.RefType == common.TypePackageManagerPURL {
-			return nullIfEmpty(ref.Locator)
+			return purlOrNil(ref.Locator)
 		}
 	}
 	return nil

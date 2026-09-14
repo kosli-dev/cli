@@ -534,6 +534,98 @@ func TestSubjectLeavesCommitOutWhenThePedigreeIsAmbiguous(t *testing.T) {
 	assert.Equal(t, "https://github.com/kosli-dev/server", *got.Document.Subject.VcsURL)
 }
 
+// The same rules apply whichever format carried the value. A generator fills a
+// vcs reference from "git remote get-url origin", which in CI holds a token.
+func TestCycloneDXSubjectIsHeldToTheSameRulesAsSPDX(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		file      string
+		commit    string
+		commitURL string
+		vcsURL    string
+	}{
+		{
+			name:      "a credential is not recorded, in either url",
+			file:      "cyclonedx-credential.json",
+			commit:    "9239abaf0a78d08f7f9e63f94eec0e5b65c82b89",
+			commitURL: "https://github.com/kosli-dev/server/commit/9239abaf",
+			vcsURL:    "https://github.com/kosli-dev/server",
+		},
+		{
+			name:      "a counter is not an object id, so no commit",
+			file:      "cyclonedx-counter-uid.json",
+			commit:    "",
+			commitURL: "https://svn.example.com/r?rev=1234567",
+			vcsURL:    "https://github.com/kosli-dev/server",
+		},
+		{
+			name:      "an object id is recorded in lower case",
+			file:      "cyclonedx-uppercase-uid.json",
+			commit:    "9239abaf0a78d08f7f9e63f94eec0e5b65c82b89",
+			commitURL: "https://github.com/kosli-dev/server/commit/9239ABAF",
+			vcsURL:    "https://github.com/kosli-dev/server",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ProcessSBOMFile(fixture(tc.file))
+
+			require.NoError(t, err)
+			require.NotNil(t, got.Document.Subject)
+			subject := got.Document.Subject
+			if tc.commit == "" {
+				assert.Nil(t, subject.Commit)
+			} else {
+				require.NotNil(t, subject.Commit)
+				assert.Equal(t, tc.commit, *subject.Commit)
+			}
+			require.NotNil(t, subject.CommitURL)
+			assert.Equal(t, tc.commitURL, *subject.CommitURL)
+			require.NotNil(t, subject.VcsURL)
+			assert.Equal(t, tc.vcsURL, *subject.VcsURL)
+		})
+	}
+}
+
+// purl carries repository_url, download_url and vcs_url qualifiers, so it can
+// hold the same clone URL every other field is stripped of.
+func TestPurlCarryingACredentialIsNotRecorded(t *testing.T) {
+	credential, err := ProcessSBOMFile(fixture("cyclonedx-purl-credential.json"))
+	require.NoError(t, err)
+	require.NotNil(t, credential.Document.Subject)
+	assert.Nil(t, credential.Document.Subject.Purl)
+
+	// A qualifier without one is left alone, so the identifier is not lost for
+	// the ordinary case.
+	clean, err := ProcessSBOMFile(fixture("cyclonedx-purl-clean.json"))
+	require.NoError(t, err)
+	require.NotNil(t, clean.Document.Subject)
+	require.NotNil(t, clean.Document.Subject.Purl)
+	assert.Contains(t, *clean.Document.Subject.Purl, "pkg:golang/github.com/kosli-dev/server@v1.2.3")
+}
+
+func TestWithoutUserinfo(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"nothing to remove", "https://github.com/o/r", "https://github.com/o/r"},
+		{"a token is removed", "https://x-access-token:ghp_secret@github.com/o/r", "https://github.com/o/r"},
+		{"an @ inside the password is not a separator", "https://oauth2:p@ss@github.com/o/r", "https://github.com/o/r"},
+		{"a / inside the password makes the authority unresolvable", "https://oauth2:to/ken@github.com/o/r", ""},
+		{"an @ in a query is not userinfo", "https://github.com/o/r?q=a@b", "https://github.com/o/r?q=a@b"},
+		{"an @ in a query with no path", "https://github.com?q=a@b", "https://github.com?q=a@b"},
+		{"a port is kept", "https://github.com:8443/o/r", "https://github.com:8443/o/r"},
+		{"an ipv6 host is kept", "https://[2001:db8::1]:8443/r", "https://[2001:db8::1]:8443/r"},
+		{"userinfo goes, ipv6 host stays", "https://user:tok@[2001:db8::1]:8443/r", "https://[2001:db8::1]:8443/r"},
+		{"empty stays empty", "", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, withoutUserinfo(tc.in))
+		})
+	}
+}
+
 func TestVcsFromSPDXDownloadLocation(t *testing.T) {
 	sha := "9239abaf0a78d08f7f9e63f94eec0e5b65c82b89"
 	for _, tc := range []struct {
@@ -564,6 +656,14 @@ func TestVcsFromSPDXDownloadLocation(t *testing.T) {
 		{"forty-eight hex characters is not an object id", "git+https://example.com/r@" + sha[:8] + sha, "https://example.com/r", ""},
 		{"a credential is not recorded", "git+https://oauth2:ghp_secret@example.com/r@" + sha, "https://example.com/r", sha},
 		{"a credential with no revision is not recorded", "git+https://oauth2:ghp_secret@example.com/r", "https://example.com/r", ""},
+		{"an unencoded @ in a password does not leak its tail", "git+https://oauth2:p@ss@example.com/r", "https://example.com/r", ""},
+		{"an invented tool prefix is not a repository", "sha+https://example.com/app.tar.gz", "", ""},
+		{"an unencoded / in a password is not recorded", "git+https://oauth2:to/ken@example.com/r", "", ""},
+		{"an upper-case tool prefix is still a repository", "GIT+https://example.com/r", "https://example.com/r", ""},
+		{"an upper-case bare scheme is still a repository", "GIT://example.com/r", "git://example.com/r", ""},
+		{"a port survives", "git+https://example.com:8443/r", "https://example.com:8443/r", ""},
+		{"a bracketed ipv6 host survives", "git+https://[2001:db8::1]:8443/r", "https://[2001:db8::1]:8443/r", ""},
+		{"userinfo is stripped from an ipv6 host too", "git+https://user:tok@[2001:db8::1]:8443/r", "https://[2001:db8::1]:8443/r", ""},
 		{"a bare git scheme is a repository", "git://git.myproject.org/MyProject", "git://git.myproject.org/MyProject", ""},
 		{"a bare svn scheme is a repository, but counts revisions", "svn://svn.myproject.org/svn/MyProject@1234567", "svn://svn.myproject.org/svn/MyProject", ""},
 		{"a bare git scheme with a revision", "git://example.com/r@" + sha, "git://example.com/r", sha},
