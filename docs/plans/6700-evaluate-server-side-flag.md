@@ -378,6 +378,14 @@ A code review of the finished branch raised findings in two rounds. All but two 
 9. **The wait budget's test seam moved out of the package default.** A test was reassigning an exported variable in another package, which is safe only while nothing runs in parallel and leaves a shortened budget behind if a restore is ever missed.
 10. **Both mirrored limits now name the server constant they copy**, so drift is findable.
 
+**Caught by CI, not by me**
+
+13. **A new flag has to be declared to the empty-flag audit.** `TestEmptyFlagAuditCoversEveryCommandAndFlag` walks the cobra tree and compares it against `cmd/kosli/testdata/empty-flag-audit-coverage.json`, so adding a flag turns the build red until that fixture is regenerated with `UPDATE_AUDIT_COVERAGE=1`. The audit in `hack/empty-flag-audit/` then refuses to run until `spec.json` covers it too, which is not checked by CI but would have been left broken for the next person.
+
+    The flag is registered there with the value `false`, not `true`. The audit stops any combination that waits more than five seconds, and a real server-side evaluation needs the queue, worker and evaluator its server does not run, so `true` would break every audit run. The cost is that the audit exercises the flag's parsing rather than its behaviour, which is the same gap as everything else waiting on a fuller local stack.
+
+    **Process note:** I only ever ran the evaluate suites in `cmd/kosli`, never the whole package, so this reached CI. Running the package once before pushing would have caught it in seconds.
+
 **Known limitations, recorded rather than fixed**
 
 11. **The wait budget governs the polling, not a single read.** A read carries no context and the shared HTTP client sets no overall deadline, so a very slow server can overrun the budget by one read, and cancelling stops the loop only at its next turn. Holding to the budget exactly means giving the read a deadline of its own, which needs `internal/requests` to accept a context. That is a change every command inherits, so it belongs in its own ticket rather than here. Stated on `WaitOptions` so nobody reads the budget as a hard bound.
