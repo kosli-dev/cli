@@ -82,19 +82,30 @@ func TestPackageCountExcludesFiles(t *testing.T) {
 	assert.Equal(t, 2, got.Document.PackageCount)
 }
 
-func TestToolsReadFromBothCycloneDXLayouts(t *testing.T) {
+func TestToolsReadFromEveryCycloneDXLayout(t *testing.T) {
 	for _, tc := range []struct {
-		name string
-		file string
+		name  string
+		file  string
+		tools []string
 	}{
-		{"post-1.5 components layout", "cyclonedx-tools.json"},
-		{"deprecated pre-1.5 layout", "cyclonedx-tools-deprecated.json"},
+		{
+			// This fixture always carried a service alongside the component.
+			// It went unreported until services were read.
+			name:  "post-1.5 components and services",
+			file:  "cyclonedx-tools.json",
+			tools: []string{"Awesome Tool 9.1.2", "Acme Signing Server"},
+		},
+		{
+			name:  "deprecated pre-1.5 layout",
+			file:  "cyclonedx-tools-deprecated.json",
+			tools: []string{"Awesome Tool 9.1.2"},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := ProcessSBOMFile(fixture(tc.file))
 
 			require.NoError(t, err)
-			assert.Equal(t, []string{"Awesome Tool 9.1.2"}, got.Document.Tools)
+			assert.Equal(t, tc.tools, got.Document.Tools)
 		})
 	}
 }
@@ -423,10 +434,114 @@ func TestTheXMLReaderPopulatesTheSameFields(t *testing.T) {
 	got, err := ProcessSBOMFile(fixture("cyclonedx-1.6.xml"))
 
 	require.NoError(t, err)
-	assert.Equal(t, []string{"Awesome Tool 9.1.2"}, got.Document.Tools)
+	// The service here is what proves services are read on the XML path too.
+	assert.Equal(t, []string{"Awesome Tool 9.1.2", "Acme Signing Server"}, got.Document.Tools)
 	require.NotNil(t, got.Document.CreatedAt)
 	assert.Equal(t, "2020-04-07T07:01:00Z", *got.Document.CreatedAt)
 	assert.Equal(t, 3, got.Document.PackageCount)
 	require.NotNil(t, got.Document.Subject)
 	assert.Equal(t, "Acme Application", got.Document.Subject.Name)
+}
+
+// A hosted generator records itself under tools.services rather than
+// tools.components. Snyk does, so this was dropped for every SBOM it produces.
+func TestToolsFromAServiceEntry(t *testing.T) {
+	got, err := ProcessSBOMFile(fixture("cyclonedx-vcs.json"))
+
+	require.NoError(t, err)
+	assert.Equal(t, []string{"SBOM Export API v1.131.1"}, got.Document.Tools)
+}
+
+func TestSubjectRecordsWhereTheComponentCameFrom(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		file      string
+		commit    string
+		commitURL string
+		vcsURL    string
+	}{
+		{
+			name:      "cyclonedx pedigree commit and vcs reference",
+			file:      "cyclonedx-vcs.json",
+			commit:    "9239abaf0a78d08f7f9e63f94eec0e5b65c82b89",
+			commitURL: "https://github.com/kosli-dev/server/commit/9239abaf0a78d08f7f9e63f94eec0e5b65c82b89",
+			vcsURL:    "https://github.com/kosli-dev/server",
+		},
+		{
+			name:   "spdx download location carries both",
+			file:   "spdx-vcs.json",
+			commit: "9239abaf0a78d08f7f9e63f94eec0e5b65c82b89",
+			vcsURL: "https://github.com/kosli-dev/server",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ProcessSBOMFile(fixture(tc.file))
+
+			require.NoError(t, err)
+			require.NotNil(t, got.Document.Subject)
+			subject := got.Document.Subject
+			require.NotNil(t, subject.Commit)
+			assert.Equal(t, tc.commit, *subject.Commit)
+			require.NotNil(t, subject.VcsURL)
+			assert.Equal(t, tc.vcsURL, *subject.VcsURL)
+			if tc.commitURL == "" {
+				assert.Nil(t, subject.CommitURL)
+			} else {
+				require.NotNil(t, subject.CommitURL)
+				assert.Equal(t, tc.commitURL, *subject.CommitURL)
+			}
+		})
+	}
+}
+
+// A branch name is not a commit. Recording one as a commit would be worse than
+// recording nothing, because a reader cannot tell the difference afterwards.
+func TestSubjectLeavesABranchOutOfCommit(t *testing.T) {
+	got, err := ProcessSBOMFile(fixture("spdx-vcs-branch.json"))
+
+	require.NoError(t, err)
+	require.NotNil(t, got.Document.Subject)
+	assert.Nil(t, got.Document.Subject.Commit)
+	require.NotNil(t, got.Document.Subject.VcsURL)
+	assert.Equal(t, "https://github.com/kosli-dev/server", *got.Document.Subject.VcsURL)
+}
+
+func TestVcsFromSPDXDownloadLocation(t *testing.T) {
+	sha := "9239abaf0a78d08f7f9e63f94eec0e5b65c82b89"
+	for _, tc := range []struct {
+		name     string
+		location string
+		wantURL  string
+		wantSHA  string
+	}{
+		{"unanswered", "NOASSERTION", "", ""},
+		{"none", "NONE", "", ""},
+		{"empty", "", "", ""},
+		{"not a url", "./local/path", "", ""},
+		{"plain url, no revision", "https://example.com/r", "https://example.com/r", ""},
+		{"vcs tool prefix stripped", "git+https://example.com/r", "https://example.com/r", ""},
+		{"revision that is a commit", "git+https://example.com/r@" + sha, "https://example.com/r", sha},
+		{"revision that is a branch", "git+https://example.com/r@main", "https://example.com/r", ""},
+		{"short abbreviation counts", "git+https://example.com/r@9239aba", "https://example.com/r", "9239aba"},
+		{"six characters is too short", "git+https://example.com/r@9239ab", "https://example.com/r", ""},
+		{"subpath removed", "git+https://example.com/r@" + sha + "#src/a.go", "https://example.com/r", sha},
+		{"userinfo is not a revision", "https://user@example.com/r", "https://user@example.com/r", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gotURL, gotSHA := vcsFromSPDXDownloadLocation(tc.location)
+
+			if tc.wantURL == "" {
+				assert.Nil(t, gotURL)
+			} else {
+				require.NotNil(t, gotURL)
+				assert.Equal(t, tc.wantURL, *gotURL)
+			}
+			if tc.wantSHA == "" {
+				assert.Nil(t, gotSHA)
+			} else {
+				require.NotNil(t, gotSHA)
+				assert.Equal(t, tc.wantSHA, *gotSHA)
+			}
+		})
+	}
 }

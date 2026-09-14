@@ -32,6 +32,12 @@ type Subject struct {
 	Version *string `json:"version"`
 	Purl    *string `json:"purl"`
 	Sha256  *string `json:"sha256"`
+	// Where the component came from, when the document says so. Sha256 above
+	// identifies the bytes; these identify the source they were built from, so
+	// an attestation's own commit can be checked against the SBOM's.
+	Commit    *string `json:"commit"`
+	CommitURL *string `json:"commit_url"`
+	VcsURL    *string `json:"vcs_url"`
 }
 
 // Document is the normalised summary shared by every supported format.
@@ -344,6 +350,13 @@ func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 			names = append(names, nameAndVersion(component.Name, component.Version))
 		}
 	}
+	// A hosted generator records itself here rather than under Components.
+	// Snyk does, so leaving it out dropped the tool for every SBOM it produces.
+	if tools.Services != nil {
+		for _, service := range *tools.Services {
+			names = append(names, nameAndVersion(service.Name, service.Version))
+		}
+	}
 	return names
 }
 
@@ -371,6 +384,26 @@ func subjectFromComponent(component *cdx.Component) (*Subject, error) {
 					return nil, err
 				}
 				subject.Sha256 = sum
+				break
+			}
+		}
+	}
+	// The first commit with a uid. Pedigree records ancestry, so later entries
+	// describe where the component came from rather than what it is.
+	if component.Pedigree != nil && component.Pedigree.Commits != nil {
+		for _, commit := range *component.Pedigree.Commits {
+			if commit.UID == "" {
+				continue
+			}
+			subject.Commit = nullIfEmpty(commit.UID)
+			subject.CommitURL = nullIfEmpty(commit.URL)
+			break
+		}
+	}
+	if component.ExternalReferences != nil {
+		for _, ref := range *component.ExternalReferences {
+			if ref.Type == cdx.ERTypeVCS {
+				subject.VcsURL = nullIfEmpty(ref.URL)
 				break
 			}
 		}
@@ -447,9 +480,65 @@ func subjectFromSPDX(doc *spdx.Document) (*Subject, error) {
 				break
 			}
 		}
+		subject.VcsURL, subject.Commit = vcsFromSPDXDownloadLocation(pkg.PackageDownloadLocation)
 		return subject, nil
 	}
 	return nil, nil
+}
+
+// vcsFromSPDXDownloadLocation reads the VCS form SPDX defines for
+// downloadLocation: "<tool>+<transport>://<host>/<path>[@<revision>][#<subpath>]".
+//
+// The revision is whatever the producer wrote, a tag or a branch as often as a
+// commit, so it is only reported as a commit when it reads as a hexadecimal
+// object id. Reporting a branch name as a commit would be worse than reporting
+// nothing, because a reader cannot tell the difference afterwards.
+func vcsFromSPDXDownloadLocation(location string) (vcsURL *string, commit *string) {
+	// Both are the spec's ways of saying the field was left unanswered.
+	if location == "" || location == "NOASSERTION" || location == "NONE" {
+		return nil, nil
+	}
+	if plus := strings.Index(location, "+"); plus != -1 {
+		if scheme := strings.Index(location, "://"); scheme == -1 || plus < scheme {
+			location = location[plus+1:]
+		}
+	}
+	if hash := strings.Index(location, "#"); hash != -1 {
+		location = location[:hash]
+	}
+	if !strings.Contains(location, "://") {
+		return nil, nil
+	}
+	// Userinfo sits between "://" and the first "/", so only an "@" after the
+	// path begins can be a revision. "https://user@example.com/r" has no revision.
+	revision := ""
+	schemeEnd := strings.Index(location, "://") + len("://")
+	if slash := strings.Index(location[schemeEnd:], "/"); slash != -1 {
+		pathStart := schemeEnd + slash
+		if at := strings.LastIndex(location, "@"); at > pathStart {
+			revision = location[at+1:]
+			location = location[:at]
+		}
+	}
+	if isHexObjectID(revision) {
+		commit = nullIfEmpty(revision)
+	}
+	return nullIfEmpty(location), commit
+}
+
+// isHexObjectID reports whether a revision reads as a commit rather than a
+// branch or tag. Seven characters is git's shortest abbreviation; anything
+// longer than a sha-256 object id is something else.
+func isHexObjectID(revision string) bool {
+	if len(revision) < 7 || len(revision) > 64 {
+		return false
+	}
+	for _, r := range revision {
+		if (r < '0' || r > '9') && (r < 'a' || r > 'f') && (r < 'A' || r > 'F') {
+			return false
+		}
+	}
+	return true
 }
 
 func purlFromSPDX(pkg *spdx.Package) *string {
