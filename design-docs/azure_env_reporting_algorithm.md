@@ -125,6 +125,29 @@ The import lines are
 The second line informs us that a container started successfully. When we have that we know that the previous `Digest: sha256`
 line was the sha256 of this container.
 
+### Which `Digest:` line to trust
+
+The docker log is not written by the platform alone. It also carries the container's stdout and stderr, so a
+container can print a line containing `Digest: sha256:...` and it lands in the same text. A container that does
+this after it starts must not be able to choose the fingerprint the snapshot reports
+([kosli-dev/server#6881](https://github.com/kosli-dev/server/issues/6881)).
+
+Two things separate the platform's lines from the container's:
+
+1. **Order.** The container's output can only appear after the platform's `Starting container for site` /
+   `docker run` lines. The digest is therefore the last `Digest:` line *before* the last container start, and
+   anything after the start is ignored. The latest start wins, because the log window can hold several
+   deployments and the running container is the most recent one. Taking the first match instead would report
+   a stale deployment.
+2. **Shape.** Platform lines begin with a UTC timestamp carrying exactly three fractional digits, then a level
+   and a dash (`2023-09-28T12:27:31.201Z INFO  - ...`). Container output is timestamped by Docker at nanosecond
+   precision and gets no level or dash (`2023-09-28T12:27:35.123456789Z ...`). Only lines of the platform's
+   shape are considered. This is what stops a container that is being replaced, and is still running while the
+   platform pulls its successor, from writing a fake digest into the gap between the pull and the start.
+
+Neither makes the log a source of truth: the registry is. `--digests-source acr` is the default, and the CLI
+prints a warning whenever `--digests-source logs` is used.
+
 
 ## Findings
 

@@ -14,15 +14,16 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
-	smithyTime "github.com/aws/smithy-go/time"
 	"github.com/distribution/reference"
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
@@ -65,7 +66,18 @@ type AzureAppsRequest struct {
 // These are for handling temporary 503 errors so that they do not fail the whole command
 var ErrAppUnavailable = errors.New("app is unavailable (503)")
 
+// warnAboutDigestsSource says once per run that a log-scraped digest is only as
+// trustworthy as the container writing to that log.
+func warnAboutDigestsSource(digestsSource string, logger *logger.Logger) {
+	if digestsSource != "logs" {
+		return
+	}
+	logger.Warn("--digests-source logs reads each app's image digest from its docker log, which the running container can also write to; a compromised container may misreport its image. Prefer --digests-source acr where the registry allows it")
+}
+
 func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logger) (appsData []*AppData, err error) {
+	warnAboutDigestsSource(staticCreds.DigestsSource, logger)
+
 	azureClient, err := staticCreds.NewAzureClient()
 	if err != nil {
 		return nil, err
@@ -736,65 +748,76 @@ func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string, logge
 	}
 }
 
-func extractImageFingerprintAndStartedTimestampFromLogs(logs []byte, appName string) (fingerprint string, startedAt int64, error error) {
-	logsReader := bytes.NewReader(logs)
-	scanner := bufio.NewScanner(logsReader)
+// platformLinePrefix is how the App Service platform starts every line it
+// writes to the docker log: a UTC timestamp with exactly three fractional
+// digits, a level and a dash. The same stream carries the container's stdout,
+// which Docker timestamps at nanosecond precision and the platform passes
+// through with no level or dash. That difference in shape is the only thing
+// telling a platform line from a line the container wrote to look like one.
+const platformLinePrefix = `^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z) INFO\s+-\s+`
 
-	searchedDigestByteArray := []byte("Digest: sha256:")
-	containerStartedAtByteArray := []byte(fmt.Sprintf("for site %s initialized successfully and is ready to serve requests.", appName))
+var (
+	platformDigestLine = regexp.MustCompile(platformLinePrefix + `Digest: sha256:([0-9a-f]{64})\s*$`)
+	// The platform logs both of these when it starts the container; either one
+	// marks the point after which the container's own output can appear.
+	platformStartLine = regexp.MustCompile(platformLinePrefix + `(Starting container for site|docker run )`)
+)
 
-	var lastDigestLine []byte
-	var lastStartedAtLine []byte
+func platformInitializedLine(appName string) *regexp.Regexp {
+	return regexp.MustCompile(platformLinePrefix + `Container \S+ for site ` + regexp.QuoteMeta(appName) +
+		` initialized successfully and is ready to serve requests\.\s*$`)
+}
+
+// extractImageFingerprintAndStartedTimestampFromLogs reads the digest of the
+// running container from the app's docker log.
+//
+// The digest is the one the platform pulled immediately before it last started
+// the container: the last platform "Digest:" line before the last platform
+// start line. A "Digest:" line after the start line is the container's own
+// output and is ignored, so a compromised container cannot name its own
+// fingerprint (kosli-dev/server#6881). The log window can hold several
+// deployments, which is why the latest start wins rather than the first match.
+//
+// startedAt is the time the platform reported that container ready. A start
+// with no such report yet has startedAt 0; a pull after the last ready report
+// means the container is being replaced, and nothing is reported.
+func extractImageFingerprintAndStartedTimestampFromLogs(logs []byte, appName string) (fingerprint string, startedAt int64, err error) {
+	initializedLine := platformInitializedLine(appName)
+
+	var pulledDigest, startedDigest string
+	var startSeen, initializedSeen, initializedAfterLastStart bool
+
+	scanner := bufio.NewScanner(bytes.NewReader(logs))
 	for scanner.Scan() {
-		line := scanner.Bytes()
-		if bytes.Contains(line, searchedDigestByteArray) {
-			lastDigestLine = make([]byte, len(line))
-			copy(lastDigestLine, line)
-		}
-
-		if bytes.Contains(line, containerStartedAtByteArray) {
-			lastStartedAtLine = make([]byte, len(line))
-			copy(lastStartedAtLine, line)
+		line := scanner.Text()
+		if m := platformDigestLine.FindStringSubmatch(line); m != nil {
+			pulledDigest = m[2]
+		} else if platformStartLine.MatchString(line) {
+			startedDigest = pulledDigest
+			startSeen = true
+			initializedAfterLastStart = false
+		} else if m := initializedLine.FindStringSubmatch(line); m != nil {
+			initializedSeen = true
+			if !startSeen {
+				continue
+			}
+			readyAt, err := time.Parse(time.RFC3339Nano, m[1])
+			if err != nil {
+				return "", 0, err
+			}
+			startedAt = readyAt.Unix()
+			initializedAfterLastStart = true
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		return "", 0, err
 	}
 
-	lengthOfTimestamp := 24 // example 2023-09-25T12:21:09.927Z
-	var digestLoggedAt string
-	if lastDigestLine != nil {
-		lastDigestLineString := string(lastDigestLine)
-		fingerprintStartIndex := len(lastDigestLineString) - 64
-		fingerprint = lastDigestLineString[fingerprintStartIndex:]
-		digestLoggedAt = lastDigestLineString[:lengthOfTimestamp]
+	if !startSeen || startedDigest == "" {
+		return "", 0, nil
 	}
-
-	var startedAtLoggedAt string
-	if lastStartedAtLine != nil {
-		startedAtLoggedAt = string(lastStartedAtLine)[:lengthOfTimestamp]
+	if initializedSeen && !initializedAfterLastStart {
+		return "", 0, nil
 	}
-
-	if digestLoggedAt != "" && startedAtLoggedAt != "" {
-		digestLoggedAt = strings.TrimSpace(digestLoggedAt)
-		digestLogTime, err := smithyTime.ParseDateTime(digestLoggedAt)
-		if err != nil {
-			return "", 0, err
-		}
-		startedAtLoggedAt = strings.TrimSpace(startedAtLoggedAt)
-		startedAtLogTime, err := smithyTime.ParseDateTime(startedAtLoggedAt)
-		if err != nil {
-			return "", 0, err
-		}
-
-		// startedAtLoggedAt must be greater than digestLoggedAt,
-		// because image pulled and build before it starts serving requests.
-		// If startedAtLoggedAt is less than digestLoggedAt, then the container is not running.
-		if startedAtLogTime.Before(digestLogTime) {
-			return "", 0, nil
-		}
-		startedAt = startedAtLogTime.Unix()
-	}
-
-	return fingerprint, startedAt, nil
+	return startedDigest, startedAt, nil
 }
