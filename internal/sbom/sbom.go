@@ -324,11 +324,14 @@ func packageCount(components *[]cdx.Component) int {
 	return count
 }
 
-// toolsFromCycloneDX reads both tool layouts. Spec 1.5 moved tools from a
-// dedicated list to components, and the library keeps the older list populated
-// for documents that use it, so a document may fill either. The services slot
-// the same spec added is deliberately skipped: a service a document consumed is
-// not a tool that generated it.
+// toolsFromCycloneDX reads all three tool layouts. Spec 1.5 moved tools from a
+// dedicated list to components and services, and the library keeps the older list
+// populated for documents that use it, so a document may fill any of them.
+//
+// A hosted generator records itself under services: the SBOM our own pipeline
+// produces names Snyk there and nowhere else, so skipping that slot lost the tool
+// entirely. Each layout contributes its name and version, and none contributes a
+// vendor, including the deprecated one that carries a Vendor field.
 func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 	if tools == nil {
 		return nil
@@ -342,6 +345,11 @@ func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 	if tools.Components != nil {
 		for _, component := range *tools.Components {
 			names = append(names, nameAndVersion(component.Name, component.Version))
+		}
+	}
+	if tools.Services != nil {
+		for _, service := range *tools.Services {
+			names = append(names, nameAndVersion(service.Name, service.Version))
 		}
 	}
 	return names

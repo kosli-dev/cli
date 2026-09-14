@@ -82,19 +82,31 @@ func TestPackageCountExcludesFiles(t *testing.T) {
 	assert.Equal(t, 2, got.Document.PackageCount)
 }
 
-func TestToolsReadFromBothCycloneDXLayouts(t *testing.T) {
+func TestToolsReadFromEveryCycloneDXLayout(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		file string
+		want []string
 	}{
-		{"post-1.5 components layout", "cyclonedx-tools.json"},
-		{"deprecated pre-1.5 layout", "cyclonedx-tools-deprecated.json"},
+		// The spec's own 1.6 example fills components and services together. Both are
+		// tools: the schema defines metadata.tools as the tools used in the creation,
+		// enrichment and validation of the BOM, and services as "a list of services used
+		// as tools". A signing service that signed the document is one of them.
+		{"components and services together", "cyclonedx-tools.json", []string{"Awesome Tool 9.1.2", "Acme Signing Server"}},
+		{"deprecated pre-1.5 layout", "cyclonedx-tools-deprecated.json", []string{"Awesome Tool 9.1.2"}},
+		// A hosted generator records itself under services rather than components, so a
+		// document can fill any of the three. This fixture is cut from the SBOM our own
+		// pipeline produced on 2026-09-14, where the tool came back empty.
+		// The vendor is not part of the name here, because it is not part of it for the
+		// other two layouts either: the deprecated shape carries a Vendor field and this
+		// reader has always ignored it.
+		{"1.5 services layout", "cyclonedx-tools-services.json", []string{"SBOM Export API v1.131.1"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := ProcessSBOMFile(fixture(tc.file))
 
 			require.NoError(t, err)
-			assert.Equal(t, []string{"Awesome Tool 9.1.2"}, got.Document.Tools)
+			assert.Equal(t, tc.want, got.Document.Tools)
 		})
 	}
 }
@@ -423,7 +435,7 @@ func TestTheXMLReaderPopulatesTheSameFields(t *testing.T) {
 	got, err := ProcessSBOMFile(fixture("cyclonedx-1.6.xml"))
 
 	require.NoError(t, err)
-	assert.Equal(t, []string{"Awesome Tool 9.1.2"}, got.Document.Tools)
+	assert.Equal(t, []string{"Awesome Tool 9.1.2", "Acme Signing Server"}, got.Document.Tools)
 	require.NotNil(t, got.Document.CreatedAt)
 	assert.Equal(t, "2020-04-07T07:01:00Z", *got.Document.CreatedAt)
 	assert.Equal(t, 3, got.Document.PackageCount)
