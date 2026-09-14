@@ -89,8 +89,21 @@ func (fs virtualFS) globDoubleStar(pattern string) ([]string, error) {
 	return matches, nil
 }
 
+// globSeparatorsLimit is filepath's pathSeparatorsLimit: the recursion depth
+// at which Glob gives up on a pattern rather than exhaust the stack.
+const globSeparatorsLimit = 10000
+
 // glob mirrors filepath.Glob on a Unix filesystem.
 func (fs virtualFS) glob(pattern string) ([]string, error) {
+	return fs.globWithLimit(pattern, 0)
+}
+
+func (fs virtualFS) globWithLimit(pattern string, depth int) ([]string, error) {
+	// A rule is attacker-writable, so the same bound filepath.Glob applies to
+	// deep wildcard paths applies here.
+	if depth == globSeparatorsLimit {
+		return nil, path.ErrBadPattern
+	}
 	// filepath.Glob rejects a malformed pattern before it looks at the
 	// filesystem, so a bad rule fails even where nothing could match it.
 	if _, err := path.Match(pattern, ""); err != nil {
@@ -112,7 +125,7 @@ func (fs virtualFS) glob(pattern string) ([]string, error) {
 	if dir == pattern {
 		return nil, path.ErrBadPattern
 	}
-	dirs, err := fs.glob(dir)
+	dirs, err := fs.globWithLimit(dir, depth+1)
 	if err != nil {
 		return nil, err
 	}
