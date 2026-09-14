@@ -36,7 +36,7 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 
 - [x] Slice 0 — split the verdict printer away from the evaluation, so both paths share it. No behaviour change. Two trail suites could not be run: they need the local test server, which needs a production token.
 - [x] Slice 1 — new client package: create an evaluation, decode the accepted response and every error shape.
-- [ ] Slice 2 — read an evaluation, and wait for a terminal status with backoff and a bounded budget.
+- [x] Slice 2 — read an evaluation, and wait for a terminal status with backoff and a bounded budget.
 - [ ] Slice 3 — the hidden flag on the single-trail command, happy path end to end.
 - [ ] Slice 4 — the same flag on the multi-trail command, all names in one evaluation.
 - [ ] Slice 5 — refuse the flag combinations the server has no equivalent for.
@@ -63,6 +63,8 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 - Input filtering and input display are refused under the flag rather than approximated. The server offers no equivalent for either, and showing the caller a later moment than the one evaluated would mislead more than refusing.
 - This repository's test environment cannot complete a server-side evaluation at all: the local stack runs a server, a database and object storage, with no queue broker, no worker and no evaluator. The local server also treats every local caller as entitled, so the feature-flag refusal cannot be reproduced there either. Every test of the new path therefore drives a stubbed HTTP server, and the existing tests stay on the real local server to prove the unflagged path is untouched. The cost accepted is that these tests pin our side of the contract only; real agreement between the two paths has to be measured on staging.
 - A denial, a broken policy, an expired wait and a fault of ours become four distinguishable exit codes, which this CLI has never had. They stay provisional while the flag is hidden, and the unflagged path keeps its single failure code unchanged.
+- Whether the two paths print the same page turns on how an empty violation list is rendered, which was not foreseen. Running the binary showed the local path prints a null rather than an empty list when there is nothing to report. The reading side therefore keeps whichever shape it was sent instead of tidying it, so the choice is made once, where the two paths meet, rather than hidden in a decoder.
+- An expired wait is a distinct outcome carrying the evaluation's identity, not a sentinel and never a verdict, so a caller can tell the user which evaluation is still running and where to read it later.
 - A server error cannot be reported to the user in the server's own words, which was assumed possible when the work was planned. Every retryable status is consumed by the shared HTTP client, which exhausts its retries and reports giving up, discarding the response body. So a refused feature flag or a missing trail keeps its sentence, while the enqueue failure the API documents does not, and the command has to supply one of its own. A test pins the loss so nobody plans around it again.
 - Every slice shares one branch for the whole issue rather than a branch each, so the history reads as one piece of work and a reviewer can follow the plan through to the code without walking a stack of branches.
 - The wait is bounded at the platform's stated enqueue-to-terminal ceiling. Expiring reports an unfinished evaluation carrying its identifier, so a slow evaluation can never be mistaken for a denial.
@@ -71,7 +73,7 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 
 ## Next Steps
 
-- [ ] Slice 2 next: read an evaluation back, and wait for a terminal status with bounded backoff. The wait takes a context, unlike the create call, because there it genuinely controls the poll loop.
+- [ ] Slice 3 next: the hidden flag on the single-trail command, end to end against a stubbed server. It owns the empty-violations decision above.
 - [ ] Confirm the four proposed exit-code values with the ticket owner before Slice 8; everything up to it is unaffected.
 - [ ] Decide what a server error should say, now that the server's own sentence is known to be unavailable. It falls due in Slice 6.
 - [ ] Build the stubbed-server test helper early in Slice 3, since Slices 3 to 7 all depend on it.

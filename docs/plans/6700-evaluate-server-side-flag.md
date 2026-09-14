@@ -1,7 +1,7 @@
 # Plan: `kosli evaluate trail|trails --server-side` (hidden flag)
 
 > **Ticket:** https://github.com/kosli-dev/server/issues/6700
-> **Status:** slices 0 and 1 done; slice 2 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
+> **Status:** slices 0, 1 and 2 done; slice 3 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
 > **Audience:** the agent or engineer who implements this. Follow the repo's TDD and thin-slice workflow (`CLAUDE.md`). Create a `## feat(evaluate): --server-side` section in `TODO.md` from the slice list below before coding.
 > **Out of scope (moved to #6832):** shadow mode. Nothing here runs a server-side evaluation unless the flag is present.
 
@@ -182,7 +182,9 @@ Exit codes 2/3/4 are proposals. They are hidden behind a hidden flag, so they ca
 
 ### 4.6 Reuse of printers
 
-Split `evaluateAndPrintResult` so the printing half takes an `*evaluate.Result` and does not know where it came from. Both paths then share `printEvaluateResult(out, result, outputFormat, showInput, input, params, assertOnDeny)`. Map `evaluations.Result` → `evaluate.Result` in the command (two fields).
+Done in slice 0. Both paths share `printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny)`, which takes an `*evaluate.Result` and does not know where it came from. Slice 3 maps `evaluations.Result` onto it, two fields.
+
+**The empty-violations shape decides whether the two paths print the same page.** Verified by running the binary: with nothing to report the local path prints `"violations": null`, because its collector returns a nil slice and a nil slice marshals to null. So the mapping must send an empty or absent list through as nil, not as `[]string{}`, or JSON output differs between the paths while the verdict agrees. Table output is unaffected either way. Slice 2 deliberately left the decoded shape alone so this choice is made once, here, where both paths meet.
 
 ---
 
@@ -225,17 +227,21 @@ Files: `internal/evaluations/client.go`, `internal/evaluations/client_test.go`.
 
 ### Slice 2: `Get` and `WaitForTerminal`
 
+**Done.** Two shape changes from the sketch. `ErrStillPending` is a typed `*StillPendingError` rather than a sentinel, so it carries the org, the id and how long was waited and the caller can name the evaluation that is still running; match it with `errors.As`. And the wait needs no injected clock: the budget is a real deadline raced against the poll in a `select`, while the backoff arithmetic is a pure function tested on its own.
+
 Tests:
-- [ ] `Get` decodes `completed` with `result.allow` / `result.violations`
-- [ ] `Get` decodes `failed` with `error.kind` / `error.message`
-- [ ] `Get` decodes `completed` with no `violations` key → empty slice
-- [ ] `WaitForTerminal` returns on the first `completed` after N `pending` responses (fake server with a response sequence)
-- [ ] `WaitForTerminal` returns on `failed`
-- [ ] `WaitForTerminal` treats an unknown status (`running`) as non-terminal and keeps polling
-- [ ] `WaitForTerminal` returns `ErrStillPending` carrying the id when the timeout expires (use tiny `WaitOptions`)
-- [ ] `WaitForTerminal` backs off: second interval ≥ first, capped at `Max` (assert on request timestamps loosely, or on a injected sleeper)
-- [ ] `WaitForTerminal` stops and returns the error when `Get` returns a non-2xx after retries
-- [ ] context cancellation stops the wait
+- [x] `Get` decodes `completed` with `result.allow` / `result.violations`
+- [x] `Get` decodes `failed` with `error.kind` / `error.message`
+- [x] ~~`Get` decodes `completed` with no `violations` key → empty slice~~ — **deliberately not normalised.** Both shapes are pinned instead, absent staying absent and empty staying empty, because the local path prints an absent list as `null`. Reconciling them is slice 3's job, see below.
+- [x] `WaitForTerminal` returns on the first `completed` after N `pending` responses (fake server with a response sequence)
+- [x] `WaitForTerminal` returns on `failed`
+- [x] `WaitForTerminal` treats an unknown status (`running`) as non-terminal and keeps polling
+- [x] `WaitForTerminal` returns `*StillPendingError` carrying the id when the timeout expires, with no evaluation alongside it
+- [x] `WaitForTerminal` backs off: `nextInterval` doubles and caps, tested as a pure function rather than by timing
+- [x] `WaitForTerminal` stops and returns the error when `Get` returns a non-2xx after retries
+- [x] context cancellation stops the wait, before the first read rather than after it
+- [x] `WaitOptions{}` falls back to the 30 s budget
+- [x] `go test -race -count=5`, `golangci-lint`, vet and build clean
 
 Files: `internal/evaluations/client.go`, `internal/evaluations/wait.go`, tests.
 
@@ -253,6 +259,7 @@ Tests (`cmd/kosli/evaluateTrail_test.go`, new suite or new test methods; fake se
 - [ ] without `--server-side` the fake evaluations endpoint is **never** called (fake asserts zero hits) and the existing client-side tests still pass against localhost:8001
 - [ ] `--dry-run --server-side` → exit 0, no GET, payload logged
 - [ ] a policy the local path rejects (`testdata/policies/no-package-policy.rego`) is uploaded, not refused, under the flag
+- [ ] an allow with no violations prints the same JSON as the local path does, `"violations": null`, whether the server sent an empty list or none at all (see §4.6)
 
 Files: `cmd/kosli/evaluateHelpers.go` (new `runServerSide(...)`), `cmd/kosli/evaluateTrail.go`, `cmd/kosli/root.go` (flag help constant `serverSideFlag`), tests.
 
