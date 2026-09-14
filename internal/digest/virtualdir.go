@@ -163,7 +163,8 @@ func buildVirtualTree(files []VirtualFile) (*virtualNode, error) {
 			return nil, err
 		}
 		// An empty digest means the content was not read. That is only acceptable
-		// for a file the rules exclude, which writeDigests enforces when it gets there.
+		// for a file the rules exclude; VirtualDirSha256 fails on an empty digest
+		// it reaches, so a skipped download cannot reach a fingerprint.
 		if file.Sha256 != "" {
 			if err := ValidateDigest(file.Sha256); err != nil {
 				return nil, fmt.Errorf("invalid fingerprint for %q: %w", file.Path, err)
