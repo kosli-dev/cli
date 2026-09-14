@@ -35,7 +35,7 @@ This issue joins the two. A hidden flag on the two trail commands sends the poli
 Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-evaluate-server-side-flag.md), committed on this branch. Read it before starting any slice: it holds the verified server contract, the known mismatches between the two evaluation paths, the design decisions behind each choice, and a per-slice test list ready to copy into `TODO.md`. Each slice is independently mergeable.
 
 - [x] Slice 0 — split the verdict printer away from the evaluation, so both paths share it. No behaviour change. Two trail suites could not be run: they need the local test server, which needs a production token.
-- [ ] Slice 1 — new client package: create an evaluation, decode the accepted response and every error shape.
+- [x] Slice 1 — new client package: create an evaluation, decode the accepted response and every error shape.
 - [ ] Slice 2 — read an evaluation, and wait for a terminal status with backoff and a bounded budget.
 - [ ] Slice 3 — the hidden flag on the single-trail command, happy path end to end.
 - [ ] Slice 4 — the same flag on the multi-trail command, all names in one evaluation.
@@ -63,6 +63,7 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 - Input filtering and input display are refused under the flag rather than approximated. The server offers no equivalent for either, and showing the caller a later moment than the one evaluated would mislead more than refusing.
 - This repository's test environment cannot complete a server-side evaluation at all: the local stack runs a server, a database and object storage, with no queue broker, no worker and no evaluator. The local server also treats every local caller as entitled, so the feature-flag refusal cannot be reproduced there either. Every test of the new path therefore drives a stubbed HTTP server, and the existing tests stay on the real local server to prove the unflagged path is untouched. The cost accepted is that these tests pin our side of the contract only; real agreement between the two paths has to be measured on staging.
 - A denial, a broken policy, an expired wait and a fault of ours become four distinguishable exit codes, which this CLI has never had. They stay provisional while the flag is hidden, and the unflagged path keeps its single failure code unchanged.
+- A server error cannot be reported to the user in the server's own words, which was assumed possible when the work was planned. Every retryable status is consumed by the shared HTTP client, which exhausts its retries and reports giving up, discarding the response body. So a refused feature flag or a missing trail keeps its sentence, while the enqueue failure the API documents does not, and the command has to supply one of its own. A test pins the loss so nobody plans around it again.
 - Every slice shares one branch for the whole issue rather than a branch each, so the history reads as one piece of work and a reviewer can follow the plan through to the code without walking a stack of branches.
 - The wait is bounded at the platform's stated enqueue-to-terminal ceiling. Expiring reports an unfinished evaluation carrying its identifier, so a slow evaluation can never be mistaken for a denial.
 
@@ -70,8 +71,10 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 
 ## Next Steps
 
+- [ ] Slice 2 next: read an evaluation back, and wait for a terminal status with bounded backoff. The wait takes a context, unlike the create call, because there it genuinely controls the poll loop.
 - [ ] Confirm the four proposed exit-code values with the ticket owner before Slice 8; everything up to it is unaffected.
-- [ ] Start Slice 0 on a branch of its own: separate the verdict printer from the evaluation, with the existing tests as the only guard.
+- [ ] Decide what a server error should say, now that the server's own sentence is known to be unavailable. It falls due in Slice 6.
 - [ ] Build the stubbed-server test helper early in Slice 3, since Slices 3 to 7 all depend on it.
+- [ ] Run the two trail suites once the local test server is available; they are the only part of Slice 0 still unverified.
 - [ ] Decide whether the local test stack should later gain a broker, a worker and an evaluator, which would turn the stubbed tests into a real end-to-end check. Not required here, and a ticket of its own.
 - [ ] Measure both paths on staging against a trail with many attestations, which is the latency comparison the ticket predicts and the first number it can produce.

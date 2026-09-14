@@ -1,7 +1,7 @@
 # Plan: `kosli evaluate trail|trails --server-side` (hidden flag)
 
 > **Ticket:** https://github.com/kosli-dev/server/issues/6700
-> **Status:** plan, not started. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`.
+> **Status:** slices 0 and 1 done; slice 2 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
 > **Audience:** the agent or engineer who implements this. Follow the repo's TDD and thin-slice workflow (`CLAUDE.md`). Create a `## feat(evaluate): --server-side` section in `TODO.md` from the slice list below before coding.
 > **Out of scope (moved to #6832):** shadow mode. Nothing here runs a server-side evaluation unless the flag is present.
 
@@ -141,18 +141,22 @@ These are refinement choices the ticket leaves open. They are chosen here so wor
 
 ### 4.4 Wait
 
-- Package `internal/evaluations` (new), no OPA import. Exposes:
+- Package `internal/evaluations` (new), no OPA import. **Built in slice 1**, actual shape:
   ```go
+  const StatusPending, StatusCompleted, StatusFailed = "pending", "completed", "failed"
   type TrailRef struct { Flow, Trail string }
   type CreateRequest struct { Trails []TrailRef; Files map[string]string; Params map[string]interface{} }
-  type Evaluation struct { ID, Status string; Result *Result; Error *EvaluationError; RequestedAt, RecordedAt float64 }
+  type Evaluation struct { ID, Status string; RequestedAt, RecordedAt float64; Result *Result; Failure *Failure }
+  func (e *Evaluation) IsTerminal() bool
   type Result struct { Allow bool; Violations []string }
-  type EvaluationError struct { Kind, Message string }
-  func (c *Client) Create(ctx, org string, req CreateRequest) (*Evaluation, error)
-  func (c *Client) Get(ctx, org, id string) (*Evaluation, error)
-  func (c *Client) WaitForTerminal(ctx, org, id string, opts WaitOptions) (*Evaluation, error)
+  type Failure struct { Kind, Message string }
+  func NewClient(httpClient *requests.Client, host, token string, dryRun bool) *Client
+  func (c *Client) Create(org string, req CreateRequest) (*Evaluation, error)
+  func (c *Client) Get(org, id string) (*Evaluation, error)                                  // slice 2
+  func (c *Client) WaitForTerminal(ctx, org, id string, opts WaitOptions) (*Evaluation, error) // slice 2
   ```
-  `Client` wraps `*requests.Client` plus host and token (so `--dry-run`, retries and proxy behave as everywhere else). Constructed in `cmd/kosli` from `kosliClient` and `global`.
+  `Client` wraps `*requests.Client` plus host, token and the dry-run setting (so `--dry-run`, retries and proxy behave as everywhere else). Constructed in `cmd/kosli` from `kosliClient` and `global`.
+- Two names differ from the original sketch. The failure type is `Failure`, not `EvaluationError`: it does not implement `error`, and a struct field spelled `Error` that is not an error misleads every reader. And `Create` takes no context, because the shared HTTP client accepts none and an ignored context would promise a cancellation that does not happen; the context arrives in slice 2, where it genuinely controls the poll loop.
 - `WaitOptions{Timeout: 30 * time.Second, Initial: 500 * time.Millisecond, Max: 5 * time.Second}`; exponential backoff doubling. Package-level defaults so tests can shrink them.
 - Terminal = `status == "completed" || status == "failed"`. Anything else keeps polling.
 - On timeout return a sentinel `ErrStillPending` wrapping the id: `evaluation <id> is still pending after 30s; read it later with GET /api/v2/evaluations/<org>/<id>`. This is never printed as a verdict.
@@ -170,9 +174,11 @@ These are refinement choices the ticket leaves open. They are chosen here so wor
 | 403 on create | error `server-side evaluation is not enabled for org '<org>' (is-server-side-evaluation-enabled); remove --server-side to evaluate locally` | 4 |
 | 404 on create (endpoint missing on old server) | error `this Kosli server does not support server-side evaluation; remove --server-side` | 4 |
 | 404 trails not found, 400 validation | error with the server message verbatim | 1 |
-| 503 / 5xx / network | error with the server message verbatim | 4 |
+| 503 / 5xx / network | error naming the endpoint, plus a sentence of our own. The server's message is **not** available, see below | 4 |
 
 Exit codes 2/3/4 are proposals. They are hidden behind a hidden flag, so they can change before publication. The client-side path keeps exit 1 for everything, unchanged.
+
+**A 5xx never carries the server's message**, proven in slice 1 and pinned by a test. Any retryable status, which is every 5xx plus 429 and 409, is consumed by the shared HTTP client: it exhausts the retries and reports giving up, discarding the response body. So a 400, 403 or 404 arrives as an API error carrying the server's sentence, and a 503 arrives as a plain error reading `giving up after N attempt(s)`. Two consequences. The enqueue failure the API documents at 503 cannot be shown to a user in its own words, so slice 6 must supply a sentence of its own. And a 503 is retried `--max-api-retries` times by default even though the evaluation behind it is already recorded as failed, which wastes the user's wall clock; leave that alone unless it shows up in practice, since it is behaviour of the shared client rather than of this command.
 
 ### 4.6 Reuse of printers
 
@@ -188,10 +194,13 @@ Each slice is one PR-sized change, independently mergeable, with its own test li
 
 Goal: `evaluateAndPrintResult` becomes `evaluate` + `printEvaluateResult(out, *evaluate.Result, ...)`.
 
+**Done.** The payload build, marshal and format dispatch moved into `printEvaluateResult`, which takes a verdict instead of a policy reference. `evaluateAndPrintResult` kept its signature, so no caller changed.
+
 Tests (all existing; they must stay green):
-- [ ] `make test_integration_single TARGET=EvaluateTrailCommandTestSuite`
-- [ ] `make test_integration_single TARGET=EvaluateTrailsCommandTestSuite`
-- [ ] `make test_integration_single TARGET=EvaluateInputCommandTestSuite`
+- [ ] `make test_integration_single TARGET=EvaluateTrailCommandTestSuite` — **not run**, needs the local server
+- [ ] `make test_integration_single TARGET=EvaluateTrailsCommandTestSuite` — **not run**, needs the local server
+- [x] `make test_integration_single TARGET=EvaluateInputCommandTestSuite` — covers every branch of the moved code: allow, deny, violations present and absent, table, json, show-input, show-input with params, assert and no-assert
+- [x] `make lint` clean, build and vet clean
 
 Files: `cmd/kosli/evaluateHelpers.go`.
 
@@ -199,15 +208,18 @@ Files: `cmd/kosli/evaluateHelpers.go`.
 
 Goal: a typed client that POSTs the create payload and decodes the 201 body and the error envelope.
 
+**Done.** No sentinel error type was needed: `*requests.APIError` already carries the status code, so a caller distinguishes a refused feature flag from a missing trail without one.
+
 Tests (`internal/evaluations/client_test.go`, `httptest.NewServer`, `t.Run` style):
-- [ ] `Create` sends `POST /api/v2/evaluations/{org}` with bearer token and `Content-Type: application/json`
-- [ ] payload JSON is exactly `{context:{trails:[{flow,trail}]}, policy:{files:{...}}, params:{...}}` and nothing else (assert with a decoded map and key set)
-- [ ] nil params serialise as `{}` (or are omitted; pick one and pin it)
-- [ ] 201 body decodes into `Evaluation{ID, Status: "pending", RequestedAt, RecordedAt}`
-- [ ] 403 returns a typed `*requests.APIError` (or a wrapped sentinel `ErrNotEnabled`) with the server message
-- [ ] 404 and 400 return the server `message` verbatim
-- [ ] 503 returns the server `message` verbatim
-- [ ] `--dry-run` (client `DryRun: true`) returns `(nil, nil)` and sends nothing
+- [x] `Create` sends `POST /api/v2/evaluations/{org}` with bearer token and `Content-Type: application/json`
+- [x] payload JSON is exactly `{context:{trails:[{flow,trail}]}, policy:{files:{...}}, params:{...}}` and nothing else (assert with a decoded map and key set)
+- [x] absent params serialise as `{}`, pinned; null would fail the server's validation
+- [x] several trails go in one request, in the order given
+- [x] 201 body decodes into `Evaluation{ID, Status: "pending", RequestedAt, RecordedAt}` with no result and no failure
+- [x] 403 returns a `*requests.APIError` carrying the status and the server message
+- [x] 404 and 400 return the server `message` verbatim
+- [x] ~~503 returns the server `message` verbatim~~ — **disproved.** A 5xx is consumed by the retry layer and its body is discarded; a test now pins that loss instead. See §4.5.
+- [x] `--dry-run` (client `DryRun: true`) returns `(nil, nil)` and sends nothing
 
 Files: `internal/evaluations/client.go`, `internal/evaluations/client_test.go`.
 
