@@ -15,7 +15,8 @@ const snapshotS3ShortDesc = `Report a snapshot of the content of an AWS S3 bucke
 const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc + `
 You can report the entire bucket content, or filter some of the content using ^--include^ / ^--exclude^ (literal prefix match) or ^--include-regex^ / ^--exclude-regex^ (Go regular expressions matched against the full object key).
 In all cases, the content is reported as one artifact. If you wish to report separate files/dirs within the same bucket as separate artifacts, you need to run the command twice.
-Object keys that cannot be stored as a local file, such as keys containing a ^..^ path segment, are rejected and fail the snapshot, naming the key. Two keys that resolve to the same local file are also an error. A legitimate key of that shape can be left out with ^--exclude-regex^ (anchor and escape it, since the pattern is a regular expression matched against the whole key); when ^--include^ or ^--include-regex^ is set, exclude filters are ignored, so narrow the include filter instead.
+Object keys are never used as local file names: each object is downloaded to a temporary file, hashed and removed, and the fingerprint is computed from the keys and the content digests, so any key S3 accepts can be fingerprinted on any operating system.
+Keys that cannot form a directory tree are rejected and fail the snapshot, naming every key involved: a key containing a ^..^ segment, two keys that resolve to the same path (such as ^a//b^ and ^a/b^), or an object whose key is also a prefix of other objects (such as ^a^ beside ^a/b^). A legitimate key of that shape can be left out with ^--exclude-regex^ (anchor and escape it, since the pattern is a regular expression matched against the whole key); when ^--include^ or ^--include-regex^ is set, exclude filters are ignored, so narrow the include filter instead.
 
 ` + kosliIgnoreDescNoExclude
 

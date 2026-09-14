@@ -199,6 +199,13 @@ func (suite *VirtualDirTestSuite) TestVirtualDirSha256Errors() {
 			wantErrMsg: "not a valid SHA256 fingerprint",
 		},
 		{
+			// An empty digest means the content was not read; that is only
+			// acceptable for a file the rules exclude.
+			name:       "a missing sha256 on a file that is hashed",
+			files:      []VirtualFile{{Path: "a.txt", Sha256: ""}},
+			wantErrMsg: "no content digest",
+		},
+		{
 			name:       "an uppercase sha256",
 			files:      []VirtualFile{{Path: "a.txt", Sha256: strings.ToUpper(validSha)}},
 			wantErrMsg: "not a valid SHA256 fingerprint",

@@ -175,6 +175,86 @@ func (suite *VirtualIgnoreTestSuite) TestNestedIgnoreFileIsExcludable() {
 	require.Equal(suite.T(), b, a)
 }
 
+// FilesNeedingContent is what lets a caller skip fetching excluded content: it
+// must name exactly the files whose digest VirtualDirSha256 reads, so a file it
+// leaves out may carry no digest at all without changing the fingerprint.
+func (suite *VirtualIgnoreTestSuite) TestFilesNeedingContentAgreesWithTheDigest() {
+	for _, t := range []struct {
+		name  string
+		rules []string
+		want  []string
+	}{
+		{name: "no rules hash everything", rules: nil, want: allPaths(ignoreTestTree, true)},
+		{name: "a directory takes its files with it", rules: []string{"logs"}, want: without(allPaths(ignoreTestTree, true), "logs/file1", "logs/deep/file2")},
+		// "*" matches the subdirectory "deep" as well, and an excluded directory
+		// takes its subtree with it.
+		{name: "the content of a directory", rules: []string{"logs/*"}, want: without(allPaths(ignoreTestTree, true), "logs/file1", "logs/deep/file2")},
+		{name: "a suffix at any depth", rules: []string{"**/*.log"}, want: without(allPaths(ignoreTestTree, true), "app.log")},
+		{name: "the ignore file cannot exclude itself", rules: []string{".kosli_ignore", "**"}, want: []string{".kosli_ignore"}},
+	} {
+		suite.Run(t.name, func() {
+			paths := allPaths(ignoreTestTree, true)
+			needed, err := FilesNeedingContent(paths, t.rules)
+			require.NoError(suite.T(), err)
+			got := make([]string, 0, len(needed))
+			for p := range needed {
+				got = append(got, p)
+			}
+			sort.Strings(got)
+			sort.Strings(t.want)
+			require.Equal(suite.T(), t.want, got)
+
+			// Files not needed may carry no digest and the fingerprint is unchanged.
+			full := virtualFilesFor(ignoreTestTree, "rules")
+			sparse := make([]VirtualFile, 0, len(full))
+			for _, f := range full {
+				if !needed[f.Path] {
+					f.Sha256 = ""
+				}
+				sparse = append(sparse, f)
+			}
+			wantSha, err := VirtualDirSha256(full, t.rules, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			gotSha, err := VirtualDirSha256(sparse, t.rules, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), wantSha, gotSha)
+		})
+	}
+}
+
+func (suite *VirtualIgnoreTestSuite) TestFilesNeedingContentRejectsAMalformedRule() {
+	_, err := FilesNeedingContent([]string{"a.txt"}, []string{"["})
+	require.Error(suite.T(), err)
+}
+
+func allPaths(tree map[string]string, withIgnoreFile bool) []string {
+	paths := make([]string, 0, len(tree)+1)
+	for p := range tree {
+		paths = append(paths, p)
+	}
+	if withIgnoreFile {
+		paths = append(paths, ignoreFileName)
+	}
+	sort.Strings(paths)
+	return paths
+}
+
+func without(paths []string, drop ...string) []string {
+	kept := make([]string, 0, len(paths))
+	for _, p := range paths {
+		skip := false
+		for _, d := range drop {
+			if p == d {
+				skip = true
+			}
+		}
+		if !skip {
+			kept = append(kept, p)
+		}
+	}
+	return kept
+}
+
 func (suite *VirtualIgnoreTestSuite) TestParseIgnoreRules() {
 	for _, t := range []struct {
 		name  string
