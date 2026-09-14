@@ -190,6 +190,22 @@ func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysCapsTheReport() {
 	require.Equal(suite.T(), maxReportedS3KeyProblems, strings.Count(msg, "object key ["))
 }
 
+// Folding variants of one path are cheap to write, so one collision must not
+// name every key that folds onto it.
+func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysCapsTheKeysNamedPerCollision() {
+	keys := []string{"a/b"}
+	for i := 0; i < 12; i++ {
+		keys = append(keys, strings.Repeat("./", i+1)+"a/b")
+	}
+	_, err := virtualPathsForS3Keys(keys)
+	require.Error(suite.T(), err)
+	msg := err.Error()
+	require.Contains(suite.T(), msg, "fingerprint as the same path [a/b]")
+	require.Contains(suite.T(), msg, " and 3 more")
+	require.Equal(suite.T(), maxReportedS3KeyProblems+1, strings.Count(msg, "a/b]"), "the named keys and the path itself")
+	require.NotContains(suite.T(), msg, "\n", "one problem still reads as one line")
+}
+
 // The reported attack shape from #1155: the traversing key is rejected for its
 // ".." segment, and is never allowed to fold onto the object it names.
 func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysTraversalKeyIsRejected() {

@@ -72,8 +72,15 @@ func virtualPathsForS3Keys(keys []string) (map[string]string, error) {
 	for virtualPath, colliding := range keysByPath {
 		if len(colliding) > 1 {
 			sort.Strings(colliding)
-			problems = append(problems, fmt.Sprintf("object keys %s fingerprint as the same path [%s]",
-				bracketed(colliding), virtualPath))
+			// Folding variants of one path are cheap to write, so one collision
+			// is bounded the same way the list of problems is.
+			named, more := colliding, ""
+			if len(named) > maxReportedS3KeyProblems {
+				named = named[:maxReportedS3KeyProblems]
+				more = fmt.Sprintf(" and %d more", len(colliding)-maxReportedS3KeyProblems)
+			}
+			problems = append(problems, fmt.Sprintf("object keys %s%s fingerprint as the same path [%s]",
+				bracketed(named), more, virtualPath))
 		}
 	}
 

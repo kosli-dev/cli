@@ -597,7 +597,7 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 	for i, object := range objects {
 		sha256, downloaded := contentSha256[object.key]
 		switch {
-		case downloaded:
+		case downloaded: // the ignore-file pass already hashed this object
 		case needed[files[i].Path]:
 			sha256, err = downloadAndHashS3Object(downloader, tempDir, bucket, object.key, nil, logger)
 			if err != nil {
