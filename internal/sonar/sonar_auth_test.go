@@ -326,9 +326,7 @@ func TestGetSonarResults_Forbidden_NonJSON_RendersActualStatus(t *testing.T) {
 	}
 }
 
-// TestGetSonarResults_CrossHostRedirect_TokenStaysOnConfiguredHost is the end-to-end
-// sentinel for server#6880: when the configured SonarQube host redirects to another
-// host, the run fails with a clear error and the other host never sees the token.
+// End-to-end check for server#6880 through GetSonarResults.
 func TestGetSonarResults_CrossHostRedirect_TokenStaysOnConfiguredHost(t *testing.T) {
 	target := &fakeSonar{acceptsBearer: true, acceptsBasic: true}
 	targetSrv := httptest.NewServer(target.handler())

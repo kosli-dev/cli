@@ -34,9 +34,8 @@ func TestIsSonarCloudHost(t *testing.T) {
 	}
 }
 
-// TestSonarRedirectPolicy pins which redirects the Sonar client follows. The
-// client-level tests below use httptest servers, which all live on 127.0.0.1 and
-// differ only by port, so hostname, case and default-port handling are checked here.
+// The client-level tests below run on 127.0.0.1 and differ only by port, so
+// hostname, case and default-port handling are pinned here.
 func TestSonarRedirectPolicy(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -69,8 +68,6 @@ func TestSonarRedirectPolicy(t *testing.T) {
 	}
 }
 
-// TestSonarRedirectPolicy_LimitMessageMatchesRedirectsFollowed: via holds the
-// requests already sent, so the message must report the limit, not len(via).
 func TestSonarRedirectPolicy_LimitMessageMatchesRedirectsFollowed(t *testing.T) {
 	via := make([]*http.Request, 0, maxSonarRedirects+1)
 	for range maxSonarRedirects + 1 {
@@ -85,8 +82,6 @@ func TestSonarRedirectPolicy_LimitMessageMatchesRedirectsFollowed(t *testing.T) 
 	}
 }
 
-// authRecorder is a redirect target that records the Authorization header of
-// every request it receives.
 type authRecorder struct {
 	hits atomic.Int32
 	auth atomic.Value
@@ -107,9 +102,8 @@ func newTestServer(t *testing.T, h http.Handler) *httptest.Server {
 	return srv
 }
 
-// TestAuthedClient_CrossHostRedirect_DoesNotLeakToken is the sentinel for
-// server#6880: a Sonar host that redirects to another host must not be followed,
-// because the transport would otherwise attach the API token to the new host.
+// server#6880: the transport re-attaches the token on every hop, so a cross-host
+// redirect must not be followed at all.
 func TestAuthedClient_CrossHostRedirect_DoesNotLeakToken(t *testing.T) {
 	target := &authRecorder{}
 	targetSrv := newTestServer(t, target.handler())
@@ -133,9 +127,6 @@ func TestAuthedClient_CrossHostRedirect_DoesNotLeakToken(t *testing.T) {
 	}
 }
 
-// TestAuthedClient_SameHostRedirect_IsFollowedWithToken keeps ordinary Sonar
-// deployments working: a same-host redirect (a path rewrite, a trailing slash) is
-// followed and the redirected request is still authenticated.
 func TestAuthedClient_SameHostRedirect_IsFollowedWithToken(t *testing.T) {
 	target := &authRecorder{}
 	mux := http.NewServeMux()
@@ -159,10 +150,6 @@ func TestAuthedClient_SameHostRedirect_IsFollowedWithToken(t *testing.T) {
 	}
 }
 
-// TestAuthedClient_RedirectThenUnauthorized_StillFallsBackToBasic: a 3xx on the
-// Bearer probe proves nothing about the scheme. On a Server < 10.0 that redirects
-// /api/ce/task to /api/ce/task/, the 401 on the redirected hop must still trigger
-// the Basic fallback instead of being returned as an invalid token.
 func TestAuthedClient_RedirectThenUnauthorized_StillFallsBackToBasic(t *testing.T) {
 	target := &authRecorder{}
 	mux := http.NewServeMux()
@@ -193,8 +180,6 @@ func TestAuthedClient_RedirectThenUnauthorized_StillFallsBackToBasic(t *testing.
 	}
 }
 
-// TestAuthedClient_RedirectLoop_StopsAtLimit: a Sonar host that redirects to itself
-// forever must fail fast rather than spin through Go's default of ten hops.
 func TestAuthedClient_RedirectLoop_StopsAtLimit(t *testing.T) {
 	var hits atomic.Int32
 	srv := newTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -216,10 +201,6 @@ func TestAuthedClient_RedirectLoop_StopsAtLimit(t *testing.T) {
 	}
 }
 
-// TestAuthedClient_HangingRedirectTarget_TimesOut: the hop cap bounds how many
-// redirects are followed, the client deadline bounds how long the whole chain may
-// take, so a host that accepts the connection and never answers cannot hold the
-// run forever.
 func TestAuthedClient_HangingRedirectTarget_TimesOut(t *testing.T) {
 	release := make(chan struct{})
 	mux := http.NewServeMux()
@@ -233,8 +214,7 @@ func TestAuthedClient_HangingRedirectTarget_TimesOut(t *testing.T) {
 		}
 	})
 	srv := newTestServer(t, mux)
-	// Cleanup runs LIFO and srv.Close blocks until handlers return, so the parked
-	// handler must be released before the server is closed.
+	// Cleanups run LIFO: release the parked handler before srv.Close, which waits for it.
 	t.Cleanup(func() { close(release) })
 
 	client := newAuthedClient("tok", schemeBearer)
@@ -255,6 +235,39 @@ func TestAuthedClient_HangingRedirectTarget_TimesOut(t *testing.T) {
 	}
 	if elapsed := time.Since(start); elapsed > 5*time.Second {
 		t.Errorf("expected the deadline to cut the request short, waited %v", elapsed)
+	}
+}
+
+// GetCETaskData reuses one *http.Request across polls. http.Client forks the request
+// before attaching its deadline, so the caller's request stays usable; pin that for
+// authTransport, which is not a *http.Transport.
+func TestAuthedClient_ReusedRequestAcrossPolls_IsNotCancelledByTimeout(t *testing.T) {
+	var polls atomic.Int32
+	srv := newTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		polls.Add(1)
+		_, _ = w.Write([]byte(`{"task":{"status":"PENDING"}}`))
+	}))
+
+	client := newAuthedClient("tok", schemeAuto)
+	if client.Timeout == 0 {
+		t.Fatal("this test only means something with a client deadline set")
+	}
+	req := mustRequest(t, srv.URL+"/api/ce/task?id=AYx")
+	for i := 1; i <= 3; i++ {
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("poll %d on the reused request failed: %v", i, err)
+		}
+		drainAndClose(resp)
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("poll %d: expected 200, got %d", i, resp.StatusCode)
+		}
+	}
+	if n := polls.Load(); n != 3 {
+		t.Errorf("expected 3 polls to reach the server, got %d", n)
+	}
+	if err := req.Context().Err(); err != nil {
+		t.Errorf("the caller's request context must stay live across polls, got: %v", err)
 	}
 }
 

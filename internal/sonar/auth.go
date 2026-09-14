@@ -111,9 +111,8 @@ func (a *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	// A 3xx says nothing about the scheme, so it is returned undecided. For the
-	// redirects the client follows, it re-enters RoundTrip for the next hop and the
-	// response there decides; 300 and 304 are handed straight back to the caller.
+	// A 3xx says nothing about the scheme: leave it undecided and let the next hop
+	// (or the caller, for 300/304) decide.
 	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
 		return resp, nil
 	}
@@ -148,25 +147,20 @@ func drainAndClose(resp *http.Response) {
 }
 
 const (
-	// maxSonarRedirects bounds how many redirects the Sonar client follows. Go's
-	// default of ten is more than any real SonarQube deployment needs.
+	// Go follows ten by default; no real SonarQube deployment needs more than a few.
 	maxSonarRedirects = 5
 
-	// sonarClientTimeout bounds one request end to end, redirects and the Basic
-	// retry included, so a host that accepts the connection and never answers
-	// cannot hold the run. SonarQube API responses are small JSON documents, so
-	// this is generous for a healthy server.
+	// Total deadline per request, redirects and the Basic retry included. Sonar
+	// responses are small JSON documents, so a healthy server is nowhere near it.
 	sonarClientTimeout = 60 * time.Second
 )
 
-// sonarRedirectPolicy keeps the API token on the host the user configured.
-// authTransport attaches the token to every request it sends, including the
-// requests Go issues while following redirects, so the stdlib's own header
-// stripping never applies. Instead of following a redirect without the token
-// (every SonarQube endpoint needs it, so that would only fail later and less
-// clearly), a redirect to another host or from https to http is refused outright.
+// sonarRedirectPolicy refuses redirects that would carry the API token to another
+// host or onto plain http. authTransport re-attaches the token on every hop, so the
+// stdlib's cross-host header stripping never applies; and following without the
+// token would only fail later, since every SonarQube endpoint needs it.
 func sonarRedirectPolicy(req *http.Request, via []*http.Request) error {
-	// via holds the requests already sent, so it is one longer than the redirects followed.
+	// via includes the initial request.
 	if len(via) > maxSonarRedirects {
 		return fmt.Errorf("stopped after %d redirects", maxSonarRedirects)
 	}
@@ -183,8 +177,8 @@ func sonarRedirectPolicy(req *http.Request, via []*http.Request) error {
 	return nil
 }
 
-// canonicalHost lowercases the hostname and drops the scheme's default port, so a
-// reverse proxy that emits an explicit :443 in Location still counts as the same host.
+// canonicalHost lowercases the hostname and drops the scheme's default port, so an
+// explicit :443 in a Location header is still the same host.
 func canonicalHost(u *url.URL) string {
 	host := strings.ToLower(u.Hostname())
 	port := u.Port()
@@ -197,8 +191,7 @@ func canonicalHost(u *url.URL) string {
 // newAuthedClient builds an HTTP client that authenticates SonarQube requests with
 // the given token, presenting it as Bearer (SonarQube Cloud and Server >= 10.0) and
 // falling back to Basic for a self-hosted Server < 10.0. The token is trimmed of
-// surrounding whitespace (e.g. a trailing newline from a secret file). Redirects
-// are followed only within the configured host, see sonarRedirectPolicy.
+// surrounding whitespace (e.g. a trailing newline from a secret file).
 func newAuthedClient(token string, mode authScheme) *http.Client {
 	return &http.Client{
 		Transport:     &authTransport{token: strings.TrimSpace(token), mode: mode},
