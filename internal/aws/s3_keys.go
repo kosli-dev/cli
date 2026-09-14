@@ -7,8 +7,9 @@ import (
 	"strings"
 )
 
-// maxReportedS3KeyProblems caps how many problems one error lists before
-// summarising the rest, so a bucket-wide problem stays readable.
+// maxReportedS3KeyProblems caps how many problems one error lists and how many
+// keys one collision names before summarising the rest, so a bucket-wide
+// problem stays readable: at most ten lines of at most ten keys each.
 const maxReportedS3KeyProblems = 10
 
 // virtualPathForS3Key returns the path an object key occupies in the virtual
