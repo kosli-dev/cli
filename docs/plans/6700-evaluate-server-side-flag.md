@@ -1,7 +1,7 @@
 # Plan: `kosli evaluate trail|trails --server-side` (hidden flag)
 
 > **Ticket:** https://github.com/kosli-dev/server/issues/6700
-> **Status:** slices 0 to 6 done; slice 7 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
+> **Status:** slices 0 to 7 done; slice 8 next, and it is the last one that changes behaviour. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
 > **Audience:** the agent or engineer who implements this. Follow the repo's TDD and thin-slice workflow (`CLAUDE.md`). Create a `## feat(evaluate): --server-side` section in `TODO.md` from the slice list below before coding.
 > **Out of scope (moved to #6832):** shadow mode. Nothing here runs a server-side evaluation unless the flag is present.
 
@@ -136,7 +136,8 @@ These are refinement choices the ticket leaves open. They are chosen here so wor
 ### 4.3 Policy upload
 
 - Read with the existing `loadPolicy(ref)`. Never run `validatePolicy` under the flag.
-- `policy.files` is a single entry. Key = `filepath.Base(ref)` for a local file; for a URL, the last path segment of the URL; fall back to `policy.rego` when the base is empty, `.`, `/` or has no `.rego` suffix. Never send an absolute path or `..`.
+- `policy.files` is a single entry. Key = `filepath.Base(ref)` for a local file; for a URL, the last path segment. Fall back to `policy.rego` only when that leaves nothing usable, which is an empty path, a bare `.`, a bare `..` or a bare `/`. Never send an absolute path or `..`.
+- **No extension rule.** An earlier draft here said to fall back when the name does not end in `.rego`. That was wrong, and checking the evaluator settled it: every bundle entry is parsed as a Rego module whatever it is called, and the name only labels the error messages. Imposing an extension would rename a user's file for no reason and make the server's errors cite something the user does not have on disk.
 - Pre-flight size check: if `len(key) + len(source) > 1 MiB` return `policy bundle is N bytes, over the 1048576 byte limit` before the POST (mirrors the server message so the two paths read alike). Keep `policyMaxBytes` (5 MiB) for the remote read itself.
 
 ### 4.4 Wait
@@ -320,14 +321,17 @@ Files: `cmd/kosli/evaluateHelpers.go` (`serverSideRequestError`, `hasKosliErrorE
 
 ### Slice 7: policy upload edge cases
 
-Tests:
-- [ ] `--policy https://<fake>/policies/pr.rego --server-side` → the CLI fetches and uploads the source under key `pr.rego`; the evaluations fake receives it; the server never receives the URL
-- [ ] URL with no file name (`https://host/`) → key `policy.rego`
-- [ ] local path `./dir/../p.rego` → key `p.rego` (basename only; never `..`)
-- [ ] local policy of 1 MiB + 1 byte → client error `policy bundle is N bytes, over the 1048576 byte limit` before any request
-- [ ] a remote policy between 1 MiB and 5 MiB → same client error (fetched, then refused)
+**Done.** The naming was already right from slice 3, so only the size cap was new. The extension rule in §4.3 turned out to be unnecessary and is struck out there.
 
-Files: `cmd/kosli/evaluateHelpers.go` (a `policyBundleEntry(ref, source)` helper), tests.
+Tests:
+- [x] `--policy http://<fake>/policies/pr.rego --server-side` → the CLI fetches and uploads the source under key `pr.rego`, and the URL never travels
+- [x] URL with no file name → key `policy.rego`
+- [x] a local path that climbs out and back, and one with a leading dot → base name only, with no `..` and no `/` in any bundle key
+- [x] a local policy one byte over → refused before any request, naming the limit
+- [x] a local policy exactly at the cap → accepted, which pins that the name counts toward it as the API counts
+- [x] a remote policy the 5 MiB fetch allows but the 1 MiB cap does not → fetched, then refused before any request
+
+Files: `cmd/kosli/evaluateHelpers.go` (`policyBundle`, `serverPolicyMaxBytes`), `cmd/kosli/evaluateServerSide_test.go`.
 
 ### Slice 8: distinct exit codes
 

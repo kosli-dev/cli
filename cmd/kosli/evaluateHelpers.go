@@ -34,6 +34,12 @@ const policyMaxBytes = 5 << 20 // 5 MiB
 // it out of a rejected request.
 const maxServerSideTrails = 100
 
+// serverPolicyMaxBytes mirrors the API's cap on a policy bundle, which counts
+// the names as well as the sources. It is a fifth of what a remote --policy
+// read allows, so a policy can be fetched in full and still be too big to
+// send; saying so here beats a rejected request.
+const serverPolicyMaxBytes = 1 << 20 // 1 MiB
+
 type commonEvaluateOptions struct {
 	flowName     string
 	policyRef    string
@@ -272,10 +278,15 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 		return err
 	}
 
+	files, err := policyBundle(o.policyRef, policySource)
+	if err != nil {
+		return err
+	}
+
 	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
 	created, err := client.Create(global.Org, evaluations.CreateRequest{
 		Trails: trails,
-		Files:  map[string]string{policyBundleKey(o.policyRef): string(policySource)},
+		Files:  files,
 		Params: params,
 	})
 	if err != nil {
@@ -377,9 +388,23 @@ func serverVerdict(result *evaluations.Result) *evaluate.Result {
 	return &evaluate.Result{Allow: result.Allow, Violations: violations}
 }
 
+// policyBundle wraps the policy source as the one-file bundle the API takes,
+// refusing one too large for it rather than letting the request be rejected.
+// The cap counts the names as well as the sources, exactly as the API counts.
+func policyBundle(ref string, source []byte) (map[string]string, error) {
+	key := policyBundleKey(ref)
+	if size := len(key) + len(source); size > serverPolicyMaxBytes {
+		return nil, fmt.Errorf("policy bundle is %d bytes, over the %d byte limit",
+			size, serverPolicyMaxBytes)
+	}
+	return map[string]string{key: string(source)}, nil
+}
+
 // policyBundleKey names the policy inside the uploaded bundle. Only the base
 // name travels: the server refuses a path that is absolute or that climbs out
 // of the bundle, and where the file sits on this machine is not its business.
+// The name is a label rather than a selector, since the evaluator parses every
+// entry as a module whatever it is called, so no extension is imposed here.
 func policyBundleKey(ref string) string {
 	base := filepath.Base(ref)
 	if isRemotePolicyRef(ref) {

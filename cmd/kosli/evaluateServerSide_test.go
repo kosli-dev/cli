@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -549,6 +551,144 @@ func (suite *EvaluateServerSideTestSuite) TestAWaitThatExpiresNamesTheEvaluation
 	require.Contains(suite.T(), err.Error(), "01EVAL", "name the evaluation still running")
 	require.NotContains(suite.T(), combined, "DENIED")
 	require.NotContains(suite.T(), combined, "ALLOWED")
+}
+
+// The server never fetches a customer URL, so a remote policy is fetched here
+// and its source is what travels.
+func (suite *EvaluateServerSideTestSuite) TestARemotePolicyIsFetchedAndItsSourceUploaded() {
+	policyServer := newPolicyServer(suite.T(), "package policy\n\nallow := true\n")
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate trail my-trail --flow my-flow --policy %s/policies/pr.rego --server-side "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0",
+		policyServer.URL, server.URL))
+
+	require.NoError(suite.T(), err)
+
+	files := fake.created[0]["policy"].(map[string]interface{})["files"].(map[string]interface{})
+	require.Len(suite.T(), files, 1)
+	require.Contains(suite.T(), files, "pr.rego", "named after the file, not the host")
+	require.Equal(suite.T(), "package policy\n\nallow := true\n", files["pr.rego"])
+
+	for name := range files {
+		require.NotContains(suite.T(), name, policyServer.URL, "the URL never travels")
+	}
+}
+
+func (suite *EvaluateServerSideTestSuite) TestThePolicyIsNamedByItsFileAlone() {
+	for _, test := range []struct {
+		name   string
+		policy string
+		want   string
+	}{
+		{
+			name:   "a path that climbs out and back",
+			policy: "testdata/policies/../policies/allow-all.rego",
+			want:   "allow-all.rego",
+		},
+		{
+			name:   "a path with a leading dot",
+			policy: "./testdata/policies/allow-all.rego",
+			want:   "allow-all.rego",
+		},
+	} {
+		suite.Run(test.name, func() {
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, _, _, _, err := executeCommandC(fmt.Sprintf(
+				"evaluate trail my-trail --flow my-flow --policy %s --server-side "+
+					"--host %s --org test-org --api-token test-token --max-api-retries 0",
+				test.policy, server.URL))
+
+			require.NoError(suite.T(), err)
+			files := fake.created[0]["policy"].(map[string]interface{})["files"].(map[string]interface{})
+			require.Contains(suite.T(), files, test.want)
+			for name := range files {
+				require.NotContains(suite.T(), name, "..", "a bundle path never climbs out")
+				require.NotContains(suite.T(), name, "/", "a bundle path is a file, not a route")
+			}
+		})
+	}
+}
+
+// A URL ending in a slash names no file, so the bundle needs a name of its own
+// rather than one derived from nothing.
+func (suite *EvaluateServerSideTestSuite) TestAPolicyUrlNamingNoFileStillGetsAName() {
+	policyServer := newPolicyServer(suite.T(), "package policy\n\nallow := true\n")
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate trail my-trail --flow my-flow --policy %s/ --server-side "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0",
+		policyServer.URL, server.URL))
+
+	require.NoError(suite.T(), err)
+	files := fake.created[0]["policy"].(map[string]interface{})["files"].(map[string]interface{})
+	require.Contains(suite.T(), files, "policy.rego")
+}
+
+func (suite *EvaluateServerSideTestSuite) TestAPolicyOverTheApiCapIsRefusedHere() {
+	suite.Run("a local policy just over the cap", func() {
+		server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+		policy := writePolicyFile(suite.T(), "big.rego", 1048576)
+
+		_, _, _, _, err := executeCommandC(fmt.Sprintf(
+			"evaluate trail my-trail --flow my-flow --policy %s --server-side "+
+				"--host %s --org test-org --api-token test-token --max-api-retries 0",
+			policy, server.URL))
+
+		require.Error(suite.T(), err)
+		require.Contains(suite.T(), err.Error(), "over the 1048576 byte limit")
+		require.Empty(suite.T(), fake.created, "refused here, so the server is never asked")
+	})
+
+	suite.Run("a local policy exactly at the cap", func() {
+		server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+		// The cap counts the name as well as the source, as the API does.
+		policy := writePolicyFile(suite.T(), "big.rego", 1048576-len("big.rego"))
+
+		_, _, _, _, err := executeCommandC(fmt.Sprintf(
+			"evaluate trail my-trail --flow my-flow --policy %s --server-side "+
+				"--host %s --org test-org --api-token test-token --max-api-retries 0",
+			policy, server.URL))
+
+		require.NoError(suite.T(), err)
+		require.Len(suite.T(), fake.created, 1)
+	})
+
+	// The remote read allows five times what the API accepts, so a policy can
+	// be fetched in full and still be too big to send.
+	suite.Run("a remote policy the fetch allows but the API would not", func() {
+		policyServer := newPolicyServer(suite.T(), strings.Repeat("x", 2<<20))
+		server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+		_, _, _, _, err := executeCommandC(fmt.Sprintf(
+			"evaluate trail my-trail --flow my-flow --policy %s/big.rego --server-side "+
+				"--host %s --org test-org --api-token test-token --max-api-retries 0",
+			policyServer.URL, server.URL))
+
+		require.Error(suite.T(), err)
+		require.Contains(suite.T(), err.Error(), "over the 1048576 byte limit")
+		require.Empty(suite.T(), fake.created)
+	})
+}
+
+func newPolicyServer(t *testing.T, source string) *httptest.Server {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, source)
+	}))
+	t.Cleanup(server.Close)
+	return server
+}
+
+func writePolicyFile(t *testing.T, name string, size int) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), name)
+	require.NoError(t, os.WriteFile(path, []byte(strings.Repeat("x", size)), 0600))
+	return path
 }
 
 // newRefusingServer answers every request with one status and body, which is
