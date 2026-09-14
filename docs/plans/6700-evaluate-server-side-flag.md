@@ -1,7 +1,7 @@
 # Plan: `kosli evaluate trail|trails --server-side` (hidden flag)
 
 > **Ticket:** https://github.com/kosli-dev/server/issues/6700
-> **Status:** slices 0 to 7 done, slice 8 deferred by decision, slice 9 wrap-up remaining. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
+> **Status:** slices 0 to 7 done, slice 8 deferred by decision, slice 9 wrap-up remaining. Written 2026-09-14 against CLI `main` @ `11306cde`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
 > **Audience:** the agent or engineer who implements this. Follow the repo's TDD and thin-slice workflow (`CLAUDE.md`). Create a `## feat(evaluate): --server-side` section in `TODO.md` from the slice list below before coding.
 > **Out of scope (moved to #6832):** shadow mode. Nothing here runs a server-side evaluation unless the flag is present.
 
@@ -22,9 +22,9 @@ Without the flag, behaviour is byte-for-byte unchanged.
 
 ---
 
-## 2. Server contract (verified in `../server`)
+## 2. Server contract
 
-Source of truth: `server/src/fastapi_app/v2/evaluations.py`, `server/src/fastapi_app/models/evaluations.py`, `server/src/fastapi_app/common/evaluations.py`, `server/src/tasks/opa_evaluation_tasks.py`.
+Source of truth: the evaluations endpoints in the Kosli API, as published in its OpenAPI schema. Everything below was verified against the API rather than assumed; this repository is public, so the notes stay at the contract a caller can see.
 
 ### 2.1 Create
 
@@ -41,7 +41,7 @@ Authorization: Bearer <api token>          (same as every other CLI call)
 }
 ```
 
-- All models are `extra="forbid"`. Send nothing else. Do **not** send `decision` (that is #6628).
+- Every object is closed: an unknown field is a 400, not something ignored. Send nothing else. Do **not** send `decision` (that is #6628).
 - `context.trails`: 1..100 entries. Duplicate `{flow, trail}` pairs are stored once, not refused.
 - `policy.files`: 1..100 entries, relative path → source. Byte cap **1 MiB = sum of (path bytes + source bytes)**. Paths must not be absolute or contain `..`.
 - `params`: optional, any JSON object, becomes `data.params`.
@@ -53,10 +53,10 @@ Authorization: Bearer <api token>          (same as every other CLI call)
 
   | Code | Meaning | Message shape |
   |---|---|---|
-  | 400 | payload validation (cap, path, name regex, extra field) | pydantic errors |
+  | 400 | payload validation (cap, path, name regex, unknown field) | per-field validation errors |
   | 403 | org lacks `is-server-side-evaluation-enabled` | `Server-side evaluation is not enabled for this organization` |
   | 404 | trail(s) not found | `These trails do not exist in org '<org>': <flow>/<trail>, ...` |
-  | 404 | endpoint missing (old server) | plain FastAPI 404 |
+  | 404 | endpoint not served (an older Kosli) | a 404 carrying no message of the API's |
   | 503 | enqueue refused; a `failed` result with kind `enqueue_failed` is already recorded | `Evaluation '<id>' could not be queued` |
 
 ### 2.2 Read
@@ -72,7 +72,7 @@ GET /api/v2/evaluations/{org}/{id}     200
   "error":  { "kind": "compile", "message": "..." } }     // only when failed
 ```
 
-- `response_model_exclude_none=True`: absent fields are **omitted**, never `null`. Branch on `status`, never on field presence.
+- Absent fields are **omitted**, never `null`. Branch on `status`, never on field presence.
 - **Unknown status values are non-terminal** (the server may add `running` later). Keep polling.
 - A denial is `completed` with `allow: false`. It is never `failed`.
 - `result` is passthrough from the evaluator: `{"allow": bool, "violations": [string]}`. `violations` may be absent or empty.
@@ -82,17 +82,17 @@ GET /api/v2/evaluations/{org}/{id}     200
 ### 2.3 Timing
 
 - Create P95 target 300 ms. Enqueue-to-terminal ceiling **30 s** (#6621/#6622). Expected ~1 s.
-- The Lambda's own evaluation timeout is 50 s and surfaces as kind `evaluate`, so a run that hits it will exceed our 30 s wait and appear to us as "still pending".
+- The evaluator has a timeout of its own, longer than our wait, which surfaces as kind `evaluate`. A run that hits it will exceed our wait and appear to us as "still pending".
 
 ### 2.4 Feature flag behaviour in tests
 
-`is_server_side_evaluation_enabled()` returns **True** whenever the server runs `in_cli_tests()` or on localhost. The CLI's local test server therefore **never returns 403**. The 403 path must be tested with a fake HTTP server.
+The local test server does not exercise the entitlement check, so it **never returns 403** whatever org is used. The 403 path must therefore be tested against a stub.
 
 ### 2.5 The local CLI test server cannot complete an evaluation
 
-`docker-compose.yml` in this repo runs server, mongo and minio only. There is **no Redis broker, no Celery worker and no OPA Lambda**. The server's Celery app defaults to `redis://localhost:6379/0` with a 30 s `broker_connection_timeout`, so a `POST` against `localhost:8001` will block up to 30 s and then return 503 with an `enqueue_failed` result.
+`docker-compose.yml` in this repo runs the server, its database and object storage only. The pieces that actually run an evaluation -- a queue, a worker and the evaluator -- are not among them, so a create against `localhost:8001` waits for a queue that is not there and then fails.
 
-Consequence: **every `--server-side` command test uses an `httptest.NewServer` fake** for the evaluations endpoints, passing `--host <fake url> --max-api-retries 0`. This is the pattern already used by `TestEvaluateTrailRehydrationError` in `cmd/kosli/evaluateTrail_test.go` and is permitted by `docs/adr/20260421-fakes-and-contract-tests.md`. Adding redis + worker + opa-lambda to the CLI compose is a separate follow-up and is not required for this ticket.
+Consequence: **every `--server-side` command test uses an `httptest.NewServer` fake** for the evaluations endpoints, passing `--host <fake url> --max-api-retries 0`. This is the pattern already used by `TestEvaluateTrailRehydrationError` in `cmd/kosli/evaluateTrail_test.go` and is permitted by `docs/adr/20260421-fakes-and-contract-tests.md`. Adding the queue, worker and evaluator to this repo's compose file is a separate follow-up and is not required for this ticket.
 
 ---
 
@@ -100,7 +100,7 @@ Consequence: **every `--server-side` command test uses an `httptest.NewServer` f
 
 These are the reasons the flag is hidden. Record them in the handover, not in code.
 
-1. **Policy contract.** `validatePolicy` (`internal/evaluate/rego.go:67`) requires `package policy` with an `allow` rule. The Lambda accepts any package and finds the entrypoint from an OPA `entrypoint: true` annotation (single-file bundles need no annotation). Under the flag the CLI **must not** run `validatePolicy`; the server classifies a broken policy as `failed`.
+1. **Policy contract.** `validatePolicy` (`internal/evaluate/rego.go:67`) requires `package policy` with an `allow` rule. The API accepts any package and finds the entrypoint from an OPA `entrypoint: true` annotation (single-file bundles need no annotation). Under the flag the CLI **must not** run `validatePolicy`; the server classifies a broken policy as `failed`.
 2. **Input shape.** The server input is built from the trail *moment*, not the trail read model:
    - top-level keys: `trails` (always, an array) and `trail` (only when exactly one trail);
    - each element has `moment_number`, `created_at`, `template_id`, `compliance_status`, `flow_name`, `trail_name`;
@@ -137,7 +137,7 @@ These are refinement choices the ticket leaves open. They are chosen here so wor
 
 - Read with the existing `loadPolicy(ref)`. Never run `validatePolicy` under the flag.
 - `policy.files` is a single entry. Key = `filepath.Base(ref)` for a local file; for a URL, the last path segment. Fall back to `policy.rego` only when that leaves nothing usable, which is an empty path, a bare `.`, a bare `..` or a bare `/`. Never send an absolute path or `..`.
-- **No extension rule.** An earlier draft here said to fall back when the name does not end in `.rego`. That was wrong, and checking the evaluator settled it: every bundle entry is parsed as a Rego module whatever it is called, and the name only labels the error messages. Imposing an extension would rename a user's file for no reason and make the server's errors cite something the user does not have on disk.
+- **No extension rule.** An earlier draft here said to fall back when the name does not end in `.rego`. That was wrong, and checking settled it: every bundle entry is parsed as a Rego module whatever it is called, and the name only labels the error messages. Imposing an extension would rename a user's file for no reason and make the server's errors cite something the user does not have on disk.
 - Pre-flight size check: if `len(key) + len(source) > 1 MiB` return `policy bundle is N bytes, over the 1048576 byte limit` before the POST (mirrors the server message so the two paths read alike). Keep `policyMaxBytes` (5 MiB) for the remote read itself.
 
 ### 4.4 Wait

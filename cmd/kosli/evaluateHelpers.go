@@ -29,18 +29,17 @@ var policyFetchTimeout = 10 * time.Second
 // misconfigured server streaming an unbounded body. 5 * 2^20 (5*1MiB)
 const policyMaxBytes = 5 << 20 // 5 MiB
 
-// maxServerSideTrails mirrors the API's own ceiling, MAX_TRAILS in the server's
-// src/fastapi_app/models/evaluations.py. Checked here so that a caller naming
-// too many is told which limit they crossed, rather than reading it out of a
-// rejected request. Drift makes this refuse what the server would accept, so
-// the two are worth comparing whenever that model changes.
+// maxServerSideTrails mirrors the ceiling the evaluations API publishes in its
+// OpenAPI schema. Checked here so that a caller naming too many is told which
+// limit they crossed, rather than reading it out of a rejected request. Drift
+// makes this refuse what the API would accept, so the two are worth comparing
+// whenever that schema changes.
 const maxServerSideTrails = 100
 
-// serverPolicyMaxBytes mirrors the API's cap on a policy bundle, MAX_POLICY_BYTES
-// in the server's src/fastapi_app/models/evaluations.py, which counts the names
-// as well as the sources. It is a fifth of what a remote --policy
-// read allows, so a policy can be fetched in full and still be too big to
-// send; saying so here beats a rejected request.
+// serverPolicyMaxBytes mirrors the cap the evaluations API publishes on a
+// policy bundle, which counts the names as well as the sources. It is a fifth
+// of what a remote --policy read allows, so a policy can be fetched in full
+// and still be too big to send; saying so here beats a rejected request.
 const serverPolicyMaxBytes = 1 << 20 // 1 MiB
 
 // serverSideWaitOptions is how long a verdict is waited for, and the seam a
