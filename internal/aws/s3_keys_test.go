@@ -208,7 +208,14 @@ func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysSingleProblemReadsAsOneLi
 	_, err := virtualPathsForS3Keys([]string{"good", "bad/.."})
 	require.Error(suite.T(), err)
 	require.Equal(suite.T(),
-		`object key [bad/..] cannot be fingerprinted: contains a ".." segment; exclude it with --exclude-regex, or narrow the include filter if one is set`,
+		`object key [bad/..] cannot be fingerprinted: contains a ".." segment; exclude the affected keys with --exclude-regex, or narrow the include filter if one is set`,
+		err.Error())
+
+	// A single problem can still name several keys.
+	_, err = virtualPathsForS3Keys([]string{"a/b", "a//b"})
+	require.Error(suite.T(), err)
+	require.Equal(suite.T(),
+		`object keys [a//b], [a/b] fingerprint as the same path [a/b]; exclude the affected keys with --exclude-regex, or narrow the include filter if one is set`,
 		err.Error())
 }
 

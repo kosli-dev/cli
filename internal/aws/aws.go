@@ -548,12 +548,21 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 		}
 	}()
 
-	if len(objects) == 1 {
-		sha256, err := downloadAndHashS3Object(downloader, tempDir, bucket, keys[0], nil, logger)
+	// The manifest starts as paths only; digests are filled in below by index,
+	// so it stays in listing order.
+	files := make([]digest.VirtualFile, len(objects))
+	for i, object := range objects {
+		files[i].Path = paths[object.key]
+	}
+
+	// One object is fingerprinted as that file and named after it, as
+	// containsSingleFile decided when the objects were on disk.
+	if file, ok := digest.SingleVirtualFile(files); ok {
+		sha256, err := downloadAndHashS3Object(downloader, tempDir, bucket, objects[0].key, nil, logger)
 		if err != nil {
 			return "", "", err
 		}
-		return path.Base(paths[keys[0]]), sha256, nil
+		return file.Name(), sha256, nil
 	}
 
 	var rules []string
@@ -580,30 +589,24 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 		logger.Debug("object key [%s] is the bucket's %s -- excluding paths: %s", key, digest.IgnoreFileName, rules)
 	}
 
-	allPaths := make([]string, len(keys))
-	for i, key := range keys {
-		allPaths[i] = paths[key]
-	}
-	needed, err := digest.FilesNeedingContent(allPaths, rules)
+	needed, err := digest.FilesNeedingContent(files, rules)
 	if err != nil {
 		return "", "", ignoreRuleError(err)
 	}
 
-	files := make([]digest.VirtualFile, 0, len(keys))
-	for _, key := range keys {
-		virtualPath := paths[key]
-		sha256, downloaded := contentSha256[key]
+	for i, object := range objects {
+		sha256, downloaded := contentSha256[object.key]
 		switch {
 		case downloaded:
-		case needed[virtualPath]:
-			sha256, err = downloadAndHashS3Object(downloader, tempDir, bucket, key, nil, logger)
+		case needed[files[i].Path]:
+			sha256, err = downloadAndHashS3Object(downloader, tempDir, bucket, object.key, nil, logger)
 			if err != nil {
 				return "", "", err
 			}
 		default:
-			logger.Debug("object key [%s] is excluded by %s and is not downloaded", key, digest.IgnoreFileName)
+			logger.Debug("object key [%s] is excluded by %s and is not downloaded", object.key, digest.IgnoreFileName)
 		}
-		files = append(files, digest.VirtualFile{Path: virtualPath, Sha256: sha256})
+		files[i].Sha256 = sha256
 	}
 
 	sha256, err := digest.VirtualDirSha256(files, rules, logger)

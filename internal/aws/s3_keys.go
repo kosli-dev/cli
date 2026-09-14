@@ -115,7 +115,7 @@ func s3KeyProblemsError(problems []string) error {
 	// Map iteration supplied these in any order; sorting keeps the message stable.
 	sort.Strings(problems)
 	if len(problems) == 1 {
-		return fmt.Errorf("%s; exclude it with --exclude-regex, or narrow the include filter if one is set", problems[0])
+		return fmt.Errorf("%s; exclude the affected keys with --exclude-regex, or narrow the include filter if one is set", problems[0])
 	}
 
 	shown := problems

@@ -99,16 +99,13 @@ func VirtualDirSha256(files []VirtualFile, ignoreRules []string, logger *logger.
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// FilesNeedingContent reports which of paths VirtualDirSha256 reads the content
-// digest of under these ignore rules. A file it leaves out is skipped by the
-// rules, so its content need not be fetched and it may be passed with an empty
-// Sha256 without changing the fingerprint. The two share one walk, so they
-// cannot disagree.
-func FilesNeedingContent(paths []string, ignoreRules []string) (map[string]bool, error) {
-	files := make([]VirtualFile, len(paths))
-	for i, p := range paths {
-		files[i] = VirtualFile{Path: p}
-	}
+// FilesNeedingContent reports, by path, which of files VirtualDirSha256 reads
+// the content digest of under these ignore rules. Digests on the input are not
+// needed and may be empty. A file it leaves out is skipped by the rules, so its
+// content need not be fetched and it may later be passed with an empty Sha256
+// without changing the fingerprint. The two share one walk, so they cannot
+// disagree.
+func FilesNeedingContent(files []VirtualFile, ignoreRules []string) (map[string]bool, error) {
 	root, err := buildVirtualTree(files)
 	if err != nil {
 		return nil, err

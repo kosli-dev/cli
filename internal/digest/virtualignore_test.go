@@ -204,8 +204,7 @@ func (suite *VirtualIgnoreTestSuite) TestFilesNeedingContentAgreesWithTheDigest(
 		{name: "the ignore file cannot exclude itself", rules: []string{".kosli_ignore", "**"}, want: []string{".kosli_ignore"}},
 	} {
 		suite.Run(t.name, func() {
-			paths := allPaths(ignoreTestTree, true)
-			needed, err := FilesNeedingContent(paths, t.rules)
+			needed, err := FilesNeedingContent(virtualFilesFromPaths(allPaths(ignoreTestTree, true)), t.rules)
 			require.NoError(suite.T(), err)
 			got := make([]string, 0, len(needed))
 			for p := range needed {
@@ -234,8 +233,16 @@ func (suite *VirtualIgnoreTestSuite) TestFilesNeedingContentAgreesWithTheDigest(
 }
 
 func (suite *VirtualIgnoreTestSuite) TestFilesNeedingContentRejectsAMalformedRule() {
-	_, err := FilesNeedingContent([]string{"a.txt"}, []string{"["})
+	_, err := FilesNeedingContent([]VirtualFile{{Path: "a.txt"}}, []string{"["})
 	require.Error(suite.T(), err)
+}
+
+func virtualFilesFromPaths(paths []string) []VirtualFile {
+	files := make([]VirtualFile, len(paths))
+	for i, p := range paths {
+		files[i] = VirtualFile{Path: p}
+	}
+	return files
 }
 
 func allPaths(tree map[string]string, withIgnoreFile bool) []string {
