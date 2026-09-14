@@ -51,7 +51,9 @@ func virtualPathForS3Key(key string) (string, error) {
 // a directory holding other objects. All problems are reported together so one
 // run tells the operator about every key they need to act on.
 //
-// Folder markers (keys ending in "/") are the caller's to filter out first.
+// Folder markers (keys ending in "/") are filtered out by the caller before
+// listing reaches here; the rule above rejects any that slip through so they
+// can never be mistaken for objects.
 func virtualPathsForS3Keys(keys []string) (map[string]string, error) {
 	paths := make(map[string]string, len(keys))
 	keysByPath := map[string][]string{}
