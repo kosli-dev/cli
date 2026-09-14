@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
+	"time"
 )
 
 // authScheme selects how the SonarQube API token is presented to the server.
@@ -109,6 +111,11 @@ func (a *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	// A redirect says nothing about the scheme: the client re-enters RoundTrip for
+	// the next hop, and the response there decides.
+	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		return resp, nil
+	}
 	if resp.StatusCode == http.StatusUnauthorized {
 		drainAndClose(resp)
 		resp, err = a.send(req, schemeBasic)
@@ -139,12 +146,64 @@ func drainAndClose(resp *http.Response) {
 	_ = resp.Body.Close()
 }
 
+const (
+	// maxSonarRedirects bounds how many redirects the Sonar client follows. Go's
+	// default of ten is more than any real SonarQube deployment needs.
+	maxSonarRedirects = 5
+
+	// sonarClientTimeout bounds one request end to end, redirects and the Basic
+	// retry included, so a host that accepts the connection and never answers
+	// cannot hold the run. SonarQube API responses are small JSON documents, so
+	// this is generous for a healthy server.
+	sonarClientTimeout = 60 * time.Second
+)
+
+// sonarRedirectPolicy keeps the API token on the host the user configured.
+// authTransport attaches the token to every request it sends, including the
+// requests Go issues while following redirects, so the stdlib's own header
+// stripping never applies. Instead of following a redirect without the token
+// (every SonarQube endpoint needs it, so that would only fail later and less
+// clearly), a redirect to another host or from https to http is refused outright.
+func sonarRedirectPolicy(req *http.Request, via []*http.Request) error {
+	// via holds the requests already sent, so it is one longer than the redirects followed.
+	if len(via) > maxSonarRedirects {
+		return fmt.Errorf("stopped after %d redirects", maxSonarRedirects)
+	}
+	prev := via[len(via)-1].URL
+	if canonicalHost(req.URL) != canonicalHost(prev) {
+		return fmt.Errorf("cross-host redirect from %s to %s refused: the SonarQube API token is only sent to the configured host.\n"+
+			"This usually means SonarQube redirected an unauthenticated request to a login page, or the configured server URL is not the instance's canonical URL. "+
+			"If %s is the SonarQube API, point --sonar-server-url (or the scanner's sonar.host.url, which report-task.txt records) at it directly",
+			prev.Host, req.URL.Host, req.URL.Host)
+	}
+	if prev.Scheme == "https" && req.URL.Scheme != "https" {
+		return fmt.Errorf("redirect from https to http on %s refused: the SonarQube API token would be sent in plain text", prev.Host)
+	}
+	return nil
+}
+
+// canonicalHost lowercases the hostname and drops the scheme's default port, so a
+// reverse proxy that emits an explicit :443 in Location still counts as the same host.
+func canonicalHost(u *url.URL) string {
+	host := strings.ToLower(u.Hostname())
+	port := u.Port()
+	if port == "" || (u.Scheme == "https" && port == "443") || (u.Scheme == "http" && port == "80") {
+		return host
+	}
+	return host + ":" + port
+}
+
 // newAuthedClient builds an HTTP client that authenticates SonarQube requests with
 // the given token, presenting it as Bearer (SonarQube Cloud and Server >= 10.0) and
 // falling back to Basic for a self-hosted Server < 10.0. The token is trimmed of
-// surrounding whitespace (e.g. a trailing newline from a secret file).
+// surrounding whitespace (e.g. a trailing newline from a secret file). Redirects
+// are followed only within the configured host, see sonarRedirectPolicy.
 func newAuthedClient(token string, mode authScheme) *http.Client {
-	return &http.Client{Transport: &authTransport{token: strings.TrimSpace(token), mode: mode}}
+	return &http.Client{
+		Transport:     &authTransport{token: strings.TrimSpace(token), mode: mode},
+		CheckRedirect: sonarRedirectPolicy,
+		Timeout:       sonarClientTimeout,
+	}
 }
 
 // sonarResponseError turns a SonarQube response that could not be parsed as the

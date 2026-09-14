@@ -325,3 +325,29 @@ func TestGetSonarResults_Forbidden_NonJSON_RendersActualStatus(t *testing.T) {
 		}
 	}
 }
+
+// TestGetSonarResults_CrossHostRedirect_TokenStaysOnConfiguredHost is the end-to-end
+// sentinel for server#6880: when the configured SonarQube host redirects to another
+// host, the run fails with a clear error and the other host never sees the token.
+func TestGetSonarResults_CrossHostRedirect_TokenStaysOnConfiguredHost(t *testing.T) {
+	target := &fakeSonar{acceptsBearer: true, acceptsBasic: true}
+	targetSrv := httptest.NewServer(target.handler())
+	defer targetSrv.Close()
+
+	redirector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, targetSrv.URL+r.URL.RequestURI(), http.StatusFound)
+	}))
+	defer redirector.Close()
+
+	sc := sonar.NewSonarConfig("SUPER-SECRET-SONAR-TOKEN", t.TempDir(), redirector.URL+"/api/ce/task?id=AYx", "", "", "", "", "", 5)
+	_, err := sc.GetSonarResults(discardLogger())
+	if got := target.authHeaders(); len(got) != 0 {
+		t.Fatalf("the redirect target must never receive a request, got Authorization headers %v", got)
+	}
+	if err == nil {
+		t.Fatal("expected an error when the SonarQube host redirects to another host")
+	}
+	if !strings.Contains(err.Error(), "cross-host redirect") {
+		t.Errorf("expected a cross-host redirect error, got: %v", err)
+	}
+}
