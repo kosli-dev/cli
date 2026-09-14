@@ -396,8 +396,9 @@ func extractZipEntry(f *zip.File, filePath string, logger *logger.Logger) error 
 	if errors.Is(err, os.ErrExist) {
 		// Legal in a zip, and containment collapses "x", "/x" and "./x" onto one
 		// path, but overwriting would fingerprint the package without the
-		// first entry.
-		return errors.New("another entry has already been extracted to the same local path")
+		// first entry. Names differing only in case collide too on macOS and
+		// Windows, and moving the snapshot is the operator's only remedy.
+		return errors.New("another entry has already been extracted to the same local path; if the names differ only in case, run the snapshot on a case-sensitive filesystem")
 	}
 	if err != nil {
 		return err

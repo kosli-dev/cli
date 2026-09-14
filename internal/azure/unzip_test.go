@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/logger"
@@ -76,13 +77,14 @@ func TestUnzipRejectsEntriesThatEscapeTheDestination(t *testing.T) {
 		{name: "a backslash traversal", entry: `..\escape.txt`, wantErrMsg: `resolves to ".."`},
 		{name: "a traversal with a trailing space", entry: ".. /escape.txt", wantErrMsg: `resolves to ".."`},
 		{name: "a file entry naming no file", entry: ".", wantErrMsg: "names no file"},
+		{name: "a file entry with an empty name", entry: "", wantErrMsg: "names no file"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
 			zipPath := filepath.Join(tmpDir, "package.zip")
 			writeZip(t, zipPath, []zipEntry{
 				{name: "index.html", content: "<html/>"},
-				{name: tc.entry, content: "attacker controlled", isDir: tc.entry[len(tc.entry)-1] == '/'},
+				{name: tc.entry, content: "attacker controlled", isDir: strings.HasSuffix(tc.entry, "/")},
 			})
 
 			// destDir is two levels below tmpDir so "../.." lands inside tmpDir,
