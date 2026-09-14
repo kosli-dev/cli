@@ -111,8 +111,9 @@ func (a *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	// A redirect says nothing about the scheme: the client re-enters RoundTrip for
-	// the next hop, and the response there decides.
+	// A 3xx says nothing about the scheme, so it is returned undecided. For the
+	// redirects the client follows, it re-enters RoundTrip for the next hop and the
+	// response there decides; 300 and 304 are handed straight back to the caller.
 	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
 		return resp, nil
 	}
