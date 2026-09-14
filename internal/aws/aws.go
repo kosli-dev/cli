@@ -476,6 +476,9 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 			newest = object.lastModified
 		}
 	}
+	if newest.IsZero() {
+		return s3Data, fmt.Errorf("bucket [%s] reported no modification time for any matching object", bucket)
+	}
 
 	artifactName, sha256, err := fingerprintS3Objects(client, bucket, objects, logger)
 	if err != nil {
@@ -507,13 +510,24 @@ func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []strin
 			return nil, err
 		}
 		for _, object := range page.Contents {
+			// Real S3 always sets both fields; S3-compatible stores may not.
+			// Dropping an entry with no key would lose an object silently.
+			if object.Key == nil {
+				return nil, fmt.Errorf("bucket [%s] listed an object with no key", bucket)
+			}
 			if strings.HasSuffix(*object.Key, "/") { // skip folders
 				continue
 			}
 			if shouldExcludePath(*object.Key, includePaths, includeRegex, excludePaths, excludeRegex) {
 				continue
 			}
-			objects = append(objects, s3Object{key: *object.Key, lastModified: *object.LastModified})
+			// An object without a timestamp stays in the fingerprint and out of
+			// the snapshot timestamp, as it was before.
+			var lastModified time.Time
+			if object.LastModified != nil {
+				lastModified = *object.LastModified
+			}
+			objects = append(objects, s3Object{key: *object.Key, lastModified: lastModified})
 		}
 	}
 	return objects, nil

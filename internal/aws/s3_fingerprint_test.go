@@ -7,8 +7,12 @@ import (
 	"sort"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/utils"
@@ -266,6 +270,52 @@ func (suite *S3FingerprintTestSuite) TestAHashErrorNamesTheKey() {
 	require.ErrorIs(suite.T(), err, os.ErrNotExist)
 	require.Contains(suite.T(), err.Error(), "failed to hash object key [README.md]")
 	require.NotContains(suite.T(), err.Error(), "--exclude-regex")
+}
+
+// Some S3-compatible stores list objects without a LastModified. Such an
+// object still belongs in the fingerprint; only the snapshot timestamp is
+// computed without it, and a listing with no timestamps at all is an error
+// rather than a panic or a zero timestamp.
+func (suite *S3FingerprintTestSuite) TestAListingWithoutModificationTimesDoesNotPanic() {
+	objects := map[string][]byte{"README.md": []byte(fakeReadmeBody), "notes.txt": []byte(fakeNotesBody)}
+	later := fakeS3LastModified.Add(time.Hour)
+	full, err := getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
+		LastModified: map[string]time.Time{"notes.txt": later}}, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+
+	partial, err := getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
+		LastModified: map[string]time.Time{"notes.txt": later}, NoLastModified: map[string]bool{"README.md": true}},
+		fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), full[0].Digests, partial[0].Digests, "the object without a timestamp stays in the fingerprint")
+	require.Equal(suite.T(), later.Unix(), partial[0].LastModifiedTimestamp)
+
+	_, err = getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
+		NoLastModified: map[string]bool{"README.md": true, "notes.txt": true}},
+		fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "modification time")
+}
+
+// A listing entry with no key cannot be fingerprinted or reported, and dropping
+// it would lose an object silently, so it is an error.
+func (suite *S3FingerprintTestSuite) TestAListingEntryWithoutAKeyIsAnError() {
+	page := &s3.ListObjectsV2Output{Contents: []s3Types.Object{
+		{Key: aws.String("README.md"), LastModified: aws.Time(fakeS3LastModified)},
+		{LastModified: aws.Time(fakeS3LastModified)},
+	}}
+	_, err := listMatchingS3Objects(singlePageLister{page: page}, fakeS3TestBucketName, nil, nil, nil, nil)
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "no key")
+}
+
+// singlePageLister answers every ListObjectsV2 call with one fixed page.
+type singlePageLister struct {
+	page *s3.ListObjectsV2Output
+}
+
+func (l singlePageLister) ListObjectsV2(context.Context, *s3.ListObjectsV2Input, ...func(*s3.Options)) (*s3.ListObjectsV2Output, error) {
+	return l.page, nil
 }
 
 func TestS3FingerprintTestSuite(t *testing.T) {

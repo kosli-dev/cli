@@ -30,6 +30,9 @@ type FakeS3Client struct {
 	// LastModified maps object key to modification time. Keys without an entry
 	// report fakeS3LastModified.
 	LastModified map[string]time.Time
+	// NoLastModified lists keys whose listing entry carries no LastModified at
+	// all, as some S3-compatible stores return.
+	NoLastModified map[string]bool
 	// PageSize controls how many objects are returned per ListObjectsV2 call.
 	// Defaults to 1000 (matching the AWS default) if zero.
 	PageSize int
@@ -114,11 +117,14 @@ func (f *FakeS3Client) ListObjectsV2(_ context.Context, params *s3.ListObjectsV2
 
 	contents := make([]s3Types.Object, 0, end-start)
 	for _, key := range keys[start:end] {
-		contents = append(contents, s3Types.Object{
-			Key:          aws.String(key),
-			LastModified: aws.Time(f.lastModified(key)),
-			Size:         aws.Int64(int64(len(f.Objects[key]))),
-		})
+		object := s3Types.Object{
+			Key:  aws.String(key),
+			Size: aws.Int64(int64(len(f.Objects[key]))),
+		}
+		if !f.NoLastModified[key] {
+			object.LastModified = aws.Time(f.lastModified(key))
+		}
+		contents = append(contents, object)
 	}
 
 	out := &s3.ListObjectsV2Output{
