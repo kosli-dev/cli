@@ -222,6 +222,12 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]in
 		return err
 	}
 
+	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny)
+}
+
+// printEvaluateResult renders a verdict, whatever produced it, so that every
+// evaluation path prints the same bytes for the same verdict.
+func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool) error {
 	auditResult := map[string]interface{}{
 		"allow":      result.Allow,
 		"violations": result.Violations,
