@@ -26,6 +26,7 @@ import (
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/server"
+	"github.com/kosli-dev/cli/internal/utils"
 )
 
 type AzureStaticCredentials struct {
@@ -330,7 +331,12 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 	}()
 
 	for _, f := range r.File {
-		filePath := filepath.Join(destDir, f.Name)
+		// The entry name comes from the deployed package, which anyone able to
+		// deploy the app controls, so it must not be able to leave destDir.
+		filePath, err := utils.ContainedPath(destDir, f.Name)
+		if err != nil {
+			return fmt.Errorf("zip entry %w; the package cannot be extracted safely", err)
+		}
 
 		if f.FileInfo().IsDir() {
 			// Create directories

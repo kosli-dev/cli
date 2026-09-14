@@ -28,6 +28,7 @@ import (
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/utils"
 )
 
 // EcsEnvRequest represents the PUT request body to be sent to kosli from ECS
@@ -556,28 +557,13 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 }
 
 // localPathForS3Key turns an S3 object key into a path under the download
-// directory, or rejects it. A key holding a ".." segment resolves onto a path
-// it does not name, taking another key's place or leaving the directory.
+// directory, or rejects it. The containment rule is shared with every other
+// place an external name becomes a local path.
 func localPathForS3Key(key string) (string, error) {
-	// Windows separates on '\\' and drops trailing dots and spaces from a
-	// name, so ".. " and "..." resolve as ".." there.
-	segments := strings.FieldsFunc(key, func(r rune) bool { return r == '/' || r == '\\' })
-	for _, segment := range segments {
-		if strings.HasPrefix(segment, "..") && strings.TrimRight(segment, ". ") == "" {
-			return "", unusableS3KeyError(key, `contains a segment that resolves to ".."`)
-		}
+	rel, err := utils.LocalRelativePath(key)
+	if err != nil {
+		return "", unusableS3KeyError(key, err.Error())
 	}
-
-	// A leading '\\' is left for filepath.IsLocal: rooted on Windows, an
-	// ordinary filename elsewhere.
-	rel := strings.TrimLeft(key, "/")
-	if filepath.Clean(rel) == "." {
-		return "", unusableS3KeyError(key, "names no file")
-	}
-	if !filepath.IsLocal(rel) {
-		return "", unusableS3KeyError(key, "is not a local path")
-	}
-
 	return rel, nil
 }
 
