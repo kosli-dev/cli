@@ -82,19 +82,37 @@ func TestPackageCountExcludesFiles(t *testing.T) {
 	assert.Equal(t, 2, got.Document.PackageCount)
 }
 
-func TestToolsReadFromBothCycloneDXLayouts(t *testing.T) {
+func TestToolsReadFromEveryCycloneDXLayout(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		file string
+		want []string
 	}{
-		{"post-1.5 components layout", "cyclonedx-tools.json"},
-		{"deprecated pre-1.5 layout", "cyclonedx-tools-deprecated.json"},
+		// The spec's own 1.6 example fills components and services together. The schema
+		// defines metadata.tools as the tools used in the creation, enrichment and
+		// validation of the BOM, and services as "a list of services used as tools".
+		{"components and services together", "cyclonedx-tools.json", []string{"Awesome Tool 9.1.2", "Acme Signing Server"}},
+		{"deprecated pre-1.5 layout", "cyclonedx-tools-deprecated.json", []string{"Awesome Tool 9.1.2"}},
+		// Cut from the SBOM our own pipeline produced on 2026-09-14.
+		{"1.5 services layout", "cyclonedx-tools-services.json", []string{"SBOM Export API v1.131.1"}},
+		// A nameless entry would reach the attestation as " v1.131.1", which names
+		// nothing.
+		{"entries named nothing or only whitespace are skipped", "cyclonedx-tools-nameless-service.json", []string{"Named Component 3.0", "SBOM Export API v1.131.1"}},
+		// The deprecated slot carries a Vendor field a generator may fill instead of Name.
+		// Such an entry used to be recorded as a bare version, which names no tool, so it
+		// is dropped. Recovering the vendor is the separate question of whether any slot
+		// should contribute one.
+		{"a deprecated entry with only a vendor is skipped", "cyclonedx-tools-vendor-only.json", []string{"Named Tool 2.0"}},
+		// A pretty-printer wraps character data across lines and encoding/xml keeps the
+		// newlines and indentation, so a name that is only whitespace, or padded, arrives
+		// that way. This is the shape a real document produces; "  " is contrived.
+		{"a wrapped xml name and version are trimmed", "cyclonedx-wrapped-tool-name.xml", []string{"Awesome Tool 9.1.2"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := ProcessSBOMFile(fixture(tc.file))
 
 			require.NoError(t, err)
-			assert.Equal(t, []string{"Awesome Tool 9.1.2"}, got.Document.Tools)
+			assert.Equal(t, tc.want, got.Document.Tools)
 		})
 	}
 }
@@ -267,6 +285,29 @@ func TestPackageCountExcludesTheSubject(t *testing.T) {
 	assert.Equal(t, 2, got.Document.PackageCount)
 }
 
+func TestSPDXToolCreatorsAreHeldToTheSameBlankRule(t *testing.T) {
+	// Document.Tools has two writers. A creator string of "Tool:" decodes to an empty
+	// creator, so without the rule on this side the attestation records a tool that
+	// names nothing.
+	t.Run("a blank creator is skipped and a named one is kept", func(t *testing.T) {
+		got, err := ProcessSBOMFile(fixture("spdx-blank-tool-creator.json"))
+
+		require.NoError(t, err)
+		assert.Equal(t, []string{"real-tool-1.0"}, got.Document.Tools)
+	})
+
+	t.Run("when every tool creator is blank the field is null, not empty", func(t *testing.T) {
+		got, err := ProcessSBOMFile(fixture("spdx-only-blank-tool-creator.json"))
+
+		require.NoError(t, err)
+		assert.Nil(t, got.Document.Tools)
+
+		encoded, err := json.Marshal(got.Document)
+		require.NoError(t, err)
+		assert.Contains(t, string(encoded), `"tools":null`)
+	})
+}
+
 func TestToolsAreNullWhenTheSBOMRecordsNone(t *testing.T) {
 	// The fixture carries a tools block holding nothing, so the tool-reading path
 	// runs and still yields null: the server's schema types tools as nullable,
@@ -423,7 +464,7 @@ func TestTheXMLReaderPopulatesTheSameFields(t *testing.T) {
 	got, err := ProcessSBOMFile(fixture("cyclonedx-1.6.xml"))
 
 	require.NoError(t, err)
-	assert.Equal(t, []string{"Awesome Tool 9.1.2"}, got.Document.Tools)
+	assert.Equal(t, []string{"Awesome Tool 9.1.2", "Acme Signing Server"}, got.Document.Tools)
 	require.NotNil(t, got.Document.CreatedAt)
 	assert.Equal(t, "2020-04-07T07:01:00Z", *got.Document.CreatedAt)
 	assert.Equal(t, 3, got.Document.PackageCount)

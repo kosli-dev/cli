@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.6" version="1">
+  <metadata>
+    <timestamp>2026-09-14T10:00:00Z</timestamp>
+    <tools>
+      <components>
+        <component type="application">
+          <name>
+            Awesome Tool
+          </name>
+          <version>
+            9.1.2
+          </version>
+        </component>
+      </components>
+    </tools>
+  </metadata>
+  <components>
+    <component type="library">
+      <name>some-library</name>
+      <version>1.0.0</version>
+    </component>
+  </components>
+</bom>

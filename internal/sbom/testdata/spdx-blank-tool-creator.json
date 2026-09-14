@@ -1,0 +1,22 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "blank-tool-creator",
+  "documentNamespace": "https://example.com/blank-tool-creator",
+  "creationInfo": {
+    "created": "2026-09-14T10:00:00Z",
+    "creators": [
+      "Tool:",
+      "Tool: real-tool-1.0",
+      "Organization: Acme"
+    ]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-1",
+      "name": "some-package",
+      "downloadLocation": "NOASSERTION"
+    }
+  ]
+}

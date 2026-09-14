@@ -1,0 +1,61 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-14T11:33:15Z",
+    "tools": {
+      "services": [
+        {
+          "provider": {
+            "name": "Snyk"
+          },
+          "name": "",
+          "version": "v1.131.1"
+        },
+        {
+          "provider": {
+            "name": "Snyk"
+          },
+          "name": "   ",
+          "version": "v1.131.1"
+        },
+        {
+          "provider": {
+            "name": "Snyk"
+          },
+          "name": "SBOM Export API",
+          "version": "v1.131.1"
+        }
+      ],
+      "components": [
+        {
+          "type": "application",
+          "name": "",
+          "version": "3.0"
+        },
+        {
+          "type": "application",
+          "name": "Named Component",
+          "version": "3.0"
+        }
+      ]
+    },
+    "component": {
+      "bom-ref": "1-772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely@9239aba",
+      "type": "container",
+      "name": "772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely",
+      "version": "9239aba"
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "1-docker-image|772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely@9239aba",
+      "type": "library",
+      "group": "alpine",
+      "name": "docker-image|772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely",
+      "version": "9239aba",
+      "purl": "pkg:apk/alpine/merkely@9239aba?distro=alpine-3.24.1&upstream=docker-image%7C772819027869.dkr.ecr.eu-central-1.amazonaws.com"
+    }
+  ]
+}

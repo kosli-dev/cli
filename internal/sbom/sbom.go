@@ -324,11 +324,14 @@ func packageCount(components *[]cdx.Component) int {
 	return count
 }
 
-// toolsFromCycloneDX reads both tool layouts. Spec 1.5 moved tools from a
-// dedicated list to components, and the library keeps the older list populated
-// for documents that use it, so a document may fill either. The services slot
-// the same spec added is deliberately skipped: a service a document consumed is
-// not a tool that generated it.
+// toolsFromCycloneDX reads every tool slot. Spec 1.5 replaced the dedicated list
+// with components and services, and the library keeps the older list populated for
+// documents that use it, so a document fills either the deprecated list or the
+// components and services pair, never both.
+//
+// A hosted generator such as Snyk's export API records itself only under services.
+// Each slot contributes a name and a version; none contributes a vendor, including
+// the deprecated one that carries a Vendor field.
 func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 	if tools == nil {
 		return nil
@@ -336,15 +339,37 @@ func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 	var names []string
 	if tools.Tools != nil {
 		for _, tool := range *tools.Tools {
-			names = append(names, nameAndVersion(tool.Name, tool.Version))
+			names = appendTool(names, tool.Name, tool.Version)
 		}
 	}
 	if tools.Components != nil {
 		for _, component := range *tools.Components {
-			names = append(names, nameAndVersion(component.Name, component.Version))
+			names = appendTool(names, component.Name, component.Version)
+		}
+	}
+	if tools.Services != nil {
+		for _, service := range *tools.Services {
+			names = appendTool(names, service.Name, service.Version)
 		}
 	}
 	return names
+}
+
+// blank reports a string that identifies nothing once recorded. Both writers of
+// Document.Tools apply it to whichever field names a tool in their format: a CycloneDX
+// entry's name, an SPDX creator string.
+func blank(s string) bool {
+	return strings.TrimSpace(s) == ""
+}
+
+// appendTool records one CycloneDX tool. No slot contributes a vendor, so an entry
+// without a name would reach the attestation as a bare version. The trim is for XML:
+// a document that wraps a name across lines keeps the newlines in the decoded value.
+func appendTool(names []string, name, version string) []string {
+	if blank(name) {
+		return names
+	}
+	return append(names, nameAndVersion(strings.TrimSpace(name), strings.TrimSpace(version)))
 }
 
 func nameAndVersion(name, version string) string {
@@ -404,8 +429,10 @@ func documentFromSPDX(doc *spdx.Document) (*Document, error) {
 		}
 		out.CreatedAt = created
 		for _, creator := range doc.CreationInfo.Creators {
-			if creator.CreatorType == "Tool" {
-				out.Tools = append(out.Tools, creator.Creator)
+			// The second writer of Document.Tools, so the blank rule holds here too:
+			// a creator of "Tool:" decodes to an empty creator.
+			if creator.CreatorType == "Tool" && !blank(creator.Creator) {
+				out.Tools = append(out.Tools, strings.TrimSpace(creator.Creator))
 			}
 		}
 	}
