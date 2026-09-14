@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
+	"time"
 )
 
 // authScheme selects how the SonarQube API token is presented to the server.
@@ -109,6 +111,11 @@ func (a *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	// A 3xx says nothing about the scheme: leave it undecided and let the next hop
+	// (or the caller, for 300/304) decide.
+	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		return resp, nil
+	}
 	if resp.StatusCode == http.StatusUnauthorized {
 		drainAndClose(resp)
 		resp, err = a.send(req, schemeBasic)
@@ -139,12 +146,58 @@ func drainAndClose(resp *http.Response) {
 	_ = resp.Body.Close()
 }
 
+const (
+	// Go follows ten by default; no real SonarQube deployment needs more than a few.
+	maxSonarRedirects = 5
+
+	// Total deadline per request, redirects and the Basic retry included. Sonar
+	// responses are small JSON documents, so a healthy server is nowhere near it.
+	sonarClientTimeout = 60 * time.Second
+)
+
+// sonarRedirectPolicy refuses redirects that would carry the API token to another
+// host or onto plain http. authTransport re-attaches the token on every hop, so the
+// stdlib's cross-host header stripping never applies; and following without the
+// token would only fail later, since every SonarQube endpoint needs it.
+func sonarRedirectPolicy(req *http.Request, via []*http.Request) error {
+	// via includes the initial request.
+	if len(via) > maxSonarRedirects {
+		return fmt.Errorf("stopped after %d redirects", maxSonarRedirects)
+	}
+	prev := via[len(via)-1].URL
+	if canonicalHost(req.URL) != canonicalHost(prev) {
+		return fmt.Errorf("cross-host redirect from %s to %s refused: the SonarQube API token is only sent to the configured host.\n"+
+			"This usually means SonarQube redirected an unauthenticated request to a login page, or the configured server URL is not the instance's canonical URL. "+
+			"If %s is the SonarQube API, point --sonar-server-url (or the scanner's sonar.host.url, which report-task.txt records) at it directly",
+			prev.Host, req.URL.Host, req.URL.Host)
+	}
+	if prev.Scheme == "https" && req.URL.Scheme != "https" {
+		return fmt.Errorf("redirect from https to http on %s refused: the SonarQube API token would be sent in plain text", prev.Host)
+	}
+	return nil
+}
+
+// canonicalHost lowercases the hostname and drops the scheme's default port, so an
+// explicit :443 in a Location header is still the same host.
+func canonicalHost(u *url.URL) string {
+	host := strings.ToLower(u.Hostname())
+	port := u.Port()
+	if port == "" || (u.Scheme == "https" && port == "443") || (u.Scheme == "http" && port == "80") {
+		return host
+	}
+	return host + ":" + port
+}
+
 // newAuthedClient builds an HTTP client that authenticates SonarQube requests with
 // the given token, presenting it as Bearer (SonarQube Cloud and Server >= 10.0) and
 // falling back to Basic for a self-hosted Server < 10.0. The token is trimmed of
 // surrounding whitespace (e.g. a trailing newline from a secret file).
 func newAuthedClient(token string, mode authScheme) *http.Client {
-	return &http.Client{Transport: &authTransport{token: strings.TrimSpace(token), mode: mode}}
+	return &http.Client{
+		Transport:     &authTransport{token: strings.TrimSpace(token), mode: mode},
+		CheckRedirect: sonarRedirectPolicy,
+		Timeout:       sonarClientTimeout,
+	}
 }
 
 // sonarResponseError turns a SonarQube response that could not be parsed as the
