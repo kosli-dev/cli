@@ -1,7 +1,7 @@
 # Plan: `kosli evaluate trail|trails --server-side` (hidden flag)
 
 > **Ticket:** https://github.com/kosli-dev/server/issues/6700
-> **Status:** slices 0, 1 and 2 done; slice 3 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
+> **Status:** slices 0 to 3 done; slice 4 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
 > **Audience:** the agent or engineer who implements this. Follow the repo's TDD and thin-slice workflow (`CLAUDE.md`). Create a `## feat(evaluate): --server-side` section in `TODO.md` from the slice list below before coding.
 > **Out of scope (moved to #6832):** shadow mode. Nothing here runs a server-side evaluation unless the flag is present.
 
@@ -131,7 +131,7 @@ These are refinement choices the ticket leaves open. They are chosen here so wor
 | `--server-side --params ...` / `@file` | supported; parsed with `parseParams`, sent verbatim as `params`. `nil` params → send `{}` or omit; the server defaults to `{}`. |
 | `--server-side --no-assert` / `--assert` | unchanged semantics; exit code driven by `result.allow` |
 | `--server-side --output json\|table` | unchanged printers |
-| `--server-side --dry-run` | `kosliClient.Do` returns `(nil, nil)`; print the payload (the client already logs it) and exit 0 without polling |
+| dry run with `--server-side` | The create call returns nothing, so the payload is logged and the command exits 0 without polling. **There is no `--dry-run` flag on the evaluate commands**: it is added per command and these only ever read until now. Dry run is reached by setting the API token to the `DRY_RUN` sentinel, which the root command turns into dry-run mode. Do not add the flag here; that widens a published command's surface for a hidden feature |
 
 ### 4.3 Policy upload
 
@@ -249,19 +249,23 @@ Files: `internal/evaluations/client.go`, `internal/evaluations/wait.go`, tests.
 
 Goal: first end-to-end path. Fake server serves create + get.
 
-Tests (`cmd/kosli/evaluateTrail_test.go`, new suite or new test methods; fake server helper `newFakeEvaluationsServer(t, ...)` in a test helper file so slice 4 can reuse it):
-- [ ] `--help` does **not** list `--server-side`
-- [ ] `evaluate trail T --flow F --policy allow-all.rego --server-side` → fake receives one POST with `{flow: F, trail: T}` and one file entry keyed `allow-all.rego`; output `RESULT: ALLOWED`; exit 0
-- [ ] same with `--output json` → JSON `{allow: true, violations: []}` identical to the client-side shape
-- [ ] deny with violations → `RESULT: DENIED`, violations rows, error `policy denied: [...]` (assert default)
-- [ ] deny with `--no-assert` → output printed, no error
-- [ ] deny with `--output json` → JSON printed then `policy denied`
-- [ ] without `--server-side` the fake evaluations endpoint is **never** called (fake asserts zero hits) and the existing client-side tests still pass against localhost:8001
-- [ ] `--dry-run --server-side` → exit 0, no GET, payload logged
-- [ ] a policy the local path rejects (`testdata/policies/no-package-policy.rego`) is uploaded, not refused, under the flag
-- [ ] an allow with no violations prints the same JSON as the local path does, `"violations": null`, whether the server sent an empty list or none at all (see §4.6)
+**Done.** The tests live in their own suite in `cmd/kosli/evaluateServerSide_test.go`, not in the existing trail suite, and that suite has no setup step. The trail suites build a flow and a trail on the local server before every test, so a test added there could not run without it; this one needs nothing but its own stub and runs anywhere. Slices 4 to 7 extend the same file.
 
-Files: `cmd/kosli/evaluateHelpers.go` (new `runServerSide(...)`), `cmd/kosli/evaluateTrail.go`, `cmd/kosli/root.go` (flag help constant `serverSideFlag`), tests.
+Tests:
+- [x] `--help` does **not** list `--server-side`, while the rest of the help still renders
+- [x] `evaluate trail T --flow F --policy allow-all.rego --server-side` → fake receives one POST with `{flow: F, trail: T}` and one file entry keyed `allow-all.rego`; output `RESULT: ALLOWED`; exit 0; the trail endpoint is never called
+- [x] same with `--output json` → identical bytes to the client-side shape
+- [x] deny with violations → `RESULT: DENIED`, violations rows, error `policy denied` (assert default)
+- [x] deny with `--no-assert` → output printed, no error
+- [x] deny with `--output json` → JSON printed then `policy denied`
+- [x] without `--server-side` no evaluation is created, and the trail is read locally exactly as before
+- [x] dry run → exit 0, nothing created, nothing polled. Reached through the `DRY_RUN` API token, since these commands carry no `--dry-run` flag; see §4.2
+- [x] a policy the local path rejects (`testdata/policies/no-package-policy.rego`) is uploaded, not refused, under the flag
+- [x] an allow with no violations prints the same JSON as the local path does, `"violations": null`, whether the server sent an empty list or none at all (see §4.6)
+
+Files: `cmd/kosli/evaluateHelpers.go` (`evaluateServerSide`, `serverVerdict`, `policyBundleKey`, `addServerSideFlag`), `cmd/kosli/evaluateTrail.go`, `cmd/kosli/root.go` (flag help constant `serverSideFlag`), `cmd/kosli/evaluateServerSide_test.go`.
+
+A minimal guard for a `failed` evaluation landed here too, because a failure carries no result and printing one would dereference nothing. It names the kind and the message and never prints a verdict. Slice 6 owns the per-kind tests and the exit codes.
 
 ### Slice 4: `evaluate trails --server-side`
 

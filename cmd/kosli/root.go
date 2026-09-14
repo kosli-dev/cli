@@ -146,6 +146,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	templateArtifactName            = "The name of the artifact in the yml template file."
 	flowNamesFlag                   = "[defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org."
 	outputFlag                      = "[defaulted] The format of the output. Valid formats are: [table, json]."
+	serverSideFlag                  = "[hidden] Evaluate the policy on the Kosli server rather than on this machine. Unsupported and subject to change."
 	outputFlagWithMarkdown          = "[defaulted] The format of the output. Valid formats are: [table, json, markdown]."
 	searchByNameFlag                = "[optional] Only list flows whose name contains this substring. The Kosli API supports alphanumeric characters and '-'."
 	ignoreCaseFlag                  = "[optional] Perform case-insensitive matching for --name. By default matching is case sensitive."

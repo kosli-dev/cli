@@ -1,16 +1,20 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/evaluate"
+	"github.com/kosli-dev/cli/internal/evaluations"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -33,6 +37,7 @@ type commonEvaluateOptions struct {
 	params       string
 	assert       bool
 	noAssert     bool
+	serverSide   bool
 }
 
 func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) {
@@ -45,6 +50,19 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 	cmd.Flags().BoolVar(&o.assert, "assert", false, "[optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.")
 	cmd.Flags().BoolVar(&o.noAssert, "no-assert", false, "[optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.")
 	cmd.MarkFlagsMutuallyExclusive("assert", "no-assert")
+}
+
+// addServerSideFlag offers the evaluation to the Kosli server instead of
+// running it here. It is hidden, and stays hidden: it exists to run the two
+// evaluation paths against each other while neither is a contract anyone can
+// rely on, and the two do not yet agree on what a policy may contain or on
+// what a policy sees. Only the trail commands have it, because an evaluation
+// is created from trail references and `evaluate input` has none to send.
+func (o *commonEvaluateOptions) addServerSideFlag(cmd *cobra.Command) {
+	cmd.Flags().BoolVar(&o.serverSide, "server-side", false, serverSideFlag)
+	if err := cmd.Flags().MarkHidden("server-side"); err != nil {
+		logger.Error("failed to hide the server-side flag: %v", err)
+	}
 }
 
 // assertOnDeny resolves the --assert / --no-assert pair into a single bool.
@@ -223,6 +241,85 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]in
 	}
 
 	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny)
+}
+
+// evaluateServerSide asks the Kosli server to evaluate the named trails and
+// prints the verdict it answers with. Nothing about the trails is read here:
+// the server assembles what the policy sees, which is the point of the flag.
+func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evaluations.TrailRef) error {
+	policySource, err := loadPolicy(o.policyRef)
+	if err != nil {
+		return err
+	}
+
+	params, err := parseParams(o.params)
+	if err != nil {
+		return err
+	}
+
+	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
+	created, err := client.Create(global.Org, evaluations.CreateRequest{
+		Trails: trails,
+		Files:  map[string]string{policyBundleKey(o.policyRef): string(policySource)},
+		Params: params,
+	})
+	if err != nil {
+		return err
+	}
+	if created == nil {
+		// A dry run sent nothing, so there is no evaluation to wait for.
+		return nil
+	}
+
+	evaluation, err := client.WaitForTerminal(context.Background(), global.Org, created.ID,
+		evaluations.WaitOptions{})
+	if err != nil {
+		return err
+	}
+	if evaluation.Result == nil {
+		return serverSideFailure(evaluation)
+	}
+
+	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
+		o.output, false, nil, o.assertOnDeny())
+}
+
+// serverSideFailure reports an evaluation that answered no verdict. It is
+// never a denial: a policy that could not run has decided nothing.
+func serverSideFailure(evaluation *evaluations.Evaluation) error {
+	if evaluation.Failure == nil {
+		return fmt.Errorf("server-side evaluation %s answered no verdict and no reason", evaluation.ID)
+	}
+	return fmt.Errorf("server-side evaluation failed (%s): %s",
+		evaluation.Failure.Kind, evaluation.Failure.Message)
+}
+
+// serverVerdict maps a server verdict onto the shared one. An empty list of
+// violations becomes no list at all, because the local evaluator returns
+// nothing rather than an empty slice and the two paths have to print alike.
+func serverVerdict(result *evaluations.Result) *evaluate.Result {
+	violations := result.Violations
+	if len(violations) == 0 {
+		violations = nil
+	}
+	return &evaluate.Result{Allow: result.Allow, Violations: violations}
+}
+
+// policyBundleKey names the policy inside the uploaded bundle. Only the base
+// name travels: the server refuses a path that is absolute or that climbs out
+// of the bundle, and where the file sits on this machine is not its business.
+func policyBundleKey(ref string) string {
+	base := filepath.Base(ref)
+	if isRemotePolicyRef(ref) {
+		if parsed, err := url.Parse(ref); err == nil {
+			base = path.Base(parsed.Path)
+		}
+	}
+	switch base {
+	case ".", "..", "/", "":
+		return "policy.rego"
+	}
+	return base
 }
 
 // printEvaluateResult renders a verdict, whatever produced it, so that every
