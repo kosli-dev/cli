@@ -75,7 +75,7 @@ func TestUnzipRejectsEntriesThatEscapeTheDestination(t *testing.T) {
 		// Windows separates on '\' and drops trailing dots and spaces from a name.
 		{name: "a backslash traversal", entry: `..\escape.txt`, wantErrMsg: `resolves to ".."`},
 		{name: "a traversal with a trailing space", entry: ".. /escape.txt", wantErrMsg: `resolves to ".."`},
-		{name: "an entry naming no file", entry: "./", wantErrMsg: "names no file"},
+		{name: "a file entry naming no file", entry: ".", wantErrMsg: "names no file"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
@@ -106,6 +106,52 @@ func TestUnzipRejectsEntriesThatEscapeTheDestination(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A "./" directory entry names the destination itself, which filepath.Join
+// turned into a harmless MkdirAll before the containment rule.
+func TestUnzipToleratesADirectoryEntryNamingTheDestination(t *testing.T) {
+	tmpDir := t.TempDir()
+	zipPath := filepath.Join(tmpDir, "package.zip")
+	writeZip(t, zipPath, []zipEntry{
+		{name: "./", isDir: true},
+		{name: "index.html", content: "<html/>"},
+	})
+
+	destDir := filepath.Join(tmpDir, "extracted")
+	require.NoError(t, unzip(zipPath, destDir, logger.NewStandardLogger()))
+
+	got, err := os.ReadFile(filepath.Join(destDir, "index.html"))
+	require.NoError(t, err)
+	require.Equal(t, "<html/>", string(got))
+}
+
+// Name containment only holds while nothing in destDir is a real symlink, so
+// a symlink entry must land as a regular file holding the target text.
+func TestUnzipWritesASymlinkEntryAsARegularFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	zipPath := filepath.Join(tmpDir, "package.zip")
+	f, err := os.Create(zipPath)
+	require.NoError(t, err)
+	w := zip.NewWriter(f)
+	header := &zip.FileHeader{Name: "link", Method: zip.Deflate}
+	header.SetMode(os.ModeSymlink | 0o777)
+	entry, err := w.CreateHeader(header)
+	require.NoError(t, err)
+	_, err = entry.Write([]byte("/etc/passwd"))
+	require.NoError(t, err)
+	require.NoError(t, w.Close())
+	require.NoError(t, f.Close())
+
+	destDir := filepath.Join(tmpDir, "extracted")
+	require.NoError(t, unzip(zipPath, destDir, logger.NewStandardLogger()))
+
+	info, err := os.Lstat(filepath.Join(destDir, "link"))
+	require.NoError(t, err)
+	require.True(t, info.Mode().IsRegular(), "a symlink entry must not become a symlink, got mode %v", info.Mode())
+	got, err := os.ReadFile(filepath.Join(destDir, "link"))
+	require.NoError(t, err)
+	require.Equal(t, "/etc/passwd", string(got))
 }
 
 // A rooted name is contained by dropping the root, which is what filepath.Join

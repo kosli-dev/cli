@@ -275,7 +275,7 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 	destDir := filepath.Join(tmpDir, "extracted")
 	err = unzip(packagePath, destDir, logger)
 	if err != nil {
-		return AppData{}, fmt.Errorf("failed to unzip the downloaded package: %v", err)
+		return AppData{}, fmt.Errorf("failed to unzip the downloaded package: %w", err)
 	}
 
 	//  fingerprint the downloaded and unzipped package
@@ -334,6 +334,10 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 		// The entry name comes from the deployed package, which anyone able to
 		// deploy the app controls, so it must not be able to leave destDir.
 		filePath, err := utils.ContainedPath(destDir, f.Name)
+		if errors.Is(err, utils.ErrNamesNoFile) && f.FileInfo().IsDir() {
+			// A "./" entry names destDir itself; there is nothing to create.
+			continue
+		}
 		if err != nil {
 			return fmt.Errorf("zip entry %w; the package cannot be extracted safely", err)
 		}
@@ -352,8 +356,11 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 			return err
 		}
 
-		// Open the destination file
-		destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		// Every entry lands as a regular file, a symlink entry included: only the
+		// permission bits are kept, so its content becomes the link target text.
+		// Name containment cannot survive a real symlink, which a later entry or
+		// the fingerprinter would follow out of destDir.
+		destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode().Perm())
 		if err != nil {
 			return err
 		}

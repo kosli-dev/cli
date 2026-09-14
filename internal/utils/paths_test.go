@@ -12,11 +12,10 @@ import (
 // uncleaned; filepath.Join is what collapses "a//b" and "./a.txt".
 func TestLocalRelativePath(t *testing.T) {
 	for _, tc := range []struct {
-		name       string
-		input      string
-		wantPath   string
-		wantErr    bool
-		wantErrMsg string
+		name     string
+		input    string
+		wantPath string
+		wantErr  error
 	}{
 		{name: "an ordinary nested name", input: "static/app.js", wantPath: "static/app.js"},
 		{name: "a plain filename", input: "a.txt", wantPath: "a.txt"},
@@ -27,24 +26,24 @@ func TestLocalRelativePath(t *testing.T) {
 		{name: "a leading dot segment is dropped by Join", input: "./a.txt", wantPath: "a.txt"},
 		{name: "a dot segment is dropped by Join", input: "a/./b", wantPath: "a/b"},
 		// filepath.IsLocal rejects reserved device names and colons on Windows only.
-		{name: "a reserved Windows name", input: "CON", wantPath: "CON", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
-		{name: "a drive-looking segment", input: "C:evil", wantPath: "C:evil", wantErr: runtime.GOOS == "windows", wantErrMsg: "is not a local path"},
-		{name: "a traversing name is rejected", input: "a/../../b", wantErr: true, wantErrMsg: `resolves to ".."`},
-		{name: "a backslash-separated traversal is rejected", input: `a\..\..\b`, wantErr: true, wantErrMsg: `resolves to ".."`},
-		{name: "a bare \"..\" is rejected", input: "..", wantErr: true, wantErrMsg: `resolves to ".."`},
-		{name: "a trailing \"..\" segment is rejected", input: "a/..", wantErr: true, wantErrMsg: `resolves to ".."`},
+		{name: "a reserved Windows name", input: "CON", wantPath: "CON", wantErr: onWindows(ErrNotLocalPath)},
+		{name: "a drive-looking segment", input: "C:evil", wantPath: "C:evil", wantErr: onWindows(ErrNotLocalPath)},
+		{name: "a traversing name is rejected", input: "a/../../b", wantErr: ErrPathTraversal},
+		{name: "a backslash-separated traversal is rejected", input: `a\..\..\b`, wantErr: ErrPathTraversal},
+		{name: "a bare \"..\" is rejected", input: "..", wantErr: ErrPathTraversal},
+		{name: "a trailing \"..\" segment is rejected", input: "a/..", wantErr: ErrPathTraversal},
 		// Windows drops trailing spaces and dots from a name, so these resolve as "..".
-		{name: "a \"..\" with a trailing space is rejected", input: "a/.. /x", wantErr: true, wantErrMsg: `resolves to ".."`},
-		{name: "three dots are rejected", input: "a/.../b", wantErr: true, wantErrMsg: `resolves to ".."`},
-		{name: "an empty name is rejected", input: "", wantErr: true, wantErrMsg: "names no file"},
-		{name: "a bare dot is rejected", input: ".", wantErr: true, wantErrMsg: "names no file"},
-		{name: "a bare slash is rejected", input: "/", wantErr: true, wantErrMsg: "names no file"},
+		{name: "a \"..\" with a trailing space is rejected", input: "a/.. /x", wantErr: ErrPathTraversal},
+		{name: "three dots are rejected", input: "a/.../b", wantErr: ErrPathTraversal},
+		{name: "an empty name is rejected", input: "", wantErr: ErrNamesNoFile},
+		{name: "a bare dot is rejected", input: ".", wantErr: ErrNamesNoFile},
+		{name: "a dot directory is rejected", input: "./", wantErr: ErrNamesNoFile},
+		{name: "a bare slash is rejected", input: "/", wantErr: ErrNamesNoFile},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := LocalRelativePath(tc.input)
-			if tc.wantErr {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.wantErrMsg)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
 				return
 			}
 			require.NoError(t, err)
@@ -59,7 +58,14 @@ func TestContainedPath(t *testing.T) {
 	require.Equal(t, filepath.Join("base", "static", "app.js"), got)
 
 	_, err = ContainedPath("base", "../escape")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "[../escape]", "the error must name the offending entry")
-	require.Contains(t, err.Error(), `resolves to ".."`)
+	require.ErrorIs(t, err, ErrPathTraversal)
+	require.Equal(t, `[../escape] contains a segment that resolves to ".."`, err.Error(),
+		"the error must name the offending entry and read as a sentence once prefixed")
+}
+
+func onWindows(err error) error {
+	if runtime.GOOS == "windows" {
+		return err
+	}
+	return nil
 }
