@@ -555,8 +555,8 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 		files[i].Path = paths[object.key]
 	}
 
-	// One object is fingerprinted as that file and named after it, as
-	// containsSingleFile decided when the objects were on disk.
+	// One object is fingerprinted as that file and named after it, as it was
+	// when the objects were laid out on disk.
 	if file, ok := digest.SingleVirtualFile(files); ok {
 		sha256, err := downloadAndHashS3Object(downloader, tempDir, bucket, objects[0].key, nil, logger)
 		if err != nil {

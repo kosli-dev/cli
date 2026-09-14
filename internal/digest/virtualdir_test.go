@@ -265,7 +265,7 @@ func (suite *VirtualDirTestSuite) TestSingleVirtualFile() {
 
 // TestSingleFileMatchesFileSha256 pins the equivalence the aws package relies on:
 // a one-object snapshot is fingerprinted as that file's content digest, exactly
-// as content mode does via containsSingleFile + FileSha256.
+// as content mode did with FileSha256 when the objects were laid out on disk.
 func (suite *VirtualDirTestSuite) TestSingleFileMatchesFileSha256() {
 	content := "the only object\n"
 	path := filepath.Join(suite.tmpDir, "only.txt")

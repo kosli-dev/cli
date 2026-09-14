@@ -29,11 +29,12 @@ func (f VirtualFile) Name() string {
 // SingleVirtualFile reports whether the tree holds exactly one file, and
 // returns it.
 //
-// This mirrors what containsSingleFile decides for a tree on disk: a tree built
-// only from file paths has no empty directories, so a single leaf means every
-// level has exactly one child, and two distinct leaves must diverge at some
-// node and give it two children. Counting the files is therefore equivalent to
-// walking the tree, and callers can pick the FileSha256 branch on len == 1.
+// A tree built only from file paths has no empty directories, so a single leaf
+// means every level has exactly one child, and two distinct leaves must diverge
+// at some node and give it two children. Counting the files is therefore
+// equivalent to walking the tree, which is how the same question was answered
+// when the objects were laid out on disk, and callers can pick the FileSha256
+// branch on len == 1.
 func SingleVirtualFile(files []VirtualFile) (VirtualFile, bool) {
 	if len(files) != 1 {
 		return VirtualFile{}, false
@@ -103,8 +104,8 @@ func VirtualDirSha256(files []VirtualFile, ignoreRules []string, logger *logger.
 // the content digest of under these ignore rules. Digests on the input are not
 // needed and may be empty. A file it leaves out is skipped by the rules, so its
 // content need not be fetched and it may later be passed with an empty Sha256
-// without changing the fingerprint. The two share one walk, so they cannot
-// disagree.
+// without changing the fingerprint. Both run the same walk over the same tree,
+// so they cannot disagree.
 func FilesNeedingContent(files []VirtualFile, ignoreRules []string) (map[string]bool, error) {
 	root, err := buildVirtualTree(files)
 	if err != nil {
