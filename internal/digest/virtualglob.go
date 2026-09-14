@@ -36,7 +36,11 @@ func (fs virtualFS) excludedPaths(rules []string) (map[string]bool, error) {
 		// filepathx hands it the first "**" piece unconditionally, so a malformed
 		// rule fails on disk even when it names a path outside the tree, which the
 		// skip below never evaluates. Later pieces are validated only once an
-		// earlier piece has matched, on disk and here alike.
+		// earlier piece has matched, which for a rule inside the tree happens here
+		// too. A rule that both leaves the tree and has a malformed later piece
+		// (say "../**/a[") errors on disk, where the temp directory's parent exists
+		// and is walked, and is skipped here; modelling that parent would be
+		// speculative.
 		if _, err := path.Match(strings.SplitN(pattern, "**", 2)[0], ""); err != nil {
 			return nil, fmt.Errorf("ignore rule %q: %w", rule, err)
 		}

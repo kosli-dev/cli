@@ -78,20 +78,20 @@ func virtualPathsForS3Keys(keys []string) (map[string]string, error) {
 	// The lexically smallest key under each directory stands as the example in
 	// the message, so the report does not depend on listing order.
 	exampleObjectUnder := map[string]string{}
-	for virtualPath, keys := range keysByPath {
-		sort.Strings(keys)
+	for virtualPath, keysHere := range keysByPath {
+		sort.Strings(keysHere)
 		for dir := path.Dir(virtualPath); dir != "."; dir = path.Dir(dir) {
-			if existing, ok := exampleObjectUnder[dir]; !ok || keys[0] < existing {
-				exampleObjectUnder[dir] = keys[0]
+			if existing, ok := exampleObjectUnder[dir]; !ok || keysHere[0] < existing {
+				exampleObjectUnder[dir] = keysHere[0]
 			}
 		}
 	}
-	for virtualPath, keys := range keysByPath {
+	for virtualPath, keysHere := range keysByPath {
 		child, isAlsoDir := exampleObjectUnder[virtualPath]
 		if !isAlsoDir {
 			continue
 		}
-		for _, key := range keys {
+		for _, key := range keysHere {
 			problems = append(problems, fmt.Sprintf("object key [%s] fingerprints as [%s], which is also a directory holding object key [%s]",
 				key, virtualPath, child))
 		}
