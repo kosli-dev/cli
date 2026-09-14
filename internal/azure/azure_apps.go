@@ -2,7 +2,6 @@ package azure
 
 import (
 	"archive/zip"
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -47,6 +46,8 @@ type AzureClient struct {
 	// acrClientOptions is nil in production. Tests set it so the ACR arm can be
 	// driven against a fake registry without package-level state.
 	acrClientOptions *azcontainerregistry.ClientOptions
+	// dockerLogsForApp is a test seam; nil falls back to GetDockerLogsForApp.
+	dockerLogsForApp func(appServiceName string, logger *logger.Logger) ([]byte, error)
 }
 
 // AppData represents the harvested Azure service app and function app data
@@ -66,8 +67,6 @@ type AzureAppsRequest struct {
 // These are for handling temporary 503 errors so that they do not fail the whole command
 var ErrAppUnavailable = errors.New("app is unavailable (503)")
 
-// warnAboutDigestsSource says once per run that a log-scraped digest is only as
-// trustworthy as the container writing to that log.
 func warnAboutDigestsSource(digestsSource string, logger *logger.Logger) {
 	if digestsSource != "logs" {
 		return
@@ -466,13 +465,17 @@ func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site
 		}
 	} else {
 		fingerprintSource = "logs"
-		logs, err := azureClient.GetDockerLogsForApp(*app.Name, logger)
+		fetchLogs := azureClient.dockerLogsForApp
+		if fetchLogs == nil {
+			fetchLogs = azureClient.GetDockerLogsForApp
+		}
+		logs, err := fetchLogs(*app.Name, logger)
 		if err != nil {
 			return AppData{}, err
 		}
-		fingerprint, startedAt, err = extractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
-		if err != nil {
-			return AppData{}, err
+		fingerprint, startedAt = extractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name, imageName, logger)
+		if fingerprint == "" {
+			logger.Warn("no platform-written image digest found in the docker log for app [%s]; it is reported without a fingerprint. The container may not have started within the log window, or the platform may log its start differently for this app kind; --digests-source acr reads the digest from the registry instead", *app.Name)
 		}
 	}
 
@@ -674,10 +677,12 @@ func (staticCreds *AzureStaticCredentials) NewAzureClient() (*AzureClient, error
 		return nil, err
 	}
 
-	return &AzureClient{
+	azureClient := &AzureClient{
 		Credentials:       *staticCreds,
 		AppServiceFactory: appserviceFactory,
-	}, nil
+	}
+	azureClient.dockerLogsForApp = azureClient.GetDockerLogsForApp
+	return azureClient, nil
 }
 
 func (azureClient *AzureClient) GetAppsListForResourceGroup() ([]*armappservice.Site, error) {
@@ -748,76 +753,159 @@ func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string, logge
 	}
 }
 
-// platformLinePrefix is how the App Service platform starts every line it
-// writes to the docker log: a UTC timestamp with exactly three fractional
-// digits, a level and a dash. The same stream carries the container's stdout,
-// which Docker timestamps at nanosecond precision and the platform passes
-// through with no level or dash. That difference in shape is the only thing
-// telling a platform line from a line the container wrote to look like one.
-const platformLinePrefix = `^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z) INFO\s+-\s+`
+// platformLinePrefix opens every line the App Service platform writes to the
+// docker log. Container stdout shares the stream but is timestamped by Docker
+// at nanosecond precision with no level or dash, so this shape is what tells a
+// platform line from a container line written to look like one.
+//
+// Submatches are read by name (see group), so the prefix may gain groups.
+const platformLinePrefix = `^(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z) [A-Z]+\s+-\s+`
 
 var (
-	platformDigestLine = regexp.MustCompile(platformLinePrefix + `Digest: sha256:([0-9a-f]{64})\s*$`)
-	// The platform logs both of these when it starts the container; either one
-	// marks the point after which the container's own output can appear.
-	platformStartLine = regexp.MustCompile(platformLinePrefix + `(Starting container for site|docker run )`)
+	platformDigestLine = regexp.MustCompile(platformLinePrefix + `Digest: sha256:(?P<digest>[0-9a-f]{64})\s*$`)
+	// The "docker run" line is the start marker: the container's output can only
+	// appear after it, and unlike "Starting container for site" it names the
+	// site and the image.
+	platformRunLine   = regexp.MustCompile(platformLinePrefix + `docker run (?P<args>.*)$`)
+	platformReadyLine = regexp.MustCompile(platformLinePrefix +
+		`Container \S+ for site (?P<site>\S+) initialized successfully and is ready to serve requests\.\s*$`)
 )
 
-func platformInitializedLine(appName string) *regexp.Regexp {
-	return regexp.MustCompile(platformLinePrefix + `Container \S+ for site ` + regexp.QuoteMeta(appName) +
-		` initialized successfully and is ready to serve requests\.\s*$`)
+// group is the named submatch of m, or "" for a name re lacks; a bad name must
+// not panic the snapshot.
+func group(re *regexp.Regexp, m [][]byte, name string) string {
+	i := re.SubexpIndex(name)
+	if i < 0 || i >= len(m) {
+		return ""
+	}
+	return string(m[i])
+}
+
+// runLineIsForSite reports whether a "docker run" argument list is the site's,
+// by WEBSITE_SITE_NAME or by the container name. App names are hostnames, so
+// case is ignored.
+func runLineIsForSite(args []string, appName string) bool {
+	for i, arg := range args {
+		if strings.EqualFold(arg, "WEBSITE_SITE_NAME="+appName) {
+			return true
+		}
+		name, ok := strings.CutPrefix(arg, "--name=")
+		if !ok && arg == "--name" && i+1 < len(args) {
+			name, ok = args[i+1], true
+		}
+		if ok && containerNameIsForSite(name, appName) {
+			return true
+		}
+	}
+	return false
+}
+
+// containerNameIsForSite matches "<site>_<instance>_<hash>". The instance digit
+// is required so a slot's "<site>__<slot>_..." does not pass.
+func containerNameIsForSite(name, appName string) bool {
+	rest, ok := strings.CutPrefix(strings.ToLower(name), strings.ToLower(appName)+"_")
+	return ok && rest != "" && rest[0] >= '0' && rest[0] <= '9'
+}
+
+// runLineDigest is the digest a "docker run" argument list pins the configured
+// repository to, or "" when it ran a tag or is ambiguous. The line is logged
+// unquoted and split on whitespace, so an app setting value or startup command
+// can also yield a token naming the repository. Every such token is a claim
+// about which image ran, a tag as much as a digest, and they must all agree.
+func runLineDigest(args []string, repository string) string {
+	var found string
+	for _, arg := range args {
+		named, err := reference.ParseNormalizedNamed(arg)
+		if err != nil || canonicalRepository(named) != repository {
+			continue
+		}
+		var hex string
+		if digested, ok := named.(reference.Digested); ok {
+			if hex, err = digest.Sha256Fingerprint(digested.Digest()); err != nil {
+				hex = ""
+			}
+		}
+		if hex == "" || (found != "" && found != hex) {
+			return ""
+		}
+		found = hex
+	}
+	return found
+}
+
+// canonicalRepository is a reference's repository with the Docker Hub short form
+// expanded, tag and digest dropped, and the host lowercased, so the app's
+// configuration and the platform's "docker run" line compare equal.
+func canonicalRepository(named reference.Named) string {
+	named = reference.TrimNamed(named)
+	return strings.ToLower(reference.Domain(named)) + "/" + reference.Path(named)
 }
 
 // extractImageFingerprintAndStartedTimestampFromLogs reads the digest of the
-// running container from the app's docker log.
+// container running for appName from the app's docker log. imageName is the
+// reference the app's configuration names.
 //
-// The digest is the one the platform pulled immediately before it last started
-// the container: the last platform "Digest:" line before the last platform
-// start line. A "Digest:" line after the start line is the container's own
-// output and is ignored, so a compromised container cannot name its own
-// fingerprint (kosli-dev/server#6881). The log window can hold several
-// deployments, which is why the latest start wins rather than the first match.
+// The digest is the platform's own record of the site's last start, its
+// "docker run" line: the digest it pins the configured image to or, when it ran
+// a tag, the last platform "Digest:" line before it. Anything after the start
+// is the container's own output and cannot name the fingerprint
+// (kosli-dev/server#6881). The latest start wins because one log window can
+// hold several deployments.
 //
-// startedAt is the time the platform reported that container ready. A start
-// with no such report yet has startedAt 0; a pull after the last ready report
-// means the container is being replaced, and nothing is reported.
-func extractImageFingerprintAndStartedTimestampFromLogs(logs []byte, appName string) (fingerprint string, startedAt int64, err error) {
-	initializedLine := platformInitializedLine(appName)
+// startedAt is when the platform reported that container ready, 0 if it has not
+// yet. A start after a ready report is reported only when it names the digest
+// that was ready, since that is a scale-out or restart and keeps the earlier
+// ready time. A different digest is a replacement in flight, and a ready
+// container whose own start precedes the window has an unknown digest; in both
+// cases nothing is reported until the new container is ready.
+//
+// No log content can fail the snapshot: lines have no length cap, and a line of
+// platform shape but invalid content is skipped.
+func extractImageFingerprintAndStartedTimestampFromLogs(logs []byte, appName, imageName string, logger *logger.Logger) (fingerprint string, startedAt int64) {
+	var repository string
+	if named, err := reference.ParseNormalizedNamed(imageName); err == nil {
+		repository = canonicalRepository(named)
+	}
 
-	var pulledDigest, startedDigest string
+	var pulledDigest, startedDigest, readyDigest string
 	var startSeen, initializedSeen, initializedAfterLastStart bool
 
-	scanner := bufio.NewScanner(bytes.NewReader(logs))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if m := platformDigestLine.FindStringSubmatch(line); m != nil {
-			pulledDigest = m[2]
-		} else if platformStartLine.MatchString(line) {
+	for line := range bytes.Lines(logs) {
+		line = bytes.TrimRight(line, "\r\n")
+		if m := platformDigestLine.FindSubmatch(line); m != nil {
+			pulledDigest = group(platformDigestLine, m, "digest")
+		} else if m := platformRunLine.FindSubmatch(line); m != nil {
+			args := strings.Fields(group(platformRunLine, m, "args"))
+			if !runLineIsForSite(args, appName) {
+				logger.Debug("skipping a docker run line that does not name site %s: %s", appName, line)
+				continue
+			}
 			startedDigest = pulledDigest
+			if runDigest := runLineDigest(args, repository); runDigest != "" {
+				startedDigest = runDigest
+			}
 			startSeen = true
 			initializedAfterLastStart = false
-		} else if m := initializedLine.FindStringSubmatch(line); m != nil {
+		} else if m := platformReadyLine.FindSubmatch(line); m != nil && strings.EqualFold(group(platformReadyLine, m, "site"), appName) {
+			readyAt, err := time.Parse(time.RFC3339Nano, group(platformReadyLine, m, "ts"))
+			if err != nil {
+				continue
+			}
 			initializedSeen = true
 			if !startSeen {
 				continue
 			}
-			readyAt, err := time.Parse(time.RFC3339Nano, m[1])
-			if err != nil {
-				return "", 0, err
-			}
 			startedAt = readyAt.Unix()
+			readyDigest = startedDigest
 			initializedAfterLastStart = true
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		return "", 0, err
-	}
 
 	if !startSeen || startedDigest == "" {
-		return "", 0, nil
+		return "", 0
 	}
-	if initializedSeen && !initializedAfterLastStart {
-		return "", 0, nil
+	if initializedSeen && !initializedAfterLastStart && startedDigest != readyDigest {
+		return "", 0
 	}
-	return startedDigest, startedAt, nil
+	return startedDigest, startedAt
 }

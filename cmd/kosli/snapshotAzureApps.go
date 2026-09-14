@@ -33,10 +33,11 @@ credentials are only ever sent to an Azure Container Registry login server. An a
 from any other registry is read without credentials, which works for a public image but not a private
 one; report those apps with ^--digests-source logs^ instead.
 
-With ^--digests-source logs^, the digest is read from each app's docker log: the digest the platform pulled
-immediately before it last started the container. That log also carries the container's own output, so a
+With ^--digests-source logs^, the digest is read from each app's docker log: the image the platform records
+running when it last started the container. That log also carries the container's own output, so a
 compromised container could try to misreport its image. Lines the container writes are ignored, but the
-registry is the stronger source; a warning is printed whenever this mode is used.
+registry is the stronger source; a warning is printed whenever this mode is used, and an app whose log holds
+no platform-written digest is reported without a fingerprint and named in a warning.
 
 ^--dry-run^ suppresses only the request to Kosli. Azure discovery and registry lookups still run.
 ` + kosliIgnoreDescNoExclude + azureAuthDesc
