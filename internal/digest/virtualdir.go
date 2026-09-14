@@ -80,7 +80,7 @@ func VirtualDirSha256(files []VirtualFile, ignoreRules []string, logger *logger.
 
 	logger.Debug("calculating fingerprint for a virtual tree of %d files -- excluding %d paths", len(files), len(excluded))
 	hasher := sha256.New()
-	err = root.walkIncluded(virtualRoot, excluded, protectedVirtualPath(), logger, func(childPath string, child *virtualNode) error {
+	err = root.walkIncluded(virtualRoot, excluded, root.protectedVirtualPath(), logger, func(childPath string, child *virtualNode) error {
 		nameSha256 := sha256OfString(child.name)
 		hasher.Write([]byte(nameSha256)) //nolint:errcheck // hash.Hash never returns an error
 		if child.isDir {
@@ -116,7 +116,7 @@ func FilesNeedingContent(files []VirtualFile, ignoreRules []string) (map[string]
 		return nil, err
 	}
 	needed := map[string]bool{}
-	err = root.walkIncluded(virtualRoot, excluded, protectedVirtualPath(), nil, func(childPath string, child *virtualNode) error {
+	err = root.walkIncluded(virtualRoot, excluded, root.protectedVirtualPath(), nil, func(childPath string, child *virtualNode) error {
 		if !child.isDir {
 			needed[relativeVirtualPath(childPath)] = true
 		}
@@ -128,8 +128,13 @@ func FilesNeedingContent(files []VirtualFile, ignoreRules []string) (map[string]
 	return needed, nil
 }
 
-// protectedVirtualPath is the root ignore file, which its own rules never exclude.
-func protectedVirtualPath() string {
+// protectedVirtualPath is the root ignore file, which its own rules never
+// exclude. A directory of that name carries no rules, as ignoreFilePathInTree
+// decides on disk, so it is not protected either.
+func (n *virtualNode) protectedVirtualPath() string {
+	if child, ok := n.children[IgnoreFileName]; !ok || child.isDir {
+		return ""
+	}
 	return path.Join(virtualRoot, IgnoreFileName)
 }
 

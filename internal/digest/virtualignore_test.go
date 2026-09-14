@@ -130,6 +130,31 @@ func (suite *VirtualIgnoreTestSuite) TestMalformedRuleIsAnErrorOnBothSides() {
 	}
 }
 
+// On disk only a file named .kosli_ignore carries rules and is protected from
+// them; a directory of that name is an ordinary entry a rule can exclude. The
+// rules come from the caller here, since a tree in this shape has no ignore
+// file to hold them.
+func (suite *VirtualIgnoreTestSuite) TestADirectoryNamedLikeTheIgnoreFileIsNotProtected() {
+	tree := map[string]string{IgnoreFileName + "/x": "not rules\n", "app.js": "app\n"}
+	root := suite.T().TempDir()
+	files := suite.materialise(root, tree, "")
+	rules := []string{IgnoreFileName}
+
+	want, err := DirSha256(root, rules, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	got, err := VirtualDirSha256(files, rules, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), want, got)
+
+	noRules, err := VirtualDirSha256(files, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.NotEqual(suite.T(), noRules, got, "the rule must exclude the directory")
+
+	needed, err := FilesNeedingContent(files, rules)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), map[string]bool{"app.js": true}, needed)
+}
+
 // Mirrors TestDirSha256IgnoreFileCannotHideItself: an ignore file that lists
 // itself cannot hide an added file, because the file's own content stays in the
 // digest.
