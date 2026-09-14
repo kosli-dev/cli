@@ -1,6 +1,4 @@
-# Automated PR review using Claude (anthropics/claude-code-action).
-# Requires repository secret: ANTHROPIC_API_KEY
-#
+# Automated PR review using Claude (anthropics/claude-code-action):
 # - PRs from branches containing dependabot/:
 #   Reviews dependency changelogs and usage in code for breaking changes and upgrade risks.
 # - All other PRs:
@@ -10,7 +8,7 @@ name: Claude PR Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
   group: claude-pr-review-${{ github.event.pull_request.number }}
@@ -98,6 +96,7 @@ jobs:
           check-latest: true
 
       - name: Claude review (general)
+        if: github.event.action != 'synchronize'
         uses: anthropics/claude-code-action@v1.0.222
         env:
           GH_TOKEN: ${{ github.token }}
