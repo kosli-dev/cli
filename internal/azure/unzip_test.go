@@ -155,7 +155,8 @@ func TestUnzipWritesASymlinkEntryAsARegularFile(t *testing.T) {
 }
 
 // Legal in a zip, impossible on disk: one name used as both a file and a
-// directory. The error must name the entry that collided, not a temp path.
+// directory, or two entries landing on one path. The error must name the
+// entry that collided, not a temp path.
 func TestUnzipNamesTheEntryThatCollides(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
@@ -186,6 +187,24 @@ func TestUnzipNamesTheEntryThatCollides(t *testing.T) {
 			entries:    []zipEntry{{name: "a/b", content: "under a"}, {name: "a", content: "a file"}},
 			wantEntry:  "a",
 			wantErrMsg: "was already extracted as a directory",
+		},
+		{
+			name:       "two file entries with the same name",
+			entries:    []zipEntry{{name: "x", content: "first"}, {name: "x", content: "second"}},
+			wantEntry:  "x",
+			wantErrMsg: "another entry has already been extracted to the same local path",
+		},
+		{
+			name:       "two file entries that containment resolves to one path",
+			entries:    []zipEntry{{name: "x", content: "first"}, {name: "/x", content: "second"}},
+			wantEntry:  "/x",
+			wantErrMsg: "another entry has already been extracted to the same local path",
+		},
+		{
+			name:       "a dot-prefixed duplicate of an earlier file",
+			entries:    []zipEntry{{name: "x", content: "first"}, {name: "./x", content: "second"}},
+			wantEntry:  "./x",
+			wantErrMsg: "another entry has already been extracted to the same local path",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

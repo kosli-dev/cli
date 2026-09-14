@@ -373,7 +373,7 @@ func extractZipEntry(f *zip.File, filePath string, logger *logger.Logger) error 
 	if !isDir {
 		dir = filepath.Dir(filePath)
 	}
-	err := os.MkdirAll(dir, os.ModePerm)
+	err := os.MkdirAll(dir, 0o700)
 	if errors.Is(err, syscall.ENOTDIR) {
 		// A file "a" and an entry under "a/".
 		return errors.New("one of its parent directories was already extracted as a file")
@@ -392,7 +392,13 @@ func extractZipEntry(f *zip.File, filePath string, logger *logger.Logger) error 
 	// symlink entry from becoming a real symlink. Name containment does not
 	// survive one, since a later entry or the fingerprinter would follow it
 	// out of the destination.
-	destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if errors.Is(err, os.ErrExist) {
+		// Legal in a zip, and containment collapses "x", "/x" and "./x" onto one
+		// path, but overwriting would fingerprint the package without the
+		// first entry.
+		return errors.New("another entry has already been extracted to the same local path")
+	}
 	if err != nil {
 		return err
 	}
@@ -407,8 +413,13 @@ func extractZipEntry(f *zip.File, filePath string, logger *logger.Logger) error 
 
 	_, err = io.Copy(destFile, zipFile)
 
+	// A write error can surface only at Close, and an entry truncated that
+	// way would be fingerprinted as if it were complete.
 	if closeErr := destFile.Close(); closeErr != nil {
 		logger.Warn("failed to close destination file %s: %v", filePath, closeErr)
+		if err == nil {
+			err = closeErr
+		}
 	}
 	if closeErr := zipFile.Close(); closeErr != nil {
 		logger.Warn("failed to close zip file: %v", closeErr)
