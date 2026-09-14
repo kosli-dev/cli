@@ -201,7 +201,7 @@ func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysCapsTheKeysNamedPerCollis
 	require.Error(suite.T(), err)
 	msg := err.Error()
 	require.Contains(suite.T(), msg, "fingerprint as the same path [a/b]")
-	require.Contains(suite.T(), msg, " and 3 more")
+	require.Contains(suite.T(), msg, " and 3 more keys fingerprint as")
 	require.Equal(suite.T(), maxReportedS3KeyProblems+1, strings.Count(msg, "a/b]"), "the named keys and the path itself")
 	require.NotContains(suite.T(), msg, "\n", "one problem still reads as one line")
 }

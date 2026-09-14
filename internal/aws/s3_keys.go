@@ -78,7 +78,7 @@ func virtualPathsForS3Keys(keys []string) (map[string]string, error) {
 			named, more := colliding, ""
 			if len(named) > maxReportedS3KeyProblems {
 				named = named[:maxReportedS3KeyProblems]
-				more = fmt.Sprintf(" and %d more", len(colliding)-maxReportedS3KeyProblems)
+				more = fmt.Sprintf(" and %d more keys", len(colliding)-maxReportedS3KeyProblems)
 			}
 			problems = append(problems, fmt.Sprintf("object keys %s%s fingerprint as the same path [%s]",
 				bracketed(named), more, virtualPath))
