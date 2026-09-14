@@ -331,6 +331,10 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 		}
 	}()
 
+	// Resolved path to the entry name that produced it, so a collision can name
+	// both sides.
+	extracted := make(map[string]string, len(r.File))
+
 	for _, f := range r.File {
 		// The entry name comes from the deployed package, which anyone able to
 		// deploy the app controls, so it must not be able to leave destDir.
@@ -346,7 +350,7 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 			return fmt.Errorf("zip entry %w; the package cannot be extracted safely, so no app in the environment is reported until this app is redeployed without that entry", err)
 		}
 
-		if err := extractZipEntry(f, filePath, logger); err != nil {
+		if err := extractZipEntry(f, filePath, extracted, logger); err != nil {
 			return fmt.Errorf("zip entry [%s]: %w", f.Name, err)
 		}
 	}
@@ -354,8 +358,8 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 }
 
 // extractZipEntry writes one entry to filePath, which the caller has already
-// checked stays inside the destination directory.
-func extractZipEntry(f *zip.File, filePath string, logger *logger.Logger) error {
+// checked stays inside the destination directory, and records it in extracted.
+func extractZipEntry(f *zip.File, filePath string, extracted map[string]string, logger *logger.Logger) error {
 	isDir := f.FileInfo().IsDir()
 
 	// Legal in a zip, impossible on disk: one name as both a file and a
@@ -392,17 +396,23 @@ func extractZipEntry(f *zip.File, filePath string, logger *logger.Logger) error 
 	// symlink entry from becoming a real symlink. Name containment does not
 	// survive one, since a later entry or the fingerprinter would follow it
 	// out of the destination.
+	// Legal in a zip, and containment collapses "x", "/x" and "./x" onto one
+	// path, but overwriting would fingerprint the package without the first
+	// entry. This fails the same way on every platform.
+	if first, dup := extracted[filePath]; dup {
+		return fmt.Errorf("resolves to the same local path as entry [%s]", first)
+	}
 	destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
 	if errors.Is(err, os.ErrExist) {
-		// Legal in a zip, and containment collapses "x", "/x" and "./x" onto one
-		// path, but overwriting would fingerprint the package without the
-		// first entry. Names differing only in case collide too on macOS and
-		// Windows, and moving the snapshot is the operator's only remedy.
-		return errors.New("another entry has already been extracted to the same local path; if the names differ only in case, run the snapshot on a case-sensitive filesystem")
+		// No recorded entry resolves here, so the filesystem itself equates two
+		// names: case, or Unicode form, on macOS and Windows. Moving the
+		// snapshot is the operator's only remedy.
+		return errors.New("collides with an earlier entry whose name this filesystem treats as the same, such as one differing only in case; run the snapshot on a case-sensitive filesystem")
 	}
 	if err != nil {
 		return err
 	}
+	extracted[filePath] = f.Name
 
 	zipFile, err := f.Open()
 	if err != nil {

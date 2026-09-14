@@ -92,7 +92,7 @@ func TestUnzipRejectsEntriesThatEscapeTheDestination(t *testing.T) {
 			destDir := filepath.Join(tmpDir, "work", "extracted")
 			err := unzip(zipPath, destDir, logger.NewStandardLogger())
 			require.Error(t, err)
-			require.Contains(t, err.Error(), tc.entry, "the error must name the offending entry")
+			require.Contains(t, err.Error(), "["+tc.entry+"]", "the error must name the offending entry, even an empty one")
 			require.Contains(t, err.Error(), tc.wantErrMsg)
 
 			// Nothing may have been written outside destDir.
@@ -194,19 +194,19 @@ func TestUnzipNamesTheEntryThatCollides(t *testing.T) {
 			name:       "two file entries with the same name",
 			entries:    []zipEntry{{name: "x", content: "first"}, {name: "x", content: "second"}},
 			wantEntry:  "x",
-			wantErrMsg: "another entry has already been extracted to the same local path",
+			wantErrMsg: "resolves to the same local path as entry [x]",
 		},
 		{
 			name:       "two file entries that containment resolves to one path",
 			entries:    []zipEntry{{name: "x", content: "first"}, {name: "/x", content: "second"}},
 			wantEntry:  "/x",
-			wantErrMsg: "another entry has already been extracted to the same local path",
+			wantErrMsg: "resolves to the same local path as entry [x]",
 		},
 		{
 			name:       "a dot-prefixed duplicate of an earlier file",
-			entries:    []zipEntry{{name: "x", content: "first"}, {name: "./x", content: "second"}},
-			wantEntry:  "./x",
-			wantErrMsg: "another entry has already been extracted to the same local path",
+			entries:    []zipEntry{{name: "dir/x", content: "first"}, {name: "dir/./x", content: "second"}},
+			wantEntry:  "dir/./x",
+			wantErrMsg: "resolves to the same local path as entry [dir/x]",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -222,6 +222,26 @@ func TestUnzipNamesTheEntryThatCollides(t *testing.T) {
 			require.NotContains(t, err.Error(), destDir, "the error must not leak the temp path")
 		})
 	}
+}
+
+// Two names the package keeps distinct but the filesystem equates, as macOS
+// and Windows do for case, cannot be reproduced portably; a pre-existing file
+// stands in for the earlier entry so the branch and its remedy are pinned.
+func TestUnzipNamesTheFilesystemWhenItEquatesTwoNames(t *testing.T) {
+	tmpDir := t.TempDir()
+	zipPath := filepath.Join(tmpDir, "package.zip")
+	writeZip(t, zipPath, []zipEntry{{name: "readme.md", content: "lower"}})
+
+	destDir := filepath.Join(tmpDir, "extracted")
+	require.NoError(t, os.MkdirAll(destDir, 0o700))
+	require.NoError(t, os.WriteFile(filepath.Join(destDir, "readme.md"), []byte("already here"), 0o600))
+
+	err := unzip(zipPath, destDir, logger.NewStandardLogger())
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "zip entry [readme.md]")
+	require.Contains(t, err.Error(), "this filesystem treats as the same")
+	require.Contains(t, err.Error(), "case-sensitive filesystem")
+	require.NotContains(t, err.Error(), destDir, "the error must not leak the temp path")
 }
 
 // A zero-mode entry (unknown creator, or Unix external attributes left at 0)
