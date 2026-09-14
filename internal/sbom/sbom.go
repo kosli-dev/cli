@@ -324,12 +324,13 @@ func packageCount(components *[]cdx.Component) int {
 	return count
 }
 
-// toolsFromCycloneDX reads all three tool layouts. Spec 1.5 moved tools from a
-// dedicated list to components and services, and the library keeps the older list
-// populated for documents that use it, so a document may fill any of them.
+// toolsFromCycloneDX reads every tool slot. Spec 1.5 replaced the dedicated list
+// with components and services, and the library keeps the older list populated for
+// documents that use it, so a document fills either the deprecated list or the
+// components and services pair, never both.
 //
 // A hosted generator such as Snyk's export API records itself only under services.
-// Each layout contributes a name and a version; none contributes a vendor, including
+// Each slot contributes a name and a version; none contributes a vendor, including
 // the deprecated one that carries a Vendor field.
 func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 	if tools == nil {
