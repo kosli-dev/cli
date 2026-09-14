@@ -501,6 +501,7 @@ type s3Object struct {
 func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []string, includeRegex []*regexp.Regexp,
 	excludePaths []string, excludeRegex []*regexp.Regexp) ([]s3Object, error) {
 	objects := []s3Object{}
+	seen := map[string]bool{}
 	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
 	})
@@ -521,6 +522,12 @@ func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []strin
 			if shouldExcludePath(*object.Key, includePaths, includeRegex, excludePaths, excludeRegex) {
 				continue
 			}
+			// A key listed twice is a listing fault, not a collision between two
+			// keys, and the collision report relies on keys being distinct.
+			if seen[*object.Key] {
+				return nil, fmt.Errorf("bucket [%s] listed object key [%s] more than once", bucket, *object.Key)
+			}
+			seen[*object.Key] = true
 			// An object without a timestamp stays in the fingerprint and out of
 			// the snapshot timestamp, as it was before.
 			var lastModified time.Time

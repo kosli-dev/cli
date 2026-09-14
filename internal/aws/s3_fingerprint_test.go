@@ -309,6 +309,20 @@ func (suite *S3FingerprintTestSuite) TestAListingEntryWithoutAKeyIsAnError() {
 	require.Contains(suite.T(), err.Error(), "no key")
 }
 
+// A key listed twice is a listing fault, not two objects: it must not be
+// reported as a key colliding with itself, and the advice to exclude it would
+// drop the only copy.
+func (suite *S3FingerprintTestSuite) TestAListingThatRepeatsAKeyIsAnError() {
+	page := &s3.ListObjectsV2Output{Contents: []s3Types.Object{
+		{Key: aws.String("a"), LastModified: aws.Time(fakeS3LastModified)},
+		{Key: aws.String("a"), LastModified: aws.Time(fakeS3LastModified)},
+	}}
+	_, err := listMatchingS3Objects(singlePageLister{page: page}, fakeS3TestBucketName, nil, nil, nil, nil)
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "object key [a] more than once")
+	require.NotContains(suite.T(), err.Error(), "--exclude-regex")
+}
+
 // singlePageLister answers every ListObjectsV2 call with one fixed page.
 type singlePageLister struct {
 	page *s3.ListObjectsV2Output
