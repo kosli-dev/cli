@@ -661,7 +661,11 @@ func downloadAndHashS3Object(downloader S3DownloadAPI, tempDir, bucket, key stri
 			return "", fmt.Errorf("object key [%s]: %w", key, err)
 		}
 	}
-	return digest.FileSha256(file.Name(), logger)
+	sha256, err := digest.FileSha256(file.Name(), logger)
+	if err != nil {
+		return "", fmt.Errorf("failed to hash object key [%s]: %w", key, err)
+	}
+	return sha256, nil
 }
 
 // getFilteredECSClusters fetches a filtered set of ECS clusters recursively (50 at a time) and returns a list of ecs Clusters

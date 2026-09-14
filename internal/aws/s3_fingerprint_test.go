@@ -253,6 +253,21 @@ func (suite *S3FingerprintTestSuite) TestADownloadErrorNamesTheKey() {
 	require.NotContains(suite.T(), err.Error(), "--exclude-regex", "a transport failure must not advise dropping the object")
 }
 
+// The temp file's name says nothing about the object, so a failure while
+// hashing it must name the key, as every other failure in the path does.
+func (suite *S3FingerprintTestSuite) TestAHashErrorNamesTheKey() {
+	client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{"README.md": []byte(fakeReadmeBody)}}
+	// Deleting the file between download and hash is the one way to make the
+	// hash fail without touching permissions.
+	_, err := downloadAndHashS3Object(client, suite.T().TempDir(), fakeS3TestBucketName, "README.md", func(file *os.File) error {
+		return os.Remove(file.Name())
+	}, logger.NewStandardLogger())
+	require.Error(suite.T(), err)
+	require.ErrorIs(suite.T(), err, os.ErrNotExist)
+	require.Contains(suite.T(), err.Error(), "failed to hash object key [README.md]")
+	require.NotContains(suite.T(), err.Error(), "--exclude-regex")
+}
+
 func TestS3FingerprintTestSuite(t *testing.T) {
 	suite.Run(t, new(S3FingerprintTestSuite))
 }
