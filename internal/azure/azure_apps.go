@@ -356,10 +356,12 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 			return err
 		}
 
-		// Every entry lands as a regular file, a symlink entry included: only the
-		// permission bits are kept, so its content becomes the link target text.
-		// Name containment cannot survive a real symlink, which a later entry or
-		// the fingerprinter would follow out of destDir.
+		// Only the permission bits are kept: os.OpenFile honours setuid, setgid
+		// and sticky, which a deployed package must not be able to set.
+		// Writing every entry through OpenFile, never os.Symlink, is what keeps a
+		// symlink entry from becoming a real symlink. Name containment does not
+		// survive one, since a later entry or the fingerprinter would follow it
+		// out of destDir.
 		destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode().Perm())
 		if err != nil {
 			return err

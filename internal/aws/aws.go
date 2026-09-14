@@ -562,7 +562,7 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 func localPathForS3Key(key string) (string, error) {
 	rel, err := utils.LocalRelativePath(key)
 	if err != nil {
-		return "", unusableS3KeyError(key, err.Error())
+		return "", unusableS3KeyError(key, err)
 	}
 	return rel, nil
 }
@@ -570,8 +570,8 @@ func localPathForS3Key(key string) (string, error) {
 // unusableS3KeyError is only for failures the key itself causes. Advising
 // exclusion on a machine fault such as a full disk would drop a legitimate
 // object from the snapshot.
-func unusableS3KeyError(key, reason string) error {
-	return fmt.Errorf("object key [%s] cannot be stored as a local file: %s; exclude it with --exclude-regex, or narrow the include filter if one is set", key, reason)
+func unusableS3KeyError(key string, reason error) error {
+	return fmt.Errorf("object key [%s] cannot be stored as a local file: %w; exclude it with --exclude-regex, or narrow the include filter if one is set", key, reason)
 }
 
 func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket string, logger *logger.Logger) error {
@@ -583,7 +583,7 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 	err = os.MkdirAll(filepath.Dir(dest), 0770)
 	if errors.Is(err, syscall.ENOTDIR) {
 		// Legal in S3, impossible on disk: an object "a" and a key under "a/".
-		return unusableS3KeyError(key, "one of its parent prefixes has already been downloaded as an object")
+		return unusableS3KeyError(key, errors.New("one of its parent prefixes has already been downloaded as an object"))
 	}
 	if err != nil {
 		return fmt.Errorf("object key [%s]: %w", key, err)
@@ -593,7 +593,7 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 	// "A/x" and "a/y" share one on a case-insensitive filesystem.
 	file, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if errors.Is(err, fs.ErrExist) {
-		return unusableS3KeyError(key, "another object already downloaded to the same local path")
+		return unusableS3KeyError(key, errors.New("another object already downloaded to the same local path"))
 	}
 	if err != nil {
 		return fmt.Errorf("object key [%s]: %w", key, err)
