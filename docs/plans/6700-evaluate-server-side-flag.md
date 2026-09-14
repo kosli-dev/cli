@@ -392,6 +392,12 @@ A code review of the finished branch raised findings in two rounds. All but two 
 15. **An expired wait reported the budget rather than the time spent.** The two can differ, as this code's own comments say, so a read that overran by ten seconds would have understated the wait to the one person asking whether the platform met its promise. It is measured now.
 16. **A non-text message panicked the whole CLI.** Pre-existing in the shared client, and confirmed by probe for a null, a number and an object. Only a message that is text is now read as one, which also makes the recorded fact honest: a body carrying the key with something unusable under it has no sentence to pass on. A stack trace in place of an error is worse than anything else on this list, and it was two lines.
 
+**Fourth review round**
+
+17. **A message key is not a sentence.** The recorded fact says only that the key was there, so a body carrying it empty, or one whose text is trimmed away entirely by the client's own phrase-stripping, passed the check and printed a stray colon and full stop where the reason should have been. Both routes confirmed by probe. The refusal now asks whether there is anything to quote, not whether a key existed.
+18. **A refusal with no message printed as nothing at all**, since an API error renders as its message alone. The status is now named when there is nothing else to say.
+19. **The 404 wording claimed to know which kind of 404 it was.** An unmatched route and a route that has since moved look identical from here, and a sentence that must be right about the difference is one a support thread quotes back. It now names both possibilities and still says what to do.
+
 **Known limitations, recorded rather than fixed**
 
 11. **The wait budget governs the polling, not a single read.** A read carries no context and the shared HTTP client sets no overall deadline, so a very slow server can overrun the budget by one read, and cancelling stops the loop only at its next turn. Holding to the budget exactly means giving the read a deadline of its own, which needs `internal/requests` to accept a context. That is a change every command inherits, so it belongs in its own ticket rather than here. Stated on `WaitOptions` so nobody reads the budget as a hard bound.

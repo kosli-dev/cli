@@ -374,7 +374,7 @@ func serverSideRequestError(err error) error {
 	}
 
 	switch {
-	case apiError.StatusCode == http.StatusForbidden && apiError.HasServerMessage:
+	case apiError.StatusCode == http.StatusForbidden && apiError.HasServerMessage && apiError.Message != "":
 		// The server's own words travel too: a refusal can come from a token
 		// without rights on the org rather than from the feature flag, and
 		// naming only the flag would send the reader after the wrong thing.
@@ -396,8 +396,19 @@ func serverSideRequestError(err error) error {
 	// front of one. The shared client records the difference where the body is
 	// decoded, since nothing downstream could tell afterwards.
 	case apiError.StatusCode == http.StatusNotFound && !apiError.HasServerMessage:
-		return errors.New("this Kosli server does not support server-side evaluation; " +
-			"remove --server-side to evaluate on this machine instead")
+		// Deliberately not certain which: an unmatched route and a route that
+		// has since moved look alike from here, and a sentence that has to be
+		// right about the difference is one a support thread quotes back.
+		return errors.New("the evaluation request was answered with a 404: either this " +
+			"Kosli server does not support server-side evaluation, or the route has " +
+			"moved; remove --server-side to evaluate on this machine instead")
+	}
+
+	// An API error prints as its message and nothing else, so one that arrived
+	// without a message prints as nothing at all. The status is the only thing
+	// left to say, and saying it beats a bare "Error:".
+	if apiError.Message == "" {
+		return fmt.Errorf("the Kosli server answered %d and said nothing about why", apiError.StatusCode)
 	}
 	return err
 }

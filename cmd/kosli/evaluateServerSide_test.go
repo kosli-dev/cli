@@ -523,6 +523,10 @@ func (suite *EvaluateServerSideTestSuite) TestARefusalWithNothingToQuoteSaysOnly
 		{name: "an answer with no body at all", body: ``},
 		{name: "an object with no message", body: `{"detail":"Forbidden"}`},
 		{name: "a bare string", body: `"Forbidden"`},
+		{name: "a message key holding nothing", body: `{"message":""}`},
+		// The client trims this phrase out of a message, which can leave
+		// nothing behind even though the key was there.
+		{name: "a message trimmed away to nothing", body: `{"message":"You have requested a thing"}`},
 	} {
 		suite.Run(test.name, func() {
 			server := newRefusingServer(suite.T(), http.StatusForbidden, test.body)
@@ -536,8 +540,22 @@ func (suite *EvaluateServerSideTestSuite) TestARefusalWithNothingToQuoteSaysOnly
 				"no decoder complaint dressed as the server's reason")
 			require.NotContains(suite.T(), err.Error(), "unexpected end of JSON input")
 			require.NotContains(suite.T(), err.Error(), "map[")
+			require.NotContains(suite.T(), err.Error(), "': .",
+				"no stray punctuation where a sentence would have gone")
 		})
 	}
+}
+
+// An API error prints as its message alone, so one that arrived without a
+// message would otherwise print as nothing at all.
+func (suite *EvaluateServerSideTestSuite) TestARefusalWithNoMessageStillSaysWhatHappened() {
+	server := newRefusingServer(suite.T(), http.StatusBadRequest, `{"message":""}`)
+
+	_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "400")
+	require.Contains(suite.T(), err.Error(), "said nothing about why")
 }
 
 // A refusal can come from a token without rights on the org rather than from
