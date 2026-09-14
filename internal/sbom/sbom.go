@@ -328,10 +328,9 @@ func packageCount(components *[]cdx.Component) int {
 // dedicated list to components and services, and the library keeps the older list
 // populated for documents that use it, so a document may fill any of them.
 //
-// A hosted generator records itself under services: the SBOM our own pipeline
-// produces names Snyk there and nowhere else, so skipping that slot lost the tool
-// entirely. Each layout contributes its name and version, and none contributes a
-// vendor, including the deprecated one that carries a Vendor field.
+// A hosted generator such as Snyk's export API records itself only under services.
+// Each layout contributes a name and a version; none contributes a vendor, including
+// the deprecated one that carries a Vendor field.
 func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 	if tools == nil {
 		return nil
