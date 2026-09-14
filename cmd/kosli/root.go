@@ -292,6 +292,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	newComplianceStatusFlag         = "The new compliance status to set on the attestation."
 	originalAttestationTypeFlag     = "The original attestation type being overridden (e.g. generic, snyk, junit, sonar, jira, pull_request, custom)."
 	attestationDecisionControlFlag  = "The control identifier being evaluated (e.g. RCTL-043)."
+	attestationSbomFileFlag         = "The path to the SBOM file. CycloneDX (JSON, XML) and SPDX (JSON, tag-value) are supported."
 	excludeScalingFlag              = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag              = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."
 	includedEnvironments            = "[optional] Comma separated list of environments to include in logical environment"
@@ -773,7 +774,20 @@ func configValueSource(flagName string) string {
 
 // Bind each cobra flag to its associated viper configuration
 // (coming either from environment variables or config file)
+// viperAppliedFlags records which flags of the command being run were filled in
+// from the environment or the config file rather than typed. Cobra marks both
+// as Changed, so this is the only way a command can tell them apart when it
+// wants to say where a value came from. Reset on every bindFlags call.
+var viperAppliedFlags = map[string]bool{}
+
+// flagCameFromConfig reports whether the named flag's value was applied from the
+// environment or the config file rather than typed on the command line.
+func flagCameFromConfig(flagName string) bool {
+	return viperAppliedFlags[flagName]
+}
+
 func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
+	viperAppliedFlags = map[string]bool{}
 	// A value that cannot be applied to its flag is user input, so it is
 	// returned as an error rather than reported from inside the VisitAll
 	// closure. Reporting it here would reach nobody: the logger's error stream
@@ -837,6 +851,7 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
 					bindErr = errors.Join(bindErr, fmt.Errorf("failed to set flag '--%s' from %s: %v", f.Name, configValueSource(f.Name), err))
 				}
 			}
+			viperAppliedFlags[f.Name] = true
 		}
 	})
 

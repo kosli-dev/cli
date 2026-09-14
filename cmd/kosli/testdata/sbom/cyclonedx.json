@@ -1,0 +1,14 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-11T10:00:00Z",
+    "tools": { "components": [{ "type": "application", "name": "syft", "version": "1.50.0" }] },
+    "component": { "type": "application", "name": "app", "version": "1.2.3" }
+  },
+  "components": [
+    { "type": "library", "name": "openssl", "version": "3.0.2" },
+    { "type": "file", "name": "/etc/hosts" }
+  ]
+}

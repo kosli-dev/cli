@@ -637,3 +637,30 @@ func (suite *RequestsTestSuite) TestNonMultipartJSON_IsCompact() {
 func TestRequestsTestSuite(t *testing.T) {
 	suite.Run(t, new(RequestsTestSuite))
 }
+
+// A file-bytes item must put exactly the caller's bytes on the wire, under the
+// caller's name. This is what lets an attestation promise that a checksum it
+// recorded describes what the server received.
+func TestCreateMultipartRequestBodyFileBytes(t *testing.T) {
+	data := []byte(`{"bomFormat":"CycloneDX"}`)
+	_, body, jsonFields, err := createMultipartRequestBody([]FormItem{
+		{Type: "field", FieldName: "data_json", Content: map[string]string{"a": "b"}},
+		{Type: "file-bytes", FieldName: "attachment_file", Content: FileBytes{Name: "bom.json", Data: data}},
+	})
+	require.NoError(t, err)
+	raw := body.String()
+	require.Contains(t, raw, `name="attachment_file"; filename="bom.json"`)
+	require.Contains(t, raw, string(data))
+	// Only JSON fields are surfaced for dry-run logging; the file is not one of them.
+	require.NotContains(t, jsonFields, "attachment_file")
+
+	_, _, _, err = createMultipartRequestBody([]FormItem{
+		{Type: "file-bytes", FieldName: "attachment_file", Content: "a/path/instead"},
+	})
+	require.Error(t, err, "a path must not be accepted where bytes are expected")
+
+	_, _, _, err = createMultipartRequestBody([]FormItem{
+		{Type: "file_bytes", FieldName: "attachment_file", Content: FileBytes{Name: "bom.json", Data: data}},
+	})
+	require.Error(t, err, "a misspelled type must fail, not silently drop the part")
+}

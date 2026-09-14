@@ -70,15 +70,21 @@ var (
 // ProcessSBOMFile reads an SBOM file and returns its format and a normalised
 // summary. It confirms the file identifies itself as the format it parses as;
 // it does not validate against the format's schema.
+//
+// It reads the whole file with no size limit. A caller that needs one, as the
+// attest command does, reads the bytes itself and calls ProcessSBOM.
 func ProcessSBOMFile(file string) (*SBOMData, error) {
 	content, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
-	return processSBOM(content)
+	return ProcessSBOM(content)
 }
 
-func processSBOM(content []byte) (*SBOMData, error) {
+// ProcessSBOM is ProcessSBOMFile for content already in memory, so a caller
+// that must also fingerprint the file can do both from one read rather than
+// risk the two describing different bytes.
+func ProcessSBOM(content []byte) (*SBOMData, error) {
 	if bytes.HasPrefix(content, gzipMagic) {
 		return nil, fmt.Errorf("the file is gzip compressed; supply the uncompressed SBOM")
 	}

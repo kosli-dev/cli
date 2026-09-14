@@ -358,6 +358,31 @@ attest pullrequest gitlab	--repo-url	1	1	1	cli	differs	differs	0.3		Error: [kosl
 attest pullrequest gitlab	--repository	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-repository-fl trail=probe-attest-pullrequest-gitlab-repository-tr] flag '--reposito
 attest pullrequest gitlab	--trail	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-trail-fl] flag '--trail' was given an empty value
 attest pullrequest gitlab	--user-data	1	1	1	cli	differs	differs	0.3		Error: [kosli attest pullrequest gitlab flow=probe-attest-pullrequest-gitlab-user-data-fl trail=probe-attest-pullrequest-gitlab-user-data-tr] flag '--user-data'
+attest sbom	--annotate	1	0	0	cli	differs	differs	0.5		Error: [kosli attest sbom flow=probe-attest-sbom-annotate-fl trail=probe-attest-sbom-annotate-tr] flag '--annotate' was given an empty value
+attest sbom	--artifact-type	1	0	1	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-artifact-type-fl trail=probe-attest-sbom-artifact-type-tr] flag '--artifact-type' was given an empty value
+attest sbom	--attachments	1	0	1	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-attachments-fl trail=probe-attest-sbom-attachments-tr] flag '--attachments' was given an empty value
+attest sbom	--commit	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-commit-fl trail=probe-attest-sbom-commit-tr] flag '--commit' was given an empty value
+attest sbom	--description	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-description-fl trail=probe-attest-sbom-description-tr] flag '--description' was given an empty value
+attest sbom	--dry-run	1	0	0	cli	differs	differs	0.4		Error: flag '--dry-run' was given an empty value
+attest sbom	--exclude	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-exclude-fl trail=probe-attest-sbom-exclude-tr] flag '--exclude' was given an empty value
+attest sbom	--external-fingerprint	1	0	1	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-external-fingerprint-fl trail=probe-attest-sbom-external-fingerprint-tr] flag '--external-fingerprint' was give
+attest sbom	--external-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-external-url-fl trail=probe-attest-sbom-external-url-tr] flag '--external-url' was given an empty value
+attest sbom	--fingerprint	1	0	1	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-fingerprint-fl trail=probe-attest-sbom-fingerprint-tr] flag '--fingerprint' was given an empty value
+attest sbom	--flow	1	1	0	cli	differs	differs	0.4		Error: [kosli attest sbom trail=probe-attest-sbom-flow-tr] flag '--flow' was given an empty value
+attest sbom	--name	1	1	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-name-fl trail=probe-attest-sbom-name-tr] flag '--name' was given an empty value
+attest sbom	--origin-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-origin-url-fl trail=probe-attest-sbom-origin-url-tr] flag '--origin-url' was given an empty value
+attest sbom	--redact-commit-info	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-redact-commit-info-fl trail=probe-attest-sbom-redact-commit-info-tr] flag '--redact-commit-info' was given an e
+attest sbom	--registry-password	1	0	1	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-registry-password-fl trail=probe-attest-sbom-registry-password-tr] flag '--registry-password' was given an empt
+attest sbom	--registry-provider	1	0	0	cli	differs	differs	0.5		Error: [kosli attest sbom flow=probe-attest-sbom-registry-provider-fl trail=probe-attest-sbom-registry-provider-tr] flag '--registry-provider' was given an empt
+attest sbom	--registry-username	1	0	1	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-registry-username-fl trail=probe-attest-sbom-registry-username-tr] flag '--registry-username' was given an empt
+attest sbom	--repo-id	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-repo-id-fl trail=probe-attest-sbom-repo-id-tr] flag '--repo-id' was given an empty value
+attest sbom	--repo-provider	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-repo-provider-fl trail=probe-attest-sbom-repo-provider-tr] flag '--repo-provider' was given an empty value
+attest sbom	--repo-root	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-repo-root-fl trail=probe-attest-sbom-repo-root-tr] flag '--repo-root' was given an empty value
+attest sbom	--repo-url	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-repo-url-fl trail=probe-attest-sbom-repo-url-tr] flag '--repo-url' was given an empty value
+attest sbom	--repository	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-repository-fl trail=probe-attest-sbom-repository-tr] flag '--repository' was given an empty value
+attest sbom	--sbom-file	1	1	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-sbom-file-fl trail=probe-attest-sbom-sbom-file-tr] flag '--sbom-file' was given an empty value
+attest sbom	--trail	1	1	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-trail-fl] flag '--trail' was given an empty value
+attest sbom	--user-data	1	0	0	cli	differs	differs	0.4		Error: [kosli attest sbom flow=probe-attest-sbom-user-data-fl trail=probe-attest-sbom-user-data-tr] flag '--user-data' was given an empty value
 attest snyk	--annotate	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-annotate-fl trail=probe-attest-snyk-annotate-tr] flag '--annotate' was given an empty value
 attest snyk	--artifact-type	1	1	1	cli	differs	differs	0.3		Error: [kosli attest snyk flow=probe-attest-snyk-artifact-type-fl trail=probe-attest-snyk-artifact-type-tr] flag '--artifact-type' was given an empty value
 attest snyk	--attachments	1	1	1	cli	differs	differs	0.4		Error: [kosli attest snyk flow=probe-attest-snyk-attachments-fl trail=probe-attest-snyk-attachments-tr] flag '--attachments' was given an empty value
