@@ -330,6 +330,98 @@ func (suite *EvaluateServerSideTestSuite) TestTheCeilingIsAHundredTrails() {
 	})
 }
 
+// Two flags have no server-side answer. Refusing them is kinder than
+// accepting them and quietly doing something else: a filter that is ignored
+// would evaluate more than the caller asked about, and an input shown from
+// here would not be the input the server judged.
+func (suite *EvaluateServerSideTestSuite) TestItRefusesWhatTheServerCannotDo() {
+	for _, test := range []struct {
+		name    string
+		extra   string
+		message string
+	}{
+		{
+			name:    "filtering attestations",
+			extra:   "--attestations some-attestation",
+			message: "--attestations is not supported with --server-side",
+		},
+		{
+			name:    "showing the policy input",
+			extra:   "--show-input",
+			message: "--show-input is not supported with --server-side",
+		},
+	} {
+		suite.Run(test.name, func() {
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, test.extra))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), test.message)
+			require.Empty(suite.T(), fake.created, "refused before anything is sent")
+			require.Equal(suite.T(), 0, fake.reads)
+			require.NotContains(suite.T(), combined, "ALLOWED")
+		})
+	}
+}
+
+// Both trail commands share the refusal, so neither can drift from the other.
+func (suite *EvaluateServerSideTestSuite) TestTheRefusalCoversTheMultiTrailCommandToo() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate trails first second --flow my-flow --show-input "+
+			"--policy testdata/policies/allow-all.rego --server-side "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "--show-input is not supported with --server-side")
+	require.Empty(suite.T(), fake.created)
+}
+
+func (suite *EvaluateServerSideTestSuite) TestPolicyParametersTravelUnchanged() {
+	for _, test := range []struct {
+		name  string
+		extra string
+		want  map[string]interface{}
+	}{
+		{
+			name:  "given inline",
+			extra: `--params '{"threshold":2}'`,
+			want:  map[string]interface{}{"threshold": float64(2)},
+		},
+		{
+			name:  "read from a file",
+			extra: "--params @testdata/evaluate/params-low-threshold.json",
+			want:  map[string]interface{}{"threshold": float64(3)},
+		},
+		{
+			name:  "not given at all",
+			extra: "",
+			want:  map[string]interface{}{},
+		},
+	} {
+		suite.Run(test.name, func() {
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, test.extra))
+
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), test.want, fake.created[0]["params"])
+		})
+	}
+}
+
+func (suite *EvaluateServerSideTestSuite) TestUnreadableParametersAreRefusedBeforeAnythingIsSent() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, "--params not-json"))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "failed to parse --params")
+	require.Empty(suite.T(), fake.created)
+}
+
 func trailNames(count int) string {
 	names := make([]string, count)
 	for i := range names {

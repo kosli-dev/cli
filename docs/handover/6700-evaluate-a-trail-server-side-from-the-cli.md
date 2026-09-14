@@ -39,7 +39,7 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 - [x] Slice 2 — read an evaluation, and wait for a terminal status with backoff and a bounded budget.
 - [x] Slice 3 — the hidden flag on the single-trail command, happy path end to end.
 - [x] Slice 4 — the same flag on the multi-trail command, all names in one evaluation.
-- [ ] Slice 5 — refuse the flag combinations the server has no equivalent for.
+- [x] Slice 5 — refuse the flag combinations the server has no equivalent for.
 - [ ] Slice 6 — classified failures and server refusals, one test per failure kind.
 - [ ] Slice 7 — policy upload edge cases: remote policies, file naming, the size cap.
 - [ ] Slice 8 — distinct exit codes for denial, broken policy, expired wait and our own faults.
@@ -63,6 +63,7 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 - Input filtering and input display are refused under the flag rather than approximated. The server offers no equivalent for either, and showing the caller a later moment than the one evaluated would mislead more than refusing.
 - This repository's test environment cannot complete a server-side evaluation at all: the local stack runs a server, a database and object storage, with no queue broker, no worker and no evaluator. The local server also treats every local caller as entitled, so the feature-flag refusal cannot be reproduced there either. Every test of the new path therefore drives a stubbed HTTP server, and the existing tests stay on the real local server to prove the unflagged path is untouched. The cost accepted is that these tests pin our side of the contract only; real agreement between the two paths has to be measured on staging.
 - A denial, a broken policy, an expired wait and a fault of ours become four distinguishable exit codes, which this CLI has never had. They stay provisional while the flag is hidden, and the unflagged path keeps its single failure code unchanged.
+- The two options with no server-side answer are refused outright rather than quietly ignored, and each refusal says why. Honouring either halfway would be worse than refusing it: a filter that was dropped would evaluate more than the caller asked about, and an input printed from here would not be the input the server judged. They are stated as errors rather than as a flag-exclusion rule, because the built-in wording says only that two flags conflict, and someone reaching for an undocumented flag needs the reason.
 - The tests for the flag sit in a suite of their own that needs no running server, rather than joining the existing trail suites. Those build a flow and a trail before every test, so anything added there inherits a dependency this feature cannot satisfy anyway: the local stack has no evaluator. The cost is that these tests prove only our half of the contract, and agreement with the real server still has to be measured on staging.
 - Whether the two paths print the same page turns on how an empty violation list is rendered, which was not foreseen. Running the binary showed the local path prints a null rather than an empty list when there is nothing to report. The reading side therefore keeps whichever shape it was sent instead of tidying it, so the choice is made once, where the two paths meet, rather than hidden in a decoder.
 - An expired wait is a distinct outcome carrying the evaluation's identity, not a sentinel and never a verdict, so a caller can tell the user which evaluation is still running and where to read it later.
@@ -74,7 +75,7 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 
 ## Next Steps
 
-- [ ] Slice 5 next: refuse the flag combinations the server has no answer for, which are attestation filtering and showing the policy input.
+- [ ] Slice 6 next: classified failures and server refusals, one test per failure kind. It owns the wording for a server error, which cannot quote the server.
 - [ ] Confirm the four proposed exit-code values with the ticket owner before Slice 8; everything up to it is unaffected.
 - [ ] Decide what a server error should say, now that the server's own sentence is known to be unavailable. It falls due in Slice 6.
 - [ ] Run the two trail suites once the local test server is available; they are the only part of Slice 0 still unverified.

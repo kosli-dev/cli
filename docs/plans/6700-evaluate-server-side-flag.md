@@ -1,7 +1,7 @@
 # Plan: `kosli evaluate trail|trails --server-side` (hidden flag)
 
 > **Ticket:** https://github.com/kosli-dev/server/issues/6700
-> **Status:** slices 0 to 4 done; slice 5 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
+> **Status:** slices 0 to 5 done; slice 6 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
 > **Audience:** the agent or engineer who implements this. Follow the repo's TDD and thin-slice workflow (`CLAUDE.md`). Create a `## feat(evaluate): --server-side` section in `TODO.md` from the slice list below before coding.
 > **Out of scope (moved to #6832):** shadow mode. Nothing here runs a server-side evaluation unless the flag is present.
 
@@ -286,15 +286,19 @@ Note that the last box was slice 5's, and is ticked here because the flag reachi
 
 ### Slice 5: flag interaction validation
 
-Tests:
-- [ ] `--server-side --attestations x` → error `--attestations is not supported with --server-side`, no request sent
-- [ ] `--server-side --show-input` → error `--show-input is not supported with --server-side`, no request sent
-- [ ] `--server-side --params '{"a":1}'` → POST `params` equals `{"a":1}`
-- [ ] `--server-side --params @testdata/evaluate/params-low-threshold.json` → POST `params` equals the file content
-- [ ] `--server-side` with no `--params` → POST `params` is `{}` (pinned from slice 1)
-- [ ] `evaluate input --server-side` → cobra `unknown flag` error (flag not registered there)
+**Done.** The two refusals are explicit errors rather than a cobra exclusion group. Cobra's own message states only that two flags conflict; each of these says *why*, which is what someone reaching for an undocumented flag actually needs. They live in the shared entry point, so the two commands cannot drift apart.
 
-Files: `cmd/kosli/evaluateHelpers.go`, tests.
+Tests:
+- [x] `--server-side --attestations x` → refused, naming the flag, nothing sent
+- [x] `--server-side --show-input` → refused, naming the flag, nothing sent
+- [x] the same refusal applies on the multi-trail command
+- [x] `--server-side --params '{"a":1}'` → POST `params` equals it
+- [x] `--server-side --params @testdata/evaluate/params-low-threshold.json` → POST `params` equals the file content
+- [x] `--server-side` with no `--params` → POST `params` is `{}`
+- [x] unreadable `--params` is refused before anything is sent
+- [x] `evaluate input --server-side` → cobra `unknown flag` error (ticked in slice 4, where the flag registration was finished)
+
+Files: `cmd/kosli/evaluateHelpers.go` (`refuseWhatTheServerCannotDo`), `cmd/kosli/evaluateServerSide_test.go`.
 
 ### Slice 6: classified failures and server errors
 

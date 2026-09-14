@@ -252,6 +252,10 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]in
 // prints the verdict it answers with. Nothing about the trails is read here:
 // the server assembles what the policy sees, which is the point of the flag.
 func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evaluations.TrailRef) error {
+	if err := o.refuseWhatTheServerCannotDo(); err != nil {
+		return err
+	}
+
 	if len(trails) > maxServerSideTrails {
 		return fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
 			maxServerSideTrails, len(trails))
@@ -292,6 +296,28 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 
 	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
 		o.output, false, nil, o.assertOnDeny())
+}
+
+// refuseWhatTheServerCannotDo rejects the options that have no server-side
+// answer, rather than accepting them and quietly doing something else.
+// Honouring either one only halfway would be worse than refusing it: a filter
+// that was ignored would evaluate more than the caller asked about, and an
+// input printed from here would not be the input the server judged.
+//
+// Stated as errors rather than as a cobra exclusion group so that each one can
+// say why, which is what an insider reaching for an undocumented flag needs.
+func (o *commonEvaluateOptions) refuseWhatTheServerCannotDo() error {
+	if len(o.attestations) > 0 {
+		return fmt.Errorf(
+			"--attestations is not supported with --server-side; " +
+				"filtering is done here and the server has no equivalent")
+	}
+	if o.showInput {
+		return fmt.Errorf(
+			"--show-input is not supported with --server-side; " +
+				"the server does not return the input it evaluated")
+	}
+	return nil
 }
 
 // serverSideFailure reports an evaluation that answered no verdict. It is
