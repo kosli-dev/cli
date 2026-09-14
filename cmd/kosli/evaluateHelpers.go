@@ -29,16 +29,25 @@ var policyFetchTimeout = 10 * time.Second
 // misconfigured server streaming an unbounded body. 5 * 2^20 (5*1MiB)
 const policyMaxBytes = 5 << 20 // 5 MiB
 
-// maxServerSideTrails mirrors the API's own ceiling. Checked here so that a
-// caller naming too many is told which limit they crossed, rather than reading
-// it out of a rejected request.
+// maxServerSideTrails mirrors the API's own ceiling, MAX_TRAILS in the server's
+// src/fastapi_app/models/evaluations.py. Checked here so that a caller naming
+// too many is told which limit they crossed, rather than reading it out of a
+// rejected request. Drift makes this refuse what the server would accept, so
+// the two are worth comparing whenever that model changes.
 const maxServerSideTrails = 100
 
-// serverPolicyMaxBytes mirrors the API's cap on a policy bundle, which counts
-// the names as well as the sources. It is a fifth of what a remote --policy
+// serverPolicyMaxBytes mirrors the API's cap on a policy bundle, MAX_POLICY_BYTES
+// in the server's src/fastapi_app/models/evaluations.py, which counts the names
+// as well as the sources. It is a fifth of what a remote --policy
 // read allows, so a policy can be fetched in full and still be too big to
 // send; saying so here beats a rejected request.
 const serverPolicyMaxBytes = 1 << 20 // 1 MiB
+
+// serverSideWaitOptions is how long a verdict is waited for, and the seam a
+// test shrinks it through. It lives here rather than being an override of the
+// package default, so a test never reaches into another package's state to set
+// it and can never leave a shortened budget behind for whatever runs next.
+var serverSideWaitOptions = evaluations.WaitOptions{}
 
 type commonEvaluateOptions struct {
 	flowName     string
@@ -268,12 +277,14 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 			maxServerSideTrails, len(trails))
 	}
 
-	policySource, err := loadPolicy(o.policyRef)
+	// Parsed before the policy is read: --params is local and cheap to check,
+	// and a remote policy fetched first would be thrown away by a typo in it.
+	params, err := parseParams(o.params)
 	if err != nil {
 		return err
 	}
 
-	params, err := parseParams(o.params)
+	policySource, err := loadPolicy(o.policyRef)
 	if err != nil {
 		return err
 	}
@@ -304,7 +315,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 	}
 
 	evaluation, err := client.WaitForTerminal(context.Background(), global.Org, created.ID,
-		evaluations.WaitOptions{})
+		serverSideWaitOptions)
 	if err != nil {
 		return serverSideRequestError(err)
 	}
@@ -347,6 +358,14 @@ func (o *commonEvaluateOptions) refuseWhatTheServerCannotDo() error {
 // unchanged; the two cases below are the ones where they are missing or not
 // enough on their own.
 func serverSideRequestError(err error) error {
+	// An expired wait already says exactly what happened and names the
+	// evaluation. Dressing it as a transport failure would put a sentence
+	// about not reaching Kosli in front of one saying Kosli was reached.
+	var stillPending *evaluations.StillPendingError
+	if errors.As(err, &stillPending) {
+		return err
+	}
+
 	var apiError *requests.APIError
 	if !errors.As(err, &apiError) {
 		// A retryable status or network trouble, which the shared client has
@@ -365,34 +384,15 @@ func serverSideRequestError(err error) error {
 			"remove --server-side to evaluate on this machine instead",
 			global.Org, apiError.Message)
 
-	case apiError.StatusCode == http.StatusNotFound && !carriesServerMessage(apiError):
+	// Not a sentence the API wrote, so this 404 came from something that does
+	// not serve the route at all: a server too old to have it, or a proxy in
+	// front of one. The shared client records the difference where the body is
+	// decoded, since nothing downstream could tell afterwards.
+	case apiError.StatusCode == http.StatusNotFound && !apiError.HasServerMessage:
 		return errors.New("this Kosli server does not support server-side evaluation; " +
 			"remove --server-side to evaluate on this machine instead")
 	}
 	return err
-}
-
-// carriesServerMessage reports whether a refusal arrived with a sentence the
-// Kosli API actually wrote. Two kinds of answer reach here without one, and
-// the shared client leaves a different trace for each: a JSON body with no
-// message field is rendered as a Go map, and a body that is not JSON at all
-// leaves the decoder's own complaint. A 404 of either kind came from something
-// that does not serve this route, such as a server too old to have it or a
-// proxy in front of one, and neither trace is fit to show anybody.
-func carriesServerMessage(apiError *requests.APIError) bool {
-	if strings.HasPrefix(apiError.Message, "map[") {
-		return false
-	}
-	for _, decoderComplaint := range []string{
-		"invalid character ",
-		"unexpected end of JSON input",
-		"json: cannot unmarshal ",
-	} {
-		if strings.HasPrefix(apiError.Message, decoderComplaint) {
-			return false
-		}
-	}
-	return true
 }
 
 // serverSideFailure reports an evaluation that answered no verdict. It is

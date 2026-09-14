@@ -493,6 +493,7 @@ func (suite *EvaluateServerSideTestSuite) TestAnOlderServerIsNamedAsSuch() {
 		{name: "a server that routes nothing here", body: `{"detail":"Not Found"}`},
 		{name: "a proxy answering in html", body: `<html><body>404 Not Found</body></html>`},
 		{name: "an answer with no body at all", body: ``},
+		{name: "a bare string where an object was expected", body: `"Not Found"`},
 	} {
 		suite.Run(test.name, func() {
 			server := newRefusingServer(suite.T(), http.StatusNotFound, test.body)
@@ -597,13 +598,13 @@ func (suite *EvaluateServerSideTestSuite) TestAServerFaultGetsASentenceOfOurOwn(
 }
 
 func (suite *EvaluateServerSideTestSuite) TestAWaitThatExpiresNamesTheEvaluationAndNoVerdict() {
-	original := evaluations.DefaultWaitOptions
-	evaluations.DefaultWaitOptions = evaluations.WaitOptions{
+	original := serverSideWaitOptions
+	serverSideWaitOptions = evaluations.WaitOptions{
 		Timeout: 20 * time.Millisecond,
 		Initial: time.Millisecond,
 		Max:     2 * time.Millisecond,
 	}
-	defer func() { evaluations.DefaultWaitOptions = original }()
+	defer func() { serverSideWaitOptions = original }()
 
 	server, _ := newFakeEvaluations(suite.T(), createdPending)
 
@@ -612,6 +613,8 @@ func (suite *EvaluateServerSideTestSuite) TestAWaitThatExpiresNamesTheEvaluation
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), "still pending")
 	require.Contains(suite.T(), err.Error(), "01EVAL", "name the evaluation still running")
+	require.NotContains(suite.T(), err.Error(), "could not get a server-side evaluation",
+		"the server answered, so this is not a transport failure")
 	require.NotContains(suite.T(), combined, "DENIED")
 	require.NotContains(suite.T(), combined, "ALLOWED")
 }

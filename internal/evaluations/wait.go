@@ -2,6 +2,7 @@ package evaluations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -70,6 +71,8 @@ func (c *Client) Get(org, id string) (*Evaluation, error) {
 		return nil, err
 	}
 
+	// DryRun is deliberately not set: it means do not write, and a read writes
+	// nothing. That matches how every other read in this CLI is made.
 	response, err := c.http.Do(&requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    endpoint,
@@ -77,6 +80,12 @@ func (c *Client) Get(org, id string) (*Evaluation, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+	if response == nil {
+		// Unreachable while the line above asks for a real request, and guarded
+		// anyway: the shared client answers a suppressed request with nothing at
+		// all, so anyone who later adds one here meets this instead of a panic.
+		return nil, errors.New("no evaluation was read back")
 	}
 	return decodeEvaluation(response.Body)
 }

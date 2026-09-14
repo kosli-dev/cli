@@ -360,7 +360,7 @@ If it is wanted later it should be its own ticket, deciding the convention for t
 
 ## 5b. Review findings
 
-A code review of the finished branch raised six things. Four were fixed; two cannot be, without changing code every command shares.
+A code review of the finished branch raised findings in two rounds. All but two were fixed; those two cannot be, without changing behaviour every command inherits.
 
 **Fixed**
 
@@ -369,10 +369,19 @@ A code review of the finished branch raised six things. Four were fixed; two can
 3. **The refusal at 403 threw the server's reason away** and always blamed the feature flag, so a token without rights on the org was sent after the wrong thing. Both reasons travel now.
 4. **An accepted evaluation with no id was polled anyway**, fetching a different resource and then blaming the answer. It is refused with a clear message, and nothing is read.
 
+**Fixed in a second pass, after review on the pull request**
+
+5. **The envelope sniff still missed a shape**, a body that is a bare JSON string, which arrives as a plain word and looked like a sentence the server wrote. Replaced entirely: the shared client now records whether the body carried a message field, at the one place that can know, and the 404 branch reads that fact instead of guessing from how the message was rendered. The string coupling between two packages is gone, and four body shapes are pinned.
+6. **An expired wait was dressed as a transport failure.** It reached the user behind a sentence saying Kosli could not be reached, over one saying Kosli answered and the evaluation is still running. It now passes through untouched, and the test asserts the transport wording is absent rather than merely that the right words appear somewhere.
+7. **A read could have panicked on a suppressed request.** Unreachable today, guarded anyway.
+8. **Policy parameters are parsed before the policy is fetched**, so a typo in them no longer costs a remote fetch first.
+9. **The wait budget's test seam moved out of the package default.** A test was reassigning an exported variable in another package, which is safe only while nothing runs in parallel and leaves a shortened budget behind if a restore is ever missed.
+10. **Both mirrored limits now name the server constant they copy**, so drift is findable.
+
 **Known limitations, recorded rather than fixed**
 
-5. **The wait budget governs the polling, not a single read.** A read carries no context and the shared HTTP client sets no overall deadline, so a very slow server can overrun the budget by one read, and cancelling stops the loop only at its next turn. Holding to the budget exactly means giving the read a deadline of its own, which needs `internal/requests` to accept a context. That is a change every command inherits, so it belongs in its own ticket rather than here. Stated on `WaitOptions` so nobody reads the budget as a hard bound.
-6. **Creating an evaluation is not idempotent and the shared client retries it.** A create that succeeded but whose answer was lost is sent again, so one command can leave more than one evaluation behind. They duplicate each other rather than disagreeing, since each is deterministic for the same policy and instant, so the cost is wasted work rather than a wrong answer. Preventing it needs a caller-supplied key, which the API does not take. Stated on `Create`.
+11. **The wait budget governs the polling, not a single read.** A read carries no context and the shared HTTP client sets no overall deadline, so a very slow server can overrun the budget by one read, and cancelling stops the loop only at its next turn. Holding to the budget exactly means giving the read a deadline of its own, which needs `internal/requests` to accept a context. That is a change every command inherits, so it belongs in its own ticket rather than here. Stated on `WaitOptions` so nobody reads the budget as a hard bound.
+12. **Creating an evaluation is not idempotent and the shared client retries it.** A create that succeeded but whose answer was lost is sent again, so one command can leave more than one evaluation behind. They duplicate each other rather than disagreeing, since each is deterministic for the same policy and instant, so the cost is wasted work rather than a wrong answer. Preventing it needs a caller-supplied key, which the API does not take. Stated on `Create`.
 
 ---
 

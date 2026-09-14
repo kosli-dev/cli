@@ -48,6 +48,14 @@ type HTTPResponse struct {
 type APIError struct {
 	StatusCode int
 	Message    string
+	// HasServerMessage records whether the body carried the message field that
+	// a Kosli error always carries. False means Message was salvaged from
+	// something else -- a body with no message field, or one that was not JSON
+	// at all -- so it is a rendering rather than a sentence anyone wrote, and
+	// the answer did not come from this API. Recorded here because it is only
+	// knowable where the body is decoded; by the time a caller sees Message,
+	// the difference is gone.
+	HasServerMessage bool
 }
 
 func (e *APIError) Error() string {
@@ -333,6 +341,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 				return nil, &APIError{StatusCode: resp.StatusCode, Message: err.Error()}
 			}
 			cleanedErrorMessage := ""
+			hasServerMessage := false
 			if reflect.ValueOf(respBody).Kind() == reflect.String {
 				cleanedErrorMessage = respBody.(string)
 			} else if reflect.ValueOf(respBody).Kind() == reflect.Map {
@@ -341,6 +350,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 				respBodyMap := respBody.(map[string]any)
 				message, ok := respBodyMap["message"]
 				if ok {
+					hasServerMessage = true
 					errors, ok := respBodyMap["errors"]
 					if ok {
 						cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0] +
@@ -352,7 +362,11 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 					cleanedErrorMessage = fmt.Sprintf("%s", respBodyMap)
 				}
 			}
-			return nil, &APIError{StatusCode: resp.StatusCode, Message: cleanedErrorMessage}
+			return nil, &APIError{
+				StatusCode:       resp.StatusCode,
+				Message:          cleanedErrorMessage,
+				HasServerMessage: hasServerMessage,
+			}
 		}
 		return &HTTPResponse{string(body), resp}, nil
 	}
