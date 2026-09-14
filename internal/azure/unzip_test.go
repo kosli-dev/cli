@@ -154,19 +154,53 @@ func TestUnzipWritesASymlinkEntryAsARegularFile(t *testing.T) {
 	require.Equal(t, "/etc/passwd", string(got))
 }
 
-// Legal in a zip, impossible on disk: a file "a" and an entry "a/b".
-func TestUnzipNamesTheEntryWhoseParentIsAFile(t *testing.T) {
-	tmpDir := t.TempDir()
-	zipPath := filepath.Join(tmpDir, "package.zip")
-	writeZip(t, zipPath, []zipEntry{
-		{name: "a", content: "a file"},
-		{name: "a/b", content: "under the file"},
-	})
+// Legal in a zip, impossible on disk: one name used as both a file and a
+// directory. The error must name the entry that collided, not a temp path.
+func TestUnzipNamesTheEntryThatCollides(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		entries    []zipEntry
+		wantEntry  string
+		wantErrMsg string
+	}{
+		{
+			name:       "a file entry under an earlier file",
+			entries:    []zipEntry{{name: "a", content: "a file"}, {name: "a/b", content: "under the file"}},
+			wantEntry:  "a/b",
+			wantErrMsg: "one of its parent directories was already extracted as a file",
+		},
+		{
+			name:       "a directory entry over an earlier file",
+			entries:    []zipEntry{{name: "a", content: "a file"}, {name: "a/", isDir: true}},
+			wantEntry:  "a/",
+			wantErrMsg: "was already extracted as a file",
+		},
+		{
+			name:       "a file entry over an earlier directory",
+			entries:    []zipEntry{{name: "a/", isDir: true}, {name: "a", content: "a file"}},
+			wantEntry:  "a",
+			wantErrMsg: "was already extracted as a directory",
+		},
+		{
+			name:       "a file entry over an implied directory",
+			entries:    []zipEntry{{name: "a/b", content: "under a"}, {name: "a", content: "a file"}},
+			wantEntry:  "a",
+			wantErrMsg: "was already extracted as a directory",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			zipPath := filepath.Join(tmpDir, "package.zip")
+			writeZip(t, zipPath, tc.entries)
 
-	err := unzip(zipPath, filepath.Join(tmpDir, "extracted"), logger.NewStandardLogger())
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "zip entry [a/b]")
-	require.Contains(t, err.Error(), "parent directories was already extracted as a file")
+			destDir := filepath.Join(tmpDir, "extracted")
+			err := unzip(zipPath, destDir, logger.NewStandardLogger())
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "zip entry ["+tc.wantEntry+"]")
+			require.Contains(t, err.Error(), tc.wantErrMsg)
+			require.NotContains(t, err.Error(), destDir, "the error must not leak the temp path")
+		})
+	}
 }
 
 // A zero-mode entry (unknown creator, or Unix external attributes left at 0)

@@ -340,9 +340,10 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 			continue
 		}
 		if err != nil {
-			// snapshot azure has no exclude flag and .kosli_ignore is only read
-			// after extraction, so the only remedy is a changed package.
-			return fmt.Errorf("zip entry %w; the package cannot be extracted safely, so the app cannot be reported until it is redeployed without that entry", err)
+			// One app's error cancels the whole run, snapshot azure has no exclude
+			// flag, and .kosli_ignore is only read after extraction, so the only
+			// remedy is a changed package.
+			return fmt.Errorf("zip entry %w; the package cannot be extracted safely, so no app in the environment is reported until this app is redeployed without that entry", err)
 		}
 
 		if err := extractZipEntry(f, filePath, logger); err != nil {
@@ -355,19 +356,32 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 // extractZipEntry writes one entry to filePath, which the caller has already
 // checked stays inside the destination directory.
 func extractZipEntry(f *zip.File, filePath string, logger *logger.Logger) error {
+	isDir := f.FileInfo().IsDir()
+
+	// Legal in a zip, impossible on disk: one name as both a file and a
+	// directory. Checked up front so the message names this entry rather than
+	// whichever filesystem call happens to fail, and fails the same way on
+	// every platform.
+	if existing, statErr := os.Lstat(filePath); statErr == nil && existing.IsDir() != isDir {
+		if existing.IsDir() {
+			return errors.New("was already extracted as a directory")
+		}
+		return errors.New("was already extracted as a file")
+	}
+
 	dir := filePath
-	if !f.FileInfo().IsDir() {
+	if !isDir {
 		dir = filepath.Dir(filePath)
 	}
 	err := os.MkdirAll(dir, os.ModePerm)
 	if errors.Is(err, syscall.ENOTDIR) {
-		// Legal in a zip, impossible on disk: a file "a" and an entry under "a/".
+		// A file "a" and an entry under "a/".
 		return errors.New("one of its parent directories was already extracted as a file")
 	}
 	if err != nil {
 		return err
 	}
-	if f.FileInfo().IsDir() {
+	if isDir {
 		return nil
 	}
 
