@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// maxReportedS3KeyProblems caps how many keys one error lists before
+// maxReportedS3KeyProblems caps how many problems one error lists before
 // summarising the rest, so a bucket-wide problem stays readable.
 const maxReportedS3KeyProblems = 10
 

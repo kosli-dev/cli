@@ -32,6 +32,12 @@ func (fs virtualFS) excludedPaths(rules []string) (map[string]bool, error) {
 	excluded := map[string]bool{}
 	for _, rule := range rules {
 		pattern := path.Join(virtualRoot, rule)
+		// filepath.Glob validates the whole pattern before it looks at the
+		// filesystem, so a malformed rule fails on disk even when it names a path
+		// outside the tree, which the skip below never evaluates.
+		if _, err := path.Match(pattern, ""); err != nil {
+			return nil, fmt.Errorf("ignore rule %q: %w", rule, err)
+		}
 		// On disk the root is a temp directory with an unguessable name, so a rule
 		// that resolves to the root or outside it cannot match anything there.
 		if pattern == virtualRoot || !strings.HasPrefix(pattern, virtualRoot+"/") {

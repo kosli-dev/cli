@@ -112,7 +112,7 @@ func (suite *VirtualIgnoreTestSuite) TestMatchesDirSha256() {
 // before it looks at the filesystem, so this holds even for a rule under a
 // directory the tree does not have.
 func (suite *VirtualIgnoreTestSuite) TestMalformedRuleIsAnErrorOnBothSides() {
-	for _, rule := range []string{"[", "nonexistent/a[", "logs/[", "a/**/["} {
+	for _, rule := range []string{"[", "nonexistent/a[", "logs/[", "a/**/[", "../a["} {
 		suite.Run(rule, func() {
 			root := suite.T().TempDir()
 			files := suite.materialise(root, ignoreTestTree, rule)
