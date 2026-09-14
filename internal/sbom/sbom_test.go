@@ -95,6 +95,10 @@ func TestToolsReadFromEveryCycloneDXLayout(t *testing.T) {
 		{"deprecated pre-1.5 layout", "cyclonedx-tools-deprecated.json", []string{"Awesome Tool 9.1.2"}},
 		// Cut from the SBOM our own pipeline produced on 2026-09-14.
 		{"1.5 services layout", "cyclonedx-tools-services.json", []string{"SBOM Export API v1.131.1"}},
+		// The schema requires a name in every slot, so a blank one means the document is
+		// malformed. Recording " v1.131.1", or an empty string, puts a tool in the
+		// attestation that names nothing.
+		{"an entry with no name is skipped", "cyclonedx-tools-nameless-service.json", []string{"SBOM Export API v1.131.1"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := ProcessSBOMFile(fixture(tc.file))

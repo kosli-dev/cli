@@ -339,20 +339,34 @@ func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 	var names []string
 	if tools.Tools != nil {
 		for _, tool := range *tools.Tools {
-			names = append(names, nameAndVersion(tool.Name, tool.Version))
+			names = appendTool(names, tool.Name, tool.Version)
 		}
 	}
 	if tools.Components != nil {
 		for _, component := range *tools.Components {
-			names = append(names, nameAndVersion(component.Name, component.Version))
+			names = appendTool(names, component.Name, component.Version)
 		}
 	}
 	if tools.Services != nil {
 		for _, service := range *tools.Services {
-			names = append(names, nameAndVersion(service.Name, service.Version))
+			names = appendTool(names, service.Name, service.Version)
 		}
 	}
 	return names
+}
+
+// appendTool records one tool, skipping an entry that names nothing. The schema
+// requires a name in every slot, so a blank one means a malformed document, and
+// recording a bare version or an empty string puts a tool in the attestation that
+// identifies nothing. Every slot is held to this, so a document cannot get a blank
+// past one reader that another would refuse. A block whose entries are all skipped
+// still yields nil rather than an empty list, which is how "none recorded" is
+// distinguished from "recorded as empty".
+func appendTool(names []string, name, version string) []string {
+	if name == "" {
+		return names
+	}
+	return append(names, nameAndVersion(name, version))
 }
 
 func nameAndVersion(name, version string) string {
