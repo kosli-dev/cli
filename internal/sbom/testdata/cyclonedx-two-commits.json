@@ -1,0 +1,52 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "services": [
+        {
+          "provider": {
+            "name": "Snyk"
+          },
+          "name": "SBOM Export API",
+          "version": "v1.131.1"
+        }
+      ]
+    },
+    "component": {
+      "type": "container",
+      "name": "example.com/app",
+      "version": "1.2.3",
+      "pedigree": {
+        "commits": [
+          {
+            "uid": "9239abaf0a78d08f7f9e63f94eec0e5b65c82b89",
+            "url": "https://github.com/kosli-dev/server/commit/9239abaf0a78d08f7f9e63f94eec0e5b65c82b89"
+          },
+          {
+            "uid": "45e5e53bebef18a804fd0a71bd04ed5e4e3dbd52",
+            "url": "https://github.com/kosli-dev/server/commit/45e5e53b"
+          }
+        ]
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://example.com"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/kosli-dev/server"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "left-pad",
+      "version": "1.0.0"
+    }
+  ]
+}

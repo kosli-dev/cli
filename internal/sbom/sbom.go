@@ -330,11 +330,11 @@ func packageCount(components *[]cdx.Component) int {
 	return count
 }
 
-// toolsFromCycloneDX reads both tool layouts. Spec 1.5 moved tools from a
-// dedicated list to components, and the library keeps the older list populated
-// for documents that use it, so a document may fill either. The services slot
-// the same spec added is deliberately skipped: a service a document consumed is
-// not a tool that generated it.
+// toolsFromCycloneDX reads every tool layout. Spec 1.5 moved tools from a
+// dedicated list to components and services, and the library keeps the older
+// list populated for documents that use it, so a document may fill any of them.
+// A hosted generator records itself as a service, which is how Snyk names
+// itself, so skipping that slot loses the tool for every SBOM it produces.
 func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 	if tools == nil {
 		return nil
@@ -354,7 +354,12 @@ func toolsFromCycloneDX(tools *cdx.ToolsChoice) []string {
 	// Snyk does, so leaving it out dropped the tool for every SBOM it produces.
 	if tools.Services != nil {
 		for _, service := range *tools.Services {
-			names = append(names, nameAndVersion(service.Name, service.Version))
+			name := service.Name
+			// "SBOM Export API" names no vendor. Snyk puts itself in provider.
+			if service.Provider != nil && service.Provider.Name != "" {
+				name = service.Provider.Name + " " + name
+			}
+			names = append(names, nameAndVersion(name, service.Version))
 		}
 	}
 	return names
@@ -388,16 +393,23 @@ func subjectFromComponent(component *cdx.Component) (*Subject, error) {
 			}
 		}
 	}
-	// The first commit with a uid. Pedigree records ancestry, so later entries
-	// describe where the component came from rather than what it is.
+	// Only when the pedigree names exactly one commit. The spec calls the list a
+	// trail describing how a component deviates from an ancestor, and does not
+	// say which end is the component, so with several there is no way to tell
+	// which one it was built from. Recording the wrong one would defeat the
+	// point of the field, which is to be compared with the commit the
+	// attestation records. Same rule as an SPDX document describing several
+	// packages: ambiguous means record nothing.
 	if component.Pedigree != nil && component.Pedigree.Commits != nil {
+		var identified []cdx.Commit
 		for _, commit := range *component.Pedigree.Commits {
-			if commit.UID == "" {
-				continue
+			if commit.UID != "" {
+				identified = append(identified, commit)
 			}
-			subject.Commit = nullIfEmpty(commit.UID)
-			subject.CommitURL = nullIfEmpty(commit.URL)
-			break
+		}
+		if len(identified) == 1 {
+			subject.Commit = nullIfEmpty(identified[0].UID)
+			subject.CommitURL = nullIfEmpty(identified[0].URL)
 		}
 	}
 	if component.ExternalReferences != nil {
@@ -486,31 +498,37 @@ func subjectFromSPDX(doc *spdx.Document) (*Subject, error) {
 	return nil, nil
 }
 
-// vcsFromSPDXDownloadLocation reads the VCS form SPDX defines for
+// vcsFromSPDXDownloadLocation reads the VCS form SPDX 7.7 defines for
 // downloadLocation: "<tool>+<transport>://<host>/<path>[@<revision>][#<subpath>]".
 //
+// That field holds one of three shapes. This one, a plain URL for a direct
+// download, or NONE/NOASSERTION. Only the first names a repository, so the
+// "<tool>+" prefix is required: without it a release tarball or a registry URL
+// would be recorded as the place the source lives.
+//
 // The revision is whatever the producer wrote, a tag or a branch as often as a
-// commit, so it is only reported as a commit when it reads as a hexadecimal
-// object id. Reporting a branch name as a commit would be worse than reporting
-// nothing, because a reader cannot tell the difference afterwards.
+// commit, so it is only reported as a commit when the tool names revisions by
+// object id and it reads as one. Reporting a branch as a commit would be worse
+// than reporting nothing, because a reader cannot tell the difference
+// afterwards.
 func vcsFromSPDXDownloadLocation(location string) (vcsURL *string, commit *string) {
 	// Both are the spec's ways of saying the field was left unanswered.
 	if location == "" || location == "NOASSERTION" || location == "NONE" {
 		return nil, nil
 	}
-	if plus := strings.Index(location, "+"); plus != -1 {
-		if scheme := strings.Index(location, "://"); scheme == -1 || plus < scheme {
-			location = location[plus+1:]
-		}
+	plus := strings.Index(location, "+")
+	scheme := strings.Index(location, "://")
+	if plus == -1 || scheme == -1 || plus > scheme {
+		return nil, nil
 	}
+	tool := location[:plus]
+	location = location[plus+1:]
 	if hash := strings.Index(location, "#"); hash != -1 {
 		location = location[:hash]
 	}
-	if !strings.Contains(location, "://") {
-		return nil, nil
-	}
+
 	// Userinfo sits between "://" and the first "/", so only an "@" after the
-	// path begins can be a revision. "https://user@example.com/r" has no revision.
+	// path begins can be a revision. "git+https://user@example.com/r" has none.
 	revision := ""
 	schemeEnd := strings.Index(location, "://") + len("://")
 	if slash := strings.Index(location[schemeEnd:], "/"); slash != -1 {
@@ -520,17 +538,26 @@ func vcsFromSPDXDownloadLocation(location string) (vcsURL *string, commit *strin
 			location = location[:at]
 		}
 	}
-	if isHexObjectID(revision) {
+	if revisionsAreObjectIDs(tool) && isHexObjectID(revision) {
 		commit = nullIfEmpty(revision)
 	}
 	return nullIfEmpty(location), commit
 }
 
-// isHexObjectID reports whether a revision reads as a commit rather than a
-// branch or tag. Seven characters is git's shortest abbreviation; anything
-// longer than a sha-256 object id is something else.
+// revisionsAreObjectIDs reports whether a tool names revisions by content hash.
+// Subversion and Bazaar count revisions instead, and a decimal counter passes
+// every test for a hexadecimal object id, so "svn+...@1234567" would otherwise
+// be recorded as a commit.
+func revisionsAreObjectIDs(tool string) bool {
+	return tool == "git" || tool == "hg"
+}
+
+// isHexObjectID reports whether a revision reads as an object id rather than a
+// branch or tag. Git abbreviates to as few as 4 characters but 7 is the
+// shortest that is unambiguous in practice; a full id is 40 characters for
+// sha-1 or 64 for sha-256, and nothing between the two is an object id.
 func isHexObjectID(revision string) bool {
-	if len(revision) < 7 || len(revision) > 64 {
+	if (len(revision) < 7 || len(revision) > 40) && len(revision) != 64 {
 		return false
 	}
 	for _, r := range revision {

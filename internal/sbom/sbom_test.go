@@ -93,7 +93,7 @@ func TestToolsReadFromEveryCycloneDXLayout(t *testing.T) {
 			// It went unreported until services were read.
 			name:  "post-1.5 components and services",
 			file:  "cyclonedx-tools.json",
-			tools: []string{"Awesome Tool 9.1.2", "Acme Signing Server"},
+			tools: []string{"Awesome Tool 9.1.2", "Acme Org Acme Signing Server"},
 		},
 		{
 			name:  "deprecated pre-1.5 layout",
@@ -435,7 +435,7 @@ func TestTheXMLReaderPopulatesTheSameFields(t *testing.T) {
 
 	require.NoError(t, err)
 	// The service here is what proves services are read on the XML path too.
-	assert.Equal(t, []string{"Awesome Tool 9.1.2", "Acme Signing Server"}, got.Document.Tools)
+	assert.Equal(t, []string{"Awesome Tool 9.1.2", "Acme Org Acme Signing Server"}, got.Document.Tools)
 	require.NotNil(t, got.Document.CreatedAt)
 	assert.Equal(t, "2020-04-07T07:01:00Z", *got.Document.CreatedAt)
 	assert.Equal(t, 3, got.Document.PackageCount)
@@ -449,7 +449,7 @@ func TestToolsFromAServiceEntry(t *testing.T) {
 	got, err := ProcessSBOMFile(fixture("cyclonedx-vcs.json"))
 
 	require.NoError(t, err)
-	assert.Equal(t, []string{"SBOM Export API v1.131.1"}, got.Document.Tools)
+	assert.Equal(t, []string{"Snyk SBOM Export API v1.131.1"}, got.Document.Tools)
 }
 
 func TestSubjectRecordsWhereTheComponentCameFrom(t *testing.T) {
@@ -506,6 +506,20 @@ func TestSubjectLeavesABranchOutOfCommit(t *testing.T) {
 	assert.Equal(t, "https://github.com/kosli-dev/server", *got.Document.Subject.VcsURL)
 }
 
+// The spec calls pedigree.commits a trail and does not say which end is the
+// component, so several identified commits cannot be resolved to one.
+func TestSubjectLeavesCommitOutWhenThePedigreeIsAmbiguous(t *testing.T) {
+	got, err := ProcessSBOMFile(fixture("cyclonedx-two-commits.json"))
+
+	require.NoError(t, err)
+	require.NotNil(t, got.Document.Subject)
+	assert.Nil(t, got.Document.Subject.Commit)
+	assert.Nil(t, got.Document.Subject.CommitURL)
+	// The repository is still unambiguous, so it is still recorded.
+	require.NotNil(t, got.Document.Subject.VcsURL)
+	assert.Equal(t, "https://github.com/kosli-dev/server", *got.Document.Subject.VcsURL)
+}
+
 func TestVcsFromSPDXDownloadLocation(t *testing.T) {
 	sha := "9239abaf0a78d08f7f9e63f94eec0e5b65c82b89"
 	for _, tc := range []struct {
@@ -518,14 +532,22 @@ func TestVcsFromSPDXDownloadLocation(t *testing.T) {
 		{"none", "NONE", "", ""},
 		{"empty", "", "", ""},
 		{"not a url", "./local/path", "", ""},
-		{"plain url, no revision", "https://example.com/r", "https://example.com/r", ""},
-		{"vcs tool prefix stripped", "git+https://example.com/r", "https://example.com/r", ""},
+		{"vcs prefix, no revision", "git+https://example.com/r", "https://example.com/r", ""},
 		{"revision that is a commit", "git+https://example.com/r@" + sha, "https://example.com/r", sha},
 		{"revision that is a branch", "git+https://example.com/r@main", "https://example.com/r", ""},
 		{"short abbreviation counts", "git+https://example.com/r@9239aba", "https://example.com/r", "9239aba"},
 		{"six characters is too short", "git+https://example.com/r@9239ab", "https://example.com/r", ""},
 		{"subpath removed", "git+https://example.com/r@" + sha + "#src/a.go", "https://example.com/r", sha},
-		{"userinfo is not a revision", "https://user@example.com/r", "https://user@example.com/r", ""},
+		{"userinfo is not a revision", "git+https://user@example.com/r", "https://user@example.com/r", ""},
+		{"a plain url is a direct download, not a repository", "https://example.com/r", "", ""},
+		{"a release tarball is not a repository", "https://registry.npmjs.org/left-pad/-/left-pad-1.0.0.tgz", "", ""},
+		{"a subversion revision is a counter, not an object id", "svn+https://example.com/r@1234567", "https://example.com/r", ""},
+		{"mercurial names revisions by object id", "hg+https://example.com/r@" + sha, "https://example.com/r", sha},
+		{"a plus in the path is not a tool prefix", "git+https://example.com/a+b@" + sha, "https://example.com/a+b", sha},
+		{"userinfo and a revision together", "git+https://user@example.com/r@" + sha, "https://user@example.com/r", sha},
+		{"no path, so the trailing @ stays in the url", "git+https://example.com@" + sha, "https://example.com@" + sha, ""},
+		{"forty-eight hex characters is not an object id", "git+https://example.com/r@" + sha[:8] + sha, "https://example.com/r", ""},
+		{"a sha-256 object id is sixty-four", "git+https://example.com/r@" + sha[:24] + sha, "https://example.com/r", sha[:24] + sha},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			gotURL, gotSHA := vcsFromSPDXDownloadLocation(tc.location)
