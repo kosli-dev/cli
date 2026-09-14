@@ -1,7 +1,7 @@
 # Plan: `kosli evaluate trail|trails --server-side` (hidden flag)
 
 > **Ticket:** https://github.com/kosli-dev/server/issues/6700
-> **Status:** slices 0 to 5 done; slice 6 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
+> **Status:** slices 0 to 6 done; slice 7 next. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
 > **Audience:** the agent or engineer who implements this. Follow the repo's TDD and thin-slice workflow (`CLAUDE.md`). Create a `## feat(evaluate): --server-side` section in `TODO.md` from the slice list below before coding.
 > **Out of scope (moved to #6832):** shadow mode. Nothing here runs a server-side evaluation unless the flag is present.
 
@@ -302,17 +302,21 @@ Files: `cmd/kosli/evaluateHelpers.go` (`refuseWhatTheServerCannotDo`), `cmd/kosl
 
 ### Slice 6: classified failures and server errors
 
-Tests:
-- [ ] `status: failed, kind: compile` → stderr/err `server-side evaluation failed (compile): <message>`; stdout contains neither `ALLOWED` nor `DENIED`
-- [ ] one test per kind in a table: `no_policy`, `entrypoint`, `compile`, `result_shape`, `input_shape`, `evaluate`, `enqueue_failed`, and an unknown kind `future_kind` (printed verbatim)
-- [ ] 403 on create → error names the org, the flag `is-server-side-evaluation-enabled`, and says to remove `--server-side`
-- [ ] 404 on create with a non-trail message (endpoint missing) → error `this Kosli server does not support server-side evaluation`
-- [ ] 404 on create with `These trails do not exist ...` → that message verbatim
-- [ ] 400 (server cap) → message verbatim
-- [ ] 503 on create → message verbatim, no polling
-- [ ] wait expires → error contains `still pending` and the evaluation id; no verdict printed (shrink wait via package var in the test)
+**Done.** The rule is that the server's own words are passed on unchanged wherever it explained itself, and only two cases get wording of their own: a refused feature flag, whose message says nothing about what to do next, and a server too old to serve the route, which sends no words at all.
 
-Files: `cmd/kosli/evaluateHelpers.go`, tests.
+**How an old server is told apart from a missing trail**, both being 404. Verified by probing the client rather than assumed: a Kosli refusal always carries a message field, while an unrouted request does not, and the shared client renders the latter as a Go map. So the test is whether the message field survived, which keys off the error envelope rather than off any English wording. If the shared client ever stops rendering an envelope-less body that way, `TestAnOlderServerIsNamedAsSuch` fails, which is the point of pinning it.
+
+Tests:
+- [x] one test per kind: `no_policy`, `entrypoint`, `compile`, `result_shape`, `input_shape`, `evaluate`, `enqueue_failed`, and an unknown `future_kind`. Each names the kind and the message, and prints neither `ALLOWED` nor `DENIED`
+- [x] a `failed` evaluation carrying no reason at all still names the evaluation and prints no verdict
+- [x] 403 on create → names the org, the feature flag, and how to carry on regardless
+- [x] 404 with no message field → `this Kosli server does not support server-side evaluation`, with no internal rendering leaking into it
+- [x] 404 with `These trails do not exist ...` → that message verbatim
+- [x] 400 over the byte cap → message verbatim
+- [x] ~~503 on create → message verbatim~~ — **impossible**, per slice 1. It gets a sentence of our own, and a test asserts the server's words are gone rather than pretending otherwise
+- [x] wait expires → names the evaluation, says still pending, prints no verdict. The budget is shrunk through the exported default
+
+Files: `cmd/kosli/evaluateHelpers.go` (`serverSideRequestError`, `hasKosliErrorEnvelope`), `cmd/kosli/evaluateServerSide_test.go`.
 
 ### Slice 7: policy upload edge cases
 

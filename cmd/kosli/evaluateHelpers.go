@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -278,7 +279,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 		Params: params,
 	})
 	if err != nil {
-		return err
+		return serverSideRequestError(err)
 	}
 	if created == nil {
 		// A dry run sent nothing, so there is no evaluation to wait for.
@@ -288,7 +289,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 	evaluation, err := client.WaitForTerminal(context.Background(), global.Org, created.ID,
 		evaluations.WaitOptions{})
 	if err != nil {
-		return err
+		return serverSideRequestError(err)
 	}
 	if evaluation.Result == nil {
 		return serverSideFailure(evaluation)
@@ -318,6 +319,41 @@ func (o *commonEvaluateOptions) refuseWhatTheServerCannotDo() error {
 				"the server does not return the input it evaluated")
 	}
 	return nil
+}
+
+// serverSideRequestError turns a refusal from the API into something a caller
+// can act on. Where the server explained itself, its own words are passed on
+// unchanged; the two cases below are the ones where they are missing or not
+// enough on their own.
+func serverSideRequestError(err error) error {
+	var apiError *requests.APIError
+	if !errors.As(err, &apiError) {
+		// A retryable status or network trouble, which the shared client has
+		// already retried and given up on, discarding the body as it went. The
+		// server's own sentence is gone, so this supplies one.
+		return fmt.Errorf("could not get a server-side evaluation from Kosli: %w", err)
+	}
+
+	switch {
+	case apiError.StatusCode == http.StatusForbidden:
+		return fmt.Errorf("server-side evaluation is not enabled for org '%s'; "+
+			"it is gated on the is-server-side-evaluation-enabled feature flag. "+
+			"Remove --server-side to evaluate on this machine instead", global.Org)
+
+	case apiError.StatusCode == http.StatusNotFound && !hasKosliErrorEnvelope(apiError):
+		return errors.New("this Kosli server does not support server-side evaluation; " +
+			"remove --server-side to evaluate on this machine instead")
+	}
+	return err
+}
+
+// hasKosliErrorEnvelope reports whether a refusal carried the message field
+// that every Kosli error carries. One that did not came from something that
+// does not serve this route at all, rather than from the API declining to do
+// something. The shared client renders such a body as a Go map, which by the
+// time it reaches here is the only trace of the difference left.
+func hasKosliErrorEnvelope(apiError *requests.APIError) bool {
+	return !strings.HasPrefix(apiError.Message, "map[")
 }
 
 // serverSideFailure reports an evaluation that answered no verdict. It is

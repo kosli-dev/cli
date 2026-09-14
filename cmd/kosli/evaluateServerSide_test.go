@@ -8,7 +8,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/kosli-dev/cli/internal/evaluations"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -420,6 +422,146 @@ func (suite *EvaluateServerSideTestSuite) TestUnreadableParametersAreRefusedBefo
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), "failed to parse --params")
 	require.Empty(suite.T(), fake.created)
+}
+
+// A policy that could not run has decided nothing. Reporting any of these as a
+// denial would block a release over a typo in the policy.
+func (suite *EvaluateServerSideTestSuite) TestABrokenPolicyIsNeverADenial() {
+	for _, kind := range []string{
+		"no_policy", "entrypoint", "compile", "result_shape",
+		"input_shape", "evaluate", "enqueue_failed",
+		// Not one of the agreed kinds. The set belongs to the evaluator, so an
+		// unknown one has to reach the user rather than be flattened away.
+		"future_kind",
+	} {
+		suite.Run(kind, func() {
+			server, _ := newFakeEvaluations(suite.T(), fmt.Sprintf(
+				`{"id":"01EVAL","status":"failed","requested_at":1.0,"recorded_at":1.0,`+
+					`"error":{"kind":%q,"message":"policy.rego:4: something is wrong"}}`, kind))
+
+			_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), kind)
+			require.Contains(suite.T(), err.Error(), "policy.rego:4: something is wrong")
+			require.NotContains(suite.T(), combined, "DENIED")
+			require.NotContains(suite.T(), combined, "ALLOWED")
+		})
+	}
+}
+
+func (suite *EvaluateServerSideTestSuite) TestAFailureWithNoReasonIsStillNotADenial() {
+	server, _ := newFakeEvaluations(suite.T(),
+		`{"id":"01EVAL","status":"failed","requested_at":1.0,"recorded_at":1.0}`)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "01EVAL")
+	require.NotContains(suite.T(), combined, "DENIED")
+}
+
+func (suite *EvaluateServerSideTestSuite) TestAnUnentitledOrgIsToldWhatToDo() {
+	server := newRefusingServer(suite.T(), http.StatusForbidden,
+		`{"message":"Server-side evaluation is not enabled for this organization"}`)
+
+	_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "test-org", "name the org that was refused")
+	require.Contains(suite.T(), err.Error(), "is-server-side-evaluation-enabled")
+	require.Contains(suite.T(), err.Error(), "--server-side", "say how to carry on regardless")
+}
+
+// A Kosli server old enough to lack the endpoint answers 404 with no message
+// field, which is how it is told apart from a 404 about a trail.
+func (suite *EvaluateServerSideTestSuite) TestAnOlderServerIsNamedAsSuch() {
+	server := newRefusingServer(suite.T(), http.StatusNotFound, `{"detail":"Not Found"}`)
+
+	_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "does not support server-side evaluation")
+	require.Contains(suite.T(), err.Error(), "--server-side")
+	require.NotContains(suite.T(), err.Error(), "map[", "no internal rendering leaks out")
+}
+
+func (suite *EvaluateServerSideTestSuite) TestAServerRefusalIsPassedOnInItsOwnWords() {
+	for _, test := range []struct {
+		name   string
+		status int
+		body   string
+		want   string
+	}{
+		{
+			name:   "a trail that does not exist",
+			status: http.StatusNotFound,
+			body:   `{"message":"These trails do not exist in org 'test-org': my-flow/my-trail"}`,
+			want:   "These trails do not exist in org 'test-org': my-flow/my-trail",
+		},
+		{
+			name:   "a policy over the byte cap",
+			status: http.StatusBadRequest,
+			body:   `{"message":"policy bundle is 1048600 bytes, over the 1048576 byte limit"}`,
+			want:   "policy bundle is 1048600 bytes, over the 1048576 byte limit",
+		},
+	} {
+		suite.Run(test.name, func() {
+			server := newRefusingServer(suite.T(), test.status, test.body)
+
+			_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), test.want)
+		})
+	}
+}
+
+// The shared HTTP client retries a 5xx, gives up and throws the body away, so
+// the server's own sentence is gone by the time it reaches here.
+func (suite *EvaluateServerSideTestSuite) TestAServerFaultGetsASentenceOfOurOwn() {
+	server := newRefusingServer(suite.T(), http.StatusServiceUnavailable,
+		`{"message":"Evaluation '01EVAL' could not be queued"}`)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "could not get a server-side evaluation")
+	require.NotContains(suite.T(), err.Error(), "could not be queued", "the body is gone by now")
+	require.NotContains(suite.T(), combined, "DENIED")
+}
+
+func (suite *EvaluateServerSideTestSuite) TestAWaitThatExpiresNamesTheEvaluationAndNoVerdict() {
+	original := evaluations.DefaultWaitOptions
+	evaluations.DefaultWaitOptions = evaluations.WaitOptions{
+		Timeout: 20 * time.Millisecond,
+		Initial: time.Millisecond,
+		Max:     2 * time.Millisecond,
+	}
+	defer func() { evaluations.DefaultWaitOptions = original }()
+
+	server, _ := newFakeEvaluations(suite.T(), createdPending)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "still pending")
+	require.Contains(suite.T(), err.Error(), "01EVAL", "name the evaluation still running")
+	require.NotContains(suite.T(), combined, "DENIED")
+	require.NotContains(suite.T(), combined, "ALLOWED")
+}
+
+// newRefusingServer answers every request with one status and body, which is
+// how a create that is refused outright is exercised.
+func newRefusingServer(t *testing.T, status int, body string) *httptest.Server {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_, _ = fmt.Fprint(w, body)
+	}))
+	t.Cleanup(server.Close)
+	return server
 }
 
 func trailNames(count int) string {

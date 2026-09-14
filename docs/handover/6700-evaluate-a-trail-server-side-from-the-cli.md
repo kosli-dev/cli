@@ -40,7 +40,7 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 - [x] Slice 3 — the hidden flag on the single-trail command, happy path end to end.
 - [x] Slice 4 — the same flag on the multi-trail command, all names in one evaluation.
 - [x] Slice 5 — refuse the flag combinations the server has no equivalent for.
-- [ ] Slice 6 — classified failures and server refusals, one test per failure kind.
+- [x] Slice 6 — classified failures and server refusals, one test per failure kind.
 - [ ] Slice 7 — policy upload edge cases: remote policies, file naming, the size cap.
 - [ ] Slice 8 — distinct exit codes for denial, broken policy, expired wait and our own faults.
 - [ ] Slice 9 — lint, full test run, a staging check against an entitled organisation, and the first latency comparison between the two paths.
@@ -63,6 +63,7 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 - Input filtering and input display are refused under the flag rather than approximated. The server offers no equivalent for either, and showing the caller a later moment than the one evaluated would mislead more than refusing.
 - This repository's test environment cannot complete a server-side evaluation at all: the local stack runs a server, a database and object storage, with no queue broker, no worker and no evaluator. The local server also treats every local caller as entitled, so the feature-flag refusal cannot be reproduced there either. Every test of the new path therefore drives a stubbed HTTP server, and the existing tests stay on the real local server to prove the unflagged path is untouched. The cost accepted is that these tests pin our side of the contract only; real agreement between the two paths has to be measured on staging.
 - A denial, a broken policy, an expired wait and a fault of ours become four distinguishable exit codes, which this CLI has never had. They stay provisional while the flag is hidden, and the unflagged path keeps its single failure code unchanged.
+- Where the server explained itself, its words are passed on untouched, and only two refusals get wording of their own: an organisation that is not entitled, whose message says nothing about what to do next, and a server too old to serve the route, which sends no words at all. Those two are told apart from an ordinary refusal by whether the error envelope carried a message field, a structural tell rather than a match on English wording, and a test pins it so the day that stops being true is a failure rather than a silent misdiagnosis.
 - The two options with no server-side answer are refused outright rather than quietly ignored, and each refusal says why. Honouring either halfway would be worse than refusing it: a filter that was dropped would evaluate more than the caller asked about, and an input printed from here would not be the input the server judged. They are stated as errors rather than as a flag-exclusion rule, because the built-in wording says only that two flags conflict, and someone reaching for an undocumented flag needs the reason.
 - The tests for the flag sit in a suite of their own that needs no running server, rather than joining the existing trail suites. Those build a flow and a trail before every test, so anything added there inherits a dependency this feature cannot satisfy anyway: the local stack has no evaluator. The cost is that these tests prove only our half of the contract, and agreement with the real server still has to be measured on staging.
 - Whether the two paths print the same page turns on how an empty violation list is rendered, which was not foreseen. Running the binary showed the local path prints a null rather than an empty list when there is nothing to report. The reading side therefore keeps whichever shape it was sent instead of tidying it, so the choice is made once, where the two paths meet, rather than hidden in a decoder.
@@ -75,9 +76,8 @@ Transcribed from [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-ev
 
 ## Next Steps
 
-- [ ] Slice 6 next: classified failures and server refusals, one test per failure kind. It owns the wording for a server error, which cannot quote the server.
+- [ ] Slice 7 next: policy upload edge cases, which are remote policies, how the file is named in the bundle, and the size cap.
 - [ ] Confirm the four proposed exit-code values with the ticket owner before Slice 8; everything up to it is unaffected.
-- [ ] Decide what a server error should say, now that the server's own sentence is known to be unavailable. It falls due in Slice 6.
 - [ ] Run the two trail suites once the local test server is available; they are the only part of Slice 0 still unverified.
 - [ ] Decide whether the local test stack should later gain a broker, a worker and an evaluator, which would turn the stubbed tests into a real end-to-end check. Not required here, and a ticket of its own.
 - [ ] Measure both paths on staging against a trail with many attestations, which is the latency comparison the ticket predicts and the first number it can produce.
