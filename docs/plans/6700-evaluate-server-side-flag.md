@@ -1,7 +1,7 @@
 # Plan: `kosli evaluate trail|trails --server-side` (hidden flag)
 
 > **Ticket:** https://github.com/kosli-dev/server/issues/6700
-> **Status:** slices 0 to 7 done; slice 8 next, and it is the last one that changes behaviour. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
+> **Status:** slices 0 to 7 done, slice 8 deferred by decision, slice 9 wrap-up remaining. Written 2026-09-14 against CLI `main` @ `11306cde` and server `main` @ `9239abaf0`. Boxes are ticked as slices land, and a box proved wrong is struck through rather than deleted.
 > **Audience:** the agent or engineer who implements this. Follow the repo's TDD and thin-slice workflow (`CLAUDE.md`). Create a `## feat(evaluate): --server-side` section in `TODO.md` from the slice list below before coding.
 > **Out of scope (moved to #6832):** shadow mode. Nothing here runs a server-side evaluation unless the flag is present.
 
@@ -108,7 +108,7 @@ These are the reasons the flag is hidden. Record them in the handover, not in co
    The CLI's `TransformTrail` output keeps the whole trail document and uses `flow.name` / `name`. **A policy that reads any of the missing fields will behave differently under the flag.** The CLI's own `--show-input` cannot show the server's input (see §4.3).
 3. **`--attestations`.** Filtering is client-side only. The create payload has no filter field.
 4. **Size caps.** CLI remote policy cap is 5 MiB (`policyMaxBytes`); the server cap is 1 MiB. A policy the CLI reads can be refused by the server with 400.
-5. **Exit codes.** Today every failure exits 1 (`logger.Error` → `log.Fatalf`). The ticket wants deny, broken policy, our fault, and still-pending to be distinguishable. That needs a new mechanism (slice 8).
+5. **Exit codes.** Every failure exits 1, here and everywhere else in the CLI. The ticket wants deny, broken policy and our fault to be distinguishable, and they are, by what each one says rather than by a number. Distinct codes were considered and deferred; see slice 8 for why.
 
 ---
 
@@ -165,19 +165,19 @@ These are refinement choices the ticket leaves open. They are chosen here so wor
 
 ### 4.5 Outcome mapping in the command
 
-| Server outcome | CLI output | Exit code (after slice 8; before it every error is 1) |
+**Every failure exits 1, as it always has.** The outcomes are told apart by what they say, not by a number, and the distinct codes originally sketched here are deferred; see slice 8.
+
+| Server outcome | CLI output | Exit code |
 |---|---|---|
 | `completed`, `allow: true` | existing `RESULT: ALLOWED` / JSON | 0 |
 | `completed`, `allow: false`, assert (default) | existing `RESULT: DENIED` + violations; error `policy denied` | 1 |
 | `completed`, `allow: false`, `--no-assert` | existing output | 0 |
-| `failed`, any kind | error `server-side evaluation failed (<kind>): <message>`. **Never prints `DENIED`.** | 2 |
-| wait expired, still `pending` | error from `ErrStillPending` with the id | 3 |
-| 403 on create | error `server-side evaluation is not enabled for org '<org>' (is-server-side-evaluation-enabled); remove --server-side to evaluate locally` | 4 |
-| 404 on create (endpoint missing on old server) | error `this Kosli server does not support server-side evaluation; remove --server-side` | 4 |
+| `failed`, any kind | error `server-side evaluation failed (<kind>): <message>`. **Never prints `DENIED`.** | 1 |
+| wait expired, still `pending` | error naming the evaluation and saying it is still pending. **Never a verdict.** | 1 |
+| 403 on create | error naming the org, the feature flag, and how to carry on without the flag | 1 |
+| 404 on create (endpoint missing on old server) | error `this Kosli server does not support server-side evaluation; remove --server-side ...` | 1 |
 | 404 trails not found, 400 validation | error with the server message verbatim | 1 |
-| 503 / 5xx / network | error naming the endpoint, plus a sentence of our own. The server's message is **not** available, see below | 4 |
-
-Exit codes 2/3/4 are proposals. They are hidden behind a hidden flag, so they can change before publication. The client-side path keeps exit 1 for everything, unchanged.
+| 503 / 5xx / network | error with a sentence of our own. The server's message is **not** available, see below | 1 |
 
 **A 5xx never carries the server's message**, proven in slice 1 and pinned by a test. Any retryable status, which is every 5xx plus 429 and 409, is consumed by the shared HTTP client: it exhausts the retries and reports giving up, discarding the response body. So a 400, 403 or 404 arrives as an API error carrying the server's sentence, and a 503 arrives as a plain error reading `giving up after N attempt(s)`. Two consequences. The enqueue failure the API documents at 503 cannot be shown to a user in its own words, so slice 6 must supply a sentence of its own. And a 503 is retried `--max-api-retries` times by default even though the evaluation behind it is already recorded as failed, which wastes the user's wall clock; leave that alone unless it shows up in practice, since it is behaviour of the shared client rather than of this command.
 
@@ -266,7 +266,7 @@ Tests:
 
 Files: `cmd/kosli/evaluateHelpers.go` (`evaluateServerSide`, `serverVerdict`, `policyBundleKey`, `addServerSideFlag`), `cmd/kosli/evaluateTrail.go`, `cmd/kosli/root.go` (flag help constant `serverSideFlag`), `cmd/kosli/evaluateServerSide_test.go`.
 
-A minimal guard for a `failed` evaluation landed here too, because a failure carries no result and printing one would dereference nothing. It names the kind and the message and never prints a verdict. Slice 6 owns the per-kind tests and the exit codes.
+A minimal guard for a `failed` evaluation landed here too, because a failure carries no result and printing one would dereference nothing. It names the kind and the message and never prints a verdict. Slice 6 owns the per-kind tests.
 
 ### Slice 4: `evaluate trails --server-side`
 
@@ -333,27 +333,28 @@ Tests:
 
 Files: `cmd/kosli/evaluateHelpers.go` (`policyBundle`, `serverPolicyMaxBytes`), `cmd/kosli/evaluateServerSide_test.go`.
 
-### Slice 8: distinct exit codes
+### Slice 8: distinct exit codes — DEFERRED, not done
 
-Goal: deny (1), broken policy (2), still pending (3), our fault (4) are distinguishable, under the flag only.
+**Decided against doing this here.** Every failure keeps exit code 1, which is what the CLI has always done.
 
-Design: add `type exitCodeError struct { code int; err error }` in `cmd/kosli` with `Error()` and `Unwrap()`; `main()` checks `errors.As(err, &exitCodeError{})` and calls `logger.Error` then `os.Exit(code)`. Keep `logger.Error`'s existing `Fatalf` path for every other error so nothing else changes. Note `enrichError` in `main.go` wraps errors: make sure it uses `%w` so `errors.As` still finds the code.
+Why it was dropped rather than built:
 
-Tests:
-- [ ] unit test on `exitCodeFor(err) int`: plain error → 1; deny → 1; `failed` → 2; `ErrStillPending` → 3; 403/404-endpoint/5xx/network → 4
-- [ ] `enrichError` preserves the exit code through wrapping
-- [ ] client-side deny still yields exit 1 (regression guard)
-- [ ] `--dry-run` swallows the error and exits 0 as today (`innerMain` returns nil)
+- **It is not this ticket's change to make.** The whole CLI has exactly one failure exit path, the logger's error call, which ends in a fatal log and exits 1. Nothing anywhere chooses a code. Introducing one invents a convention that every future command inherits, through the single function every command exits by. That is a far wider blast radius than the seven slices before it, all of which stayed inside the evaluate commands.
+- **The requirement is already met, in the words.** The ticket asks that a denial, a broken policy and a fault of ours be distinguishable. They are: slice 6 gives each its own sentence, and tests assert that a broken policy and an expired wait never print a verdict. Distinct codes would only serve a script branching on them, and nothing can branch on a flag that is hidden and unpublished.
+- **Nothing this ticket exists to measure depends on it.** The number wanted here is whether the two evaluation paths agree, and that is read off the verdicts, not off exit codes.
+- **Code 1 for a denial is already promised.** `evaluate` and `evaluate input` both state in their help text that a denial exits with code 1, so that one was never free to change anyway.
 
-Files: `cmd/kosli/main.go`, `cmd/kosli/exitcode.go`, tests. This slice is optional for the first shadow comparison; land it last.
+If it is wanted later it should be its own ticket, deciding the convention for the CLI as a whole rather than for one hidden flag. The sketch that was here, an error type carrying a code plus a check in `main`, is a reasonable starting point, and `enrichError` already wraps with `%w` so a code would survive it.
 
 ### Slice 9: wrap-up
 
-- [ ] Run `make lint`, `make test_integration`.
-- [ ] Manual check against **staging** with an org that has `is-server-side-evaluation-enabled`: allow, deny, `--no-assert`, broken policy, `trails` with several names. Record wall-clock for a many-attestation trail with and without the flag (first latency comparison the ticket asks for).
-- [ ] Update `docs/adr/20260302-client-side-policy-evaluation.md` with a short "Status 2026-09" note pointing at the flag and at §3 above.
-- [ ] Create `docs/handover/6700-evaluate-a-trail-server-side-from-the-cli.md` via the `handover` skill; copy §3 and §4 into its Decisions section.
-- [ ] Remove the `TODO.md` section when the last slice merges.
+- [x] `make lint` clean across the whole repository.
+- [x] Every test that can run on a machine without the local stack passes: the whole of `internal/evaluations`, the offline command suites, and `internal/evaluate`.
+- [ ] **`make test_integration` has not been run.** It needs the local Kosli server, which needs a production API token to pull the server image. One test in `internal/requests` already fails without it on a clean checkout, so that failure is not from this work. The two client-side trail suites are the part of this change it would exercise, and they are the only thing still unverified.
+- [ ] Manual check against **staging** with an org that has `is-server-side-evaluation-enabled`: allow, deny, `--no-assert`, broken policy, `trails` with several names. Record wall-clock for a many-attestation trail with and without the flag (first latency comparison the ticket asks for). Cannot be done from here; needs staging credentials.
+- [x] `docs/adr/20260302-client-side-policy-evaluation.md` carries a status note naming the flag and both contract mismatches.
+- [x] `docs/handover/6700-evaluate-a-trail-server-side-from-the-cli.md` exists and carries every decision.
+- [ ] Remove the `TODO.md` section when the work merges. It is git-ignored, so it is local to whoever did the work.
 
 ---
 
@@ -378,7 +379,6 @@ Files: `cmd/kosli/main.go`, `cmd/kosli/exitcode.go`, tests. This slice is option
 | `cmd/kosli/evaluateTrail.go` | `addServerSideFlag`, branch on `o.serverSide` |
 | `cmd/kosli/evaluateTrails.go` | same, plus 100-trail guard |
 | `cmd/kosli/root.go` | `serverSideFlag` help constant (`"[hidden] Evaluate on the Kosli server instead of locally."`) |
-| `cmd/kosli/main.go`, `cmd/kosli/exitcode.go` | slice 8 only |
 | `cmd/kosli/evaluateTrail_test.go`, `evaluateTrails_test.go`, `evaluateFake_test.go` | tests |
 | `docs/adr/20260302-client-side-policy-evaluation.md` | status note |
 | `docs/handover/6700-evaluate-a-trail-server-side-from-the-cli.md` | via `handover` skill |
@@ -390,7 +390,7 @@ No generated docs change: hidden flags are omitted by cobra and by `kosli docs`.
 
 ## 8. Open questions for the ticket owner (do not block slices 0–7)
 
-1. Exit code values for broken policy / still pending / our fault (§4.5 proposes 2/3/4).
+1. ~~Exit code values for broken policy, still pending and our fault.~~ Settled: every failure keeps exit code 1 and slice 8 is deferred. Reopen as its own ticket if a caller ever needs to branch on the outcome.
 2. Should `--attestations` with `--server-side` be an error (chosen here) or silently ignored?
 3. Should `--show-input --server-side` fetch `GET /api/v2/trails/{org}/{flow}/{trail}/moments/latest` for a single trail instead of erroring? It shows a *later* moment than the one evaluated, so it is misleading; hence the error.
 4. Honeycomb wants evaluations split by source (flag vs shadow). The create payload has no `source` field and is `extra="forbid"`. The CLI already sends `User-Agent: Kosli/<version>`; the server can key on that, or #6832 adds a field. Nothing to do in this ticket.
