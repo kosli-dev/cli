@@ -25,7 +25,8 @@ https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings#w
 
 For zip-deployed apps, the fingerprint respects a ^.kosli_ignore^ file at the root of the deployed package.
 The package is extracted into a temporary directory; an entry whose name would resolve outside that directory
-(for example one containing a ^..^ segment) fails the snapshot rather than being written.
+(for example one containing a ^..^ segment) fails the snapshot rather than being written, and the app cannot
+be reported until it is redeployed without that entry.
 
 With ^--digests-source acr^, the registry is taken from each app's own container configuration. Azure
 credentials are only ever sent to an Azure Container Registry login server. An app whose image comes

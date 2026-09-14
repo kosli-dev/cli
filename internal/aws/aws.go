@@ -567,6 +567,13 @@ func localPathForS3Key(key string) (string, error) {
 	return rel, nil
 }
 
+// The key-caused rejections downloadFileFromBucket adds to those of
+// utils.LocalRelativePath.
+var (
+	errParentPrefixIsObject = errors.New("one of its parent prefixes has already been downloaded as an object")
+	errPathCollision        = errors.New("another object already downloaded to the same local path")
+)
+
 // unusableS3KeyError is only for failures the key itself causes. Advising
 // exclusion on a machine fault such as a full disk would drop a legitimate
 // object from the snapshot.
@@ -583,7 +590,7 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 	err = os.MkdirAll(filepath.Dir(dest), 0770)
 	if errors.Is(err, syscall.ENOTDIR) {
 		// Legal in S3, impossible on disk: an object "a" and a key under "a/".
-		return unusableS3KeyError(key, errors.New("one of its parent prefixes has already been downloaded as an object"))
+		return unusableS3KeyError(key, errParentPrefixIsObject)
 	}
 	if err != nil {
 		return fmt.Errorf("object key [%s]: %w", key, err)
@@ -593,7 +600,7 @@ func downloadFileFromBucket(downloader S3DownloadAPI, dirName, key, bucket strin
 	// "A/x" and "a/y" share one on a case-insensitive filesystem.
 	file, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if errors.Is(err, fs.ErrExist) {
-		return unusableS3KeyError(key, errors.New("another object already downloaded to the same local path"))
+		return unusableS3KeyError(key, errPathCollision)
 	}
 	if err != nil {
 		return fmt.Errorf("object key [%s]: %w", key, err)

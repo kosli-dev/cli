@@ -154,6 +154,46 @@ func TestUnzipWritesASymlinkEntryAsARegularFile(t *testing.T) {
 	require.Equal(t, "/etc/passwd", string(got))
 }
 
+// Legal in a zip, impossible on disk: a file "a" and an entry "a/b".
+func TestUnzipNamesTheEntryWhoseParentIsAFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	zipPath := filepath.Join(tmpDir, "package.zip")
+	writeZip(t, zipPath, []zipEntry{
+		{name: "a", content: "a file"},
+		{name: "a/b", content: "under the file"},
+	})
+
+	err := unzip(zipPath, filepath.Join(tmpDir, "extracted"), logger.NewStandardLogger())
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "zip entry [a/b]")
+	require.Contains(t, err.Error(), "parent directories was already extracted as a file")
+}
+
+// A zero-mode entry (unknown creator, or Unix external attributes left at 0)
+// used to be written unreadable, failing later inside the fingerprinter.
+func TestUnzipWritesEveryEntryReadable(t *testing.T) {
+	tmpDir := t.TempDir()
+	zipPath := filepath.Join(tmpDir, "package.zip")
+	f, err := os.Create(zipPath)
+	require.NoError(t, err)
+	w := zip.NewWriter(f)
+	header := &zip.FileHeader{Name: "zero-mode.txt", Method: zip.Deflate}
+	header.SetMode(0)
+	entry, err := w.CreateHeader(header)
+	require.NoError(t, err)
+	_, err = entry.Write([]byte("content"))
+	require.NoError(t, err)
+	require.NoError(t, w.Close())
+	require.NoError(t, f.Close())
+
+	destDir := filepath.Join(tmpDir, "extracted")
+	require.NoError(t, unzip(zipPath, destDir, logger.NewStandardLogger()))
+
+	info, err := os.Stat(filepath.Join(destDir, "zero-mode.txt"))
+	require.NoError(t, err)
+	require.Equal(t, os.FileMode(0o600), info.Mode().Perm())
+}
+
 // A rooted name is contained by dropping the root, which is what filepath.Join
 // did before the containment rule; the extracted layout is unchanged.
 func TestUnzipContainsARootedEntry(t *testing.T) {

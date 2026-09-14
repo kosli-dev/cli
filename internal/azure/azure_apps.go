@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -339,58 +340,67 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 			continue
 		}
 		if err != nil {
-			return fmt.Errorf("zip entry %w; the package cannot be extracted safely", err)
+			// snapshot azure has no exclude flag and .kosli_ignore is only read
+			// after extraction, so the only remedy is a changed package.
+			return fmt.Errorf("zip entry %w; the package cannot be extracted safely, so the app cannot be reported until it is redeployed without that entry", err)
 		}
 
-		if f.FileInfo().IsDir() {
-			// Create directories
-			err := os.MkdirAll(filePath, os.ModePerm)
-			if err != nil {
-				return err
-			}
-			continue
-		}
-
-		// Ensure the directory for the file exists
-		if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
-			return err
-		}
-
-		// Only the permission bits are kept: os.OpenFile honours setuid, setgid
-		// and sticky, which a deployed package must not be able to set.
-		// Writing every entry through OpenFile, never os.Symlink, is what keeps a
-		// symlink entry from becoming a real symlink. Name containment does not
-		// survive one, since a later entry or the fingerprinter would follow it
-		// out of destDir.
-		destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode().Perm())
-		if err != nil {
-			return err
-		}
-
-		// Open the source file within the ZIP archive
-		zipFile, err := f.Open()
-		if err != nil {
-			return err
-		}
-
-		// Copy the file contents
-		_, err = io.Copy(destFile, zipFile)
-
-		// Close the open files
-		if closeErr := destFile.Close(); closeErr != nil {
-			// Log warning for cleanup error
-			logger.Warn("failed to close destination file %s: %v", filePath, closeErr)
-		}
-		if closeErr := zipFile.Close(); closeErr != nil {
-			// Log warning for cleanup error
-			logger.Warn("failed to close zip file: %v", closeErr)
-		}
-
-		if err != nil {
-			return err
+		if err := extractZipEntry(f, filePath, logger); err != nil {
+			return fmt.Errorf("zip entry [%s]: %w", f.Name, err)
 		}
 	}
 	return nil
+}
+
+// extractZipEntry writes one entry to filePath, which the caller has already
+// checked stays inside the destination directory.
+func extractZipEntry(f *zip.File, filePath string, logger *logger.Logger) error {
+	dir := filePath
+	if !f.FileInfo().IsDir() {
+		dir = filepath.Dir(filePath)
+	}
+	err := os.MkdirAll(dir, os.ModePerm)
+	if errors.Is(err, syscall.ENOTDIR) {
+		// Legal in a zip, impossible on disk: a file "a" and an entry under "a/".
+		return errors.New("one of its parent directories was already extracted as a file")
+	}
+	if err != nil {
+		return err
+	}
+	if f.FileInfo().IsDir() {
+		return nil
+	}
+
+	// The tree is deleted once fingerprinted and the fingerprint never reads a
+	// mode, so a constant is safe: it keeps a zero-mode entry readable and
+	// drops setuid, setgid and sticky, which os.OpenFile would honour.
+	// Writing every entry through OpenFile, never os.Symlink, is what keeps a
+	// symlink entry from becoming a real symlink. Name containment does not
+	// survive one, since a later entry or the fingerprinter would follow it
+	// out of the destination.
+	destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	if err != nil {
+		return err
+	}
+
+	zipFile, err := f.Open()
+	if err != nil {
+		if closeErr := destFile.Close(); closeErr != nil {
+			logger.Warn("failed to close destination file %s: %v", filePath, closeErr)
+		}
+		return err
+	}
+
+	_, err = io.Copy(destFile, zipFile)
+
+	if closeErr := destFile.Close(); closeErr != nil {
+		logger.Warn("failed to close destination file %s: %v", filePath, closeErr)
+	}
+	if closeErr := zipFile.Close(); closeErr != nil {
+		logger.Warn("failed to close zip file: %v", closeErr)
+	}
+
+	return err
 }
 
 func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site, logger *logger.Logger, imageName string) (AppData, error) {
