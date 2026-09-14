@@ -296,13 +296,23 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 		// A dry run sent nothing, so there is no evaluation to wait for.
 		return nil
 	}
+	if created.ID == "" {
+		// Without an id there is nothing to read the verdict back from, and
+		// asking anyway would fetch a different resource and blame the answer.
+		return errors.New("the Kosli server accepted the evaluation but named no id, " +
+			"so its verdict cannot be read back")
+	}
 
 	evaluation, err := client.WaitForTerminal(context.Background(), global.Org, created.ID,
 		evaluations.WaitOptions{})
 	if err != nil {
 		return serverSideRequestError(err)
 	}
-	if evaluation.Result == nil {
+	// Status decides, not the presence of a result: an evaluation that reports
+	// a failure has decided nothing, whatever else it carries. Reading it the
+	// other way round would let a stray result print as a verdict, which is the
+	// one outcome none of this may produce.
+	if evaluation.Status != evaluations.StatusCompleted || evaluation.Result == nil {
 		return serverSideFailure(evaluation)
 	}
 
@@ -347,24 +357,42 @@ func serverSideRequestError(err error) error {
 
 	switch {
 	case apiError.StatusCode == http.StatusForbidden:
-		return fmt.Errorf("server-side evaluation is not enabled for org '%s'; "+
-			"it is gated on the is-server-side-evaluation-enabled feature flag. "+
-			"Remove --server-side to evaluate on this machine instead", global.Org)
+		// The server's own words travel too: a refusal can come from a token
+		// without rights on the org rather than from the feature flag, and
+		// naming only the flag would send the reader after the wrong thing.
+		return fmt.Errorf("server-side evaluation was refused for org '%s': %s. "+
+			"It is gated on the is-server-side-evaluation-enabled feature flag; "+
+			"remove --server-side to evaluate on this machine instead",
+			global.Org, apiError.Message)
 
-	case apiError.StatusCode == http.StatusNotFound && !hasKosliErrorEnvelope(apiError):
+	case apiError.StatusCode == http.StatusNotFound && !carriesServerMessage(apiError):
 		return errors.New("this Kosli server does not support server-side evaluation; " +
 			"remove --server-side to evaluate on this machine instead")
 	}
 	return err
 }
 
-// hasKosliErrorEnvelope reports whether a refusal carried the message field
-// that every Kosli error carries. One that did not came from something that
-// does not serve this route at all, rather than from the API declining to do
-// something. The shared client renders such a body as a Go map, which by the
-// time it reaches here is the only trace of the difference left.
-func hasKosliErrorEnvelope(apiError *requests.APIError) bool {
-	return !strings.HasPrefix(apiError.Message, "map[")
+// carriesServerMessage reports whether a refusal arrived with a sentence the
+// Kosli API actually wrote. Two kinds of answer reach here without one, and
+// the shared client leaves a different trace for each: a JSON body with no
+// message field is rendered as a Go map, and a body that is not JSON at all
+// leaves the decoder's own complaint. A 404 of either kind came from something
+// that does not serve this route, such as a server too old to have it or a
+// proxy in front of one, and neither trace is fit to show anybody.
+func carriesServerMessage(apiError *requests.APIError) bool {
+	if strings.HasPrefix(apiError.Message, "map[") {
+		return false
+	}
+	for _, decoderComplaint := range []string{
+		"invalid character ",
+		"unexpected end of JSON input",
+		"json: cannot unmarshal ",
+	} {
+		if strings.HasPrefix(apiError.Message, decoderComplaint) {
+			return false
+		}
+	}
+	return true
 }
 
 // serverSideFailure reports an evaluation that answered no verdict. It is

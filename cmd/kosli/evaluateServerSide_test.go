@@ -27,6 +27,9 @@ type fakeEvaluations struct {
 	trailReads int
 	unexpected int
 	verdict    string
+	// createdBody answers the create, so a test can shape what comes back
+	// from it; empty means the ordinary pending answer.
+	createdBody string
 }
 
 const (
@@ -57,7 +60,11 @@ func newFakeEvaluations(t *testing.T, verdict string) (*httptest.Server, *fakeEv
 			require.NoError(t, json.Unmarshal(raw, &body))
 			fake.created = append(fake.created, body)
 			w.WriteHeader(http.StatusCreated)
-			_, _ = fmt.Fprint(w, createdPending)
+			answer := fake.createdBody
+			if answer == "" {
+				answer = createdPending
+			}
+			_, _ = fmt.Fprint(w, answer)
 
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/api/v2/evaluations/"):
 			fake.reads++
@@ -475,17 +482,73 @@ func (suite *EvaluateServerSideTestSuite) TestAnUnentitledOrgIsToldWhatToDo() {
 	require.Contains(suite.T(), err.Error(), "--server-side", "say how to carry on regardless")
 }
 
-// A Kosli server old enough to lack the endpoint answers 404 with no message
-// field, which is how it is told apart from a 404 about a trail.
+// Something that does not serve this route answers 404 without a message of
+// its own, which is how it is told apart from a 404 about a trail. It can say
+// so in more than one way, and none of them should reach a user raw.
 func (suite *EvaluateServerSideTestSuite) TestAnOlderServerIsNamedAsSuch() {
-	server := newRefusingServer(suite.T(), http.StatusNotFound, `{"detail":"Not Found"}`)
+	for _, test := range []struct {
+		name string
+		body string
+	}{
+		{name: "a server that routes nothing here", body: `{"detail":"Not Found"}`},
+		{name: "a proxy answering in html", body: `<html><body>404 Not Found</body></html>`},
+		{name: "an answer with no body at all", body: ``},
+	} {
+		suite.Run(test.name, func() {
+			server := newRefusingServer(suite.T(), http.StatusNotFound, test.body)
+
+			_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), "does not support server-side evaluation")
+			require.Contains(suite.T(), err.Error(), "--server-side")
+			require.NotContains(suite.T(), err.Error(), "map[", "no internal rendering leaks out")
+			require.NotContains(suite.T(), err.Error(), "invalid character",
+				"no decoder complaint leaks out")
+			require.NotContains(suite.T(), err.Error(), "unexpected end of JSON input")
+		})
+	}
+}
+
+// A refusal can come from a token without rights on the org rather than from
+// the feature flag, so the server's own reason has to travel with ours.
+func (suite *EvaluateServerSideTestSuite) TestARefusalKeepsTheServersOwnReason() {
+	server := newRefusingServer(suite.T(), http.StatusForbidden,
+		`{"message":"API token does not have access to this organization"}`)
 
 	_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
 
 	require.Error(suite.T(), err)
-	require.Contains(suite.T(), err.Error(), "does not support server-side evaluation")
-	require.Contains(suite.T(), err.Error(), "--server-side")
-	require.NotContains(suite.T(), err.Error(), "map[", "no internal rendering leaks out")
+	require.Contains(suite.T(), err.Error(), "API token does not have access to this organization")
+	require.Contains(suite.T(), err.Error(), "test-org")
+}
+
+// The status decides, not what else the answer happens to carry.
+func (suite *EvaluateServerSideTestSuite) TestAFailureCarryingAResultIsStillNotAVerdict() {
+	server, _ := newFakeEvaluations(suite.T(),
+		`{"id":"01EVAL","status":"failed","requested_at":1.0,"recorded_at":1.0,`+
+			`"result":{"allow":true,"violations":[]},`+
+			`"error":{"kind":"compile","message":"policy does not compile"}}`)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "compile")
+	require.NotContains(suite.T(), combined, "ALLOWED", "a failure never prints a verdict")
+	require.NotContains(suite.T(), combined, "DENIED")
+}
+
+// Without an id there is nothing to read the verdict back from, and asking
+// anyway would fetch a different resource and then blame the answer.
+func (suite *EvaluateServerSideTestSuite) TestAnEvaluationWithNoIdIsRefusedNotPolled() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+	fake.createdBody = `{"status":"pending","requested_at":1.0,"recorded_at":1.0}`
+
+	_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "named no id")
+	require.Equal(suite.T(), 0, fake.reads, "nothing to read back, so nothing is read")
 }
 
 func (suite *EvaluateServerSideTestSuite) TestAServerRefusalIsPassedOnInItsOwnWords() {

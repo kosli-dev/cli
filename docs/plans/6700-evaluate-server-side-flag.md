@@ -358,6 +358,24 @@ If it is wanted later it should be its own ticket, deciding the convention for t
 
 ---
 
+## 5b. Review findings
+
+A code review of the finished branch raised six things. Four were fixed; two cannot be, without changing code every command shares.
+
+**Fixed**
+
+1. **A 404 without a Kosli message was only recognised when the body was JSON.** The tell used was the Go map rendering, which the shared client produces only for a JSON body carrying no message field. A body that is not JSON at all, such as an HTML page from a proxy or an empty response, leaves the decoder's complaint instead, so the old-server branch never ran and the user saw `invalid character '<' looking for beginning of value`. Both renderings are now treated as "no message from the server", and three bodies are pinned by tests.
+2. **The verdict was chosen by the presence of a result rather than by the status.** An evaluation reporting a failure while also carrying a result would have printed as a verdict, which is the one outcome none of this may produce. Status decides now, and a test sends exactly that answer.
+3. **The refusal at 403 threw the server's reason away** and always blamed the feature flag, so a token without rights on the org was sent after the wrong thing. Both reasons travel now.
+4. **An accepted evaluation with no id was polled anyway**, fetching a different resource and then blaming the answer. It is refused with a clear message, and nothing is read.
+
+**Known limitations, recorded rather than fixed**
+
+5. **The wait budget governs the polling, not a single read.** A read carries no context and the shared HTTP client sets no overall deadline, so a very slow server can overrun the budget by one read, and cancelling stops the loop only at its next turn. Holding to the budget exactly means giving the read a deadline of its own, which needs `internal/requests` to accept a context. That is a change every command inherits, so it belongs in its own ticket rather than here. Stated on `WaitOptions` so nobody reads the budget as a hard bound.
+6. **Creating an evaluation is not idempotent and the shared client retries it.** A create that succeeded but whose answer was lost is sent again, so one command can leave more than one evaluation behind. They duplicate each other rather than disagreeing, since each is deterministic for the same policy and instant, so the cost is wasted work rather than a wrong answer. Preventing it needs a caller-supplied key, which the API does not take. Stated on `Create`.
+
+---
+
 ## 6. Test strategy summary
 
 - **Unit (`internal/evaluations`)**: `httptest.NewServer`, `t.Run`, `testify/require`. No OPA, no Kosli server.

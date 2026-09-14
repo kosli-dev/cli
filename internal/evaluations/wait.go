@@ -20,8 +20,14 @@ var DefaultWaitOptions = WaitOptions{
 	Max:     5 * time.Second,
 }
 
-// WaitOptions bounds how long a verdict is waited for and how often it is
-// asked about. A zero field takes its default.
+// WaitOptions bounds how long an evaluation is asked about and how often. A
+// zero field takes its default.
+//
+// Timeout governs the polling, not any single read. A read is bounded by the
+// HTTP client's own retry policy instead, which has no overall deadline, so a
+// server that answers very slowly can overrun this budget by one read. Holding
+// to it exactly would mean giving the read a deadline of its own, which the
+// shared client cannot take today.
 type WaitOptions struct {
 	Timeout time.Duration
 	Initial time.Duration
@@ -78,6 +84,10 @@ func (c *Client) Get(org, id string) (*Evaluation, error) {
 // WaitForTerminal polls until the evaluation finishes, the caller gives up, or
 // the budget expires. It returns an evaluation only when that evaluation is
 // terminal, so a caller never has to ask whether the answer it holds is final.
+//
+// Cancelling ctx stops the polling but cannot abort a read already in flight,
+// for the same reason the budget cannot: the read carries no context. Both take
+// effect at the next turn of the loop.
 func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options WaitOptions) (*Evaluation, error) {
 	options = options.withDefaults()
 	expired := time.After(options.Timeout)

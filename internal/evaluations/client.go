@@ -82,6 +82,13 @@ func NewClient(httpClient *requests.Client, host, token string, dryRun bool) *Cl
 
 // Create asks for an evaluation and returns it pending; the verdict is read
 // back separately. A dry run sends nothing and returns no evaluation.
+//
+// Not idempotent, and the shared client retries a server error or a network
+// timeout: a create that succeeded but whose answer was lost is sent again, so
+// one command can leave more than one evaluation behind. They are duplicates
+// of each other rather than disagreements, since each is deterministic for the
+// same policy and instant, so the cost is wasted work. Preventing it needs a
+// key the caller supplies, which the API does not take.
 func (c *Client) Create(org string, request CreateRequest) (*Evaluation, error) {
 	endpoint, err := url.JoinPath(c.host, "api/v2/evaluations", org)
 	if err != nil {
