@@ -171,11 +171,11 @@ func defaultNewS3Client(creds *AWSStaticCreds) (S3API, error) {
 		return nil, err
 	}
 	// Objects download in parallel (see DownloadLimits), and the transfer manager
-	// fetches each object's parts in parallel on top of that. Its default of five
-	// parts per object times the object concurrency would open more connections
-	// than helps; three keeps the product modest while still splitting large objects.
+	// fetches each object's parts in parallel on top of that. The parts figure is
+	// the SDK's own default, pinned here so the connection product, objects times
+	// parts, is visible in one place and does not move with an SDK upgrade.
 	return &s3Client{S3ListAPI: client, S3DownloadAPI: transfermanager.New(client, func(o *transfermanager.Options) {
-		o.Concurrency = 3
+		o.Concurrency = 5
 	})}, nil
 }
 
