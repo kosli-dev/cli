@@ -192,8 +192,11 @@ func TestWaitGivesUpWithTheEvaluationIdAndNoVerdict(t *testing.T) {
 	// The time actually spent, not the budget: a read carries no deadline of
 	// its own, so the two can differ and only the first answers "did the
 	// platform meet its promise".
-	require.GreaterOrEqual(t, stillPending.Waited, options.Timeout,
+	// Rounded to the millisecond before it is reported, so allow that much.
+	require.GreaterOrEqual(t, stillPending.Waited+time.Millisecond, options.Timeout,
 		"the wait reported must be the time spent")
+	require.Equal(t, stillPending.Waited.Round(time.Millisecond), stillPending.Waited,
+		"no nanosecond noise in a sentence about a budget")
 	require.Contains(t, err.Error(), "01JABCDEF")
 	require.Contains(t, err.Error(), "still pending")
 	require.NotContains(t, err.Error(), "denied")

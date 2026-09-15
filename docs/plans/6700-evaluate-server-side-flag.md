@@ -398,6 +398,11 @@ A code review of the finished branch raised findings in two rounds. All but two 
 18. **A refusal with no message printed as nothing at all**, since an API error renders as its message alone. The status is now named when there is nothing else to say.
 19. **The 404 wording claimed to know which kind of 404 it was.** An unmatched route and a route that has since moved look identical from here, and a sentence that must be right about the difference is one a support thread quotes back. It now names both possibilities and still says what to do.
 
+**Fifth review round**
+
+20. **A failure to read the verdict back was worded for the create, and dropped the evaluation.** Once the create has succeeded the evaluation exists and the server holds its answer, so a refusal blamed a feature flag that had already let the create through, and a 404 denied support for the route the create had just used. Worse, every read failure except an expired wait discarded the id, which is the one thing that makes the outcome recoverable. Read failures now go through their own mapping, which names the evaluation and passes an expired wait through untouched.
+21. **The measured wait was reported to the nanosecond.** Rounding it to the millisecond keeps the overrun visible, which is why it is measured, without putting six digits of noise in a sentence whose point is that the budget was spent.
+
 **Known limitations, recorded rather than fixed**
 
 11. **The wait budget governs the polling, not a single read.** A read carries no context and the shared HTTP client sets no overall deadline, so a very slow server can overrun the budget by one read, and cancelling stops the loop only at its next turn. Holding to the budget exactly means giving the read a deadline of its own, which needs `internal/requests` to accept a context. That is a change every command inherits, so it belongs in its own ticket rather than here. Stated on `WaitOptions` so nobody reads the budget as a hard bound.

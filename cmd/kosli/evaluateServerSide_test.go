@@ -27,6 +27,9 @@ type fakeEvaluations struct {
 	trailReads int
 	unexpected int
 	verdict    string
+	// readStatus answers the read, so a test can fail it after a create that
+	// worked; zero means the ordinary 200.
+	readStatus int
 	// createdBody answers the create, so a test can shape what comes back
 	// from it; empty means the ordinary pending answer.
 	createdBody string
@@ -68,7 +71,11 @@ func newFakeEvaluations(t *testing.T, verdict string) (*httptest.Server, *fakeEv
 
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/api/v2/evaluations/"):
 			fake.reads++
-			w.WriteHeader(http.StatusOK)
+			status := fake.readStatus
+			if status == 0 {
+				status = http.StatusOK
+			}
+			w.WriteHeader(status)
 			_, _ = fmt.Fprint(w, fake.verdict)
 
 		// Only the client-side path asks for this, which is how a test proves
@@ -542,6 +549,38 @@ func (suite *EvaluateServerSideTestSuite) TestARefusalWithNothingToQuoteSaysOnly
 			require.NotContains(suite.T(), err.Error(), "map[")
 			require.NotContains(suite.T(), err.Error(), "': .",
 				"no stray punctuation where a sentence would have gone")
+		})
+	}
+}
+
+// Once the create has succeeded the evaluation exists and the server holds its
+// answer, so a failure to read it back must name it. The create's own wording
+// must not be reused either: it would blame a feature flag that has already let
+// a create through, or deny support for a route the create just used.
+func (suite *EvaluateServerSideTestSuite) TestAFailedReadNamesTheEvaluationAndNotTheRoute() {
+	for _, test := range []struct {
+		name   string
+		status int
+		body   string
+	}{
+		{name: "the read is refused", status: http.StatusForbidden,
+			body: `{"message":"Server-side evaluation is not enabled for this organization"}`},
+		{name: "the read finds nothing", status: http.StatusNotFound, body: `{"detail":"Not Found"}`},
+		{name: "the read keeps failing", status: http.StatusServiceUnavailable, body: `{}`},
+	} {
+		suite.Run(test.name, func() {
+			server, fake := newFakeEvaluations(suite.T(), "")
+			fake.readStatus, fake.verdict = test.status, test.body
+
+			_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), "01EVAL",
+				"the evaluation exists, so say which one")
+			require.NotContains(suite.T(), err.Error(), "does not support server-side evaluation",
+				"the create just used this route")
+			require.NotContains(suite.T(), err.Error(), "is-server-side-evaluation-enabled",
+				"the flag already let the create through")
 		})
 	}
 }

@@ -316,7 +316,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 	evaluation, err := client.WaitForTerminal(context.Background(), global.Org, created.ID,
 		serverSideWaitOptions)
 	if err != nil {
-		return serverSideRequestError(err)
+		return serverSideReadError(created.ID, err)
 	}
 	// Status decides, not the presence of a result: an evaluation that reports
 	// a failure has decided nothing, whatever else it carries. Reading it the
@@ -411,6 +411,23 @@ func serverSideRequestError(err error) error {
 		return fmt.Errorf("the Kosli server answered %d and said nothing about why", apiError.StatusCode)
 	}
 	return err
+}
+
+// serverSideReadError reports a failure to read a verdict back. By this point
+// the evaluation exists and the server holds its answer, so the id travels: it
+// is the one thing that makes the outcome recoverable.
+//
+// Separate from the create's own mapping because every sentence there is
+// written for a request that has not happened yet. Reused here, a refusal would
+// blame a feature flag that has already let a create through, and a 404 would
+// deny support for a route the create just used.
+func serverSideReadError(id string, err error) error {
+	// An expired wait already names the evaluation and says where to read it.
+	var stillPending *evaluations.StillPendingError
+	if errors.As(err, &stillPending) {
+		return err
+	}
+	return fmt.Errorf("could not read server-side evaluation %s back: %w", id, err)
 }
 
 // serverSideFailure reports an evaluation that answered no verdict. It is

@@ -128,7 +128,11 @@ func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options Wa
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		case <-expired:
-			return nil, &StillPendingError{Org: org, ID: id, Waited: time.Since(started)}
+			// Rounded: the point of the number is that the budget was spent, and
+			// six digits of nanoseconds are noise in that sentence. An overrun
+			// still shows, which is why it is measured at all.
+			return nil, &StillPendingError{
+				Org: org, ID: id, Waited: time.Since(started).Round(time.Millisecond)}
 		case <-time.After(interval):
 		}
 		interval = nextInterval(interval, options.Max)
