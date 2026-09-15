@@ -17,59 +17,59 @@ trail:
     - name: smoke-test
       type: generic
     - name: container-sbom
-      type: generic
+      type: "*"
 
   - name: linux-arm
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: windows-arm64
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: darwin-arm64
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: linux-arm64
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: linux-amd64
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: windows-amd64
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: darwin-amd64
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: rpm-pkg-amd64
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: rpm-pkg-arm64
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: rpm-pkg-arm
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: deb-pkg-arm64
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: deb-pkg-arm
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
   - name: deb-pkg-amd64
     attestations:
     - name: sbom
-      type: generic
+      type: "*"
 
 

@@ -23,4 +23,4 @@ trail:
     - name: smoke-test
       type: generic
     - name: container-sbom
-      type: generic
+      type: "*"
