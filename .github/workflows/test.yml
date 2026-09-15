@@ -107,6 +107,12 @@ jobs:
         version: latest
         args: --timeout=5m -v
 
+    # The server-image lookup decides which server the integration suite runs against, so
+    # when it is wrong the suite does not run at all. It stubs kosli on PATH and takes
+    # about a second.
+    - name: Test the server image lookup
+      run: ./hack/test-get-server-image.sh
+
     - name: Report lint to Kosli
       if:  ${{ (success() || failure()) && inputs.report_to_kosli != 'none' }}
       env:

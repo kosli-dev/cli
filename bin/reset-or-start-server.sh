@@ -7,6 +7,15 @@ if [[ -z "${KOSLI_SERVER_IMAGE:-}" ]] || [[ "$KOSLI_SERVER_IMAGE" == *"Error"* ]
     exit 1
 fi
 
+# More than one image reference reaches docker as one malformed string, and docker answers
+# "invalid reference format", which says nothing about where the two came from.
+if [[ "$KOSLI_SERVER_IMAGE" == *$'\n'* ]]; then
+    echo "❌ KOSLI_SERVER_IMAGE holds more than one image reference:"
+    printf '%s\n' "$KOSLI_SERVER_IMAGE" | sed 's/^/    /'
+    echo "   Expected exactly one. See hack/get-server-image.sh."
+    exit 1
+fi
+
 # Set force_restart to the first argument if provided, empty string otherwise
 force_restart="${1:-}"
 container_name=cli_kosli_server
