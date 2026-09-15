@@ -16,6 +16,7 @@ import (
 type VirtualFile struct {
 	// Path is relative to the tree root, slash-separated, with no leading or
 	// trailing slash and no "." or ".." segments (e.g. "dummy/template.yml").
+	// Its depth is bounded by globSeparatorsLimit; S3 keys stay far below it.
 	Path string
 	// Sha256 is the hex-encoded sha256 of the file content.
 	Sha256 string
@@ -29,11 +30,12 @@ func (f VirtualFile) Name() string {
 // SingleVirtualFile reports whether the tree holds exactly one file, and
 // returns it.
 //
-// This mirrors what containsSingleFile decides for a tree on disk: a tree built
-// only from file paths has no empty directories, so a single leaf means every
-// level has exactly one child, and two distinct leaves must diverge at some
-// node and give it two children. Counting the files is therefore equivalent to
-// walking the tree, and callers can pick the FileSha256 branch on len == 1.
+// A tree built only from file paths has no empty directories, so a single leaf
+// means every level has exactly one child, and two distinct leaves must diverge
+// at some node and give it two children. Counting the files is therefore
+// equivalent to walking the tree, which is how the same question was answered
+// when the objects were laid out on disk, and callers can pick the FileSha256
+// branch on len == 1.
 func SingleVirtualFile(files []VirtualFile) (VirtualFile, bool) {
 	if len(files) != 1 {
 		return VirtualFile{}, false
@@ -79,7 +81,7 @@ func VirtualDirSha256(files []VirtualFile, ignoreRules []string, logger *logger.
 
 	logger.Debug("calculating fingerprint for a virtual tree of %d files -- excluding %d paths", len(files), len(excluded))
 	hasher := sha256.New()
-	err = root.walkIncluded(virtualRoot, excluded, protectedVirtualPath(), logger, func(childPath string, child *virtualNode) error {
+	err = root.walkIncluded(virtualRoot, excluded, root.protectedVirtualPath(), logger, func(childPath string, child *virtualNode) error {
 		nameSha256 := sha256OfString(child.name)
 		hasher.Write([]byte(nameSha256)) //nolint:errcheck // hash.Hash never returns an error
 		if child.isDir {
@@ -99,16 +101,13 @@ func VirtualDirSha256(files []VirtualFile, ignoreRules []string, logger *logger.
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// FilesNeedingContent reports which of paths VirtualDirSha256 reads the content
-// digest of under these ignore rules. A file it leaves out is skipped by the
-// rules, so its content need not be fetched and it may be passed with an empty
-// Sha256 without changing the fingerprint. The two share one walk, so they
-// cannot disagree.
-func FilesNeedingContent(paths []string, ignoreRules []string) (map[string]bool, error) {
-	files := make([]VirtualFile, len(paths))
-	for i, p := range paths {
-		files[i] = VirtualFile{Path: p}
-	}
+// FilesNeedingContent reports, by path, which of files VirtualDirSha256 reads
+// the content digest of under these ignore rules. Digests on the input are not
+// needed and may be empty. A file it leaves out is skipped by the rules, so its
+// content need not be fetched and it may later be passed with an empty Sha256
+// without changing the fingerprint. Both run the same walk over the same tree,
+// so they cannot disagree.
+func FilesNeedingContent(files []VirtualFile, ignoreRules []string) (map[string]bool, error) {
 	root, err := buildVirtualTree(files)
 	if err != nil {
 		return nil, err
@@ -118,7 +117,7 @@ func FilesNeedingContent(paths []string, ignoreRules []string) (map[string]bool,
 		return nil, err
 	}
 	needed := map[string]bool{}
-	err = root.walkIncluded(virtualRoot, excluded, protectedVirtualPath(), nil, func(childPath string, child *virtualNode) error {
+	err = root.walkIncluded(virtualRoot, excluded, root.protectedVirtualPath(), nil, func(childPath string, child *virtualNode) error {
 		if !child.isDir {
 			needed[relativeVirtualPath(childPath)] = true
 		}
@@ -130,9 +129,14 @@ func FilesNeedingContent(paths []string, ignoreRules []string) (map[string]bool,
 	return needed, nil
 }
 
-// protectedVirtualPath is the root ignore file, which its own rules never exclude.
-func protectedVirtualPath() string {
-	return path.Join(virtualRoot, ignoreFileName)
+// protectedVirtualPath is the root ignore file, which its own rules never
+// exclude. A directory of that name carries no rules, as ignoreFilePathInTree
+// decides on disk, so it is not protected either.
+func (n *virtualNode) protectedVirtualPath() string {
+	if child, ok := n.children[IgnoreFileName]; !ok || child.isDir {
+		return ""
+	}
+	return path.Join(virtualRoot, IgnoreFileName)
 }
 
 // relativeVirtualPath strips the synthetic root from a tree path.
@@ -160,7 +164,8 @@ func buildVirtualTree(files []VirtualFile) (*virtualNode, error) {
 			return nil, err
 		}
 		// An empty digest means the content was not read. That is only acceptable
-		// for a file the rules exclude, which writeDigests enforces when it gets there.
+		// for a file the rules exclude; VirtualDirSha256 fails on an empty digest
+		// it reaches, so a skipped download cannot reach a fingerprint.
 		if file.Sha256 != "" {
 			if err := ValidateDigest(file.Sha256); err != nil {
 				return nil, fmt.Errorf("invalid fingerprint for %q: %w", file.Path, err)
@@ -246,6 +251,11 @@ func validateVirtualPath(p string) error {
 	if p == "" || p != path.Clean(p) || path.IsAbs(p) || strings.HasPrefix(p, "../") || p == ".." {
 		return fmt.Errorf("path %q is not a clean relative path: it must not be empty, absolute, "+
 			"or contain empty, \".\" or \"..\" segments", p)
+	}
+	// The walks recurse once per segment over a tree whose shape the bucket's
+	// writers control, so depth is bounded as filepath.Glob bounds a pattern.
+	if strings.Count(p, "/") >= globSeparatorsLimit {
+		return fmt.Errorf("path %q is too deep: at most %d segments are supported", p, globSeparatorsLimit)
 	}
 	return nil
 }

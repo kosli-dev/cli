@@ -7,8 +7,12 @@ import (
 	"sort"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/utils"
@@ -226,6 +230,22 @@ func (suite *S3FingerprintTestSuite) TestObjectsNeverLandUnderTheirKeyAndDoNotLi
 	}
 }
 
+// A malformed rule in the bucket's .kosli_ignore fails the snapshot and names
+// the file, even when the rule points under a prefix the bucket does not have.
+func (suite *S3FingerprintTestSuite) TestAMalformedIgnoreRuleFailsTheSnapshot() {
+	for _, rule := range []string{"[", "nonexistent/a["} {
+		suite.Run(rule, func() {
+			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{
+				".kosli_ignore": []byte(rule + "\n"), "app.js": []byte("app"),
+			}}
+			_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), "the bucket's .kosli_ignore holds a rule that cannot be applied")
+			require.Contains(suite.T(), err.Error(), rule)
+		})
+	}
+}
+
 func (suite *S3FingerprintTestSuite) TestADownloadErrorNamesTheKey() {
 	client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{
 		"README.md": []byte(fakeReadmeBody), "notes.txt": []byte(fakeNotesBody),
@@ -235,6 +255,81 @@ func (suite *S3FingerprintTestSuite) TestADownloadErrorNamesTheKey() {
 	require.ErrorIs(suite.T(), err, os.ErrDeadlineExceeded)
 	require.Contains(suite.T(), err.Error(), "object key [README.md]")
 	require.NotContains(suite.T(), err.Error(), "--exclude-regex", "a transport failure must not advise dropping the object")
+}
+
+// The temp file's name says nothing about the object, so a failure while
+// hashing it must name the key, as every other failure in the path does.
+func (suite *S3FingerprintTestSuite) TestAHashErrorNamesTheKey() {
+	client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{"README.md": []byte(fakeReadmeBody)}}
+	// Deleting the file between download and hash is the one way to make the
+	// hash fail without touching permissions.
+	_, err := downloadAndHashS3Object(client, suite.T().TempDir(), fakeS3TestBucketName, "README.md", func(file *os.File) error {
+		return os.Remove(file.Name())
+	}, logger.NewStandardLogger())
+	require.Error(suite.T(), err)
+	require.ErrorIs(suite.T(), err, os.ErrNotExist)
+	require.Contains(suite.T(), err.Error(), "failed to hash object key [README.md]")
+	require.NotContains(suite.T(), err.Error(), "--exclude-regex")
+}
+
+// Some S3-compatible stores list objects without a LastModified. Such an
+// object still belongs in the fingerprint; only the snapshot timestamp is
+// computed without it, and a listing with no timestamps at all is an error
+// rather than a panic or a zero timestamp.
+func (suite *S3FingerprintTestSuite) TestAListingWithoutModificationTimesDoesNotPanic() {
+	objects := map[string][]byte{"README.md": []byte(fakeReadmeBody), "notes.txt": []byte(fakeNotesBody)}
+	later := fakeS3LastModified.Add(time.Hour)
+	full, err := getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
+		LastModified: map[string]time.Time{"notes.txt": later}}, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+
+	partial, err := getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
+		LastModified: map[string]time.Time{"notes.txt": later}, NoLastModified: map[string]bool{"README.md": true}},
+		fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), full[0].Digests, partial[0].Digests, "the object without a timestamp stays in the fingerprint")
+	require.Equal(suite.T(), later.Unix(), partial[0].LastModifiedTimestamp)
+
+	_, err = getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
+		NoLastModified: map[string]bool{"README.md": true, "notes.txt": true}},
+		fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "modification time")
+}
+
+// A listing entry with no key cannot be fingerprinted or reported, and dropping
+// it would lose an object silently, so it is an error.
+func (suite *S3FingerprintTestSuite) TestAListingEntryWithoutAKeyIsAnError() {
+	page := &s3.ListObjectsV2Output{Contents: []s3Types.Object{
+		{Key: aws.String("README.md"), LastModified: aws.Time(fakeS3LastModified)},
+		{LastModified: aws.Time(fakeS3LastModified)},
+	}}
+	_, err := listMatchingS3Objects(singlePageLister{page: page}, fakeS3TestBucketName, nil, nil, nil, nil)
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "no key")
+}
+
+// A key listed twice is a listing fault, not two objects: it must not be
+// reported as a key colliding with itself, and the advice to exclude it would
+// drop the only copy.
+func (suite *S3FingerprintTestSuite) TestAListingThatRepeatsAKeyIsAnError() {
+	page := &s3.ListObjectsV2Output{Contents: []s3Types.Object{
+		{Key: aws.String("a"), LastModified: aws.Time(fakeS3LastModified)},
+		{Key: aws.String("a"), LastModified: aws.Time(fakeS3LastModified)},
+	}}
+	_, err := listMatchingS3Objects(singlePageLister{page: page}, fakeS3TestBucketName, nil, nil, nil, nil)
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "object key [a] more than once")
+	require.NotContains(suite.T(), err.Error(), "--exclude-regex")
+}
+
+// singlePageLister answers every ListObjectsV2 call with one fixed page.
+type singlePageLister struct {
+	page *s3.ListObjectsV2Output
+}
+
+func (l singlePageLister) ListObjectsV2(context.Context, *s3.ListObjectsV2Input, ...func(*s3.Options)) (*s3.ListObjectsV2Output, error) {
+	return l.page, nil
 }
 
 func TestS3FingerprintTestSuite(t *testing.T) {

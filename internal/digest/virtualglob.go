@@ -32,9 +32,23 @@ func (fs virtualFS) excludedPaths(rules []string) (map[string]bool, error) {
 	excluded := map[string]bool{}
 	for _, rule := range rules {
 		pattern := path.Join(virtualRoot, rule)
+		// filepath.Glob validates a pattern before it looks at the filesystem, and
+		// filepathx hands it the first "**" piece unconditionally, so a malformed
+		// rule fails on disk even when it names a path outside the tree, which the
+		// skip below never evaluates. Later pieces are validated only once an
+		// earlier piece has matched, which for a rule inside the tree happens here
+		// too. A rule that both leaves the tree and has a malformed later piece
+		// (say "../**/a[") errors on disk, where the temp directory's parent exists
+		// and is walked, and is skipped here; modelling that parent would be
+		// speculative.
+		if _, err := path.Match(strings.SplitN(pattern, "**", 2)[0], ""); err != nil {
+			return nil, fmt.Errorf("ignore rule %q: %w", rule, err)
+		}
 		// On disk the root is a temp directory with an unguessable name, so a rule
-		// that resolves to the root or outside it cannot match anything there.
-		if pattern == virtualRoot || !strings.HasPrefix(pattern, virtualRoot+"/") {
+		// that resolves to the root or leaves it cannot match anything there, and
+		// naming the root cannot bring it back, which the cleaned pattern alone
+		// would not show ("../tree/x" cleans to "tree/x").
+		if pattern == virtualRoot || !strings.HasPrefix(pattern, virtualRoot+"/") || escapesVirtualRoot(rule) {
 			continue
 		}
 		matches, err := fs.globDoubleStar(pattern)
@@ -81,8 +95,28 @@ func (fs virtualFS) globDoubleStar(pattern string) ([]string, error) {
 	return matches, nil
 }
 
+// globSeparatorsLimit is filepath's pathSeparatorsLimit: the recursion depth
+// at which Glob gives up on a pattern rather than exhaust the stack. It bounds
+// the depth of a tree path too, since walking one recurses per segment just
+// as globbing recurses per separator.
+const globSeparatorsLimit = 10000
+
 // glob mirrors filepath.Glob on a Unix filesystem.
 func (fs virtualFS) glob(pattern string) ([]string, error) {
+	return fs.globWithLimit(pattern, 0)
+}
+
+func (fs virtualFS) globWithLimit(pattern string, depth int) ([]string, error) {
+	// A rule is attacker-writable, so deep wildcard paths take the same bound
+	// filepath.Glob gives them.
+	if depth == globSeparatorsLimit {
+		return nil, path.ErrBadPattern
+	}
+	// filepath.Glob rejects a malformed pattern before it looks at the
+	// filesystem, so a bad rule fails even where nothing could match it.
+	if _, err := path.Match(pattern, ""); err != nil {
+		return nil, err
+	}
 	if !hasGlobMeta(pattern) {
 		// A literal pattern is returned as written, not cleaned.
 		if _, ok := fs.lookup(pattern); !ok {
@@ -99,7 +133,7 @@ func (fs virtualFS) glob(pattern string) ([]string, error) {
 	if dir == pattern {
 		return nil, path.ErrBadPattern
 	}
-	dirs, err := fs.glob(dir)
+	dirs, err := fs.globWithLimit(dir, depth+1)
 	if err != nil {
 		return nil, err
 	}
@@ -181,6 +215,27 @@ func (fs virtualFS) lookup(p string) (*virtualNode, bool) {
 // on Unix, where a backslash is an escape character.
 func hasGlobMeta(pattern string) bool {
 	return strings.ContainsAny(pattern, `*?[\`)
+}
+
+// escapesVirtualRoot reports whether the rule walks above the tree root before
+// it is cleaned. filepath.Join resolves ".." lexically, so counting segments
+// gives the same answer as the join does on disk, where anything above the
+// root is outside the tree whatever the rule names next.
+func escapesVirtualRoot(rule string) bool {
+	depth := 0
+	for _, segment := range strings.Split(rule, "/") {
+		switch segment {
+		case "", ".":
+		case "..":
+			if depth == 0 {
+				return true
+			}
+			depth--
+		default:
+			depth++
+		}
+	}
+	return false
 }
 
 // cleanGlobPath is filepath's helper of the same name: drop the trailing

@@ -7,8 +7,9 @@ import (
 	"strings"
 )
 
-// maxReportedS3KeyProblems caps how many keys one error lists before
-// summarising the rest, so a bucket-wide problem stays readable.
+// maxReportedS3KeyProblems caps how many problems one error lists and how many
+// keys one collision names before summarising the rest, so a bucket-wide
+// problem stays readable: at most ten lines of at most ten keys each.
 const maxReportedS3KeyProblems = 10
 
 // virtualPathForS3Key returns the path an object key occupies in the virtual
@@ -51,7 +52,9 @@ func virtualPathForS3Key(key string) (string, error) {
 // a directory holding other objects. All problems are reported together so one
 // run tells the operator about every key they need to act on.
 //
-// Folder markers (keys ending in "/") are the caller's to filter out first.
+// Folder markers (keys ending in "/") are filtered out by the caller before
+// listing reaches here; the rule above rejects any that slip through so they
+// can never be mistaken for objects.
 func virtualPathsForS3Keys(keys []string) (map[string]string, error) {
 	paths := make(map[string]string, len(keys))
 	keysByPath := map[string][]string{}
@@ -70,28 +73,35 @@ func virtualPathsForS3Keys(keys []string) (map[string]string, error) {
 	for virtualPath, colliding := range keysByPath {
 		if len(colliding) > 1 {
 			sort.Strings(colliding)
-			problems = append(problems, fmt.Sprintf("object keys %s fingerprint as the same path [%s]",
-				bracketed(colliding), virtualPath))
+			// Folding variants of one path are cheap to write, so one collision
+			// is bounded the same way the list of problems is.
+			named, more := colliding, ""
+			if len(named) > maxReportedS3KeyProblems {
+				named = named[:maxReportedS3KeyProblems]
+				more = fmt.Sprintf(" and %d more keys", len(colliding)-maxReportedS3KeyProblems)
+			}
+			problems = append(problems, fmt.Sprintf("object keys %s%s fingerprint as the same path [%s]",
+				bracketed(named), more, virtualPath))
 		}
 	}
 
 	// The lexically smallest key under each directory stands as the example in
 	// the message, so the report does not depend on listing order.
 	exampleObjectUnder := map[string]string{}
-	for virtualPath, keys := range keysByPath {
-		sort.Strings(keys)
+	for virtualPath, keysHere := range keysByPath {
+		sort.Strings(keysHere)
 		for dir := path.Dir(virtualPath); dir != "."; dir = path.Dir(dir) {
-			if existing, ok := exampleObjectUnder[dir]; !ok || keys[0] < existing {
-				exampleObjectUnder[dir] = keys[0]
+			if existing, ok := exampleObjectUnder[dir]; !ok || keysHere[0] < existing {
+				exampleObjectUnder[dir] = keysHere[0]
 			}
 		}
 	}
-	for virtualPath, keys := range keysByPath {
+	for virtualPath, keysHere := range keysByPath {
 		child, isAlsoDir := exampleObjectUnder[virtualPath]
 		if !isAlsoDir {
 			continue
 		}
-		for _, key := range keys {
+		for _, key := range keysHere {
 			problems = append(problems, fmt.Sprintf("object key [%s] fingerprints as [%s], which is also a directory holding object key [%s]",
 				key, virtualPath, child))
 		}
@@ -115,7 +125,7 @@ func s3KeyProblemsError(problems []string) error {
 	// Map iteration supplied these in any order; sorting keeps the message stable.
 	sort.Strings(problems)
 	if len(problems) == 1 {
-		return fmt.Errorf("%s; exclude it with --exclude-regex, or narrow the include filter if one is set", problems[0])
+		return fmt.Errorf("%s; exclude the affected keys with --exclude-regex, or narrow the include filter if one is set", problems[0])
 	}
 
 	shown := problems
@@ -124,7 +134,7 @@ func s3KeyProblemsError(problems []string) error {
 		shown = shown[:maxReportedS3KeyProblems]
 		suffix = fmt.Sprintf("\n(and %d more)", len(problems)-maxReportedS3KeyProblems)
 	}
-	return fmt.Errorf("%d object keys cannot be fingerprinted:\n%s%s\nexclude them with --exclude-regex, or narrow the include filter if one is set",
+	return fmt.Errorf("%d problems prevent the bucket from being fingerprinted:\n%s%s\nexclude the keys with --exclude-regex, or narrow the include filter if one is set",
 		len(problems), strings.Join(shown, "\n"), suffix)
 }
 

@@ -35,8 +35,6 @@ var (
 // IgnoreFileName is the exclusion list a directory artifact may carry at its root.
 const IgnoreFileName = ".kosli_ignore"
 
-const ignoreFileName = IgnoreFileName
-
 // DirSha256 returns sha256 digest of a directory
 func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (string, error) {
 	logger.Debug("calculating fingerprint for path [%s] -- excluding paths: %s", dirPath, excludePaths)
@@ -237,12 +235,12 @@ func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
 // stores one spelling and opens any of them. Snapshotting S3 or Azure unzips the
 // tree onto the machine running the CLI, so that filesystem is the operator's.
 //
-// An exact match wins over a folded one so that ignoreFileName owns the rules
+// An exact match wins over a folded one so that IgnoreFileName owns the rules
 // where a case-sensitive filesystem holds both spellings as distinct files.
 func ignoreFilePathInTree(dirPath string) (string, error) {
 	// "" is also the answer for a tree with no ignore file, so a swallowed error
 	// would silently mean "no exclusions".
-	if _, err := os.Lstat(filepath.Join(dirPath, ignoreFileName)); err != nil {
+	if _, err := os.Lstat(filepath.Join(dirPath, IgnoreFileName)); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", nil
 		}
@@ -254,7 +252,7 @@ func ignoreFilePathInTree(dirPath string) (string, error) {
 	}
 	folded := ""
 	for _, entry := range entries {
-		if !strings.EqualFold(entry.Name(), ignoreFileName) {
+		if !strings.EqualFold(entry.Name(), IgnoreFileName) {
 			continue
 		}
 		// Only a file can carry rules. The dirent type is not enough on its own: it
@@ -267,7 +265,7 @@ func ignoreFilePathInTree(dirPath string) (string, error) {
 		if resolved, err := os.Stat(path); err == nil && resolved.IsDir() {
 			continue
 		}
-		if entry.Name() == ignoreFileName {
+		if entry.Name() == IgnoreFileName {
 			return path, nil
 		}
 		if folded == "" {

@@ -168,7 +168,7 @@ func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysReportsEveryBadKey() {
 	_, err := virtualPathsForS3Keys([]string{"ok.txt", "../one", "two/..", "", "dup", "./dup"})
 	require.Error(suite.T(), err)
 	msg := err.Error()
-	require.Contains(suite.T(), msg, "4 object keys cannot be fingerprinted")
+	require.Contains(suite.T(), msg, "4 problems prevent the bucket from being fingerprinted")
 	require.Contains(suite.T(), msg, "[../one]")
 	require.Contains(suite.T(), msg, "[two/..]")
 	require.Contains(suite.T(), msg, "object key []")
@@ -185,9 +185,25 @@ func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysCapsTheReport() {
 	_, err := virtualPathsForS3Keys(keys)
 	require.Error(suite.T(), err)
 	msg := err.Error()
-	require.Contains(suite.T(), msg, "13 object keys cannot be fingerprinted")
+	require.Contains(suite.T(), msg, "13 problems prevent the bucket from being fingerprinted")
 	require.Contains(suite.T(), msg, "(and 3 more)")
 	require.Equal(suite.T(), maxReportedS3KeyProblems, strings.Count(msg, "object key ["))
+}
+
+// Folding variants of one path are cheap to write, so one collision must not
+// name every key that folds onto it.
+func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysCapsTheKeysNamedPerCollision() {
+	keys := []string{"a/b"}
+	for i := 0; i < 12; i++ {
+		keys = append(keys, strings.Repeat("./", i+1)+"a/b")
+	}
+	_, err := virtualPathsForS3Keys(keys)
+	require.Error(suite.T(), err)
+	msg := err.Error()
+	require.Contains(suite.T(), msg, "fingerprint as the same path [a/b]")
+	require.Contains(suite.T(), msg, " and 3 more keys fingerprint as")
+	require.Equal(suite.T(), maxReportedS3KeyProblems+1, strings.Count(msg, "a/b]"), "the named keys and the path itself")
+	require.NotContains(suite.T(), msg, "\n", "one problem still reads as one line")
 }
 
 // The reported attack shape from #1155: the traversing key is rejected for its
@@ -208,7 +224,14 @@ func (suite *S3KeysTestSuite) TestVirtualPathsForS3KeysSingleProblemReadsAsOneLi
 	_, err := virtualPathsForS3Keys([]string{"good", "bad/.."})
 	require.Error(suite.T(), err)
 	require.Equal(suite.T(),
-		`object key [bad/..] cannot be fingerprinted: contains a ".." segment; exclude it with --exclude-regex, or narrow the include filter if one is set`,
+		`object key [bad/..] cannot be fingerprinted: contains a ".." segment; exclude the affected keys with --exclude-regex, or narrow the include filter if one is set`,
+		err.Error())
+
+	// A single problem can still name several keys.
+	_, err = virtualPathsForS3Keys([]string{"a/b", "a//b"})
+	require.Error(suite.T(), err)
+	require.Equal(suite.T(),
+		`object keys [a//b], [a/b] fingerprint as the same path [a/b]; exclude the affected keys with --exclude-regex, or narrow the include filter if one is set`,
 		err.Error())
 }
 
