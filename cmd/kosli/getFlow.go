@@ -107,7 +107,6 @@ func printFlowAsTable(raw string, out io.Writer, page int) error {
 
 	rows = append(rows, fmt.Sprintf("Name:\t%s", flow["name"]))
 	rows = append(rows, fmt.Sprintf("Description:\t%s", flow["description"]))
-	rows = append(rows, fmt.Sprintf("Visibility:\t%s", flow["visibility"]))
 	rows = append(rows, fmt.Sprintf("Template:\t%s", template))
 	rows = append(rows, fmt.Sprintf("Last Deployment At:\t%s", lastDeployedAt))
 	rows = append(rows, fmt.Sprintf("Tags:\t%s", tagsOutput))
