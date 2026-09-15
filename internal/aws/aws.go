@@ -347,7 +347,7 @@ func getAndProcessOneLambdaFunc(client LambdaAPI, functionName string) (*LambdaD
 		return &LambdaData{}, err
 	}
 
-	lambdaData, err := processOneLambdaFunc(*function.LastModified, *function.CodeSha256, *function.FunctionName, string(function.PackageType))
+	lambdaData, err := processOneLambdaFunc(aws.ToString(function.LastModified), aws.ToString(function.CodeSha256), aws.ToString(function.FunctionName), function.PackageType)
 	if err != nil {
 		return lambdaData, err
 	}
@@ -356,7 +356,7 @@ func getAndProcessOneLambdaFunc(client LambdaAPI, functionName string) (*LambdaD
 }
 
 // processOneLambdaFunc returns LambdaData object from lambda function attributes
-func processOneLambdaFunc(lastModified, codeSha256, functionName, packageType string) (*LambdaData, error) {
+func processOneLambdaFunc(lastModified, codeSha256, functionName string, packageType types.PackageType) (*LambdaData, error) {
 	lambdaData := &LambdaData{}
 	lastModifiedTimestamp, err := formatLambdaLastModified(lastModified)
 	if err != nil {
@@ -365,7 +365,7 @@ func processOneLambdaFunc(lastModified, codeSha256, functionName, packageType st
 	lambdaData.LastModifiedTimestamp = lastModifiedTimestamp.Unix()
 	lambdaData.Digests = map[string]string{functionName: codeSha256}
 
-	if packageType == "Zip" {
+	if packageType == types.PackageTypeZip {
 		lambdaData.Digests[functionName], err = decodeLambdaFingerprint(codeSha256)
 		if err != nil {
 			return lambdaData, err
@@ -837,7 +837,7 @@ func getTasksDataInClusterService(client *ecs.Client, clusterName string, filter
 				serviceTasksData := []*EcsTaskData{}
 				for _, taskDesc := range result.Tasks {
 					digests := make(map[string]string)
-					if *taskDesc.LastStatus == "RUNNING" {
+					if aws.ToString(taskDesc.LastStatus) == "RUNNING" {
 						for _, container := range taskDesc.Containers {
 							imageName := container.Image
 							if imageName == nil {
