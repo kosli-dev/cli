@@ -113,6 +113,34 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 			cmd:    fmt.Sprintf(`snapshot s3 %s %s --bucket %s --exclude dummy`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
 			golden: "bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
+		{
+			name:   "download limits can be set, with a bare number read as megabytes",
+			cmd:    fmt.Sprintf(`snapshot s3 %s %s --bucket %s --download-concurrency 2 --download-budget 64`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
+		},
+		{
+			name:   "the download budget takes a unit suffix",
+			cmd:    fmt.Sprintf(`snapshot s3 %s %s --bucket %s --download-budget 2GB`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot s3 fails if --download-concurrency is below 1",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --download-concurrency 0`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: --download-concurrency must be at least 1, got 0\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot s3 fails if --download-budget is not a size",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --download-budget large`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: invalid --download-budget: \"large\" is not a size: expected a number with an optional K, M, G or T unit, e.g. 512M\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot s3 fails if --download-budget is zero",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --download-budget 0`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: invalid --download-budget: size \"0\" must be at least 1 byte\n",
+		},
 	}
 
 	for _, t := range tests {

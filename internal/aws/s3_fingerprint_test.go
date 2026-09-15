@@ -59,7 +59,7 @@ func (r *recordingDownloader) downloadedKeys() []string {
 
 func snapshotFake(t *testing.T, client S3API) (artifactName, fingerprint string) {
 	t.Helper()
-	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(t, err)
 	require.Len(t, data, 1)
 	require.Len(t, data[0].Digests, 1)
@@ -191,7 +191,7 @@ func (suite *S3FingerprintTestSuite) TestDownloadsExactlyTheContributingObjects(
 		"scratch.tmp":      []byte("tmp"),
 		"filtered/out.txt": []byte("out"),
 	}}}
-	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, []string{"filtered/"}, nil, logger.NewStandardLogger())
+	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, []string{"filtered/"}, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), data, 1)
 	require.Equal(suite.T(), []string{".kosli_ignore", "app.js", "lib/util.js"}, client.downloadedKeys())
@@ -214,7 +214,7 @@ func (suite *S3FingerprintTestSuite) TestObjectsNeverLandUnderTheirKeyAndDoNotLi
 			"the local file name must owe nothing to the key")
 	}
 
-	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), client.files, len(keys))
 	for _, file := range client.files {
@@ -233,7 +233,7 @@ func (suite *S3FingerprintTestSuite) TestAMalformedIgnoreRuleFailsTheSnapshot() 
 			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{
 				".kosli_ignore": []byte(rule + "\n"), "app.js": []byte("app"),
 			}}
-			_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+			_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 			require.Error(suite.T(), err)
 			require.Contains(suite.T(), err.Error(), "the bucket's .kosli_ignore holds a rule that cannot be applied")
 			require.Contains(suite.T(), err.Error(), rule)
@@ -245,7 +245,7 @@ func (suite *S3FingerprintTestSuite) TestADownloadErrorNamesTheKey() {
 	client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{
 		"README.md": []byte(fakeReadmeBody), "notes.txt": []byte(fakeNotesBody),
 	}, DownloadObjectErr: os.ErrDeadlineExceeded}
-	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
 	require.ErrorIs(suite.T(), err, os.ErrDeadlineExceeded)
 	// Downloads overlap, so either object may be the first to fail.
@@ -276,19 +276,19 @@ func (suite *S3FingerprintTestSuite) TestAListingWithoutModificationTimesDoesNot
 	objects := map[string][]byte{"README.md": []byte(fakeReadmeBody), "notes.txt": []byte(fakeNotesBody)}
 	later := fakeS3LastModified.Add(time.Hour)
 	full, err := getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
-		LastModified: map[string]time.Time{"notes.txt": later}}, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+		LastModified: map[string]time.Time{"notes.txt": later}}, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 
 	partial, err := getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
 		LastModified: map[string]time.Time{"notes.txt": later}, NoLastModified: map[string]bool{"README.md": true}},
-		fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+		fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), full[0].Digests, partial[0].Digests, "the object without a timestamp stays in the fingerprint")
 	require.Equal(suite.T(), later.Unix(), partial[0].LastModifiedTimestamp)
 
 	_, err = getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
 		NoLastModified: map[string]bool{"README.md": true, "notes.txt": true}},
-		fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+		fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), "modification time")
 }
