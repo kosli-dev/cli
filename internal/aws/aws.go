@@ -347,7 +347,7 @@ func getAndProcessOneLambdaFunc(client LambdaAPI, functionName string) (*LambdaD
 		return &LambdaData{}, err
 	}
 
-	lambdaData, err := processOneLambdaFunc(*function.LastModified, *function.CodeSha256, *function.FunctionName, function.PackageType)
+	lambdaData, err := processOneLambdaFunc(aws.ToString(function.LastModified), aws.ToString(function.CodeSha256), aws.ToString(function.FunctionName), function.PackageType)
 	if err != nil {
 		return lambdaData, err
 	}

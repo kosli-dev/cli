@@ -128,6 +128,9 @@ func (suite *AWSTestSuite) TestProcessOneLambdaFunc() {
 				"processOneLambdaFunc() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
 				require.Equal(suite.T(), t.wantFingerprint, got.Digests[functionName])
+				want, err := time.Parse("2006-01-02T15:04:05.000+0000", lastModified)
+				require.NoError(suite.T(), err)
+				require.Equal(suite.T(), want.Unix(), got.LastModifiedTimestamp)
 			}
 		})
 	}
