@@ -516,19 +516,20 @@ func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []strin
 			if object.Key == nil {
 				return nil, fmt.Errorf("bucket [%s] listed an object with no key", bucket)
 			}
-			// A key listed twice is a listing fault, not a collision between two
-			// keys, and the collision report relies on keys being distinct. It is
-			// checked before the filters so the error is about the listing itself.
-			if seen[*object.Key] {
-				return nil, fmt.Errorf("bucket [%s] listed object key [%s] more than once", bucket, *object.Key)
-			}
-			seen[*object.Key] = true
 			if strings.HasSuffix(*object.Key, "/") { // skip folders
 				continue
 			}
 			if shouldExcludePath(*object.Key, includePaths, includeRegex, excludePaths, excludeRegex) {
 				continue
 			}
+			// A key listed twice is a listing fault, not a collision between two
+			// keys, and the collision report relies on keys being distinct. Only
+			// keys that reach the fingerprint are checked, so memory stays bounded
+			// by the filtered set rather than the whole bucket.
+			if seen[*object.Key] {
+				return nil, fmt.Errorf("bucket [%s] listed object key [%s] more than once", bucket, *object.Key)
+			}
+			seen[*object.Key] = true
 			// An object without a timestamp stays in the fingerprint and out of
 			// the snapshot timestamp, as it was before.
 			var lastModified time.Time
