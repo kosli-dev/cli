@@ -327,12 +327,12 @@ jobs:
         env:
           KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
         run:
-          kosli attest generic
+          kosli attest sbom
             --flow ${{ inputs.flow_name }}
             --trail ${{ inputs.trail_name }}
             --name container-sbom
             --fingerprint ${{ env.FINGERPRINT }}
-            --attachments sbom.spdx.json
+            --sbom-file sbom.spdx.json
             --org ${{ inputs.kosli_org }}
 
       - name: Run Snyk Container Test to scan the Docker image for vulnerabilities
