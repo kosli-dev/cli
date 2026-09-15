@@ -7,8 +7,6 @@ if [[ -z "${KOSLI_SERVER_IMAGE:-}" ]] || [[ "$KOSLI_SERVER_IMAGE" == *"Error"* ]
     exit 1
 fi
 
-# More than one image reference reaches docker as one malformed string, and docker answers
-# "invalid reference format", which says nothing about where the two came from.
 if [[ "$KOSLI_SERVER_IMAGE" == *$'\n'* ]]; then
     echo "❌ KOSLI_SERVER_IMAGE holds more than one image reference:"
     printf '%s\n' "$KOSLI_SERVER_IMAGE" | sed 's/^/    /'
@@ -16,7 +14,6 @@ if [[ "$KOSLI_SERVER_IMAGE" == *$'\n'* ]]; then
     exit 1
 fi
 
-# Set force_restart to the first argument if provided, empty string otherwise
 force_restart="${1:-}"
 container_name=cli_kosli_server
 
@@ -33,8 +30,7 @@ check_success()
 restart_server() 
 {
     echo restarting server ...
-    # Only remote (digest-pinned) images need an AWS login and pull. The local-image
-    # flow uses the plain "merkely-test" tag, which is built locally — skip both.
+
     if [[ "$KOSLI_SERVER_IMAGE" == *"@sha256:"* ]]; then
         ./bin/docker_login_aws.sh staging
         docker pull "${KOSLI_SERVER_IMAGE}" || true
