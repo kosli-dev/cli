@@ -21,6 +21,7 @@ services:
     environment:
       KOSLI_HOSTNAME: localhost
       TEST_MODE: cli
+      SECRET_KEY: cli-integration-tests-only-not-a-secret
     stop_signal: SIGINT
     tmpfs:
       - /tmp
@@ -40,6 +41,7 @@ services:
     environment:
       KOSLI_HOSTNAME: localhost
       TEST_MODE: cli
+      SECRET_KEY: cli-integration-tests-only-not-a-secret
       EVIDENCE_BUCKET_ENDPOINT_URL: http://minio:9000
       EVIDENCE_BUCKET_NAME: cli-tests-evidence
       AWS_ACCESS_KEY_ID: ROOTUSER

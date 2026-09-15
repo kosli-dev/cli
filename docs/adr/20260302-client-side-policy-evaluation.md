@@ -113,6 +113,17 @@ Embed the OPA library in the CLI for client-side Rego policy evaluation.
 - Policy files are local Rego files passed via `--policy` flag
 - The `internal/evaluate` package encapsulates all OPA interaction
 
+## Status update, September 2026
+
+The migration path this record called for now exists, behind a hidden `--server-side` flag on `kosli evaluate trail` and `kosli evaluate trails` (kosli-dev/server#6700). Without the flag nothing here changes; with it, the policy and the trail references are sent to Kosli and the verdict is read back. The flag is hidden because the two paths do not yet agree, in two ways that matter to anyone writing a policy:
+
+- **The policy contract is wider server-side.** The rule stated above, `package policy` with an `allow` rule, is enforced only here. The server discovers the entry point from the bundle, so it accepts policies this evaluator refuses. Under the flag that local check is deliberately skipped, so the server judges what it will actually run.
+- **The policy sees a different document.** The server builds the input from the trail's recorded moment rather than from the live trail, so trail metadata and events that appear in `input` here are absent there. A policy reading anything outside the compliance slots will answer differently under the flag.
+
+Neither is a defect to fix in the CLI. Making the disagreement observable is the point, and measuring it is what the flag exists for. Full detail, including the server contract and every decision taken, is in [docs/plans/6700-evaluate-server-side-flag.md](../plans/6700-evaluate-server-side-flag.md) and [docs/handover/6700-evaluate-a-trail-server-side-from-the-cli.md](../handover/6700-evaluate-a-trail-server-side-from-the-cli.md).
+
+This record stays **Accepted**: client-side evaluation remains the default and the only published path.
+
 ## Related Decisions
 
 - [20260302-client-side-enrichment-pipeline](20260302-client-side-enrichment-pipeline.md) — client-side data enrichment needed to make trail data policy-friendly

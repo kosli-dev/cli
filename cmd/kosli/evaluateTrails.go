@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 
+	"github.com/kosli-dev/cli/internal/evaluations"
 	"github.com/spf13/cobra"
 )
 
@@ -90,6 +91,7 @@ func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 	}
 
 	o.addFlags(cmd, "Path or http(s):// URL of a Rego policy to evaluate against the trails.")
+	o.addServerSideFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"flow", "policy"})
 	if err != nil {
@@ -100,6 +102,14 @@ func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
+	if o.serverSide {
+		refs := make([]evaluations.TrailRef, 0, len(args))
+		for _, trailName := range args {
+			refs = append(refs, evaluations.TrailRef{Flow: o.flowName, Trail: trailName})
+		}
+		return evaluateServerSide(out, &o.commonEvaluateOptions, refs)
+	}
+
 	var trails []interface{}
 	for _, trailName := range args {
 		trailData, err := fetchAndEnrichTrail(o.flowName, trailName, o.attestations)

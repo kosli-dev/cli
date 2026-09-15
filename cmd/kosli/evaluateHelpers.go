@@ -1,16 +1,21 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/evaluate"
+	"github.com/kosli-dev/cli/internal/evaluations"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -24,6 +29,25 @@ var policyFetchTimeout = 10 * time.Second
 // misconfigured server streaming an unbounded body. 5 * 2^20 (5*1MiB)
 const policyMaxBytes = 5 << 20 // 5 MiB
 
+// maxServerSideTrails mirrors the ceiling the evaluations API publishes in its
+// OpenAPI schema. Checked here so that a caller naming too many is told which
+// limit they crossed, rather than reading it out of a rejected request. Drift
+// makes this refuse what the API would accept, so the two are worth comparing
+// whenever that schema changes.
+const maxServerSideTrails = 100
+
+// serverPolicyMaxBytes mirrors the cap the evaluations API publishes on a
+// policy bundle, which counts the names as well as the sources. It is a fifth
+// of what a remote --policy read allows, so a policy can be fetched in full
+// and still be too big to send; saying so here beats a rejected request.
+const serverPolicyMaxBytes = 1 << 20 // 1 MiB
+
+// serverSideWaitOptions is how long a verdict is waited for, and the seam a
+// test shrinks it through. It lives here rather than being an override of the
+// package default, so a test never reaches into another package's state to set
+// it and can never leave a shortened budget behind for whatever runs next.
+var serverSideWaitOptions = evaluations.WaitOptions{}
+
 type commonEvaluateOptions struct {
 	flowName     string
 	policyRef    string
@@ -33,6 +57,7 @@ type commonEvaluateOptions struct {
 	params       string
 	assert       bool
 	noAssert     bool
+	serverSide   bool
 }
 
 func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) {
@@ -45,6 +70,19 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 	cmd.Flags().BoolVar(&o.assert, "assert", false, "[optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.")
 	cmd.Flags().BoolVar(&o.noAssert, "no-assert", false, "[optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.")
 	cmd.MarkFlagsMutuallyExclusive("assert", "no-assert")
+}
+
+// addServerSideFlag offers the evaluation to the Kosli server instead of
+// running it here. It is hidden, and stays hidden: it exists to run the two
+// evaluation paths against each other while neither is a contract anyone can
+// rely on, and the two do not yet agree on what a policy may contain or on
+// what a policy sees. Only the trail commands have it, because an evaluation
+// is created from trail references and `evaluate input` has none to send.
+func (o *commonEvaluateOptions) addServerSideFlag(cmd *cobra.Command) {
+	cmd.Flags().BoolVar(&o.serverSide, "server-side", false, serverSideFlag)
+	if err := cmd.Flags().MarkHidden("server-side"); err != nil {
+		logger.Error("failed to hide the server-side flag: %v", err)
+	}
 }
 
 // assertOnDeny resolves the --assert / --no-assert pair into a single bool.
@@ -222,6 +260,195 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]in
 		return err
 	}
 
+	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny)
+}
+
+// evaluateServerSide asks the Kosli server to evaluate the named trails and
+// prints the verdict it answers with. Nothing about the trails is read here:
+// the server assembles what the policy sees, which is the point of the flag.
+func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evaluations.TrailRef) error {
+	if err := o.refuseWhatTheServerCannotDo(); err != nil {
+		return err
+	}
+
+	if len(trails) > maxServerSideTrails {
+		return fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
+			maxServerSideTrails, len(trails))
+	}
+
+	// Parsed before the policy is read: --params is local and cheap to check,
+	// and a remote policy fetched first would be thrown away by a typo in it.
+	params, err := parseParams(o.params)
+	if err != nil {
+		return err
+	}
+
+	policySource, err := loadPolicy(o.policyRef)
+	if err != nil {
+		return err
+	}
+
+	files, err := policyBundle(o.policyRef, policySource)
+	if err != nil {
+		return err
+	}
+
+	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
+	created, err := client.Create(global.Org, evaluations.CreateRequest{
+		Trails: trails,
+		Files:  files,
+		Params: params,
+	})
+	if err != nil {
+		return serverSideRequestError(err)
+	}
+	if created == nil {
+		// A dry run sent nothing, so there is no evaluation to wait for.
+		return nil
+	}
+	if created.ID == "" {
+		// Without an id there is nothing to read the verdict back from, and
+		// asking anyway would fetch a different resource and blame the answer.
+		return errors.New("the Kosli server accepted the evaluation but named no id, " +
+			"so its verdict cannot be read back")
+	}
+
+	evaluation, err := client.WaitForTerminal(context.Background(), global.Org, created.ID,
+		serverSideWaitOptions)
+	if err != nil {
+		return serverSideReadError(created.ID, err)
+	}
+	// Status decides, not the presence of a result: an evaluation that reports
+	// a failure has decided nothing, whatever else it carries. Reading it the
+	// other way round would let a stray result print as a verdict, which is the
+	// one outcome none of this may produce.
+	if evaluation.Status != evaluations.StatusCompleted || evaluation.Result == nil {
+		return serverSideFailure(evaluation)
+	}
+
+	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
+		o.output, false, nil, o.assertOnDeny())
+}
+
+// refuseWhatTheServerCannotDo rejects the options that have no server-side
+// answer, rather than accepting them and quietly doing something else.
+// Honouring either one only halfway would be worse than refusing it: a filter
+// that was ignored would evaluate more than the caller asked about, and an
+// input printed from here would not be the input the server judged.
+//
+// Stated as errors rather than as a cobra exclusion group so that each one can
+// say why, which is what an insider reaching for an undocumented flag needs.
+func (o *commonEvaluateOptions) refuseWhatTheServerCannotDo() error {
+	if len(o.attestations) > 0 {
+		return fmt.Errorf(
+			"--attestations is not supported with --server-side; " +
+				"filtering is done here and the server has no equivalent")
+	}
+	if o.showInput {
+		return fmt.Errorf(
+			"--show-input is not supported with --server-side; " +
+				"the server does not return the input it evaluated")
+	}
+	return nil
+}
+
+// serverSideRequestError reports a refusal from the API as the status it
+// answered with and whatever it said about why.
+func serverSideRequestError(err error) error {
+	// An expired wait is not a failed request: it already says what happened
+	// and names the evaluation, so it travels untouched.
+	var stillPending *evaluations.StillPendingError
+	if errors.As(err, &stillPending) {
+		return err
+	}
+
+	var apiError *requests.APIError
+	if !errors.As(err, &apiError) {
+		// Retried and given up on inside the shared HTTP client, which throws
+		// the body away as it goes, so there is no status or message to report.
+		return fmt.Errorf("could not get a server-side evaluation from Kosli: %w", err)
+	}
+	// Without a message the API wrote there is only the status to report.
+	// Quoting what arrived instead would dress a proxy's page, or the decoder's
+	// complaint about one, as the server's own reason.
+	if !apiError.HasServerMessage || apiError.Message == "" {
+		return fmt.Errorf("the Kosli server answered %d", apiError.StatusCode)
+	}
+	return fmt.Errorf("the Kosli server answered %d: %s", apiError.StatusCode, apiError.Message)
+}
+
+// serverSideReadError reports a failure to read a verdict back. By this point
+// the evaluation exists and the server holds its answer, so the id travels: it
+// is the one thing that makes the outcome recoverable.
+//
+// Separate from the create's own mapping because every sentence there is
+// written for a request that has not happened yet. Reused here, a refusal would
+// blame a feature flag that has already let a create through, and a 404 would
+// deny support for a route the create just used.
+func serverSideReadError(id string, err error) error {
+	// An expired wait already names the evaluation and says where to read it.
+	var stillPending *evaluations.StillPendingError
+	if errors.As(err, &stillPending) {
+		return err
+	}
+	return fmt.Errorf("could not read server-side evaluation %s back: %w", id, err)
+}
+
+// serverSideFailure reports an evaluation that answered no verdict. It is
+// never a denial: a policy that could not run has decided nothing.
+func serverSideFailure(evaluation *evaluations.Evaluation) error {
+	if evaluation.Failure == nil {
+		return fmt.Errorf("server-side evaluation %s answered no verdict and no reason", evaluation.ID)
+	}
+	return fmt.Errorf("server-side evaluation failed (%s): %s",
+		evaluation.Failure.Kind, evaluation.Failure.Message)
+}
+
+// serverVerdict maps a server verdict onto the shared one. An empty list of
+// violations becomes no list at all, because the local evaluator returns
+// nothing rather than an empty slice and the two paths have to print alike.
+func serverVerdict(result *evaluations.Result) *evaluate.Result {
+	violations := result.Violations
+	if len(violations) == 0 {
+		violations = nil
+	}
+	return &evaluate.Result{Allow: result.Allow, Violations: violations}
+}
+
+// policyBundle wraps the policy source as the one-file bundle the API takes,
+// refusing one too large for it rather than letting the request be rejected.
+// The cap counts the names as well as the sources, exactly as the API counts.
+func policyBundle(ref string, source []byte) (map[string]string, error) {
+	key := policyBundleKey(ref)
+	if size := len(key) + len(source); size > serverPolicyMaxBytes {
+		return nil, fmt.Errorf("policy bundle is %d bytes, over the %d byte limit",
+			size, serverPolicyMaxBytes)
+	}
+	return map[string]string{key: string(source)}, nil
+}
+
+// policyBundleKey names the policy inside the uploaded bundle. Only the base
+// name travels: the server refuses a path that is absolute or that climbs out
+// of the bundle, and where the file sits on this machine is not its business.
+// The name is a label rather than a selector, since the evaluator parses every
+// entry as a module whatever it is called, so no extension is imposed here.
+func policyBundleKey(ref string) string {
+	base := filepath.Base(ref)
+	if isRemotePolicyRef(ref) {
+		if parsed, err := url.Parse(ref); err == nil {
+			base = path.Base(parsed.Path)
+		}
+	}
+	switch base {
+	case ".", "..", "/", "":
+		return "policy.rego"
+	}
+	return base
+}
+
+// printEvaluateResult renders a verdict, whatever produced it, so that every
+// evaluation path prints the same bytes for the same verdict.
+func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool) error {
 	auditResult := map[string]interface{}{
 		"allow":      result.Allow,
 		"violations": result.Violations,

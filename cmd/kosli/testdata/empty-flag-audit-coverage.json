@@ -606,6 +606,7 @@
   "output": "string",
   "params": "string",
   "policy": "string",
+  "server-side": "bool",
   "show-input": "bool"
  },
  "evaluate trails": {
@@ -616,6 +617,7 @@
   "output": "string",
   "params": "string",
   "policy": "string",
+  "server-side": "bool",
   "show-input": "bool"
  },
  "fingerprint": {

@@ -48,6 +48,11 @@ type HTTPResponse struct {
 type APIError struct {
 	StatusCode int
 	Message    string
+	// HasServerMessage records whether the body carried a message the API
+	// wrote. False means Message was salvaged from something else, such as a
+	// body that was not JSON at all, so it is a rendering rather than a
+	// sentence anyone wrote. Only knowable where the body is decoded.
+	HasServerMessage bool
 }
 
 func (e *APIError) Error() string {
@@ -333,26 +338,36 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 				return nil, &APIError{StatusCode: resp.StatusCode, Message: err.Error()}
 			}
 			cleanedErrorMessage := ""
+			hasServerMessage := false
 			if reflect.ValueOf(respBody).Kind() == reflect.String {
 				cleanedErrorMessage = respBody.(string)
 			} else if reflect.ValueOf(respBody).Kind() == reflect.Map {
 				// Error response from kosli application SW contains a "message"
 				// Error response from the API schema validation contains a "message" and a list of "errors"
 				respBodyMap := respBody.(map[string]any)
-				message, ok := respBodyMap["message"]
-				if ok {
+				// Only a message that is text counts. A body carrying the key
+				// with a null, a number or an object under it has no sentence
+				// to pass on, and asserting it into a string would panic the
+				// whole CLI rather than report the error it arrived with.
+				messageText, isText := respBodyMap["message"].(string)
+				if isText {
+					hasServerMessage = true
 					errors, ok := respBodyMap["errors"]
 					if ok {
-						cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0] +
+						cleanedErrorMessage = strings.Split(messageText, "You have requested")[0] +
 							": " + fmt.Sprintf("%v", errors)
 					} else {
-						cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0]
+						cleanedErrorMessage = strings.Split(messageText, "You have requested")[0]
 					}
 				} else {
 					cleanedErrorMessage = fmt.Sprintf("%s", respBodyMap)
 				}
 			}
-			return nil, &APIError{StatusCode: resp.StatusCode, Message: cleanedErrorMessage}
+			return nil, &APIError{
+				StatusCode:       resp.StatusCode,
+				Message:          cleanedErrorMessage,
+				HasServerMessage: hasServerMessage,
+			}
 		}
 		return &HTTPResponse{string(body), resp}, nil
 	}
