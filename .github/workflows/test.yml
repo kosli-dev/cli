@@ -27,9 +27,6 @@ on:
         type: boolean
         default: true
       upload_sarif:
-        # Upload the Snyk Code SARIF report to GitHub code scanning. Off by
-        # default: only a caller triggered by a push to a branch can attribute
-        # the results to the right ref, so the decision belongs at the call site.
         required: false
         type: boolean
         default: false
@@ -107,9 +104,6 @@ jobs:
         version: latest
         args: --timeout=5m -v
 
-    # The server-image lookup decides which server the integration suite runs against, so
-    # when it is wrong the suite does not run at all. It stubs kosli on PATH and takes
-    # about a second.
     - name: Test the server image lookup
       run: ./hack/test-get-server-image.sh
 
@@ -206,7 +200,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-      security-events: write  # upload SARIF to GitHub code scanning
+      security-events: write 
     steps:
 
     - name: Harden Runner
@@ -234,13 +228,7 @@ jobs:
           snyk code test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.sarif --prune-repeated-subdependencies
 
     - name: Upload Snyk Code results to GitHub code scanning
-      # snyk exits non-zero when it finds issues, so upload on failure too;
-      # hashFiles guards the case where snyk (or an earlier step) died before
-      # writing the report, so the real error stays the visible one.
-      # Soft-failure on purpose: the Kosli attestation below is the gate, while
-      # `docker` in main.yml and `goreleaser`/`binary-provenance` in release.yml
-      # all need this workflow - a SARIF size limit or a GitHub 5xx should not
-      # block a publish over ancillary reporting.
+
       if: ${{ (success() || failure()) && inputs.upload_sarif && hashFiles('snyk-code.sarif') != '' }}
       continue-on-error: true
       uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
