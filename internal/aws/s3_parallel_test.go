@@ -21,6 +21,7 @@ import (
 
 type S3ParallelTestSuite struct {
 	suite.Suite
+	lock sync.Mutex
 }
 
 // trackingDownloader records peak downloads and listed bytes in flight, and
