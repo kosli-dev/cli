@@ -125,6 +125,61 @@ The import lines are
 The second line informs us that a container started successfully. When we have that we know that the previous `Digest: sha256`
 line was the sha256 of this container.
 
+### Which `Digest:` line to trust
+
+The docker log is not written by the platform alone. It also carries the container's stdout and stderr, so a
+container can print a line containing `Digest: sha256:...` and it lands in the same text. A container that does
+this after it starts must not be able to choose the fingerprint the snapshot reports
+([kosli-dev/server#6881](https://github.com/kosli-dev/server/issues/6881)).
+
+Three things separate the platform's lines from the container's:
+
+1. **The start line names the site and the image.** The platform's `docker run` line is the start marker. It
+   names the site (`--name <site>_...` and `-e WEBSITE_SITE_NAME=<site>`), so only this site's starts count,
+   and it names the reference the platform ran. When the configured repository is pinned there
+   (`<repository>@sha256:<digest>`, as in the sample above) the digest is read from it. Start proof and digest
+   are then the same platform line, so nothing written earlier in the log can stand in for it. This also
+   covers a restart with no pull in the window. Only the configured repository is accepted, because a
+   configured startup command follows the image on the same line.
+2. **Order.** The container's output can only appear after the platform's `docker run` line. When the run line
+   names a tag instead, the digest is the last `Digest:` line *before* the last container start, and anything
+   after the start is ignored. The latest start wins, because the log window can hold several deployments and
+   the running container is the most recent one. Taking the first match instead would report a stale
+   deployment.
+3. **Shape.** Platform lines begin with a UTC timestamp carrying exactly three fractional digits, then a level
+   and a dash (`2023-09-28T12:27:31.201Z INFO  - ...`). Container output is timestamped by Docker at nanosecond
+   precision and gets no level or dash (`2023-09-28T12:27:35.123456789Z ...`). Only lines of the platform's
+   shape are considered. This is what stops a container that is being replaced, and is still running while the
+   platform pulls its successor, from writing a fake digest into the gap between the pull and the start when
+   the run line names a tag.
+
+Nothing in the log can fail the snapshot. Lines are walked without a length cap, so a container writing an
+arbitrarily long line cannot abort reporting, and a line that matches a platform pattern in shape but not in
+content (a timestamp that is not an instant, a digest token of the wrong length) is skipped. When no platform
+digest can be found the app is reported without a fingerprint and a warning names it.
+
+#### Assumptions about the platform's log
+
+Every logs-mode app now depends on these, and each fails closed to "no fingerprint plus a warning" rather than
+to a wrong fingerprint:
+
+1. The platform logs a `docker run` line for every container start.
+2. That line names the site as `--name <site>_<instance>_...` or `-e WEBSITE_SITE_NAME=<site>`, compared
+   ignoring case since app names are hostnames.
+3. Platform lines carry the `<timestamp with three fractional digits> <LEVEL>  - ` prefix, and container output
+   does not.
+4. When the platform pins the image by digest on the run line, it spells the repository the same way the app's
+   configuration does, up to Docker Hub short-form expansion and registry host case. The line is logged
+   unquoted and split on whitespace, so an app setting value or startup command can produce a token that also
+   names that repository; the run line is trusted only when every such token names the same digest, a tag
+   counting as a competing claim, and the pulled digest is used otherwise.
+
+They hold for the Linux Web App capture above. They have **not** been verified against a containerised Function
+App or a Windows-container app; a capture from either is the way to close that.
+
+None of this makes the log a source of truth: the registry is. `--digests-source acr` is the default, and the CLI
+prints a warning whenever `--digests-source logs` is used.
+
 
 ## Findings
 

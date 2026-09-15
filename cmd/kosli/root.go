@@ -215,7 +215,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	azureTenantIdFlag               = "Azure tenant ID."
 	azureSubscriptionIdFlag         = "Azure subscription ID."
 	azureResourceGroupNameFlag      = "Azure resource group name."
-	azureDigestsSourceFlag          = "[defaulted] Where to get the digests from. Valid values are 'acr' and 'logs'. With 'acr', Azure credentials are only sent to Azure Container Registry login servers; an app whose image comes from any other registry is read without credentials, so a private third-party registry needs 'logs'."
+	azureDigestsSourceFlag          = "[defaulted] Where to get the digests from. Valid values are 'acr' and 'logs'. With 'acr', Azure credentials are only sent to Azure Container Registry login servers; an app whose image comes from any other registry is read without credentials, so a private third-party registry needs 'logs'. 'logs' reads the digest from the app's docker log, which the running container can also write to, and is the weaker source."
 	githubTokenFlag                 = "Github token."
 	githubOrgFlag                   = "Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/integrations/ci_cd )."
 	githubBaseURLFlag               = "[optional] GitHub base URL (only needed for GitHub Enterprise installations)."
