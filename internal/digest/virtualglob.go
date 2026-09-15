@@ -18,10 +18,14 @@ const virtualRoot = "tree"
 // DirSha256 resolves .kosli_ignore rules with filepathx.Glob, which has its own
 // reading of "**" and inherits filepath.Glob's: a pattern without wildcards is
 // returned as written, uncleaned, while one with wildcards is rebuilt from the
-// directory listing, cleaned. So "**/x" never matches x at the root (the pieces
-// concatenate to "tree//x") but "**/*.log" does. Reproducing the algorithm step
-// for step, rather than its apparent meaning, is what keeps the virtual digest
-// equal to the on-disk one for every rule anyone has already written.
+// directory listing, cleaned. So "**/x" does find x at the root, but spelled
+// "tree//x" (the pieces concatenate around the empty match), and the tree walk
+// compares against the cleaned "tree/x", so a root file x survives; a root
+// directory x keeps its name while its descendants, joined cleaned by the walk,
+// are excluded. "**/*.log" is rebuilt cleaned and matches outright. Reproducing
+// the algorithm step for step, rather than its apparent meaning, is what keeps
+// the virtual digest equal to the on-disk one for every rule anyone has
+// already written.
 type virtualFS struct {
 	root *virtualNode
 }
