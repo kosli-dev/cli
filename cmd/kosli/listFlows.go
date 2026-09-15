@@ -164,10 +164,11 @@ func printFlowsListAsTable(raw string, out io.Writer, page int) error {
 	header := []string{"NAME", "DESCRIPTION", "TAGS"}
 	rows := []string{}
 	for _, flow := range flows {
-		tags := flow["tags"].(map[string]interface{})
 		tagsOutput := ""
-		for key, value := range tags {
-			tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
+		if tags, ok := flow["tags"].(map[string]interface{}); ok {
+			for key, value := range tags {
+				tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
+			}
 		}
 		tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
 		row := fmt.Sprintf("%s\t%s\t%s", flow["name"], flow["description"], tagsOutput)

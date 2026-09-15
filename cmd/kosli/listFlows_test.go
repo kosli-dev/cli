@@ -144,13 +144,12 @@ func TestPrintFlowsListAsTableOmitsVisibility(t *testing.T) {
 	raw := `[{"name":"backend","description":"Backend service","visibility":"private","tags":{"team":"platform"}}]`
 	var buf bytes.Buffer
 	require.NoError(t, printFlowsListAsTable(raw, &buf, 1))
-	out := buf.String()
-	require.NotContains(t, out, "VISIBILITY")
-	require.NotContains(t, out, "private")
-	require.Contains(t, out, "NAME")
-	require.Contains(t, out, "DESCRIPTION")
-	require.Contains(t, out, "TAGS")
-	require.Contains(t, out, "backend")
-	require.Contains(t, out, "Backend service")
-	require.Contains(t, out, "[team=platform]")
+	require.Equal(t, "NAME     DESCRIPTION      TAGS\nbackend  Backend service  [team=platform]\n", buf.String())
+}
+
+func TestPrintFlowsListAsTableRendersFlowWithoutTags(t *testing.T) {
+	raw := `[{"name":"backend","description":"Backend service","tags":null},{"name":"frontend","description":"Web UI"}]`
+	var buf bytes.Buffer
+	require.NoError(t, printFlowsListAsTable(raw, &buf, 1))
+	require.Equal(t, "NAME      DESCRIPTION      TAGS\nbackend   Backend service  \nfrontend  Web UI           \n", buf.String())
 }
