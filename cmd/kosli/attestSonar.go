@@ -28,6 +28,9 @@ type attestSonarOptions struct {
 	branch      string
 	maxWait     int
 	payload     SonarAttestationPayload
+	// revisionExplicit is true when --sonar-revision was set by the user rather
+	// than defaulted from the CI commit.
+	revisionExplicit bool
 }
 
 const attestSonarShortDesc = `Report a SonarQube attestation to an artifact or a trail in a Kosli flow.  `
@@ -188,11 +191,6 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			err = MuXRequiredFlags(cmd, []string{"sonar-revision", "pull-request"}, false)
-			if err != nil {
-				return err
-			}
-
 			err = MuXRequiredFlags(cmd, []string{"sonar-branch", "pull-request"}, false)
 			if err != nil {
 				return err
@@ -209,6 +207,7 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoURLExplicit = cmd.Flags().Changed("repo-url")
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
+			o.revisionExplicit = cmd.Flags().Changed("sonar-revision")
 			return o.run(args)
 		},
 	}
@@ -244,7 +243,14 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir, o.ceTaskURL, o.projectKey, o.serverURL, o.revision, o.pullRequest, o.branch, o.maxWait)
+	// The flag defaults to the CI commit, so only a revision the user actually
+	// gave is checked against the pull request's analysed commit (#1192).
+	revision := o.revision
+	if o.pullRequest != "" && !o.revisionExplicit {
+		revision = ""
+	}
+
+	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir, o.ceTaskURL, o.projectKey, o.serverURL, revision, o.pullRequest, o.branch, o.maxWait)
 
 	o.payload.SonarResults, err = sc.GetSonarResults(logger)
 	if err != nil {
