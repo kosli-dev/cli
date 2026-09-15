@@ -257,6 +257,13 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 		if err != nil {
 			return nil, err
 		}
+		// SonarQube keeps only a pull request's latest analysis, which is the
+		// previous push's until the current scan is processed (#1192). Only a
+		// revision the user passed alongside --pull-request is checked; on the
+		// other paths sc.revision is the defaulted commit, not an expectation.
+		if sc.pullRequest != "" && sc.revision != "" && sonarResults.Revision != sc.revision {
+			return nil, fmt.Errorf("analysis for pull request %s of project %s is of revision %s, not %s.\nThe scan for that revision may still be being processed by SonarQube, try again later.\nOtherwise check the revision is correct", sc.pullRequest, project.Key, sonarResults.Revision, sc.revision)
+		}
 	}
 
 	//Get the quality gate status from the qualitygates/project_status API
