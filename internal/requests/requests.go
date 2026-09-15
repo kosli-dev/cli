@@ -48,13 +48,10 @@ type HTTPResponse struct {
 type APIError struct {
 	StatusCode int
 	Message    string
-	// HasServerMessage records whether the body carried the message field that
-	// a Kosli error always carries. False means Message was salvaged from
-	// something else -- a body with no message field, or one that was not JSON
-	// at all -- so it is a rendering rather than a sentence anyone wrote, and
-	// the answer did not come from this API. Recorded here because it is only
-	// knowable where the body is decoded; by the time a caller sees Message,
-	// the difference is gone.
+	// HasServerMessage records whether the body carried a message the API
+	// wrote. False means Message was salvaged from something else, such as a
+	// body that was not JSON at all, so it is a rendering rather than a
+	// sentence anyone wrote. Only knowable where the body is decoded.
 	HasServerMessage bool
 }
 

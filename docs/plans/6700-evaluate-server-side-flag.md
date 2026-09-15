@@ -403,6 +403,12 @@ A code review of the finished branch raised findings in two rounds. All but two 
 20. **A failure to read the verdict back was worded for the create, and dropped the evaluation.** Once the create has succeeded the evaluation exists and the server holds its answer, so a refusal blamed a feature flag that had already let the create through, and a 404 denied support for the route the create had just used. Worse, every read failure except an expired wait discarded the id, which is the one thing that makes the outcome recoverable. Read failures now go through their own mapping, which names the evaluation and passes an expired wait through untouched.
 21. **The measured wait was reported to the nanosecond.** Rounding it to the millisecond keeps the overrun visible, which is why it is measured, without putting six digits of noise in a sentence whose point is that the budget was spent.
 
+**Sixth round, from a human reviewer**
+
+22. **The error mapping had grown to twenty-nine lines of branching, and mostly did not show the status code.** Each branch was reasonable when the previous round asked for it; the accumulation was not. It is fourteen lines now and reports the status the API answered with plus whatever it said about why. Six tests collapsed into one table.
+23. **The refusal no longer names the feature flag.** This was a stated requirement of the ticket, and dropping it was the reviewer's call, not an oversight. The consequence is that an organisation without the entitlement sees the API's own sentence and the status, with no hint that a hidden flag exists or that removing it evaluates locally instead. Worth raising with the ticket owner rather than leaving buried here.
+24. **A message the API did not write is still not quoted.** A proxy's page, or the decoder's complaint about one, would otherwise print as the server's reason. One condition, not a branch.
+
 **Known limitations, recorded rather than fixed**
 
 11. **The wait budget governs the polling, not a single read.** A read carries no context and the shared HTTP client sets no overall deadline, so a very slow server can overrun the budget by one read, and cancelling stops the loop only at its next turn. Holding to the budget exactly means giving the read a deadline of its own, which needs `internal/requests` to accept a context. That is a change every command inherits, so it belongs in its own ticket rather than here. Stated on `WaitOptions` so nobody reads the budget as a hard bound.

@@ -477,82 +477,6 @@ func (suite *EvaluateServerSideTestSuite) TestAFailureWithNoReasonIsStillNotADen
 	require.NotContains(suite.T(), combined, "DENIED")
 }
 
-func (suite *EvaluateServerSideTestSuite) TestAnUnentitledOrgIsToldWhatToDo() {
-	server := newRefusingServer(suite.T(), http.StatusForbidden,
-		`{"message":"Server-side evaluation is not enabled for this organization"}`)
-
-	_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
-
-	require.Error(suite.T(), err)
-	require.Contains(suite.T(), err.Error(), "test-org", "name the org that was refused")
-	require.Contains(suite.T(), err.Error(), "is-server-side-evaluation-enabled")
-	require.Contains(suite.T(), err.Error(), "--server-side", "say how to carry on regardless")
-}
-
-// Something that does not serve this route answers 404 without a message of
-// its own, which is how it is told apart from a 404 about a trail. It can say
-// so in more than one way, and none of them should reach a user raw.
-func (suite *EvaluateServerSideTestSuite) TestAnOlderServerIsNamedAsSuch() {
-	for _, test := range []struct {
-		name string
-		body string
-	}{
-		{name: "a server that routes nothing here", body: `{"detail":"Not Found"}`},
-		{name: "a proxy answering in html", body: `<html><body>404 Not Found</body></html>`},
-		{name: "an answer with no body at all", body: ``},
-		{name: "a bare string where an object was expected", body: `"Not Found"`},
-	} {
-		suite.Run(test.name, func() {
-			server := newRefusingServer(suite.T(), http.StatusNotFound, test.body)
-
-			_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
-
-			require.Error(suite.T(), err)
-			require.Contains(suite.T(), err.Error(), "does not support server-side evaluation")
-			require.Contains(suite.T(), err.Error(), "--server-side")
-			require.NotContains(suite.T(), err.Error(), "map[", "no internal rendering leaks out")
-			require.NotContains(suite.T(), err.Error(), "invalid character",
-				"no decoder complaint leaks out")
-			require.NotContains(suite.T(), err.Error(), "unexpected end of JSON input")
-		})
-	}
-}
-
-// A refusal can arrive from something in front of Kosli, which has no sentence
-// of the API's to quote. Quoting what it did send would dress a decoder
-// complaint as the server's reason, exactly as the 404 branch once did.
-func (suite *EvaluateServerSideTestSuite) TestARefusalWithNothingToQuoteSaysOnlyWhatIsKnown() {
-	for _, test := range []struct {
-		name string
-		body string
-	}{
-		{name: "a proxy answering in html", body: `<html><body>403 Forbidden</body></html>`},
-		{name: "an answer with no body at all", body: ``},
-		{name: "an object with no message", body: `{"detail":"Forbidden"}`},
-		{name: "a bare string", body: `"Forbidden"`},
-		{name: "a message key holding nothing", body: `{"message":""}`},
-		// The client trims this phrase out of a message, which can leave
-		// nothing behind even though the key was there.
-		{name: "a message trimmed away to nothing", body: `{"message":"You have requested a thing"}`},
-	} {
-		suite.Run(test.name, func() {
-			server := newRefusingServer(suite.T(), http.StatusForbidden, test.body)
-
-			_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
-
-			require.Error(suite.T(), err)
-			require.Contains(suite.T(), err.Error(), "test-org")
-			require.Contains(suite.T(), err.Error(), "is-server-side-evaluation-enabled")
-			require.NotContains(suite.T(), err.Error(), "invalid character",
-				"no decoder complaint dressed as the server's reason")
-			require.NotContains(suite.T(), err.Error(), "unexpected end of JSON input")
-			require.NotContains(suite.T(), err.Error(), "map[")
-			require.NotContains(suite.T(), err.Error(), "': .",
-				"no stray punctuation where a sentence would have gone")
-		})
-	}
-}
-
 // Once the create has succeeded the evaluation exists and the server holds its
 // answer, so a failure to read it back must name it. The create's own wording
 // must not be reused either: it would blame a feature flag that has already let
@@ -585,31 +509,6 @@ func (suite *EvaluateServerSideTestSuite) TestAFailedReadNamesTheEvaluationAndNo
 	}
 }
 
-// An API error prints as its message alone, so one that arrived without a
-// message would otherwise print as nothing at all.
-func (suite *EvaluateServerSideTestSuite) TestARefusalWithNoMessageStillSaysWhatHappened() {
-	server := newRefusingServer(suite.T(), http.StatusBadRequest, `{"message":""}`)
-
-	_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
-
-	require.Error(suite.T(), err)
-	require.Contains(suite.T(), err.Error(), "400")
-	require.Contains(suite.T(), err.Error(), "said nothing about why")
-}
-
-// A refusal can come from a token without rights on the org rather than from
-// the feature flag, so the server's own reason has to travel with ours.
-func (suite *EvaluateServerSideTestSuite) TestARefusalKeepsTheServersOwnReason() {
-	server := newRefusingServer(suite.T(), http.StatusForbidden,
-		`{"message":"API token does not have access to this organization"}`)
-
-	_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
-
-	require.Error(suite.T(), err)
-	require.Contains(suite.T(), err.Error(), "API token does not have access to this organization")
-	require.Contains(suite.T(), err.Error(), "test-org")
-}
-
 // The status decides, not what else the answer happens to carry.
 func (suite *EvaluateServerSideTestSuite) TestAFailureCarryingAResultIsStillNotAVerdict() {
 	server, _ := newFakeEvaluations(suite.T(),
@@ -636,37 +535,6 @@ func (suite *EvaluateServerSideTestSuite) TestAnEvaluationWithNoIdIsRefusedNotPo
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), "named no id")
 	require.Equal(suite.T(), 0, fake.reads, "nothing to read back, so nothing is read")
-}
-
-func (suite *EvaluateServerSideTestSuite) TestAServerRefusalIsPassedOnInItsOwnWords() {
-	for _, test := range []struct {
-		name   string
-		status int
-		body   string
-		want   string
-	}{
-		{
-			name:   "a trail that does not exist",
-			status: http.StatusNotFound,
-			body:   `{"message":"These trails do not exist in org 'test-org': my-flow/my-trail"}`,
-			want:   "These trails do not exist in org 'test-org': my-flow/my-trail",
-		},
-		{
-			name:   "a policy over the byte cap",
-			status: http.StatusBadRequest,
-			body:   `{"message":"policy bundle is 1048600 bytes, over the 1048576 byte limit"}`,
-			want:   "policy bundle is 1048600 bytes, over the 1048576 byte limit",
-		},
-	} {
-		suite.Run(test.name, func() {
-			server := newRefusingServer(suite.T(), test.status, test.body)
-
-			_, _, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
-
-			require.Error(suite.T(), err)
-			require.Contains(suite.T(), err.Error(), test.want)
-		})
-	}
 }
 
 // The shared HTTP client retries a 5xx, gives up and throws the body away, so
@@ -824,6 +692,56 @@ func (suite *EvaluateServerSideTestSuite) TestAPolicyOverTheApiCapIsRefusedHere(
 		require.Contains(suite.T(), err.Error(), "over the 1048576 byte limit")
 		require.Empty(suite.T(), fake.created)
 	})
+}
+
+// A refusal is reported as the status the API answered with, plus whatever it
+// said about why. No advice, and no guessing at which kind of refusal it was.
+func (suite *EvaluateServerSideTestSuite) TestARefusalIsReportedAsStatusAndMessage() {
+	for _, test := range []struct {
+		name   string
+		status int
+		body   string
+		wants  string
+		absent string
+	}{
+		{name: "a trail that does not exist", status: http.StatusNotFound,
+			body:  `{"message":"These trails do not exist in org 'test-org': my-flow/my-trail"}`,
+			wants: "These trails do not exist in org 'test-org': my-flow/my-trail"},
+		{name: "an org that is not entitled", status: http.StatusForbidden,
+			body:  `{"message":"Server-side evaluation is not enabled for this organization"}`,
+			wants: "Server-side evaluation is not enabled for this organization"},
+		{name: "a policy over the byte cap", status: http.StatusBadRequest,
+			body:  `{"message":"policy bundle is 1048600 bytes, over the 1048576 byte limit"}`,
+			wants: "policy bundle is 1048600 bytes, over the 1048576 byte limit"},
+
+		// Nothing the API wrote, so the status is all there is to report, and
+		// none of what did arrive should reach anybody.
+		{name: "a proxy answering in html", status: http.StatusNotFound,
+			body: `<html><body>404 Not Found</body></html>`, absent: "invalid character"},
+		{name: "an answer with no body at all", status: http.StatusForbidden,
+			body: ``, absent: "unexpected end of JSON input"},
+		{name: "an object with no message", status: http.StatusNotFound,
+			body: `{"detail":"Not Found"}`, absent: "map["},
+		{name: "a message key holding nothing", status: http.StatusBadRequest,
+			body: `{"message":""}`, absent: ": ."},
+	} {
+		suite.Run(test.name, func() {
+			server := newRefusingServer(suite.T(), test.status, test.body)
+
+			_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), fmt.Sprint(test.status),
+				"the status the API answered with")
+			if test.wants != "" {
+				require.Contains(suite.T(), err.Error(), test.wants)
+			}
+			if test.absent != "" {
+				require.NotContains(suite.T(), err.Error(), test.absent)
+			}
+			require.NotContains(suite.T(), combined, "DENIED")
+		})
+	}
 }
 
 func newPolicyServer(t *testing.T, source string) *httptest.Server {

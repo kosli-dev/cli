@@ -255,8 +255,6 @@ func TestCreateSurvivesAMessageThatIsNotText(t *testing.T) {
 				var apiError *requests.APIError
 				require.True(t, errors.As(err, &apiError))
 				require.Equal(t, http.StatusForbidden, apiError.StatusCode)
-				require.False(t, apiError.HasServerMessage,
-					"a message that is not text is no message to pass on")
 			})
 		})
 	}

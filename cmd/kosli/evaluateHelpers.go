@@ -352,14 +352,11 @@ func (o *commonEvaluateOptions) refuseWhatTheServerCannotDo() error {
 	return nil
 }
 
-// serverSideRequestError turns a refusal from the API into something a caller
-// can act on. Where the server explained itself, its own words are passed on
-// unchanged; the two cases below are the ones where they are missing or not
-// enough on their own.
+// serverSideRequestError reports a refusal from the API as the status it
+// answered with and whatever it said about why.
 func serverSideRequestError(err error) error {
-	// An expired wait already says exactly what happened and names the
-	// evaluation. Dressing it as a transport failure would put a sentence
-	// about not reaching Kosli in front of one saying Kosli was reached.
+	// An expired wait is not a failed request: it already says what happened
+	// and names the evaluation, so it travels untouched.
 	var stillPending *evaluations.StillPendingError
 	if errors.As(err, &stillPending) {
 		return err
@@ -367,50 +364,17 @@ func serverSideRequestError(err error) error {
 
 	var apiError *requests.APIError
 	if !errors.As(err, &apiError) {
-		// A retryable status or network trouble, which the shared client has
-		// already retried and given up on, discarding the body as it went. The
-		// server's own sentence is gone, so this supplies one.
+		// Retried and given up on inside the shared HTTP client, which throws
+		// the body away as it goes, so there is no status or message to report.
 		return fmt.Errorf("could not get a server-side evaluation from Kosli: %w", err)
 	}
-
-	switch {
-	case apiError.StatusCode == http.StatusForbidden && apiError.HasServerMessage && apiError.Message != "":
-		// The server's own words travel too: a refusal can come from a token
-		// without rights on the org rather than from the feature flag, and
-		// naming only the flag would send the reader after the wrong thing.
-		return fmt.Errorf("server-side evaluation was refused for org '%s': %s. "+
-			"It is gated on the is-server-side-evaluation-enabled feature flag; "+
-			"remove --server-side to evaluate on this machine instead",
-			global.Org, apiError.Message)
-
-	case apiError.StatusCode == http.StatusForbidden:
-		// A refusal from something in front of Kosli, such as a proxy, which
-		// has no sentence of the API's to pass on. Quoting what it did send
-		// would dress a decoder complaint as the server's reason.
-		return fmt.Errorf("server-side evaluation was refused for org '%s'. "+
-			"It is gated on the is-server-side-evaluation-enabled feature flag; "+
-			"remove --server-side to evaluate on this machine instead", global.Org)
-
-	// Not a sentence the API wrote, so this 404 came from something that does
-	// not serve the route at all: a server too old to have it, or a proxy in
-	// front of one. The shared client records the difference where the body is
-	// decoded, since nothing downstream could tell afterwards.
-	case apiError.StatusCode == http.StatusNotFound && !apiError.HasServerMessage:
-		// Deliberately not certain which: an unmatched route and a route that
-		// has since moved look alike from here, and a sentence that has to be
-		// right about the difference is one a support thread quotes back.
-		return errors.New("the evaluation request was answered with a 404: either this " +
-			"Kosli server does not support server-side evaluation, or the route has " +
-			"moved; remove --server-side to evaluate on this machine instead")
+	// Without a message the API wrote there is only the status to report.
+	// Quoting what arrived instead would dress a proxy's page, or the decoder's
+	// complaint about one, as the server's own reason.
+	if !apiError.HasServerMessage || apiError.Message == "" {
+		return fmt.Errorf("the Kosli server answered %d", apiError.StatusCode)
 	}
-
-	// An API error prints as its message and nothing else, so one that arrived
-	// without a message prints as nothing at all. The status is the only thing
-	// left to say, and saying it beats a bare "Error:".
-	if apiError.Message == "" {
-		return fmt.Errorf("the Kosli server answered %d and said nothing about why", apiError.StatusCode)
-	}
-	return err
+	return fmt.Errorf("the Kosli server answered %d: %s", apiError.StatusCode, apiError.Message)
 }
 
 // serverSideReadError reports a failure to read a verdict back. By this point
