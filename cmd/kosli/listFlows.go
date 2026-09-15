@@ -161,7 +161,7 @@ func printFlowsListAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
-	header := []string{"NAME", "DESCRIPTION", "VISIBILITY", "TAGS"}
+	header := []string{"NAME", "DESCRIPTION", "TAGS"}
 	rows := []string{}
 	for _, flow := range flows {
 		tags := flow["tags"].(map[string]interface{})
@@ -170,7 +170,7 @@ func printFlowsListAsTable(raw string, out io.Writer, page int) error {
 			tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
 		}
 		tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
-		row := fmt.Sprintf("%s\t%s\t%s\t%s", flow["name"], flow["description"], flow["visibility"], tagsOutput)
+		row := fmt.Sprintf("%s\t%s\t%s", flow["name"], flow["description"], tagsOutput)
 		rows = append(rows, row)
 	}
 	if pagination != nil {

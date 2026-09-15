@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -134,4 +136,21 @@ func (suite *ListFlowsCommandTestSuite) TestListFlowsCmd() {
 // a normal test function and pass our suite to suite.Run
 func TestListFlowsCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(ListFlowsCommandTestSuite))
+}
+
+func TestPrintFlowsListAsTableOmitsVisibility(t *testing.T) {
+	// visibility is a legacy per-flow field with no effect on access, so the
+	// table must not surface it even when the server still returns it
+	raw := `[{"name":"backend","description":"Backend service","visibility":"private","tags":{"team":"platform"}}]`
+	var buf bytes.Buffer
+	require.NoError(t, printFlowsListAsTable(raw, &buf, 1))
+	out := buf.String()
+	require.NotContains(t, out, "VISIBILITY")
+	require.NotContains(t, out, "private")
+	require.Contains(t, out, "NAME")
+	require.Contains(t, out, "DESCRIPTION")
+	require.Contains(t, out, "TAGS")
+	require.Contains(t, out, "backend")
+	require.Contains(t, out, "Backend service")
+	require.Contains(t, out, "[team=platform]")
 }
