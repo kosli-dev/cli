@@ -14,11 +14,9 @@ func TestParseByteSize(t *testing.T) {
 		want    int64
 		wantErr string
 	}{
-		// A bare number is megabytes, matching how Lambda's ephemeral storage is expressed.
 		{input: "512", want: 512 * mib},
 		{input: "1", want: mib},
 		{input: " 64 ", want: 64 * mib},
-		// A suffix picks the unit; the trailing B is optional and case does not matter.
 		{input: "512M", want: 512 * mib},
 		{input: "512MB", want: 512 * mib},
 		{input: "512mb", want: 512 * mib},
@@ -32,7 +30,6 @@ func TestParseByteSize(t *testing.T) {
 		{input: "1000B", want: 1000},
 		{input: "1.5G", want: 3 << 29},
 		{input: "0.5M", want: 512 << 10},
-		// Rejected: nothing to download into, or not a size at all.
 		{input: "", wantErr: "empty"},
 		{input: "0", wantErr: "must be at least 1 byte"},
 		{input: "0B", wantErr: "must be at least 1 byte"},
@@ -60,8 +57,7 @@ func TestParseByteSize(t *testing.T) {
 	}
 }
 
-// The flag's default is spelled as a string, so pin it to the value the aws
-// package uses when no flag is given.
+// The flag default is a string, so it can drift from the value it spells.
 func TestDefaultDownloadBudgetMatchesTheAwsDefault(t *testing.T) {
 	got, err := parseByteSize(defaultDownloadBudget)
 	require.NoError(t, err)

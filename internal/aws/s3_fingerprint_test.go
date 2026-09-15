@@ -197,10 +197,8 @@ func (suite *S3FingerprintTestSuite) TestDownloadsExactlyTheContributingObjects(
 	require.Equal(suite.T(), []string{".kosli_ignore", "app.js", "lib/util.js"}, client.downloadedKeys())
 }
 
-// Objects are downloaded to files whose names owe nothing to the key, every
-// file is removed once hashed, and the download directory is gone at the end.
-// Downloads overlap, so how many files exist at once is the byte budget's
-// concern (see S3ParallelTestSuite), not this test's.
+// How many temp files exist at once is the byte budget's concern, tested in
+// S3ParallelTestSuite; this test checks only their names and their removal.
 func (suite *S3FingerprintTestSuite) TestObjectsNeverLandUnderTheirKeyAndDoNotLinger() {
 	keys := []string{"alpha.bin", "beta/gamma.bin", "delta/epsilon/zeta.bin"}
 	objects := map[string][]byte{}

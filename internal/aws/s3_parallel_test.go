@@ -23,14 +23,13 @@ type S3ParallelTestSuite struct {
 	suite.Suite
 }
 
-// trackingDownloader records how many downloads, and how many listed bytes,
-// are in flight at once, and how often each key is fetched. A delay keeps
-// downloads overlapping so the bounds are actually exercised.
+// trackingDownloader records peak downloads and listed bytes in flight, and
+// calls per key. delay keeps downloads overlapping so the bounds are exercised.
 type trackingDownloader struct {
 	S3API
 	sizes map[string]int64
 	delay time.Duration
-	// hook, when set, runs in place of the delegate for that key.
+	// hook runs before the delegate and can fail the download in its place.
 	hook func(ctx context.Context, key string) error
 
 	mu               sync.Mutex
@@ -75,8 +74,7 @@ func (d *trackingDownloader) currentInFlight() int {
 	return d.inFlight
 }
 
-// bucketOf builds a fake bucket of n objects of the given size and returns the
-// tracking downloader plus the listing fingerprintS3Objects takes.
+// bucketOf fakes n objects of size bytes each, spread over four prefixes.
 func bucketOf(n int, size int, delay time.Duration) (*trackingDownloader, []s3Object) {
 	objects := map[string][]byte{}
 	listing := make([]s3Object, 0, n)
@@ -126,7 +124,6 @@ func (suite *S3ParallelTestSuite) TestRespectsTheByteBudget() {
 	require.GreaterOrEqual(suite.T(), client.maxInFlight, 2, "downloads must actually overlap for the budget to be tested")
 }
 
-// An object larger than the whole budget must still download, and runs alone.
 func (suite *S3ParallelTestSuite) TestAnObjectLargerThanTheBudgetRunsAlone() {
 	client, listing := bucketOf(12, 100, 5*time.Millisecond)
 	big := "big/huge.bin"
@@ -156,8 +153,6 @@ var suiteMu sync.Mutex
 
 func (suite *S3ParallelTestSuite) mu() *sync.Mutex { return &suiteMu }
 
-// Random per-object delays reorder completion; the fingerprint must equal what
-// DirSha256 gives the same tree on disk, every time.
 func (suite *S3ParallelTestSuite) TestFingerprintIsIndependentOfCompletionOrder() {
 	tree := map[string]string{}
 	for i := 0; i < 30; i++ {
@@ -193,10 +188,8 @@ func (suite *S3ParallelTestSuite) TestFingerprintIsIndependentOfCompletionOrder(
 	}
 }
 
-// The first transport error cancels the shared context: an in-flight download
-// sees it and returns, and no further download starts. Goroutines race for the
-// slots, so the hook decides by arrival rather than by key: the first download
-// to arrive fails, every other one blocks until it is cancelled.
+// Workers race for the slots, so the hook fails the first arrival rather than a
+// fixed key, and blocks every other one until it is cancelled.
 func (suite *S3ParallelTestSuite) TestATransportErrorStopsRemainingWork() {
 	client, listing := bucketOf(10, 8, 0)
 	errBoom := errors.New("boom")
@@ -229,8 +222,6 @@ func (suite *S3ParallelTestSuite) TestATransportErrorStopsRemainingWork() {
 	require.Len(suite.T(), client.calls, 2, "only the two downloads in flight at the failure may have started: %v", client.calls)
 }
 
-// The limits handed to getS3DataFromClient are the ones the fan-out obeys: the
-// same bucket runs one at a time under a limit of one and overlaps under four.
 func (suite *S3ParallelTestSuite) TestLimitsReachTheDownloader() {
 	for _, limit := range []int{1, 4} {
 		client, _ := bucketOf(12, 8, 3*time.Millisecond)
@@ -245,10 +236,8 @@ func (suite *S3ParallelTestSuite) TestLimitsReachTheDownloader() {
 	}
 }
 
-// The fan-out must not park one goroutine per object: on a large bucket that
-// is hundreds of megabytes of stacks doing nothing. Goroutines in flight stay
-// within the concurrency bound plus a small fixed overhead, whatever the size
-// of the bucket.
+// One goroutine per object would be hundreds of megabytes of idle stacks on a
+// large bucket.
 func (suite *S3ParallelTestSuite) TestGoroutinesDoNotScaleWithTheBucket() {
 	const objects, concurrency = 2000, 4
 	client, listing := bucketOf(objects, 8, 0)

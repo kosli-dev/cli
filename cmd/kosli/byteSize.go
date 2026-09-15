@@ -9,9 +9,8 @@ import (
 	"unicode"
 )
 
-// byteSizeUnits maps a lower-cased unit suffix to its size in bytes. Sizes are
-// binary, as Lambda's /tmp and most disk figures are. The trailing "b" or "ib"
-// is stripped before lookup, so "M", "MB" and "MiB" all land on the same entry.
+// byteSizeUnits maps a lower-cased unit, with any trailing "b" or "ib" already
+// stripped, to bytes. Units are binary, as disk figures are.
 var byteSizeUnits = map[string]int64{
 	"":  1 << 20, // a bare number is megabytes
 	"b": 1,
@@ -21,9 +20,8 @@ var byteSizeUnits = map[string]int64{
 	"t": 1 << 40,
 }
 
-// parseByteSize reads a size such as "512", "512M", "8GB" or "1.5G". A bare
-// number is megabytes; a unit suffix, case-insensitive and with an optional B,
-// selects kilobytes, megabytes, gigabytes or terabytes; "B" alone means bytes.
+// parseByteSize turns "512", "512M", "8GB" or "1.5G" into bytes: a bare number
+// is megabytes, a K, M, G or T suffix takes an optional B, and "B" alone is bytes.
 func parseByteSize(s string) (int64, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {

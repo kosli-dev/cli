@@ -170,10 +170,8 @@ func defaultNewS3Client(creds *AWSStaticCreds) (S3API, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Objects download in parallel (see DownloadLimits), and the transfer manager
-	// fetches each object's parts in parallel on top of that. The parts figure is
-	// the SDK's own default, pinned here so the connection product, objects times
-	// parts, is visible in one place and does not move with an SDK upgrade.
+	// Five parts per object is the SDK's default, pinned so the connection count,
+	// objects in flight times parts, cannot move with an SDK upgrade.
 	return &s3Client{S3ListAPI: client, S3DownloadAPI: transfermanager.New(client, func(o *transfermanager.Options) {
 		o.Concurrency = 5
 	})}, nil
@@ -515,9 +513,8 @@ type DownloadLimits struct {
 	BytesInFlight int64
 }
 
-// DefaultDownloadLimits keeps peak temp disk around half a gigabyte, which fits
-// the default Lambda /tmp, and the connection count modest together with the
-// transfer manager's per-object part concurrency.
+// DefaultDownloadLimits keeps peak temp disk near half a gigabyte, which fits
+// Lambda's default /tmp.
 var DefaultDownloadLimits = DownloadLimits{Concurrency: 8, BytesInFlight: 512 << 20}
 
 // listMatchingS3Objects lists the bucket, dropping folder markers and keys the
@@ -599,8 +596,7 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 		}
 	}()
 
-	// The manifest starts as paths only; digests are filled in below by index,
-	// so it stays in listing order however the downloads interleave.
+	// The manifest starts as paths only; digests are filled in by index below.
 	files := make([]digest.VirtualFile, len(objects))
 	for i, object := range objects {
 		files[i].Path = paths[object.key]
@@ -680,12 +676,10 @@ func ignoreRuleError(err error) error {
 	return err
 }
 
-// downloadS3ObjectsInParallel fetches the objects at the given indexes and
-// writes each content digest into files at the same index. A fixed pool of
-// workers bounds the number of downloads, so memory does not grow with the
-// bucket, and a weighted semaphore bounds their listed bytes. The first error
-// cancels the shared context: in-flight transfers stop, the producer stops
-// feeding, and the workers drain out.
+// downloadS3ObjectsInParallel fetches the objects at indexes and writes each
+// digest into files at the same index. A fixed worker pool bounds downloads and
+// goroutines alike, a weighted semaphore bounds their listed bytes, and the
+// first error cancels the context so nothing further starts.
 func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket string, objects []s3Object, indexes []int,
 	files []digest.VirtualFile, limits DownloadLimits, logger *logger.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -725,7 +719,6 @@ func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket strin
 		}()
 	}
 
-	// Feed in listing order; stop as soon as a worker has failed.
 feed:
 	for _, i := range indexes {
 		select {

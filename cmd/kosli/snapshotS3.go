@@ -171,12 +171,10 @@ func (o *snapshotS3Options) run(args []string) error {
 	return err
 }
 
-// defaultDownloadBudget spells aws.DefaultDownloadLimits.BytesInFlight the way
-// the flag reads it.
+// defaultDownloadBudget is aws.DefaultDownloadLimits.BytesInFlight as the flag
+// spells it; a test keeps the two equal.
 const defaultDownloadBudget = "512M"
 
-// resolveDownloadLimits validates the download flags and turns them into the
-// limits the aws package takes.
 func (o *snapshotS3Options) resolveDownloadLimits() error {
 	if o.downloadConcurrency < 1 {
 		return fmt.Errorf("--download-concurrency must be at least 1, got %d", o.downloadConcurrency)
