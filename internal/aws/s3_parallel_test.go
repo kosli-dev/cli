@@ -132,13 +132,14 @@ func (suite *S3ParallelTestSuite) TestAnObjectLargerThanTheBudgetRunsAlone() {
 	client.sizes[big] = 1000
 	listing = append([]s3Object{{key: big, size: 1000}}, listing...)
 
-	var aloneChecks int
+	var aloneChecks, inFlightDuringBig int
 	client.hook = func(_ context.Context, key string) error {
 		if key == big {
+			seen := client.currentInFlight()
 			suite.mu().Lock()
 			aloneChecks++
+			inFlightDuringBig = max(inFlightDuringBig, seen)
 			suite.mu().Unlock()
-			require.Equal(suite.T(), 1, client.currentInFlight(), "the oversized object must be the only download in flight")
 		}
 		return nil
 	}
@@ -147,11 +148,10 @@ func (suite *S3ParallelTestSuite) TestAnObjectLargerThanTheBudgetRunsAlone() {
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), 1, aloneChecks)
 	require.Equal(suite.T(), 1, client.calls[big])
+	require.Equal(suite.T(), 1, inFlightDuringBig, "the oversized object must be the only download in flight")
 }
 
-var suiteMu sync.Mutex
-
-func (suite *S3ParallelTestSuite) mu() *sync.Mutex { return &suiteMu }
+func (suite *S3ParallelTestSuite) mu() *sync.Mutex { return &suite.lock }
 
 func (suite *S3ParallelTestSuite) TestFingerprintIsIndependentOfCompletionOrder() {
 	tree := map[string]string{}
