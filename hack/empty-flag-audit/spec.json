@@ -2115,7 +2115,7 @@
     "flags": {},
     "baseline_ok": true,
     "baseline_exit": 0,
-    "baseline_output": "Name:                {flow}\nDescription:         \nVisibility:          private\nTemplate:            \n                     version: 1\nLast Deployment At:  N/A\nTags:                None",
+    "baseline_output": "Name:                {flow}\nDescription:         \nTemplate:            \n                     version: 1\nLast Deployment At:  N/A\nTags:                None",
     "flags_to_test": [
       "output"
     ],

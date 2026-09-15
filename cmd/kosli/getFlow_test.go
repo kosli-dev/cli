@@ -66,18 +66,20 @@ func TestGetFlowCommandTestSuite(t *testing.T) {
 func TestPrintFlowAsTableOmitsVisibility(t *testing.T) {
 	// visibility is a legacy per-flow field with no effect on access, so the
 	// table must not surface it even when the server still returns it
-	raw := `{"name":"backend","description":"Backend service","visibility":"private","template":"artifact pull-request","last_deployment_at":1700000000,"tags":{"team":"platform"}}`
+	raw := `{"name":"backend","description":"Backend service","visibility":"private","template":"artifact pull-request","last_deployment_at":null,"tags":{"team":"platform"}}`
 	var buf bytes.Buffer
 	require.NoError(t, printFlowAsTable(raw, &buf, 0))
-	out := buf.String()
-	require.NotContains(t, out, "Visibility:")
-	require.NotContains(t, out, "private")
-	require.Contains(t, out, "Name:")
-	require.Contains(t, out, "Description:")
-	require.Contains(t, out, "Template:")
-	require.Contains(t, out, "Last Deployment At:")
-	require.Contains(t, out, "Tags:")
-	require.Contains(t, out, "backend")
-	require.Contains(t, out, "Backend service")
-	require.Contains(t, out, "[team=platform]")
+	want := "Name:                backend\n" +
+		"Description:         Backend service\n" +
+		"Template:            artifact, pull-request\n" +
+		"Last Deployment At:  N/A\n" +
+		"Tags:                [team=platform]\n"
+	require.Equal(t, want, buf.String())
+}
+
+func TestPrintFlowAsTableShowsNoneForMissingTags(t *testing.T) {
+	raw := `{"name":"backend","description":"Backend service","template":"artifact","last_deployment_at":null}`
+	var buf bytes.Buffer
+	require.NoError(t, printFlowAsTable(raw, &buf, 0))
+	require.Contains(t, buf.String(), "Tags:                None\n")
 }
