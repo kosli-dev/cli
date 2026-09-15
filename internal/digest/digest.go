@@ -32,8 +32,8 @@ var (
 		"has it been pushed to or pulled from a registry?")
 )
 
-// ignoreFileName is the exclusion list a directory artifact may carry at its root.
-const ignoreFileName = ".kosli_ignore"
+// IgnoreFileName is the exclusion list a directory artifact may carry at its root.
+const IgnoreFileName = ".kosli_ignore"
 
 // DirSha256 returns sha256 digest of a directory
 func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (string, error) {
@@ -235,12 +235,12 @@ func Sha256Fingerprint(parsed godigest.Digest) (string, error) {
 // stores one spelling and opens any of them. Snapshotting S3 or Azure unzips the
 // tree onto the machine running the CLI, so that filesystem is the operator's.
 //
-// An exact match wins over a folded one so that ignoreFileName owns the rules
+// An exact match wins over a folded one so that IgnoreFileName owns the rules
 // where a case-sensitive filesystem holds both spellings as distinct files.
 func ignoreFilePathInTree(dirPath string) (string, error) {
 	// "" is also the answer for a tree with no ignore file, so a swallowed error
 	// would silently mean "no exclusions".
-	if _, err := os.Lstat(filepath.Join(dirPath, ignoreFileName)); err != nil {
+	if _, err := os.Lstat(filepath.Join(dirPath, IgnoreFileName)); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", nil
 		}
@@ -252,7 +252,7 @@ func ignoreFilePathInTree(dirPath string) (string, error) {
 	}
 	folded := ""
 	for _, entry := range entries {
-		if !strings.EqualFold(entry.Name(), ignoreFileName) {
+		if !strings.EqualFold(entry.Name(), IgnoreFileName) {
 			continue
 		}
 		// Only a file can carry rules. The dirent type is not enough on its own: it
@@ -265,7 +265,7 @@ func ignoreFilePathInTree(dirPath string) (string, error) {
 		if resolved, err := os.Stat(path); err == nil && resolved.IsDir() {
 			continue
 		}
-		if entry.Name() == ignoreFileName {
+		if entry.Name() == IgnoreFileName {
 			return path, nil
 		}
 		if folded == "" {
@@ -534,19 +534,8 @@ func excludePathsFromFile(path string) ([]string, error) {
 				fmt.Printf("warning: failed to close file %s: %v\n", path, err)
 			}
 		}()
-		var excludes = []string{}
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-			line = removeComments(line)
-			line = strings.TrimSpace(line)
-			if len(line) > 0 {
-				excludes = append(excludes, line)
-			}
-		}
-		// A stopped scan yields the entries read so far, so an unchecked error means
-		// fingerprinting against a rule set the file does not hold.
-		if err := scanner.Err(); err != nil {
+		excludes, err := ParseIgnoreRules(file)
+		if err != nil {
 			return nil, fmt.Errorf("failed to read %s: %w", path, err)
 		}
 		return excludes, nil
@@ -554,6 +543,29 @@ func excludePathsFromFile(path string) ([]string, error) {
 		return []string{}, nil
 	}
 	return nil, err
+}
+
+// ParseIgnoreRules reads the content of a .kosli_ignore file: one path or glob
+// per line, with "#" starting a comment and blank lines skipped. It is the same
+// reading DirSha256 gives the file, for callers that hold the bytes rather than
+// a path.
+func ParseIgnoreRules(r io.Reader) ([]string, error) {
+	var rules = []string{}
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := scanner.Text()
+		line = removeComments(line)
+		line = strings.TrimSpace(line)
+		if len(line) > 0 {
+			rules = append(rules, line)
+		}
+	}
+	// A stopped scan yields the entries read so far, so an unchecked error means
+	// fingerprinting against a rule set the file does not hold.
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return rules, nil
 }
 
 func removeComments(line string) string {

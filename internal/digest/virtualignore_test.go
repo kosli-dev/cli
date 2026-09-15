@@ -1,0 +1,377 @@
+package digest
+
+import (
+	"path"
+	"path/filepath"
+	"sort"
+	"strings"
+	"testing"
+
+	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/utils"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+)
+
+type VirtualIgnoreTestSuite struct {
+	suite.Suite
+}
+
+// ignoreTestTree is shaped to reach every glob behaviour DirSha256 has on disk:
+// a directory and a file sharing a stem, the same name at several depths, a
+// nested .kosli_ignore, and a directory whose content can be excluded while the
+// directory itself stays.
+var ignoreTestTree = map[string]string{
+	"app.js":                   "app",
+	"app.log":                  "log at the root",
+	"notes.txt":                "notes",
+	"logs/file1":               "c1",
+	"logs/deep/file2":          "c2",
+	"nested-dir/file1":         "n1",
+	"nested-dir/logs/log.txt":  "nl",
+	"vendor/lib/v.js":          "v",
+	"vendor/lib/.kosli_ignore": "nested-rules",
+	"a/x":                      "ax",
+	"a/b/x":                    "abx",
+	"a/b/c/x":                  "abcx",
+}
+
+// TestMatchesDirSha256 is the test that matters. For each rule set, the tree
+// plus a root .kosli_ignore holding the rules is materialised on disk and
+// fingerprinted with DirSha256; the same files and rules go through
+// VirtualDirSha256 and must give the identical digest. Rows marked hasEffect
+// also require the rules to have changed the digest, so a row cannot pass
+// because both sides ignored the rules.
+func (suite *VirtualIgnoreTestSuite) TestMatchesDirSha256() {
+	for _, t := range []struct {
+		name      string
+		ignore    string
+		hasEffect bool
+	}{
+		{name: "no rules", ignore: ""},
+		{name: "only comments and blanks", ignore: "# nothing\n\n   \n"},
+		{name: "a directory by name", ignore: "logs", hasEffect: true},
+		{name: "a file by name", ignore: "app.js", hasEffect: true},
+		{name: "a directory at depth one", ignore: "*/logs", hasEffect: true},
+		{name: "the content of a directory but not the directory", ignore: "logs/*", hasEffect: true},
+		{name: "a suffix at the root", ignore: "*.log", hasEffect: true},
+		{name: "a suffix at any depth", ignore: "**/*.log", hasEffect: true},
+		{name: "a literal name at any depth", ignore: "**/x", hasEffect: true},
+		{name: "a literal name at any depth under a prefix", ignore: "a/**/x", hasEffect: true},
+		{name: "a directory at any depth", ignore: "**/logs", hasEffect: true},
+		{name: "a bare double star", ignore: "**", hasEffect: true},
+		// filepathx appends ".log" to every existing path, so this matches only an
+		// "x.log" whose sibling "x" also exists. Nothing here, on either side.
+		{name: "a double star glued to a suffix", ignore: "**.log"},
+		{name: "a nested ignore file under a prefix", ignore: "vendor/**/.kosli_ignore", hasEffect: true},
+		{name: "a trailing slash", ignore: "logs/", hasEffect: true},
+		{name: "a leading slash", ignore: "/logs", hasEffect: true},
+		{name: "a leading dot segment", ignore: "./logs", hasEffect: true},
+		// On disk the root has an unguessable name, so a rule that leaves the
+		// tree cannot come back by naming it; a rule that only dips through a
+		// wildcard and returns still folds onto a real path.
+		{name: "a rule that leaves the tree and names the root", ignore: "../tree/app.js", hasEffect: false},
+		{name: "a rule that dips and returns through a wildcard", ignore: "*/../app.js", hasEffect: true},
+		{name: "a doubled slash", ignore: "nested-dir//logs", hasEffect: true},
+		{name: "a parent segment that leaves the tree", ignore: "../logs"},
+		{name: "a rule that matches nothing", ignore: "does-not-exist"},
+		// The first piece matches nothing, so the malformed second piece is never
+		// evaluated, on disk or here.
+		{name: "a malformed pattern behind a double star that matches nothing", ignore: "nonexistent/**/a["},
+		{name: "a star alone", ignore: "*", hasEffect: true},
+		{name: "a character class", ignore: "app.[jl]?", hasEffect: true},
+		{name: "a question mark", ignore: "a/?", hasEffect: true},
+		{name: "an escaped star is a literal", ignore: `app\*`},
+		{name: "several rules with a comment", ignore: "logs\n# keep vendor\n*/logs\napp.log  # trailing comment\n", hasEffect: true},
+		{name: "the ignore file itself", ignore: ".kosli_ignore"},
+		{name: "a glob matching the ignore file", ignore: "*ignore*"},
+		{name: "a dotted glob matching the ignore file", ignore: ".kosli*"},
+		{name: "a double star matching the ignore file", ignore: "**/.kosli_ignore", hasEffect: true},
+	} {
+		suite.Run(t.name, func() {
+			root := suite.T().TempDir()
+			files := suite.materialise(root, ignoreTestTree, t.ignore)
+
+			want, err := DirSha256(root, nil, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+
+			rules, err := ParseIgnoreRules(strings.NewReader(t.ignore))
+			require.NoError(suite.T(), err)
+			got, err := VirtualDirSha256(files, rules, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), want, got, "VirtualDirSha256 must equal DirSha256 with rules %q", t.ignore)
+
+			noRules, err := VirtualDirSha256(files, nil, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			if t.hasEffect {
+				require.NotEqual(suite.T(), noRules, got, "rules %q were expected to change the digest", t.ignore)
+			} else {
+				require.Equal(suite.T(), noRules, got, "rules %q were expected to leave the digest unchanged", t.ignore)
+			}
+		})
+	}
+}
+
+// A malformed pattern fails DirSha256, so it must fail the virtual digest too
+// rather than silently excluding nothing. filepath.Glob validates the pattern
+// before it looks at the filesystem, so this holds even for a rule under a
+// directory the tree does not have.
+func (suite *VirtualIgnoreTestSuite) TestMalformedRuleIsAnErrorOnBothSides() {
+	// The last rule is a wildcard path deeper than filepath.Glob's recursion
+	// limit, which it rejects rather than descend.
+	for _, rule := range []string{"[", "nonexistent/a[", "logs/[", "a/**/[", "../a[", "../tree/a[", strings.Repeat("*/", globSeparatorsLimit+1) + "x"} {
+		suite.Run(rule, func() {
+			root := suite.T().TempDir()
+			files := suite.materialise(root, ignoreTestTree, rule)
+
+			_, err := DirSha256(root, nil, logger.NewStandardLogger())
+			require.Error(suite.T(), err, "DirSha256 must reject the rule")
+
+			_, err = VirtualDirSha256(files, []string{rule}, logger.NewStandardLogger())
+			require.Error(suite.T(), err, "VirtualDirSha256 must reject the rule")
+			require.ErrorIs(suite.T(), err, path.ErrBadPattern)
+			require.Contains(suite.T(), err.Error(), rule)
+		})
+	}
+}
+
+// On disk only a file named .kosli_ignore carries rules and is protected from
+// them; a directory of that name is an ordinary entry a rule can exclude. The
+// rules come from the caller here, since a tree in this shape has no ignore
+// file to hold them.
+func (suite *VirtualIgnoreTestSuite) TestADirectoryNamedLikeTheIgnoreFileIsNotProtected() {
+	tree := map[string]string{IgnoreFileName + "/x": "not rules\n", "app.js": "app\n"}
+	root := suite.T().TempDir()
+	files := suite.materialise(root, tree, "")
+	rules := []string{IgnoreFileName}
+
+	want, err := DirSha256(root, rules, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	got, err := VirtualDirSha256(files, rules, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), want, got)
+
+	noRules, err := VirtualDirSha256(files, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.NotEqual(suite.T(), noRules, got, "the rule must exclude the directory")
+
+	needed, err := FilesNeedingContent(files, rules)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), map[string]bool{"app.js": true}, needed)
+}
+
+// Mirrors TestDirSha256IgnoreFileCannotHideItself: an ignore file that lists
+// itself cannot hide an added file, because the file's own content stays in the
+// digest.
+func (suite *VirtualIgnoreTestSuite) TestIgnoreFileCannotHideItself() {
+	baseline := map[string]string{
+		"app/index.js":    "console.log(1)",
+		"app/lib/util.js": "exports.x = 1",
+	}
+	approvedFiles := virtualFilesFor(baseline, "")
+	approved, err := VirtualDirSha256(approvedFiles, nil, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+
+	for _, ignore := range []string{
+		".kosli_ignore\napp/backdoor.js",
+		"*ignore*\napp/backdoor.js",
+		".kosli*\napp/backdoor.js",
+		"**/.kosli_ignore\napp/backdoor.js",
+		"**\napp/backdoor.js",
+	} {
+		suite.Run(ignore, func() {
+			deployed := map[string]string{}
+			for k, v := range baseline {
+				deployed[k] = v
+			}
+			deployed["app/backdoor.js"] = "BACKDOOR"
+			rules, err := ParseIgnoreRules(strings.NewReader(ignore))
+			require.NoError(suite.T(), err)
+
+			got, err := VirtualDirSha256(virtualFilesFor(deployed, ignore), rules, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			require.NotEqual(suite.T(), approved, got, "the added file is invisible to the fingerprint")
+		})
+	}
+}
+
+// Only the root ignore file is protected; a nested one is an ordinary file the
+// root list may exclude.
+func (suite *VirtualIgnoreTestSuite) TestNestedIgnoreFileIsExcludable() {
+	rules := "vendor/**/.kosli_ignore"
+	withNested := virtualFilesFor(map[string]string{
+		"app.js":                   "app",
+		"vendor/lib/v.js":          "v",
+		"vendor/lib/.kosli_ignore": "nested-rules",
+	}, rules)
+	withoutNested := virtualFilesFor(map[string]string{
+		"app.js":          "app",
+		"vendor/lib/v.js": "v",
+	}, rules)
+
+	parsed, err := ParseIgnoreRules(strings.NewReader(rules))
+	require.NoError(suite.T(), err)
+	a, err := VirtualDirSha256(withNested, parsed, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	b, err := VirtualDirSha256(withoutNested, parsed, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), b, a)
+}
+
+// FilesNeedingContent is what lets a caller skip fetching excluded content: it
+// must name exactly the files whose digest VirtualDirSha256 reads, so a file it
+// leaves out may carry no digest at all without changing the fingerprint.
+func (suite *VirtualIgnoreTestSuite) TestFilesNeedingContentAgreesWithTheDigest() {
+	for _, t := range []struct {
+		name  string
+		rules []string
+		want  []string
+	}{
+		{name: "no rules hash everything", rules: nil, want: allPaths(ignoreTestTree, true)},
+		{name: "a directory takes its files with it", rules: []string{"logs"}, want: without(allPaths(ignoreTestTree, true), "logs/file1", "logs/deep/file2")},
+		// "*" matches the subdirectory "deep" as well, and an excluded directory
+		// takes its subtree with it.
+		{name: "the content of a directory", rules: []string{"logs/*"}, want: without(allPaths(ignoreTestTree, true), "logs/file1", "logs/deep/file2")},
+		{name: "a suffix at any depth", rules: []string{"**/*.log"}, want: without(allPaths(ignoreTestTree, true), "app.log")},
+		{name: "the ignore file cannot exclude itself", rules: []string{".kosli_ignore", "**"}, want: []string{".kosli_ignore"}},
+	} {
+		suite.Run(t.name, func() {
+			needed, err := FilesNeedingContent(virtualFilesFromPaths(allPaths(ignoreTestTree, true)), t.rules)
+			require.NoError(suite.T(), err)
+			got := make([]string, 0, len(needed))
+			for p := range needed {
+				got = append(got, p)
+			}
+			sort.Strings(got)
+			sort.Strings(t.want)
+			require.Equal(suite.T(), t.want, got)
+
+			// Files not needed may carry no digest and the fingerprint is unchanged.
+			full := virtualFilesFor(ignoreTestTree, "rules")
+			sparse := make([]VirtualFile, 0, len(full))
+			for _, f := range full {
+				if !needed[f.Path] {
+					f.Sha256 = ""
+				}
+				sparse = append(sparse, f)
+			}
+			wantSha, err := VirtualDirSha256(full, t.rules, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			gotSha, err := VirtualDirSha256(sparse, t.rules, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), wantSha, gotSha)
+		})
+	}
+}
+
+func (suite *VirtualIgnoreTestSuite) TestFilesNeedingContentRejectsAMalformedRule() {
+	_, err := FilesNeedingContent([]VirtualFile{{Path: "a.txt"}}, []string{"["})
+	require.Error(suite.T(), err)
+}
+
+func virtualFilesFromPaths(paths []string) []VirtualFile {
+	files := make([]VirtualFile, len(paths))
+	for i, p := range paths {
+		files[i] = VirtualFile{Path: p}
+	}
+	return files
+}
+
+func allPaths(tree map[string]string, withIgnoreFile bool) []string {
+	paths := make([]string, 0, len(tree)+1)
+	for p := range tree {
+		paths = append(paths, p)
+	}
+	if withIgnoreFile {
+		paths = append(paths, IgnoreFileName)
+	}
+	sort.Strings(paths)
+	return paths
+}
+
+func without(paths []string, drop ...string) []string {
+	kept := make([]string, 0, len(paths))
+	for _, p := range paths {
+		skip := false
+		for _, d := range drop {
+			if p == d {
+				skip = true
+			}
+		}
+		if !skip {
+			kept = append(kept, p)
+		}
+	}
+	return kept
+}
+
+func (suite *VirtualIgnoreTestSuite) TestParseIgnoreRules() {
+	for _, t := range []struct {
+		name  string
+		input string
+		want  []string
+	}{
+		{name: "empty input", input: "", want: []string{}},
+		{name: "one rule", input: "logs", want: []string{"logs"}},
+		{name: "blank lines and whitespace are dropped", input: "\n  logs  \n\n\t*.log\t\n", want: []string{"logs", "*.log"}},
+		{name: "comment lines are dropped", input: "# all logs\nlogs\n# done", want: []string{"logs"}},
+		{name: "a trailing comment is stripped", input: "logs # noisy", want: []string{"logs"}},
+		{name: "a comment with no rule before it is dropped", input: "   # only a comment", want: []string{}},
+		{name: "windows line endings", input: "logs\r\n*.log\r\n", want: []string{"logs", "*.log"}},
+	} {
+		suite.Run(t.name, func() {
+			got, err := ParseIgnoreRules(strings.NewReader(t.input))
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), t.want, got)
+		})
+	}
+}
+
+// ParseIgnoreRules and excludePathsFromFile must agree, since DirSha256 reads
+// the file while the virtual digest is handed the same bytes.
+func (suite *VirtualIgnoreTestSuite) TestParseIgnoreRulesAgreesWithTheFileReader() {
+	content := "logs\n# comment\n*/logs # trailing\n\n  app.log\n"
+	path := filepath.Join(suite.T().TempDir(), ".kosli_ignore")
+	require.NoError(suite.T(), utils.CreateFileWithContent(path, content))
+
+	fromFile, err := excludePathsFromFile(path)
+	require.NoError(suite.T(), err)
+	fromReader, err := ParseIgnoreRules(strings.NewReader(content))
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), fromFile, fromReader)
+}
+
+// materialise writes the tree and, when ignore is non-empty, a root
+// .kosli_ignore holding it; it returns the matching virtual files.
+func (suite *VirtualIgnoreTestSuite) materialise(root string, tree map[string]string, ignore string) []VirtualFile {
+	suite.T().Helper()
+	for p, content := range tree {
+		require.NoError(suite.T(), utils.CreateFileWithContent(filepath.Join(root, filepath.FromSlash(p)), content))
+	}
+	if ignore != "" {
+		require.NoError(suite.T(), utils.CreateFileWithContent(filepath.Join(root, IgnoreFileName), ignore))
+	}
+	return virtualFilesFor(tree, ignore)
+}
+
+// virtualFilesFor returns the (path, sha256) pairs for tree plus, when ignore
+// is non-empty, a root .kosli_ignore with that content, in a fixed order.
+func virtualFilesFor(tree map[string]string, ignore string) []VirtualFile {
+	paths := make([]string, 0, len(tree)+1)
+	for p := range tree {
+		paths = append(paths, p)
+	}
+	sort.Strings(paths)
+	files := make([]VirtualFile, 0, len(paths)+1)
+	for _, p := range paths {
+		files = append(files, VirtualFile{Path: p, Sha256: sha256OfString(tree[p])})
+	}
+	if ignore != "" {
+		files = append(files, VirtualFile{Path: IgnoreFileName, Sha256: sha256OfString(ignore)})
+	}
+	return files
+}
+
+func TestVirtualIgnoreTestSuite(t *testing.T) {
+	suite.Run(t, new(VirtualIgnoreTestSuite))
+}
