@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -206,14 +207,27 @@ func (suite *S3FingerprintTestSuite) TestObjectsNeverLandUnderTheirKeyAndDoNotLi
 		objects[key] = []byte(key)
 	}
 	client := &recordingDownloader{S3API: &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects}}
+	// Downloads run concurrently, so onDownload fires from worker goroutines;
+	// require.* must run only on the test goroutine, so record and assert after.
+	var mu sync.Mutex
+	var nilFile bool
+	var keyLikeNames []string
 	client.onDownload = func(key string, file *os.File) {
-		require.NotNil(suite.T(), file, "the transfer manager must be handed a real file")
-		require.NotContains(suite.T(), filepath.Base(file.Name()), filepath.Base(key),
-			"the local file name must owe nothing to the key")
+		mu.Lock()
+		defer mu.Unlock()
+		if file == nil {
+			nilFile = true
+			return
+		}
+		if strings.Contains(filepath.Base(file.Name()), filepath.Base(key)) {
+			keyLikeNames = append(keyLikeNames, key)
+		}
 	}
 
 	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
+	require.False(suite.T(), nilFile, "the transfer manager must be handed a real file")
+	require.Empty(suite.T(), keyLikeNames, "the local file name must owe nothing to the key")
 	require.Len(suite.T(), client.files, len(keys))
 	for _, file := range client.files {
 		_, err := os.Stat(file)
