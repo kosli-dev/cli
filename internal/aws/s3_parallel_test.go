@@ -257,6 +257,24 @@ func (suite *S3ParallelTestSuite) TestGoroutinesDoNotScaleWithTheBucket() {
 		"goroutines during the run must be bounded by the concurrency, not the object count")
 }
 
+// A concurrency far above the object count must not start idle workers.
+func (suite *S3ParallelTestSuite) TestWorkersAreClampedToTheWork() {
+	client, listing := bucketOf(3, 8, 0)
+	before := runtime.NumGoroutine()
+	var peak int
+	client.hook = func(_ context.Context, _ string) error {
+		suite.mu().Lock()
+		peak = max(peak, runtime.NumGoroutine())
+		suite.mu().Unlock()
+		return nil
+	}
+
+	_, _, err := fingerprintS3Objects(client, fakeS3TestBucketName, listing, DownloadLimits{Concurrency: 50000, BytesInFlight: 1 << 30}, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), client.calls, 3)
+	require.LessOrEqual(suite.T(), peak, before+3+8, "workers must be bounded by the objects to download")
+}
+
 func (suite *S3ParallelTestSuite) TestDefaultLimitsAreSane() {
 	require.GreaterOrEqual(suite.T(), DefaultDownloadLimits.Concurrency, 2)
 	require.GreaterOrEqual(suite.T(), DefaultDownloadLimits.BytesInFlight, int64(64<<20))

@@ -505,7 +505,9 @@ type s3Object struct {
 // DownloadLimits bounds the object downloads in flight at once when
 // fingerprinting a bucket.
 type DownloadLimits struct {
-	// Concurrency is the number of objects downloading at the same time.
+	// Concurrency is the number of objects downloading at the same time. Each
+	// one may buffer up to five 8 MiB parts in memory while it writes, so memory
+	// rises with this figure independently of BytesInFlight.
 	Concurrency int
 	// BytesInFlight caps the sum of the listed sizes of the objects downloading
 	// at the same time, and so the temp disk they occupy. An object larger than
@@ -514,7 +516,7 @@ type DownloadLimits struct {
 }
 
 // DefaultDownloadLimits keeps peak temp disk near half a gigabyte, which fits
-// Lambda's default /tmp.
+// Lambda's default /tmp, and part buffers near 320 MiB of memory.
 var DefaultDownloadLimits = DownloadLimits{Concurrency: 8, BytesInFlight: 512 << 20}
 
 // listMatchingS3Objects lists the bucket, dropping folder markers and keys the
@@ -697,7 +699,7 @@ func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket strin
 
 	work := make(chan int)
 	var wg sync.WaitGroup
-	for range max(limits.Concurrency, 1) {
+	for range min(max(limits.Concurrency, 1), len(indexes)) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
