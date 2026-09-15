@@ -442,9 +442,8 @@ func getLatestAnalysisRevision(t *testing.T) string {
 	return result.Analyses[0].Revision
 }
 
-// getPRAnalysisRevision fetches the commit SonarCloud analysed for the given
-// pull request of cyber-dojo_differ. PR analyses are not listed by
-// project_analyses/search on SonarCloud, so this uses project_pull_requests/list.
+// getPRAnalysisRevision fetches the commit SonarCloud analysed for the given pull
+// request of cyber-dojo_differ. project_analyses/search does not list PR analyses.
 func getPRAnalysisRevision(t *testing.T, prKey string) string {
 	t.Helper()
 

@@ -168,8 +168,6 @@ func (f *fakeSonarProject) handler() http.HandlerFunc {
 				}},
 			})
 		case "/api/ce/task":
-			// The CE task of the pull request scan, as report-task.txt or
-			// --sonar-ce-task-url would point at it.
 			_ = json.NewEncoder(w).Encode(sonar.TaskResponse{Task: sonar.Task{
 				TaskID: revTaskID, AnalysisID: revAnalysisKey, Status: "SUCCESS", ComponentKey: revProjectKey,
 				ComponentName: "customer project", PullRequest: revPullRequest,
@@ -386,13 +384,10 @@ func TestGetSonarResults_BranchIgnoredForPullRequest(t *testing.T) {
 	}
 }
 
-// TestGetSonarResults_PullRequestRevision is the issue #1192 check: a pull request's
-// latest analysis is whatever SonarQube holds for the PR, which is the previous
-// push's scan until the current one is processed. When the caller names the
-// revision alongside the pull request, an analysis of another commit must fail
-// rather than be attested against a commit nobody scanned. Without a revision
-// nothing is checked, so existing callers are unaffected. Both ways of naming the
-// scan funnel through the same lookup, so both are pinned.
+// TestGetSonarResults_PullRequestRevision is the #1192 check: SonarQube keeps only a
+// pull request's latest analysis, so a revision named alongside the pull request
+// must be the analysed commit, and no revision means no check. Both ways of
+// naming the scan reach the same lookup, so both paths are pinned.
 func TestGetSonarResults_PullRequestRevision(t *testing.T) {
 	const otherRevision = "0000000000000000000000000000000000000000"
 

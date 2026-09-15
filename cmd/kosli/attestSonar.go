@@ -18,18 +18,16 @@ type SonarAttestationPayload struct {
 
 type attestSonarOptions struct {
 	*CommonAttestationOptions
-	apiToken    string
-	workingDir  string
-	ceTaskURL   string
-	projectKey  string
-	serverURL   string
-	revision    string
-	pullRequest string
-	branch      string
-	maxWait     int
-	payload     SonarAttestationPayload
-	// revisionExplicit is true when --sonar-revision was set by the user rather
-	// than defaulted from the CI commit.
+	apiToken         string
+	workingDir       string
+	ceTaskURL        string
+	projectKey       string
+	serverURL        string
+	revision         string
+	pullRequest      string
+	branch           string
+	maxWait          int
+	payload          SonarAttestationPayload
 	revisionExplicit bool
 }
 
@@ -55,6 +53,8 @@ or have overridden the revision in SonarQube via parameters to the Sonar scanner
 If the scan ran on a branch other than the project's main branch in SonarQube, also provide the branch name using the ^--sonar-branch^ flag.
 SonarQube only searches the project's main branch unless told otherwise, so without this flag the scan cannot be found.
 For pull request scans: provide the pull-request ID using the ^--pull-request^ flag instead of the revision.
+SonarQube keeps only the latest analysis of a pull request, so if the scan for the current push has not finished, that is the previous push's analysis.
+To make sure the attested analysis is of the commit you expect, also pass ^--sonar-revision^: the command then fails if the pull request's analysis is of another commit.
 Kosli then finds the scan results for the specified project key and revision or pull-request ID.
 
 3. Providing the CE task URL directly via ^--sonar-ce-task-url^. The CE task URL can be found in the ^report-task.txt^ file
@@ -132,6 +132,18 @@ kosli attest sonar \
 	--sonar-api-token yourSonarAPIToken \
 	--sonar-project-key yourSonarProjectKey \
 	--pull-request yourPullRequestID \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+
+# report a SonarQube Cloud attestation about a trail for a pull request scan, failing unless the analysis is of the given commit:
+kosli attest sonar \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--sonar-api-token yourSonarAPIToken \
+	--sonar-project-key yourSonarProjectKey \
+	--pull-request yourPullRequestID \
+	--sonar-revision yourSonarRevision \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
@@ -243,8 +255,8 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	// The flag defaults to the CI commit, so only a revision the user actually
-	// gave is checked against the pull request's analysed commit (#1192).
+	// --sonar-revision defaults to the CI commit; only one the user gave is
+	// checked against the pull request's analysed commit (#1192).
 	revision := o.revision
 	if o.pullRequest != "" && !o.revisionExplicit {
 		revision = ""
