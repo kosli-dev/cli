@@ -386,8 +386,10 @@ func TestGetSonarResults_BranchIgnoredForPullRequest(t *testing.T) {
 
 // TestGetSonarResults_PullRequestRevision is the #1192 check: SonarQube keeps only a
 // pull request's latest analysis, so a revision named alongside the pull request
-// must be the analysed commit, and no revision means no check. Both ways of
-// naming the scan reach the same lookup, so both paths are pinned.
+// must be the analysed commit, and no revision means no check. Both variants pass
+// --pull-request explicitly, discovering the scan via --sonar-project-key or via
+// --sonar-ce-task-url; see TestGetSonarResults_PullRequestRevision_DiscoveredWithoutFlag
+// for the case where the pull request is discovered without that flag.
 func TestGetSonarResults_PullRequestRevision(t *testing.T) {
 	const otherRevision = "0000000000000000000000000000000000000000"
 
@@ -435,6 +437,28 @@ func TestGetSonarResults_PullRequestRevision(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// TestGetSonarResults_PullRequestRevision_DiscoveredWithoutFlag pins the gap the
+// comment above notes: when a CE task's own response names the pull request
+// (--sonar-ce-task-url or report-task.txt used without --pull-request), sc.pullRequest
+// is empty and the #1192 check does not fire, even for a revision that does not
+// match — the same staleness the check exists to catch elsewhere.
+func TestGetSonarResults_PullRequestRevision_DiscoveredWithoutFlag(t *testing.T) {
+	const otherRevision = "0000000000000000000000000000000000000000"
+
+	fake := &fakeSonarProject{}
+	srv := httptest.NewServer(fake.handler())
+	defer srv.Close()
+
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id="+revTaskID, "", "", otherRevision, "", "", 5)
+	results, err := sc.GetSonarResults(discardLogger())
+	if err != nil {
+		t.Fatalf("expected no check without --pull-request, got error: %v", err)
+	}
+	if results.Revision != revRevision {
+		t.Errorf("expected the analysed revision %q in the results, got %q", revRevision, results.Revision)
 	}
 }
 

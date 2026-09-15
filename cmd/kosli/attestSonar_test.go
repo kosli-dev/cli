@@ -231,7 +231,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			golden:    "Error: open .scannerwork/report-task.txt: no such file or directory. Check your working directory is set correctly. Alternatively provide the project key and either revision or pull-request ID for the scan to attest\n",
 		},
 		{
-			name:   "25 can attest a pull request scan when --sonar-revision is the commit it analysed",
+			name:   "25 can attest a pull request scan alongside --sonar-revision",
 			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --pull-request %s --sonar-revision %s %s", suite.prKey, suite.prRevision, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
@@ -268,7 +268,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			wantError: true,
 			name:      "31 attesting a pull request scan with --sonar-revision of a commit it did not analyse fails",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --pull-request %s --sonar-revision 0000000000000000000000000000000000000000 %s", suite.prKey, suite.defaultKosliArguments),
-			golden:    fmt.Sprintf("Error: analysis for pull request %s of project cyber-dojo_differ is of revision %s, not 0000000000000000000000000000000000000000. \nThe scan for revision 0000000000000000000000000000000000000000 may still be being processed by SonarQube, try again later.\n Otherwise check the revision is correct\n", suite.prKey, suite.prRevision),
+			golden:    fmt.Sprintf("Error: analysis for pull request %s of project cyber-dojo_differ is of revision %s, not 0000000000000000000000000000000000000000.\nThe scan for that revision may still be being processed by SonarQube, try again later.\nOtherwise check the revision is correct\n", suite.prKey, suite.prRevision),
 		},
 	}
 

@@ -255,8 +255,10 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	// --sonar-revision defaults to the CI commit; only one the user gave is
-	// checked against the pull request's analysed commit (#1192).
+	// --sonar-revision defaults to the CI commit, so only a revision the user
+	// gave explicitly is checked against the pull request's analysed commit
+	// (#1192). The non-PR path still needs the default: it looks the analysis
+	// up by revision.
 	revision := o.revision
 	if o.pullRequest != "" && !o.revisionExplicit {
 		revision = ""
