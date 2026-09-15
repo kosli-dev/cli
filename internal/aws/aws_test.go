@@ -83,6 +83,56 @@ func (suite *AWSTestSuite) TestDecodeLambdaFingerprint() {
 	}
 }
 
+func (suite *AWSTestSuite) TestProcessOneLambdaFunc() {
+	const (
+		base64Fingerprint = "16ikLdccyKitxEizXiYBnXQUOkf2Y49MagwOKmTykdg="
+		hexFingerprint    = "d7a8a42dd71cc8a8adc448b35e26019d74143a47f6638f4c6a0c0e2a64f291d8"
+		lastModified      = "2024-01-15T10:30:00.000+0000"
+		functionName      = "my-func"
+	)
+	for _, t := range []struct {
+		name            string
+		packageType     types.PackageType
+		codeSha256      string
+		wantFingerprint string
+		wantErr         bool
+	}{
+		{
+			name:            "a Zip function fingerprint is decoded from base64",
+			packageType:     types.PackageTypeZip,
+			codeSha256:      base64Fingerprint,
+			wantFingerprint: hexFingerprint,
+		},
+		{
+			name:            "an Image function fingerprint is used as reported",
+			packageType:     types.PackageTypeImage,
+			codeSha256:      hexFingerprint,
+			wantFingerprint: hexFingerprint,
+		},
+		{
+			name:            "a package type the SDK does not know yet is not decoded",
+			packageType:     types.PackageType("Wasm"),
+			codeSha256:      hexFingerprint,
+			wantFingerprint: hexFingerprint,
+		},
+		{
+			name:        "a Zip function with a non-base64 fingerprint causes an error",
+			packageType: types.PackageTypeZip,
+			codeSha256:  "2023-01-22",
+			wantErr:     true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			got, err := processOneLambdaFunc(lastModified, t.codeSha256, functionName, t.packageType)
+			require.False(suite.T(), (err != nil) != t.wantErr,
+				"processOneLambdaFunc() error = %v, wantErr %v", err, t.wantErr)
+			if !t.wantErr {
+				require.Equal(suite.T(), t.wantFingerprint, got.Digests[functionName])
+			}
+		})
+	}
+}
+
 func (suite *AWSTestSuite) TestNewEcsTaskData() {
 	taskARN := ""
 	cluster := "foo"
