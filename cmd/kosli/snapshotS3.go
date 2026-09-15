@@ -181,7 +181,7 @@ func (o *snapshotS3Options) resolveDownloadLimits() error {
 	}
 	budget, err := parseByteSize(o.downloadBudget)
 	if err != nil {
-		return fmt.Errorf("invalid --download-budget: %v", err)
+		return fmt.Errorf("invalid --download-budget: %w", err)
 	}
 	o.downloadLimits = aws.DownloadLimits{Concurrency: o.downloadConcurrency, BytesInFlight: budget}
 	return nil

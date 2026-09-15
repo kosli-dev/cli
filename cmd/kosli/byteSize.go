@@ -42,8 +42,13 @@ func parseByteSize(s string) (int64, error) {
 	}
 
 	key := strings.ToLower(unit)
-	if key != "b" {
+	if key != "" && key != "b" {
+		// Only a single unit letter may precede the optional "b" or "ib", so
+		// "ib" alone and "bb" are unknown rather than a guess at megabytes or bytes.
 		key = strings.TrimSuffix(strings.TrimSuffix(key, "ib"), "b")
+		if len(key) != 1 || key == "b" {
+			return 0, fmt.Errorf("unknown unit %q in size %q: use K, M, G or T, optionally followed by B", unit, s)
+		}
 	}
 	multiplier, ok := byteSizeUnits[key]
 	if !ok {
