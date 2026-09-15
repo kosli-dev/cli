@@ -167,6 +167,13 @@ func (f *fakeSonarProject) handler() http.HandlerFunc {
 					Commit: sonar.PRCommit{SHA: revRevision},
 				}},
 			})
+		case "/api/ce/task":
+			// The CE task of the pull request scan, as report-task.txt or
+			// --sonar-ce-task-url would point at it.
+			_ = json.NewEncoder(w).Encode(sonar.TaskResponse{Task: sonar.Task{
+				TaskID: revTaskID, AnalysisID: revAnalysisKey, Status: "SUCCESS", ComponentKey: revProjectKey,
+				ComponentName: "customer project", PullRequest: revPullRequest,
+			}})
 		case "/api/qualitygates/project_status":
 			_ = json.NewEncoder(w).Encode(sonar.QualityGateResponse{
 				ProjectStatus: sonar.ProjectStatus{Status: "OK", Conditions: []sonar.Conditions{}},
@@ -376,6 +383,63 @@ func TestGetSonarResults_BranchIgnoredForPullRequest(t *testing.T) {
 	}
 	if results.Branch != nil {
 		t.Errorf("expected no branch alongside a pull request, got %+v", results.Branch)
+	}
+}
+
+// TestGetSonarResults_PullRequestRevision is the issue #1192 check: a pull request's
+// latest analysis is whatever SonarQube holds for the PR, which is the previous
+// push's scan until the current one is processed. When the caller names the
+// revision alongside the pull request, an analysis of another commit must fail
+// rather than be attested against a commit nobody scanned. Without a revision
+// nothing is checked, so existing callers are unaffected. Both ways of naming the
+// scan funnel through the same lookup, so both are pinned.
+func TestGetSonarResults_PullRequestRevision(t *testing.T) {
+	const otherRevision = "0000000000000000000000000000000000000000"
+
+	cases := []struct {
+		name     string
+		revision string
+		wantErr  bool
+	}{
+		{name: "matching revision is attested", revision: revRevision},
+		{name: "other revision fails", revision: otherRevision, wantErr: true},
+		{name: "no revision is not checked", revision: ""},
+	}
+
+	for _, c := range cases {
+		for _, path := range []string{"project key", "CE task"} {
+			t.Run(path+": "+c.name, func(t *testing.T) {
+				fake := &fakeSonarProject{}
+				srv := httptest.NewServer(fake.handler())
+				defer srv.Close()
+
+				var sc *sonar.SonarConfig
+				if path == "CE task" {
+					sc = sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id="+revTaskID, "", "", c.revision, revPullRequest, "", 5)
+				} else {
+					sc = sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, c.revision, revPullRequest, "", 5)
+				}
+				results, err := sc.GetSonarResults(discardLogger())
+
+				if !c.wantErr {
+					if err != nil {
+						t.Fatalf("expected the pull-request scan to be attested, got error: %v", err)
+					}
+					if results.Revision != revRevision {
+						t.Errorf("expected the analysed revision %q in the results, got %q", revRevision, results.Revision)
+					}
+					return
+				}
+				if err == nil {
+					t.Fatalf("expected an error: pull request %s was analysed at %s, not %s", revPullRequest, revRevision, otherRevision)
+				}
+				for _, want := range []string{revPullRequest, revRevision, otherRevision} {
+					if !strings.Contains(err.Error(), want) {
+						t.Errorf("expected %q in the error, got: %v", want, err)
+					}
+				}
+			})
+		}
 	}
 }
 
