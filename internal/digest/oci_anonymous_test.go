@@ -1,6 +1,7 @@
 package digest
 
 import (
+	"crypto/x509"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -82,10 +83,13 @@ func TestOciSha256RefusesAFakeRegistryWithoutTheOverride(t *testing.T) {
 
 	fingerprint, err := OciSha256Anonymous(host + "/repo:tag")
 
-	require.Error(t, err)
+	var certErr x509.UnknownAuthorityError
+	require.ErrorAs(t, err, &certErr, "must fail on TLS verification, not on something incidental")
 	require.Empty(t, fingerprint)
 }
 
+// Concurrent Set/restore pairs would lose updates and leave an override
+// installed, so only readers race the single setter.
 func TestSetOciSystemContextOverride_Race(t *testing.T) {
 	fake := func(sysCtx *types.SystemContext) { sysCtx.DockerInsecureSkipTLSVerify = types.OptionalBoolTrue }
 	var wg sync.WaitGroup
@@ -97,14 +101,13 @@ func TestSetOciSystemContextOverride_Race(t *testing.T) {
 		}()
 	}
 	for i := 0; i < 50; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			restore := SetOciSystemContextOverride(fake)
-			restore()
-		}()
+		SetOciSystemContextOverride(fake)()
 	}
 	wg.Wait()
+
+	sysCtx := &types.SystemContext{}
+	applyOciSystemContextOverride(sysCtx)
+	require.Equal(t, types.OptionalBoolUndefined, sysCtx.DockerInsecureSkipTLSVerify, "override leaked")
 }
 
 // TestCredentialContext pins the credential decision itself, which is the

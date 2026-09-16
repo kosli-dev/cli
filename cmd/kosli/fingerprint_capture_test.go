@@ -35,7 +35,7 @@ const (
 	// SHA256 of cmd/kosli/testdata/folder1, pinned in fingerprint_test.go.
 	folder1Fingerprint = "c43808cb04c6e66c4c6fc1f972dd67c3b9b71c81e0a0c78730da3699922d17be"
 
-	// Digest of library/alpine, the image the docker and OCI variants fingerprint.
+	// Digest of library/alpine, the image the docker variant fingerprints.
 	alpineFingerprint = "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
 
 	// Realistic notice the version-check goroutine emits when a newer
@@ -185,6 +185,7 @@ type FingerprintOCICaptureTestSuite struct {
 }
 
 func (suite *FingerprintOCICaptureTestSuite) fakeRegistry(contentDigest string) string {
+	suite.T().Helper()
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v2/" {
 			w.Header().Set("Docker-Content-Digest", contentDigest)
@@ -196,30 +197,35 @@ func (suite *FingerprintOCICaptureTestSuite) fakeRegistry(contentDigest string) 
 	return strings.TrimPrefix(srv.URL, "https://")
 }
 
-// The OCI path is containers/image's HTTP client, a stderr surface none of the
-// file/dir/docker tests exercise. The registry is a local fake, so no network,
-// Docker daemon, or Docker Hub rate limit is involved.
+// TestFingerprintOCI_CaptureCleanliness covers the OCI variant: containers/image's
+// HTTP client, a stderr surface none of the file/dir/docker tests exercise. The
+// registry is a local fake, so no network, Docker daemon, or Docker Hub rate
+// limit is involved.
 func (suite *FingerprintOCICaptureTestSuite) TestFingerprintOCI_CaptureCleanliness() {
 	defer version.SetCheckForUpdateOverride(func(string) (string, error) {
 		return fakeUpdateNotice, nil
 	})()
+	// The empty auth config stops containers/image discovering host docker
+	// credentials, which can shell out to a credential helper.
 	defer digest.SetOciSystemContextOverride(func(sysCtx *types.SystemContext) {
 		sysCtx.DockerInsecureSkipTLSVerify = types.OptionalBoolTrue
+		sysCtx.DockerAuthConfig = &types.DockerAuthConfig{}
 	})()
 
-	host := suite.fakeRegistry("sha256:" + alpineFingerprint)
+	want := strings.Repeat("a", 64)
+	host := suite.fakeRegistry("sha256:" + want)
 
 	_, combined, stdout, stderr, err := executeCommandC(
-		"fingerprint --artifact-type oci " + host + "/library/alpine:3.20")
+		"fingerprint --artifact-type oci " + host + "/repo:tag")
 	suite.Require().NoError(err)
 
-	suite.Equal(alpineFingerprint+"\n", stdout,
+	suite.Equal(want+"\n", stdout,
 		"stdout must contain only the fingerprint — anything else breaks shell capture")
 
 	suite.Equal("", stderr,
 		"stderr must be empty — any output here pollutes 2>&1 capture pipelines")
 
-	suite.Equal(alpineFingerprint+"\n", combined,
+	suite.Equal(want+"\n", combined,
 		"combined output (the 2>&1 capture pattern) must be exactly the fingerprint")
 }
 
