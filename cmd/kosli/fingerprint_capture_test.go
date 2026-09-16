@@ -1,8 +1,13 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/containers/image/v5/types"
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/docker"
 	"github.com/kosli-dev/cli/internal/version"
 	"github.com/stretchr/testify/require"
@@ -30,6 +35,9 @@ const (
 	// SHA256 of cmd/kosli/testdata/folder1, pinned in fingerprint_test.go.
 	folder1Fingerprint = "c43808cb04c6e66c4c6fc1f972dd67c3b9b71c81e0a0c78730da3699922d17be"
 
+	// Digest of library/alpine, the image the docker variant fingerprints.
+	alpineFingerprint = "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
+
 	// Realistic notice the version-check goroutine emits when a newer
 	// release exists. Stubbed in via SetCheckForUpdateOverride.
 	fakeUpdateNotice = "\nA new version of the Kosli CLI is available: v9.99.0 (you have v0.0.1)\nUpgrade: https://docs.kosli.com/getting_started/install/\n"
@@ -39,7 +47,7 @@ const (
 // pattern as FingerprintTestSuite in fingerprint_test.go — the image is
 // pinned by digest so the assertion can be exact.
 func (suite *FingerprintCaptureTestSuite) SetupSuite() {
-	suite.dockerImage = "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
+	suite.dockerImage = "library/alpine@sha256:" + alpineFingerprint
 	err := docker.PullDockerImage(suite.dockerImage)
 	require.NoError(suite.T(), err)
 }
@@ -115,8 +123,6 @@ func (suite *FingerprintCaptureTestSuite) TestFingerprintDocker_CaptureCleanline
 		return fakeUpdateNotice, nil
 	})()
 
-	const alpineFingerprint = "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
-
 	_, combined, stdout, stderr, err := executeCommandC(
 		"fingerprint --artifact-type docker " + suite.dockerImage)
 	suite.Require().NoError(err)
@@ -169,4 +175,60 @@ func (suite *FingerprintCaptureTestSuite) TestFingerprintFile_DebugModeIsAllowed
 
 func TestFingerprintCaptureTestSuite(t *testing.T) {
 	suite.Run(t, new(FingerprintCaptureTestSuite))
+}
+
+// FingerprintOCICaptureTestSuite is separate from FingerprintCaptureTestSuite so
+// the OCI path, which needs no Docker daemon, is not gated behind that suite's
+// docker pull.
+type FingerprintOCICaptureTestSuite struct {
+	suite.Suite
+}
+
+func (suite *FingerprintOCICaptureTestSuite) fakeRegistry(contentDigest string) string {
+	suite.T().Helper()
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v2/" {
+			w.Header().Set("Docker-Content-Digest", contentDigest)
+			w.Header().Set("Content-Type", "application/vnd.docker.distribution.manifest.v2+json")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	suite.T().Cleanup(srv.Close)
+	return strings.TrimPrefix(srv.URL, "https://")
+}
+
+// TestFingerprintOCI_CaptureCleanliness covers the OCI variant: containers/image's
+// HTTP client, a stderr surface none of the file/dir/docker tests exercise. The
+// registry is a local fake, so no network, Docker daemon, or Docker Hub rate
+// limit is involved.
+func (suite *FingerprintOCICaptureTestSuite) TestFingerprintOCI_CaptureCleanliness() {
+	defer version.SetCheckForUpdateOverride(func(string) (string, error) {
+		return fakeUpdateNotice, nil
+	})()
+	// The empty auth config stops containers/image discovering host docker
+	// credentials, which can shell out to a credential helper.
+	defer digest.SetOciSystemContextOverride(func(sysCtx *types.SystemContext) {
+		sysCtx.DockerInsecureSkipTLSVerify = types.OptionalBoolTrue
+		sysCtx.DockerAuthConfig = &types.DockerAuthConfig{}
+	})()
+
+	want := strings.Repeat("a", 64)
+	host := suite.fakeRegistry("sha256:" + want)
+
+	_, combined, stdout, stderr, err := executeCommandC(
+		"fingerprint --artifact-type oci " + host + "/repo:tag")
+	suite.Require().NoError(err)
+
+	suite.Equal(want+"\n", stdout,
+		"stdout must contain only the fingerprint — anything else breaks shell capture")
+
+	suite.Equal("", stderr,
+		"stderr must be empty — any output here pollutes 2>&1 capture pipelines")
+
+	suite.Equal(want+"\n", combined,
+		"combined output (the 2>&1 capture pattern) must be exactly the fingerprint")
+}
+
+func TestFingerprintOCICaptureTestSuite(t *testing.T) {
+	suite.Run(t, new(FingerprintOCICaptureTestSuite))
 }
