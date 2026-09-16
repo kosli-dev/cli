@@ -433,7 +433,7 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 	} {
 		suite.Run(t.name, func() {
 			skipIfCredsUnset(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, nil, t.excludePaths, nil, logger.NewStandardLogger())
+			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, nil, t.excludePaths, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
@@ -1178,7 +1178,7 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 			}
 
 			data, err := getS3DataFromClient(client, fakeS3TestBucketName, t.includePaths,
-				t.includeRegex, t.excludePaths, t.excludeRegex, logger.NewStandardLogger())
+				t.includeRegex, t.excludePaths, t.excludeRegex, DefaultDownloadLimits, logger.NewStandardLogger())
 
 			if t.wantErr {
 				require.Error(suite.T(), err)
@@ -1221,7 +1221,7 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientFilterEquivalence() {
 	fingerprint := func(objects map[string][]byte, includePaths, includeRegex, excludePaths, excludeRegex []string) string {
 		client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects}
 		data, err := getS3DataFromClient(client, fakeS3TestBucketName, includePaths,
-			includeRegex, excludePaths, excludeRegex, logger.NewStandardLogger())
+			includeRegex, excludePaths, excludeRegex, DefaultDownloadLimits, logger.NewStandardLogger())
 		require.NoError(suite.T(), err)
 		require.Len(suite.T(), data, 1)
 		require.Len(suite.T(), data[0].Digests, 1)
@@ -1292,7 +1292,7 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientRejectsKeysWithDotDotSegments(
 		},
 	}
 
-	_, err := getS3DataFromClient(poisoned, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	_, err := getS3DataFromClient(poisoned, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.Error(suite.T(), err, "a key containing a \"..\" segment must fail the snapshot instead of silently overwriting another object's download")
 	require.Contains(suite.T(), err.Error(), "uploads/user-a/../../protected/release.bin")
 }
@@ -1307,7 +1307,7 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientCollidingKeysAreAnError() {
 		},
 	}
 
-	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), "[a//b]", "the error must name both colliding keys")
 	require.Contains(suite.T(), err.Error(), "[a/b]", "the error must name both colliding keys")
@@ -1325,7 +1325,7 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientObjectAndPrefixCollideAreAnErr
 		},
 	}
 
-	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), "object key [a]", "the error must name the object")
 	require.Contains(suite.T(), err.Error(), "object key [a/b]", "the error must name an object under the prefix")
@@ -1358,9 +1358,9 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientKeepsTodaysLayoutForUnusualKey
 		},
 	}
 
-	unusualData, err := getS3DataFromClient(unusual, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	unusualData, err := getS3DataFromClient(unusual, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
-	todayData, err := getS3DataFromClient(today, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	todayData, err := getS3DataFromClient(today, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), unusualData, 1)
 	require.Len(suite.T(), todayData, 1)

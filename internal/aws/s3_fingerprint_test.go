@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -59,7 +60,7 @@ func (r *recordingDownloader) downloadedKeys() []string {
 
 func snapshotFake(t *testing.T, client S3API) (artifactName, fingerprint string) {
 	t.Helper()
-	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(t, err)
 	require.Len(t, data, 1)
 	require.Len(t, data[0].Digests, 1)
@@ -191,14 +192,14 @@ func (suite *S3FingerprintTestSuite) TestDownloadsExactlyTheContributingObjects(
 		"scratch.tmp":      []byte("tmp"),
 		"filtered/out.txt": []byte("out"),
 	}}}
-	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, []string{"filtered/"}, nil, logger.NewStandardLogger())
+	data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, []string{"filtered/"}, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), data, 1)
 	require.Equal(suite.T(), []string{".kosli_ignore", "app.js", "lib/util.js"}, client.downloadedKeys())
 }
 
-// Objects are downloaded to files whose names owe nothing to the key, each is
-// removed once hashed, and the download directory is gone at the end.
+// How many temp files exist at once is the byte budget's concern, tested in
+// S3ParallelTestSuite; this test checks only their names and their removal.
 func (suite *S3FingerprintTestSuite) TestObjectsNeverLandUnderTheirKeyAndDoNotLinger() {
 	keys := []string{"alpha.bin", "beta/gamma.bin", "delta/epsilon/zeta.bin"}
 	objects := map[string][]byte{}
@@ -206,21 +207,27 @@ func (suite *S3FingerprintTestSuite) TestObjectsNeverLandUnderTheirKeyAndDoNotLi
 		objects[key] = []byte(key)
 	}
 	client := &recordingDownloader{S3API: &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects}}
+	// Downloads run concurrently, so onDownload fires from worker goroutines;
+	// require.* must run only on the test goroutine, so record and assert after.
+	var mu sync.Mutex
+	var nilFile bool
+	var keyLikeNames []string
 	client.onDownload = func(key string, file *os.File) {
-		require.NotNil(suite.T(), file, "the transfer manager must be handed a real file")
-		require.NotContains(suite.T(), filepath.Base(file.Name()), filepath.Base(key),
-			"the local file name must owe nothing to the key")
-		client.mu.Lock()
-		earlier := append([]string{}, client.files[:len(client.files)-1]...)
-		client.mu.Unlock()
-		for _, previous := range earlier {
-			_, err := os.Stat(previous)
-			require.ErrorIs(suite.T(), err, os.ErrNotExist, "an earlier object's file must be gone before the next download")
+		mu.Lock()
+		defer mu.Unlock()
+		if file == nil {
+			nilFile = true
+			return
+		}
+		if strings.Contains(filepath.Base(file.Name()), filepath.Base(key)) {
+			keyLikeNames = append(keyLikeNames, key)
 		}
 	}
 
-	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
+	require.False(suite.T(), nilFile, "the transfer manager must be handed a real file")
+	require.Empty(suite.T(), keyLikeNames, "the local file name must owe nothing to the key")
 	require.Len(suite.T(), client.files, len(keys))
 	for _, file := range client.files {
 		_, err := os.Stat(file)
@@ -238,7 +245,7 @@ func (suite *S3FingerprintTestSuite) TestAMalformedIgnoreRuleFailsTheSnapshot() 
 			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{
 				".kosli_ignore": []byte(rule + "\n"), "app.js": []byte("app"),
 			}}
-			_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+			_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 			require.Error(suite.T(), err)
 			require.Contains(suite.T(), err.Error(), "the bucket's .kosli_ignore holds a rule that cannot be applied")
 			require.Contains(suite.T(), err.Error(), rule)
@@ -250,10 +257,11 @@ func (suite *S3FingerprintTestSuite) TestADownloadErrorNamesTheKey() {
 	client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{
 		"README.md": []byte(fakeReadmeBody), "notes.txt": []byte(fakeNotesBody),
 	}, DownloadObjectErr: os.ErrDeadlineExceeded}
-	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+	_, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
 	require.ErrorIs(suite.T(), err, os.ErrDeadlineExceeded)
-	require.Contains(suite.T(), err.Error(), "object key [README.md]")
+	// Downloads overlap, so either object may be the first to fail.
+	require.Regexp(suite.T(), `object key \[(README\.md|notes\.txt)\]`, err.Error())
 	require.NotContains(suite.T(), err.Error(), "--exclude-regex", "a transport failure must not advise dropping the object")
 }
 
@@ -263,7 +271,7 @@ func (suite *S3FingerprintTestSuite) TestAHashErrorNamesTheKey() {
 	client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{"README.md": []byte(fakeReadmeBody)}}
 	// Deleting the file between download and hash is the one way to make the
 	// hash fail without touching permissions.
-	_, err := downloadAndHashS3Object(client, suite.T().TempDir(), fakeS3TestBucketName, "README.md", func(file *os.File) error {
+	_, err := downloadAndHashS3Object(context.TODO(), client, suite.T().TempDir(), fakeS3TestBucketName, "README.md", func(file *os.File) error {
 		return os.Remove(file.Name())
 	}, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
@@ -280,19 +288,19 @@ func (suite *S3FingerprintTestSuite) TestAListingWithoutModificationTimesDoesNot
 	objects := map[string][]byte{"README.md": []byte(fakeReadmeBody), "notes.txt": []byte(fakeNotesBody)}
 	later := fakeS3LastModified.Add(time.Hour)
 	full, err := getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
-		LastModified: map[string]time.Time{"notes.txt": later}}, fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+		LastModified: map[string]time.Time{"notes.txt": later}}, fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 
 	partial, err := getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
 		LastModified: map[string]time.Time{"notes.txt": later}, NoLastModified: map[string]bool{"README.md": true}},
-		fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+		fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), full[0].Digests, partial[0].Digests, "the object without a timestamp stays in the fingerprint")
 	require.Equal(suite.T(), later.Unix(), partial[0].LastModifiedTimestamp)
 
 	_, err = getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects,
 		NoLastModified: map[string]bool{"README.md": true, "notes.txt": true}},
-		fakeS3TestBucketName, nil, nil, nil, nil, logger.NewStandardLogger())
+		fakeS3TestBucketName, nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), "modification time")
 }

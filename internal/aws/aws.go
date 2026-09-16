@@ -27,6 +27,7 @@ import (
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
+	"golang.org/x/sync/semaphore"
 )
 
 // EcsEnvRequest represents the PUT request body to be sent to kosli from ECS
@@ -169,7 +170,11 @@ func defaultNewS3Client(creds *AWSStaticCreds) (S3API, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &s3Client{S3ListAPI: client, S3DownloadAPI: transfermanager.New(client)}, nil
+	// Five parts per object is the SDK's default, pinned so the connection count,
+	// objects in flight times parts, cannot move with an SDK upgrade.
+	return &s3Client{S3ListAPI: client, S3DownloadAPI: transfermanager.New(client, func(o *transfermanager.Options) {
+		o.Concurrency = 5
+	})}, nil
 }
 
 // NewS3ClientFunc is the factory used by GetS3Data to create an S3API client.
@@ -441,16 +446,16 @@ func objectMatchesFilter(key string, paths []string, patterns []*regexp.Regexp) 
 // includePaths / excludePaths match object keys by literal prefix.
 // includeRegex / excludeRegex match object keys by Go regular expression.
 // Include and exclude filters are mutually exclusive (callers enforce this).
-func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, logger *logger.Logger) ([]*S3Data, error) {
+func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, logger *logger.Logger) ([]*S3Data, error) {
 	client, err := NewS3ClientFunc(staticCreds)
 	if err != nil {
 		return []*S3Data{}, err
 	}
-	return getS3DataFromClient(client, bucket, includePaths, includeRegex, excludePaths, excludeRegex, logger)
+	return getS3DataFromClient(client, bucket, includePaths, includeRegex, excludePaths, excludeRegex, limits, logger)
 }
 
 // getS3DataFromClient harvests bucket content using the provided S3API client.
-func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, logger *logger.Logger) ([]*S3Data, error) {
+func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, logger *logger.Logger) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
 
 	includeRegexCompiled, err := compilePathRegex(includeRegex)
@@ -480,7 +485,7 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 		return s3Data, fmt.Errorf("bucket [%s] reported no modification time for any matching object", bucket)
 	}
 
-	artifactName, sha256, err := fingerprintS3Objects(client, bucket, objects, logger)
+	artifactName, sha256, err := fingerprintS3Objects(client, bucket, objects, limits, logger)
 	if err != nil {
 		return s3Data, err
 	}
@@ -494,7 +499,25 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 type s3Object struct {
 	key          string
 	lastModified time.Time
+	size         int64
 }
+
+// DownloadLimits bounds the object downloads in flight at once when
+// fingerprinting a bucket.
+type DownloadLimits struct {
+	// Concurrency is the number of objects downloading at the same time. Each
+	// one may buffer up to five 8 MiB parts in memory while it writes, so memory
+	// rises with this figure independently of BytesInFlight.
+	Concurrency int
+	// BytesInFlight caps the sum of the listed sizes of the objects downloading
+	// at the same time, and so the temp disk they occupy. An object larger than
+	// the whole budget downloads alone.
+	BytesInFlight int64
+}
+
+// DefaultDownloadLimits keeps peak temp disk near half a gigabyte, which fits
+// Lambda's default /tmp, and part buffers near 320 MiB of memory.
+var DefaultDownloadLimits = DownloadLimits{Concurrency: 8, BytesInFlight: 512 << 20}
 
 // listMatchingS3Objects lists the bucket, dropping folder markers and keys the
 // filters exclude, in the order S3 returns them.
@@ -532,11 +555,14 @@ func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []strin
 			seen[*object.Key] = true
 			// An object without a timestamp stays in the fingerprint and out of
 			// the snapshot timestamp, as it was before.
-			var lastModified time.Time
+			listed := s3Object{key: *object.Key}
 			if object.LastModified != nil {
-				lastModified = *object.LastModified
+				listed.lastModified = *object.LastModified
 			}
-			objects = append(objects, s3Object{key: *object.Key, lastModified: lastModified})
+			if object.Size != nil {
+				listed.size = *object.Size
+			}
+			objects = append(objects, listed)
 		}
 	}
 	return objects, nil
@@ -550,8 +576,9 @@ func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []strin
 // is fingerprinted as that file and named after it, as before.
 //
 // A root .kosli_ignore is downloaded first so its rules can be applied, and
-// objects the rules exclude are not downloaded at all.
-func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, logger *logger.Logger) (string, string, error) {
+// objects the rules exclude are not downloaded at all. The remaining objects
+// download in parallel within limits; the first failure cancels the rest.
+func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
 	keys := make([]string, len(objects))
 	for i, object := range objects {
 		keys[i] = object.key
@@ -571,8 +598,7 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 		}
 	}()
 
-	// The manifest starts as paths only; digests are filled in below by index,
-	// so it stays in listing order.
+	// The manifest starts as paths only; digests are filled in by index below.
 	files := make([]digest.VirtualFile, len(objects))
 	for i, object := range objects {
 		files[i].Path = paths[object.key]
@@ -581,7 +607,7 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 	// One object is fingerprinted as that file and named after it, as it was
 	// when the objects were laid out on disk.
 	if file, ok := digest.SingleVirtualFile(files); ok {
-		sha256, err := downloadAndHashS3Object(downloader, tempDir, bucket, objects[0].key, nil, logger)
+		sha256, err := downloadAndHashS3Object(context.TODO(), downloader, tempDir, bucket, objects[0].key, nil, logger)
 		if err != nil {
 			return "", "", err
 		}
@@ -594,7 +620,7 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 		if paths[key] != digest.IgnoreFileName {
 			continue
 		}
-		sha256, err := downloadAndHashS3Object(downloader, tempDir, bucket, key, func(file *os.File) error {
+		sha256, err := downloadAndHashS3Object(context.TODO(), downloader, tempDir, bucket, key, func(file *os.File) error {
 			if _, err := file.Seek(0, io.SeekStart); err != nil {
 				return err
 			}
@@ -617,19 +643,23 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 		return "", "", ignoreRuleError(err)
 	}
 
+	var toDownload []int
 	for i, object := range objects {
 		sha256, downloaded := contentSha256[object.key]
 		switch {
 		case downloaded: // the ignore-file pass already hashed this object
 		case needed[files[i].Path]:
-			sha256, err = downloadAndHashS3Object(downloader, tempDir, bucket, object.key, nil, logger)
-			if err != nil {
-				return "", "", err
-			}
+			toDownload = append(toDownload, i)
 		default:
 			logger.Debug("object key [%s] is excluded by %s and is not downloaded", object.key, digest.IgnoreFileName)
 		}
 		files[i].Sha256 = sha256
+	}
+
+	// Each download writes its own slot, so the manifest stays in listing order
+	// however the downloads interleave.
+	if err := downloadS3ObjectsInParallel(downloader, tempDir, bucket, objects, toDownload, files, limits, logger); err != nil {
+		return "", "", err
 	}
 
 	sha256, err := digest.VirtualDirSha256(files, rules, logger)
@@ -648,11 +678,73 @@ func ignoreRuleError(err error) error {
 	return err
 }
 
+// downloadS3ObjectsInParallel fetches the objects at indexes and writes each
+// digest into files at the same index. A fixed worker pool bounds downloads and
+// goroutines alike, a weighted semaphore bounds their listed bytes, and the
+// first error cancels the context so nothing further starts.
+func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket string, objects []s3Object, indexes []int,
+	files []digest.VirtualFile, limits DownloadLimits, logger *logger.Logger) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	budget := semaphore.NewWeighted(max(limits.BytesInFlight, 1))
+	firstErr := make(chan error, 1)
+	fail := func(err error) {
+		select {
+		case firstErr <- err:
+		default: // an earlier failure is already recorded
+		}
+		cancel()
+	}
+
+	work := make(chan int)
+	var wg sync.WaitGroup
+	for range min(max(limits.Concurrency, 1), len(indexes)) {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range work {
+				object := objects[i]
+				// An object larger than the budget takes all of it and so runs alone.
+				weight := max(min(object.size, limits.BytesInFlight), 1)
+				if err := budget.Acquire(ctx, weight); err != nil {
+					return // cancelled while waiting
+				}
+				sha256, err := downloadAndHashS3Object(ctx, downloader, tempDir, bucket, object.key, nil, logger)
+				budget.Release(weight)
+				if err != nil {
+					fail(err)
+					return
+				}
+				files[i].Sha256 = sha256
+			}
+		}()
+	}
+
+feed:
+	for _, i := range indexes {
+		select {
+		case work <- i:
+		case <-ctx.Done():
+			break feed
+		}
+	}
+	close(work)
+	wg.Wait()
+
+	select {
+	case err := <-firstErr:
+		return err
+	default:
+		return nil
+	}
+}
+
 // downloadAndHashS3Object fetches one object into a fresh temp file, lets
 // inspect read it when given, returns the sha256 of its content and removes the
 // file. The file's name comes from the OS, so nothing about the key reaches the
 // filesystem.
-func downloadAndHashS3Object(downloader S3DownloadAPI, tempDir, bucket, key string, inspect func(*os.File) error, logger *logger.Logger) (string, error) {
+func downloadAndHashS3Object(ctx context.Context, downloader S3DownloadAPI, tempDir, bucket, key string, inspect func(*os.File) error, logger *logger.Logger) (string, error) {
 	file, err := os.CreateTemp(tempDir, "object-*")
 	if err != nil {
 		return "", fmt.Errorf("object key [%s]: %w", key, err)
@@ -667,7 +759,7 @@ func downloadAndHashS3Object(downloader S3DownloadAPI, tempDir, bucket, key stri
 		}
 	}()
 
-	result, err := downloader.DownloadObject(context.TODO(), &transfermanager.DownloadObjectInput{
+	result, err := downloader.DownloadObject(ctx, &transfermanager.DownloadObjectInput{
 		Bucket:   aws.String(bucket),
 		Key:      aws.String(key),
 		WriterAt: file,
