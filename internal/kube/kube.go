@@ -47,15 +47,22 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 	owners := pod.GetObjectMeta().GetOwnerReferences()
 	containers := pod.Status.ContainerStatuses
 
+	// an empty image ID is transient (image still pulling, kubelet status not yet
+	// populated), not an error
+	withoutImageID := []string{}
 	for _, cs := range containers {
 		if cs.ImageID == "" {
-			// an empty image ID is a transient state on a healthy cluster (image still
-			// pulling, kubelet status not yet populated), so it must never abort the
-			// whole snapshot: https://github.com/kosli-dev/cli/issues/1194
-			logger.Warn("skipping %s pod %s in namespace %s as it has containers without image IDs", pod.Status.Phase, pod.Name, pod.Namespace)
-			return nil, nil
+			withoutImageID = append(withoutImageID, cs.Name)
+			continue
 		}
 		digests[cs.Image] = cs.ImageID[len(cs.ImageID)-64:]
+	}
+	if len(withoutImageID) > 0 {
+		if len(digests) == 0 {
+			logger.Warn("skipping %s pod %s in namespace %s as none of its containers has an image ID", pod.Status.Phase, pod.Name, pod.Namespace)
+			return nil, nil
+		}
+		logger.Warn("%s pod %s in namespace %s has containers without an image ID, reporting it without them: %v", pod.Status.Phase, pod.Name, pod.Namespace, withoutImageID)
 	}
 
 	return &PodData{

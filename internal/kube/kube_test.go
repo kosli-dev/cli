@@ -523,6 +523,29 @@ func TestNewPodData(t *testing.T) {
 			pod:         podWithStatuses("pod", corev1.PodRunning, [2]string{"nginx:1.21.3", ""}),
 			wantSkipped: true,
 		},
+		{
+			name:        "a Failed pod whose only container has no image ID is skipped",
+			pod:         podWithStatuses("pod", corev1.PodFailed, [2]string{"nginx:1.21.3", ""}),
+			wantSkipped: true,
+		},
+		{
+			name: "a Running pod is reported with the digests of the containers that have an image ID",
+			pod: podWithStatuses("pod", corev1.PodRunning,
+				[2]string{"nginx:1.21.3", nginxImageID},
+				[2]string{"busybox:latest", ""}),
+			wantDigests: map[string]string{
+				"nginx:1.21.3": "644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36",
+			},
+		},
+		{
+			name: "a Failed pod is reported with the digests of the containers that have an image ID",
+			pod: podWithStatuses("pod", corev1.PodFailed,
+				[2]string{"busybox:latest", ""},
+				[2]string{"nginx:1.21.3", nginxImageID}),
+			wantDigests: map[string]string{
+				"nginx:1.21.3": "644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36",
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := NewPodData(&tc.pod, logger.NewStandardLogger())
