@@ -27,7 +27,7 @@ require (
 	github.com/google/go-github/v42 v42.0.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/joshdk/go-junit v1.0.0
-	github.com/mattn/go-shellwords v1.0.14
+	github.com/mattn/go-shellwords v1.0.15
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5
 	github.com/mitchellh/go-homedir v1.1.0
@@ -50,7 +50,7 @@ require (
 	github.com/zalando/go-keyring v0.2.8
 	gitlab.com/gitlab-org/api/client-go v1.46.0
 	golang.org/x/oauth2 v0.37.0
-	golang.org/x/sync v0.22.0
+	golang.org/x/sync v0.23.0
 	golang.org/x/term v0.46.0
 	google.golang.org/api v0.297.0
 	google.golang.org/grpc v1.83.2
