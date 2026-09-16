@@ -50,9 +50,6 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 	owners := pod.GetObjectMeta().GetOwnerReferences()
 	containers := pod.Status.ContainerStatuses
 
-	// an empty image ID is transient (image still pulling, kubelet status not yet
-	// populated) and a malformed one is the runtime's doing; neither is a reason to
-	// fail the snapshot
 	unusable := []string{}
 	for _, cs := range containers {
 		fingerprint, err := imageFingerprint(cs.ImageID)
@@ -62,11 +59,19 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 		}
 		digests[cs.Image] = fingerprint
 	}
-	if len(unusable) > 0 {
-		if len(digests) == 0 {
-			logger.Warn("skipping %s pod %s in namespace %s as none of its containers has a usable image ID: %s", pod.Status.Phase, pod.Name, pod.Namespace, strings.Join(unusable, ", "))
-			return nil, nil
+	// an empty image ID is transient (image still pulling, kubelet status not yet
+	// populated) and a malformed one is the runtime's doing; neither is a reason to
+	// fail the snapshot. A pod with nothing to report is skipped rather than sent as
+	// an artifact with no digests.
+	if len(digests) == 0 {
+		reason := ""
+		if len(unusable) > 0 {
+			reason = ": " + strings.Join(unusable, ", ")
 		}
+		logger.Warn("skipping %s pod %s in namespace %s as none of its containers has a usable image ID%s", pod.Status.Phase, pod.Name, pod.Namespace, reason)
+		return nil, nil
+	}
+	if len(unusable) > 0 {
 		logger.Warn("%s pod %s in namespace %s has containers without a usable image ID, reporting it without them: %s", pod.Status.Phase, pod.Name, pod.Namespace, strings.Join(unusable, ", "))
 	}
 
