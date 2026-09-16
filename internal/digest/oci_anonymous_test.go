@@ -1,15 +1,12 @@
 package digest
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
-
-	"github.com/containers/image/v5/docker"
 
 	"github.com/containers/image/v5/types"
 	godigest "github.com/opencontainers/go-digest"
@@ -34,22 +31,13 @@ func fakeRegistry(t *testing.T, contentDigest string) string {
 	return parsed.Host
 }
 
-// insecureAnonymousLookup mirrors OciSha256Anonymous against a fake TLS
-// registry. Production does not skip TLS verification, so the flag is set here
-// rather than in credentialContext.
-func insecureAnonymousLookup(artifactName string) (string, error) {
-	sysCtx := credentialContext(noCredentials, "", "")
-	sysCtx.DockerInsecureSkipTLSVerify = types.OptionalBoolTrue
-
-	ref, err := docker.ParseReference("//" + artifactName)
-	if err != nil {
-		return "", err
-	}
-	remoteDigest, err := docker.GetDigest(context.Background(), sysCtx, ref)
-	if err != nil {
-		return "", fmt.Errorf("failed to get digest: %w", err)
-	}
-	return Sha256Fingerprint(remoteDigest)
+// trustFakeRegistry accepts the fake's self-signed certificate through the test
+// seam; production never skips TLS verification.
+func trustFakeRegistry(t *testing.T) {
+	t.Helper()
+	t.Cleanup(SetOciSystemContextOverride(func(sysCtx *types.SystemContext) {
+		sysCtx.DockerInsecureSkipTLSVerify = types.OptionalBoolTrue
+	}))
 }
 
 // TestOciSha256RejectsNonSha256RegistryDigest covers a registry answering with
@@ -64,9 +52,10 @@ func TestOciSha256RejectsNonSha256RegistryDigest(t *testing.T) {
 		{algorithm: "sha512", contentDigest: "sha512:" + strings.Repeat("c", 128)},
 	} {
 		t.Run(tc.algorithm, func(t *testing.T) {
+			trustFakeRegistry(t)
 			host := fakeRegistry(t, tc.contentDigest)
 
-			fingerprint, err := insecureAnonymousLookup(host + "/repo:tag")
+			fingerprint, err := OciSha256Anonymous(host + "/repo:tag")
 
 			require.Error(t, err)
 			require.Empty(t, fingerprint)
@@ -77,13 +66,45 @@ func TestOciSha256RejectsNonSha256RegistryDigest(t *testing.T) {
 }
 
 func TestOciSha256ReturnsTheSha256Fingerprint(t *testing.T) {
+	trustFakeRegistry(t)
 	want := strings.Repeat("a", 64)
 	host := fakeRegistry(t, "sha256:"+want)
 
-	fingerprint, err := insecureAnonymousLookup(host + "/repo:tag")
+	fingerprint, err := OciSha256Anonymous(host + "/repo:tag")
 
 	require.NoError(t, err)
 	require.Equal(t, want, fingerprint)
+}
+
+// Without the override, TLS verification rejects the fake's self-signed certificate.
+func TestOciSha256RefusesAFakeRegistryWithoutTheOverride(t *testing.T) {
+	host := fakeRegistry(t, "sha256:"+strings.Repeat("a", 64))
+
+	fingerprint, err := OciSha256Anonymous(host + "/repo:tag")
+
+	require.Error(t, err)
+	require.Empty(t, fingerprint)
+}
+
+func TestSetOciSystemContextOverride_Race(t *testing.T) {
+	fake := func(sysCtx *types.SystemContext) { sysCtx.DockerInsecureSkipTLSVerify = types.OptionalBoolTrue }
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			applyOciSystemContextOverride(&types.SystemContext{})
+		}()
+	}
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			restore := SetOciSystemContextOverride(fake)
+			restore()
+		}()
+	}
+	wg.Wait()
 }
 
 // TestCredentialContext pins the credential decision itself, which is the

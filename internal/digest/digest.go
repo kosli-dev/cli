@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/containers/image/v5/docker"
 	"github.com/containers/image/v5/types"
@@ -157,6 +158,35 @@ func credentialContext(source credentialSource, registryUsername, registryPasswo
 	return sysCtx
 }
 
+var (
+	ociSysCtxOverrideMu sync.RWMutex
+	ociSysCtxOverride   func(*types.SystemContext)
+)
+
+// SetOciSystemContextOverride applies fn to the SystemContext of every
+// subsequent OCI registry lookup and returns a function that restores the
+// previous value. Tests only.
+func SetOciSystemContextOverride(fn func(*types.SystemContext)) func() {
+	ociSysCtxOverrideMu.Lock()
+	old := ociSysCtxOverride
+	ociSysCtxOverride = fn
+	ociSysCtxOverrideMu.Unlock()
+	return func() {
+		ociSysCtxOverrideMu.Lock()
+		ociSysCtxOverride = old
+		ociSysCtxOverrideMu.Unlock()
+	}
+}
+
+func applyOciSystemContextOverride(sysCtx *types.SystemContext) {
+	ociSysCtxOverrideMu.RLock()
+	fn := ociSysCtxOverride
+	ociSysCtxOverrideMu.RUnlock()
+	if fn != nil {
+		fn(sysCtx)
+	}
+}
+
 // OciSha256 gets the digest of a docker/OCI image from its registry, presenting
 // the given credentials, or those the host holds when none are given.
 func OciSha256(artifactName string, registryUsername string, registryPassword string) (string, error) {
@@ -174,6 +204,7 @@ func ociSha256(artifactName string, source credentialSource, registryUsername, r
 	imageName := fmt.Sprintf("//%s", artifactName)
 	ctx := context.Background()
 	sysCtx := credentialContext(source, registryUsername, registryPassword)
+	applyOciSystemContextOverride(sysCtx)
 
 	// Parse image reference
 	ref, err := docker.ParseReference(imageName)
