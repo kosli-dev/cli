@@ -879,6 +879,7 @@
   "dry-run": "bool",
   "exclude": "stringSlice",
   "exclude-regex": "stringSlice",
+  "fingerprint-source": "string",
   "include": "stringSlice",
   "include-regex": "stringSlice"
  },

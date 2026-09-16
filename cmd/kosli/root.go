@@ -119,6 +119,8 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	// the server is the authority on which types are actually accepted
 	validEnvTypesList = "K8S, ECS, S3, lambda, server, docker, azure-apps, cloud-run, logical"
 
+	validS3FingerprintSources = "content, metadata"
+
 	// single source of truth for the service account privilege list shown in
 	// flag help texts; the server is the authority on which privileges are
 	// actually accepted
@@ -261,6 +263,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	bucketNameFlag                  = "The name of the S3 bucket."
 	downloadConcurrencyFlag         = "[optional] The number of S3 objects to download at the same time when fingerprinting the bucket. Each object in flight may hold up to 40 MB of download buffers in memory, on top of the disk the --download-budget allows."
 	downloadBudgetFlag              = "[optional] The maximum total size of the S3 objects downloading at the same time, which caps the temporary disk the snapshot uses. A bare number is megabytes; add K, M, G or T (optionally followed by B) to choose the unit, e.g. 512M or 8G. An object larger than the budget still downloads, on its own. Objects are downloaded to the OS temporary directory."
+	s3FingerprintSourceFlag         = "[defaulted] Where each object's SHA256 comes from when fingerprinting the bucket. Valid sources are: [" + validS3FingerprintSources + "]. 'content' downloads every contributing object and hashes it. 'metadata' reads the SHA256 checksum S3 stores for each object instead, which skips the download but requires every contributing object to have been uploaded with a full-object SHA256 checksum. Both produce the same fingerprint and need the same permissions."
 	bucketPathsFlag                 = "[optional] The comma separated list of file and/or directory paths in the S3 bucket to include when fingerprinting. Paths match by literal prefix. Cannot be used together with --exclude or --exclude-regex."
 	bucketPathsRegexFlag            = "[optional] The comma separated list of Go regular expressions matched against object keys in the S3 bucket to include when fingerprinting. Cannot be used together with --exclude or --exclude-regex."
 	excludeBucketPathsFlag          = "[optional] The comma separated list of file and/or directory paths in the S3 bucket to exclude when fingerprinting. Paths match by literal prefix. Cannot be used together with --include or --include-regex."
