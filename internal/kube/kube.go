@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
 
+	"github.com/distribution/reference"
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
 	corev1 "k8s.io/api/core/v1"
@@ -47,20 +50,29 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 	owners := pod.GetObjectMeta().GetOwnerReferences()
 	containers := pod.Status.ContainerStatuses
 
+	unusable := []string{}
 	for _, cs := range containers {
-		if cs.ImageID == "" {
-			switch pod.Status.Phase {
-			case corev1.PodFailed:
-				// skip failed pods
-				logger.Warn("skipping failed pod %s in namespace %s as it has containers without image IDs", pod.Name, pod.Namespace)
-				return nil, nil
-			case corev1.PodRunning:
-				// fail
-				return nil, fmt.Errorf("pod %s in namespace %s has containers without image IDs", pod.Name, pod.Namespace)
-			}
-		} else {
-			digests[cs.Image] = cs.ImageID[len(cs.ImageID)-64:]
+		fingerprint, err := imageFingerprint(cs.ImageID)
+		if err != nil {
+			unusable = append(unusable, fmt.Sprintf("%s (%v)", cs.Name, err))
+			continue
 		}
+		digests[cs.Image] = fingerprint
+	}
+	// an empty image ID is transient (image still pulling, kubelet status not yet
+	// populated) and a malformed one is the runtime's doing; neither is a reason to
+	// fail the snapshot. A pod with nothing to report is skipped rather than sent as
+	// an artifact with no digests.
+	if len(digests) == 0 {
+		reason := ""
+		if len(unusable) > 0 {
+			reason = ": " + strings.Join(unusable, ", ")
+		}
+		logger.Warn("skipping %s pod %s in namespace %s as none of its containers has a usable image ID%s", pod.Status.Phase, pod.Name, pod.Namespace, reason)
+		return nil, nil
+	}
+	if len(unusable) > 0 {
+		logger.Warn("%s pod %s in namespace %s has containers without a usable image ID, reporting it without them: %s", pod.Status.Phase, pod.Name, pod.Namespace, strings.Join(unusable, ", "))
 	}
 
 	return &PodData{
@@ -70,6 +82,28 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 		CreationTimestamp: creationTimestamp.Unix(),
 		Owners:            owners,
 	}, nil
+}
+
+// imageFingerprint reduces a container status ImageID to the sha256 hex Kosli uses.
+// Runtimes report it as a reference with a digest (docker.io/library/nginx@sha256:...)
+// or a bare digest (sha256:...); dockershim clusters put either behind a
+// docker-pullable:// or docker:// prefix.
+func imageFingerprint(imageID string) (string, error) {
+	if imageID == "" {
+		return "", fmt.Errorf("empty image ID")
+	}
+	if _, rest, found := strings.Cut(imageID, "://"); found {
+		imageID = rest
+	}
+	ref, err := reference.ParseAnyReference(imageID)
+	if err != nil {
+		return "", fmt.Errorf("unparseable image ID %q: %w", imageID, err)
+	}
+	digested, ok := ref.(reference.Digested)
+	if !ok {
+		return "", fmt.Errorf("image ID %q has no digest", imageID)
+	}
+	return digest.Sha256Fingerprint(digested.Digest())
 }
 
 // NewK8sClientSet creates a k8s clientset

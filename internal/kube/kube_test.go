@@ -1,11 +1,14 @@
 package kube
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -483,4 +486,160 @@ func TestProcessPodsWithFailedPodsWithoutImageIDs(t *testing.T) {
 	require.Contains(t, podNames, "another-running-pod")
 	require.NotContains(t, podNames, "failed-pod-without-imageid")
 	require.NotContains(t, podNames, "another-failed-pod-without-imageid")
+}
+
+// containerStatus is the (image, imageID) pair kubelet reports per container. An empty
+// imageID models a container the kubelet has not reported an image for yet.
+type containerStatus struct{ image, imageID string }
+
+// podWithStatuses builds a pod in the given phase with one container status per
+// containerStatus, in order.
+func podWithStatuses(name string, phase corev1.PodPhase, statuses ...containerStatus) corev1.Pod {
+	containerStatuses := make([]corev1.ContainerStatus, 0, len(statuses))
+	for i, s := range statuses {
+		containerStatuses = append(containerStatuses, corev1.ContainerStatus{
+			Name:    fmt.Sprintf("container-%d", i),
+			Image:   s.image,
+			ImageID: s.imageID,
+		})
+	}
+	return corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "test-ns"},
+		Status:     corev1.PodStatus{Phase: phase, ContainerStatuses: containerStatuses},
+	}
+}
+
+const (
+	nginxImageID   = "docker-pullable://nginx@sha256:644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
+	busyboxImageID = "docker-pullable://busybox@sha256:123a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
+)
+
+// TestNewPodData covers containers without an image ID, which is a transient state on
+// a healthy cluster (image still pulling, kubelet status not yet populated) and must
+// never abort the snapshot. See https://github.com/kosli-dev/cli/issues/1194
+func TestNewPodData(t *testing.T) {
+	const nginxSha = "644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
+	for _, tc := range []struct {
+		name        string
+		pod         corev1.Pod
+		wantDigests map[string]string
+		wantSkipped bool
+		wantWarning string
+	}{
+		{
+			name:        "a Running pod whose only container has no image ID is skipped, not an error",
+			pod:         podWithStatuses("pod", corev1.PodRunning, containerStatus{"nginx:1.21.3", ""}),
+			wantSkipped: true,
+			wantWarning: "skipping Running pod pod in namespace test-ns as none of its containers has a usable image ID: container-0 (empty image ID)",
+		},
+		{
+			name:        "a Failed pod whose only container has no image ID is skipped",
+			pod:         podWithStatuses("pod", corev1.PodFailed, containerStatus{"nginx:1.21.3", ""}),
+			wantSkipped: true,
+			wantWarning: "skipping Failed pod pod in namespace test-ns",
+		},
+		{
+			name:        "a Running pod whose only container has a malformed image ID is skipped, not an error",
+			pod:         podWithStatuses("pod", corev1.PodRunning, containerStatus{"nginx:1.21.3", "sha256:abc"}),
+			wantSkipped: true,
+			wantWarning: "skipping Running pod pod in namespace test-ns",
+		},
+		{
+			name:        "a Running pod with no container statuses yet is skipped",
+			pod:         podWithStatuses("pod", corev1.PodRunning),
+			wantSkipped: true,
+			wantWarning: "skipping Running pod pod in namespace test-ns as none of its containers has a usable image ID\n",
+		},
+		{
+			name: "a Running pod is reported with the digests of the containers that have an image ID",
+			pod: podWithStatuses("pod", corev1.PodRunning,
+				containerStatus{"nginx:1.21.3", nginxImageID},
+				containerStatus{"busybox:latest", ""}),
+			wantDigests: map[string]string{"nginx:1.21.3": nginxSha},
+			wantWarning: "Running pod pod in namespace test-ns has containers without a usable image ID, reporting it without them: container-1 (empty image ID)",
+		},
+		{
+			name: "a Failed pod is reported with the digests of the containers that have an image ID",
+			pod: podWithStatuses("pod", corev1.PodFailed,
+				containerStatus{"busybox:latest", ""},
+				containerStatus{"nginx:1.21.3", nginxImageID}),
+			wantDigests: map[string]string{"nginx:1.21.3": nginxSha},
+			wantWarning: "reporting it without them: container-0 (empty image ID)",
+		},
+		{
+			name:        "a pod whose containers all have an image ID is reported without a warning",
+			pod:         podWithStatuses("pod", corev1.PodRunning, containerStatus{"nginx:1.21.3", nginxImageID}),
+			wantDigests: map[string]string{"nginx:1.21.3": nginxSha},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var warnings bytes.Buffer
+			got, err := NewPodData(&tc.pod, logger.NewLogger(io.Discard, &warnings, false))
+			require.NoError(t, err)
+			if tc.wantWarning == "" {
+				require.Empty(t, warnings.String())
+			} else {
+				require.Contains(t, warnings.String(), tc.wantWarning)
+			}
+			if tc.wantSkipped {
+				require.Nil(t, got, "expected the pod to be skipped")
+				return
+			}
+			require.NotNil(t, got, "expected the pod to be reported")
+			require.Equal(t, tc.wantDigests, got.Digests)
+		})
+	}
+}
+
+// TestProcessPodsWithRunningPodWithoutImageID checks that one Running pod with an empty
+// image ID does not abort the snapshot for every other pod.
+// See https://github.com/kosli-dev/cli/issues/1194
+func TestProcessPodsWithRunningPodWithoutImageID(t *testing.T) {
+	pods := &corev1.PodList{
+		Items: []corev1.Pod{
+			podWithStatuses("running-pod", corev1.PodRunning, containerStatus{"nginx:1.21.3", nginxImageID}),
+			podWithStatuses("running-pod-without-imageid", corev1.PodRunning, containerStatus{"nginx:1.21.3", ""}),
+			podWithStatuses("another-running-pod", corev1.PodRunning, containerStatus{"busybox:latest", busyboxImageID}),
+		},
+	}
+
+	result, err := processPods(pods, logger.NewStandardLogger())
+	require.NoError(t, err, "a Running pod without an image ID must not abort the snapshot")
+
+	podNames := []string{}
+	for _, podData := range result {
+		require.NotNil(t, podData)
+		podNames = append(podNames, podData.PodName)
+	}
+	require.ElementsMatch(t, []string{"running-pod", "another-running-pod"}, podNames)
+}
+
+func TestImageFingerprint(t *testing.T) {
+	const sha = "644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
+	for _, tc := range []struct {
+		name    string
+		imageID string
+		want    string
+	}{
+		{name: "dockershim reference with digest", imageID: "docker-pullable://nginx@sha256:" + sha, want: sha},
+		{name: "dockershim bare digest", imageID: "docker://sha256:" + sha, want: sha},
+		{name: "containerd reference with digest", imageID: "docker.io/library/nginx@sha256:" + sha, want: sha},
+		{name: "reference with tag and digest", imageID: "ghcr.io/org/app:v1@sha256:" + sha, want: sha},
+		{name: "bare digest of a locally loaded image", imageID: "sha256:" + sha, want: sha},
+		{name: "empty", imageID: ""},
+		{name: "too short to hold a digest", imageID: "sha256:abc"},
+		{name: "reference without a digest", imageID: "nginx:1.21.3"},
+		{name: "sha512 digest", imageID: "sha512:" + sha + sha},
+		{name: "upper-case hex", imageID: "sha256:" + strings.ToUpper(sha)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := imageFingerprint(tc.imageID)
+			if tc.want == "" {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
 }
