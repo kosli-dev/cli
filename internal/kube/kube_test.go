@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -529,6 +530,11 @@ func TestNewPodData(t *testing.T) {
 			wantSkipped: true,
 		},
 		{
+			name:        "a Running pod whose only container has a malformed image ID is skipped, not an error",
+			pod:         podWithStatuses("pod", corev1.PodRunning, [2]string{"nginx:1.21.3", "sha256:abc"}),
+			wantSkipped: true,
+		},
+		{
 			name: "a Running pod is reported with the digests of the containers that have an image ID",
 			pod: podWithStatuses("pod", corev1.PodRunning,
 				[2]string{"nginx:1.21.3", nginxImageID},
@@ -581,4 +587,34 @@ func TestProcessPodsWithRunningPodWithoutImageID(t *testing.T) {
 		podNames = append(podNames, podData.PodName)
 	}
 	require.ElementsMatch(t, []string{"running-pod", "another-running-pod"}, podNames)
+}
+
+func TestImageFingerprint(t *testing.T) {
+	const sha = "644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
+	for _, tc := range []struct {
+		name    string
+		imageID string
+		want    string
+	}{
+		{name: "dockershim reference with digest", imageID: "docker-pullable://nginx@sha256:" + sha, want: sha},
+		{name: "dockershim bare digest", imageID: "docker://sha256:" + sha, want: sha},
+		{name: "containerd reference with digest", imageID: "docker.io/library/nginx@sha256:" + sha, want: sha},
+		{name: "reference with tag and digest", imageID: "ghcr.io/org/app:v1@sha256:" + sha, want: sha},
+		{name: "bare digest of a locally loaded image", imageID: "sha256:" + sha, want: sha},
+		{name: "empty", imageID: ""},
+		{name: "too short to hold a digest", imageID: "sha256:abc"},
+		{name: "reference without a digest", imageID: "nginx:1.21.3"},
+		{name: "sha512 digest", imageID: "sha512:" + sha + sha},
+		{name: "upper-case hex", imageID: "sha256:" + strings.ToUpper(sha)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := imageFingerprint(tc.imageID)
+			if tc.want == "" {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
 }
