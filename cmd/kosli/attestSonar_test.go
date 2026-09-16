@@ -45,6 +45,7 @@ type AttestSonarCommandTestSuite struct {
 	prScannerWorkDir    string
 	prKey               string
 	prCETaskURL         string
+	prRevision          string
 	suite.Suite
 	defaultKosliArguments string
 }
@@ -76,6 +77,7 @@ func (suite *AttestSonarCommandTestSuite) SetupTest() {
 
 	suite.mainScannerWorkDir, suite.mainCETaskURL, suite.mainRevision = downloadMainScanData(suite.T())
 	suite.prScannerWorkDir, suite.prKey, suite.prCETaskURL = downloadPRScanData(suite.T())
+	suite.prRevision = getPRAnalysisRevision(suite.T(), suite.prKey)
 }
 
 func (suite *AttestSonarQubeCommandTestSuite) SetupTest() {
@@ -229,10 +231,9 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			golden:    "Error: open .scannerwork/report-task.txt: no such file or directory. Check your working directory is set correctly. Alternatively provide the project key and either revision or pull-request ID for the scan to attest\n",
 		},
 		{
-			wantError: true,
-			name:      "25 can't provide both revision and pull-request",
-			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-revision xxx --pull-request 5 %s", suite.defaultKosliArguments),
-			golden:    "Error: only one of --sonar-revision, --pull-request is allowed\n",
+			name:   "25 can attest a pull request scan alongside --sonar-revision",
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --pull-request %s --sonar-revision %s %s", suite.prKey, suite.prRevision, suite.defaultKosliArguments),
+			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "26 can attest sonar for a pull request scan using --sonar-ce-task-url",
@@ -262,6 +263,12 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			name:      "30 can't provide both sonar-branch and pull-request",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-branch release/uat --pull-request 5 %s", suite.defaultKosliArguments),
 			golden:    "Error: only one of --sonar-branch, --pull-request is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "31 attesting a pull request scan with --sonar-revision of a commit it did not analyse fails",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --pull-request %s --sonar-revision 0000000000000000000000000000000000000000 %s", suite.prKey, suite.defaultKosliArguments),
+			golden:    fmt.Sprintf("Error: analysis for pull request %s of project cyber-dojo_differ is of revision %s, not 0000000000000000000000000000000000000000.\nThe scan for that revision may still be being processed by SonarQube, try again later.\nOtherwise check the revision is correct\n", suite.prKey, suite.prRevision),
 		},
 	}
 
@@ -433,6 +440,51 @@ func getLatestAnalysisRevision(t *testing.T) string {
 		t.Fatalf("no analyses found for cyber-dojo_differ on SonarCloud")
 	}
 	return result.Analyses[0].Revision
+}
+
+// getPRAnalysisRevision fetches the commit SonarCloud analysed for the given pull
+// request of cyber-dojo_differ. project_analyses/search does not list PR analyses.
+func getPRAnalysisRevision(t *testing.T, prKey string) string {
+	t.Helper()
+
+	sonarToken := os.Getenv("KOSLI_SONAR_API_TOKEN")
+	httpClient := &http.Client{}
+
+	req, err := http.NewRequest("GET",
+		"https://sonarcloud.io/api/project_pull_requests/list?project=cyber-dojo_differ", nil)
+	if err != nil {
+		t.Fatalf("failed to create pull requests list request: %v", err)
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", sonarToken))
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		t.Fatalf("failed to fetch pull requests from SonarCloud: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("SonarCloud pull requests API returned status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		PullRequests []struct {
+			Key    string `json:"key"`
+			Commit struct {
+				SHA string `json:"sha"`
+			} `json:"commit"`
+		} `json:"pullRequests"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode pull requests response: %v", err)
+	}
+	for _, pr := range result.PullRequests {
+		if pr.Key == prKey {
+			return pr.Commit.SHA
+		}
+	}
+	t.Fatalf("pull request %s not found for cyber-dojo_differ on SonarCloud", prKey)
+	return ""
 }
 
 // downloadPRScanData downloads the report-task.txt from the latest

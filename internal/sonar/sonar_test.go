@@ -167,6 +167,11 @@ func (f *fakeSonarProject) handler() http.HandlerFunc {
 					Commit: sonar.PRCommit{SHA: revRevision},
 				}},
 			})
+		case "/api/ce/task":
+			_ = json.NewEncoder(w).Encode(sonar.TaskResponse{Task: sonar.Task{
+				TaskID: revTaskID, AnalysisID: revAnalysisKey, Status: "SUCCESS", ComponentKey: revProjectKey,
+				ComponentName: "customer project", PullRequest: revPullRequest,
+			}})
 		case "/api/qualitygates/project_status":
 			_ = json.NewEncoder(w).Encode(sonar.QualityGateResponse{
 				ProjectStatus: sonar.ProjectStatus{Status: "OK", Conditions: []sonar.Conditions{}},
@@ -376,6 +381,84 @@ func TestGetSonarResults_BranchIgnoredForPullRequest(t *testing.T) {
 	}
 	if results.Branch != nil {
 		t.Errorf("expected no branch alongside a pull request, got %+v", results.Branch)
+	}
+}
+
+// TestGetSonarResults_PullRequestRevision is the #1192 check: SonarQube keeps only a
+// pull request's latest analysis, so a revision named alongside the pull request
+// must be the analysed commit, and no revision means no check. Both variants pass
+// --pull-request explicitly, discovering the scan via --sonar-project-key or via
+// --sonar-ce-task-url; see TestGetSonarResults_PullRequestRevision_DiscoveredWithoutFlag
+// for the case where the pull request is discovered without that flag.
+func TestGetSonarResults_PullRequestRevision(t *testing.T) {
+	const otherRevision = "0000000000000000000000000000000000000000"
+
+	cases := []struct {
+		name     string
+		revision string
+		wantErr  bool
+	}{
+		{name: "matching revision is attested", revision: revRevision},
+		{name: "other revision fails", revision: otherRevision, wantErr: true},
+		{name: "no revision is not checked", revision: ""},
+	}
+
+	for _, c := range cases {
+		for _, path := range []string{"project key", "CE task"} {
+			t.Run(path+": "+c.name, func(t *testing.T) {
+				fake := &fakeSonarProject{}
+				srv := httptest.NewServer(fake.handler())
+				defer srv.Close()
+
+				var sc *sonar.SonarConfig
+				if path == "CE task" {
+					sc = sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id="+revTaskID, "", "", c.revision, revPullRequest, "", 5)
+				} else {
+					sc = sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, c.revision, revPullRequest, "", 5)
+				}
+				results, err := sc.GetSonarResults(discardLogger())
+
+				if !c.wantErr {
+					if err != nil {
+						t.Fatalf("expected the pull-request scan to be attested, got error: %v", err)
+					}
+					if results.Revision != revRevision {
+						t.Errorf("expected the analysed revision %q in the results, got %q", revRevision, results.Revision)
+					}
+					return
+				}
+				if err == nil {
+					t.Fatalf("expected an error: pull request %s was analysed at %s, not %s", revPullRequest, revRevision, otherRevision)
+				}
+				for _, want := range []string{revPullRequest, revRevision, otherRevision} {
+					if !strings.Contains(err.Error(), want) {
+						t.Errorf("expected %q in the error, got: %v", want, err)
+					}
+				}
+			})
+		}
+	}
+}
+
+// TestGetSonarResults_PullRequestRevision_DiscoveredWithoutFlag pins the gap the
+// comment above notes: when a CE task's own response names the pull request
+// (--sonar-ce-task-url or report-task.txt used without --pull-request), sc.pullRequest
+// is empty and the #1192 check does not fire, even for a revision that does not
+// match — the same staleness the check exists to catch elsewhere.
+func TestGetSonarResults_PullRequestRevision_DiscoveredWithoutFlag(t *testing.T) {
+	const otherRevision = "0000000000000000000000000000000000000000"
+
+	fake := &fakeSonarProject{}
+	srv := httptest.NewServer(fake.handler())
+	defer srv.Close()
+
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), srv.URL+"/api/ce/task?id="+revTaskID, "", "", otherRevision, "", "", 5)
+	results, err := sc.GetSonarResults(discardLogger())
+	if err != nil {
+		t.Fatalf("expected no check without --pull-request, got error: %v", err)
+	}
+	if results.Revision != revRevision {
+		t.Errorf("expected the analysed revision %q in the results, got %q", revRevision, results.Revision)
 	}
 }
 
