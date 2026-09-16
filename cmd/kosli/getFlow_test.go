@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -59,4 +61,25 @@ func (suite *GetFlowCommandTestSuite) TestGetFlowCmd() {
 // a normal test function and pass our suite to suite.Run
 func TestGetFlowCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(GetFlowCommandTestSuite))
+}
+
+func TestPrintFlowAsTableOmitsVisibility(t *testing.T) {
+	// visibility is a legacy per-flow field with no effect on access, so the
+	// table must not surface it even when the server still returns it
+	raw := `{"name":"backend","description":"Backend service","visibility":"private","template":"artifact pull-request","last_deployment_at":null,"tags":{"team":"platform"}}`
+	var buf bytes.Buffer
+	require.NoError(t, printFlowAsTable(raw, &buf, 0))
+	want := "Name:                backend\n" +
+		"Description:         Backend service\n" +
+		"Template:            artifact, pull-request\n" +
+		"Last Deployment At:  N/A\n" +
+		"Tags:                [team=platform]\n"
+	require.Equal(t, want, buf.String())
+}
+
+func TestPrintFlowAsTableShowsNoneForMissingTags(t *testing.T) {
+	raw := `{"name":"backend","description":"Backend service","template":"artifact","last_deployment_at":null}`
+	var buf bytes.Buffer
+	require.NoError(t, printFlowAsTable(raw, &buf, 0))
+	require.Contains(t, buf.String(), "Tags:                None\n")
 }
