@@ -94,25 +94,64 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 // first:
 //
 //  1. the runtime's own name, when it has one
-//  2. this container's image in the pod spec (nginx:1.25@sha256:... - repository and tag)
+//  2. this container's image in the pod spec (docker.io/library/nginx:1.25)
 //  3. the image ID (docker.io/library/nginx@sha256:... - repository, no tag)
 //
-// The fingerprint is unaffected either way: it always comes from cs.ImageID.
+// The spec image is normalized to the form the runtime would have reported had it
+// held the image under its tag, so the same image is named the same way whether or
+// not the node had it cached. Its digest is dropped rather than carried into the
+// name: the fingerprint already records it, from cs.ImageID, and the two are
+// separate values that can disagree while an in-place image update is rolling.
+// internal/cloudrun does the same for the same reason, resolving digest-pinned
+// images to a tag-shaped name.
+//
+// The fingerprint is unaffected throughout: it always comes from cs.ImageID.
 // See https://github.com/kosli-dev/cli/issues/1203
 func artifactName(pod *corev1.Pod, cs corev1.ContainerStatus) string {
 	if isNamed(cs.Image) {
 		return cs.Image
 	}
 	for _, container := range pod.Spec.Containers {
-		if container.Name == cs.Name && isNamed(container.Image) {
-			return container.Image
+		if container.Name != cs.Name {
+			continue
+		}
+		if name, ok := normalizedTagName(container.Image); ok {
+			return name
 		}
 	}
 	if imageID := trimRuntimePrefix(cs.ImageID); isNamed(imageID) {
 		return imageID
 	}
-	// nothing readable to fall back to; the runtime's name is still the truth
-	return cs.Image
+	// nothing readable to fall back to; the runtime's name is still the truth,
+	// unless the kubelet reported none at all
+	if cs.Image != "" {
+		return cs.Image
+	}
+	return trimRuntimePrefix(cs.ImageID)
+}
+
+// normalizedTagName turns a pod spec image into the tagged name the runtime would
+// report for it, dropping any digest: nginx:1.25@sha256:... becomes
+// docker.io/library/nginx:1.25. It reports false for a reference with no tag, since
+// there is then no name to prefer over the image ID.
+func normalizedTagName(image string) (string, bool) {
+	// ParseNormalizedNamed is more permissive than isNamed and reads a bare digest
+	// as a repository with a tag: sha256:8dd77ef... becomes docker.io/library/sha256
+	// tagged 8dd77ef.... Reject those first.
+	if !isNamed(image) {
+		return "", false
+	}
+	ref, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return "", false
+	}
+	tagged, ok := ref.(reference.Tagged)
+	if !ok {
+		return "", false
+	}
+	// reference.TagNameOnly would default an untagged reference to :latest, which
+	// would be a name the image never had; only a tag actually present is used.
+	return reference.TrimNamed(ref).Name() + ":" + tagged.Tag(), true
 }
 
 // isNamed reports whether an image reference carries a repository, as opposed to
