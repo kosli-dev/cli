@@ -76,7 +76,7 @@ The evaluation resource gains `decision_attestation_id`: the id of the decision 
 | Flag | Required | Meaning |
 |---|---|---|
 | `--context` | yes | Repeatable `trail=<flow>/<trail>`. What is evaluated, all of it at one instant. |
-| `--policy`, `-p` | yes | A `.rego` file, a directory, or an `http(s)://` URL. |
+| `--policy`, `-p` | yes | A `.rego` file or a directory on this machine. |
 | `--params` | no | Inline JSON or `@file.json`, unchanged, read by the policy as `data.params`. |
 | `--control` | no | The control the decision answers. Present, a decision is recorded; absent, nothing is. |
 | `--flow`, `-f` | with `--control` | Flow the decision is recorded in. |
@@ -136,7 +136,7 @@ The ticket asks for denial, a broken policy and a fault of ours to be three dist
 
 ### 4.6 A directory of policy files
 
-`--policy` pointing at a directory uploads every file below it as one bundle, keyed by path relative to that directory, within the published 100-file and 1 MiB caps. Paths stay inside the bundle. A single file keeps today's behaviour: one entry named after the file, no extension imposed.
+`--policy` pointing at a directory uploads every file below it as one bundle, keyed by path relative to that directory, within the published 100-file and 1 MiB caps. Nothing is left out by name, and nothing here reads the modules: what a bundle may hold, and what its modules may import, is the evaluator's to judge, and a rule here would refuse bundles the evaluator would have accepted. An empty directory is named here, because the API takes at least one file. A single file keeps today's behaviour: one entry named after the file, no extension imposed. A URL is refused: fetching a policy from one is on its way out, so this command never offers it.
 
 ### 4.7 `--context`
 
@@ -200,7 +200,7 @@ Deliberately shallow. A refusal is reported as the status the API answered with 
 
 ### Slice 6: a directory of policy files
 
-Relative keys, the file and byte caps refused here with the cap named, paths that would climb out of the bundle refused.
+Relative keys, the file and byte caps refused here with the cap named, an empty directory named here, the bundle's contents left for the evaluator to judge, and a URL refused.
 
 ### Slice 7: wrap-up
 

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -35,6 +36,10 @@ const policyMaxBytes = 5 << 20 // 5 MiB
 // makes this refuse what the API would accept, so the two are worth comparing
 // whenever that schema changes.
 const maxServerSideTrails = 100
+
+// maxPolicyBundleFiles mirrors the ceiling the evaluations API publishes on
+// the entries in a policy bundle.
+const maxPolicyBundleFiles = 100
 
 // serverPolicyMaxBytes mirrors the cap the evaluations API publishes on a
 // policy bundle, which counts the names as well as the sources. It is a fifth
@@ -304,12 +309,7 @@ func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
 		return err
 	}
 
-	policySource, err := loadPolicy(spec.policyRef)
-	if err != nil {
-		return err
-	}
-
-	files, err := policyBundle(spec.policyRef, policySource)
+	files, err := policyBundle(spec.policyRef)
 	if err != nil {
 		return err
 	}
@@ -437,16 +437,79 @@ func serverVerdict(result *evaluations.Result) *evaluate.Result {
 	return &evaluate.Result{Allow: result.Allow, Violations: violations}
 }
 
-// policyBundle wraps the policy source as the one-file bundle the API takes,
-// refusing one too large for it rather than letting the request be rejected.
-// The cap counts the names as well as the sources, exactly as the API counts.
-func policyBundle(ref string, source []byte) (map[string]string, error) {
-	key := policyBundleKey(ref)
-	if size := len(key) + len(source); size > serverPolicyMaxBytes {
+// policyBundle reads what --policy names as the bundle the API takes. The caps
+// are checked here so an oversized bundle is named as such rather than rejected
+// as an opaque 422, and the byte cap counts the names as well as the sources,
+// exactly as the API counts.
+func policyBundle(ref string) (map[string]string, error) {
+	files, err := policyBundleFiles(ref)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(files) > maxPolicyBundleFiles {
+		return nil, fmt.Errorf("policy bundle holds %d files, over the limit of %d",
+			len(files), maxPolicyBundleFiles)
+	}
+	size := 0
+	for name, source := range files {
+		size += len(name) + len(source)
+	}
+	if size > serverPolicyMaxBytes {
 		return nil, fmt.Errorf("policy bundle is %d bytes, over the %d byte limit",
 			size, serverPolicyMaxBytes)
 	}
-	return map[string]string{key: string(source)}, nil
+	return files, nil
+}
+
+func policyBundleFiles(ref string) (map[string]string, error) {
+	if !isRemotePolicyRef(ref) {
+		if info, err := os.Stat(ref); err == nil && info.IsDir() {
+			return policyDirectory(ref)
+		}
+	}
+
+	source, err := loadPolicy(ref)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{policyBundleKey(ref): string(source)}, nil
+}
+
+// policyDirectory collects every file below root, keyed by its path relative
+// to it. Nothing is left out by name: a rule here would refuse bundles the
+// evaluator that runs them would have accepted.
+func policyDirectory(root string) (map[string]string, error) {
+	files := map[string]string{}
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			return nil
+		}
+		source, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("failed to read policy file: %w", err)
+		}
+		name, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		// Relative paths reach the API spelled one way, whatever this machine
+		// spells them with.
+		files[filepath.ToSlash(name)] = string(source)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(files) == 0 {
+		// The API takes at least one file, so an empty directory is named here
+		// rather than sent to be refused.
+		return nil, fmt.Errorf("no file found under %s", root)
+	}
+	return files, nil
 }
 
 // policyBundleKey names the policy inside the uploaded bundle. Only the base

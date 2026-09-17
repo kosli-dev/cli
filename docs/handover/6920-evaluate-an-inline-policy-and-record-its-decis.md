@@ -22,7 +22,7 @@ Server-side evaluation reaches the CLI today only through the hidden `--server-s
 - A denial is a decision, recorded as non-compliant with its violations. A policy that cannot run is not: it records nothing and must never print a denial.
 - Destination flags without `--control` are refused, and a control or a destination the caller cannot write to is refused before the evaluation is queued.
 - The command always waits for a terminal status; `--assert` exits non-zero on denial and changes nothing else.
-- `--policy` accepts a single file or a directory, within the published bundle caps.
+- `--policy` accepts a single file or a directory on this machine, within the published bundle caps. A URL is refused.
 - Output and `--output json` match `kosli evaluate trail`, so a caller switching commands does not re-parse.
 - An organisation without the server-side evaluation entitlement is refused in words that name it.
 - `--name` defaults to `<control>-decision`, so the common case names only the control.
@@ -42,7 +42,7 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 - [x] Slice 3 — `--context` names what is evaluated, and is always required.
 - [x] Slice 4 — `--control` records a decision, with `--flow` and `--trail` as its destination.
 - [x] Slice 5 — refusals travel in the API's own words, and a classified failure is never a denial.
-- [ ] Slice 6 — a directory of policy files as one bundle, with the caps refused here.
+- [x] Slice 6 — a directory of policy files as one bundle, with the caps refused here.
 - [ ] Slice 7 — help text, docs, changelog, lint, full test run, and a staging check against an entitled organisation.
 
 ---
@@ -60,6 +60,8 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 - The command declares its own options rather than inheriting the evaluate commands' shared ones, because four of those flags have no meaning here and inheriting them only to hide them is how two commands drift apart.
 - Asserting is opt-in on this command and the default is silent, which is the reverse of `evaluate trail`. A command that records a decision should not fail a pipeline unless the caller asked it to, and the flag that asks is the one the tutorial already publishes.
 - What is evaluated and where a decision lands are named separately: `--context` is the only way to say what to evaluate and is always required, while `--flow` and `--trail` name the destination alone. Neither is refused for being present without `--control`, because a pipeline sets them as environment variables for every command it runs, and refusing them would refuse an ordinary run that asked for no decision. The ticket's example predates this split.
+- A policy comes from the machine that runs the command: this command does not fetch one from a URL, though the older evaluate commands do, because that way of naming a policy is on its way out and a new command should not take it on.
+- A directory of policy files travels whole, with nothing left out by name and nothing here reading the modules. What a bundle may hold, and what its modules may import, is for the evaluator that runs it to judge; a rule here would refuse bundles the evaluator would have accepted, and would go stale as the evaluator changes. Only the published caps and an empty directory are refused here, because those the caller can act on before sending.
 - Refusals are passed on as the API worded them rather than being classified here, and the slice that was to give each case a sentence of its own was cut back to two tests. A list of cases in the CLI would go stale against the server that writes them, and the one thing that must not vary — a failed policy never reading as a denial — is pinned by a test instead.
 - The destination is read as a resolved value rather than as a flag the caller typed, so `KOSLI_FLOW` and `KOSLI_TRAIL` satisfy `--control` exactly as the flags do.
 - The first cut of the command is synchronous only, and `--sync` is not offered: with nothing to opt into, the flag would name the one behaviour there is. A command whose purpose is recording a decision should not return before the decision exists. An asynchronous mode, and the `--sync` flag that would pair with it, belong to a later ticket if anyone asks for them.
@@ -76,5 +78,5 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 
 ## Next Steps
 
-- [ ] Slice 6: a directory of policy files as one bundle, with the caps refused here.
+- [ ] Slice 7: help text, docs, changelog, the full integration run, and a staging check against an entitled organisation.
 - [ ] Check what the create endpoint refuses for each destination failure, against staging, so Slice 5's messages are written from real answers rather than guessed.

@@ -18,6 +18,9 @@ recorded it, and the verdict is printed here.
 Name what to evaluate with ` + "`--context trail=<flow>/<trail>`" + `, repeated once per
 trail. Trails named in one command are all evaluated at the same instant.
 
+` + "`--policy`" + ` takes a single Rego file or a directory. A directory travels as one
+bundle of every file below it, keyed by its path relative to that directory.
+
 Pass ` + "`--control`" + ` to record the outcome as a decision against that control, in the
 ` + "`--flow`" + ` and ` + "`--trail`" + ` given. The decision is recorded where the policy runs, so
 the verdict is never asserted from here. Without ` + "`--control`" + ` nothing is recorded.
@@ -103,7 +106,7 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringArrayVar(&o.contexts, "context", []string{}, policyContextFlag)
-	cmd.Flags().StringVarP(&o.policyRef, "policy", "p", "", "Path or http(s):// URL of a Rego policy to evaluate the trail against.")
+	cmd.Flags().StringVarP(&o.policyRef, "policy", "p", "", "Path of a Rego policy file, or of a directory sent as one bundle.")
 	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, policyAssertFlag)
@@ -122,6 +125,12 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluatePolicyOptions) run(out io.Writer) error {
+	// Fetching a policy from a URL is on its way out, so this command does not
+	// offer it, though the older evaluate commands still do.
+	if isRemotePolicyRef(o.policyRef) {
+		return fmt.Errorf("--policy takes a file or a directory on this machine, not a URL")
+	}
+
 	trails, err := parseTrailContexts(o.contexts)
 	if err != nil {
 		return err

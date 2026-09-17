@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
 	"testing"
 	"time"
 
@@ -456,6 +459,92 @@ func (suite *EvaluatePolicyCommandTestSuite) TestAClassifiedFailureIsNotADenial(
 	require.NotContains(suite.T(), combined, "DENIED")
 }
 
+func (suite *EvaluatePolicyCommandTestSuite) TestADirectoryTravelsAsOneBundle() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate policy --context trail=my-flow/my-trail --policy testdata/policies/bundle "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.NoError(suite.T(), err)
+	files := fake.created[0]["policy"].(map[string]interface{})["files"].(map[string]interface{})
+	require.Equal(suite.T(), []string{"README.md", "lib/helpers.rego", "policy.rego"}, sortedKeys(files),
+		"keyed by path relative to the directory, and nothing left out by name")
+	require.Contains(suite.T(), files["policy.rego"], "package policy")
+	require.Contains(suite.T(), files["lib/helpers.rego"], "package lib.helpers")
+}
+
+// The API takes at least one file.
+func (suite *EvaluatePolicyCommandTestSuite) TestAnEmptyDirectoryIsRefused() {
+	directory := suite.T().TempDir()
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate policy --context trail=my-flow/my-trail --policy %s "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", directory, server.URL))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), directory)
+	require.Empty(suite.T(), fake.created)
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestABundleOverTheCapsIsRefusedWithTheCapNamed() {
+	for _, test := range []struct {
+		name  string
+		build func(string)
+		says  string
+	}{
+		{"too many files", func(directory string) {
+			for i := 0; i <= maxPolicyBundleFiles; i++ {
+				require.NoError(suite.T(), os.WriteFile(
+					filepath.Join(directory, fmt.Sprintf("policy-%d.rego", i)),
+					[]byte("package policy\n"), 0644))
+			}
+		}, fmt.Sprintf("%d", maxPolicyBundleFiles)},
+		{"too many bytes", func(directory string) {
+			source := make([]byte, serverPolicyMaxBytes+1)
+			for i := range source {
+				source[i] = 'a'
+			}
+			require.NoError(suite.T(), os.WriteFile(
+				filepath.Join(directory, "policy.rego"), source, 0644))
+		}, fmt.Sprintf("%d", serverPolicyMaxBytes)},
+	} {
+		suite.Run(test.name, func() {
+			directory := suite.T().TempDir()
+			test.build(directory)
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, _, _, _, err := executeCommandC(fmt.Sprintf(
+				"evaluate policy --context trail=my-flow/my-trail --policy %s "+
+					"--host %s --org test-org --api-token test-token --max-api-retries 0",
+				directory, server.URL))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), test.says)
+			require.Empty(suite.T(), fake.created, "nothing is sent")
+		})
+	}
+}
+
+// A policy comes from the machine that runs the command.
+func (suite *EvaluatePolicyCommandTestSuite) TestARemotePolicyIsRefused() {
+	for _, ref := range []string{"http://policies.example.com/pr.rego", "https://policies.example.com/pr.rego"} {
+		suite.Run(ref, func() {
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, combined, _, _, err := executeCommandC(fmt.Sprintf(
+				"evaluate policy --context trail=my-flow/my-trail --policy %s "+
+					"--host %s --org test-org --api-token test-token --max-api-retries 0", ref, server.URL))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), "--policy")
+			require.Empty(suite.T(), fake.created, "nothing is sent")
+			require.NotContains(suite.T(), combined, "RESULT")
+		})
+	}
+}
+
 func (suite *EvaluatePolicyCommandTestSuite) TestADryRunSendsNothing() {
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
@@ -468,6 +557,15 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADryRunSendsNothing() {
 	require.Empty(suite.T(), fake.created)
 	require.Equal(suite.T(), 0, fake.reads, "nothing was created, so there is no verdict to wait for")
 	require.NotContains(suite.T(), combined, "RESULT")
+}
+
+func sortedKeys(files map[string]interface{}) []string {
+	keys := make([]string, 0, len(files))
+	for key := range files {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func TestEvaluatePolicyCommandTestSuite(t *testing.T) {
