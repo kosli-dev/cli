@@ -52,8 +52,10 @@ func GithubPRNumber() int {
 	return 829
 }
 
+// CloneGitRepo clones url into cloneTo, which must already exist.
 func CloneGitRepo(url, cloneTo string) (*git.Repository, error) {
-	// Resolved for the same reason as in InitializeGitRepo below.
+	// Resolved for the same reason as in InitializeGitRepo below. EvalSymlinks
+	// fails on a missing path, hence the precondition.
 	resolvedCloneTo, err := filepath.EvalSymlinks(cloneTo)
 	if err != nil {
 		return nil, err
