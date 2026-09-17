@@ -39,10 +39,10 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 
 - [x] Slice 1 — the command exists, evaluates one trail and prints the verdict.
 - [x] Slice 2 — `--assert` exits non-zero on a denial.
-- [ ] Slice 3 — `--control` records a decision, and a destination flag without it is refused.
-- [ ] Slice 4 — server refusals and classified failures, one test per shape, each with a sentence of its own.
-- [ ] Slice 5 — a directory of policy files as one bundle, with the caps refused here.
-- [ ] Slice 6 — several trails in one evaluation, the decision still landing on one.
+- [x] Slice 3 — `--context` names what is evaluated, and is always required.
+- [ ] Slice 4 — `--control` records a decision, with `--flow` and `--trail` as its destination.
+- [ ] Slice 5 — server refusals and classified failures, one test per shape, each with a sentence of its own.
+- [ ] Slice 6 — a directory of policy files as one bundle, with the caps refused here.
 - [ ] Slice 7 — help text, docs, changelog, lint, full test run, and a staging check against an entitled organisation.
 
 ---
@@ -59,6 +59,7 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 
 - The command declares its own options rather than inheriting the evaluate commands' shared ones, because four of those flags have no meaning here and inheriting them only to hide them is how two commands drift apart.
 - Asserting is opt-in on this command and the default is silent, which is the reverse of `evaluate trail`. A command that records a decision should not fail a pipeline unless the caller asked it to, and the flag that asks is the one the tutorial already publishes.
+- What is evaluated and where a decision lands are named separately: `--context` is the only way to say what to evaluate and is always required, while `--flow` and `--trail` name the destination alone. Neither is refused for being present without `--control`, because a pipeline sets them as environment variables for every command it runs, and refusing them would refuse an ordinary run that asked for no decision. The ticket's example predates this split.
 - The first cut of the command is synchronous only, and `--sync` is not offered: with nothing to opt into, the flag would name the one behaviour there is. A command whose purpose is recording a decision should not return before the decision exists. An asynchronous mode, and the `--sync` flag that would pair with it, belong to a later ticket if anyone asks for them.
 - `--name` defaults to `<control>-decision` rather than being required beside `--control`, so the common case names the control once. The default is computed before the request is sent, because a name the caller can predict is worth more than one chosen further away.
 - Nothing is recorded without `--control`, and a destination flag without one is refused rather than ignored: accepting it would read as a decision having been recorded when none was.
@@ -73,5 +74,5 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 
 ## Next Steps
 
-- [ ] Slice 3: the decision block, the `--name` default, and the refusal of a destination flag without `--control`.
+- [ ] Slice 4: the decision block, the `--name` default, and the refusal of `--name` or `--fingerprint` without `--control`.
 - [ ] Check what the create endpoint refuses for each destination failure, against staging, so Slice 5's messages are written from real answers rather than guessed.

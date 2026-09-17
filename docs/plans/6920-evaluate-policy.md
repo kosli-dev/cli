@@ -75,16 +75,18 @@ The evaluation resource gains `decision_attestation_id`: the id of the decision 
 
 | Flag | Required | Meaning |
 |---|---|---|
-| `--flow`, `-f` | yes | Flow of the trail to evaluate, and of the decision's destination. |
-| `--trail` | yes | Trail to evaluate, and the decision's destination. |
+| `--context` | yes | Repeatable `trail=<flow>/<trail>`. What is evaluated, all of it at one instant. |
 | `--policy`, `-p` | yes | A `.rego` file, a directory, or an `http(s)://` URL. |
 | `--params` | no | Inline JSON or `@file.json`, unchanged, read by the policy as `data.params`. |
 | `--control` | no | The control the decision answers. Present, a decision is recorded; absent, nothing is. |
+| `--flow`, `-f` | with `--control` | Flow the decision is recorded in. |
+| `--trail` | with `--control` | Trail the decision is recorded in. |
 | `--name` | no | The attestation name the decision is recorded under. Defaults to `<control>-decision`. |
 | `--fingerprint` | no | The artifact the decision is about. Absent, the decision is about the trail. |
-| `--context` | no | Repeatable `trail=<flow>/<trail>`, to evaluate several trails at one instant. |
 | `--assert` | no | Exit non-zero when the policy denies. |
 | `--output`, `-o` | no | `table` (default) or `json`, the same shapes `evaluate trail` prints. |
+
+**What is evaluated and where the decision lands are separate.** `--context` is the only way to name what is evaluated, and it is always required. `--flow` and `--trail` name nothing but the destination, so they are not required without `--control` — and they are commonly set as `KOSLI_FLOW` and `KOSLI_TRAIL` for every command in a pipeline, which is reason enough not to refuse a run that happens to carry them. The ticket's own example predates this split; the command surface here is the one to build.
 
 Not offered, and why: `--sync` (the command is always synchronous, so there is nothing to opt into), `--no-assert` (asserting is opt-in here, so its opposite is the default and needs no flag), `--attestations` and `--show-input` (filtering and input display happen where the evaluation runs, and this command never evaluates locally), `--server-side` (this command has no other side).
 
@@ -104,10 +106,10 @@ Output shape and `--output json` must match `evaluate trail`, so a caller switch
 
 ### 4.3 What is refused before any request
 
-Synchronous-only and an optional `--name` leave two refusals, and both belong to the decision block:
-
 - `--name` or `--fingerprint` without `--control`: refused, naming `--control`. They are meaningless alone, and accepting them would look like a decision was recorded.
-- Nothing else. `--assert` is meaningful on its own, the wait has no mode to conflict with, and `--name` beside `--control` is a default rather than a requirement.
+- `--control` without a `--flow` and a `--trail` to record in: refused, naming both. The destination is required on the wire.
+- `--flow` and `--trail` without `--control`: accepted and ignored. They are set as environment variables for every command in a pipeline, so refusing them would refuse an ordinary run that asked for no decision.
+- A `--context` that is not `trail=<flow>/<trail>`: refused, naming the form it expects.
 
 The caps are refused before a request too, but each is checked where its flag is built: the trail ceiling with `--context`, the bundle size with a directory of policy files.
 
@@ -130,15 +132,15 @@ Where the server explained itself, its words are passed on untouched. Two refusa
 
 ### 4.5 One exit code, and messages that tell the outcomes apart
 
-The ticket asks for denial, a broken policy and a fault of ours to be three distinguishable exit codes. They stay one code, as everywhere else in this CLI, and the outcomes are told apart by what they say. #6700 made the same call: a single failure exit path is a product-wide convention, and it is not this command's to change. The obligation that remains is on the wording — a broken policy, an unfinished evaluation and a refused destination each need their own sentence, and none of them may read as a denial. Slice 4 is where that is proved, one test per shape.
+The ticket asks for denial, a broken policy and a fault of ours to be three distinguishable exit codes. They stay one code, as everywhere else in this CLI, and the outcomes are told apart by what they say. #6700 made the same call: a single failure exit path is a product-wide convention, and it is not this command's to change. The obligation that remains is on the wording — a broken policy, an unfinished evaluation and a refused destination each need their own sentence, and none of them may read as a denial. Slice 5 is where that is proved, one test per shape.
 
 ### 4.6 A directory of policy files
 
 `--policy` pointing at a directory uploads every file below it as one bundle, keyed by path relative to that directory, within the published 100-file and 1 MiB caps. Paths stay inside the bundle. A single file keeps today's behaviour: one entry named after the file, no extension imposed.
 
-### 4.7 Repeating `--context`
+### 4.7 `--context`
 
-`--context trail=<flow>/<trail>` adds trails to the evaluation. `--flow`/`--trail` always name one of them, and always name where the decision lands. The form is `key=value` so that other kinds of context can be added later without a second flag.
+`--context trail=<flow>/<trail>`, repeated once per trail. The form is `key=value` so that other kinds of context can be added later without a second flag, and `trail` is the only key there is today. The decision's destination is named separately and need not be among them.
 
 ### 4.8 Tests drive a stubbed server
 
@@ -170,26 +172,32 @@ The thinnest end-to-end path: `--flow`, `--trail`, `--policy`, `--params`, no de
 - Without it, a denial still prints in full and exits 0
 - An expired wait names the evaluation, prints no verdict, and fails whether or not `--assert` was given
 
-### Slice 3: `--control` records a decision
+### Slice 3: `--context` names what is evaluated
 
-- `--control` (+ optional `--name`, `--fingerprint`) sends the decision block
-- `--name` or `--fingerprint` without `--control` is refused, naming `--control`, before any request
+Replaces `--flow`/`--trail` as the evaluation target; they return in Slice 4 as the decision's destination alone.
+
+- `--context trail=<flow>/<trail>`, required, repeatable, order preserved
+- A malformed or unknown context is refused, naming the form expected, before any request
+- More than the published ceiling of trails is refused here, naming the cap
+- A repeated pair travels as given, since the API stores it once rather than refusing it
+
+### Slice 4: `--control` records a decision
+
+- `--control` (+ `--flow`, `--trail`, optional `--name`, `--fingerprint`) sends the decision block
 - Absent `--name`, the name sent is `<control>-decision`
+- `--name` or `--fingerprint` without `--control` is refused; `--flow` and `--trail` without it are not
+- `--control` without a destination is refused, naming `--flow` and `--trail`
 - Absent `--control`, no decision block is sent at all
 - The recorded decision id is read back and reported once the evaluation completes
 - A denial records a decision too — nothing about the decision block depends on the verdict
 
-### Slice 4: server refusals and classified failures
+### Slice 5: server refusals and classified failures
 
 One test per shape: unknown control, unwritable or archived destination, unknown fingerprint, unresolvable trail, organisation not entitled, server too old, enqueue refused, and a policy that does not compile. Each has a sentence of its own; a classified failure never prints a denial and never leaves a decision behind. This slice is where 4.5 is made good: one exit code, and no two outcomes that read alike.
 
-### Slice 5: a directory of policy files
+### Slice 6: a directory of policy files
 
 Relative keys, the file and byte caps refused here with the cap named, paths that would climb out of the bundle refused.
-
-### Slice 6: several trails in one evaluation
-
-Repeating `--context`, order preserved, the ceiling refused here, the decision still landing on the one `--flow`/`--trail`.
 
 ### Slice 7: wrap-up
 
@@ -214,3 +222,4 @@ Recorded here so no slice reopens them:
 2. **One exit code.** Clear messages carry the difference between a denial, a broken policy and a fault of ours — see 4.5.
 3. **Synchronous only.** No asynchronous mode and no `--sync` flag; the command always waits.
 4. **`--name` defaults to `<control>-decision`.**
+5. **`--context` is always required, and is the only thing that names what is evaluated.** `--flow` and `--trail` name the decision's destination alone, and are never refused for being present without one.

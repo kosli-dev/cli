@@ -149,6 +149,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	serverSideFlag                  = "[hidden] Evaluate the policy on the Kosli server rather than on this machine. Unsupported and subject to change."
 	policyParamsFlag                = "[optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params."
 	policyAssertFlag                = "[optional] Exit with a non-zero status when the policy denies. Without it the verdict is printed and the command exits 0."
+	policyContextFlag               = "What to evaluate, as trail=<flow>/<trail>. Repeat it to evaluate several trails at one instant."
 	outputFlagWithMarkdown          = "[defaulted] The format of the output. Valid formats are: [table, json, markdown]."
 	searchByNameFlag                = "[optional] Only list flows whose name contains this substring. The Kosli API supports alphanumeric characters and '-'."
 	ignoreCaseFlag                  = "[optional] Perform case-insensitive matching for --name. By default matching is case sensitive."

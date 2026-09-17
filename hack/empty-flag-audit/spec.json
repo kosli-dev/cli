@@ -4780,8 +4780,7 @@
   "evaluate policy": {
     "args": [],
     "flags": {
-      "flow": "{flow}",
-      "trail": "{trail}",
+      "context": "trail={flow}/{trail}",
       "policy": "cmd/kosli/testdata/policies/allow-all.rego"
     },
     "baseline_ok": false,
@@ -4789,19 +4788,17 @@
     "needs": "server-side evaluation",
     "flags_to_test": [
       "assert",
-      "flow",
+      "context",
       "output",
       "params",
-      "policy",
-      "trail"
+      "policy"
     ],
     "flag_values": {
       "assert": "true",
-      "flow": "{flow}",
+      "context": "trail={flow}/{trail}",
       "output": "json",
       "params": "{}",
-      "policy": "cmd/kosli/testdata/policies/allow-all.rego",
-      "trail": "{trail}"
+      "policy": "cmd/kosli/testdata/policies/allow-all.rego"
     },
     "setup": [
       {

@@ -18,7 +18,7 @@ type EvaluatePolicyCommandTestSuite struct {
 
 func (suite *EvaluatePolicyCommandTestSuite) cmd(host, extra string) string {
 	return fmt.Sprintf(
-		"evaluate policy --flow my-flow --trail my-trail "+
+		"evaluate policy --context trail=my-flow/my-trail "+
 			"--policy testdata/policies/allow-all.rego "+
 			"--host %s --org test-org --api-token test-token --max-api-retries 0 %s",
 		host, extra)
@@ -30,7 +30,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestItOffersOnlyItsOwnFlags() {
 	_, combined, _, _, err := executeCommandC("evaluate policy --help")
 
 	require.NoError(suite.T(), err)
-	for _, flag := range []string{"--flow", "--trail", "--policy", "--params", "--output", "--assert"} {
+	for _, flag := range []string{"--context", "--policy", "--params", "--output", "--assert"} {
 		require.Contains(suite.T(), combined, flag)
 	}
 	for _, flag := range []string{"--server-side", "--attestations", "--show-input", "--no-assert", "--sync"} {
@@ -43,9 +43,8 @@ func (suite *EvaluatePolicyCommandTestSuite) TestItNamesTheRequiredFlagItWasNotG
 		missing string
 		cmd     string
 	}{
-		{"flow", "evaluate policy --trail my-trail --policy testdata/policies/allow-all.rego"},
-		{"trail", "evaluate policy --flow my-flow --policy testdata/policies/allow-all.rego"},
-		{"policy", "evaluate policy --flow my-flow --trail my-trail"},
+		{"context", "evaluate policy --policy testdata/policies/allow-all.rego"},
+		{"policy", "evaluate policy --context trail=my-flow/my-trail"},
 	} {
 		suite.Run(test.missing, func() {
 			_, _, _, _, err := executeCommandC(test.cmd + " --org test-org --api-token test-token")
@@ -201,11 +200,90 @@ func (suite *EvaluatePolicyCommandTestSuite) TestAnExpiredWaitNamesTheEvaluation
 	}
 }
 
+// Every trail resolves at one instant, which holds only if they travel in one
+// evaluation.
+func (suite *EvaluatePolicyCommandTestSuite) TestEveryContextGoesInOneEvaluation() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.cmd(server.URL,
+		"--context trail=other-flow/second --context trail=my-flow/third"))
+
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), fake.created, 1, "one evaluation, however many trails")
+
+	context := fake.created[0]["context"].(map[string]interface{})
+	require.Equal(suite.T(), []interface{}{
+		map[string]interface{}{"flow": "my-flow", "trail": "my-trail"},
+		map[string]interface{}{"flow": "other-flow", "trail": "second"},
+		map[string]interface{}{"flow": "my-flow", "trail": "third"},
+	}, context["trails"], "named in the order given")
+}
+
+// The API stores a repeat once rather than refusing it, so refusing it here
+// would be stricter than the thing being called.
+func (suite *EvaluatePolicyCommandTestSuite) TestARepeatedContextIsSentAsGiven() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.cmd(server.URL, "--context trail=my-flow/my-trail"))
+
+	require.NoError(suite.T(), err)
+	context := fake.created[0]["context"].(map[string]interface{})
+	require.Len(suite.T(), context["trails"], 2)
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAMalformedContextIsRefusedBeforeAnyRequest() {
+	for _, test := range []struct {
+		name  string
+		value string
+	}{
+		{"no key", "my-flow/my-trail"},
+		{"an unknown key", "artifact=my-flow/my-trail"},
+		{"no flow and trail", "trail=my-trail"},
+		{"an empty value", "trail="},
+		{"an empty flow", "trail=/my-trail"},
+		{"an empty trail", "trail=my-flow/"},
+		{"more than a flow and a trail", "trail=my-flow/my-trail/extra"},
+	} {
+		suite.Run(test.name, func() {
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, combined, _, _, err := executeCommandC(fmt.Sprintf(
+				"evaluate policy --context %s --policy testdata/policies/allow-all.rego "+
+					"--host %s --org test-org --api-token test-token --max-api-retries 0",
+				test.value, server.URL))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), "trail=<flow>/<trail>",
+				"the refusal names the form it expects")
+			require.Empty(suite.T(), fake.created, "nothing is sent")
+			require.NotContains(suite.T(), combined, "RESULT")
+		})
+	}
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestTooManyContextsAreRefusedBeforeAnyRequest() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	contexts := ""
+	for i := 0; i <= maxServerSideTrails; i++ {
+		contexts += fmt.Sprintf("--context trail=my-flow/trail-%d ", i)
+	}
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate policy %s--policy testdata/policies/allow-all.rego "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0",
+		contexts, server.URL))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), fmt.Sprintf("%d", maxServerSideTrails))
+	require.Empty(suite.T(), fake.created)
+}
+
 func (suite *EvaluatePolicyCommandTestSuite) TestADryRunSendsNothing() {
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
 	_, combined, _, _, err := executeCommandC(fmt.Sprintf(
-		"evaluate policy --flow my-flow --trail my-trail "+
+		"evaluate policy --context trail=my-flow/my-trail "+
 			"--policy testdata/policies/allow-all.rego "+
 			"--host %s --org test-org --api-token DRY_RUN --max-api-retries 0", server.URL))
 

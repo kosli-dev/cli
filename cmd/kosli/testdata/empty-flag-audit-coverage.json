@@ -600,11 +600,10 @@
  },
  "evaluate policy": {
   "assert": "bool",
-  "flow": "string",
+  "context": "stringArray",
   "output": "string",
   "params": "string",
-  "policy": "string",
-  "trail": "string"
+  "policy": "string"
  },
  "evaluate trail": {
   "assert": "bool",
