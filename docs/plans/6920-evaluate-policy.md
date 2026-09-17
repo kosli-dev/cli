@@ -73,6 +73,8 @@ The evaluation resource gains `decision_attestation_id`: the id of the decision 
 
 ## 3. Command surface
 
+**Hidden for now.** The command is registered with `Hidden`, so it is in no help listing and gets no docs page, and it runs for anyone who names it. The ticket asks for a published command; unhiding it is one line, and it belongs to the wrap-up slice, once the command has been run against a server that can evaluate.
+
 | Flag | Required | Meaning |
 |---|---|---|
 | `--context` | yes | Repeatable `trail=<flow>/<trail>`. What is evaluated, all of it at one instant. |
@@ -204,7 +206,7 @@ Relative keys, the file and byte caps refused here with the cap named, an empty 
 
 ### Slice 7: wrap-up
 
-Help text and documentation, the changelog entry, `make lint`, the full integration run, and a manual check against staging with an entitled organisation: allow, deny, a broken policy, a decision recorded and read back, and a destination the token cannot write to.
+Unhiding the command, help text and documentation, the changelog entry, `make lint`, the full integration run, and a manual check against staging with an entitled organisation: allow, deny, a broken policy, a decision recorded and read back, and a destination the token cannot write to.
 
 ---
 

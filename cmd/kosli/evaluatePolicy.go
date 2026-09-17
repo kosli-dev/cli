@@ -103,6 +103,9 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out)
 		},
+		// Hidden while the command is proved out against a server that can run
+		// it. Unhiding it is this line, and it also restores its docs page.
+		Hidden: true,
 	}
 
 	cmd.Flags().StringArrayVar(&o.contexts, "context", []string{}, policyContextFlag)
