@@ -57,7 +57,7 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 			unusable = append(unusable, fmt.Sprintf("%s (%v)", cs.Name, err))
 			continue
 		}
-		digests[cs.Image] = fingerprint
+		digests[artifactName(pod, cs)] = fingerprint
 	}
 	// an empty image ID is transient (image still pulling, kubelet status not yet
 	// populated) and a malformed one is the runtime's doing; neither is a reason to
@@ -84,6 +84,60 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 	}, nil
 }
 
+// artifactName is the name the artifact is reported under.
+//
+// cs.Image is whatever the container runtime reports, and containerd names an
+// image record by the reference it was pulled with. An image pulled by digest has
+// no tagged name in the store, so the runtime reports the image ID instead and the
+// artifact would be named after a bare sha256 nobody can read. The pod still
+// carries readable references in that case, so prefer them, most informative
+// first:
+//
+//  1. the runtime's own name, when it has one
+//  2. this container's image in the pod spec (nginx:1.25@sha256:... - repository and tag)
+//  3. the image ID (docker.io/library/nginx@sha256:... - repository, no tag)
+//
+// The fingerprint is unaffected either way: it always comes from cs.ImageID.
+// See https://github.com/kosli-dev/cli/issues/1203
+func artifactName(pod *corev1.Pod, cs corev1.ContainerStatus) string {
+	if isNamed(cs.Image) {
+		return cs.Image
+	}
+	for _, container := range pod.Spec.Containers {
+		if container.Name == cs.Name && isNamed(container.Image) {
+			return container.Image
+		}
+	}
+	if imageID := trimRuntimePrefix(cs.ImageID); isNamed(imageID) {
+		return imageID
+	}
+	// nothing readable to fall back to; the runtime's name is still the truth
+	return cs.Image
+}
+
+// isNamed reports whether an image reference carries a repository, as opposed to
+// being a bare digest such as sha256:8dd77ef...
+func isNamed(image string) bool {
+	if image == "" {
+		return false
+	}
+	ref, err := reference.ParseAnyReference(image)
+	if err != nil {
+		return false
+	}
+	_, ok := ref.(reference.Named)
+	return ok
+}
+
+// trimRuntimePrefix drops the docker-pullable:// or docker:// prefix that
+// dockershim clusters put in front of an image ID.
+func trimRuntimePrefix(imageID string) string {
+	if _, rest, found := strings.Cut(imageID, "://"); found {
+		return rest
+	}
+	return imageID
+}
+
 // imageFingerprint reduces a container status ImageID to the sha256 hex Kosli uses.
 // Runtimes report it as a reference with a digest (docker.io/library/nginx@sha256:...)
 // or a bare digest (sha256:...); dockershim clusters put either behind a
@@ -92,9 +146,7 @@ func imageFingerprint(imageID string) (string, error) {
 	if imageID == "" {
 		return "", fmt.Errorf("empty image ID")
 	}
-	if _, rest, found := strings.Cut(imageID, "://"); found {
-		imageID = rest
-	}
+	imageID = trimRuntimePrefix(imageID)
 	ref, err := reference.ParseAnyReference(imageID)
 	if err != nil {
 		return "", fmt.Errorf("unparseable image ID %q: %w", imageID, err)
