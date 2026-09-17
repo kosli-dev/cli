@@ -38,14 +38,13 @@ Server-side evaluation reaches the CLI today only through the hidden `--server-s
 
 Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-policy.md), committed on this branch. Read it before starting any slice: it holds the contract this ticket adds, the command surface, the outcome mapping and a per-slice test list ready to copy into `TODO.md`. It builds on the #6700 plan rather than repeating it. Each slice is independently mergeable.
 
-- [ ] Slice 1 — the command exists, evaluates one trail and prints the verdict.
+- [x] Slice 1 — the command exists, evaluates one trail and prints the verdict.
 - [ ] Slice 2 — `--assert` exits non-zero on a denial.
-- [ ] Slice 3 — `--control` records a decision, and its id is reported once the evaluation completes.
-- [ ] Slice 4 — refuse the flag combinations that cannot be asked for, before any network call.
-- [ ] Slice 5 — server refusals and classified failures, one test per shape, each with a sentence of its own.
-- [ ] Slice 6 — a directory of policy files as one bundle, with the caps refused here.
-- [ ] Slice 7 — several trails in one evaluation, the decision still landing on one.
-- [ ] Slice 8 — help text, docs, changelog, lint, full test run, and a staging check against an entitled organisation.
+- [ ] Slice 3 — `--control` records a decision, and a destination flag without it is refused.
+- [ ] Slice 4 — server refusals and classified failures, one test per shape, each with a sentence of its own.
+- [ ] Slice 5 — a directory of policy files as one bundle, with the caps refused here.
+- [ ] Slice 6 — several trails in one evaluation, the decision still landing on one.
+- [ ] Slice 7 — help text, docs, changelog, lint, full test run, and a staging check against an entitled organisation.
 
 ---
 
@@ -67,6 +66,7 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 - The verdict printer is reused untouched, so a caller moving from `evaluate trail` does not re-parse. Anything this command has to add — the evaluation id, the recorded decision id — is said around the verdict rather than inside its payload.
 - Versioned policies are excluded from this round by the engineer, on top of the ticket's own exclusion of policy publishing. Until publishing exists, an inline policy is the only policy there is.
 - Every outcome keeps the one exit code this CLI has always used, against the ticket's request for three. A single failure exit path is a product-wide convention and not this command's to change, as #6700 also found. The obligation moves to the wording instead: a denial, a broken policy, an unfinished evaluation and a refused destination each get a sentence of their own, and none may read as another.
+- A slice of its own for refused flag combinations was dropped once the command became synchronous and `--name` gained a default: the only refusal left is a destination flag without `--control`, which belongs with the decision block that gives it meaning.
 - The policy-bundle digest is not built. It belongs with versioned policies, so a decision recorded now cites the policy it ran by the evaluation that ran it and nothing more.
 - Tests drive a stubbed server, as under #6700 and for the same reason: this repository's test environment cannot complete a server-side evaluation. That an evaluation really records a decision has to be checked on staging, which is why the wrap-up slice carries a manual check rather than a test.
 
@@ -74,5 +74,5 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 
 ## Next Steps
 
-- [ ] Copy the Slice 1 test list into `TODO.md` and start the red-green loop.
+- [ ] Slice 2: `--assert`, and an expired wait that names the evaluation and prints no verdict.
 - [ ] Check what the create endpoint refuses for each destination failure, against staging, so Slice 5's messages are written from real answers rather than guessed.

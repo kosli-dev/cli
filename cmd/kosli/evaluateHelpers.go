@@ -66,7 +66,7 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
-	cmd.Flags().StringVar(&o.params, "params", "", "[optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.")
+	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, "[optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.")
 	cmd.Flags().BoolVar(&o.noAssert, "no-assert", false, "[optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.")
 	cmd.MarkFlagsMutuallyExclusive("assert", "no-assert")
@@ -271,31 +271,54 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 		return err
 	}
 
-	if len(trails) > maxServerSideTrails {
+	return runServerEvaluation(out, serverEvaluation{
+		policyRef:    o.policyRef,
+		params:       o.params,
+		trails:       trails,
+		output:       o.output,
+		assertOnDeny: o.assertOnDeny(),
+	})
+}
+
+// serverEvaluation is one evaluation asked of the Kosli server: what to
+// evaluate, against what, and how to report the verdict.
+type serverEvaluation struct {
+	policyRef    string
+	params       string
+	trails       []evaluations.TrailRef
+	output       string
+	assertOnDeny bool
+}
+
+// runServerEvaluation creates the evaluation, waits for its verdict and prints
+// it. Shared by every command that evaluates away from this machine, so that
+// they cannot drift on what they send or on how an outcome reads.
+func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
+	if len(spec.trails) > maxServerSideTrails {
 		return fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
-			maxServerSideTrails, len(trails))
+			maxServerSideTrails, len(spec.trails))
 	}
 
 	// Parsed before the policy is read: --params is local and cheap to check,
 	// and a remote policy fetched first would be thrown away by a typo in it.
-	params, err := parseParams(o.params)
+	params, err := parseParams(spec.params)
 	if err != nil {
 		return err
 	}
 
-	policySource, err := loadPolicy(o.policyRef)
+	policySource, err := loadPolicy(spec.policyRef)
 	if err != nil {
 		return err
 	}
 
-	files, err := policyBundle(o.policyRef, policySource)
+	files, err := policyBundle(spec.policyRef, policySource)
 	if err != nil {
 		return err
 	}
 
 	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
 	created, err := client.Create(global.Org, evaluations.CreateRequest{
-		Trails: trails,
+		Trails: spec.trails,
 		Files:  files,
 		Params: params,
 	})
@@ -327,7 +350,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 	}
 
 	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
-		o.output, false, nil, o.assertOnDeny())
+		spec.output, false, nil, spec.assertOnDeny)
 }
 
 // refuseWhatTheServerCannotDo rejects the options that have no server-side

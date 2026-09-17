@@ -44,6 +44,7 @@ func newEvaluateCmd(out io.Writer) *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(
+		newEvaluatePolicyCmd(out),
 		newEvaluateTrailCmd(out),
 		newEvaluateTrailsCmd(out),
 		newEvaluateInputCmd(out),

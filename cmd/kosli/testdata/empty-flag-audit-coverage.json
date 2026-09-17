@@ -598,6 +598,13 @@
   "policy": "string",
   "show-input": "bool"
  },
+ "evaluate policy": {
+  "flow": "string",
+  "output": "string",
+  "params": "string",
+  "policy": "string",
+  "trail": "string"
+ },
  "evaluate trail": {
   "assert": "bool",
   "attestations": "stringSlice",

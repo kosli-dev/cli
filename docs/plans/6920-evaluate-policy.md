@@ -102,14 +102,18 @@ Not offered, and why: `--sync` (the command is always synchronous, so there is n
 
 Output shape and `--output json` must match `evaluate trail`, so a caller switching commands does not re-parse. That is a constraint on this command, not a licence to change the printer. Anything new this command has to say — the recorded decision id — is said around the verdict, not inside its payload.
 
-### 4.3 Flag combinations refused before any request
+### 4.3 What is refused before any request
+
+Synchronous-only and an optional `--name` leave two refusals, and both belong to the decision block:
 
 - `--name` or `--fingerprint` without `--control`: refused, naming `--control`. They are meaningless alone, and accepting them would look like a decision was recorded.
-- More than 100 trails, or a policy bundle over the published caps: refused here, naming the cap, rather than sent to be rejected.
+- Nothing else. `--assert` is meaningful on its own, the wait has no mode to conflict with, and `--name` beside `--control` is a default rather than a requirement.
+
+The caps are refused before a request too, but each is checked where its flag is built: the trail ceiling with `--context`, the bundle size with a directory of policy files.
 
 Each refusal says why, in its own sentence, rather than relying on cobra's "these flags conflict" wording.
 
-`--name` is not among these: with `--control` and no `--name`, the name is `<control>-decision`. The default is computed where the request is built and sent explicitly, because the field is required on the wire and a name the caller can predict is worth more than one the API chose.
+With `--control` and no `--name`, the name is `<control>-decision`. The default is computed where the request is built and sent explicitly, because the field is required on the wire and a name the caller can predict is worth more than one chosen further away.
 
 ### 4.4 Outcome mapping
 
@@ -126,7 +130,7 @@ Where the server explained itself, its words are passed on untouched. Two refusa
 
 ### 4.5 One exit code, and messages that tell the outcomes apart
 
-The ticket asks for denial, a broken policy and a fault of ours to be three distinguishable exit codes. They stay one code, as everywhere else in this CLI, and the outcomes are told apart by what they say. #6700 made the same call: a single failure exit path is a product-wide convention, and it is not this command's to change. The obligation that remains is on the wording — a broken policy, an unfinished evaluation and a refused destination each need their own sentence, and none of them may read as a denial. Slice 5 is where that is proved, one test per shape.
+The ticket asks for denial, a broken policy and a fault of ours to be three distinguishable exit codes. They stay one code, as everywhere else in this CLI, and the outcomes are told apart by what they say. #6700 made the same call: a single failure exit path is a product-wide convention, and it is not this command's to change. The obligation that remains is on the wording — a broken policy, an unfinished evaluation and a refused destination each need their own sentence, and none of them may read as a denial. Slice 4 is where that is proved, one test per shape.
 
 ### 4.6 A directory of policy files
 
@@ -169,28 +173,25 @@ The thinnest end-to-end path: `--flow`, `--trail`, `--policy`, `--params`, no de
 ### Slice 3: `--control` records a decision
 
 - `--control` (+ optional `--name`, `--fingerprint`) sends the decision block
+- `--name` or `--fingerprint` without `--control` is refused, naming `--control`, before any request
 - Absent `--name`, the name sent is `<control>-decision`
 - Absent `--control`, no decision block is sent at all
 - The recorded decision id is read back and reported once the evaluation completes
 - A denial records a decision too — nothing about the decision block depends on the verdict
 
-### Slice 4: refusing what cannot be asked for
-
-One test per refusal in 4.3, each checked before any network call.
-
-### Slice 5: server refusals and classified failures
+### Slice 4: server refusals and classified failures
 
 One test per shape: unknown control, unwritable or archived destination, unknown fingerprint, unresolvable trail, organisation not entitled, server too old, enqueue refused, and a policy that does not compile. Each has a sentence of its own; a classified failure never prints a denial and never leaves a decision behind. This slice is where 4.5 is made good: one exit code, and no two outcomes that read alike.
 
-### Slice 6: a directory of policy files
+### Slice 5: a directory of policy files
 
 Relative keys, the file and byte caps refused here with the cap named, paths that would climb out of the bundle refused.
 
-### Slice 7: several trails in one evaluation
+### Slice 6: several trails in one evaluation
 
 Repeating `--context`, order preserved, the ceiling refused here, the decision still landing on the one `--flow`/`--trail`.
 
-### Slice 8: wrap-up
+### Slice 7: wrap-up
 
 Help text and documentation, the changelog entry, `make lint`, the full integration run, and a manual check against staging with an entitled organisation: allow, deny, a broken policy, a decision recorded and read back, and a destination the token cannot write to.
 
