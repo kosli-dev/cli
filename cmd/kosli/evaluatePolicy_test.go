@@ -355,16 +355,33 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADestinationWithoutAControlReco
 
 func (suite *EvaluatePolicyCommandTestSuite) TestWhatCannotBeAskedForIsRefusedBeforeAnyRequest() {
 	for _, test := range []struct {
-		name  string
-		extra string
-		says  []string
+		name    string
+		extra   string
+		says    []string
+		saysNot []string
 	}{
-		{"a name with no control", "--name code-review-decision", []string{"--control"}},
+		{"a name with no control", "--name code-review-decision",
+			[]string{"--name", "--control"}, []string{"--fingerprint"}},
 		{"a fingerprint with no control",
 			"--fingerprint b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c",
-			[]string{"--control"}},
-		{"a control with no destination", "--control SDLC-CTRL-0007", []string{"--flow", "--trail"}},
-		{"a control with no trail", "--control SDLC-CTRL-0007 --flow release", []string{"--trail"}},
+			[]string{"--fingerprint", "--control"}, []string{"--name"}},
+		{"a name and a fingerprint with no control",
+			"--name code-review-decision " +
+				"--fingerprint b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c",
+			[]string{"--name", "--fingerprint", "--control"}, nil},
+		{"a control with no destination", "--control SDLC-CTRL-0007",
+			[]string{"--flow", "--trail"}, nil},
+		{"a control with no trail", "--control SDLC-CTRL-0007 --flow release",
+			[]string{"--trail"}, nil},
+		// A malformed fingerprint is ours to catch, as on every other command
+		// that takes one.
+		{"a fingerprint that is not a SHA256",
+			"--control SDLC-CTRL-0007 --flow release --trail my-trail --fingerprint sha256:abc",
+			[]string{"not a valid SHA256"}, nil},
+		// Refused before the request, which with --control records a decision.
+		{"an output format that does not exist",
+			"--control SDLC-CTRL-0007 --flow release --trail my-trail --output tabel",
+			[]string{"tabel", "table", "json"}, nil},
 	} {
 		suite.Run(test.name, func() {
 			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
@@ -374,6 +391,10 @@ func (suite *EvaluatePolicyCommandTestSuite) TestWhatCannotBeAskedForIsRefusedBe
 			require.Error(suite.T(), err)
 			for _, says := range test.says {
 				require.Contains(suite.T(), err.Error(), says)
+			}
+			for _, saysNot := range test.saysNot {
+				require.NotContains(suite.T(), err.Error(), saysNot,
+					"the refusal names what was typed, not what was not")
 			}
 			require.Empty(suite.T(), fake.created, "nothing is sent")
 			require.NotContains(suite.T(), combined, "RESULT")

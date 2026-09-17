@@ -53,7 +53,7 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 
 | Branch | PR | Status |
 |--------|----|--------|
-| `6920-evaluate-policy` | — | in progress |
+| `6920-evaluate-policy` | #1201 | open |
 
 ---
 
@@ -62,6 +62,7 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 - The command declares its own options rather than inheriting the evaluate commands' shared ones, because four of those flags have no meaning here and inheriting them only to hide them is how two commands drift apart.
 - Asserting is opt-in on this command and the default is silent, which is the reverse of `evaluate trail`. A command that records a decision should not fail a pipeline unless the caller asked it to, and the flag that asks is the one the tutorial already publishes.
 - What is evaluated and where a decision lands are named separately: `--context` is the only way to say what to evaluate and is always required, while `--flow` and `--trail` name the destination alone. Neither is refused for being present without `--control`, because a pipeline sets them as environment variables for every command it runs, and refusing them would refuse an ordinary run that asked for no decision. The ticket's example predates this split.
+- A malformed fingerprint, an unknown output format and a decision flag without its control are all refused before the request. The format is the reason this matters more here than on the other evaluate commands: those check it where they print, which costs nothing, while this one would have recorded a decision and then failed on the format, so a rerun would record a second.
 - The command is hidden for now, against the ticket, which asks for a published one. Nothing about it can be exercised end to end until it runs against a server that can evaluate, and a command listed in `kosli evaluate --help` is a contract from the moment it ships. Hiding it is one line, and unhiding it also restores its documentation page; the ticket's published contract is the wrap-up slice's business.
 - A policy comes from the machine that runs the command: this command does not fetch one from a URL, though the older evaluate commands do, because that way of naming a policy is on its way out and a new command should not take it on.
 - A directory of policy files travels whole, with nothing left out by name and nothing here reading the modules. What a bundle may hold, and what its modules may import, is for the evaluator that runs it to judge; a rule here would refuse bundles the evaluator would have accepted, and would go stale as the evaluator changes. Only the published caps and an empty directory are refused here, because those the caller can act on before sending.
@@ -81,5 +82,6 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 
 ## Next Steps
 
+- [ ] Open a ticket for how a directory bundle is read: symlinks are followed today, so a link pointing out of the bundle is uploaded, and the caps are checked only after every file has been read. Raised in review on #1201 and deliberately left for its own ticket, together with saying in the help text that a directory is sent whole.
 - [ ] Slice 7: help text, docs, changelog, the full integration run, and a staging check against an entitled organisation.
 - [ ] Check what the create endpoint refuses for each destination failure, against staging, so Slice 5's messages are written from real answers rather than guessed.

@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/evaluations"
 	"github.com/spf13/cobra"
 )
@@ -134,6 +135,12 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 		return fmt.Errorf("--policy takes a file or a directory on this machine, not a URL")
 	}
 
+	// Refused before the request: a format refused where it is printed would
+	// leave a decision recorded, and a rerun would record a second.
+	if _, known := evaluatePolicyOutputs[o.output]; !known {
+		return fmt.Errorf("unsupported output format: %s. Valid formats are: [table, json]", o.output)
+	}
+
 	trails, err := parseTrailContexts(o.contexts)
 	if err != nil {
 		return err
@@ -160,9 +167,8 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 func (o *evaluatePolicyOptions) decision() (*evaluations.Decision, error) {
 	if o.control == "" {
 		// Accepting these silently would look like a decision was recorded.
-		if o.name != "" || o.fingerprint != "" {
-			return nil, fmt.Errorf(
-				"--name and --fingerprint record a decision, so they need --control")
+		if given := namedDecisionFlags(o.name, o.fingerprint); given != "" {
+			return nil, fmt.Errorf("%s records a decision, so it needs --control", given)
 		}
 		// --flow and --trail are not refused with them: a pipeline sets those
 		// for every command it runs, and without a control they name nothing.
@@ -183,6 +189,14 @@ func (o *evaluatePolicyOptions) decision() (*evaluations.Decision, error) {
 			strings.Join(missing, " and "))
 	}
 
+	// A malformed fingerprint is ours to catch; one that names no artifact is
+	// the API's.
+	if o.fingerprint != "" {
+		if err := digest.ValidateDigest(o.fingerprint); err != nil {
+			return nil, err
+		}
+	}
+
 	name := o.name
 	if name == "" {
 		name = o.control + "-decision"
@@ -195,6 +209,21 @@ func (o *evaluatePolicyOptions) decision() (*evaluations.Decision, error) {
 		Trail:       o.trailName,
 		Fingerprint: o.fingerprint,
 	}, nil
+}
+
+var evaluatePolicyOutputs = map[string]bool{"table": true, "json": true}
+
+// namedDecisionFlags names the decision flags that were given, so a refusal
+// speaks of what was typed.
+func namedDecisionFlags(name, fingerprint string) string {
+	var given []string
+	if name != "" {
+		given = append(given, "--name")
+	}
+	if fingerprint != "" {
+		given = append(given, "--fingerprint")
+	}
+	return strings.Join(given, " and ")
 }
 
 // parseTrailContexts reads the --context values as trail references, keeping
