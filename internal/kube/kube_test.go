@@ -509,6 +509,22 @@ func podWithStatuses(name string, phase corev1.PodPhase, statuses ...containerSt
 	}
 }
 
+// podWithSpec builds a Running pod whose containers have a spec image as well as a
+// status, which is what a digest-pinned pod looks like. specImages are matched to
+// statuses by position, as container-N.
+func podWithSpec(name string, specImages []string, statuses ...containerStatus) corev1.Pod {
+	pod := podWithStatuses(name, corev1.PodRunning, statuses...)
+	containers := make([]corev1.Container, 0, len(specImages))
+	for i, image := range specImages {
+		containers = append(containers, corev1.Container{
+			Name:  fmt.Sprintf("container-%d", i),
+			Image: image,
+		})
+	}
+	pod.Spec = corev1.PodSpec{Containers: containers}
+	return pod
+}
+
 const (
 	nginxImageID   = "docker-pullable://nginx@sha256:644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
 	busyboxImageID = "docker-pullable://busybox@sha256:123a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
@@ -587,6 +603,94 @@ func TestNewPodData(t *testing.T) {
 			}
 			require.NotNil(t, got, "expected the pod to be reported")
 			require.Equal(t, tc.wantDigests, got.Digests)
+		})
+	}
+}
+
+// TestNewPodDataArtifactName covers the name an artifact is reported under when the
+// runtime has no tagged name for the image, which happens whenever a digest-pinned
+// image is pulled on a node that does not already hold it under a tag.
+// See https://github.com/kosli-dev/cli/issues/1203
+func TestNewPodDataArtifactName(t *testing.T) {
+	const (
+		nginxSha    = "644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
+		busyboxSha  = "123a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
+		imageID     = "sha256:8dd77ef2d82eade8dcf2c08ea032bd9cba04c9d28ace2ccf08ad6804c27bf14f"
+		imageIDSha  = "8dd77ef2d82eade8dcf2c08ea032bd9cba04c9d28ace2ccf08ad6804c27bf14f"
+		nginxDigest = "nginx:1.25@sha256:644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
+	)
+	for _, tc := range []struct {
+		name        string
+		pod         corev1.Pod
+		wantDigests map[string]string
+	}{
+		{
+			name:        "the runtime's name is used when it has one",
+			pod:         podWithSpec("pod", []string{nginxDigest}, containerStatus{"docker.io/library/nginx:1.25", nginxImageID}),
+			wantDigests: map[string]string{"docker.io/library/nginx:1.25": nginxSha},
+		},
+		{
+			name:        "a bare image ID falls back to the spec image, normalized to its tag",
+			pod:         podWithSpec("pod", []string{nginxDigest}, containerStatus{imageID, nginxImageID}),
+			wantDigests: map[string]string{"docker.io/library/nginx:1.25": nginxSha},
+		},
+		{
+			name:        "the fallback name matches what the runtime reports for the same image",
+			pod:         podWithSpec("pod", []string{"nginx:1.25"}, containerStatus{imageID, nginxImageID}),
+			wantDigests: map[string]string{"docker.io/library/nginx:1.25": nginxSha},
+		},
+		{
+			name:        "a spec image with no tag falls back to the image ID, not to :latest",
+			pod:         podWithSpec("pod", []string{"nginx@sha256:" + nginxSha}, containerStatus{imageID, nginxImageID}),
+			wantDigests: map[string]string{"nginx@sha256:" + nginxSha: nginxSha},
+		},
+		{
+			name:        "a bare image ID with no spec containers at all falls back to the image ID",
+			pod:         podWithStatuses("pod", corev1.PodRunning, containerStatus{imageID, nginxImageID}),
+			wantDigests: map[string]string{"nginx@sha256:" + nginxSha: nginxSha},
+		},
+		{
+			name: "a spec container whose name does not match is not used",
+			pod: func() corev1.Pod {
+				pod := podWithStatuses("pod", corev1.PodRunning, containerStatus{imageID, nginxImageID})
+				pod.Spec = corev1.PodSpec{Containers: []corev1.Container{
+					{Name: "sidecar", Image: "busybox:1.36"},
+				}}
+				return pod
+			}(),
+			wantDigests: map[string]string{"nginx@sha256:" + nginxSha: nginxSha},
+		},
+		{
+			name:        "a spec image that is itself a bare digest falls back to the image ID",
+			pod:         podWithSpec("pod", []string{imageID}, containerStatus{imageID, nginxImageID}),
+			wantDigests: map[string]string{"nginx@sha256:" + nginxSha: nginxSha},
+		},
+		{
+			// a bare-digest ImageID, so this reaches the last fallback rather than
+			// returning at the isNamed(imageID) check above it
+			name:        "a container status with no name and no named image ID is reported under the digest",
+			pod:         podWithStatuses("pod", corev1.PodRunning, containerStatus{"", imageID}),
+			wantDigests: map[string]string{imageID: imageIDSha},
+		},
+		{
+			name: "two digest-pinned containers keep distinct names",
+			pod: podWithSpec("pod",
+				[]string{nginxDigest, "busybox:1.36@sha256:" + busyboxSha},
+				containerStatus{imageID, nginxImageID},
+				containerStatus{"sha256:99aa70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36", busyboxImageID}),
+			wantDigests: map[string]string{
+				"docker.io/library/nginx:1.25":   nginxSha,
+				"docker.io/library/busybox:1.36": busyboxSha,
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var warnings bytes.Buffer
+			got, err := NewPodData(&tc.pod, logger.NewLogger(io.Discard, &warnings, false))
+			require.NoError(t, err)
+			require.NotNil(t, got, "expected the pod to be reported")
+			require.Equal(t, tc.wantDigests, got.Digests)
+			require.Empty(t, warnings.String())
 		})
 	}
 }

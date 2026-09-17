@@ -57,7 +57,7 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 			unusable = append(unusable, fmt.Sprintf("%s (%v)", cs.Name, err))
 			continue
 		}
-		digests[cs.Image] = fingerprint
+		digests[artifactName(pod, cs)] = fingerprint
 	}
 	// an empty image ID is transient (image still pulling, kubelet status not yet
 	// populated) and a malformed one is the runtime's doing; neither is a reason to
@@ -84,6 +84,79 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 	}, nil
 }
 
+// artifactName is the name the artifact is reported under. containerd names an
+// image record by the reference it was pulled with, so an image pulled by digest
+// has no tagged name and the runtime reports its image ID instead. Fall back to
+// the pod's own references then, preferring the spec image normalized to the form
+// the runtime uses, so one image gets one name whether or not the node had it
+// cached. See https://github.com/kosli-dev/cli/issues/1203
+func artifactName(pod *corev1.Pod, cs corev1.ContainerStatus) string {
+	if isNamed(cs.Image) {
+		return cs.Image
+	}
+	for _, container := range pod.Spec.Containers {
+		if container.Name != cs.Name {
+			continue
+		}
+		if name, ok := normalizedTagName(container.Image); ok {
+			return name
+		}
+	}
+	if imageID := trimRuntimePrefix(cs.ImageID); isNamed(imageID) {
+		return imageID
+	}
+	// nothing readable left; the runtime's name still beats no name at all
+	if cs.Image != "" {
+		return cs.Image
+	}
+	return trimRuntimePrefix(cs.ImageID)
+}
+
+// normalizedTagName turns a pod spec image into the tagged name the runtime would
+// report for it, dropping any digest: the fingerprint already records that, and a
+// name carrying its own digest can disagree with it. Reports false for an untagged
+// reference, leaving the image ID as the better name.
+func normalizedTagName(image string) (string, bool) {
+	// ParseNormalizedNamed reads a bare digest as a repository with a tag:
+	// sha256:8dd77ef... becomes docker.io/library/sha256 tagged 8dd77ef...
+	if !isNamed(image) {
+		return "", false
+	}
+	ref, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return "", false
+	}
+	tagged, ok := ref.(reference.Tagged)
+	if !ok {
+		return "", false
+	}
+	// not TagNameOnly: it defaults an untagged reference to :latest
+	return reference.TrimNamed(ref).Name() + ":" + tagged.Tag(), true
+}
+
+// isNamed reports whether an image reference carries a repository, as opposed to
+// being a bare digest such as sha256:8dd77ef...
+func isNamed(image string) bool {
+	if image == "" {
+		return false
+	}
+	ref, err := reference.ParseAnyReference(image)
+	if err != nil {
+		return false
+	}
+	_, ok := ref.(reference.Named)
+	return ok
+}
+
+// trimRuntimePrefix drops the docker-pullable:// or docker:// prefix that
+// dockershim clusters put in front of an image ID.
+func trimRuntimePrefix(imageID string) string {
+	if _, rest, found := strings.Cut(imageID, "://"); found {
+		return rest
+	}
+	return imageID
+}
+
 // imageFingerprint reduces a container status ImageID to the sha256 hex Kosli uses.
 // Runtimes report it as a reference with a digest (docker.io/library/nginx@sha256:...)
 // or a bare digest (sha256:...); dockershim clusters put either behind a
@@ -92,9 +165,7 @@ func imageFingerprint(imageID string) (string, error) {
 	if imageID == "" {
 		return "", fmt.Errorf("empty image ID")
 	}
-	if _, rest, found := strings.Cut(imageID, "://"); found {
-		imageID = rest
-	}
+	imageID = trimRuntimePrefix(imageID)
 	ref, err := reference.ParseAnyReference(imageID)
 	if err != nil {
 		return "", fmt.Errorf("unparseable image ID %q: %w", imageID, err)
