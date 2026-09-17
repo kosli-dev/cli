@@ -132,7 +132,7 @@ Where the server explained itself, its words are passed on untouched. Two refusa
 
 ### 4.5 One exit code, and messages that tell the outcomes apart
 
-The ticket asks for denial, a broken policy and a fault of ours to be three distinguishable exit codes. They stay one code, as everywhere else in this CLI, and the outcomes are told apart by what they say. #6700 made the same call: a single failure exit path is a product-wide convention, and it is not this command's to change. The obligation that remains is on the wording — a broken policy, an unfinished evaluation and a refused destination each need their own sentence, and none of them may read as a denial. Slice 5 is where that is proved, one test per shape.
+The ticket asks for denial, a broken policy and a fault of ours to be three distinguishable exit codes. They stay one code, as everywhere else in this CLI, and the outcomes are told apart by what they say. #6700 made the same call: a single failure exit path is a product-wide convention, and it is not this command's to change. The obligation that remains is on the wording — a broken policy, an unfinished evaluation and a refused destination each need their own sentence, and none of them may read as a denial. Slice 5 is where that is proved.
 
 ### 4.6 A directory of policy files
 
@@ -191,9 +191,12 @@ Replaces `--flow`/`--trail` as the evaluation target; they return in Slice 4 as 
 - The recorded decision id is read back and reported once the evaluation completes
 - A denial records a decision too — nothing about the decision block depends on the verdict
 
-### Slice 5: server refusals and classified failures
+### Slice 5: refusals travel in the API's own words
 
-One test per shape: unknown control, unwritable or archived destination, unknown fingerprint, unresolvable trail, organisation not entitled, server too old, enqueue refused, and a policy that does not compile. Each has a sentence of its own; a classified failure never prints a denial and never leaves a decision behind. This slice is where 4.5 is made good: one exit code, and no two outcomes that read alike.
+Deliberately shallow. A refusal is reported as the status the API answered with and whatever it said about why, whatever it refused, so the command carries no list of cases to keep in step with the server. What is pinned here is that this holds for this command, and that a classified failure is never worded as a denial.
+
+- A refusal carrying a message is reported with that message and that status, and prints no verdict
+- A policy that could not run reports its kind and its message, never a denial, and records nothing
 
 ### Slice 6: a directory of policy files
 

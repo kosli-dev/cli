@@ -410,6 +410,52 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheRecordedDecisionIsReportedIn
 	require.Contains(suite.T(), combined, `"decision_attestation_id": "01DECISION"`)
 }
 
+// A refusal is reported in the API's own words, whatever it refused, so the
+// command needs no opinion about each one.
+func (suite *EvaluatePolicyCommandTestSuite) TestARefusalIsReportedAsTheServerPutIt() {
+	for _, test := range []struct {
+		name    string
+		status  int
+		message string
+	}{
+		{"an unknown control", 404, "Control 'SDLC-CTRL-0007' does not exist in org 'test-org'"},
+		{"an unresolvable trail", 404, "These trails do not exist in org 'test-org': my-flow/my-trail"},
+		{"an archived destination", 400, "Flow named 'release' has been archived for organization 'test-org'"},
+		{"an organisation without the entitlement", 403,
+			"Server-side evaluation is not enabled for this organization"},
+	} {
+		suite.Run(test.name, func() {
+			server := newRefusingServer(suite.T(), test.status,
+				fmt.Sprintf(`{"message":%q}`, test.message))
+
+			_, combined, _, _, err := executeCommandC(suite.cmd(server.URL,
+				"--control SDLC-CTRL-0007 --flow release --trail my-trail"))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), test.message)
+			require.Contains(suite.T(), err.Error(), fmt.Sprintf("%d", test.status))
+			require.NotContains(suite.T(), combined, "RESULT")
+		})
+	}
+}
+
+// A policy that could not run has decided nothing: it is never a denial, and
+// nothing is recorded.
+func (suite *EvaluatePolicyCommandTestSuite) TestAClassifiedFailureIsNotADenial() {
+	server, _ := newFakeEvaluations(suite.T(),
+		`{"id":"01EVAL","status":"failed","requested_at":1.0,"recorded_at":1.0,`+
+			`"error":{"kind":"compile","message":"policy.rego:4: unexpected token"}}`)
+
+	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL,
+		"--control SDLC-CTRL-0007 --flow release --trail my-trail --assert"))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "compile")
+	require.Contains(suite.T(), err.Error(), "policy.rego:4: unexpected token")
+	require.NotContains(suite.T(), err.Error(), "denied")
+	require.NotContains(suite.T(), combined, "DENIED")
+}
+
 func (suite *EvaluatePolicyCommandTestSuite) TestADryRunSendsNothing() {
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
