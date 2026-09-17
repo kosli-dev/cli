@@ -87,6 +87,29 @@ func (suite *AttestationCommitInfoTestSuite) TestCIDefaultedCommitNotInRepositor
 	})
 }
 
+func (suite *AttestationCommitInfoTestSuite) TestCommitFromEnvVarIsExplicit() {
+	suite.T().Chdir(suite.T().TempDir())
+	suite.T().Setenv("KOSLI_COMMIT", suite.headHash)
+	_, out, _, _, err := executeCommandC(suite.attestGeneric(""))
+	suite.Require().Error(err)
+	suite.Contains(err.Error(), "failed to get commit info for --commit "+suite.headHash+":")
+	suite.NotContains(err.Error(), "defaulted from the CI environment")
+	suite.NotContains(out, "[warning] proceeding without commit info")
+}
+
+// A --repo-root set via the environment or config to its own "." default
+// must not count as explicit: bindFlags marks the flag Changed regardless of
+// whether the applied value differs from the default.
+func (suite *AttestationCommitInfoTestSuite) TestRepoRootFromEnvVarAtDefaultValueStillWarns() {
+	suite.T().Chdir(suite.T().TempDir())
+	suite.T().Setenv("KOSLI_REPO_ROOT", ".")
+	suite.inCI(suite.headHash, func() {
+		_, out, _, _, err := executeCommandC(suite.attestGeneric(""))
+		suite.Require().NoError(err)
+		suite.Contains(out, "[warning] proceeding without commit info")
+	})
+}
+
 func (suite *AttestationCommitInfoTestSuite) TestCIDefaultedCommitWithExplicitRepoRootFails() {
 	suite.inCI(suite.headHash, func() {
 		for _, cmd := range []string{suite.attestGeneric("--repo-root testdata"), suite.beginTrail("--repo-root testdata")} {
@@ -137,15 +160,15 @@ func (suite *AttestationCommitInfoTestSuite) TestExplicitCommitIsAttached() {
 func (suite *AttestationCommitInfoTestSuite) TestCommandsNeedingTheCommitFail() {
 	suite.T().Chdir(suite.T().TempDir())
 	suite.inCI(suite.headHash, func() {
-		for cmd, need := range map[string]string{
-			"attest pullrequest github --name foo --flow f --trail t --github-token tok --github-org o --repository r" + suite.defaultKosliArguments:                 "find pull requests",
-			"attest jira --name foo --flow f --trail t --jira-base-url https://x.atlassian.net --jira-username u --jira-api-token tok" + suite.defaultKosliArguments: "search for Jira issue keys",
+		for _, tc := range []struct{ cmd, need string }{
+			{"attest pullrequest github --name foo --flow f --trail t --github-token tok --github-org o --repository r" + suite.defaultKosliArguments, "find pull requests"},
+			{"attest jira --name foo --flow f --trail t --jira-base-url https://x.atlassian.net --jira-username u --jira-api-token tok" + suite.defaultKosliArguments, "search for Jira issue keys"},
 		} {
-			_, out, _, _, err := executeCommandC(cmd)
-			suite.Require().Error(err, cmd)
-			suite.Contains(err.Error(), "failed to get commit info for --commit "+suite.headHash+" (defaulted from the CI environment)", cmd)
-			suite.Contains(err.Error(), "The commit is required to "+need, cmd)
-			suite.NotContains(out, "[warning] proceeding without commit info", cmd)
+			_, out, _, _, err := executeCommandC(tc.cmd)
+			suite.Require().Error(err, tc.cmd)
+			suite.Contains(err.Error(), "failed to get commit info for --commit "+suite.headHash+" (defaulted from the CI environment)", tc.cmd)
+			suite.Contains(err.Error(), "The commit is required to "+tc.need, tc.cmd)
+			suite.NotContains(out, "[warning] proceeding without commit info", tc.cmd)
 		}
 	})
 }

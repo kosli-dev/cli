@@ -64,10 +64,6 @@ type CommonAttestationOptions struct {
 	commitRequiredFor string
 }
 
-func (o *CommonAttestationOptions) flagChanged(name string) bool {
-	return o.flags != nil && o.flags.Changed(name)
-}
-
 func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestationPayload) error {
 	var err error
 
@@ -91,12 +87,11 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 
 	if o.commitSHA != "" {
 		payload.Commit, err = commitInfoRequest{
-			repoRoot:         o.srcRepoRoot,
-			sha:              o.commitSHA,
-			redacted:         o.redactedCommitInfo,
-			commitExplicit:   o.flagChanged("commit"),
-			repoRootExplicit: o.flagChanged("repo-root"),
-			requiredFor:      o.commitRequiredFor,
+			repoRoot:    o.srcRepoRoot,
+			sha:         o.commitSHA,
+			redacted:    o.redactedCommitInfo,
+			flags:       o.flags,
+			requiredFor: o.commitRequiredFor,
 		}.resolve()
 		if err != nil {
 			return err
@@ -132,13 +127,32 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 }
 
 type commitInfoRequest struct {
-	repoRoot string
-	sha      string
-	redacted []string
-	// commitExplicit is false when --commit was defaulted from the CI environment.
-	commitExplicit   bool
-	repoRootExplicit bool
-	requiredFor      string
+	repoRoot    string
+	sha         string
+	redacted    []string
+	flags       *pflag.FlagSet
+	requiredFor string
+}
+
+// lookup reads the commit info from the repository at repoRoot, or returns
+// the error from opening it or resolving sha within it.
+func (r commitInfoRequest) lookup() (*gitview.CommitInfo, error) {
+	gv, err := gitview.New(r.repoRoot)
+	if err != nil {
+		return nil, err
+	}
+	return gv.GetCommitInfoFromCommitSHA(r.sha, false, r.redacted)
+}
+
+func (r commitInfoRequest) commitExplicit() bool {
+	return r.flags != nil && r.flags.Changed("commit")
+}
+
+// repoRootExplicit is true only when --repo-root carries a value other than
+// its "." default: bindFlags marks a config or env value as Changed even when
+// it equals the default, and "." itself asks for nothing.
+func (r commitInfoRequest) repoRootExplicit() bool {
+	return r.flags != nil && r.flags.Changed("repo-root") && r.repoRoot != "."
 }
 
 // resolve returns nil, nil when the lookup fails but nothing was asked for
@@ -147,26 +161,23 @@ type commitInfoRequest struct {
 // (kosli-dev/server#6094). An unresolvable commit, as in a shallow clone,
 // deliberately takes the same route.
 func (r commitInfoRequest) resolve() (*gitview.BasicCommitInfo, error) {
-	gv, err := gitview.New(r.repoRoot)
+	commitInfo, err := r.lookup()
 	if err == nil {
-		var commitInfo *gitview.CommitInfo
-		commitInfo, err = gv.GetCommitInfoFromCommitSHA(r.sha, false, r.redacted)
-		if err == nil {
-			return &commitInfo.BasicCommitInfo, nil
-		}
+		return &commitInfo.BasicCommitInfo, nil
 	}
 
-	origin := "--commit " + r.sha
-	if !r.commitExplicit {
-		origin += " (defaulted from the CI environment)"
+	describedCommit := "--commit " + r.sha
+	if !r.commitExplicit() {
+		describedCommit += " (defaulted from the CI environment)"
 	}
 	switch {
 	case r.requiredFor != "":
-		return nil, fmt.Errorf("failed to get commit info for %s: %s. The commit is required to %s, so point --repo-root at a repository containing it", origin, err, r.requiredFor)
-	case r.commitExplicit || r.repoRootExplicit:
-		return nil, fmt.Errorf("failed to get commit info for %s: %s. Point --repo-root at a repository containing it", origin, err)
+		return nil, fmt.Errorf("failed to get commit info for %s: %s. The commit is required to %s, so point --repo-root at a repository containing it", describedCommit, err, r.requiredFor)
+	case r.commitExplicit() || r.repoRootExplicit():
+		return nil, fmt.Errorf("failed to get commit info for %s: %s. Point --repo-root at a repository containing it", describedCommit, err)
 	}
-	logger.Warn("proceeding without commit info: %s could not be read: %s. Kosli binds an attestation reported before its artifact through this commit, so point --repo-root at a repository containing it if that binding is needed.", origin, err)
+	logger.Warn("proceeding without commit info: %s could not be read: %s.", describedCommit, err)
+	logger.Warn("Kosli binds an attestation reported before its artifact through this commit, so point --repo-root at a repository containing it if that binding is needed.")
 	return nil, nil
 }
 
