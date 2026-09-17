@@ -8,14 +8,10 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// AttestationCommitInfoTestSuite guards how a failed commit lookup is reported.
-// A --commit defaulted from the CI environment must not fail a command that
-// asked for no repository (kosli-dev/server#6094, kosli-dev/server#5615), while
-// anything asked for explicitly, or needed by the command, still fails.
-//
-// The CI default exists only while KOSLI_TESTS is unset, because DefaultValue
-// returns "" under it. inCI unsets it around a command run, as TestDefaultValue
-// does, and simulates a GitHub Actions job whose GITHUB_SHA is the given commit.
+// AttestationCommitInfoTestSuite covers how a failed commit lookup is reported
+// (kosli-dev/server#6094, kosli-dev/server#5615). The CI default exists only
+// while KOSLI_TESTS is unset, because DefaultValue returns "" under it, so inCI
+// unsets it around the command run.
 type AttestationCommitInfoTestSuite struct {
 	suite.Suite
 	headHash              string
@@ -138,8 +134,6 @@ func (suite *AttestationCommitInfoTestSuite) TestExplicitCommitIsAttached() {
 	runTestCmd(suite.T(), tests)
 }
 
-// The commands that do their work from the commit get one error naming what
-// needs it, not a warning followed by a nil dereference.
 func (suite *AttestationCommitInfoTestSuite) TestCommandsNeedingTheCommitFail() {
 	suite.T().Chdir(suite.T().TempDir())
 	suite.inCI(suite.headHash, func() {
@@ -156,8 +150,8 @@ func (suite *AttestationCommitInfoTestSuite) TestCommandsNeedingTheCommitFail() 
 	})
 }
 
-// RequireFlags keeps --commit non-empty for these commands, so this guards the
-// nil dereference that would follow if that ever changed.
+// Unreachable from the CLI while RequireFlags keeps --commit non-empty; guards
+// the nil dereference that would follow if that changed.
 func (suite *AttestationCommitInfoTestSuite) TestCommandsNeedingTheCommitFailWithoutOne() {
 	o := &CommonAttestationOptions{
 		fingerprintOptions:      &fingerprintOptions{},

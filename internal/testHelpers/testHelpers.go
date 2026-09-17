@@ -54,8 +54,8 @@ func GithubPRNumber() int {
 
 // CloneGitRepo clones url into cloneTo, which must already exist.
 func CloneGitRepo(url, cloneTo string) (*git.Repository, error) {
-	// Resolved for the same reason as in InitializeGitRepo below. EvalSymlinks
-	// fails on a missing path, hence the precondition.
+	// osfs resolves symlinks in cloneTo but not in the ".git" path built from
+	// it, so resolve first to keep the two roots consistent.
 	resolvedCloneTo, err := filepath.EvalSymlinks(cloneTo)
 	if err != nil {
 		return nil, err

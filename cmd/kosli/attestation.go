@@ -57,11 +57,10 @@ type CommonAttestationOptions struct {
 	repoProvider            string
 	repoURLExplicit         bool
 	repoNameExplicit        bool
-	// flags is the command's flag set, kept so run can tell a passed flag from
-	// a defaulted one after parsing.
+	// flags lets run tell a passed flag from a defaulted one.
 	flags *pflag.FlagSet
-	// commitRequiredFor names what the command cannot do without the commit,
-	// e.g. "find pull requests". Empty when commit info is optional.
+	// commitRequiredFor completes "the commit is required to ..."; empty when
+	// commit info is optional.
 	commitRequiredFor string
 }
 
@@ -132,27 +131,21 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	return err
 }
 
-// commitInfoRequest is one attempt to read the commit info for a payload from
-// the repository at repoRoot.
 type commitInfoRequest struct {
 	repoRoot string
 	sha      string
 	redacted []string
 	// commitExplicit is false when --commit was defaulted from the CI environment.
-	commitExplicit bool
-	// repoRootExplicit is true when --repo-root was passed rather than left at ".".
+	commitExplicit   bool
 	repoRootExplicit bool
-	// requiredFor names what the command cannot do without the commit; empty
-	// when commit info is optional.
-	requiredFor string
+	requiredFor      string
 }
 
-// resolve returns nil, nil when the lookup fails but neither the commit nor
-// the repository was asked for: a --commit defaulted from CI in a job with no
-// checked-out repository must not fail the command (kosli-dev/server#6094,
-// kosli-dev/server#5615). A commit that is not in the repository, as in a
-// shallow clone, is the same surprise for the same reason and takes the same
-// route. Anything asked for explicitly, or needed by the command, still fails.
+// resolve returns nil, nil when the lookup fails but nothing was asked for
+// explicitly and the command can do without the commit: a CI-defaulted
+// --commit must not fail a job with no checked-out repository
+// (kosli-dev/server#6094). An unresolvable commit, as in a shallow clone,
+// deliberately takes the same route.
 func (r commitInfoRequest) resolve() (*gitview.BasicCommitInfo, error) {
 	gv, err := gitview.New(r.repoRoot)
 	if err == nil {
