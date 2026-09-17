@@ -133,7 +133,6 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoURLExplicit = cmd.Flags().Changed("repo-url")
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
-			o.commitSHAExplicit = cmd.Flags().Changed("commit")
 			return o.run(args)
 		},
 	}

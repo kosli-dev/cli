@@ -9,6 +9,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/spf13/pflag"
 )
 
 const commitDescription = `You can optionally associate the attestation to a git commit using ^--commit^ (requires access to a git repo).
@@ -56,7 +57,16 @@ type CommonAttestationOptions struct {
 	repoProvider            string
 	repoURLExplicit         bool
 	repoNameExplicit        bool
-	commitSHAExplicit       bool
+	// flags is the command's flag set, kept so run can tell a passed flag from
+	// a defaulted one after parsing.
+	flags *pflag.FlagSet
+	// commitRequiredFor names what the command cannot do without the commit,
+	// e.g. "find pull requests". Empty when commit info is optional.
+	commitRequiredFor string
+}
+
+func (o *CommonAttestationOptions) flagChanged(name string) bool {
+	return o.flags != nil && o.flags.Changed(name)
 }
 
 func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestationPayload) error {
@@ -81,10 +91,19 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	}
 
 	if o.commitSHA != "" {
-		payload.Commit, err = resolveCommitInfo(o.srcRepoRoot, o.commitSHA, o.commitSHAExplicit, o.redactedCommitInfo)
+		payload.Commit, err = commitInfoRequest{
+			repoRoot:         o.srcRepoRoot,
+			sha:              o.commitSHA,
+			redacted:         o.redactedCommitInfo,
+			commitExplicit:   o.flagChanged("commit"),
+			repoRootExplicit: o.flagChanged("repo-root"),
+			requiredFor:      o.commitRequiredFor,
+		}.resolve()
 		if err != nil {
 			return err
 		}
+	} else if o.commitRequiredFor != "" {
+		return fmt.Errorf("no commit info is available, and the commit is required to %s. Pass --commit", o.commitRequiredFor)
 	}
 
 	payload.GitRepoInfo, err = getGitRepoInfoFromEnvironment()
@@ -113,22 +132,48 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	return err
 }
 
-// resolveCommitInfo returns nil when git cannot supply the commit info and the
-// commit was not asked for explicitly, so a CI-defaulted --commit does not fail
-// the command in a job with no checked-out repository (#6094).
-func resolveCommitInfo(srcRepoRoot, commitSHA string, explicit bool, redactedCommitInfo []string) (*gitview.BasicCommitInfo, error) {
-	gv, err := gitview.New(srcRepoRoot)
+// commitInfoRequest is one attempt to read the commit info for a payload from
+// the repository at repoRoot.
+type commitInfoRequest struct {
+	repoRoot string
+	sha      string
+	redacted []string
+	// commitExplicit is false when --commit was defaulted from the CI environment.
+	commitExplicit bool
+	// repoRootExplicit is true when --repo-root was passed rather than left at ".".
+	repoRootExplicit bool
+	// requiredFor names what the command cannot do without the commit; empty
+	// when commit info is optional.
+	requiredFor string
+}
+
+// resolve returns nil, nil when the lookup fails but neither the commit nor
+// the repository was asked for: a --commit defaulted from CI in a job with no
+// checked-out repository must not fail the command (kosli-dev/server#6094,
+// kosli-dev/server#5615). A commit that is not in the repository, as in a
+// shallow clone, is the same surprise for the same reason and takes the same
+// route. Anything asked for explicitly, or needed by the command, still fails.
+func (r commitInfoRequest) resolve() (*gitview.BasicCommitInfo, error) {
+	gv, err := gitview.New(r.repoRoot)
 	if err == nil {
 		var commitInfo *gitview.CommitInfo
-		commitInfo, err = gv.GetCommitInfoFromCommitSHA(commitSHA, false, redactedCommitInfo)
+		commitInfo, err = gv.GetCommitInfoFromCommitSHA(r.sha, false, r.redacted)
 		if err == nil {
 			return &commitInfo.BasicCommitInfo, nil
 		}
 	}
-	if explicit {
-		return nil, fmt.Errorf("failed to get commit info. %s", err)
+
+	origin := "--commit " + r.sha
+	if !r.commitExplicit {
+		origin += " (defaulted from the CI environment)"
 	}
-	logger.Warn("attesting without commit info: --commit defaulted to %s from the CI environment, but %s. Point --repo-root at a repository containing that commit to attach it.", commitSHA, err.Error())
+	switch {
+	case r.requiredFor != "":
+		return nil, fmt.Errorf("failed to get commit info for %s: %s. The commit is required to %s, so point --repo-root at a repository containing it", origin, err, r.requiredFor)
+	case r.commitExplicit || r.repoRootExplicit:
+		return nil, fmt.Errorf("failed to get commit info for %s: %s. Point --repo-root at a repository containing it", origin, err)
+	}
+	logger.Warn("proceeding without commit info: %s could not be read: %s. Kosli binds an attestation reported before its artifact through this commit, so point --repo-root at a repository containing it if that binding is needed.", origin, err)
 	return nil, nil
 }
 

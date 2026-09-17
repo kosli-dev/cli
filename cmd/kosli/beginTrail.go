@@ -50,7 +50,8 @@ type beginTrailOptions struct {
 	repoURL              string
 	repoProvider         string
 	repoNameExplicit     bool
-	commitSHAExplicit    bool
+	commitExplicit       bool
+	repoRootExplicit     bool
 }
 
 type TrailPayload struct {
@@ -86,7 +87,8 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
-			o.commitSHAExplicit = cmd.Flags().Changed("commit")
+			o.commitExplicit = cmd.Flags().Changed("commit")
+			o.repoRootExplicit = cmd.Flags().Changed("repo-root")
 			return o.run(args)
 		},
 	}
@@ -130,7 +132,13 @@ func (o *beginTrailOptions) run(args []string) error {
 	}
 
 	if o.commitSHA != "" {
-		o.payload.Commit, err = resolveCommitInfo(o.srcRepoRoot, o.commitSHA, o.commitSHAExplicit, o.redactedCommitInfo)
+		o.payload.Commit, err = commitInfoRequest{
+			repoRoot:         o.srcRepoRoot,
+			sha:              o.commitSHA,
+			redacted:         o.redactedCommitInfo,
+			commitExplicit:   o.commitExplicit,
+			repoRootExplicit: o.repoRootExplicit,
+		}.resolve()
 		if err != nil {
 			return err
 		}

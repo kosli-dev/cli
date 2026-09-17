@@ -95,6 +95,7 @@ func addListFlags(cmd *cobra.Command, o *listOptions, customPageLimit ...int) {
 }
 
 func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payload *CommonAttestationPayload, ci string) {
+	o.flags = cmd.Flags()
 	commitFlagDesc := attestationCommitFlag
 	if _, ok := cmd.Annotations["pr"]; ok {
 		commitFlagDesc = "the git merge commit to be checked for associated pull requests."

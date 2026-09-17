@@ -33,13 +33,10 @@ func (o *attestPROptions) run(args []string) error {
 		return err
 	}
 
+	o.commitRequiredFor = "find pull requests"
 	err = o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err
-	}
-
-	if o.payload.Commit == nil {
-		return fmt.Errorf("failed to get commit info, which is required to find pull requests. Pass --commit and point --repo-root at a repository containing it")
 	}
 
 	label := ""
