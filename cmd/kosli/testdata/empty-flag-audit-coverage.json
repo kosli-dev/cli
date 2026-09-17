@@ -601,9 +601,14 @@
  "evaluate policy": {
   "assert": "bool",
   "context": "stringArray",
+  "control": "string",
+  "fingerprint": "string",
+  "flow": "string",
+  "name": "string",
   "output": "string",
   "params": "string",
-  "policy": "string"
+  "policy": "string",
+  "trail": "string"
  },
  "evaluate trail": {
   "assert": "bool",

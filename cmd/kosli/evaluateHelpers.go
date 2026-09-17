@@ -260,7 +260,7 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]in
 		return err
 	}
 
-	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny)
+	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny, "")
 }
 
 // evaluateServerSide asks the Kosli server to evaluate the named trails and
@@ -284,6 +284,7 @@ type serverEvaluation struct {
 	policyRef    string
 	params       string
 	trails       []evaluations.TrailRef
+	decision     *evaluations.Decision
 	output       string
 	assertOnDeny bool
 }
@@ -315,9 +316,10 @@ func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
 
 	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
 	created, err := client.Create(global.Org, evaluations.CreateRequest{
-		Trails: spec.trails,
-		Files:  files,
-		Params: params,
+		Trails:   spec.trails,
+		Files:    files,
+		Params:   params,
+		Decision: spec.decision,
 	})
 	if err != nil {
 		return serverSideRequestError(err)
@@ -347,7 +349,7 @@ func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
 	}
 
 	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
-		spec.output, false, nil, spec.assertOnDeny)
+		spec.output, false, nil, spec.assertOnDeny, evaluation.DecisionAttestationID)
 }
 
 // refuseWhatTheServerCannotDo rejects the options that have no server-side
@@ -468,10 +470,15 @@ func policyBundleKey(ref string) string {
 
 // printEvaluateResult renders a verdict, whatever produced it, so that every
 // evaluation path prints the same bytes for the same verdict.
-func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool) error {
+func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool, decisionID string) error {
 	auditResult := map[string]interface{}{
 		"allow":      result.Allow,
 		"violations": result.Violations,
+	}
+	// Absent everywhere else, so a caller reading a verdict alone parses the
+	// same page as before.
+	if decisionID != "" {
+		auditResult["decision_attestation_id"] = decisionID
 	}
 	if showInput {
 		auditResult["input"] = input
@@ -517,11 +524,15 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 		}
 
 		allow, _ := result["allow"].(bool)
+		decisionRow := []string{}
+		if id, ok := result["decision_attestation_id"].(string); ok && id != "" {
+			decisionRow = append(decisionRow, fmt.Sprintf("DECISION:\t%s", id))
+		}
 
 		var rows []string
 		if allow {
 			rows = append(rows, "RESULT:\tALLOWED")
-			tabFormattedPrint(out, []string{}, rows)
+			tabFormattedPrint(out, []string{}, append(rows, decisionRow...))
 			return nil
 		}
 
@@ -535,13 +546,13 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 					rows = append(rows, fmt.Sprintf("\t%s", v))
 				}
 			}
-			tabFormattedPrint(out, []string{}, rows)
+			tabFormattedPrint(out, []string{}, append(rows, decisionRow...))
 			if assertOnDeny {
 				return fmt.Errorf("policy denied: %v", violations)
 			}
 			return nil
 		}
-		tabFormattedPrint(out, []string{}, rows)
+		tabFormattedPrint(out, []string{}, append(rows, decisionRow...))
 		if assertOnDeny {
 			return fmt.Errorf("policy denied")
 		}

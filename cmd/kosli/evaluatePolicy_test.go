@@ -279,6 +279,137 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTooManyContextsAreRefusedBefore
 	require.Empty(suite.T(), fake.created)
 }
 
+func (suite *EvaluatePolicyCommandTestSuite) TestControlRecordsADecisionWhereItIsTold() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.cmd(server.URL,
+		"--control SDLC-CTRL-0007 --flow release --trail my-trail "+
+			"--fingerprint b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"))
+
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), map[string]interface{}{
+		"control":     "SDLC-CTRL-0007",
+		"name":        "SDLC-CTRL-0007-decision",
+		"flow":        "release",
+		"trail":       "my-trail",
+		"fingerprint": "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c",
+	}, fake.created[0]["decision"])
+}
+
+// The default is computed here and sent, so the name is one the caller can
+// predict.
+func (suite *EvaluatePolicyCommandTestSuite) TestTheDecisionNameDefaultsToTheControl() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.cmd(server.URL,
+		"--control SDLC-CTRL-0007 --flow release --trail my-trail"))
+
+	require.NoError(suite.T(), err)
+	decision := fake.created[0]["decision"].(map[string]interface{})
+	require.Equal(suite.T(), "SDLC-CTRL-0007-decision", decision["name"])
+	require.NotContains(suite.T(), decision, "fingerprint",
+		"a decision about the trail carries no fingerprint")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAGivenNameIsSentAsGiven() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.cmd(server.URL,
+		"--control SDLC-CTRL-0007 --flow release --trail my-trail --name code-review-decision"))
+
+	require.NoError(suite.T(), err)
+	decision := fake.created[0]["decision"].(map[string]interface{})
+	require.Equal(suite.T(), "code-review-decision", decision["name"])
+}
+
+// A pipeline sets the flow and the trail for every command it runs, so
+// carrying them is not a reason to refuse a run that asked for no decision.
+func (suite *EvaluatePolicyCommandTestSuite) TestADestinationWithoutAControlRecordsNothing() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL, "--flow release --trail my-trail"))
+
+	require.NoError(suite.T(), err)
+	require.Regexp(suite.T(), `RESULT:\s+ALLOWED`, combined)
+	require.NotContains(suite.T(), fake.created[0], "decision")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestWhatCannotBeAskedForIsRefusedBeforeAnyRequest() {
+	for _, test := range []struct {
+		name  string
+		extra string
+		says  []string
+	}{
+		{"a name with no control", "--name code-review-decision", []string{"--control"}},
+		{"a fingerprint with no control",
+			"--fingerprint b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c",
+			[]string{"--control"}},
+		{"a control with no destination", "--control SDLC-CTRL-0007", []string{"--flow", "--trail"}},
+		{"a control with no trail", "--control SDLC-CTRL-0007 --flow release", []string{"--trail"}},
+	} {
+		suite.Run(test.name, func() {
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, combined, _, _, err := executeCommandC(suite.cmd(server.URL, test.extra))
+
+			require.Error(suite.T(), err)
+			for _, says := range test.says {
+				require.Contains(suite.T(), err.Error(), says)
+			}
+			require.Empty(suite.T(), fake.created, "nothing is sent")
+			require.NotContains(suite.T(), combined, "RESULT")
+		})
+	}
+}
+
+// The environment satisfies the destination as the flags do.
+func (suite *EvaluatePolicyCommandTestSuite) TestTheDestinationCanComeFromTheEnvironment() {
+	suite.T().Setenv("KOSLI_FLOW", "release")
+	suite.T().Setenv("KOSLI_TRAIL", "my-trail")
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.cmd(server.URL, "--control SDLC-CTRL-0007"))
+
+	require.NoError(suite.T(), err)
+	decision := fake.created[0]["decision"].(map[string]interface{})
+	require.Equal(suite.T(), "release", decision["flow"])
+	require.Equal(suite.T(), "my-trail", decision["trail"])
+}
+
+// A denial is a decision: it is recorded whether or not the caller asked the
+// command to fail.
+func (suite *EvaluatePolicyCommandTestSuite) TestADenialAsksForItsDecisionToo() {
+	server, fake := newFakeEvaluations(suite.T(), verdictDenied)
+
+	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL,
+		"--control SDLC-CTRL-0007 --flow release --trail my-trail --assert"))
+
+	require.Error(suite.T(), err, "--assert still fails the step")
+	require.Contains(suite.T(), err.Error(), "policy denied")
+	require.Regexp(suite.T(), `RESULT:\s+DENIED`, combined)
+	require.Contains(suite.T(), fake.created[0], "decision")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestTheRecordedDecisionIsReported() {
+	server, _ := newFakeEvaluations(suite.T(), verdictAllowedWithDecision)
+
+	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL,
+		"--control SDLC-CTRL-0007 --flow release --trail my-trail"))
+
+	require.NoError(suite.T(), err)
+	require.Contains(suite.T(), combined, "01DECISION")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestTheRecordedDecisionIsReportedInJson() {
+	server, _ := newFakeEvaluations(suite.T(), verdictAllowedWithDecision)
+
+	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL,
+		"--control SDLC-CTRL-0007 --flow release --trail my-trail --output json"))
+
+	require.NoError(suite.T(), err)
+	require.Contains(suite.T(), combined, `"decision_attestation_id": "01DECISION"`)
+}
+
 func (suite *EvaluatePolicyCommandTestSuite) TestADryRunSendsNothing() {
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 

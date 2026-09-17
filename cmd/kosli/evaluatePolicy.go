@@ -18,6 +18,10 @@ recorded it, and the verdict is printed here.
 Name what to evaluate with ` + "`--context trail=<flow>/<trail>`" + `, repeated once per
 trail. Trails named in one command are all evaluated at the same instant.
 
+Pass ` + "`--control`" + ` to record the outcome as a decision against that control, in the
+` + "`--flow`" + ` and ` + "`--trail`" + ` given. The decision is recorded where the policy runs, so
+the verdict is never asserted from here. Without ` + "`--control`" + ` nothing is recorded.
+
 Use ` + "`--params`" + ` to pass values the policy reads as ` + "`data.params`" + `.
 Pass ` + "`--assert`" + ` to exit with a non-zero status when the policy denies.
 Use ` + "`--output json`" + ` for structured output.`
@@ -46,6 +50,17 @@ kosli evaluate policy \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
+# evaluate a policy and record the outcome as a decision:
+kosli evaluate policy \
+	--context trail=yourFlowName/yourTrailName \
+	--policy yourPolicyFile.rego \
+	--control yourControlIdentifier \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--fingerprint yourArtifactFingerprint \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # evaluate a policy and fail the step when it denies:
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
@@ -55,11 +70,16 @@ kosli evaluate policy \
 	--org yourOrgName`
 
 type evaluatePolicyOptions struct {
-	contexts  []string
-	policyRef string
-	params    string
-	output    string
-	assert    bool
+	contexts    []string
+	policyRef   string
+	params      string
+	output      string
+	assert      bool
+	control     string
+	flowName    string
+	trailName   string
+	name        string
+	fingerprint string
 }
 
 func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
@@ -87,6 +107,11 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, policyAssertFlag)
+	cmd.Flags().StringVar(&o.control, "control", "", policyControlFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", policyDecisionFlowFlag)
+	cmd.Flags().StringVar(&o.trailName, "trail", "", policyDecisionTrailFlag)
+	cmd.Flags().StringVar(&o.name, "name", "", policyDecisionNameFlag)
+	cmd.Flags().StringVar(&o.fingerprint, "fingerprint", "", policyDecisionFingerprintFlag)
 
 	err := RequireFlags(cmd, []string{"context", "policy"})
 	if err != nil {
@@ -102,13 +127,62 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 		return err
 	}
 
+	decision, err := o.decision()
+	if err != nil {
+		return err
+	}
+
 	return runServerEvaluation(out, serverEvaluation{
 		policyRef:    o.policyRef,
 		params:       o.params,
 		trails:       trails,
+		decision:     decision,
 		output:       o.output,
 		assertOnDeny: o.assert,
 	})
+}
+
+// decision resolves where the outcome is recorded, or nil where none was
+// asked for. The flags are read as resolved values rather than as flags the
+// caller typed, so KOSLI_FLOW and KOSLI_TRAIL satisfy the destination too.
+func (o *evaluatePolicyOptions) decision() (*evaluations.Decision, error) {
+	if o.control == "" {
+		// Accepting these silently would look like a decision was recorded.
+		if o.name != "" || o.fingerprint != "" {
+			return nil, fmt.Errorf(
+				"--name and --fingerprint record a decision, so they need --control")
+		}
+		// --flow and --trail are not refused with them: a pipeline sets those
+		// for every command it runs, and without a control they name nothing.
+		return nil, nil
+	}
+
+	var missing []string
+	if o.flowName == "" {
+		missing = append(missing, "--flow")
+	}
+	if o.trailName == "" {
+		missing = append(missing, "--trail")
+	}
+	if len(missing) > 0 {
+		return nil, fmt.Errorf(
+			"a decision is recorded in a trail, so --control needs %s "+
+				"(set as flags, or as KOSLI_FLOW and KOSLI_TRAIL)",
+			strings.Join(missing, " and "))
+	}
+
+	name := o.name
+	if name == "" {
+		name = o.control + "-decision"
+	}
+
+	return &evaluations.Decision{
+		Control:     o.control,
+		Name:        name,
+		Flow:        o.flowName,
+		Trail:       o.trailName,
+		Fingerprint: o.fingerprint,
+	}, nil
 }
 
 // parseTrailContexts reads the --context values as trail references, keeping
