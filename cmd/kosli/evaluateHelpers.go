@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -35,6 +36,10 @@ const policyMaxBytes = 5 << 20 // 5 MiB
 // makes this refuse what the API would accept, so the two are worth comparing
 // whenever that schema changes.
 const maxServerSideTrails = 100
+
+// maxPolicyBundleFiles mirrors the ceiling the evaluations API publishes on
+// the entries in a policy bundle.
+const maxPolicyBundleFiles = 100
 
 // serverPolicyMaxBytes mirrors the cap the evaluations API publishes on a
 // policy bundle, which counts the names as well as the sources. It is a fifth
@@ -66,7 +71,7 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
-	cmd.Flags().StringVar(&o.params, "params", "", "[optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.")
+	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, "[optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.")
 	cmd.Flags().BoolVar(&o.noAssert, "no-assert", false, "[optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.")
 	cmd.MarkFlagsMutuallyExclusive("assert", "no-assert")
@@ -260,7 +265,7 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]in
 		return err
 	}
 
-	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny)
+	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny, "")
 }
 
 // evaluateServerSide asks the Kosli server to evaluate the named trails and
@@ -271,33 +276,50 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 		return err
 	}
 
-	if len(trails) > maxServerSideTrails {
+	return runServerEvaluation(out, serverEvaluation{
+		policyRef:    o.policyRef,
+		params:       o.params,
+		trails:       trails,
+		output:       o.output,
+		assertOnDeny: o.assertOnDeny(),
+	})
+}
+
+type serverEvaluation struct {
+	policyRef    string
+	params       string
+	trails       []evaluations.TrailRef
+	decision     *evaluations.Decision
+	output       string
+	assertOnDeny bool
+}
+
+// runServerEvaluation is shared by every command that evaluates away from this
+// machine, so they cannot drift on what they send or on how an outcome reads.
+func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
+	if len(spec.trails) > maxServerSideTrails {
 		return fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
-			maxServerSideTrails, len(trails))
+			maxServerSideTrails, len(spec.trails))
 	}
 
 	// Parsed before the policy is read: --params is local and cheap to check,
 	// and a remote policy fetched first would be thrown away by a typo in it.
-	params, err := parseParams(o.params)
+	params, err := parseParams(spec.params)
 	if err != nil {
 		return err
 	}
 
-	policySource, err := loadPolicy(o.policyRef)
-	if err != nil {
-		return err
-	}
-
-	files, err := policyBundle(o.policyRef, policySource)
+	files, err := policyBundle(spec.policyRef)
 	if err != nil {
 		return err
 	}
 
 	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
 	created, err := client.Create(global.Org, evaluations.CreateRequest{
-		Trails: trails,
-		Files:  files,
-		Params: params,
+		Trails:   spec.trails,
+		Files:    files,
+		Params:   params,
+		Decision: spec.decision,
 	})
 	if err != nil {
 		return serverSideRequestError(err)
@@ -327,7 +349,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 	}
 
 	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
-		o.output, false, nil, o.assertOnDeny())
+		spec.output, false, nil, spec.assertOnDeny, evaluation.DecisionAttestationID)
 }
 
 // refuseWhatTheServerCannotDo rejects the options that have no server-side
@@ -415,16 +437,79 @@ func serverVerdict(result *evaluations.Result) *evaluate.Result {
 	return &evaluate.Result{Allow: result.Allow, Violations: violations}
 }
 
-// policyBundle wraps the policy source as the one-file bundle the API takes,
-// refusing one too large for it rather than letting the request be rejected.
-// The cap counts the names as well as the sources, exactly as the API counts.
-func policyBundle(ref string, source []byte) (map[string]string, error) {
-	key := policyBundleKey(ref)
-	if size := len(key) + len(source); size > serverPolicyMaxBytes {
+// policyBundle reads what --policy names as the bundle the API takes. The caps
+// are checked here so an oversized bundle is named as such rather than rejected
+// as an opaque 422, and the byte cap counts the names as well as the sources,
+// exactly as the API counts.
+func policyBundle(ref string) (map[string]string, error) {
+	files, err := policyBundleFiles(ref)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(files) > maxPolicyBundleFiles {
+		return nil, fmt.Errorf("policy bundle holds %d files, over the limit of %d",
+			len(files), maxPolicyBundleFiles)
+	}
+	size := 0
+	for name, source := range files {
+		size += len(name) + len(source)
+	}
+	if size > serverPolicyMaxBytes {
 		return nil, fmt.Errorf("policy bundle is %d bytes, over the %d byte limit",
 			size, serverPolicyMaxBytes)
 	}
-	return map[string]string{key: string(source)}, nil
+	return files, nil
+}
+
+func policyBundleFiles(ref string) (map[string]string, error) {
+	if !isRemotePolicyRef(ref) {
+		if info, err := os.Stat(ref); err == nil && info.IsDir() {
+			return policyDirectory(ref)
+		}
+	}
+
+	source, err := loadPolicy(ref)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{policyBundleKey(ref): string(source)}, nil
+}
+
+// policyDirectory collects every file below root, keyed by its path relative
+// to it. Nothing is left out by name: a rule here would refuse bundles the
+// evaluator that runs them would have accepted.
+func policyDirectory(root string) (map[string]string, error) {
+	files := map[string]string{}
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			return nil
+		}
+		source, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("failed to read policy file: %w", err)
+		}
+		name, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		// Relative paths reach the API spelled one way, whatever this machine
+		// spells them with.
+		files[filepath.ToSlash(name)] = string(source)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(files) == 0 {
+		// The API takes at least one file, so an empty directory is named here
+		// rather than sent to be refused.
+		return nil, fmt.Errorf("no file found under %s", root)
+	}
+	return files, nil
 }
 
 // policyBundleKey names the policy inside the uploaded bundle. Only the base
@@ -448,10 +533,15 @@ func policyBundleKey(ref string) string {
 
 // printEvaluateResult renders a verdict, whatever produced it, so that every
 // evaluation path prints the same bytes for the same verdict.
-func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool) error {
+func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool, decisionID string) error {
 	auditResult := map[string]interface{}{
 		"allow":      result.Allow,
 		"violations": result.Violations,
+	}
+	// Absent everywhere else, so a caller reading a verdict alone parses the
+	// same page as before.
+	if decisionID != "" {
+		auditResult["decision_attestation_id"] = decisionID
 	}
 	if showInput {
 		auditResult["input"] = input
@@ -497,11 +587,15 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 		}
 
 		allow, _ := result["allow"].(bool)
+		decisionRow := []string{}
+		if id, ok := result["decision_attestation_id"].(string); ok && id != "" {
+			decisionRow = append(decisionRow, fmt.Sprintf("DECISION:\t%s", id))
+		}
 
 		var rows []string
 		if allow {
 			rows = append(rows, "RESULT:\tALLOWED")
-			tabFormattedPrint(out, []string{}, rows)
+			tabFormattedPrint(out, []string{}, append(rows, decisionRow...))
 			return nil
 		}
 
@@ -515,13 +609,13 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 					rows = append(rows, fmt.Sprintf("\t%s", v))
 				}
 			}
-			tabFormattedPrint(out, []string{}, rows)
+			tabFormattedPrint(out, []string{}, append(rows, decisionRow...))
 			if assertOnDeny {
 				return fmt.Errorf("policy denied: %v", violations)
 			}
 			return nil
 		}
-		tabFormattedPrint(out, []string{}, rows)
+		tabFormattedPrint(out, []string{}, append(rows, decisionRow...))
 		if assertOnDeny {
 			return fmt.Errorf("policy denied")
 		}

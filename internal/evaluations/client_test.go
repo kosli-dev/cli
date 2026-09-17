@@ -259,3 +259,79 @@ func TestCreateSurvivesAMessageThatIsNotText(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateSendsNoDecisionWhenNoneIsAskedFor(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusCreated, createdBody)
+
+	_, err := newTestClient(t, server.URL, false).Create("my-org", aCreateRequest())
+	require.NoError(t, err)
+
+	// The body forbids what it does not name, so an absent decision is absent
+	// rather than null.
+	require.NotContains(t, seen.body, "decision")
+}
+
+func TestCreateSendsTheDecisionItWasGiven(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusCreated, createdBody)
+
+	request := aCreateRequest()
+	request.Decision = &Decision{
+		Control:     "SDLC-CTRL-0007",
+		Name:        "SDLC-CTRL-0007-decision",
+		Flow:        "release",
+		Trail:       "my-trail",
+		Fingerprint: "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c",
+	}
+
+	_, err := newTestClient(t, server.URL, false).Create("my-org", request)
+	require.NoError(t, err)
+
+	require.Equal(t, map[string]interface{}{
+		"control":     "SDLC-CTRL-0007",
+		"name":        "SDLC-CTRL-0007-decision",
+		"flow":        "release",
+		"trail":       "my-trail",
+		"fingerprint": "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c",
+	}, seen.body["decision"])
+}
+
+// A decision about the trail itself carries no fingerprint, and an empty one
+// is not the same as none.
+func TestCreateLeavesOutAnAbsentFingerprint(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusCreated, createdBody)
+
+	request := aCreateRequest()
+	request.Decision = &Decision{
+		Control: "SDLC-CTRL-0007",
+		Name:    "SDLC-CTRL-0007-decision",
+		Flow:    "release",
+		Trail:   "my-trail",
+	}
+
+	_, err := newTestClient(t, server.URL, false).Create("my-org", request)
+	require.NoError(t, err)
+
+	require.NotContains(t, seen.body["decision"], "fingerprint")
+}
+
+func TestGetReadsTheDecisionTheEvaluationWrote(t *testing.T) {
+	server, _ := newFakeServer(t, http.StatusOK,
+		`{"id":"01JABCDEF","status":"completed","requested_at":1.0,"recorded_at":1.0,`+
+			`"result":{"allow":true},"decision_attestation_id":"01DECISION"}`)
+
+	evaluation, err := newTestClient(t, server.URL, false).Get("my-org", "01JABCDEF")
+	require.NoError(t, err)
+
+	require.Equal(t, "01DECISION", evaluation.DecisionAttestationID)
+}
+
+// An evaluation asked for no decision names none.
+func TestGetReadsNoDecisionWhereNoneWasWritten(t *testing.T) {
+	server, _ := newFakeServer(t, http.StatusOK,
+		`{"id":"01JABCDEF","status":"completed","requested_at":1.0,"recorded_at":1.0,"result":{"allow":true}}`)
+
+	evaluation, err := newTestClient(t, server.URL, false).Get("my-org", "01JABCDEF")
+	require.NoError(t, err)
+
+	require.Empty(t, evaluation.DecisionAttestationID)
+}

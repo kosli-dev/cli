@@ -44,6 +44,8 @@ const (
 		`"result":{"allow":true}}`
 	verdictDenied = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
 		`"result":{"allow":false,"violations":["change is not approved"]}}`
+	verdictAllowedWithDecision = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"result":{"allow":true},"decision_attestation_id":"01DECISION"}`
 
 	// What the local path prints for a verdict with nothing to report. The
 	// server path has to match it byte for byte, or the two disagree on the

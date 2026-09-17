@@ -32,9 +32,22 @@ type TrailRef struct {
 // single instant, which is why several trails belong in one request rather
 // than in one request each.
 type CreateRequest struct {
-	Trails []TrailRef
-	Files  map[string]string
-	Params map[string]interface{}
+	Trails   []TrailRef
+	Files    map[string]string
+	Params   map[string]interface{}
+	Decision *Decision
+}
+
+// Decision is where an evaluation records its outcome, and against which
+// control. The evaluation writes it itself, so the verdict never travels back
+// through a caller that could assert a different one.
+type Decision struct {
+	Control string `json:"control"`
+	Name    string `json:"name"`
+	Flow    string `json:"flow"`
+	Trail   string `json:"trail"`
+	// Absent, the decision is about the trail rather than an artifact in it.
+	Fingerprint string `json:"fingerprint,omitempty"`
 }
 
 // Result is the policy's verdict. A denial is a result, not a failure.
@@ -61,6 +74,8 @@ type Evaluation struct {
 	RecordedAt  float64  `json:"recorded_at"`
 	Result      *Result  `json:"result"`
 	Failure     *Failure `json:"error"`
+	// Empty until a decision that was asked for has been written.
+	DecisionAttestationID string `json:"decision_attestation_id"`
 }
 
 // IsTerminal reports whether the evaluation has finished and will not change.
@@ -108,9 +123,10 @@ func (c *Client) Create(org string, request CreateRequest) (*Evaluation, error) 
 		Token:  c.token,
 		DryRun: c.dryRun,
 		Payload: createPayload{
-			Context: createContext{Trails: request.Trails},
-			Policy:  inlinePolicy{Files: request.Files},
-			Params:  params,
+			Context:  createContext{Trails: request.Trails},
+			Policy:   inlinePolicy{Files: request.Files},
+			Params:   params,
+			Decision: request.Decision,
 		},
 	})
 	if err != nil {
@@ -126,9 +142,10 @@ func (c *Client) Create(org string, request CreateRequest) (*Evaluation, error) 
 // every model behind this endpoint forbids unknown fields: the wire shape has
 // to be stated exactly here rather than inherited from a caller's struct.
 type createPayload struct {
-	Context createContext          `json:"context"`
-	Policy  inlinePolicy           `json:"policy"`
-	Params  map[string]interface{} `json:"params"`
+	Context  createContext          `json:"context"`
+	Policy   inlinePolicy           `json:"policy"`
+	Params   map[string]interface{} `json:"params"`
+	Decision *Decision              `json:"decision,omitempty"`
 }
 
 type createContext struct {

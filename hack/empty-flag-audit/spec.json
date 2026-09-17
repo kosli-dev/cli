@@ -4776,5 +4776,59 @@
         "json"
       ]
     ]
+  },
+  "evaluate policy": {
+    "args": [],
+    "flags": {
+      "context": "trail={flow}/{trail}",
+      "policy": "cmd/kosli/testdata/policies/allow-all.rego"
+    },
+    "baseline_ok": false,
+    "error": "the evaluation is created and run away from this machine, and the server the audit runs against does not offer it",
+    "needs": "server-side evaluation",
+    "flags_to_test": [
+      "assert",
+      "context",
+      "control",
+      "fingerprint",
+      "flow",
+      "name",
+      "output",
+      "params",
+      "policy",
+      "trail"
+    ],
+    "flag_values": {
+      "assert": "true",
+      "context": "trail={flow}/{trail}",
+      "control": "{control}",
+      "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
+      "flow": "{flow}",
+      "name": "{name}",
+      "output": "json",
+      "params": "{}",
+      "policy": "cmd/kosli/testdata/policies/allow-all.rego",
+      "trail": "{trail}"
+    },
+    "setup": [
+      {
+        "argv": [
+          "create",
+          "flow",
+          "{flow}",
+          "--use-empty-template"
+        ]
+      },
+      {
+        "argv": [
+          "begin",
+          "trail",
+          "{trail}",
+          "--flow",
+          "{flow}"
+        ]
+      }
+    ],
+    "verify": []
   }
 }
