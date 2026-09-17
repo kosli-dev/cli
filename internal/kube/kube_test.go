@@ -616,6 +616,7 @@ func TestNewPodDataArtifactName(t *testing.T) {
 		nginxSha    = "644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
 		busyboxSha  = "123a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
 		imageID     = "sha256:8dd77ef2d82eade8dcf2c08ea032bd9cba04c9d28ace2ccf08ad6804c27bf14f"
+		imageIDSha  = "8dd77ef2d82eade8dcf2c08ea032bd9cba04c9d28ace2ccf08ad6804c27bf14f"
 		nginxDigest = "nginx:1.25@sha256:644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36"
 	)
 	for _, tc := range []struct {
@@ -665,9 +666,11 @@ func TestNewPodDataArtifactName(t *testing.T) {
 			wantDigests: map[string]string{"nginx@sha256:" + nginxSha: nginxSha},
 		},
 		{
-			name:        "a container status with no name at all is reported under its image ID",
-			pod:         podWithStatuses("pod", corev1.PodRunning, containerStatus{"", nginxImageID}),
-			wantDigests: map[string]string{"nginx@sha256:" + nginxSha: nginxSha},
+			// a bare-digest ImageID, so this reaches the last fallback rather than
+			// returning at the isNamed(imageID) check above it
+			name:        "a container status with no name and no named image ID is reported under the digest",
+			pod:         podWithStatuses("pod", corev1.PodRunning, containerStatus{"", imageID}),
+			wantDigests: map[string]string{imageID: imageIDSha},
 		},
 		{
 			name: "two digest-pinned containers keep distinct names",

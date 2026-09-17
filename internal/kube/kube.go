@@ -84,29 +84,12 @@ func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 	}, nil
 }
 
-// artifactName is the name the artifact is reported under.
-//
-// cs.Image is whatever the container runtime reports, and containerd names an
-// image record by the reference it was pulled with. An image pulled by digest has
-// no tagged name in the store, so the runtime reports the image ID instead and the
-// artifact would be named after a bare sha256 nobody can read. The pod still
-// carries readable references in that case, so prefer them, most informative
-// first:
-//
-//  1. the runtime's own name, when it has one
-//  2. this container's image in the pod spec (docker.io/library/nginx:1.25)
-//  3. the image ID (docker.io/library/nginx@sha256:... - repository, no tag)
-//
-// The spec image is normalized to the form the runtime would have reported had it
-// held the image under its tag, so the same image is named the same way whether or
-// not the node had it cached. Its digest is dropped rather than carried into the
-// name: the fingerprint already records it, from cs.ImageID, and the two are
-// separate values that can disagree while an in-place image update is rolling.
-// internal/cloudrun does the same for the same reason, resolving digest-pinned
-// images to a tag-shaped name.
-//
-// The fingerprint is unaffected throughout: it always comes from cs.ImageID.
-// See https://github.com/kosli-dev/cli/issues/1203
+// artifactName is the name the artifact is reported under. containerd names an
+// image record by the reference it was pulled with, so an image pulled by digest
+// has no tagged name and the runtime reports its image ID instead. Fall back to
+// the pod's own references then, preferring the spec image normalized to the form
+// the runtime uses, so one image gets one name whether or not the node had it
+// cached. See https://github.com/kosli-dev/cli/issues/1203
 func artifactName(pod *corev1.Pod, cs corev1.ContainerStatus) string {
 	if isNamed(cs.Image) {
 		return cs.Image
@@ -122,8 +105,7 @@ func artifactName(pod *corev1.Pod, cs corev1.ContainerStatus) string {
 	if imageID := trimRuntimePrefix(cs.ImageID); isNamed(imageID) {
 		return imageID
 	}
-	// nothing readable to fall back to; the runtime's name is still the truth,
-	// unless the kubelet reported none at all
+	// nothing readable left; the runtime's name still beats no name at all
 	if cs.Image != "" {
 		return cs.Image
 	}
@@ -131,13 +113,12 @@ func artifactName(pod *corev1.Pod, cs corev1.ContainerStatus) string {
 }
 
 // normalizedTagName turns a pod spec image into the tagged name the runtime would
-// report for it, dropping any digest: nginx:1.25@sha256:... becomes
-// docker.io/library/nginx:1.25. It reports false for a reference with no tag, since
-// there is then no name to prefer over the image ID.
+// report for it, dropping any digest: the fingerprint already records that, and a
+// name carrying its own digest can disagree with it. Reports false for an untagged
+// reference, leaving the image ID as the better name.
 func normalizedTagName(image string) (string, bool) {
-	// ParseNormalizedNamed is more permissive than isNamed and reads a bare digest
-	// as a repository with a tag: sha256:8dd77ef... becomes docker.io/library/sha256
-	// tagged 8dd77ef.... Reject those first.
+	// ParseNormalizedNamed reads a bare digest as a repository with a tag:
+	// sha256:8dd77ef... becomes docker.io/library/sha256 tagged 8dd77ef...
 	if !isNamed(image) {
 		return "", false
 	}
@@ -149,8 +130,7 @@ func normalizedTagName(image string) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	// reference.TagNameOnly would default an untagged reference to :latest, which
-	// would be a name the image never had; only a tag actually present is used.
+	// not TagNameOnly: it defaults an untagged reference to :latest
 	return reference.TrimNamed(ref).Name() + ":" + tagged.Tag(), true
 }
 
