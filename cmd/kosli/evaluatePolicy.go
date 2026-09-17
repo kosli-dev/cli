@@ -14,6 +14,7 @@ The policy is evaluated where the trail is stored, against the trail as Kosli
 recorded it, and the verdict is printed here.
 
 Use ` + "`--params`" + ` to pass values the policy reads as ` + "`data.params`" + `.
+Pass ` + "`--assert`" + ` to exit with a non-zero status when the policy denies.
 Use ` + "`--output json`" + ` for structured output.`
 
 const evaluatePolicyExample = `
@@ -32,6 +33,15 @@ kosli evaluate policy \
 	--policy yourPolicyFile.rego \
 	--params '{"protected_branch": "master"}' \
 	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate a policy and fail the step when it denies:
+kosli evaluate policy \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--policy yourPolicyFile.rego \
+	--assert \
+	--api-token yourAPIToken \
 	--org yourOrgName`
 
 type evaluatePolicyOptions struct {
@@ -40,6 +50,7 @@ type evaluatePolicyOptions struct {
 	policyRef string
 	params    string
 	output    string
+	assert    bool
 }
 
 func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
@@ -67,6 +78,7 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.policyRef, "policy", "p", "", "Path or http(s):// URL of a Rego policy to evaluate the trail against.")
 	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().BoolVar(&o.assert, "assert", false, policyAssertFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "policy"})
 	if err != nil {
@@ -78,9 +90,10 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 
 func (o *evaluatePolicyOptions) run(out io.Writer) error {
 	return runServerEvaluation(out, serverEvaluation{
-		policyRef: o.policyRef,
-		params:    o.params,
-		trails:    []evaluations.TrailRef{{Flow: o.flowName, Trail: o.trailName}},
-		output:    o.output,
+		policyRef:    o.policyRef,
+		params:       o.params,
+		trails:       []evaluations.TrailRef{{Flow: o.flowName, Trail: o.trailName}},
+		output:       o.output,
+		assertOnDeny: o.assert,
 	})
 }

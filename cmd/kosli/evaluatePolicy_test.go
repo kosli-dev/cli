@@ -3,14 +3,15 @@ package main
 import (
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/kosli-dev/cli/internal/evaluations"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
-// The evaluation is never run here, so every test drives the stub the
-// server-side suite already stands up: this repository's test environment has
-// no evaluator to reach a verdict with.
+// This repository's test environment has no evaluator, so every test drives
+// the stub the server-side suite stands up.
 type EvaluatePolicyCommandTestSuite struct {
 	suite.Suite
 }
@@ -23,14 +24,13 @@ func (suite *EvaluatePolicyCommandTestSuite) cmd(host, extra string) string {
 		host, extra)
 }
 
-// The command evaluates where the policy runs, so the flags that only make
-// sense on this machine are not offered at all. Hiding them would still leave
-// them reachable; they are simply not there.
+// The flags that only make sense on this machine are absent rather than
+// hidden, because a hidden flag is still reachable.
 func (suite *EvaluatePolicyCommandTestSuite) TestItOffersOnlyItsOwnFlags() {
 	_, combined, _, _, err := executeCommandC("evaluate policy --help")
 
 	require.NoError(suite.T(), err)
-	for _, flag := range []string{"--flow", "--trail", "--policy", "--params", "--output"} {
+	for _, flag := range []string{"--flow", "--trail", "--policy", "--params", "--output", "--assert"} {
 		require.Contains(suite.T(), combined, flag)
 	}
 	for _, flag := range []string{"--server-side", "--attestations", "--show-input", "--no-assert", "--sync"} {
@@ -80,8 +80,8 @@ func (suite *EvaluatePolicyCommandTestSuite) TestItSendsThePolicyAndTheTrailAndP
 	require.Contains(suite.T(), files["allow-all.rego"], "package policy")
 }
 
-// No decision is asked for yet, and the block must be absent rather than sent
-// empty: the body forbids what it does not name.
+// The body forbids what it does not name, so an unasked-for decision block is
+// absent rather than empty.
 func (suite *EvaluatePolicyCommandTestSuite) TestItAsksForNoDecision() {
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
@@ -111,8 +111,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestItPassesParamsOnUnchanged() {
 	}
 }
 
-// The field is required by the API and defaults to empty, so no params must
-// travel as an empty object rather than as a null.
+// The API's params field rejects a null where it accepts an empty object.
 func (suite *EvaluatePolicyCommandTestSuite) TestNoParamsTravelAsAnEmptyObject() {
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
@@ -132,8 +131,8 @@ func (suite *EvaluatePolicyCommandTestSuite) TestItPrintsTheSameJsonAsEvaluateTr
 	require.Equal(suite.T(), localAllowedJSON, combined)
 }
 
-// Asserting arrives with --assert in the next slice. Until then a denial is
-// reported in full and the command exits 0, so nothing half-built is exposed.
+// Asserting is opt-in: recording a decision is not a reason to fail the step
+// that asked for it.
 func (suite *EvaluatePolicyCommandTestSuite) TestADenialPrintsInFullAndExitsZero() {
 	server, _ := newFakeEvaluations(suite.T(), verdictDenied)
 
@@ -142,6 +141,64 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADenialPrintsInFullAndExitsZero
 	require.NoError(suite.T(), err)
 	require.Regexp(suite.T(), `RESULT:\s+DENIED`, combined)
 	require.Contains(suite.T(), combined, "change is not approved")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAssertFailsOnADenial() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDenied)
+
+	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL, "--assert"))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "policy denied")
+	require.Regexp(suite.T(), `RESULT:\s+DENIED`, combined)
+	require.Contains(suite.T(), combined, "change is not approved")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAssertPassesOnAnAllow() {
+	server, _ := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL, "--assert"))
+
+	require.NoError(suite.T(), err)
+	require.Regexp(suite.T(), `RESULT:\s+ALLOWED`, combined)
+}
+
+// The verdict is printed before the assertion, so the page is the same
+// whichever exit code follows.
+func (suite *EvaluatePolicyCommandTestSuite) TestAssertStillPrintsTheVerdictInJson() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDenied)
+
+	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL, "--assert --output json"))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, `"allow": false`)
+	require.Contains(suite.T(), combined, "change is not approved")
+}
+
+// An evaluation that has not answered is never a verdict, with or without
+// --assert.
+func (suite *EvaluatePolicyCommandTestSuite) TestAnExpiredWaitNamesTheEvaluationAndNoVerdict() {
+	for _, extra := range []string{"", "--assert"} {
+		suite.Run("with "+extra, func() {
+			original := serverSideWaitOptions
+			serverSideWaitOptions = evaluations.WaitOptions{
+				Timeout: 20 * time.Millisecond,
+				Initial: time.Millisecond,
+				Max:     2 * time.Millisecond,
+			}
+			defer func() { serverSideWaitOptions = original }()
+
+			server, _ := newFakeEvaluations(suite.T(), createdPending)
+
+			_, combined, _, _, err := executeCommandC(suite.cmd(server.URL, extra))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), "still pending")
+			require.Contains(suite.T(), err.Error(), "01EVAL")
+			require.NotContains(suite.T(), combined, "DENIED")
+			require.NotContains(suite.T(), combined, "ALLOWED")
+		})
+	}
 }
 
 func (suite *EvaluatePolicyCommandTestSuite) TestADryRunSendsNothing() {

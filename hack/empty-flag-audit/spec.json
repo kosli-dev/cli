@@ -4788,6 +4788,7 @@
     "error": "the evaluation is created and run away from this machine, and the server the audit runs against does not offer it",
     "needs": "server-side evaluation",
     "flags_to_test": [
+      "assert",
       "flow",
       "output",
       "params",
@@ -4795,6 +4796,7 @@
       "trail"
     ],
     "flag_values": {
+      "assert": "true",
       "flow": "{flow}",
       "output": "json",
       "params": "{}",

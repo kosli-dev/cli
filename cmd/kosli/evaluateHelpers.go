@@ -280,8 +280,6 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 	})
 }
 
-// serverEvaluation is one evaluation asked of the Kosli server: what to
-// evaluate, against what, and how to report the verdict.
 type serverEvaluation struct {
 	policyRef    string
 	params       string
@@ -290,9 +288,8 @@ type serverEvaluation struct {
 	assertOnDeny bool
 }
 
-// runServerEvaluation creates the evaluation, waits for its verdict and prints
-// it. Shared by every command that evaluates away from this machine, so that
-// they cannot drift on what they send or on how an outcome reads.
+// runServerEvaluation is shared by every command that evaluates away from this
+// machine, so they cannot drift on what they send or on how an outcome reads.
 func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
 	if len(spec.trails) > maxServerSideTrails {
 		return fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",

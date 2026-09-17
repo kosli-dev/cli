@@ -25,10 +25,9 @@ Server-side evaluation reaches the CLI today only through the hidden `--server-s
 - `--policy` accepts a single file or a directory, within the published bundle caps.
 - Output and `--output json` match `kosli evaluate trail`, so a caller switching commands does not re-parse.
 - An organisation without the server-side evaluation entitlement is refused in words that name it.
-
 - `--name` defaults to `<control>-decision`, so the common case names only the control.
 
-**Scope.** Versioned and published policies are out of scope for the ticket, and again by decision for this round: an inline policy is the only policy there is until publishing exists. The policy-bundle digest goes with them. Also out: asynchronous evaluation, migrating our own controls onto this command, `kosli evaluate input`, and removing the client-side evaluator or the hidden `--server-side` flag.
+**Scope.** Asynchronous evaluation is out of the first cut: the command always waits. Versioned and published policies are out of scope for the ticket, and again by decision for this round: an inline policy is the only policy there is until publishing exists. The policy-bundle digest goes with them. Also out: migrating our own controls onto this command, `kosli evaluate input`, and removing the client-side evaluator or the hidden `--server-side` flag.
 
 **Public repository.** This repository is public. The plan, the code and the help text stay at the contract a caller can see — the published API schema, the requests sent and the answers received.
 
@@ -39,7 +38,7 @@ Server-side evaluation reaches the CLI today only through the hidden `--server-s
 Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-policy.md), committed on this branch. Read it before starting any slice: it holds the contract this ticket adds, the command surface, the outcome mapping and a per-slice test list ready to copy into `TODO.md`. It builds on the #6700 plan rather than repeating it. Each slice is independently mergeable.
 
 - [x] Slice 1 — the command exists, evaluates one trail and prints the verdict.
-- [ ] Slice 2 — `--assert` exits non-zero on a denial.
+- [x] Slice 2 — `--assert` exits non-zero on a denial.
 - [ ] Slice 3 — `--control` records a decision, and a destination flag without it is refused.
 - [ ] Slice 4 — server refusals and classified failures, one test per shape, each with a sentence of its own.
 - [ ] Slice 5 — a directory of policy files as one bundle, with the caps refused here.
@@ -60,7 +59,7 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 
 - The command declares its own options rather than inheriting the evaluate commands' shared ones, because four of those flags have no meaning here and inheriting them only to hide them is how two commands drift apart.
 - Asserting is opt-in on this command and the default is silent, which is the reverse of `evaluate trail`. A command that records a decision should not fail a pipeline unless the caller asked it to, and the flag that asks is the one the tutorial already publishes.
-- The command is synchronous and has no asynchronous mode, so `--sync` is not offered: a command whose purpose is recording a decision should not return before the decision exists. An asynchronous mode is a flag and a ticket of its own if anyone asks for one.
+- The first cut of the command is synchronous only, and `--sync` is not offered: with nothing to opt into, the flag would name the one behaviour there is. A command whose purpose is recording a decision should not return before the decision exists. An asynchronous mode, and the `--sync` flag that would pair with it, belong to a later ticket if anyone asks for them.
 - `--name` defaults to `<control>-decision` rather than being required beside `--control`, so the common case names the control once. The default is computed before the request is sent, because a name the caller can predict is worth more than one chosen further away.
 - Nothing is recorded without `--control`, and a destination flag without one is refused rather than ignored: accepting it would read as a decision having been recorded when none was.
 - The verdict printer is reused untouched, so a caller moving from `evaluate trail` does not re-parse. Anything this command has to add — the evaluation id, the recorded decision id — is said around the verdict rather than inside its payload.
@@ -74,5 +73,5 @@ Transcribed from [docs/plans/6920-evaluate-policy.md](../plans/6920-evaluate-pol
 
 ## Next Steps
 
-- [ ] Slice 2: `--assert`, and an expired wait that names the evaluation and prints no verdict.
+- [ ] Slice 3: the decision block, the `--name` default, and the refusal of a destination flag without `--control`.
 - [ ] Check what the create endpoint refuses for each destination failure, against staging, so Slice 5's messages are written from real answers rather than guessed.

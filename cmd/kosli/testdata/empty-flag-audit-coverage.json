@@ -599,6 +599,7 @@
   "show-input": "bool"
  },
  "evaluate policy": {
+  "assert": "bool",
   "flow": "string",
   "output": "string",
   "params": "string",
