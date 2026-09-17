@@ -56,6 +56,7 @@ type CommonAttestationOptions struct {
 	repoProvider            string
 	repoURLExplicit         bool
 	repoNameExplicit        bool
+	commitSHAExplicit       bool
 }
 
 func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestationPayload) error {
@@ -80,15 +81,10 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	}
 
 	if o.commitSHA != "" {
-		gv, err := gitview.New(o.srcRepoRoot)
+		payload.Commit, err = resolveCommitInfo(o.srcRepoRoot, o.commitSHA, o.commitSHAExplicit, o.redactedCommitInfo)
 		if err != nil {
-			return fmt.Errorf("failed to get commit info. %s", err)
+			return err
 		}
-		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false, o.redactedCommitInfo)
-		if err != nil {
-			return fmt.Errorf("failed to get commit info. %s", err)
-		}
-		payload.Commit = &commitInfo.BasicCommitInfo
 	}
 
 	payload.GitRepoInfo, err = getGitRepoInfoFromEnvironment()
@@ -115,6 +111,25 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	// process annotations
 	payload.Annotations, err = processAnnotations(o.annotations)
 	return err
+}
+
+// resolveCommitInfo returns nil when git cannot supply the commit info and the
+// commit was not asked for explicitly, so a CI-defaulted --commit does not fail
+// the command in a job with no checked-out repository (#6094).
+func resolveCommitInfo(srcRepoRoot, commitSHA string, explicit bool, redactedCommitInfo []string) (*gitview.BasicCommitInfo, error) {
+	gv, err := gitview.New(srcRepoRoot)
+	if err == nil {
+		var commitInfo *gitview.CommitInfo
+		commitInfo, err = gv.GetCommitInfoFromCommitSHA(commitSHA, false, redactedCommitInfo)
+		if err == nil {
+			return &commitInfo.BasicCommitInfo, nil
+		}
+	}
+	if explicit {
+		return nil, fmt.Errorf("failed to get commit info. %s", err)
+	}
+	logger.Warn("attesting without commit info: --commit defaulted to %s from the CI environment, but %s. Point --repo-root at a repository containing that commit to attach it.", commitSHA, err.Error())
+	return nil, nil
 }
 
 // mergeGitRepoInfo applies flag overrides onto base (which may be nil) and
