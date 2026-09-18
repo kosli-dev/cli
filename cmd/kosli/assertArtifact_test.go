@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
@@ -259,4 +260,39 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 // a normal test function and pass our suite to suite.Run
 func TestAssertArtifactCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(AssertArtifactCommandTestSuite))
+}
+
+func TestPrintAssertAsTableToleratesMissingFields(t *testing.T) {
+	var buf bytes.Buffer
+	logger.SetInfoOut(&buf)
+	defer logger.SetInfoOut(logger.Out)
+
+	require.NotPanics(t, func() {
+		require.NoError(t, printAssertAsTable(`{"compliant":true}`, &buf, 0))
+	})
+	require.Equal(t, "COMPLIANT\n", buf.String())
+}
+
+func TestPrintAssertAsTableReportsForControl(t *testing.T) {
+	var buf bytes.Buffer
+	logger.SetInfoOut(&buf)
+	defer logger.SetInfoOut(logger.Out)
+
+	raw := `{
+	  "scope": "environment", "compliant": false, "environment": "prod", "html_url": "https://app/x",
+	  "policy_evaluations": [{
+	    "policy_name": "p1", "status": "NON_COMPLIANT",
+	    "rule_evaluations": [{
+	      "ignored": false, "satisfied": false,
+	      "rule": {"definition": {"name": "decision", "type": "decision"}},
+	      "resolutions": [{"type": "missing_attestation", "context": {"for_control": "ctl-1"}}]
+	    }]
+	  }],
+	  "flows": []
+	}`
+	require.NoError(t, printAssertAsTable(raw, &buf, 0))
+	out := buf.String()
+	require.Contains(t, out, "Error: NON-COMPLIANT\n")
+	require.Contains(t, out, "Environment: prod\n")
+	require.Contains(t, out, "artifact is missing required decision for control 'ctl-1'\n")
 }
