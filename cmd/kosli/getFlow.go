@@ -93,14 +93,7 @@ func printFlowAsTable(raw string, out io.Writer, page int) error {
 		template = strings.ReplaceAll(template, " ", ", ")
 	}
 
-	tagsOutput := ""
-	if flow["tags"] != nil {
-		tags := flow["tags"].(map[string]any)
-		for key, value := range tags {
-			tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
-		}
-	}
-	tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
+	tagsOutput := formatTags(flow["tags"])
 	if tagsOutput == "" {
 		tagsOutput = "None"
 	}

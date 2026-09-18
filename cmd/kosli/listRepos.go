@@ -182,7 +182,7 @@ func printReposListAsTable(raw string, out io.Writer, page int) error {
 	header := []string{"NAME", "URL", "PROVIDER", "TAGS"}
 	rows := []string{}
 	for _, repo := range response.Repos {
-		row := fmt.Sprintf("%v\t%v\t%v\t%s", repo["name"], repo["url"], repo["provider"], formatRepoTags(repo["tags"]))
+		row := fmt.Sprintf("%v\t%v\t%v\t%s", repo["name"], repo["url"], repo["provider"], formatPlainTags(repo["tags"]))
 		rows = append(rows, row)
 	}
 

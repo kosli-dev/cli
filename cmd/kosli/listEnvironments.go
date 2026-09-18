@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -202,13 +201,7 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 			last_modified_str = time.Unix(int64(last_modified_at.(float64)), 0).Format(time.RFC3339)
 		}
 
-		tagsOutput := ""
-		if tags, ok := env["tags"].(map[string]any); ok {
-			for key, value := range tags {
-				tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
-			}
-			tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
-		}
+		tagsOutput := formatTags(env["tags"])
 
 		var policies []any
 		if env["policies"] != nil {

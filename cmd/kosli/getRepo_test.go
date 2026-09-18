@@ -170,13 +170,6 @@ func TestGetRepoCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(GetRepoCommandTestSuite))
 }
 
-func TestFormatRepoTags(t *testing.T) {
-	require.Equal(t, "", formatRepoTags(nil))
-	require.Equal(t, "", formatRepoTags(map[string]any{}))
-	require.Equal(t, "", formatRepoTags("not-a-map"))
-	require.Equal(t, "a=1, b=x", formatRepoTags(map[string]any{"b": "x", "a": float64(1)}))
-}
-
 func TestPrintRepoAsTableRendersNonStringValues(t *testing.T) {
 	// ids and tag values are rendered with %v so a numeric id from the
 	// server prints as a number instead of a %!s(float64=...) artifact
