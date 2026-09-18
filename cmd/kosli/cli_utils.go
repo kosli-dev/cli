@@ -592,6 +592,17 @@ func formattedTimestamp(timestamp any, short bool) (string, error) {
 			return "", err
 		}
 		intTimestamp = int64(floatTimestamp)
+	case json.Number:
+		// the API returns some timestamps as numbers and others as numeric strings;
+		// json.Number decodes both, and is empty when the field is absent
+		if t == "" {
+			return "N/A", nil
+		}
+		floatTimestamp, err := t.Float64()
+		if err != nil {
+			return "", err
+		}
+		intTimestamp = int64(floatTimestamp)
 	case nil:
 		return "N/A", nil
 	default:

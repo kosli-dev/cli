@@ -137,81 +137,106 @@ func printArtifactAsTableWrapper(artifactRaw string, out io.Writer, pageNumber i
 	return printArtifactsAsTable(artifactRaw, out, pageNumber)
 }
 
+type artifactResponse struct {
+	Filename              string           `json:"filename"`
+	FlowName              string           `json:"flow_name"`
+	TrailName             string           `json:"trail_name"`
+	TemplateReferenceName string           `json:"template_reference_name"`
+	Fingerprint           string           `json:"fingerprint"`
+	CreatedAt             json.Number      `json:"created_at"`
+	GitCommit             string           `json:"git_commit"`
+	CommitURL             string           `json:"commit_url"`
+	BuildURL              string           `json:"build_url"`
+	HTMLURL               string           `json:"html_url"`
+	State                 string           `json:"state"`
+	Running               []environmentRef `json:"running"`
+	Exited                []environmentRef `json:"exited"`
+	History               []artifactEvent  `json:"history"`
+}
+
+type environmentRef struct {
+	EnvironmentName string  `json:"environment_name"`
+	SnapshotIndex   float64 `json:"snapshot_index"`
+}
+
+type artifactEvent struct {
+	Event     string      `json:"event"`
+	Timestamp json.Number `json:"timestamp"`
+}
+
 func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) error {
-	var artifacts []map[string]any
-	err := json.Unmarshal([]byte(artifactRaw), &artifacts)
-	if err != nil {
+	var artifacts []artifactResponse
+	if err := json.Unmarshal([]byte(artifactRaw), &artifacts); err != nil {
 		return err
 	}
 	return printArtifactsJsonAsTable(artifacts, out, pageNumber)
 }
 
-func printArtifactsJsonAsTable(artifacts []map[string]any, out io.Writer, pageNumber int) error {
+func printArtifactsJsonAsTable(artifacts []artifactResponse, out io.Writer, pageNumber int) error {
 	separator := ""
 	for _, artifact := range artifacts {
-		rows := []string{}
-		rows = append(rows, fmt.Sprintf("Name:\t%s", artifact["filename"].(string)))
-		rows = append(rows, fmt.Sprintf("Flow:\t%s", artifact["flow_name"].(string)))
-		if artifact["trail_name"] != nil {
-			rows = append(rows, fmt.Sprintf("Trail:\t%s", artifact["trail_name"].(string)))
-		}
-		if artifact["template_reference_name"] != nil {
-			rows = append(rows, fmt.Sprintf("Name in template:\t%s", artifact["template_reference_name"].(string)))
-		}
-		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifact["fingerprint"].(string)))
-		createdAt, err := formattedTimestamp(artifact["created_at"], false)
+		rows, err := artifactTableRows(artifact)
 		if err != nil {
 			return err
 		}
-		rows = append(rows, fmt.Sprintf("Created on:\t%s", createdAt))
-		rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifact["git_commit"].(string)))
-		rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifact["commit_url"].(string)))
-		rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifact["build_url"].(string)))
-		rows = append(rows, fmt.Sprintf("Artifact URL:\t%s", artifact["html_url"].(string)))
-
-		rows = append(rows, fmt.Sprintf("State:\t%s", artifact["state"].(string)))
-
-		runningInEnvs := artifact["running"].([]any)
-		if len(runningInEnvs) > 0 {
-			runningInEnvNames := []string{}
-			for _, envDataInterface := range runningInEnvs {
-				envData := envDataInterface.(map[string]any)
-				runningInEnvNames = append(runningInEnvNames,
-					fmt.Sprintf("%s#%.0f", envData["environment_name"].(string), envData["snapshot_index"].(float64)))
-			}
-			sort.Strings(runningInEnvNames)
-			rows = append(rows, fmt.Sprintf("Running in environments:\t%s", strings.Join(runningInEnvNames, ", ")))
-		}
-
-		exitedInEnvs := artifact["exited"].([]any)
-		if len(exitedInEnvs) > 0 {
-			exitedInEnvNames := []string{}
-			for _, envDataInterface := range exitedInEnvs {
-				envData := envDataInterface.(map[string]any)
-				exitedInEnvNames = append(exitedInEnvNames,
-					fmt.Sprintf("%s#%.0f", envData["environment_name"].(string), envData["snapshot_index"].(float64)))
-			}
-			rows = append(rows, fmt.Sprintf("Exited from environments:\t%s", strings.Join(exitedInEnvNames, ", ")))
-		}
-
-		history := artifact["history"].([]any)
-		if len(history) > 0 {
-			rows = append(rows, "History:")
-			for _, rawHistory := range history {
-				event := rawHistory.(map[string]any)
-				eventString := event["event"]
-				eventTimestamp, err := formattedTimestamp(event["timestamp"], true)
-				if err != nil {
-					return err
-				}
-				historyRow := fmt.Sprintf("    %s\t%s", eventString, eventTimestamp)
-				rows = append(rows, historyRow)
-			}
-		}
-
 		fmt.Print(separator)
 		separator = "\n"
 		tabFormattedPrint(out, []string{}, rows)
 	}
 	return nil
+}
+
+func artifactTableRows(artifact artifactResponse) ([]string, error) {
+	rows := []string{
+		fmt.Sprintf("Name:\t%s", artifact.Filename),
+		fmt.Sprintf("Flow:\t%s", artifact.FlowName),
+	}
+	if artifact.TrailName != "" {
+		rows = append(rows, fmt.Sprintf("Trail:\t%s", artifact.TrailName))
+	}
+	if artifact.TemplateReferenceName != "" {
+		rows = append(rows, fmt.Sprintf("Name in template:\t%s", artifact.TemplateReferenceName))
+	}
+	rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifact.Fingerprint))
+	createdAt, err := formattedTimestamp(artifact.CreatedAt, false)
+	if err != nil {
+		return nil, err
+	}
+	rows = append(rows,
+		fmt.Sprintf("Created on:\t%s", createdAt),
+		fmt.Sprintf("Git commit:\t%s", artifact.GitCommit),
+		fmt.Sprintf("Commit URL:\t%s", artifact.CommitURL),
+		fmt.Sprintf("Build URL:\t%s", artifact.BuildURL),
+		fmt.Sprintf("Artifact URL:\t%s", artifact.HTMLURL),
+		fmt.Sprintf("State:\t%s", artifact.State),
+	)
+
+	if len(artifact.Running) > 0 {
+		names := environmentRefNames(artifact.Running)
+		sort.Strings(names)
+		rows = append(rows, fmt.Sprintf("Running in environments:\t%s", strings.Join(names, ", ")))
+	}
+	if len(artifact.Exited) > 0 {
+		rows = append(rows, fmt.Sprintf("Exited from environments:\t%s", strings.Join(environmentRefNames(artifact.Exited), ", ")))
+	}
+	if len(artifact.History) > 0 {
+		rows = append(rows, "History:")
+		for _, event := range artifact.History {
+			timestamp, err := formattedTimestamp(event.Timestamp, true)
+			if err != nil {
+				return nil, err
+			}
+			rows = append(rows, fmt.Sprintf("    %s\t%s", event.Event, timestamp))
+		}
+	}
+	return rows, nil
+}
+
+// environmentRefNames renders each reference as name#snapshot, e.g. "prod#12".
+func environmentRefNames(refs []environmentRef) []string {
+	names := make([]string, 0, len(refs))
+	for _, ref := range refs {
+		names = append(names, fmt.Sprintf("%s#%.0f", ref.EnvironmentName, ref.SnapshotIndex))
+	}
+	return names
 }
