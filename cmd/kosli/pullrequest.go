@@ -33,6 +33,7 @@ func (o *attestPROptions) run(args []string) error {
 		return err
 	}
 
+	o.commitRequiredFor = "find pull requests"
 	err = o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err

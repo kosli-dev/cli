@@ -330,6 +330,7 @@ func (o *attestJiraOptions) run(args []string) error {
 		return err
 	}
 
+	o.commitRequiredFor = "search for Jira issue keys"
 	err = o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err

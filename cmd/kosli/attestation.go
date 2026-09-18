@@ -9,6 +9,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/spf13/pflag"
 )
 
 const commitDescription = `You can optionally associate the attestation to a git commit using ^--commit^ (requires access to a git repo).
@@ -56,6 +57,11 @@ type CommonAttestationOptions struct {
 	repoProvider            string
 	repoURLExplicit         bool
 	repoNameExplicit        bool
+	// flags lets run tell a passed flag from a defaulted one.
+	flags *pflag.FlagSet
+	// commitRequiredFor completes "the commit is required to ..."; empty when
+	// commit info is optional.
+	commitRequiredFor string
 }
 
 func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestationPayload) error {
@@ -80,15 +86,18 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	}
 
 	if o.commitSHA != "" {
-		gv, err := gitview.New(o.srcRepoRoot)
+		payload.Commit, err = commitInfoRequest{
+			repoRoot:    o.srcRepoRoot,
+			sha:         o.commitSHA,
+			redacted:    o.redactedCommitInfo,
+			flags:       o.flags,
+			requiredFor: o.commitRequiredFor,
+		}.resolve()
 		if err != nil {
-			return fmt.Errorf("failed to get commit info. %s", err)
+			return err
 		}
-		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false, o.redactedCommitInfo)
-		if err != nil {
-			return fmt.Errorf("failed to get commit info. %s", err)
-		}
-		payload.Commit = &commitInfo.BasicCommitInfo
+	} else if o.commitRequiredFor != "" {
+		return fmt.Errorf("no commit info is available, and the commit is required to %s. Pass --commit", o.commitRequiredFor)
 	}
 
 	payload.GitRepoInfo, err = getGitRepoInfoFromEnvironment()
@@ -115,6 +124,61 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	// process annotations
 	payload.Annotations, err = processAnnotations(o.annotations)
 	return err
+}
+
+type commitInfoRequest struct {
+	repoRoot    string
+	sha         string
+	redacted    []string
+	flags       *pflag.FlagSet
+	requiredFor string
+}
+
+// lookup reads the commit info from the repository at repoRoot, or returns
+// the error from opening it or resolving sha within it.
+func (r commitInfoRequest) lookup() (*gitview.CommitInfo, error) {
+	gv, err := gitview.New(r.repoRoot)
+	if err != nil {
+		return nil, err
+	}
+	return gv.GetCommitInfoFromCommitSHA(r.sha, false, r.redacted)
+}
+
+func (r commitInfoRequest) commitExplicit() bool {
+	return r.flags != nil && r.flags.Changed("commit")
+}
+
+// repoRootExplicit is true only when --repo-root carries a value other than
+// its "." default: bindFlags marks a config or env value as Changed even when
+// it equals the default, and "." itself asks for nothing.
+func (r commitInfoRequest) repoRootExplicit() bool {
+	return r.flags != nil && r.flags.Changed("repo-root") && r.repoRoot != "."
+}
+
+// resolve returns nil, nil when the lookup fails but nothing was asked for
+// explicitly and the command can do without the commit: a CI-defaulted
+// --commit must not fail a job with no checked-out repository
+// (kosli-dev/server#6094). An unresolvable commit, as in a shallow clone,
+// deliberately takes the same route.
+func (r commitInfoRequest) resolve() (*gitview.BasicCommitInfo, error) {
+	commitInfo, err := r.lookup()
+	if err == nil {
+		return &commitInfo.BasicCommitInfo, nil
+	}
+
+	describedCommit := "--commit " + r.sha
+	if !r.commitExplicit() {
+		describedCommit += " (defaulted from the CI environment)"
+	}
+	switch {
+	case r.requiredFor != "":
+		return nil, fmt.Errorf("failed to get commit info for %s: %s. The commit is required to %s, so point --repo-root at a repository containing it", describedCommit, err, r.requiredFor)
+	case r.commitExplicit() || r.repoRootExplicit():
+		return nil, fmt.Errorf("failed to get commit info for %s: %s. Point --repo-root at a repository containing it", describedCommit, err)
+	}
+	logger.Warn("proceeding without commit info: %s could not be read: %s.", describedCommit, err)
+	logger.Warn("Kosli binds an attestation reported before its artifact through this commit, so point --repo-root at a repository containing it if that binding is needed.")
+	return nil, nil
 }
 
 // mergeGitRepoInfo applies flag overrides onto base (which may be nil) and

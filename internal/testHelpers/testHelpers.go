@@ -52,11 +52,18 @@ func GithubPRNumber() int {
 	return 829
 }
 
+// CloneGitRepo clones url into cloneTo, which must already exist.
 func CloneGitRepo(url, cloneTo string) (*git.Repository, error) {
+	// osfs resolves symlinks in cloneTo but not in the ".git" path built from
+	// it, so resolve first to keep the two roots consistent.
+	resolvedCloneTo, err := filepath.EvalSymlinks(cloneTo)
+	if err != nil {
+		return nil, err
+	}
 	// the repo worktree filesystem. It has to be osfs so that we can give it a path
-	fs := osfs.New(cloneTo)
+	fs := osfs.New(resolvedCloneTo)
 	// the filesystem for git database
-	storerFS := osfs.New(filepath.Join(cloneTo, ".git"))
+	storerFS := osfs.New(filepath.Join(resolvedCloneTo, ".git"))
 	storer := filesystem.NewStorage(storerFS, cache.NewObjectLRUDefault())
 	return git.Clone(storer, fs, &git.CloneOptions{URL: url})
 }

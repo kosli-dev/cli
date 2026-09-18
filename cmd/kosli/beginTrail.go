@@ -9,6 +9,7 @@ import (
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 const beginTrailShortDesc = `Begin or update a Kosli flow trail.`
@@ -50,6 +51,9 @@ type beginTrailOptions struct {
 	repoURL              string
 	repoProvider         string
 	repoNameExplicit     bool
+	// flags lets commitInfoRequest tell a passed --commit/--repo-root from a
+	// defaulted one.
+	flags *pflag.FlagSet
 }
 
 type TrailPayload struct {
@@ -85,6 +89,7 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
+			o.flags = cmd.Flags()
 			return o.run(args)
 		},
 	}
@@ -128,15 +133,15 @@ func (o *beginTrailOptions) run(args []string) error {
 	}
 
 	if o.commitSHA != "" {
-		gv, err := gitview.New(o.srcRepoRoot)
+		o.payload.Commit, err = commitInfoRequest{
+			repoRoot: o.srcRepoRoot,
+			sha:      o.commitSHA,
+			redacted: o.redactedCommitInfo,
+			flags:    o.flags,
+		}.resolve()
 		if err != nil {
 			return err
 		}
-		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false, o.redactedCommitInfo)
-		if err != nil {
-			return err
-		}
-		o.payload.Commit = &commitInfo.BasicCommitInfo
 	}
 
 	base, err := getGitRepoInfoFromEnvironment()

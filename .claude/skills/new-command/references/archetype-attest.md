@@ -53,7 +53,9 @@ Canonical example: `cmd/kosli/attestCustom.go` — read it in full and adapt.
 - `RequireFlags(cmd, []string{"flow", "trail", "name", ...})` for type-specific required flags.
 
 **`RunE`**
-- Capture `o.repoURLExplicit = cmd.Flags().Changed("repo-url")` before delegating.
+- Capture `o.repoURLExplicit = cmd.Flags().Changed("repo-url")` and `o.repoNameExplicit = cmd.Flags().Changed("repository")` before delegating.
+- Do not capture `--commit` or `--repo-root`: `addAttestationFlags` keeps the flag set on the options and `CommonAttestationOptions.run` reads `Changed` from it.
+- If the command cannot work without the commit (as `attest pullrequest *` and `attest jira` cannot), set `o.commitRequiredFor = "<what needs it>"` in `run` before delegating.
 
 **`run` method**
 - Build the URL: `url.JoinPath(global.Host, "api/v2/attestations", global.Org, o.flowName, "trail", o.trailName, "<type-slug>")`.
