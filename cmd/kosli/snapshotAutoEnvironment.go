@@ -134,7 +134,7 @@ func getEnvironmentTypeIfExists(envName string) (bool, string, error) {
 		return false, "", err
 	}
 
-	var env map[string]interface{}
+	var env map[string]any
 	if err := json.Unmarshal([]byte(response.Body), &env); err != nil {
 		return false, "", err
 	}

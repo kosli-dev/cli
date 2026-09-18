@@ -35,7 +35,7 @@ func (suite *GetSnapshotCommandTestSuite) SetupTest() {
 	CreateEnv(global.Org, suite.emptyEnvName, "server", suite.T())
 }
 
-// TODO: Add test for a snappish of the environemnt name
+// TODO: Add test for a snappish of the environment name
 func (suite *GetSnapshotCommandTestSuite) TestGetSnapshotCmd() {
 	tests := []cmdTestCase{
 		{

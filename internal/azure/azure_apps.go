@@ -202,7 +202,7 @@ func (azureClient *AzureClient) getBearerToken(logger *logger.Logger) (string, e
 	if err != nil {
 		return "", err
 	}
-	var oauthResp map[string]interface{}
+	var oauthResp map[string]any
 	err = json.Unmarshal(body, &oauthResp)
 	if err != nil {
 		return "", err

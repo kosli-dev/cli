@@ -436,9 +436,9 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions, logger *log.Log
 }
 
 // LoadJsonData loads json data from a file
-func LoadJsonData(filepath string) (interface{}, error) {
+func LoadJsonData(filepath string) (any, error) {
 	var err error
-	var result interface{}
+	var result any
 	content := `{}`
 	if filepath != "" {
 		content, err = utils.LoadFileContent(filepath)
@@ -459,7 +459,7 @@ func LoadJsonData(filepath string) (interface{}, error) {
 
 // LoadOptionalJsonData loads json data from a file, and returns nil when no
 // file was given so that an omitempty field stays out of the payload.
-func LoadOptionalJsonData(filepath string) (interface{}, error) {
+func LoadOptionalJsonData(filepath string) (any, error) {
 	if filepath == "" {
 		return nil, nil
 	}
@@ -578,7 +578,7 @@ func tabFormattedPrint(out io.Writer, header []string, rows []string) {
 
 // formattedTimestamp formats a float timestamp into something like "Mon, 22 Aug 2022 11:34:59 CEST • 10 days ago"
 // time is formatted using RFC1123
-func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
+func formattedTimestamp(timestamp any, short bool) (string, error) {
 	var intTimestamp int64
 	var shortFormat string
 	var unixTime time.Time

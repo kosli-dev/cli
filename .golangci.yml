@@ -1,8 +1,12 @@
 version: "2"
 
+run:
+  timeout: 5m       # Set the maximum time for the analysis run
+
 linters:
   enable:
-    - forbidigo
+    - forbidigo     # Forbid usage of certain Go constructs
+
   settings:
     forbidigo:
       analyze-types: true
@@ -11,3 +15,16 @@ linters:
           msg: "binary.NativeEndian is not portable; s390x is big-endian. Use binary.BigEndian or binary.LittleEndian explicitly."
         - pattern: '^unsafe\.Pointer$'
           msg: "unsafe.Pointer byte reinterpretation is endian-sensitive on s390x. Prefer encoding/binary, or add //nolint:forbidigo with justification."
+
+formatters:
+  enable:
+    - gofmt         # Check code formatting
+
+  settings:
+    gofmt:
+      # Apply the rewrite rules to the source before reformatting.
+      # https://pkg.go.dev/cmd/gofmt
+      # Default: []
+      rewrite-rules:
+        - pattern: 'interface{}'
+          replacement: 'any'

@@ -31,25 +31,25 @@ import (
 // realisticTrailInput mirrors the shape produced by TransformTrail +
 // RehydrateTrail: attestations keyed by name, each carrying the fields the
 // Kosli API returns.
-func realisticTrailInput() map[string]interface{} {
-	return map[string]interface{}{
-		"trail": map[string]interface{}{
+func realisticTrailInput() map[string]any {
+	return map[string]any{
+		"trail": map[string]any{
 			"name": "release-42",
-			"compliance_status": map[string]interface{}{
-				"attestations_statuses": map[string]interface{}{
-					"pull-request": map[string]interface{}{
+			"compliance_status": map[string]any{
+				"attestations_statuses": map[string]any{
+					"pull-request": map[string]any{
 						"attestation_name": "pull-request",
 						"compliant":        true,
 						"html_url":         "https://app.kosli.com/kosli/flows/cli/trails/release-42",
 						"created_at":       "2026-01-14T09:30:00Z",
 					},
-					"unit-tests": map[string]interface{}{
+					"unit-tests": map[string]any{
 						"attestation_name": "unit-tests",
 						"compliant":        true,
 						"html_url":         "https://app.kosli.com/kosli/flows/cli/trails/release-42",
 						"created_at":       "2026-01-14T09:35:00Z",
 					},
-					"snyk-scan": map[string]interface{}{
+					"snyk-scan": map[string]any{
 						"attestation_name": "snyk-scan",
 						"compliant":        false,
 						"html_url":         "https://app.kosli.com/kosli/flows/cli/trails/release-42",
@@ -87,8 +87,8 @@ func TestOPAContract_RealisticPolicyAllows(t *testing.T) {
 
 func TestOPAContract_RealisticPolicyDeniesOnDefaultRequirements(t *testing.T) {
 	input := realisticTrailInput()
-	attestations := input["trail"].(map[string]interface{})["compliance_status"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})
-	attestations["unit-tests"].(map[string]interface{})["compliant"] = false
+	attestations := input["trail"].(map[string]any)["compliance_status"].(map[string]any)["attestations_statuses"].(map[string]any)
+	attestations["unit-tests"].(map[string]any)["compliant"] = false
 
 	result, err := Evaluate(realisticPolicy, input, nil)
 	require.NoError(t, err)
@@ -97,8 +97,8 @@ func TestOPAContract_RealisticPolicyDeniesOnDefaultRequirements(t *testing.T) {
 }
 
 func TestOPAContract_RealisticPolicyDeniesWithViolations(t *testing.T) {
-	params := map[string]interface{}{
-		"required_attestations": []interface{}{"pull-request", "snyk-scan", "sbom"},
+	params := map[string]any{
+		"required_attestations": []any{"pull-request", "snyk-scan", "sbom"},
 	}
 
 	result, err := Evaluate(realisticPolicy, realisticTrailInput(), params)
@@ -151,7 +151,7 @@ allow {
 }
 `
 
-	_, err := Evaluate(policy, map[string]interface{}{"score": 5}, nil)
+	_, err := Evaluate(policy, map[string]any{"score": 5}, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "failed to parse policy")
 	require.Contains(t, err.Error(), "`if` keyword is required before rule body")
@@ -173,7 +173,7 @@ allow if {
 }
 `
 
-	result, err := Evaluate(policy, map[string]interface{}{"score": 5}, nil)
+	result, err := Evaluate(policy, map[string]any{"score": 5}, nil)
 	require.NoError(t, err)
 	require.True(t, result.Allow)
 }
@@ -194,7 +194,7 @@ allow if {
 }
 `
 
-	_, err := Evaluate(policy, map[string]interface{}{}, nil)
+	_, err := Evaluate(policy, map[string]any{}, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "rego_unsafe_var_error")
 	require.Contains(t, err.Error(), "policy.rego:6")
@@ -219,7 +219,7 @@ allow if {
 }
 `
 
-	_, err := Evaluate(policy, map[string]interface{}{}, nil)
+	_, err := Evaluate(policy, map[string]any{}, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "rego_unsafe_var_error")
 	require.Contains(t, err.Error(), "var y is unsafe")
@@ -241,7 +241,7 @@ allow if {
 }
 `
 
-	input := map[string]interface{}{"score": 5, "checks": []interface{}{"a", "b", "c"}}
+	input := map[string]any{"score": 5, "checks": []any{"a", "b", "c"}}
 
 	result, err := Evaluate(policy, input, nil)
 	require.NoError(t, err)
@@ -262,7 +262,7 @@ violations contains msg if {
 }
 `
 
-	result, err := Evaluate(policy, map[string]interface{}{}, nil)
+	result, err := Evaluate(policy, map[string]any{}, nil)
 	require.Error(t, err)
 	require.Nil(t, result)
 	require.Contains(t, err.Error(), "rego_unsafe_var_error")
@@ -278,7 +278,7 @@ func TestOPAContract_UndefinedAllowIsAnError(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		policy string
-		input  map[string]interface{}
+		input  map[string]any
 	}{
 		{
 			name: "no default and the body does not hold",
@@ -288,7 +288,7 @@ allow if {
 	input.score > 3
 }
 `,
-			input: map[string]interface{}{"score": 1},
+			input: map[string]any{"score": 1},
 		},
 		{
 			name: "expression is undefined at evaluation time",
@@ -299,7 +299,7 @@ allow if {
 	ratio > 0.5
 }
 `,
-			input: map[string]interface{}{"passed": 3, "total": 0},
+			input: map[string]any{"passed": 3, "total": 0},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -340,7 +340,7 @@ violations contains msg if {
 		t.Run(tc.name, func(t *testing.T) {
 			policy := "package policy\n\ndefault allow := false\n\n" + tc.rules + "\n"
 
-			result, err := Evaluate(policy, map[string]interface{}{}, nil)
+			result, err := Evaluate(policy, map[string]any{}, nil)
 			require.NoError(t, err)
 			require.False(t, result.Allow)
 			require.Equal(t, tc.expect, result.Violations)
@@ -404,7 +404,7 @@ allow if {
 }
 `
 
-	result, err := Evaluate(policy, map[string]interface{}{}, map[string]interface{}{"threshold": 7})
+	result, err := Evaluate(policy, map[string]any{}, map[string]any{"threshold": 7})
 	require.NoError(t, err)
 	require.True(t, result.Allow)
 }
@@ -431,9 +431,9 @@ allow if {
 }
 `
 
-	input := map[string]interface{}{"score": 5}
+	input := map[string]any{"score": 5}
 
-	withParams, err := Evaluate(policy, input, map[string]interface{}{"unrelated": true})
+	withParams, err := Evaluate(policy, input, map[string]any{"unrelated": true})
 	require.NoError(t, err)
 	require.True(t, withParams.Allow, "with a store installed, object.get returns the fallback of 3")
 

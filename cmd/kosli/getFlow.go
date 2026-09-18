@@ -67,7 +67,7 @@ func (o *getFlowOptions) run(out io.Writer, args []string) error {
 }
 
 func printFlowAsTable(raw string, out io.Writer, page int) error {
-	var flow map[string]interface{}
+	var flow map[string]any
 	err := json.Unmarshal([]byte(raw), &flow)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func printFlowAsTable(raw string, out io.Writer, page int) error {
 
 	tagsOutput := ""
 	if flow["tags"] != nil {
-		tags := flow["tags"].(map[string]interface{})
+		tags := flow["tags"].(map[string]any)
 		for key, value := range tags {
 			tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
 		}

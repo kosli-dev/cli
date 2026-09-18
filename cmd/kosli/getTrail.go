@@ -80,7 +80,7 @@ func (o *getTrailOptions) run(out io.Writer, args []string) error {
 // summary.md artifact). It is a method so the trail heading can link to the
 // trail page in the Kosli app, which needs the flow name.
 func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page int) error {
-	var trail map[string]interface{}
+	var trail map[string]any
 	err := json.Unmarshal([]byte(raw), &trail)
 	if err != nil {
 		return err
@@ -111,7 +111,7 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 		fmt.Fprintf(&b, "| Origin | %s |\n", mdCell(originURL))
 	}
 
-	if commitInfo, ok := trail["git_commit_info"].(map[string]interface{}); ok {
+	if commitInfo, ok := trail["git_commit_info"].(map[string]any); ok {
 		commitTimestamp, err := formattedTimestamp(commitInfo["timestamp"], false)
 		if err != nil {
 			return err
@@ -132,7 +132,7 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 	writeAttestationStatuses(&b, trail["compliance_status"], trailURL)
 
 	b.WriteString("\n### Events\n\n")
-	if events, ok := trail["events"].([]interface{}); ok && len(events) > 0 {
+	if events, ok := trail["events"].([]any); ok && len(events) > 0 {
 		b.WriteString("| Time | Description | Git commit | Compliance |\n")
 		b.WriteString("| --- | --- | --- | --- |\n")
 		for _, event := range events {
@@ -159,7 +159,7 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 // that would otherwise break the table layout or be swallowed as HTML (e.g.
 // "<email>" in a commit author). CR and CRLF count as line endings in
 // CommonMark, so they must be normalized along with LF.
-func mdCell(v interface{}) string {
+func mdCell(v any) string {
 	if v == nil {
 		return ""
 	}
@@ -176,7 +176,7 @@ func mdCell(v interface{}) string {
 
 // firstLine returns the first line of a multi-line value, e.g. a git commit
 // message subject. A full commit message would dominate a CI summary table.
-func firstLine(v interface{}) string {
+func firstLine(v any) string {
 	if v == nil {
 		return ""
 	}
@@ -190,7 +190,7 @@ func firstLine(v interface{}) string {
 // mdComplianceState prefixes a trail or artifact compliance state with a
 // glanceable emoji. Values come from the server: COMPLIANT / NON-COMPLIANT /
 // INCOMPLETE for trails, plus MISSING for artifacts.
-func mdComplianceState(v interface{}) string {
+func mdComplianceState(v any) string {
 	s := mdCell(v)
 	switch s {
 	case "COMPLIANT":
@@ -209,13 +209,13 @@ func mdComplianceState(v interface{}) string {
 // the trail and by each artifact. The attestation name links to the attestation
 // on the trail page when an attestation_id is present. The section is omitted
 // when the trail has no attestation statuses.
-func writeAttestationStatuses(b *strings.Builder, complianceStatus interface{}, trailURL string) {
-	cs, ok := complianceStatus.(map[string]interface{})
+func writeAttestationStatuses(b *strings.Builder, complianceStatus any, trailURL string) {
+	cs, ok := complianceStatus.(map[string]any)
 	if !ok {
 		return
 	}
-	trailAtts, _ := cs["attestations_statuses"].([]interface{})
-	artifactsStatuses, _ := cs["artifacts_statuses"].(map[string]interface{})
+	trailAtts, _ := cs["attestations_statuses"].([]any)
+	artifactsStatuses, _ := cs["artifacts_statuses"].(map[string]any)
 
 	artifactNames := make([]string, 0, len(artifactsStatuses))
 	for name := range artifactsStatuses {
@@ -225,8 +225,8 @@ func writeAttestationStatuses(b *strings.Builder, complianceStatus interface{}, 
 
 	total := len(trailAtts)
 	for _, name := range artifactNames {
-		if artifact, ok := artifactsStatuses[name].(map[string]interface{}); ok {
-			if atts, ok := artifact["attestations_statuses"].([]interface{}); ok {
+		if artifact, ok := artifactsStatuses[name].(map[string]any); ok {
+			if atts, ok := artifact["attestations_statuses"].([]any); ok {
 				total += len(atts)
 			}
 		}
@@ -243,11 +243,11 @@ func writeAttestationStatuses(b *strings.Builder, complianceStatus interface{}, 
 	}
 
 	for _, name := range artifactNames {
-		artifact, ok := artifactsStatuses[name].(map[string]interface{})
+		artifact, ok := artifactsStatuses[name].(map[string]any)
 		if !ok {
 			continue
 		}
-		atts, _ := artifact["attestations_statuses"].([]interface{})
+		atts, _ := artifact["attestations_statuses"].([]any)
 		if len(atts) == 0 {
 			continue
 		}
@@ -258,11 +258,11 @@ func writeAttestationStatuses(b *strings.Builder, complianceStatus interface{}, 
 
 // writeAttestationTable writes a headerless two-column table of attestation
 // name (linked when possible) and compliance status.
-func writeAttestationTable(b *strings.Builder, attestations []interface{}, trailURL string) {
+func writeAttestationTable(b *strings.Builder, attestations []any, trailURL string) {
 	b.WriteString("|  |  |\n")
 	b.WriteString("| --- | --- |\n")
 	for _, a := range attestations {
-		att, ok := a.(map[string]interface{})
+		att, ok := a.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -280,7 +280,7 @@ func writeAttestationTable(b *strings.Builder, attestations []interface{}, trail
 // label, covering every status the server produces: MISSING (not yet reported),
 // COMPLETE with is_compliant true/false, and the unexpected flag (reported but
 // not expected by the template).
-func mdAttestationCompliance(status string, isCompliant interface{}, unexpected bool) string {
+func mdAttestationCompliance(status string, isCompliant any, unexpected bool) string {
 	var label string
 	switch status {
 	case "MISSING":
@@ -348,7 +348,7 @@ func mdEventCompliance(compliance string) string {
 }
 
 func printTrailAsTable(raw string, out io.Writer, page int) error {
-	var trail map[string]interface{}
+	var trail map[string]any
 	err := json.Unmarshal([]byte(raw), &trail)
 	if err != nil {
 		return err
@@ -366,7 +366,7 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 	rows = append(rows, fmt.Sprintf("Description:\t%s", trail["description"]))
 	rows = append(rows, fmt.Sprintf("Compliance:\t%s", trail["compliance_state"]))
 	rows = append(rows, fmt.Sprintf("Last modified at:\t%s", lastModifiedAt))
-	if commitInfo, ok := trail["git_commit_info"].(map[string]interface{}); ok {
+	if commitInfo, ok := trail["git_commit_info"].(map[string]any); ok {
 		rows = append(rows, "Git commit:\t")
 		rows = append(rows, fmt.Sprintf("  Sha1:\t%s", commitInfo["sha1"].(string)))
 		rows = append(rows, fmt.Sprintf("  Author:\t%s", commitInfo["author"].(string)))
@@ -384,7 +384,7 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 
 	tabFormattedPrint(out, header, rows)
 
-	if events, ok := trail["events"].([]interface{}); ok {
+	if events, ok := trail["events"].([]any); ok {
 		eventsHeader := []string{"\tTIME", "DESCRIPTION", "GIT-COMMIT", "COMPLIANCE"}
 		eventsRows := []string{}
 		for _, event := range events {
@@ -400,7 +400,7 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 	return nil
 }
 
-func eventRow(event interface{}) (string, error) {
+func eventRow(event any) (string, error) {
 	e, err := eventFields(event)
 	if err != nil {
 		return "", err
@@ -422,8 +422,8 @@ type trailEventFields struct {
 	attestationRef  string // the attestation reference as it appears in the description, e.g. "artifact.snyk-scan"
 }
 
-func eventFields(event interface{}) (trailEventFields, error) {
-	eventMap := event.(map[string]interface{})
+func eventFields(event any) (trailEventFields, error) {
+	eventMap := event.(map[string]any)
 	eventTimestamp, err := formattedTimestamp(eventMap["timestamp"].(float64), true)
 	if err != nil {
 		return trailEventFields{}, err
@@ -441,7 +441,7 @@ func eventFields(event interface{}) (trailEventFields, error) {
 
 	eventCommit := ""
 	eventCommitURL := ""
-	if commitInfo, ok := eventMap["git_commit_info"].(map[string]interface{}); ok {
+	if commitInfo, ok := eventMap["git_commit_info"].(map[string]any); ok {
 		if sha1, ok := commitInfo["sha1"].(string); ok && len(sha1) >= 7 {
 			eventCommit = sha1[0:7]
 		}

@@ -66,7 +66,7 @@ func (o *policiesLsOptions) run(out io.Writer, args []string) error {
 }
 
 func printPolicyListAsTable(raw string, out io.Writer, page int) error {
-	var policies []map[string]interface{}
+	var policies []map[string]any
 	err := json.Unmarshal([]byte(raw), &policies)
 	if err != nil {
 		return err
@@ -85,9 +85,9 @@ func printPolicyListAsTable(raw string, out io.Writer, page int) error {
 			return err
 		}
 
-		versions := policy["versions"].([]interface{})
+		versions := policy["versions"].([]any)
 
-		usedByEnvs := policy["consuming_envs"].([]interface{})
+		usedByEnvs := policy["consuming_envs"].([]any)
 
 		row := fmt.Sprintf("%s\t%s\t%s\t%d\t%s", policy["name"], policy["description"], createdAt, len(versions), usedByEnvs)
 		rows = append(rows, row)

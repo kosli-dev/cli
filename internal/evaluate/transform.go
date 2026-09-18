@@ -4,31 +4,31 @@ import "strings"
 
 // TransformTrail converts attestations_statuses arrays in trail data
 // to maps keyed by attestation_name for easier Rego policy access.
-func TransformTrail(trailData interface{}) interface{} {
+func TransformTrail(trailData any) any {
 	if trailData == nil {
 		return nil
 	}
-	trailMap, ok := trailData.(map[string]interface{})
+	trailMap, ok := trailData.(map[string]any)
 	if !ok {
 		return trailData
 	}
 
-	cs, ok := trailMap["compliance_status"].(map[string]interface{})
+	cs, ok := trailMap["compliance_status"].(map[string]any)
 	if !ok {
 		return trailData
 	}
 
-	if arr, ok := cs["attestations_statuses"].([]interface{}); ok {
+	if arr, ok := cs["attestations_statuses"].([]any); ok {
 		cs["attestations_statuses"] = attestationsArrayToMap(arr)
 	}
 
-	if artifacts, ok := cs["artifacts_statuses"].(map[string]interface{}); ok {
+	if artifacts, ok := cs["artifacts_statuses"].(map[string]any); ok {
 		for _, artData := range artifacts {
-			artMap, ok := artData.(map[string]interface{})
+			artMap, ok := artData.(map[string]any)
 			if !ok {
 				continue
 			}
-			if arr, ok := artMap["attestations_statuses"].([]interface{}); ok {
+			if arr, ok := artMap["attestations_statuses"].([]any); ok {
 				artMap["attestations_statuses"] = attestationsArrayToMap(arr)
 			}
 		}
@@ -39,10 +39,10 @@ func TransformTrail(trailData interface{}) interface{} {
 
 // CollectAttestationIDs extracts all non-null attestation_id values
 // from the already-transformed (map-keyed) trail data.
-func CollectAttestationIDs(trailData interface{}) []string {
+func CollectAttestationIDs(trailData any) []string {
 	var ids []string
 	seen := make(map[string]bool)
-	walkTrailAttestations(trailData, func(_ string, as map[string]interface{}) {
+	walkTrailAttestations(trailData, func(_ string, as map[string]any) {
 		for _, id := range collectIDsFromAttestationMap(as) {
 			if !seen[id] {
 				seen[id] = true
@@ -55,11 +55,11 @@ func CollectAttestationIDs(trailData interface{}) []string {
 
 // RehydrateTrail merges attestation detail data into the already-transformed
 // trail data. Fields from details are added where the key doesn't already exist.
-func RehydrateTrail(trailData interface{}, details map[string]interface{}) interface{} {
+func RehydrateTrail(trailData any, details map[string]any) any {
 	if len(details) == 0 {
 		return trailData
 	}
-	walkTrailAttestations(trailData, func(_ string, as map[string]interface{}) {
+	walkTrailAttestations(trailData, func(_ string, as map[string]any) {
 		rehydrateAttestationMap(as, details)
 	})
 	return trailData
@@ -69,14 +69,14 @@ func RehydrateTrail(trailData interface{}, details map[string]interface{}) inter
 // When filters is nil or empty, all attestations are included unchanged.
 // Plain names (e.g. "pull-request") filter trail-level attestations.
 // Dot-qualified names (e.g. "cli.unit-test") filter artifact-level attestations.
-func FilterAttestations(trailData interface{}, filters []string) interface{} {
+func FilterAttestations(trailData any, filters []string) any {
 	if len(filters) == 0 {
 		return trailData
 	}
 
 	trailFilters, artifactFilters := parseAttestationFilters(filters)
 
-	walkTrailAttestations(trailData, func(artifactName string, as map[string]interface{}) {
+	walkTrailAttestations(trailData, func(artifactName string, as map[string]any) {
 		if artifactName == "" {
 			filterMap(as, trailFilters)
 		} else if allowed, exists := artifactFilters[artifactName]; exists {
@@ -94,27 +94,27 @@ func FilterAttestations(trailData interface{}, filters []string) interface{} {
 // walkTrailAttestations navigates the trail data structure and calls fn
 // for each attestations_statuses map found. The artifactName is "" for
 // trail-level attestations, or the artifact name for artifact-level ones.
-func walkTrailAttestations(trailData interface{}, fn func(artifactName string, as map[string]interface{})) {
-	trailMap, ok := trailData.(map[string]interface{})
+func walkTrailAttestations(trailData any, fn func(artifactName string, as map[string]any)) {
+	trailMap, ok := trailData.(map[string]any)
 	if !ok {
 		return
 	}
-	cs, ok := trailMap["compliance_status"].(map[string]interface{})
+	cs, ok := trailMap["compliance_status"].(map[string]any)
 	if !ok {
 		return
 	}
 
-	if as, ok := cs["attestations_statuses"].(map[string]interface{}); ok {
+	if as, ok := cs["attestations_statuses"].(map[string]any); ok {
 		fn("", as)
 	}
 
-	if artifacts, ok := cs["artifacts_statuses"].(map[string]interface{}); ok {
+	if artifacts, ok := cs["artifacts_statuses"].(map[string]any); ok {
 		for artName, artData := range artifacts {
-			artMap, ok := artData.(map[string]interface{})
+			artMap, ok := artData.(map[string]any)
 			if !ok {
 				continue
 			}
-			if as, ok := artMap["attestations_statuses"].(map[string]interface{}); ok {
+			if as, ok := artMap["attestations_statuses"].(map[string]any); ok {
 				fn(artName, as)
 			}
 		}
@@ -145,7 +145,7 @@ func parseAttestationFilters(filters []string) (trailFilters map[string]bool, ar
 	return
 }
 
-func filterMap(m map[string]interface{}, keep map[string]bool) {
+func filterMap(m map[string]any, keep map[string]bool) {
 	for k := range m {
 		if !keep[k] {
 			delete(m, k)
@@ -153,9 +153,9 @@ func filterMap(m map[string]interface{}, keep map[string]bool) {
 	}
 }
 
-func rehydrateAttestationMap(attestations map[string]interface{}, details map[string]interface{}) {
+func rehydrateAttestationMap(attestations map[string]any, details map[string]any) {
 	for _, v := range attestations {
-		entry, ok := v.(map[string]interface{})
+		entry, ok := v.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -163,7 +163,7 @@ func rehydrateAttestationMap(attestations map[string]interface{}, details map[st
 		if !ok {
 			continue
 		}
-		detail, ok := details[id].(map[string]interface{})
+		detail, ok := details[id].(map[string]any)
 		if !ok {
 			continue
 		}
@@ -175,10 +175,10 @@ func rehydrateAttestationMap(attestations map[string]interface{}, details map[st
 	}
 }
 
-func collectIDsFromAttestationMap(m map[string]interface{}) []string {
+func collectIDsFromAttestationMap(m map[string]any) []string {
 	var ids []string
 	for _, v := range m {
-		entry, ok := v.(map[string]interface{})
+		entry, ok := v.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -189,10 +189,10 @@ func collectIDsFromAttestationMap(m map[string]interface{}) []string {
 	return ids
 }
 
-func attestationsArrayToMap(arr []interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
+func attestationsArrayToMap(arr []any) map[string]any {
+	result := make(map[string]any)
 	for _, entry := range arr {
-		entryMap, ok := entry.(map[string]interface{})
+		entryMap, ok := entry.(map[string]any)
 		if !ok {
 			continue
 		}

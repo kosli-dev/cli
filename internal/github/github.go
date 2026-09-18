@@ -419,7 +419,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 		} `graphql:"repository(owner: $owner, name: $repo)"`
 	}
 
-	variables := map[string]interface{}{
+	variables := map[string]any{
 		"owner":        graphql.String(c.Org),
 		"repo":         graphql.String(c.Repository),
 		"prNumber":     graphql.Int(prNumber),
@@ -518,7 +518,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		} `graphql:"repository(owner: $owner, name: $repo)"`
 	}
 
-	variables := map[string]interface{}{
+	variables := map[string]any{
 		"owner":        graphql.String(c.Org),
 		"repo":         graphql.String(c.Repository),
 		"commitSHA":    GitObjectID(commit),

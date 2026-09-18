@@ -594,7 +594,7 @@ func (suite *RequestsTestSuite) TestMultipartFieldJSON_IsCompact() {
 		{
 			Type:      "field",
 			FieldName: "data_json",
-			Content:   map[string]interface{}{"key": "value", "nested": map[string]interface{}{"a": 1}},
+			Content:   map[string]any{"key": "value", "nested": map[string]any{"a": 1}},
 		},
 	}
 	_, body, jsonFields, err := createMultipartRequestBody(formItems)
@@ -615,9 +615,9 @@ func (suite *RequestsTestSuite) TestNonMultipartJSON_IsCompact() {
 		Method: http.MethodPut,
 		URL:    "https://example.com/api/v2/test",
 		Token:  "test-token",
-		Payload: map[string]interface{}{
+		Payload: map[string]any{
 			"key":    "value",
-			"nested": map[string]interface{}{"a": 1},
+			"nested": map[string]any{"a": 1},
 		},
 	}
 	req, _, err := params.newHTTPRequest()

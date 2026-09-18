@@ -102,7 +102,7 @@ func (o *getAttestationTypeOptions) run(out io.Writer, args []string) error {
 }
 
 func printAttestationTypeAsTable(raw string, out io.Writer, page int) error {
-	var attestationType map[string]interface{}
+	var attestationType map[string]any
 	err := json.Unmarshal([]byte(raw), &attestationType)
 	if err != nil {
 		return err
@@ -141,8 +141,8 @@ func printAttestationTypeAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	rows = append(rows, "Versions:\t")
-	for _, version := range attestationType["versions"].([]interface{}) {
-		versionMap := version.(map[string]interface{})
+	for _, version := range attestationType["versions"].([]any) {
+		versionMap := version.(map[string]any)
 		rows, err = printVersionedAttestationTypeAsTable(versionMap, rows)
 		if err != nil {
 			return err
@@ -154,7 +154,7 @@ func printAttestationTypeAsTable(raw string, out io.Writer, page int) error {
 	return nil
 }
 
-func printVersionedAttestationTypeAsTable(raw map[string]interface{}, rows []string) ([]string, error) {
+func printVersionedAttestationTypeAsTable(raw map[string]any, rows []string) ([]string, error) {
 	attestationType := raw
 
 	timestamp, err := formattedTimestamp(attestationType["timestamp"], false)
@@ -179,10 +179,10 @@ func printVersionedAttestationTypeAsTable(raw map[string]interface{}, rows []str
 		rows = append(rows, fmt.Sprintf("	Type schema:\t%s", string(typeSchemaJSON)))
 	}
 
-	if evaluator, ok := attestationType["evaluator"].(map[string]interface{}); ok {
+	if evaluator, ok := attestationType["evaluator"].(map[string]any); ok {
 		rows = append(rows, "	Evaluator:\t")
 		rows = append(rows, fmt.Sprintf("		Content Type:\t%s", evaluator["content_type"]))
-		if rules, ok := evaluator["rules"].([]interface{}); ok {
+		if rules, ok := evaluator["rules"].([]any); ok {
 			rows = append(rows, "		Rules:")
 			for _, rule := range rules {
 				rows = append(rows, fmt.Sprintf("	\t\t%s", rule))
@@ -192,10 +192,10 @@ func printVersionedAttestationTypeAsTable(raw map[string]interface{}, rows []str
 
 	// Types created without a summary have a null "summary", which fails this
 	// type assertion and prints nothing, leaving their output unchanged.
-	if summary, ok := attestationType["summary"].([]interface{}); ok && len(summary) > 0 {
+	if summary, ok := attestationType["summary"].([]any); ok && len(summary) > 0 {
 		rows = append(rows, "	Summary:\t")
 		for _, entry := range summary {
-			entryMap, ok := entry.(map[string]interface{})
+			entryMap, ok := entry.(map[string]any)
 			if !ok {
 				continue
 			}

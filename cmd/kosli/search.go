@@ -23,18 +23,18 @@ type SearchResponse struct {
 }
 
 type SearchArtifact struct {
-	Fingerprint     string                   `json:"fingerprint"`
-	Name            string                   `json:"name"`
-	Flow            string                   `json:"flow"`
-	Commit          string                   `json:"git_commit"`
-	HasProvenance   bool                     `json:"has_provenance"`
-	CommitURL       string                   `json:"commit_url"`
-	BuildURL        string                   `json:"build_url"`
-	ArtifactURL     string                   `json:"html_url"`
-	ComplianceState string                   `json:"compliance_state"`
-	RunningIn       []string                 `json:"running_in"`
-	ExitedFrom      []string                 `json:"exited_from"`
-	History         []map[string]interface{} `json:"history"`
+	Fingerprint     string           `json:"fingerprint"`
+	Name            string           `json:"name"`
+	Flow            string           `json:"flow"`
+	Commit          string           `json:"git_commit"`
+	HasProvenance   bool             `json:"has_provenance"`
+	CommitURL       string           `json:"commit_url"`
+	BuildURL        string           `json:"build_url"`
+	ArtifactURL     string           `json:"html_url"`
+	ComplianceState string           `json:"compliance_state"`
+	RunningIn       []string         `json:"running_in"`
+	ExitedFrom      []string         `json:"exited_from"`
+	History         []map[string]any `json:"history"`
 }
 
 type ResolvedToBody struct {

@@ -66,10 +66,10 @@ type listControlsOptions struct {
 }
 
 type listControlsResponse struct {
-	Controls   []map[string]interface{} `json:"controls"`
-	Page       int                      `json:"page"`
-	TotalPages int                      `json:"total_pages"`
-	TotalCount int                      `json:"total_count"`
+	Controls   []map[string]any `json:"controls"`
+	Page       int              `json:"page"`
+	TotalPages int              `json:"total_pages"`
+	TotalCount int              `json:"total_count"`
 }
 
 func newListControlsCmd(out io.Writer) *cobra.Command {

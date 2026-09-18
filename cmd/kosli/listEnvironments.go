@@ -72,11 +72,11 @@ type environmentLsOptions struct {
 }
 
 type paginatedEnvsResponse struct {
-	Page         int64                    `json:"page"`
-	PerPage      int64                    `json:"per_page"`
-	TotalPages   int64                    `json:"total_pages"`
-	TotalCount   int64                    `json:"total_count"`
-	Environments []map[string]interface{} `json:"environments"`
+	Page         int64            `json:"page"`
+	PerPage      int64            `json:"per_page"`
+	TotalPages   int64            `json:"total_pages"`
+	TotalCount   int64            `json:"total_count"`
+	Environments []map[string]any `json:"environments"`
 }
 
 func newListEnvironmentsCmd(out io.Writer) *cobra.Command {
@@ -169,7 +169,7 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 func printEnvListAsTable(raw string, out io.Writer, page int) error {
 	// the API returns a plain array when no pagination params are sent,
 	// and a wrapped object with pagination metadata when they are
-	var envs []map[string]interface{}
+	var envs []map[string]any
 	var paginated *paginatedEnvsResponse
 	if err := json.Unmarshal([]byte(raw), &envs); err != nil {
 		paginated = &paginatedEnvsResponse{}
@@ -203,18 +203,18 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 		}
 
 		tagsOutput := ""
-		if tags, ok := env["tags"].(map[string]interface{}); ok {
+		if tags, ok := env["tags"].(map[string]any); ok {
 			for key, value := range tags {
 				tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
 			}
 			tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
 		}
 
-		var policies []interface{}
+		var policies []any
 		if env["policies"] != nil {
-			policies = env["policies"].([]interface{})
+			policies = env["policies"].([]any)
 		} else {
-			policies = []interface{}{}
+			policies = []any{}
 		}
 
 		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s", env["name"], env["type"], last_reported_str, last_modified_str, tagsOutput, policies)

@@ -243,7 +243,7 @@ func (o *createAttestationTypeOptions) run(args []string) error {
 	return err
 }
 
-func prepareAttestationTypeForm(payload interface{}, schemaFilePath string) ([]requests.FormItem, error) {
+func prepareAttestationTypeForm(payload any, schemaFilePath string) ([]requests.FormItem, error) {
 	form, err := newAttestationTypeForm(payload, schemaFilePath)
 	if err != nil {
 		return []requests.FormItem{}, err
@@ -253,7 +253,7 @@ func prepareAttestationTypeForm(payload interface{}, schemaFilePath string) ([]r
 
 // newAttestationTypeForm constructs a list of FormItems for an attestation-type
 // form submission.
-func newAttestationTypeForm(payload interface{}, schemaFilePath string) (
+func newAttestationTypeForm(payload any, schemaFilePath string) (
 	[]requests.FormItem, error,
 ) {
 	form := []requests.FormItem{

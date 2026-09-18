@@ -132,7 +132,7 @@ func printApiKeyMetadataAsTable(raw string, out io.Writer, page int) error {
 
 // optionalTimestamp formats an epoch timestamp, returning "N/A" when it is
 // unset (nil, or a zero value meaning "never"/"not set").
-func optionalTimestamp(epoch interface{}) (string, error) {
+func optionalTimestamp(epoch any) (string, error) {
 	switch v := epoch.(type) {
 	case nil:
 		return "N/A", nil

@@ -22,7 +22,7 @@ import (
 // database and object storage, with no queue, no worker and no evaluator, so
 // an evaluation started there can never reach a verdict.
 type fakeEvaluations struct {
-	created    []map[string]interface{}
+	created    []map[string]any
 	reads      int
 	trailReads int
 	unexpected int
@@ -61,7 +61,7 @@ func newFakeEvaluations(t *testing.T, verdict string) (*httptest.Server, *fakeEv
 		case r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/api/v2/evaluations/"):
 			raw, err := io.ReadAll(r.Body)
 			require.NoError(t, err)
-			var body map[string]interface{}
+			var body map[string]any
 			require.NoError(t, json.Unmarshal(raw, &body))
 			fake.created = append(fake.created, body)
 			w.WriteHeader(http.StatusCreated)
@@ -146,12 +146,12 @@ func (suite *EvaluateServerSideTestSuite) TestItSendsThePolicyAndTheTrailAndPrin
 	require.Equal(suite.T(), 0, fake.unexpected)
 
 	created := fake.created[0]
-	context := created["context"].(map[string]interface{})
-	require.Equal(suite.T(), []interface{}{
-		map[string]interface{}{"flow": "my-flow", "trail": "my-trail"},
+	context := created["context"].(map[string]any)
+	require.Equal(suite.T(), []any{
+		map[string]any{"flow": "my-flow", "trail": "my-trail"},
 	}, context["trails"])
 
-	files := created["policy"].(map[string]interface{})["files"].(map[string]interface{})
+	files := created["policy"].(map[string]any)["files"].(map[string]any)
 	require.Len(suite.T(), files, 1)
 	require.Contains(suite.T(), files, "allow-all.rego", "the policy travels under its own name")
 	require.Contains(suite.T(), files["allow-all.rego"], "package policy")
@@ -252,7 +252,7 @@ func (suite *EvaluateServerSideTestSuite) TestItUploadsAPolicyTheLocalPathWouldR
 	require.NoError(suite.T(), err, "the local package rule must not be applied under the flag")
 	require.Regexp(suite.T(), `RESULT:\s+ALLOWED`, combined)
 
-	files := fake.created[0]["policy"].(map[string]interface{})["files"].(map[string]interface{})
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
 	require.Contains(suite.T(), files, "no-package-policy.rego")
 }
 
@@ -272,11 +272,11 @@ func (suite *EvaluateServerSideTestSuite) TestEveryTrailGoesInOneEvaluation() {
 	require.Len(suite.T(), fake.created, 1, "one evaluation, however many trails")
 	require.Equal(suite.T(), 0, fake.trailReads)
 
-	context := fake.created[0]["context"].(map[string]interface{})
-	require.Equal(suite.T(), []interface{}{
-		map[string]interface{}{"flow": "my-flow", "trail": "first"},
-		map[string]interface{}{"flow": "my-flow", "trail": "second"},
-		map[string]interface{}{"flow": "my-flow", "trail": "third"},
+	context := fake.created[0]["context"].(map[string]any)
+	require.Equal(suite.T(), []any{
+		map[string]any{"flow": "my-flow", "trail": "first"},
+		map[string]any{"flow": "my-flow", "trail": "second"},
+		map[string]any{"flow": "my-flow", "trail": "third"},
 	}, context["trails"], "named in the order given")
 }
 
@@ -316,7 +316,7 @@ func (suite *EvaluateServerSideTestSuite) TestARepeatedTrailIsSentAsGiven() {
 			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
 
 	require.NoError(suite.T(), err)
-	context := fake.created[0]["context"].(map[string]interface{})
+	context := fake.created[0]["context"].(map[string]any)
 	require.Len(suite.T(), context["trails"], 2)
 }
 
@@ -331,7 +331,7 @@ func (suite *EvaluateServerSideTestSuite) TestTheCeilingIsAHundredTrails() {
 			trailNames(100), server.URL))
 
 		require.NoError(suite.T(), err)
-		require.Len(suite.T(), fake.created[0]["context"].(map[string]interface{})["trails"], 100)
+		require.Len(suite.T(), fake.created[0]["context"].(map[string]any)["trails"], 100)
 	})
 
 	suite.Run("a hundred and one are refused before anything is sent", func() {
@@ -403,22 +403,22 @@ func (suite *EvaluateServerSideTestSuite) TestPolicyParametersTravelUnchanged() 
 	for _, test := range []struct {
 		name  string
 		extra string
-		want  map[string]interface{}
+		want  map[string]any
 	}{
 		{
 			name:  "given inline",
 			extra: `--params '{"threshold":2}'`,
-			want:  map[string]interface{}{"threshold": float64(2)},
+			want:  map[string]any{"threshold": float64(2)},
 		},
 		{
 			name:  "read from a file",
 			extra: "--params @testdata/evaluate/params-low-threshold.json",
-			want:  map[string]interface{}{"threshold": float64(3)},
+			want:  map[string]any{"threshold": float64(3)},
 		},
 		{
 			name:  "not given at all",
 			extra: "",
-			want:  map[string]interface{}{},
+			want:  map[string]any{},
 		},
 	} {
 		suite.Run(test.name, func() {
@@ -588,7 +588,7 @@ func (suite *EvaluateServerSideTestSuite) TestARemotePolicyIsFetchedAndItsSource
 
 	require.NoError(suite.T(), err)
 
-	files := fake.created[0]["policy"].(map[string]interface{})["files"].(map[string]interface{})
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
 	require.Len(suite.T(), files, 1)
 	require.Contains(suite.T(), files, "pr.rego", "named after the file, not the host")
 	require.Equal(suite.T(), "package policy\n\nallow := true\n", files["pr.rego"])
@@ -624,7 +624,7 @@ func (suite *EvaluateServerSideTestSuite) TestThePolicyIsNamedByItsFileAlone() {
 				test.policy, server.URL))
 
 			require.NoError(suite.T(), err)
-			files := fake.created[0]["policy"].(map[string]interface{})["files"].(map[string]interface{})
+			files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
 			require.Contains(suite.T(), files, test.want)
 			for name := range files {
 				require.NotContains(suite.T(), name, "..", "a bundle path never climbs out")
@@ -646,7 +646,7 @@ func (suite *EvaluateServerSideTestSuite) TestAPolicyUrlNamingNoFileStillGetsANa
 		policyServer.URL, server.URL))
 
 	require.NoError(suite.T(), err)
-	files := fake.created[0]["policy"].(map[string]interface{})["files"].(map[string]interface{})
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
 	require.Contains(suite.T(), files, "policy.rego")
 }
 

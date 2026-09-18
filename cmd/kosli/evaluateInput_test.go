@@ -252,7 +252,7 @@ func TestLoadInput(t *testing.T) {
 	reader := strings.NewReader(`{"trail": {"name": "from-reader"}}`)
 	input, err := loadInput(reader)
 	require.NoError(t, err)
-	trail, ok := input["trail"].(map[string]interface{})
+	trail, ok := input["trail"].(map[string]any)
 	require.True(t, ok)
 	require.Equal(t, "from-reader", trail["name"])
 }

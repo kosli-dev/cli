@@ -21,7 +21,7 @@ type received struct {
 	path        string
 	authHeader  string
 	contentType string
-	body        map[string]interface{}
+	body        map[string]any
 }
 
 func newFakeServer(t *testing.T, status int, responseBody string) (*httptest.Server, *received) {
@@ -61,7 +61,7 @@ func aCreateRequest() CreateRequest {
 	return CreateRequest{
 		Trails: []TrailRef{{Flow: "release", Trail: "my-trail"}},
 		Files:  map[string]string{"policy.rego": "package policy\n\nallow := true\n"},
-		Params: map[string]interface{}{"threshold": float64(2)},
+		Params: map[string]any{"threshold": float64(2)},
 	}
 }
 
@@ -90,21 +90,21 @@ func TestCreateSendsExactlyTheAgreedPayload(t *testing.T) {
 	// is a 400 rather than something ignored.
 	require.ElementsMatch(t, []string{"context", "policy", "params"}, keysOf(seen.body))
 
-	context, ok := seen.body["context"].(map[string]interface{})
+	context, ok := seen.body["context"].(map[string]any)
 	require.True(t, ok)
 	require.Equal(t, []string{"trails"}, keysOf(context))
-	require.Equal(t, []interface{}{
-		map[string]interface{}{"flow": "release", "trail": "my-trail"},
+	require.Equal(t, []any{
+		map[string]any{"flow": "release", "trail": "my-trail"},
 	}, context["trails"])
 
-	policy, ok := seen.body["policy"].(map[string]interface{})
+	policy, ok := seen.body["policy"].(map[string]any)
 	require.True(t, ok)
 	require.Equal(t, []string{"files"}, keysOf(policy))
-	require.Equal(t, map[string]interface{}{
+	require.Equal(t, map[string]any{
 		"policy.rego": "package policy\n\nallow := true\n",
 	}, policy["files"])
 
-	require.Equal(t, map[string]interface{}{"threshold": float64(2)}, seen.body["params"])
+	require.Equal(t, map[string]any{"threshold": float64(2)}, seen.body["params"])
 }
 
 func TestCreateSendsEveryTrailInOneEvaluation(t *testing.T) {
@@ -119,10 +119,10 @@ func TestCreateSendsEveryTrailInOneEvaluation(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, 1, seen.hits)
-	context := seen.body["context"].(map[string]interface{})
-	require.Equal(t, []interface{}{
-		map[string]interface{}{"flow": "release", "trail": "first"},
-		map[string]interface{}{"flow": "release", "trail": "second"},
+	context := seen.body["context"].(map[string]any)
+	require.Equal(t, []any{
+		map[string]any{"flow": "release", "trail": "first"},
+		map[string]any{"flow": "release", "trail": "second"},
 	}, context["trails"])
 }
 
@@ -136,7 +136,7 @@ func TestCreateSendsAbsentParamsAsAnEmptyObject(t *testing.T) {
 
 	// Not null: the field is a plain dict on the server, so null fails
 	// validation where an empty object is the documented default.
-	require.Equal(t, map[string]interface{}{}, seen.body["params"])
+	require.Equal(t, map[string]any{}, seen.body["params"])
 }
 
 func TestCreateDecodesTheCreatedEvaluation(t *testing.T) {
@@ -225,7 +225,7 @@ func TestCreateSendsNothingOnADryRun(t *testing.T) {
 	require.Equal(t, 0, seen.hits)
 }
 
-func keysOf(m map[string]interface{}) []string {
+func keysOf(m map[string]any) []string {
 	keys := make([]string, 0, len(m))
 	for key := range m {
 		keys = append(keys, key)
@@ -286,7 +286,7 @@ func TestCreateSendsTheDecisionItWasGiven(t *testing.T) {
 	_, err := newTestClient(t, server.URL, false).Create("my-org", request)
 	require.NoError(t, err)
 
-	require.Equal(t, map[string]interface{}{
+	require.Equal(t, map[string]any{
 		"control":     "SDLC-CTRL-0007",
 		"name":        "SDLC-CTRL-0007-decision",
 		"flow":        "release",

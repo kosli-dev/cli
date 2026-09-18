@@ -32,7 +32,7 @@ type CommonAttestationPayload struct {
 	TargetArtifacts     []string                 `json:"target_artifacts,omitempty"`
 	ExternalURLs        map[string]*URLInfo      `json:"external_urls,omitempty"`
 	OriginURL           string                   `json:"origin_url,omitempty"`
-	UserData            interface{}              `json:"user_data,omitempty"`
+	UserData            any                      `json:"user_data,omitempty"`
 	Description         string                   `json:"description,omitempty"`
 	Annotations         map[string]string        `json:"annotations,omitempty"`
 }
@@ -212,7 +212,7 @@ func processExternalURLs(externalURLs, externalFingerprints map[string]string) (
 	return processedExternalURLs, nil
 }
 
-func prepareAttestationForm(payload interface{}, evidencePaths []string) ([]requests.FormItem, bool, string, error) {
+func prepareAttestationForm(payload any, evidencePaths []string) ([]requests.FormItem, bool, string, error) {
 	form, cleanupNeeded, evidencePath, err := newAttestationForm(payload, evidencePaths)
 	if err != nil {
 		return []requests.FormItem{}, cleanupNeeded, evidencePath, err
@@ -235,7 +235,7 @@ func parseAttestationNameTemplate(template string) (string, string, error) {
 
 // newAttestationForm constructs a list of FormItems for an attestation
 // form submission.
-func newAttestationForm(payload interface{}, attachments []string) (
+func newAttestationForm(payload any, attachments []string) (
 	[]requests.FormItem, bool, string, error,
 ) {
 	form := []requests.FormItem{
@@ -314,9 +314,9 @@ func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 		workspace = ""
 	}
 
-	var additionalInfo map[string]interface{}
+	var additionalInfo map[string]any
 	if projectKey := os.Getenv("BITBUCKET_PROJECT_KEY"); projectKey != "" {
-		additionalInfo = map[string]interface{}{"project_key": projectKey}
+		additionalInfo = map[string]any{"project_key": projectKey}
 	}
 
 	return &gitview.GitRepoInfo{

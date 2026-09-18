@@ -108,7 +108,7 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateInputOptions) run(out io.Writer, in io.Reader) error {
-	var input map[string]interface{}
+	var input map[string]any
 	var err error
 
 	if o.inputFile == "" {
@@ -131,7 +131,7 @@ func (o *evaluateInputOptions) run(out io.Writer, in io.Reader) error {
 	return evaluateAndPrintResult(out, o.policyRef, input, o.output, o.showInput, params, o.assertOnDeny())
 }
 
-func loadInputFromFile(filePath string) (result map[string]interface{}, err error) {
+func loadInputFromFile(filePath string) (result map[string]any, err error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read input file: %w", err)
@@ -144,8 +144,8 @@ func loadInputFromFile(filePath string) (result map[string]interface{}, err erro
 	return loadInput(f)
 }
 
-func loadInput(r io.Reader) (map[string]interface{}, error) {
-	var input map[string]interface{}
+func loadInput(r io.Reader) (map[string]any, error) {
+	var input map[string]any
 	if err := json.NewDecoder(r).Decode(&input); err != nil {
 		return nil, fmt.Errorf("failed to parse input: %w", err)
 	}

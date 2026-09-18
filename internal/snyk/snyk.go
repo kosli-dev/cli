@@ -146,7 +146,7 @@ func findLevel(r *sarif.Run, id string) (string, error) {
 	// }
 	problem, problem_exists := ruleDesc.Properties["problem"]
 	if problem_exists && problem != nil {
-		severity, severity_exists := problem.(map[string]interface{})["severity"]
+		severity, severity_exists := problem.(map[string]any)["severity"]
 		if severity_exists {
 			return severity.(string), nil
 		}

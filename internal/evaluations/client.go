@@ -34,7 +34,7 @@ type TrailRef struct {
 type CreateRequest struct {
 	Trails   []TrailRef
 	Files    map[string]string
-	Params   map[string]interface{}
+	Params   map[string]any
 	Decision *Decision
 }
 
@@ -114,7 +114,7 @@ func (c *Client) Create(org string, request CreateRequest) (*Evaluation, error) 
 	if params == nil {
 		// The server's field is a plain object defaulting to empty, so null
 		// fails its validation where an empty object is accepted.
-		params = map[string]interface{}{}
+		params = map[string]any{}
 	}
 
 	response, err := c.http.Do(&requests.RequestParams{
@@ -142,10 +142,10 @@ func (c *Client) Create(org string, request CreateRequest) (*Evaluation, error) 
 // every model behind this endpoint forbids unknown fields: the wire shape has
 // to be stated exactly here rather than inherited from a caller's struct.
 type createPayload struct {
-	Context  createContext          `json:"context"`
-	Policy   inlinePolicy           `json:"policy"`
-	Params   map[string]interface{} `json:"params"`
-	Decision *Decision              `json:"decision,omitempty"`
+	Context  createContext  `json:"context"`
+	Policy   inlinePolicy   `json:"policy"`
+	Params   map[string]any `json:"params"`
+	Decision *Decision      `json:"decision,omitempty"`
 }
 
 type createContext struct {
