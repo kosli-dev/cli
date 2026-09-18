@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -86,12 +85,7 @@ func printEnvironmentAsTable(raw string, out io.Writer, page int) error {
 		state = "NON-COMPLIANT"
 	}
 
-	tags := env["tags"].(map[string]any)
-	tagsOutput := ""
-	for key, value := range tags {
-		tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
-	}
-	tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
+	tagsOutput := formatTags(env["tags"])
 	if tagsOutput == "" {
 		tagsOutput = "None"
 	}
