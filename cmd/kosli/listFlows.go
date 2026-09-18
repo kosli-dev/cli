@@ -129,12 +129,12 @@ func (o *listFlowsOptions) run(out io.Writer) error {
 }
 
 type listFlowsResponse struct {
-	Data       []map[string]interface{} `json:"data"`
-	Pagination Pagination               `json:"pagination"`
+	Data       []map[string]any `json:"data"`
+	Pagination Pagination       `json:"pagination"`
 }
 
 func printFlowsListAsTable(raw string, out io.Writer, page int) error {
-	var flows []map[string]interface{}
+	var flows []map[string]any
 	var pagination *Pagination
 
 	// The endpoint returns a plain array when unpaginated and a {data, pagination}
@@ -165,7 +165,7 @@ func printFlowsListAsTable(raw string, out io.Writer, page int) error {
 	rows := []string{}
 	for _, flow := range flows {
 		tagsOutput := ""
-		if tags, ok := flow["tags"].(map[string]interface{}); ok {
+		if tags, ok := flow["tags"].(map[string]any); ok {
 			for key, value := range tags {
 				tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
 			}

@@ -124,7 +124,7 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	input := map[string]interface{}{
+	input := map[string]any{
 		"trail": trailData,
 	}
 

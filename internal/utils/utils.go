@@ -170,7 +170,7 @@ func CreateFileWithContent(path, content string) error {
 }
 
 func ConvertStringListToInterfaceList(approversList []string) []any {
-	approversIface := make([]interface{}, len(approversList))
+	approversIface := make([]any, len(approversList))
 	for i, v := range approversList {
 		approversIface[i] = v
 	}

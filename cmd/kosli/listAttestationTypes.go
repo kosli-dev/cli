@@ -66,7 +66,7 @@ func (o *listAttestationTypesOptions) run(out io.Writer, args []string) error {
 }
 
 func printAttestationTypesListAsTable(raw string, out io.Writer, page int) error {
-	var attestationTypes []map[string]interface{}
+	var attestationTypes []map[string]any
 	err := json.Unmarshal([]byte(raw), &attestationTypes)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func printAttestationTypesListAsTable(raw string, out io.Writer, page int) error
 		if description == nil {
 			description = ""
 		}
-		latestVersion := len(attestationType["versions"].([]interface{}))
+		latestVersion := len(attestationType["versions"].([]any))
 
 		rows = append(rows, fmt.Sprintf("%s\t%s\t%d", attestationType["name"], description, latestVersion))
 	}

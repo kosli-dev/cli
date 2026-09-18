@@ -97,7 +97,7 @@ func (o *commonEvaluateOptions) assertOnDeny() bool {
 	return !o.noAssert
 }
 
-func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (interface{}, error) {
+func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (any, error) {
 	trailURL, err := url.JoinPath(global.Host, "api/v2/trails", global.Org, flowName, trailName)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (int
 		return nil, err
 	}
 
-	var trailData interface{}
+	var trailData any
 	err = json.Unmarshal([]byte(response.Body), &trailData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse trail response: %v", err)
@@ -124,7 +124,7 @@ func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (int
 
 	ids := evaluate.CollectAttestationIDs(trailData)
 	if len(ids) > 0 {
-		details := make(map[string]interface{})
+		details := make(map[string]any)
 		for _, id := range ids {
 			detailURL, err := url.JoinPath(global.Host, "api/v2/attestations", global.Org)
 			if err != nil {
@@ -141,12 +141,12 @@ func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (int
 			if err != nil {
 				return nil, fmt.Errorf("failed to fetch attestation detail for %s: %w", id, err)
 			}
-			var wrapper map[string]interface{}
+			var wrapper map[string]any
 			if err := json.Unmarshal([]byte(detailResp.Body), &wrapper); err != nil {
 				return nil, fmt.Errorf("failed to parse attestation detail for %s: %w", id, err)
 			}
-			if data, ok := wrapper["data"].([]interface{}); ok && len(data) > 0 {
-				if entry, ok := data[0].(map[string]interface{}); ok {
+			if data, ok := wrapper["data"].([]any); ok && len(data) > 0 {
+				if entry, ok := data[0].(map[string]any); ok {
 					details[id] = entry
 				}
 			}
@@ -231,7 +231,7 @@ func sameHostRedirectPolicy(req *http.Request, via []*http.Request) error {
 	return nil
 }
 
-func parseParams(raw string) (map[string]interface{}, error) {
+func parseParams(raw string) (map[string]any, error) {
 	if raw == "" {
 		return nil, nil
 	}
@@ -247,14 +247,14 @@ func parseParams(raw string) (map[string]interface{}, error) {
 		jsonBytes = []byte(raw)
 	}
 
-	var params map[string]interface{}
+	var params map[string]any
 	if err := json.Unmarshal(jsonBytes, &params); err != nil {
 		return nil, fmt.Errorf("failed to parse --params: %w", err)
 	}
 	return params, nil
 }
 
-func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool) error {
+func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool) error {
 	policySource, err := loadPolicy(policyRef)
 	if err != nil {
 		return err
@@ -533,8 +533,8 @@ func policyBundleKey(ref string) string {
 
 // printEvaluateResult renders a verdict, whatever produced it, so that every
 // evaluation path prints the same bytes for the same verdict.
-func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool, decisionID string) error {
-	auditResult := map[string]interface{}{
+func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, decisionID string) error {
+	auditResult := map[string]any{
 		"allow":      result.Allow,
 		"violations": result.Violations,
 	}
@@ -568,7 +568,7 @@ func printEvaluateResultAsJsonFn(assertOnDeny bool) output.FormatOutputFunc {
 			return err
 		}
 
-		var result map[string]interface{}
+		var result map[string]any
 		if err := json.Unmarshal([]byte(raw), &result); err != nil {
 			return err
 		}
@@ -581,7 +581,7 @@ func printEvaluateResultAsJsonFn(assertOnDeny bool) output.FormatOutputFunc {
 
 func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 	return func(raw string, out io.Writer, _ int) error {
-		var result map[string]interface{}
+		var result map[string]any
 		if err := json.Unmarshal([]byte(raw), &result); err != nil {
 			return err
 		}
@@ -601,7 +601,7 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 
 		rows = append(rows, "RESULT:\tDENIED")
 
-		if violations, ok := result["violations"].([]interface{}); ok && len(violations) > 0 {
+		if violations, ok := result["violations"].([]any); ok && len(violations) > 0 {
 			for i, v := range violations {
 				if i == 0 {
 					rows = append(rows, fmt.Sprintf("VIOLATIONS:\t%s", v))

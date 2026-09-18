@@ -75,7 +75,7 @@ func (o *updateControlOptions) run(cmd *cobra.Command, args []string) error {
 	// Only send the fields the user explicitly set, so unset flags leave the
 	// corresponding values unchanged (the server treats an omitted field as
 	// "no change").
-	payload := map[string]interface{}{}
+	payload := map[string]any{}
 	if cmd.Flags().Changed("name") {
 		payload["name"] = o.name
 	}

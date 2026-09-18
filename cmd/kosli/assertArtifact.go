@@ -168,7 +168,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	var evaluationResult map[string]interface{}
+	var evaluationResult map[string]any
 	err = json.Unmarshal([]byte(response.Body), &evaluationResult)
 	if err != nil {
 		return err
@@ -182,7 +182,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 }
 
 func printAssertAsTable(raw string, out io.Writer, page int) error {
-	var evaluationResult map[string]interface{}
+	var evaluationResult map[string]any
 	err := json.Unmarshal([]byte(raw), &evaluationResult)
 	if err != nil {
 		return err
@@ -201,29 +201,29 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 			logger.Info("Environment: %v", evaluationResult["environment"].(string))
 		}
 		logger.Info("%-32v %-30v", "Policy-name", "status")
-		policyEvaluations := evaluationResult["policy_evaluations"].([]interface{})
+		policyEvaluations := evaluationResult["policy_evaluations"].([]any)
 		for _, item := range policyEvaluations {
-			policyEvaluation := item.(map[string]interface{})
+			policyEvaluation := item.(map[string]any)
 			policyName := policyEvaluation["policy_name"]
 			policyStatus := policyEvaluation["status"]
 			logger.Info("  %-32v %-30v", policyName, policyStatus)
 			if policyStatus != "COMPLIANT" {
-				ruleEvaluations := policyEvaluation["rule_evaluations"].([]interface{})
+				ruleEvaluations := policyEvaluation["rule_evaluations"].([]any)
 				var failures []string
 				for _, item2 := range ruleEvaluations {
-					ruleEvaluation := item2.(map[string]interface{})
+					ruleEvaluation := item2.(map[string]any)
 					ignored := ruleEvaluation["ignored"].(bool)
 					satisfied, _ := ruleEvaluation["satisfied"].(bool)
 					if !ignored && !satisfied {
-						rule := ruleEvaluation["rule"].(map[string]interface{})
-						resolutions := ruleEvaluation["resolutions"].([]interface{})
+						rule := ruleEvaluation["rule"].(map[string]any)
+						resolutions := ruleEvaluation["resolutions"].([]any)
 						for _, item3 := range resolutions {
-							resolution := item3.(map[string]interface{})
+							resolution := item3.(map[string]any)
 							resolutionType := resolution["type"].(string)
-							ruleDefinition := rule["definition"].(map[string]interface{})
+							ruleDefinition := rule["definition"].(map[string]any)
 							attestationName := ruleDefinition["name"]
 							attestationType := ruleDefinition["type"]
-							context, _ := resolution["context"].(map[string]interface{})
+							context, _ := resolution["context"].(map[string]any)
 							forControl, _ := context["for_control"].(string)
 							switch resolutionType {
 							case "legacy_flow":
@@ -254,19 +254,19 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 		logger.Info("")
 	}
 
-	flows := evaluationResult["flows"].([]interface{})
+	flows := evaluationResult["flows"].([]any)
 	for _, item := range flows {
-		item := item.(map[string]interface{})
+		item := item.(map[string]any)
 		flow := item["flow"].(string)
 		trail, _ := item["trail"].(string)
-		complianceStatus, _ := item["compliance_status"].(map[string]interface{})
-		attestationsStatuses, _ := complianceStatus["attestations_statuses"].([]interface{})
+		complianceStatus, _ := item["compliance_status"].(map[string]any)
+		attestationsStatuses, _ := complianceStatus["attestations_statuses"].([]any)
 
 		logger.Info("Flow: %v\n  Trail: %v", flow, trail)
 		logger.Info("  %-32v %-30v %-15v %-10v", "Attestation-name", "type", "status", "compliant")
 
 		for _, item := range attestationsStatuses {
-			attestation := item.(map[string]interface{})
+			attestation := item.(map[string]any)
 			name := attestation["attestation_name"]
 			attType := attestation["attestation_type"]
 			status := attestation["status"]

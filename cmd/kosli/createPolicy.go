@@ -108,7 +108,7 @@ func (o *createPolicyOptions) run(args []string) error {
 
 // newPolicyForm constructs a list of FormItems for a policy with a policy file
 // form submission.
-func newPolicyForm(payload interface{}, policyFile string) ([]requests.FormItem, error) {
+func newPolicyForm(payload any, policyFile string) ([]requests.FormItem, error) {
 	if policyFile == "" {
 		return []requests.FormItem{}, fmt.Errorf("cannot create a policy form without a policy file")
 	}

@@ -40,7 +40,7 @@ type cmdTestCase struct {
 	goldenStderr     string      // expected stderr only (exact match, ignored when empty)
 	stdin            string      // fed to the command's stdin (empty means an immediate EOF)
 	wantError        bool
-	additionalConfig interface{}
+	additionalConfig any
 }
 
 // executeCommandC executes a command as a user would, with an empty stdin (any
@@ -709,7 +709,7 @@ func GetAttestationId(flowName, trailName, attestationName string, t *testing.T)
 	err := o.run(buffer, []string{attestationName})
 	require.NoError(t, err, "attestation should be retrieved without error")
 
-	var data []map[string]interface{}
+	var data []map[string]any
 	err = json.Unmarshal(buffer.Bytes(), &data)
 	require.NoError(t, err, "failed to parse attestation JSON: %s", buffer.String())
 	require.Greater(t, len(data), 0, "expected at least one attestation")

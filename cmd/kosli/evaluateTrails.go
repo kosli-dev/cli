@@ -110,7 +110,7 @@ func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
 		return evaluateServerSide(out, &o.commonEvaluateOptions, refs)
 	}
 
-	var trails []interface{}
+	var trails []any
 	for _, trailName := range args {
 		trailData, err := fetchAndEnrichTrail(o.flowName, trailName, o.attestations)
 		if err != nil {
@@ -124,7 +124,7 @@ func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	input := map[string]interface{}{
+	input := map[string]any{
 		"trails": trails,
 	}
 

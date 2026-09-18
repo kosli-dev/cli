@@ -187,7 +187,7 @@ func (o *reportArtifactOptions) latestCommit(branchName string) (string, error) 
 		return "", err
 	}
 
-	var latestCommitResponse map[string]interface{}
+	var latestCommitResponse map[string]any
 	err = json.Unmarshal([]byte(response.Body), &latestCommitResponse)
 	if err != nil {
 		return "", err

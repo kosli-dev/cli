@@ -138,7 +138,7 @@ func printArtifactAsTableWrapper(artifactRaw string, out io.Writer, pageNumber i
 }
 
 func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) error {
-	var artifacts []map[string]interface{}
+	var artifacts []map[string]any
 	err := json.Unmarshal([]byte(artifactRaw), &artifacts)
 	if err != nil {
 		return err
@@ -146,7 +146,7 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 	return printArtifactsJsonAsTable(artifacts, out, pageNumber)
 }
 
-func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer, pageNumber int) error {
+func printArtifactsJsonAsTable(artifacts []map[string]any, out io.Writer, pageNumber int) error {
 	separator := ""
 	for _, artifact := range artifacts {
 		rows := []string{}
@@ -171,11 +171,11 @@ func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer
 
 		rows = append(rows, fmt.Sprintf("State:\t%s", artifact["state"].(string)))
 
-		runningInEnvs := artifact["running"].([]interface{})
+		runningInEnvs := artifact["running"].([]any)
 		if len(runningInEnvs) > 0 {
 			runningInEnvNames := []string{}
 			for _, envDataInterface := range runningInEnvs {
-				envData := envDataInterface.(map[string]interface{})
+				envData := envDataInterface.(map[string]any)
 				runningInEnvNames = append(runningInEnvNames,
 					fmt.Sprintf("%s#%.0f", envData["environment_name"].(string), envData["snapshot_index"].(float64)))
 			}
@@ -183,22 +183,22 @@ func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer
 			rows = append(rows, fmt.Sprintf("Running in environments:\t%s", strings.Join(runningInEnvNames, ", ")))
 		}
 
-		exitedInEnvs := artifact["exited"].([]interface{})
+		exitedInEnvs := artifact["exited"].([]any)
 		if len(exitedInEnvs) > 0 {
 			exitedInEnvNames := []string{}
 			for _, envDataInterface := range exitedInEnvs {
-				envData := envDataInterface.(map[string]interface{})
+				envData := envDataInterface.(map[string]any)
 				exitedInEnvNames = append(exitedInEnvNames,
 					fmt.Sprintf("%s#%.0f", envData["environment_name"].(string), envData["snapshot_index"].(float64)))
 			}
 			rows = append(rows, fmt.Sprintf("Exited from environments:\t%s", strings.Join(exitedInEnvNames, ", ")))
 		}
 
-		history := artifact["history"].([]interface{})
+		history := artifact["history"].([]any)
 		if len(history) > 0 {
 			rows = append(rows, "History:")
 			for _, rawHistory := range history {
-				event := rawHistory.(map[string]interface{})
+				event := rawHistory.(map[string]any)
 				eventString := event["event"]
 				eventTimestamp, err := formattedTimestamp(event["timestamp"], true)
 				if err != nil {

@@ -23,7 +23,7 @@ func TestMergeGitRepoInfo(t *testing.T) {
 		wantURL            string
 		wantProvider       string
 		wantNamespacePath  []string
-		wantAdditionalInfo map[string]interface{}
+		wantAdditionalInfo map[string]any
 	}{
 		{
 			name:    "nil when both ID and Name are empty",
@@ -115,7 +115,7 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			name: "explicit --repository override clears stale CI-detected NamespacePath/AdditionalInfo",
 			base: &gitview.GitRepoInfo{
 				ID: "repo-id", Name: "MyOrg/Payment/my-repo", URL: "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
-				NamespacePath: []string{"MyOrg", "Payment"}, AdditionalInfo: map[string]interface{}{"project_key": "PAY"},
+				NamespacePath: []string{"MyOrg", "Payment"}, AdditionalInfo: map[string]any{"project_key": "PAY"},
 			},
 			repoName:         "my-fork/repo",
 			repoProvider:     "github",
@@ -130,7 +130,7 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			name: "CI-detected NamespacePath/AdditionalInfo are preserved when --repository is not set explicitly",
 			base: &gitview.GitRepoInfo{
 				ID: "repo-id", Name: "MyOrg/Payment/my-repo", URL: "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
-				NamespacePath: []string{"MyOrg", "Payment"}, AdditionalInfo: map[string]interface{}{"project_key": "PAY"},
+				NamespacePath: []string{"MyOrg", "Payment"}, AdditionalInfo: map[string]any{"project_key": "PAY"},
 			},
 			repoNameExplicit:   false,
 			wantNil:            false,
@@ -138,7 +138,7 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			wantName:           "MyOrg/Payment/my-repo",
 			wantURL:            "https://dev.azure.com/MyOrg/Payment/_git/my-repo",
 			wantNamespacePath:  []string{"MyOrg", "Payment"},
-			wantAdditionalInfo: map[string]interface{}{"project_key": "PAY"},
+			wantAdditionalInfo: map[string]any{"project_key": "PAY"},
 		},
 		{
 			name:             "flag name applied when base has no name even if not explicit",
@@ -440,14 +440,14 @@ func TestGetGitRepoInfoFromBitbucket(t *testing.T) {
 		bitbucketRepoFullName string
 		bitbucketProjectKey   string
 		wantNamespacePath     []string
-		wantAdditionalInfo    map[string]interface{}
+		wantAdditionalInfo    map[string]any
 	}{
 		{
 			name:                  "with project key",
 			bitbucketRepoFullName: "myteam/my-repo",
 			bitbucketProjectKey:   "PROJ",
 			wantNamespacePath:     []string{"myteam"},
-			wantAdditionalInfo:    map[string]interface{}{"project_key": "PROJ"},
+			wantAdditionalInfo:    map[string]any{"project_key": "PROJ"},
 		},
 		{
 			name:                  "without project key",

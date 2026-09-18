@@ -46,7 +46,7 @@ type componentSchema struct {
 // driftCase maps a CLI payload struct to the OpenAPI component it must match.
 type driftCase struct {
 	name      string
-	payload   interface{}
+	payload   any
 	component string
 	// ignore lists json field names to skip on both sides, for deliberate
 	// CLI/API divergences (none needed yet).
@@ -110,7 +110,7 @@ func (suite *OpenAPIContractTestSuite) TestPayloadsMatchSchema() {
 }
 
 // jsonFieldNames returns the wire names from a struct's json tags.
-func jsonFieldNames(v interface{}) []string {
+func jsonFieldNames(v any) []string {
 	t := reflect.TypeOf(v)
 	names := []string{}
 	for i := 0; i < t.NumField(); i++ {

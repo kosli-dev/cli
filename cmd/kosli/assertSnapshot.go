@@ -78,7 +78,7 @@ func run(out io.Writer, args []string) error {
 		return err
 	}
 
-	var environmentData map[string]interface{}
+	var environmentData map[string]any
 	err = json.Unmarshal([]byte(response.Body), &environmentData)
 	if err != nil {
 		return err

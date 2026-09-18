@@ -189,7 +189,7 @@ func injectArtifactIntoTemplateIfNotExisting(template []string) []string {
 
 // newFlowForm constructs a list of FormItems for a flow with a template file
 // form submission.
-func newFlowForm(payload interface{}, templateFile string, templateRequired bool) ([]requests.FormItem, error) {
+func newFlowForm(payload any, templateFile string, templateRequired bool) ([]requests.FormItem, error) {
 	if templateFile == "" && templateRequired {
 		return []requests.FormItem{}, fmt.Errorf("cannot create a flow form without a template file")
 	}

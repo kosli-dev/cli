@@ -77,7 +77,7 @@ func (o *getControlOptions) run(out io.Writer, args []string) error {
 }
 
 func printControlAsTable(raw string, out io.Writer, page int) error {
-	var control map[string]interface{}
+	var control map[string]any
 	if err := json.Unmarshal([]byte(raw), &control); err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func printControlAsTable(raw string, out io.Writer, page int) error {
 		rows = append(rows, fmt.Sprintf("Created at:\t%s", createdAtFormatted))
 	}
 
-	if tags, ok := control["tags"].(map[string]interface{}); ok && len(tags) > 0 {
+	if tags, ok := control["tags"].(map[string]any); ok && len(tags) > 0 {
 		tagKeys := make([]string, 0, len(tags))
 		for key := range tags {
 			tagKeys = append(tagKeys, key)
@@ -118,7 +118,7 @@ func printControlAsTable(raw string, out io.Writer, page int) error {
 		rows = append(rows, fmt.Sprintf("Tags:\t%s", strings.Join(tagPairs, ", ")))
 	}
 
-	if links, ok := control["links"].(map[string]interface{}); ok && len(links) > 0 {
+	if links, ok := control["links"].(map[string]any); ok && len(links) > 0 {
 		rows = append(rows, "Links:\t")
 		linkNames := make([]string, 0, len(links))
 		for name := range links {
@@ -130,7 +130,7 @@ func printControlAsTable(raw string, out io.Writer, page int) error {
 		}
 	}
 
-	if policies, ok := control["policies_referencing"].([]interface{}); ok && len(policies) > 0 {
+	if policies, ok := control["policies_referencing"].([]any); ok && len(policies) > 0 {
 		policyNames := make([]string, 0, len(policies))
 		for _, p := range policies {
 			policyNames = append(policyNames, fmt.Sprintf("%s", p))

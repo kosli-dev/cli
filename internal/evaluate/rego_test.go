@@ -11,8 +11,8 @@ func TestEvaluate_AllowAllPolicy(t *testing.T) {
 
 allow = true
 `
-	input := map[string]interface{}{
-		"trail": map[string]interface{}{
+	input := map[string]any{
+		"trail": map[string]any{
 			"name": "test-trail",
 		},
 	}
@@ -32,8 +32,8 @@ violations contains msg if {
 	msg := "always denied"
 }
 `
-	input := map[string]interface{}{
-		"trail": map[string]interface{}{
+	input := map[string]any{
+		"trail": map[string]any{
 			"name": "test-trail",
 		},
 	}
@@ -49,7 +49,7 @@ func TestEvaluate_MissingPackagePolicy(t *testing.T) {
 
 allow = true
 `
-	input := map[string]interface{}{}
+	input := map[string]any{}
 
 	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
@@ -63,7 +63,7 @@ violations contains msg if {
 	msg := "no allow rule"
 }
 `
-	input := map[string]interface{}{}
+	input := map[string]any{}
 
 	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
@@ -75,7 +75,7 @@ func TestEvaluate_NoViolationsRule(t *testing.T) {
 
 allow = false
 `
-	input := map[string]interface{}{}
+	input := map[string]any{}
 
 	result, err := Evaluate(policy, input, nil)
 	require.NoError(t, err)
@@ -88,7 +88,7 @@ func TestEvaluate_NonBooleanAllow(t *testing.T) {
 
 allow = "yes"
 `
-	input := map[string]interface{}{}
+	input := map[string]any{}
 
 	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
@@ -100,7 +100,7 @@ func TestEvaluate_SyntaxError(t *testing.T) {
 
 allow = {{{
 `
-	input := map[string]interface{}{}
+	input := map[string]any{}
 
 	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
@@ -125,10 +125,10 @@ violations contains msg if {
 	msg := sprintf("score %d is below threshold %d", [input.score, threshold])
 }
 `
-	input := map[string]interface{}{
+	input := map[string]any{
 		"score": 5,
 	}
-	params := map[string]interface{}{
+	params := map[string]any{
 		"threshold": 3,
 	}
 
@@ -155,7 +155,7 @@ violations contains msg if {
 	msg := sprintf("score %d is below threshold %d", [input.score, threshold])
 }
 `
-	input := map[string]interface{}{
+	input := map[string]any{
 		"score": 5,
 	}
 
@@ -172,8 +172,8 @@ func TestEvaluate_ParamsIgnoredByPolicy(t *testing.T) {
 
 allow = true
 `
-	input := map[string]interface{}{}
-	params := map[string]interface{}{
+	input := map[string]any{}
+	params := map[string]any{
 		"unused_key": "unused_value",
 	}
 

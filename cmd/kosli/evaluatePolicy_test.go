@@ -87,12 +87,12 @@ func (suite *EvaluatePolicyCommandTestSuite) TestItSendsThePolicyAndTheTrailAndP
 	require.Equal(suite.T(), 0, fake.unexpected)
 
 	created := fake.created[0]
-	context := created["context"].(map[string]interface{})
-	require.Equal(suite.T(), []interface{}{
-		map[string]interface{}{"flow": "my-flow", "trail": "my-trail"},
+	context := created["context"].(map[string]any)
+	require.Equal(suite.T(), []any{
+		map[string]any{"flow": "my-flow", "trail": "my-trail"},
 	}, context["trails"])
 
-	files := created["policy"].(map[string]interface{})["files"].(map[string]interface{})
+	files := created["policy"].(map[string]any)["files"].(map[string]any)
 	require.Len(suite.T(), files, 1)
 	require.Contains(suite.T(), files, "allow-all.rego", "the policy travels under its own name")
 	require.Contains(suite.T(), files["allow-all.rego"], "package policy")
@@ -113,10 +113,10 @@ func (suite *EvaluatePolicyCommandTestSuite) TestItPassesParamsOnUnchanged() {
 	for _, test := range []struct {
 		name string
 		flag string
-		want map[string]interface{}
+		want map[string]any
 	}{
-		{"inline json", `--params '{"min_approvers":2}'`, map[string]interface{}{"min_approvers": float64(2)}},
-		{"a file", "--params @testdata/evaluate/params-low-threshold.json", map[string]interface{}{"threshold": float64(3)}},
+		{"inline json", `--params '{"min_approvers":2}'`, map[string]any{"min_approvers": float64(2)}},
+		{"a file", "--params @testdata/evaluate/params-low-threshold.json", map[string]any{"threshold": float64(3)}},
 	} {
 		suite.Run(test.name, func() {
 			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
@@ -136,7 +136,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestNoParamsTravelAsAnEmptyObject()
 	_, _, _, _, err := executeCommandC(suite.cmd(server.URL, ""))
 
 	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), map[string]interface{}{}, fake.created[0]["params"])
+	require.Equal(suite.T(), map[string]any{}, fake.created[0]["params"])
 }
 
 // A caller moving here from `evaluate trail` must not have to re-parse.
@@ -230,11 +230,11 @@ func (suite *EvaluatePolicyCommandTestSuite) TestEveryContextGoesInOneEvaluation
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), fake.created, 1, "one evaluation, however many trails")
 
-	context := fake.created[0]["context"].(map[string]interface{})
-	require.Equal(suite.T(), []interface{}{
-		map[string]interface{}{"flow": "my-flow", "trail": "my-trail"},
-		map[string]interface{}{"flow": "other-flow", "trail": "second"},
-		map[string]interface{}{"flow": "my-flow", "trail": "third"},
+	context := fake.created[0]["context"].(map[string]any)
+	require.Equal(suite.T(), []any{
+		map[string]any{"flow": "my-flow", "trail": "my-trail"},
+		map[string]any{"flow": "other-flow", "trail": "second"},
+		map[string]any{"flow": "my-flow", "trail": "third"},
 	}, context["trails"], "named in the order given")
 }
 
@@ -246,7 +246,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestARepeatedContextIsSentAsGiven()
 	_, _, _, _, err := executeCommandC(suite.cmd(server.URL, "--context trail=my-flow/my-trail"))
 
 	require.NoError(suite.T(), err)
-	context := fake.created[0]["context"].(map[string]interface{})
+	context := fake.created[0]["context"].(map[string]any)
 	require.Len(suite.T(), context["trails"], 2)
 }
 
@@ -306,7 +306,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestControlRecordsADecisionWhereItI
 			"--fingerprint b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"))
 
 	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), map[string]interface{}{
+	require.Equal(suite.T(), map[string]any{
 		"control":     "SDLC-CTRL-0007",
 		"name":        "SDLC-CTRL-0007-decision",
 		"flow":        "release",
@@ -324,7 +324,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheDecisionNameDefaultsToTheCon
 		"--control SDLC-CTRL-0007 --flow release --trail my-trail"))
 
 	require.NoError(suite.T(), err)
-	decision := fake.created[0]["decision"].(map[string]interface{})
+	decision := fake.created[0]["decision"].(map[string]any)
 	require.Equal(suite.T(), "SDLC-CTRL-0007-decision", decision["name"])
 	require.NotContains(suite.T(), decision, "fingerprint",
 		"a decision about the trail carries no fingerprint")
@@ -337,7 +337,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestAGivenNameIsSentAsGiven() {
 		"--control SDLC-CTRL-0007 --flow release --trail my-trail --name code-review-decision"))
 
 	require.NoError(suite.T(), err)
-	decision := fake.created[0]["decision"].(map[string]interface{})
+	decision := fake.created[0]["decision"].(map[string]any)
 	require.Equal(suite.T(), "code-review-decision", decision["name"])
 }
 
@@ -411,7 +411,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheDestinationCanComeFromTheEnv
 	_, _, _, _, err := executeCommandC(suite.cmd(server.URL, "--control SDLC-CTRL-0007"))
 
 	require.NoError(suite.T(), err)
-	decision := fake.created[0]["decision"].(map[string]interface{})
+	decision := fake.created[0]["decision"].(map[string]any)
 	require.Equal(suite.T(), "release", decision["flow"])
 	require.Equal(suite.T(), "my-trail", decision["trail"])
 }
@@ -504,7 +504,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADirectoryTravelsAsOneBundle() 
 			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
 
 	require.NoError(suite.T(), err)
-	files := fake.created[0]["policy"].(map[string]interface{})["files"].(map[string]interface{})
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
 	require.Equal(suite.T(), []string{"README.md", "lib/helpers.rego", "policy.rego"}, sortedKeys(files),
 		"keyed by path relative to the directory, and nothing left out by name")
 	require.Contains(suite.T(), files["policy.rego"], "package policy")
@@ -596,7 +596,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADryRunSendsNothing() {
 	require.NotContains(suite.T(), combined, "RESULT")
 }
 
-func sortedKeys(files map[string]interface{}) []string {
+func sortedKeys(files map[string]any) []string {
 	keys := make([]string, 0, len(files))
 	for key := range files {
 		keys = append(keys, key)

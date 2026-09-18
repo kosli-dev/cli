@@ -68,7 +68,7 @@ func (o *getEnvironmentOptions) run(out io.Writer, args []string) error {
 }
 
 func printEnvironmentAsTable(raw string, out io.Writer, page int) error {
-	var env map[string]interface{}
+	var env map[string]any
 	err := json.Unmarshal([]byte(raw), &env)
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ func printEnvironmentAsTable(raw string, out io.Writer, page int) error {
 		state = "NON-COMPLIANT"
 	}
 
-	tags := env["tags"].(map[string]interface{})
+	tags := env["tags"].(map[string]any)
 	tagsOutput := ""
 	for key, value := range tags {
 		tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)

@@ -67,7 +67,7 @@ func (o *getPolicyOptions) run(out io.Writer, args []string) error {
 }
 
 func printPolicyAsTable(raw string, out io.Writer, page int) error {
-	var policy map[string]interface{}
+	var policy map[string]any
 	err := json.Unmarshal([]byte(raw), &policy)
 	if err != nil {
 		return err
@@ -78,11 +78,11 @@ func printPolicyAsTable(raw string, out io.Writer, page int) error {
 		return err
 	}
 
-	consumingEnvs := policy["consuming_envs"].([]interface{})
+	consumingEnvs := policy["consuming_envs"].([]any)
 
-	versions := policy["versions"].([]interface{})
+	versions := policy["versions"].([]any)
 
-	latestVersion := versions[len(versions)-1].(map[string]interface{})
+	latestVersion := versions[len(versions)-1].(map[string]any)
 	policyYaml := latestVersion["policy_yaml"].(string)
 	policyYamlIndented := "\t" + strings.ReplaceAll(policyYaml, "\n", "\n\t")
 

@@ -121,7 +121,7 @@ func (o *listSnapshotsOptions) getSnapshotsList(out io.Writer, envName, interval
 }
 
 func printSnapshotsListAsTable(raw string, out io.Writer, page int) error {
-	var snapshots []map[string]interface{}
+	var snapshots []map[string]any
 	err := json.Unmarshal([]byte(raw), &snapshots)
 	if err != nil {
 		return err
@@ -166,7 +166,7 @@ func printSnapshotsListAsTable(raw string, out io.Writer, page int) error {
 }
 
 func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error {
-	var events []map[string]interface{}
+	var events []map[string]any
 	err := json.Unmarshal([]byte(raw), &events)
 	if err != nil {
 		return err

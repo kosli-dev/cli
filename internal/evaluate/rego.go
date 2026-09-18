@@ -18,7 +18,7 @@ type Result struct {
 // Evaluate evaluates a Rego policy against the given input.
 // The policy must use `package policy` and declare an `allow` rule.
 // An optional params map can be provided to populate data.params in the policy.
-func Evaluate(policySource string, input interface{}, params map[string]interface{}) (*Result, error) {
+func Evaluate(policySource string, input any, params map[string]any) (*Result, error) {
 	if err := validatePolicy(policySource); err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func Evaluate(policySource string, input interface{}, params map[string]interfac
 		rego.Input(input),
 	}
 	if params != nil {
-		store := inmem.NewFromObject(map[string]interface{}{"params": params})
+		store := inmem.NewFromObject(map[string]any{"params": params})
 		opts = append(opts, rego.Store(store))
 	}
 
@@ -89,14 +89,14 @@ func validatePolicy(policySource string) error {
 	return nil
 }
 
-func collectViolations(ctx context.Context, policySource string, input interface{}, params map[string]interface{}) ([]string, error) {
+func collectViolations(ctx context.Context, policySource string, input any, params map[string]any) ([]string, error) {
 	opts := []func(*rego.Rego){
 		rego.Query("data.policy.violations"),
 		rego.Module("policy.rego", policySource),
 		rego.Input(input),
 	}
 	if params != nil {
-		store := inmem.NewFromObject(map[string]interface{}{"params": params})
+		store := inmem.NewFromObject(map[string]any{"params": params})
 		opts = append(opts, rego.Store(store))
 	}
 
@@ -109,7 +109,7 @@ func collectViolations(ctx context.Context, policySource string, input interface
 
 	var violations []string
 	if len(rs) > 0 && len(rs[0].Expressions) > 0 {
-		if vs, ok := rs[0].Expressions[0].Value.([]interface{}); ok {
+		if vs, ok := rs[0].Expressions[0].Value.([]any); ok {
 			for _, v := range vs {
 				if s, ok := v.(string); ok {
 					violations = append(violations, s)

@@ -23,7 +23,7 @@ import (
 type FormItem struct {
 	Type      string
 	FieldName string
-	Content   interface{}
+	Content   any
 }
 
 // FileBytes is the Content of a "file-bytes" FormItem: a file the caller has
@@ -73,7 +73,7 @@ type CustomLogger struct {
 }
 
 // Printf intercepts the log message and removes the hardcoded [DEBUG] part
-func (cl *CustomLogger) Printf(format string, args ...interface{}) {
+func (cl *CustomLogger) Printf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 
 	// Remove the hardcoded [DEBUG] prefix if it exists
@@ -117,7 +117,7 @@ func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *
 type RequestParams struct {
 	Method            string
 	URL               string
-	Payload           interface{}
+	Payload           any
 	Form              []FormItem
 	AdditionalHeaders map[string]string
 	Username          string
@@ -141,7 +141,7 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]any, error) 
 	}
 
 	var body io.Reader
-	var jsonFields map[string]interface{}
+	var jsonFields map[string]any
 
 	if len(p.Form) > 0 {
 		// Multipart form handling (with possible file attachments)
@@ -205,7 +205,7 @@ func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[st
 	}()
 
 	// Map to store the JSON fields for logging during dry-run
-	jsonFields := make(map[string]interface{})
+	jsonFields := make(map[string]any)
 
 	for _, item := range items {
 		switch item.Type {

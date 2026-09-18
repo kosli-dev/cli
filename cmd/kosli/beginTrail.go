@@ -55,7 +55,7 @@ type beginTrailOptions struct {
 type TrailPayload struct {
 	Name         string                   `json:"name"`
 	Description  string                   `json:"description,omitempty"`
-	UserData     interface{}              `json:"user_data,omitempty"`
+	UserData     any                      `json:"user_data,omitempty"`
 	Commit       *gitview.BasicCommitInfo `json:"git_commit_info,omitempty"`
 	GitRepoInfo  *gitview.GitRepoInfo     `json:"repo_info,omitempty"`
 	ExternalURLs map[string]*URLInfo      `json:"external_urls,omitempty"`

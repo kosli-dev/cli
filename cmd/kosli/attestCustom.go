@@ -13,8 +13,8 @@ import (
 
 type CustomAttestationPayload struct {
 	*CommonAttestationPayload
-	TypeName        string      `json:"type_name"`
-	AttestationData interface{} `json:"attestation_data"`
+	TypeName        string `json:"type_name"`
+	AttestationData any    `json:"attestation_data"`
 }
 
 type attestCustomOptions struct {

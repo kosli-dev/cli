@@ -859,7 +859,7 @@ func (suite *CliUtilsTestSuite) TestConditionallyRequiredFlags() {
 func (suite *CliUtilsTestSuite) TestFormattedTimestamp() {
 	tests := []struct {
 		name      string
-		timestamp interface{}
+		timestamp any
 		short     bool
 		expected  string
 		wantErr   bool
