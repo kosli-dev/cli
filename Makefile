@@ -58,7 +58,9 @@ ldflags: ## Print ldflags
 	@echo $(LDFLAGS)
 
 fmt: ## Reformat package sources
-	@go fmt ./...
+# Mirrors the gofmt rewrite rule in .golangci.yml so fmt can fix what lint rejects.
+# gofmt is used directly because golangci-lint is not available where `make build` runs (Dockerfile).
+	@gofmt -l -w -r 'interface{} -> any' $$(go list -f '{{.Dir}}' ./...)
 
 ensure_golangci-lint:
 	@if command -v brew >/dev/null 2>&1; then \
@@ -77,7 +79,7 @@ ensure_golangci-lint:
 	fi
 
 lint: deps vet ensure_golangci-lint ## Run linting
-	@golangci-lint run --timeout=5m --color always  -v ./...
+	@golangci-lint run --color always -v ./...
 
 vet: fmt ## Run Go vet
 	@go vet ./...
