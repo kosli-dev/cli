@@ -68,11 +68,8 @@ func TestFormatTags(t *testing.T) {
 	}
 }
 
-// The table printers receive tags as a map, so without an explicit sort their
-// output ordering was whatever Go's map iteration gave that run: the released
-// CLI returned three distinct orderings for these three keys across 20 runs.
-// Each subtest pins the full rendering, tab padding included, so a column-width
-// change cannot pass silently.
+// Each subtest asserts the full rendering, tab padding included, so a change in
+// column width cannot pass silently.
 func TestTagRenderingIsSortedAcrossPrinters(t *testing.T) {
 	const tags = `{"team":"platform","env":"prod","app":"api"}`
 
@@ -117,9 +114,7 @@ func TestTagRenderingIsSortedAcrossPrinters(t *testing.T) {
 	})
 }
 
-// Responses carry "tags": {} for an untagged resource, but get environment
-// asserted the value to a map unchecked, so an absent or null key would have
-// panicked. The other printers already tolerated both shapes.
+// An absent or null tags value must render as "None" rather than panic.
 func TestPrintEnvironmentAsTableWithoutTags(t *testing.T) {
 	raw := `{"name":"prod","type":"K8S","description":"","state":true,"last_reported_at":null}`
 	var buf bytes.Buffer

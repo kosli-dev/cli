@@ -6,11 +6,9 @@ import (
 	"strings"
 )
 
-// sortedTagPairs renders a tags map as "key=value" pairs ordered by key. The
-// order matters because tags reach the printers as a map, whose iteration order
-// would otherwise leak into the table output. A missing or non-map value yields
-// no pairs: responses carry an empty object today, but the printers have always
-// tolerated both shapes, so the shared helper does too.
+// sortedTagPairs renders a tags map as "key=value" pairs ordered by key, so map
+// iteration order cannot leak into table output. A missing or non-map value
+// yields no pairs.
 func sortedTagPairs(rawTags any) []string {
 	tags, ok := rawTags.(map[string]any)
 	if !ok || len(tags) == 0 {
