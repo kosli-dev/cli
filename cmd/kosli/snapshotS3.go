@@ -19,6 +19,11 @@ In all cases, the content is reported as one artifact. If you wish to report sep
 Object keys are never used as local file names: each object is downloaded to a temporary file, hashed and removed, and the fingerprint is computed from the keys and the content digests, so any key S3 accepts can be fingerprinted on any operating system.
 Keys that cannot form a directory tree are rejected and fail the snapshot, naming every key involved: a key containing a ^..^ segment, two keys that resolve to the same path (such as ^a//b^ and ^a/b^), or an object whose key is also a prefix of other objects (such as ^a^ beside ^a/b^). A legitimate key of that shape can be left out with ^--exclude-regex^ (anchor and escape it, since the pattern is a regular expression matched against the whole key); when ^--include^ or ^--include-regex^ is set, exclude filters are ignored, so narrow the include filter instead.
 
+By default each object's SHA256 comes from downloading the object and hashing it. ^--fingerprint-source metadata^ reads the SHA256 checksum S3 stores for the object instead, which skips the download, the temporary disk and the hashing. Everything else -- the keys, the ^.kosli_ignore^ rules, the way digests combine into the fingerprint -- is the same in both modes, so the fingerprint is identical and a snapshot matches the artifact you attested either way. Two conditions apply:
+- Every contributing object must carry a full-object SHA256 checksum. S3 only stores one when the upload asked for it, for example ^aws s3api put-object --checksum-algorithm SHA256^. Objects without one fail the snapshot, all named in one run.
+- A multipart upload gets a composite SHA256, which hashes the checksums of the parts rather than the object content, so it cannot serve as the object's fingerprint. Such an object can be collapsed into a single part in place with ^aws s3api copy-object --checksum-algorithm SHA256 --copy-source yourBucket/yourKey --bucket yourBucket --key yourKey^.
+A root ^.kosli_ignore^ is still downloaded in this mode, because its rules decide which objects contribute; the objects it excludes are never fetched and need no checksum. Reading a checksum does not need fewer permissions than downloading: AWS requires ^s3:GetObject^ for both, and an SSE-KMS encrypted object additionally needs ^kms:GenerateDataKey^ and ^kms:Decrypt^ either way.
+
 ` + kosliIgnoreDescNoExclude
 
 const snapshotS3Example = `
@@ -69,7 +74,21 @@ kosli snapshot s3 yourEnvironmentName \
 	--exclude-regex '.*\.png$' \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# report contents of an AWS S3 bucket without downloading the objects,
+# using the SHA256 checksums S3 stores for them:
+kosli snapshot s3 yourEnvironmentName \
+	--bucket yourBucketName \
+	--fingerprint-source metadata \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
+
+// fingerprint sources accepted by --fingerprint-source
+const (
+	fingerprintSourceContent  = "content"
+	fingerprintSourceMetadata = "metadata"
+)
 
 type snapshotS3Options struct {
 	bucket              string
@@ -77,6 +96,7 @@ type snapshotS3Options struct {
 	includeRegex        []string
 	excludePaths        []string
 	excludeRegex        []string
+	fingerprintSource   string
 	downloadConcurrency int
 	downloadBudget      string
 	downloadLimits      aws.DownloadLimits
@@ -112,6 +132,12 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 				}
 			}
 
+			if o.fingerprintSource != fingerprintSourceContent && o.fingerprintSource != fingerprintSourceMetadata {
+				return ErrorBeforePrintingUsage(cmd, fmt.Sprintf(
+					"%s is not a valid fingerprint source. Valid sources are: [%s]",
+					o.fingerprintSource, validS3FingerprintSources))
+			}
+
 			return o.resolveDownloadLimits()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -124,6 +150,7 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVar(&o.includeRegex, "include-regex", []string{}, bucketPathsRegexFlag)
 	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludeBucketPathsFlag)
 	cmd.Flags().StringSliceVar(&o.excludeRegex, "exclude-regex", []string{}, excludeBucketPathsRegexFlag)
+	cmd.Flags().StringVar(&o.fingerprintSource, "fingerprint-source", fingerprintSourceContent, s3FingerprintSourceFlag)
 	cmd.Flags().IntVar(&o.downloadConcurrency, "download-concurrency", aws.DefaultDownloadLimits.Concurrency, downloadConcurrencyFlag)
 	cmd.Flags().StringVar(&o.downloadBudget, "download-budget", defaultDownloadBudget, downloadBudgetFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
@@ -149,7 +176,12 @@ func (o *snapshotS3Options) run(args []string) error {
 		return err
 	}
 
-	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, o.downloadLimits, logger)
+	harvest := o.awsStaticCreds.GetS3Data
+	if o.fingerprintSource == fingerprintSourceMetadata {
+		harvest = o.awsStaticCreds.GetS3DataFromMetadata
+	}
+
+	s3Data, err := harvest(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, o.downloadLimits, logger)
 	if err != nil {
 		return err
 	}

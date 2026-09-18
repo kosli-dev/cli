@@ -68,9 +68,9 @@ func (suite *AWSTestSuite) TestDecodeLambdaFingerprint() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			got, err := decodeLambdaFingerprint(t.base64Fingerprint)
+			got, err := decodeBase64Sha256(t.base64Fingerprint)
 			require.False(suite.T(), (err != nil) != t.wantErr,
-				"decodeLambdaFingerprint() error = %v, wantErr %v", err, t.wantErr)
+				"decodeBase64Sha256() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
 				require.Equal(suite.T(), t.wantFingerprint, got)
 			}
