@@ -69,43 +69,67 @@ func TestFormatTags(t *testing.T) {
 }
 
 // The table printers receive tags as a map, so without an explicit sort their
-// output ordering was whatever Go's map iteration gave that run.
-func TestTagRenderingIsDeterministicAcrossPrinters(t *testing.T) {
-	t.Run("printFlowAsTable orders tags by key", func(t *testing.T) {
-		raw := `{"name":"backend","description":"Backend service","template":"artifact","last_deployment_at":null,"tags":{"team":"platform","env":"prod","app":"api"}}`
+// output ordering was whatever Go's map iteration gave that run: the released
+// CLI returned three distinct orderings for these three keys across 20 runs.
+// Each subtest pins the full rendering, tab padding included, so a column-width
+// change cannot pass silently.
+func TestTagRenderingIsSortedAcrossPrinters(t *testing.T) {
+	const tags = `{"team":"platform","env":"prod","app":"api"}`
+
+	t.Run("printFlowAsTable", func(t *testing.T) {
+		raw := `{"name":"backend","description":"Backend service","template":"artifact","last_deployment_at":null,"tags":` + tags + `}`
 		var buf bytes.Buffer
 		require.NoError(t, printFlowAsTable(raw, &buf, 0))
-		require.Contains(t, buf.String(), "Tags:                [app=api], [env=prod], [team=platform]\n")
+		require.Equal(t, "Name:                backend\n"+
+			"Description:         Backend service\n"+
+			"Template:            artifact\n"+
+			"Last Deployment At:  N/A\n"+
+			"Tags:                [app=api], [env=prod], [team=platform]\n", buf.String())
 	})
 
-	t.Run("printEnvironmentAsTable orders tags by key", func(t *testing.T) {
-		raw := `{"name":"prod","type":"K8S","description":"","state":true,"last_reported_at":null,"tags":{"team":"platform","env":"prod","app":"api"}}`
+	t.Run("printEnvironmentAsTable", func(t *testing.T) {
+		raw := `{"name":"prod","type":"K8S","description":"","state":true,"last_reported_at":null,"tags":` + tags + `}`
 		var buf bytes.Buffer
 		require.NoError(t, printEnvironmentAsTable(raw, &buf, 0))
-		require.Contains(t, buf.String(), "[app=api], [env=prod], [team=platform]")
+		require.Equal(t, "Name:              prod\n"+
+			"Type:              K8S\n"+
+			"Description:       \n"+
+			"State:             COMPLIANT\n"+
+			"Last Reported At:  N/A\n"+
+			"Tags:              [app=api], [env=prod], [team=platform]\n"+
+			"Policies:          []\n", buf.String())
 	})
 
-	t.Run("printFlowsListAsTable orders tags by key", func(t *testing.T) {
-		raw := `[{"name":"backend","description":"Backend service","tags":{"team":"platform","env":"prod","app":"api"}}]`
+	t.Run("printFlowsListAsTable", func(t *testing.T) {
+		raw := `[{"name":"backend","description":"Backend service","tags":` + tags + `}]`
 		var buf bytes.Buffer
 		require.NoError(t, printFlowsListAsTable(raw, &buf, 1))
-		require.Contains(t, buf.String(), "[app=api], [env=prod], [team=platform]")
+		require.Equal(t, "NAME     DESCRIPTION      TAGS\n"+
+			"backend  Backend service  [app=api], [env=prod], [team=platform]\n", buf.String())
 	})
 
-	t.Run("printEnvListAsTable orders tags by key", func(t *testing.T) {
-		raw := `[{"name":"prod","type":"K8S","last_reported_at":null,"last_modified_at":null,"tags":{"team":"platform","env":"prod","app":"api"}}]`
+	t.Run("printEnvListAsTable", func(t *testing.T) {
+		raw := `[{"name":"prod","type":"K8S","last_reported_at":null,"last_modified_at":null,"tags":` + tags + `}]`
 		var buf bytes.Buffer
 		require.NoError(t, printEnvListAsTable(raw, &buf, 1))
-		require.Contains(t, buf.String(), "[app=api], [env=prod], [team=platform]")
+		require.Equal(t, "NAME  TYPE  LAST REPORT  LAST MODIFIED  TAGS                                    POLICIES\n"+
+			"prod  K8S                               [app=api], [env=prod], [team=platform]  []\n", buf.String())
 	})
 }
 
-// The API omits "tags" entirely for an environment without tags, which used to
-// panic on an unchecked type assertion.
+// Responses carry "tags": {} for an untagged resource, but get environment
+// asserted the value to a map unchecked, so an absent or null key would have
+// panicked. The other printers already tolerated both shapes.
 func TestPrintEnvironmentAsTableWithoutTags(t *testing.T) {
 	raw := `{"name":"prod","type":"K8S","description":"","state":true,"last_reported_at":null}`
 	var buf bytes.Buffer
 	require.NoError(t, printEnvironmentAsTable(raw, &buf, 0))
-	require.Contains(t, buf.String(), "Tags:")
-	require.Contains(t, buf.String(), "None")
+	require.Contains(t, buf.String(), "Tags:              None\n")
+}
+
+func TestFormatPlainTags(t *testing.T) {
+	require.Equal(t, "", formatPlainTags(nil))
+	require.Equal(t, "", formatPlainTags(map[string]any{}))
+	require.Equal(t, "", formatPlainTags("not-a-map"))
+	require.Equal(t, "a=1, b=x", formatPlainTags(map[string]any{"b": "x", "a": float64(1)}))
 }

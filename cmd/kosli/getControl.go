@@ -105,8 +105,8 @@ func printControlAsTable(raw string, out io.Writer, page int) error {
 		rows = append(rows, fmt.Sprintf("Created at:\t%s", createdAtFormatted))
 	}
 
-	if tagPairs := sortedTagPairs(control["tags"]); len(tagPairs) > 0 {
-		rows = append(rows, fmt.Sprintf("Tags:\t%s", strings.Join(tagPairs, ", ")))
+	if tagsOutput := formatPlainTags(control["tags"]); tagsOutput != "" {
+		rows = append(rows, fmt.Sprintf("Tags:\t%s", tagsOutput))
 	}
 
 	if links, ok := control["links"].(map[string]any); ok && len(links) > 0 {

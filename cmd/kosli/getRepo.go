@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	neturl "net/url"
-	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -162,7 +161,7 @@ func printRepoAsTable(raw string, out io.Writer, page int) error {
 		return err
 	}
 
-	tagsOutput := formatRepoTags(repo["tags"])
+	tagsOutput := formatPlainTags(repo["tags"])
 	if tagsOutput == "" {
 		tagsOutput = "None"
 	}
@@ -176,11 +175,4 @@ func printRepoAsTable(raw string, out io.Writer, page int) error {
 
 	tabFormattedPrint(out, []string{}, rows)
 	return nil
-}
-
-// formatRepoTags renders a repo's tags map as sorted "key=value" pairs, or ""
-// when there are no tags. Repo and control tables use unbracketed pairs, unlike
-// the flow and environment tables, which use formatTags.
-func formatRepoTags(rawTags any) string {
-	return strings.Join(sortedTagPairs(rawTags), ", ")
 }
