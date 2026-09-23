@@ -207,6 +207,9 @@ jobs:
       artifact-metadata: write
     env:
       RESULTS_FILE: smoke-test-results.json
+      # Syft scans one platform. The image is multi-platform, so the SBOM covers
+      # this one only, and the attestation records which.
+      SBOM_PLATFORM: linux/amd64
 
     steps:
       - name: Harden Runner
@@ -289,13 +292,37 @@ jobs:
           subject-digest: ${{ steps.docker_build.outputs.digest }}
           push-to-registry: true
 
+      - name: Install syft
+        uses: anchore/sbom-action/download-syft@v0
+
       - name: Generate SBOM for the docker image
-        uses: anchore/sbom-action@v0
-        with:
-          image: ${{ env.IMAGE }}:${{ inputs.tag }}
-          format: 'spdx-json'
-          output-file: 'sbom.spdx.json'
-          upload-artifact: false
+        env:
+          IMAGE: ${{ env.IMAGE }}
+          DIGEST: ${{ steps.docker_build.outputs.digest }}
+        run: |
+          syft -q -o spdx-json --platform "${SBOM_PLATFORM}" \
+            "registry:${IMAGE}@${DIGEST}" > sbom.spdx.json
+
+          # Syft names the platform image it scanned, never the index ${DIGEST}
+          # points at, so the subject has to be that platform's entry in it.
+          expected=$(docker buildx imagetools inspect "${IMAGE}@${DIGEST}" --raw \
+            | jq -r --arg p "${SBOM_PLATFORM}" '
+                .manifests[]?
+                | select((.platform.os + "/" + .platform.architecture) == $p)
+                | .digest')
+          subject=$(jq -r '
+            (.relationships[] | select(.relationshipType == "DESCRIBES") | .relatedSpdxElement) as $root
+            | .packages[] | select(.SPDXID == $root)
+            | .checksums[]? | select(.algorithm == "SHA256") | .checksumValue
+          ' sbom.spdx.json)
+
+          if [ -z "${expected}" ]; then
+            echo "::error::${IMAGE}@${DIGEST} is not a multi-platform index listing ${SBOM_PLATFORM}"; exit 1
+          fi
+          if [ "sha256:${subject}" != "${expected}" ]; then
+            echo "::error::sbom.spdx.json describes sha256:${subject}, not the ${SBOM_PLATFORM} image ${expected}"
+            exit 1
+          fi
 
       - name: Attest SBOM to Github
         uses: actions/attest@v4.2.2
@@ -333,6 +360,7 @@ jobs:
             --name container-sbom
             --fingerprint ${{ env.FINGERPRINT }}
             --sbom-file sbom.spdx.json
+            --annotate sbom_platform=${{ env.SBOM_PLATFORM }}
             --org ${{ inputs.kosli_org }}
 
       - name: Run Snyk Container Test to scan the Docker image for vulnerabilities
