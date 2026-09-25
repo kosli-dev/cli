@@ -160,6 +160,22 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 				{"report.compliant", false},
 			},
 		},
+		{
+			name: "--output-rule can be repeated",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-with-report.rego --output-rule report --output-rule summary --output json",
+			goldenJson: []jsonCheck{
+				{"report.compliant", true},
+				{"summary", "all good"},
+			},
+		},
+		{
+			name: "--output-rule takes a comma-separated list",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-with-report.rego --output-rule report,summary --output json",
+			goldenJson: []jsonCheck{
+				{"report.compliant", true},
+				{"summary", "all good"},
+			},
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
