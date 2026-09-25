@@ -1669,7 +1669,7 @@
     "args": [],
     "flags": {
       "input-file": "cmd/kosli/testdata/person-schema.json",
-      "policy": "cmd/kosli/testdata/policies/allow-all.rego"
+      "policy": "cmd/kosli/testdata/policies/allow-with-report.rego"
     },
     "baseline_ok": true,
     "baseline_exit": 0,
@@ -1681,6 +1681,7 @@
       "input-file",
       "no-assert",
       "output",
+      "output-rule",
       "params",
       "policy",
       "show-input"
@@ -1692,8 +1693,9 @@
       "input-file": "cmd/kosli/testdata/person-schema.json",
       "no-assert": "true",
       "output": "json",
+      "output-rule": "report",
       "params": "{}",
-      "policy": "cmd/kosli/testdata/policies/allow-all.rego",
+      "policy": "cmd/kosli/testdata/policies/allow-with-report.rego",
       "show-input": "true"
     },
     "setup": [],
@@ -1705,7 +1707,7 @@
     ],
     "flags": {
       "flow": "{flow}",
-      "policy": "cmd/kosli/testdata/policies/allow-all.rego"
+      "policy": "cmd/kosli/testdata/policies/allow-with-report.rego"
     },
     "baseline_ok": true,
     "baseline_exit": 0,
@@ -1716,6 +1718,7 @@
       "flow",
       "no-assert",
       "output",
+      "output-rule",
       "params",
       "policy",
       "server-side",
@@ -1727,8 +1730,9 @@
       "flow": "{flow}",
       "no-assert": "true",
       "output": "json",
+      "output-rule": "report",
       "params": "{}",
-      "policy": "cmd/kosli/testdata/policies/allow-all.rego",
+      "policy": "cmd/kosli/testdata/policies/allow-with-report.rego",
       "server-side": "false",
       "show-input": "true"
     },
@@ -1759,7 +1763,7 @@
     ],
     "flags": {
       "flow": "{flow}",
-      "policy": "cmd/kosli/testdata/policies/allow-all.rego"
+      "policy": "cmd/kosli/testdata/policies/allow-with-report.rego"
     },
     "baseline_ok": true,
     "baseline_exit": 0,
@@ -1770,6 +1774,7 @@
       "flow",
       "no-assert",
       "output",
+      "output-rule",
       "params",
       "policy",
       "server-side",
@@ -1781,8 +1786,9 @@
       "flow": "{flow}",
       "no-assert": "true",
       "output": "json",
+      "output-rule": "report",
       "params": "{}",
-      "policy": "cmd/kosli/testdata/policies/allow-all.rego",
+      "policy": "cmd/kosli/testdata/policies/allow-with-report.rego",
       "server-side": "false",
       "show-input": "true"
     },
