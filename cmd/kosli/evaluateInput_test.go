@@ -189,6 +189,12 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 				{"report", nil},
 			},
 		},
+		{
+			name:         "--output-rule is left out of table output, with a hint",
+			cmd:          "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-with-report.rego --output-rule report",
+			goldenStdout: "RESULT:  ALLOWED\n",
+			goldenStderr: "[warning] --output-rule values are only shown with --output json\n",
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
