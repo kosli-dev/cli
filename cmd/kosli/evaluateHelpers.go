@@ -254,13 +254,13 @@ func parseParams(raw string) (map[string]any, error) {
 	return params, nil
 }
 
-func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool) error {
+func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, outputRules []string) error {
 	policySource, err := loadPolicy(policyRef)
 	if err != nil {
 		return err
 	}
 
-	result, err := evaluate.Evaluate(string(policySource), input, params)
+	result, err := evaluate.Evaluate(string(policySource), input, params, outputRules...)
 	if err != nil {
 		return err
 	}
@@ -537,6 +537,9 @@ func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[strin
 	auditResult := map[string]any{
 		"allow":      result.Allow,
 		"violations": result.Violations,
+	}
+	for rule, value := range result.Outputs {
+		auditResult[rule] = value
 	}
 	// Absent everywhere else, so a caller reading a verdict alone parses the
 	// same page as before.

@@ -148,6 +148,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	outputFlag                      = "[defaulted] The format of the output. Valid formats are: [table, json]."
 	serverSideFlag                  = "[hidden] Evaluate the policy on the Kosli server rather than on this machine. Unsupported and subject to change."
 	policyParamsFlag                = "[optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params."
+	policyOutputRuleFlag            = "[optional] Name of a policy rule to add to the JSON output, next to allow and violations."
 	policyAssertFlag                = "[optional] Exit with a non-zero status when the policy denies. Without it the verdict is printed and the command exits 0."
 	policyContextFlag               = "What to evaluate, as trail=<flow>/<trail>. Repeat it to evaluate several trails at one instant."
 	policyControlFlag               = "[optional] Record the outcome as a decision against this control. Without it nothing is recorded."

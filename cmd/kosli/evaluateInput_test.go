@@ -144,6 +144,22 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 				{"allow", false},
 			},
 		},
+		{
+			name: "--output-rule adds the rule to the JSON output",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-with-report.rego --output-rule report --output json",
+			goldenJson: []jsonCheck{
+				{"allow", true},
+				{"report.compliant", true},
+			},
+		},
+		{
+			name: "--output-rule adds the rule to the JSON output when the policy denies",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/deny-with-report.rego --output-rule report --output json --no-assert",
+			goldenJson: []jsonCheck{
+				{"allow", false},
+				{"report.compliant", false},
+			},
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
