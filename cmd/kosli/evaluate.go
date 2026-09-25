@@ -22,6 +22,7 @@ Use ` + "`evaluate input`" + ` to evaluate a local JSON file or stdin without an
 
 The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` rule.
 An optional ` + "`violations`" + ` rule (a set of strings) can provide human-readable denial reasons.
+Use ` + "`--output-rule`" + ` to add other rules of the policy, like a report, to the JSON output.
 
 By default a deny exits with code 1 so the command can gate a pipeline.
 Pass ` + "`--no-assert`" + ` to use the command as a policy decision point: it prints
