@@ -374,6 +374,11 @@ func (o *commonEvaluateOptions) refuseWhatTheServerCannotDo() error {
 			"--show-input is not supported with --server-side; " +
 				"the server does not return the input it evaluated")
 	}
+	if len(o.outputRules) > 0 {
+		return fmt.Errorf(
+			"--output-rule is not supported with --server-side; " +
+				"the server only returns allow and violations")
+	}
 	return nil
 }
 
