@@ -666,7 +666,13 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 	// One object is fingerprinted as that file and named after it, as it was
 	// when the objects were laid out on disk.
 	if file, ok := digest.SingleVirtualFile(files); ok {
-		sha256, err := source.sha256(context.TODO(), tempDir, objects[0])
+		fetch := source
+		// The root ignore file is always downloaded, so no source ever asks it
+		// for a checksum -- even alone, when its rules have nothing to decide.
+		if file.Path == digest.IgnoreFileName {
+			fetch = downloadDigests(downloader, bucket, logger)
+		}
+		sha256, err := fetch.sha256(context.TODO(), tempDir, objects[0])
 		if err != nil {
 			return "", "", err
 		}
