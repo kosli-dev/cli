@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -533,6 +534,17 @@ func policyBundleKey(ref string) string {
 
 // printEvaluateResult renders a verdict, whatever produced it, so that every
 // evaluation path prints the same bytes for the same verdict.
+var evaluateResultKeys = []string{"allow", "violations", "input", "params", "decision_attestation_id"}
+
+func validateOutputRules(rules []string) error {
+	for _, rule := range rules {
+		if slices.Contains(evaluateResultKeys, rule) {
+			return fmt.Errorf("--output-rule cannot be '%s', it is already part of the output", rule)
+		}
+	}
+	return nil
+}
+
 func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, decisionID string) error {
 	auditResult := map[string]any{
 		"allow":      result.Allow,

@@ -422,6 +422,19 @@ func TestLoadPolicyHonorsHTTPProxy(t *testing.T) {
 	require.True(t, sawProxyStyleRequest, "expected proxy to receive an absolute-URL request")
 }
 
+func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmdRefusesOutputRulesClashingWithOutputKeys() {
+	tests := []cmdTestCase{}
+	for _, name := range []string{"allow", "violations", "input", "params", "decision_attestation_id"} {
+		tests = append(tests, cmdTestCase{
+			wantError:   true,
+			name:        "--output-rule " + name + " is refused",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-all.rego --output-rule " + name,
+			goldenRegex: `--output-rule cannot be '` + name + `', it is already part of the output`,
+		})
+	}
+	runTestCmd(suite.T(), tests)
+}
+
 func TestEvaluateInputCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(EvaluateInputCommandTestSuite))
 }
