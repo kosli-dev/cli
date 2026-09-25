@@ -176,6 +176,19 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 				{"summary", "all good"},
 			},
 		},
+		{
+			wantError:   true,
+			name:        "--output-rule naming a rule the policy does not declare fails",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-all.rego --output-rule report --output json",
+			goldenRegex: `policy does not declare a 'report' rule`,
+		},
+		{
+			name: "--output-rule prints null for a rule with no value",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/undefined-report.rego --output-rule report --output json",
+			goldenJson: []jsonCheck{
+				{"report", nil},
+			},
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
