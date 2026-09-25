@@ -138,7 +138,7 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 					o.fingerprintSource, validS3FingerprintSources))
 			}
 
-			return o.resolveDownloadLimits()
+			return o.resolveDownloadLimits(cmd.Flags().Changed("download-concurrency"))
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -207,7 +207,11 @@ func (o *snapshotS3Options) run(args []string) error {
 // spells it; a test keeps the two equal.
 const defaultDownloadBudget = "512M"
 
-func (o *snapshotS3Options) resolveDownloadLimits() error {
+// resolveDownloadLimits validates the download flags into o.downloadLimits.
+// concurrencySet reports whether --download-concurrency was given by flag,
+// environment or config file; bindFlags applies the latter two through
+// Flags().Set, so all three mark the flag changed.
+func (o *snapshotS3Options) resolveDownloadLimits(concurrencySet bool) error {
 	if o.downloadConcurrency < 1 {
 		return fmt.Errorf("--download-concurrency must be at least 1, got %d", o.downloadConcurrency)
 	}
@@ -215,6 +219,12 @@ func (o *snapshotS3Options) resolveDownloadLimits() error {
 	if err != nil {
 		return fmt.Errorf("invalid --download-budget: %w", err)
 	}
-	o.downloadLimits = aws.DownloadLimits{Concurrency: o.downloadConcurrency, BytesInFlight: budget}
+	concurrency := o.downloadConcurrency
+	// The flag's default is sized for download buffers, which reading stored
+	// checksums does not use.
+	if o.fingerprintSource == fingerprintSourceMetadata && !concurrencySet {
+		concurrency = aws.DefaultMetadataConcurrency
+	}
+	o.downloadLimits = aws.DownloadLimits{Concurrency: concurrency, BytesInFlight: budget}
 	return nil
 }
