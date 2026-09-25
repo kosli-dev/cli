@@ -13,31 +13,21 @@ import (
 type Result struct {
 	Allow      bool
 	Violations []string
+	Outputs    map[string]any
 }
 
 // Evaluate evaluates a Rego policy against the given input.
 // The policy must use `package policy` and declare an `allow` rule.
 // An optional params map can be provided to populate data.params in the policy.
-func Evaluate(policySource string, input any, params map[string]any) (*Result, error) {
+// The values of outputRules, rules of the policy package, are returned in Result.Outputs.
+func Evaluate(policySource string, input any, params map[string]any, outputRules ...string) (*Result, error) {
 	if err := validatePolicy(policySource); err != nil {
 		return nil, err
 	}
 
 	ctx := context.Background()
 
-	opts := []func(*rego.Rego){
-		rego.Query("data.policy.allow"),
-		rego.Module("policy.rego", policySource),
-		rego.Input(input),
-	}
-	if params != nil {
-		store := inmem.NewFromObject(map[string]any{"params": params})
-		opts = append(opts, rego.Store(store))
-	}
-
-	r := rego.New(opts...)
-
-	rs, err := r.Eval(ctx)
+	rs, err := evalQuery(ctx, "data.policy.allow", policySource, input, params)
 	if err != nil {
 		return nil, fmt.Errorf("policy evaluation failed: %w", err)
 	}
@@ -61,7 +51,29 @@ func Evaluate(policySource string, input any, params map[string]any) (*Result, e
 		result.Violations = violations
 	}
 
+	for _, rule := range outputRules {
+		value, err := evaluateRule(ctx, policySource, input, params, rule)
+		if err != nil {
+			return nil, err
+		}
+		if result.Outputs == nil {
+			result.Outputs = map[string]any{}
+		}
+		result.Outputs[rule] = value
+	}
+
 	return result, nil
+}
+
+func evaluateRule(ctx context.Context, policySource string, input any, params map[string]any, rule string) (any, error) {
+	rs, err := evalQuery(ctx, "data.policy."+rule, policySource, input, params)
+	if err != nil {
+		return nil, fmt.Errorf("%s evaluation failed: %w", rule, err)
+	}
+	if len(rs) == 0 || len(rs[0].Expressions) == 0 {
+		return nil, nil
+	}
+	return rs[0].Expressions[0].Value, nil
 }
 
 func validatePolicy(policySource string) error {
@@ -90,19 +102,7 @@ func validatePolicy(policySource string) error {
 }
 
 func collectViolations(ctx context.Context, policySource string, input any, params map[string]any) ([]string, error) {
-	opts := []func(*rego.Rego){
-		rego.Query("data.policy.violations"),
-		rego.Module("policy.rego", policySource),
-		rego.Input(input),
-	}
-	if params != nil {
-		store := inmem.NewFromObject(map[string]any{"params": params})
-		opts = append(opts, rego.Store(store))
-	}
-
-	r := rego.New(opts...)
-
-	rs, err := r.Eval(ctx)
+	rs, err := evalQuery(ctx, "data.policy.violations", policySource, input, params)
 	if err != nil {
 		return nil, fmt.Errorf("violations evaluation failed: %w", err)
 	}
@@ -119,4 +119,17 @@ func collectViolations(ctx context.Context, policySource string, input any, para
 	}
 
 	return violations, nil
+}
+
+func evalQuery(ctx context.Context, query string, policySource string, input any, params map[string]any) (rego.ResultSet, error) {
+	opts := []func(*rego.Rego){
+		rego.Query(query),
+		rego.Module("policy.rego", policySource),
+		rego.Input(input),
+	}
+	if params != nil {
+		store := inmem.NewFromObject(map[string]any{"params": params})
+		opts = append(opts, rego.Store(store))
+	}
+	return rego.New(opts...).Eval(ctx)
 }

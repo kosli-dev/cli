@@ -128,5 +128,5 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		"trail": trailData,
 	}
 
-	return evaluateAndPrintResult(out, o.policyRef, input, o.output, o.showInput, params, o.assertOnDeny())
+	return evaluateAndPrintResult(out, o.policyRef, input, o.output, o.showInput, params, o.assertOnDeny(), nil)
 }
