@@ -197,3 +197,26 @@ report := {"compliant": ` + allow + `}
 		})
 	}
 }
+
+func TestEvaluate_OutputRuleNotDeclared(t *testing.T) {
+	policy := `package policy
+
+allow = true
+`
+	_, err := Evaluate(policy, map[string]any{}, nil, "report")
+	require.EqualError(t, err, "policy does not declare a 'report' rule")
+}
+
+func TestEvaluate_OutputRuleUndefined(t *testing.T) {
+	policy := `package policy
+
+allow = true
+
+report := "never" if {
+	input.never_there
+}
+`
+	result, err := Evaluate(policy, map[string]any{}, nil, "report")
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{"report": nil}, result.Outputs)
+}

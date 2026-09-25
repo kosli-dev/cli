@@ -21,7 +21,7 @@ type Result struct {
 // An optional params map can be provided to populate data.params in the policy.
 // The values of outputRules, rules of the policy package, are returned in Result.Outputs.
 func Evaluate(policySource string, input any, params map[string]any, outputRules ...string) (*Result, error) {
-	if err := validatePolicy(policySource); err != nil {
+	if err := validatePolicy(policySource, outputRules); err != nil {
 		return nil, err
 	}
 
@@ -76,7 +76,7 @@ func evaluateRule(ctx context.Context, policySource string, input any, params ma
 	return rs[0].Expressions[0].Value, nil
 }
 
-func validatePolicy(policySource string) error {
+func validatePolicy(policySource string, outputRules []string) error {
 	module, err := ast.ParseModuleWithOpts("policy.rego", policySource, ast.ParserOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to parse policy: %w", err)
@@ -87,15 +87,17 @@ func validatePolicy(policySource string) error {
 			module.Package.Path[1:].String())
 	}
 
-	hasAllow := false
+	declared := map[string]bool{}
 	for _, rule := range module.Rules {
-		if rule.Head.Name.String() == "allow" {
-			hasAllow = true
-			break
-		}
+		declared[rule.Head.Name.String()] = true
 	}
-	if !hasAllow {
+	if !declared["allow"] {
 		return fmt.Errorf("policy must declare an 'allow' rule")
+	}
+	for _, rule := range outputRules {
+		if !declared[rule] {
+			return fmt.Errorf("policy does not declare a '%s' rule", rule)
+		}
 	}
 
 	return nil
