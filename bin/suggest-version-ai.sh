@@ -6,7 +6,7 @@
 #   - ANTHROPIC_API_KEY: call Claude directly.
 #   - OP_ANTHROPIC_API_KEY_REF: 1Password reference (default below; override if your item path differs).
 #
-# Optional: CLAUDE_MODEL (default: claude-sonnet-4-6) — e.g. claude-opus-4-6.
+# Optional: CLAUDE_MODEL (default: claude-sonnet-5)
 #
 # Requires: curl, jq; for 1Password: op CLI
 # Usage: bin/suggest-version-ai.sh [base_ref] [-o release_notes.md]
@@ -95,7 +95,7 @@ BUMP: major|minor|patch
 ---CHANGELOG---
 <markdown changelog here>"
 
-CLAUDE_MODEL="${CLAUDE_MODEL:-claude-sonnet-4-6}"
+CLAUDE_MODEL="${CLAUDE_MODEL:-claude-sonnet-5}"
 DIFF_FILE=$(mktemp)
 trap 'rm -f "$DIFF_FILE" "$RELEASE_NOTES_FILE" "$SUGGESTED_VERSION_FILE"' EXIT
 printf '%s' "$DIFF" > "$DIFF_FILE"
