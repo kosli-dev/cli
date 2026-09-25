@@ -18,16 +18,10 @@ import (
 var fakeS3LastModified = time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)
 
 // FakeS3Checksum is the additional checksum S3 has stored for an object.
-// Objects uploaded without an explicit checksum algorithm have none, which is
-// why FakeS3Client.Checksums is keyed sparsely rather than derived from content.
 type FakeS3Checksum struct {
-	// SHA256 is Base64-encoded, as S3 returns it. A composite (multipart)
-	// checksum carries a "-N" part-count suffix and is a hash of the part
-	// hashes, not of the object content.
+	// SHA256 is Base64, as S3 returns it; a composite one ends in a "-N" part count.
 	SHA256 string
-	// Type is COMPOSITE for multipart uploads and FULL_OBJECT for whole-object
-	// checksums.
-	Type s3Types.ChecksumType
+	Type   s3Types.ChecksumType
 }
 
 // FakeS3Client is an in-memory implementation of S3API for testing.
@@ -46,9 +40,8 @@ type FakeS3Client struct {
 	// NoLastModified lists keys whose listing entry carries no LastModified at
 	// all, as some S3-compatible stores return.
 	NoLastModified map[string]bool
-	// Checksums maps object key to the additional checksum S3 has stored for
-	// it. A key with no entry has no additional checksum, as objects uploaded
-	// without --checksum-algorithm do, and HeadObject returns none for it.
+	// Checksums maps object key to its stored checksum. A key with no entry has
+	// none, like an object uploaded without --checksum-algorithm.
 	Checksums map[string]FakeS3Checksum
 	// PageSize controls how many objects are returned per ListObjectsV2 call.
 	// Defaults to 1000 (matching the AWS default) if zero.
@@ -183,8 +176,8 @@ func (f *FakeS3Client) HeadObject(_ context.Context, params *s3.HeadObjectInput,
 		LastModified:  aws.Time(f.lastModified(*params.Key)),
 	}
 
-	// S3 only returns a stored checksum when the request asks for it. Returning
-	// it unconditionally would hide a caller that forgets to set ChecksumMode.
+	// Withhold the checksum unless asked, as S3 does, so a caller that forgets
+	// ChecksumMode fails here too.
 	if params.ChecksumMode != s3Types.ChecksumModeEnabled {
 		return out, nil
 	}

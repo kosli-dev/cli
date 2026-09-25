@@ -8,10 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// The download defaults are sized for download buffers and temp disk, which a
-// source that reads stored checksums never uses, so metadata mode takes its own
-// concurrency default. An explicit --download-concurrency, from the flag, the
-// environment or the config file, still decides in either mode.
 func TestResolveDownloadLimitsPicksTheConcurrencyForTheSource(t *testing.T) {
 	for _, tc := range []struct {
 		name           string
@@ -44,8 +40,7 @@ func TestDefaultMetadataConcurrencyIsWiderThanTheDownloadDefault(t *testing.T) {
 		"a source that holds no buffers should not be throttled below the download default")
 }
 
-// cobra prints only the flag's own default, so the metadata default is spelt
-// out in the help text, and has to keep matching the constant.
+// cobra shows only the flag's own default, so the help text spells out the metadata one.
 func TestDownloadConcurrencyHelpStatesTheMetadataDefault(t *testing.T) {
 	require.Contains(t, downloadConcurrencyFlag, fmt.Sprintf("defaults to %d", aws.DefaultMetadataConcurrency))
 }

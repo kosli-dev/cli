@@ -32,7 +32,6 @@ func fullObjectChecksums(objects map[string][]byte) map[string]FakeS3Checksum {
 	return checksums
 }
 
-// checksummedBucket is a fake whose every object carries a full-object SHA256.
 func checksummedBucket(objects map[string][]byte) *FakeS3Client {
 	return &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects, Checksums: fullObjectChecksums(objects)}
 }
@@ -43,11 +42,8 @@ func snapshotMetadata(t *testing.T, client S3API, excludePaths []string) ([]*S3D
 		DefaultDownloadLimits, logger.NewStandardLogger())
 }
 
-// TestMatchesContentMode is the property the feature rests on: for the same
-// bucket, the stored checksums must fingerprint to exactly what downloading and
-// hashing produces -- digest, artifact name and timestamp. Both sources run the
-// shared pipeline, so the only thing that can differ is the per-object digest,
-// and the checksum of a full-object upload is that digest.
+// The property the feature rests on: stored checksums fingerprint a bucket
+// exactly as downloading does, artifact name and timestamp included.
 func (suite *S3MetadataTestSuite) TestMatchesContentMode() {
 	for _, t := range []struct {
 		name         string
@@ -64,13 +60,11 @@ func (suite *S3MetadataTestSuite) TestMatchesContentMode() {
 			},
 		},
 		{
-			// '.' sorts before '/', so a flat key sort would order these
-			// differently from the directory walk the download path uses.
+			// '.' sorts before '/', so a flat key sort would diverge from the tree walk.
 			name:    "a prefix sharing a name prefix with a sibling object",
 			objects: map[string][]byte{"a.txt": []byte("1"), "a/z": []byte("2"), "a/b/c": []byte("3"), "b": []byte("4")},
 		},
 		{
-			// The key rule is shared, so keys fold the same way in both modes.
 			name:    "unusual key shapes",
 			objects: map[string][]byte{"/lead.txt": []byte("u\n"), "a//b": []byte("o\n"), "./c.txt": []byte("t\n"), `d\e.txt`: []byte("n\n")},
 		},
@@ -102,9 +96,8 @@ func (suite *S3MetadataTestSuite) TestMatchesContentMode() {
 	}
 }
 
-// TestPinnedFingerprints re-derives, from checksums alone, the fingerprints
-// recorded before content mode stopped writing objects under their keys. They
-// are the values already on the server, so metadata mode must hit them too.
+// Existing snapshots on the server carry these fingerprints, so metadata mode
+// must reproduce them from checksums alone.
 func (suite *S3MetadataTestSuite) TestPinnedFingerprints() {
 	for _, t := range []struct {
 		name             string
@@ -152,11 +145,10 @@ type countingHeader struct {
 	S3API
 	delay time.Duration
 
-	mu          sync.Mutex
-	calls       map[string]int
-	inFlight    int
-	maxInFlight int
-	// checksumModeMissing counts requests that forgot to ask for the checksum.
+	mu                  sync.Mutex
+	calls               map[string]int
+	inFlight            int
+	maxInFlight         int
 	checksumModeMissing int
 }
 
@@ -181,9 +173,6 @@ func (h *countingHeader) HeadObject(ctx context.Context, params *s3.HeadObjectIn
 	return h.S3API.HeadObject(ctx, params, optFns...)
 }
 
-// TestReadsMetadataNotContent pins what leaves the bucket: one HeadObject per
-// object that contributes to the fingerprint, and a download of nothing but the
-// root .kosli_ignore, whose rules decide what contributes.
 func (suite *S3MetadataTestSuite) TestReadsMetadataNotContent() {
 	objects := map[string][]byte{
 		".kosli_ignore": []byte("logs\n"), "app.js": []byte("app"), "lib/util.js": []byte("util"),
@@ -207,9 +196,8 @@ func (suite *S3MetadataTestSuite) TestReadsMetadataNotContent() {
 	require.Zero(suite.T(), client.checksumModeMissing, "every HeadObject must ask for the stored checksum")
 }
 
-// The root .kosli_ignore is downloaded in metadata mode whatever else the bucket
-// holds, so a checksum is never required of it -- including when it is the
-// only object and so takes the single-file branch rather than the ignore pass.
+// A lone ignore file takes the single-file branch, not the ignore pass, and must
+// still be downloaded rather than read through HeadObject.
 func (suite *S3MetadataTestSuite) TestALoneIgnoreFileNeedsNoChecksum() {
 	objects := map[string][]byte{".kosli_ignore": []byte("logs\n")}
 	downloads := &recordingDownloader{S3API: &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects}}
@@ -227,9 +215,7 @@ func (suite *S3MetadataTestSuite) TestALoneIgnoreFileNeedsNoChecksum() {
 	require.Equal(suite.T(), content, metadata)
 }
 
-// A source that reads metadata occupies no temp disk, so the byte budget must
-// not throttle it: with a one-byte budget the HEADs still overlap up to the
-// worker count.
+// A one-byte budget would serialise downloads; HEADs use no disk and must still overlap.
 func (suite *S3MetadataTestSuite) TestHeadsAreBoundedByConcurrencyNotBytes() {
 	objects := map[string][]byte{}
 	for i := 0; i < 40; i++ {
@@ -256,7 +242,7 @@ func (suite *S3MetadataTestSuite) TestErrors() {
 		wantErrMsg []string
 	}{
 		{
-			// Pinned in full: the command-level golden for this case mirrors it.
+			// Pinned in full because the SnapshotS3TestSuite golden repeats it.
 			name:    "an object with no stored checksum",
 			objects: map[string][]byte{"README.md": readme},
 			wantErrMsg: []string{"object key [README.md] has no SHA256 checksum, so its fingerprint cannot be read from S3 " +
@@ -313,10 +299,6 @@ func (suite *S3MetadataTestSuite) TestErrors() {
 	}
 }
 
-// Only a "-N" part-count suffix marks a composite checksum. A "-" anywhere
-// else cannot occur in standard Base64, so such a value is undecodable rather
-// than composite, and must not send the user to copy-object, which would not
-// help.
 func (suite *S3MetadataTestSuite) TestCompositeDetectionKeysOffThePartCountSuffix() {
 	readme := []byte(fakeReadmeBody)
 	for _, t := range []struct {
@@ -345,9 +327,6 @@ func (suite *S3MetadataTestSuite) TestCompositeDetectionKeysOffThePartCountSuffi
 	}
 }
 
-// Whether an object's checksum is usable is a property of the object, not of
-// the connection, so one run reports every such object rather than stopping at
-// the first; a bucket-wide migration is then not a guess-and-retry loop.
 func (suite *S3MetadataTestSuite) TestReportsEveryUnusableObjectTogether() {
 	objects := map[string][]byte{}
 	for i := 0; i < 6; i++ {
