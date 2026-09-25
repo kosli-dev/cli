@@ -64,6 +64,7 @@ type commonEvaluateOptions struct {
 	assert       bool
 	noAssert     bool
 	serverSide   bool
+	outputRules  []string
 }
 
 func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) {
@@ -75,6 +76,7 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, "[optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.")
 	cmd.Flags().BoolVar(&o.noAssert, "no-assert", false, "[optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.")
+	cmd.Flags().StringSliceVar(&o.outputRules, "output-rule", nil, policyOutputRuleFlag)
 	cmd.MarkFlagsMutuallyExclusive("assert", "no-assert")
 }
 

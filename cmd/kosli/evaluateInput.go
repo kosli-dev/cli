@@ -12,8 +12,7 @@ import (
 
 type evaluateInputOptions struct {
 	commonEvaluateOptions
-	inputFile   string
-	outputRules []string
+	inputFile string
 }
 
 const evaluateInputShortDesc = `Evaluate a local JSON input against a Rego policy.`
@@ -96,7 +95,6 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 
 	o.addFlags(cmd, "Path or http(s):// URL of a Rego policy to evaluate against the input.")
 	cmd.Flags().StringVarP(&o.inputFile, "input-file", "i", "", "[optional] Path to a JSON input file. Reads from stdin if omitted.")
-	cmd.Flags().StringSliceVar(&o.outputRules, "output-rule", nil, policyOutputRuleFlag)
 
 	cmd.Flags().Lookup("flow").Hidden = true
 	cmd.Flags().Lookup("attestations").Hidden = true
