@@ -17,6 +17,13 @@ import (
 // entry in FakeS3Client.LastModified.
 var fakeS3LastModified = time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)
 
+// FakeS3Checksum is the additional checksum S3 has stored for an object.
+type FakeS3Checksum struct {
+	// SHA256 is Base64, as S3 returns it; a composite one ends in a "-N" part count.
+	SHA256 string
+	Type   s3Types.ChecksumType
+}
+
 // FakeS3Client is an in-memory implementation of S3API for testing.
 // It simulates continuation-token pagination and returns errors for unknown
 // buckets and missing objects.
@@ -33,6 +40,9 @@ type FakeS3Client struct {
 	// NoLastModified lists keys whose listing entry carries no LastModified at
 	// all, as some S3-compatible stores return.
 	NoLastModified map[string]bool
+	// Checksums maps object key to its stored checksum. A key with no entry has
+	// none, like an object uploaded without --checksum-algorithm.
+	Checksums map[string]FakeS3Checksum
 	// PageSize controls how many objects are returned per ListObjectsV2 call.
 	// Defaults to 1000 (matching the AWS default) if zero.
 	PageSize int
@@ -42,6 +52,9 @@ type FakeS3Client struct {
 	// DownloadObjectErr, if set, is returned by DownloadObject for any object.
 	// Useful for testing error propagation.
 	DownloadObjectErr error
+	// HeadObjectErr, if set, is returned by HeadObject for any object.
+	// Useful for testing error propagation.
+	HeadObjectErr error
 }
 
 func (f *FakeS3Client) pageSize() int {
@@ -138,6 +151,40 @@ func (f *FakeS3Client) ListObjectsV2(_ context.Context, params *s3.ListObjectsV2
 		out.NextContinuationToken = aws.String(strconv.Itoa(end))
 	}
 
+	return out, nil
+}
+
+func (f *FakeS3Client) HeadObject(_ context.Context, params *s3.HeadObjectInput, _ ...func(*s3.Options)) (*s3.HeadObjectOutput, error) {
+	if params.Bucket == nil || params.Key == nil {
+		return nil, fmt.Errorf("missing required fields: Bucket and Key")
+	}
+	if *params.Bucket != f.Bucket {
+		// Real S3 returns *types.NoSuchBucket.
+		return nil, fmt.Errorf("bucket not found: %s", *params.Bucket)
+	}
+	if f.HeadObjectErr != nil {
+		return nil, f.HeadObjectErr
+	}
+	content, ok := f.Objects[*params.Key]
+	if !ok {
+		// Real S3 returns *types.NotFound for HeadObject.
+		return nil, fmt.Errorf("object not found: %s", *params.Key)
+	}
+
+	out := &s3.HeadObjectOutput{
+		ContentLength: aws.Int64(int64(len(content))),
+		LastModified:  aws.Time(f.lastModified(*params.Key)),
+	}
+
+	// Withhold the checksum unless asked, as S3 does, so a caller that forgets
+	// ChecksumMode fails here too.
+	if params.ChecksumMode != s3Types.ChecksumModeEnabled {
+		return out, nil
+	}
+	if checksum, ok := f.Checksums[*params.Key]; ok {
+		out.ChecksumSHA256 = aws.String(checksum.SHA256)
+		out.ChecksumType = checksum.Type
+	}
 	return out, nil
 }
 

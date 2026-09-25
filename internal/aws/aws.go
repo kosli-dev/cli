@@ -151,17 +151,26 @@ type S3DownloadAPI interface {
 	DownloadObject(ctx context.Context, params *transfermanager.DownloadObjectInput, optFns ...func(*transfermanager.Options)) (*transfermanager.DownloadObjectOutput, error)
 }
 
+// S3HeadAPI reads an object's metadata, including the checksum S3 stores for
+// it, which is returned only when the request sets ChecksumMode to
+// ChecksumModeEnabled. The real *s3.Client satisfies this implicitly.
+type S3HeadAPI interface {
+	HeadObject(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
+}
+
 // S3API is the combined S3 surface that GetS3Data depends on.
 type S3API interface {
 	S3ListAPI
 	S3DownloadAPI
+	S3HeadAPI
 }
 
-// s3Client combines the two real AWS clients that back S3API: *s3.Client for
-// listing and *transfermanager.Client for downloading.
+// s3Client combines the real AWS clients that back S3API: *s3.Client for
+// listing and metadata, and *transfermanager.Client for downloading.
 type s3Client struct {
 	S3ListAPI
 	S3DownloadAPI
+	S3HeadAPI
 }
 
 // defaultNewS3Client creates a real S3 client from credentials.
@@ -172,9 +181,13 @@ func defaultNewS3Client(creds *AWSStaticCreds) (S3API, error) {
 	}
 	// Five parts per object is the SDK's default, pinned so the connection count,
 	// objects in flight times parts, cannot move with an SDK upgrade.
-	return &s3Client{S3ListAPI: client, S3DownloadAPI: transfermanager.New(client, func(o *transfermanager.Options) {
-		o.Concurrency = 5
-	})}, nil
+	return &s3Client{
+		S3ListAPI: client,
+		S3DownloadAPI: transfermanager.New(client, func(o *transfermanager.Options) {
+			o.Concurrency = 5
+		}),
+		S3HeadAPI: client,
+	}, nil
 }
 
 // NewS3ClientFunc is the factory used by GetS3Data to create an S3API client.
@@ -369,7 +382,7 @@ func processOneLambdaFunc(lastModified, codeSha256, functionName string, package
 	lambdaData.Digests = map[string]string{functionName: codeSha256}
 
 	if packageType == types.PackageTypeZip {
-		lambdaData.Digests[functionName], err = decodeLambdaFingerprint(codeSha256)
+		lambdaData.Digests[functionName], err = decodeBase64Sha256(codeSha256)
 		if err != nil {
 			return lambdaData, err
 		}
@@ -384,8 +397,9 @@ func formatLambdaLastModified(lastModified string) (time.Time, error) {
 	return time.Parse(layout, lastModified)
 }
 
-// decodeLambdaFingerprint decodes a base64 lambda function fingerprint
-func decodeLambdaFingerprint(fingerprint string) (string, error) {
+// decodeBase64Sha256 converts a Base64 SHA256 digest, the form AWS reports
+// stored digests in, into the hex form Kosli fingerprints use.
+func decodeBase64Sha256(fingerprint string) (string, error) {
 	sha256base64, err := base64.StdEncoding.DecodeString(fingerprint)
 	if err != nil {
 		return "", err
@@ -454,8 +468,15 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includ
 	return getS3DataFromClient(client, bucket, includePaths, includeRegex, excludePaths, excludeRegex, limits, logger)
 }
 
-// getS3DataFromClient harvests bucket content using the provided S3API client.
+// getS3DataFromClient harvests bucket content using the provided S3API client,
+// downloading and hashing each object.
 func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, logger *logger.Logger) ([]*S3Data, error) {
+	return getS3DataWithSource(client, downloadDigests(client, bucket, logger), bucket, includePaths, includeRegex, excludePaths, excludeRegex, limits, logger)
+}
+
+// getS3DataWithSource lists and filters the bucket, then fingerprints what is
+// left with digests from source.
+func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, logger *logger.Logger) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
 
 	includeRegexCompiled, err := compilePathRegex(includeRegex)
@@ -485,7 +506,7 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 		return s3Data, fmt.Errorf("bucket [%s] reported no modification time for any matching object", bucket)
 	}
 
-	artifactName, sha256, err := fingerprintS3Objects(client, bucket, objects, limits, logger)
+	artifactName, sha256, err := fingerprintS3Tree(client, source, bucket, objects, limits, logger)
 	if err != nil {
 		return s3Data, err
 	}
@@ -518,6 +539,12 @@ type DownloadLimits struct {
 // DefaultDownloadLimits keeps peak temp disk near half a gigabyte, which fits
 // Lambda's default /tmp, and part buffers near 320 MiB of memory.
 var DefaultDownloadLimits = DownloadLimits{Concurrency: 8, BytesInFlight: 512 << 20}
+
+// DefaultMetadataConcurrency is how many checksum reads run at once when
+// fingerprinting from S3 metadata. A HeadObject holds no part buffers or temp
+// disk, so it is sized against S3's request rate instead: 32 at a 30 ms round
+// trip is about 1,000 reads a second, well under the 5,500 S3 allows per prefix.
+const DefaultMetadataConcurrency = 32
 
 // listMatchingS3Objects lists the bucket, dropping folder markers and keys the
 // filters exclude, in the order S3 returns them.
@@ -568,17 +595,42 @@ func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []strin
 	return objects, nil
 }
 
-// fingerprintS3Objects fingerprints the objects as the directory their keys
-// describe, without ever using a key as a local file name. Each object is
-// downloaded to an anonymous temp file, hashed and removed; the fingerprint is
-// then computed from the (key, sha256) pairs by digest.VirtualDirSha256, which
-// reproduces what digest.DirSha256 gives the same tree on disk. A single object
-// is fingerprinted as that file and named after it, as before.
-//
-// A root .kosli_ignore is downloaded first so its rules can be applied, and
-// objects the rules exclude are not downloaded at all. The remaining objects
-// download in parallel within limits; the first failure cancels the rest.
+// s3DigestSource supplies each object's content sha256 to the fingerprint
+// pipeline. It is the only part that varies by source, so two sources cannot
+// fingerprint the same bucket differently.
+type s3DigestSource struct {
+	// sha256 returns the hex digest of an object's content. tempDir is scratch
+	// space the pipeline removes afterwards.
+	sha256 func(ctx context.Context, tempDir string, object s3Object) (string, error)
+	// usesDisk means an object's listed size occupies temp disk while sha256
+	// runs, so it counts against DownloadLimits.BytesInFlight.
+	usesDisk bool
+}
+
+// downloadDigests is the content-mode source: download, hash, remove.
+func downloadDigests(downloader S3DownloadAPI, bucket string, logger *logger.Logger) s3DigestSource {
+	return s3DigestSource{
+		sha256: func(ctx context.Context, tempDir string, object s3Object) (string, error) {
+			return downloadAndHashS3Object(ctx, downloader, tempDir, bucket, object.key, nil, logger)
+		},
+		usesDisk: true,
+	}
+}
+
+// fingerprintS3Objects fingerprints the objects with the download source.
 func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
+	return fingerprintS3Tree(downloader, downloadDigests(downloader, bucket, logger), bucket, objects, limits, logger)
+}
+
+// fingerprintS3Tree fingerprints the objects as the directory their keys
+// describe, without using a key as a local file name: digest.VirtualDirSha256
+// combines the (key, sha256) pairs from source exactly as digest.DirSha256
+// would on disk. A single object is fingerprinted as that file and named
+// after it.
+//
+// The root .kosli_ignore is always downloaded, whatever the source, because its
+// rules decide which other objects are fetched at all.
+func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
 	keys := make([]string, len(objects))
 	for i, object := range objects {
 		keys[i] = object.key
@@ -607,7 +659,12 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 	// One object is fingerprinted as that file and named after it, as it was
 	// when the objects were laid out on disk.
 	if file, ok := digest.SingleVirtualFile(files); ok {
-		sha256, err := downloadAndHashS3Object(context.TODO(), downloader, tempDir, bucket, objects[0].key, nil, logger)
+		fetch := source
+		// The ignore file is downloaded even when alone, so no source needs its checksum.
+		if file.Path == digest.IgnoreFileName {
+			fetch = downloadDigests(downloader, bucket, logger)
+		}
+		sha256, err := fetch.sha256(context.TODO(), tempDir, objects[0])
 		if err != nil {
 			return "", "", err
 		}
@@ -656,9 +713,9 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 		files[i].Sha256 = sha256
 	}
 
-	// Each download writes its own slot, so the manifest stays in listing order
-	// however the downloads interleave.
-	if err := downloadS3ObjectsInParallel(downloader, tempDir, bucket, objects, toDownload, files, limits, logger); err != nil {
+	// Each fetch writes its own slot, so the manifest stays in listing order
+	// however the fetches interleave.
+	if err := fetchS3DigestsInParallel(source, tempDir, objects, toDownload, files, limits, logger); err != nil {
 		return "", "", err
 	}
 
@@ -678,11 +735,13 @@ func ignoreRuleError(err error) error {
 	return err
 }
 
-// downloadS3ObjectsInParallel fetches the objects at indexes and writes each
-// digest into files at the same index. A fixed worker pool bounds downloads and
-// goroutines alike, a weighted semaphore bounds their listed bytes, and the
-// first error cancels the context so nothing further starts.
-func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket string, objects []s3Object, indexes []int,
+// fetchS3DigestsInParallel reads the digests of the objects at indexes from
+// source and writes each into files at the same index. A fixed worker pool
+// bounds fetches and goroutines alike, a weighted semaphore bounds the listed
+// bytes of sources that use the disk, and the first transport error cancels the
+// context so nothing further starts. unusableChecksumErrors are collected
+// and reported together instead.
+func fetchS3DigestsInParallel(source s3DigestSource, tempDir string, objects []s3Object, indexes []int,
 	files []digest.VirtualFile, limits DownloadLimits, logger *logger.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -696,6 +755,10 @@ func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket strin
 		}
 		cancel()
 	}
+	var (
+		unusableMu sync.Mutex
+		unusable   []error
+	)
 
 	work := make(chan int)
 	var wg sync.WaitGroup
@@ -706,17 +769,29 @@ func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket strin
 			for i := range work {
 				object := objects[i]
 				// An object larger than the budget takes all of it and so runs alone.
-				weight := max(min(object.size, limits.BytesInFlight), 1)
-				if err := budget.Acquire(ctx, weight); err != nil {
-					return // cancelled while waiting
+				var weight int64
+				if source.usesDisk {
+					weight = max(min(object.size, limits.BytesInFlight), 1)
+					if err := budget.Acquire(ctx, weight); err != nil {
+						return // cancelled while waiting
+					}
 				}
-				sha256, err := downloadAndHashS3Object(ctx, downloader, tempDir, bucket, object.key, nil, logger)
-				budget.Release(weight)
-				if err != nil {
+				sha256, err := source.sha256(ctx, tempDir, object)
+				if source.usesDisk {
+					budget.Release(weight)
+				}
+				var unusableErr unusableChecksumError
+				switch {
+				case err == nil:
+					files[i].Sha256 = sha256
+				case errors.As(err, &unusableErr):
+					unusableMu.Lock()
+					unusable = append(unusable, err)
+					unusableMu.Unlock()
+				default:
 					fail(err)
 					return
 				}
-				files[i].Sha256 = sha256
 			}
 		}()
 	}
@@ -736,8 +811,11 @@ feed:
 	case err := <-firstErr:
 		return err
 	default:
-		return nil
 	}
+	if len(unusable) > 0 {
+		return combineUnusableChecksumErrors(unusable)
+	}
+	return nil
 }
 
 // downloadAndHashS3Object fetches one object into a fresh temp file, lets

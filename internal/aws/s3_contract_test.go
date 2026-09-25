@@ -2,6 +2,8 @@ package aws
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"os"
 	"path/filepath"
@@ -11,12 +13,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
 )
 
 // errInjected is the error tests inject into FakeS3Client to exercise error paths.
 var errInjected = errors.New("injected error")
+
+// base64Sha256 is content's SHA256 in the Base64 form S3 reports checksums in.
+func base64Sha256(content []byte) string {
+	sum := sha256.Sum256(content)
+	return base64.StdEncoding.EncodeToString(sum[:])
+}
 
 // runS3ContractTests exercises the S3API contract. It verifies the behaviours
 // we depend on — object listing, continuation-token pagination, object
@@ -27,7 +36,10 @@ var errInjected = errors.New("injected error")
 //
 // bucket must name a bucket the client can see, holding at least two objects.
 // existingKey must name an object in that bucket with a non-empty body.
-func runS3ContractTests(t *testing.T, client S3API, bucket, existingKey string) {
+// sha256ChecksumKey names an object with a stored SHA256 checksum, or is empty
+// to skip those sub-tests: kosli-cli-public has none, and adding one would move
+// the fingerprints TestGetS3Data pins.
+func runS3ContractTests(t *testing.T, client S3API, bucket, existingKey, sha256ChecksumKey string) {
 	t.Helper()
 
 	t.Run("ListObjectsV2 returns objects with keys and modification times", func(t *testing.T) {
@@ -132,6 +144,55 @@ func runS3ContractTests(t *testing.T, client S3API, bucket, existingKey string) 
 		})
 		require.Error(t, err)
 	})
+
+	t.Run("HeadObject returns object metadata", func(t *testing.T) {
+		out, err := client.HeadObject(context.TODO(), &s3.HeadObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(existingKey),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, out)
+		require.NotNil(t, out.ContentLength, "ContentLength should be present")
+		require.NotNil(t, out.LastModified, "LastModified should be present")
+	})
+
+	t.Run("HeadObject errors for a missing key", func(t *testing.T) {
+		_, err := client.HeadObject(context.TODO(), &s3.HeadObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String("nonexistent-key-that-should-not-exist"),
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("HeadObject omits the checksum unless ChecksumMode is enabled", func(t *testing.T) {
+		if sha256ChecksumKey == "" {
+			t.Skip("no object with an SHA256 checksum available in this bucket")
+		}
+		out, err := client.HeadObject(context.TODO(), &s3.HeadObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(sha256ChecksumKey),
+		})
+		require.NoError(t, err)
+		require.Nil(t, out.ChecksumSHA256,
+			"ChecksumSHA256 should be absent when ChecksumMode is not enabled")
+	})
+
+	t.Run("HeadObject returns the stored SHA256 when ChecksumMode is enabled", func(t *testing.T) {
+		if sha256ChecksumKey == "" {
+			t.Skip("no object with an SHA256 checksum available in this bucket")
+		}
+		out, err := client.HeadObject(context.TODO(), &s3.HeadObjectInput{
+			Bucket:       aws.String(bucket),
+			Key:          aws.String(sha256ChecksumKey),
+			ChecksumMode: s3Types.ChecksumModeEnabled,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, out.ChecksumSHA256, "ChecksumSHA256 should be present")
+		require.NotEmpty(t, *out.ChecksumSHA256)
+		require.NotContains(t, *out.ChecksumSHA256, "-",
+			"a single-part upload should carry a full-object checksum")
+		require.Equal(t, s3Types.ChecksumTypeFullObject, out.ChecksumType)
+	})
 }
 
 func TestS3Contract_Fake(t *testing.T) {
@@ -142,11 +203,17 @@ func TestS3Contract_Fake(t *testing.T) {
 			"README.md":                  []byte("# readme\n"),
 			"dummy/dummy_2/template.yml": []byte("key: value\n"),
 		},
+		Checksums: map[string]FakeS3Checksum{
+			"README.md": {
+				SHA256: base64Sha256([]byte("# readme\n")),
+				Type:   s3Types.ChecksumTypeFullObject,
+			},
+		},
 		// One object per page so the pagination contract is genuinely exercised.
 		PageSize: 1,
 	}
 
-	runS3ContractTests(t, client, bucket, "README.md")
+	runS3ContractTests(t, client, bucket, "README.md", "README.md")
 
 	// Error injection is a fake-specific mechanism with no real-API equivalent.
 	// These tests verify the fake itself, not the contract.
@@ -168,6 +235,16 @@ func TestS3Contract_Fake(t *testing.T) {
 			Bucket:   aws.String(bucket),
 			Key:      aws.String("README.md"),
 			WriterAt: file,
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("HeadObject returns error when HeadObjectErr is injected", func(t *testing.T) {
+		client.HeadObjectErr = errInjected
+		defer func() { client.HeadObjectErr = nil }()
+		_, err := client.HeadObject(context.TODO(), &s3.HeadObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String("README.md"),
 		})
 		require.Error(t, err)
 	})
@@ -203,5 +280,5 @@ func TestS3Contract_RealAWS(t *testing.T) {
 	client, err := defaultNewS3Client(creds)
 	require.NoError(t, err)
 
-	runS3ContractTests(t, client, "kosli-cli-public", "README.md")
+	runS3ContractTests(t, client, "kosli-cli-public", "README.md", "")
 }
