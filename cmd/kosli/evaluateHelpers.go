@@ -553,6 +553,9 @@ func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[strin
 	for rule, value := range result.Outputs {
 		auditResult[rule] = value
 	}
+	if len(result.Outputs) > 0 && outputFormat == "table" {
+		logger.Warn("--output-rule values are only shown with --output json")
+	}
 	// Absent everywhere else, so a caller reading a verdict alone parses the
 	// same page as before.
 	if decisionID != "" {
