@@ -16,7 +16,8 @@ The trail data is passed to the policy as ` + "`input.trails`" + ` (an array), u
 
 Use ` + "`--attestations`" + ` to enrich the input with detailed attestation data
 (e.g. pull request approvers, scan results). Use ` + "`--show-input`" + ` to inspect the
-full data structure available to the policy. Use ` + "`--output json`" + ` for structured output.`
+full data structure available to the policy. Use ` + "`--output json`" + ` for structured output,
+and ` + "`--output-rule`" + ` to add other rules of the policy, like a report, to it.`
 
 const evaluateTrailsExample = `
 # evaluate multiple trails against a policy:
@@ -64,6 +65,15 @@ kosli evaluate trails yourTrailName1 yourTrailName2 \
 	--flow yourFlowName \
 	--no-assert \
 	--api-token yourAPIToken \
+	--org yourOrgName
+
+# add the policy's report rule to the JSON output:
+kosli evaluate trails yourTrailName1 yourTrailName2 \
+	--policy yourPolicyFile.rego \
+	--flow yourFlowName \
+	--output-rule report \
+	--output json \
+	--api-token yourAPIToken \
 	--org yourOrgName`
 
 type evaluateTrailsOptions struct {
@@ -102,6 +112,10 @@ func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
+	if err := validateOutputRules(o.outputRules); err != nil {
+		return err
+	}
+
 	if o.serverSide {
 		refs := make([]evaluations.TrailRef, 0, len(args))
 		for _, trailName := range args {
@@ -128,5 +142,5 @@ func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
 		"trails": trails,
 	}
 
-	return evaluateAndPrintResult(out, o.policyRef, input, o.output, o.showInput, params, o.assertOnDeny())
+	return evaluateAndPrintResult(out, o.policyRef, input, o.output, o.showInput, params, o.assertOnDeny(), o.outputRules)
 }

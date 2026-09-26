@@ -144,6 +144,57 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 				{"allow", false},
 			},
 		},
+		{
+			name: "--output-rule adds the rule to the JSON output",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-with-report.rego --output-rule report --output json",
+			goldenJson: []jsonCheck{
+				{"allow", true},
+				{"report.compliant", true},
+			},
+		},
+		{
+			name: "--output-rule adds the rule to the JSON output when the policy denies",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/deny-with-report.rego --output-rule report --output json --no-assert",
+			goldenJson: []jsonCheck{
+				{"allow", false},
+				{"report.compliant", false},
+			},
+		},
+		{
+			name: "--output-rule can be repeated",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-with-report.rego --output-rule report --output-rule summary --output json",
+			goldenJson: []jsonCheck{
+				{"report.compliant", true},
+				{"summary", "all good"},
+			},
+		},
+		{
+			name: "--output-rule takes a comma-separated list",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-with-report.rego --output-rule report,summary --output json",
+			goldenJson: []jsonCheck{
+				{"report.compliant", true},
+				{"summary", "all good"},
+			},
+		},
+		{
+			wantError:   true,
+			name:        "--output-rule naming a rule the policy does not declare fails",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-all.rego --output-rule report --output json",
+			goldenRegex: `policy does not declare a 'report' rule`,
+		},
+		{
+			name: "--output-rule prints null for a rule with no value",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/undefined-report.rego --output-rule report --output json",
+			goldenJson: []jsonCheck{
+				{"report", nil},
+			},
+		},
+		{
+			name:         "--output-rule is left out of table output, with a hint",
+			cmd:          "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-with-report.rego --output-rule report",
+			goldenStdout: "RESULT:  ALLOWED\n",
+			goldenStderr: "[warning] --output-rule values are only shown with --output json\n",
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
@@ -375,6 +426,19 @@ func TestLoadPolicyHonorsHTTPProxy(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, rego, string(body))
 	require.True(t, sawProxyStyleRequest, "expected proxy to receive an absolute-URL request")
+}
+
+func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmdRefusesOutputRulesClashingWithOutputKeys() {
+	tests := []cmdTestCase{}
+	for _, name := range []string{"allow", "violations", "input", "params", "decision_attestation_id"} {
+		tests = append(tests, cmdTestCase{
+			wantError:   true,
+			name:        "--output-rule " + name + " is refused",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-all.rego --output-rule " + name,
+			goldenRegex: `--output-rule cannot be '` + name + `', it is already part of the output`,
+		})
+	}
+	runTestCmd(suite.T(), tests)
 }
 
 func TestEvaluateInputCommandTestSuite(t *testing.T) {

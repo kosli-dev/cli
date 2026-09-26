@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -63,6 +64,7 @@ type commonEvaluateOptions struct {
 	assert       bool
 	noAssert     bool
 	serverSide   bool
+	outputRules  []string
 }
 
 func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) {
@@ -74,6 +76,7 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, "[optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.")
 	cmd.Flags().BoolVar(&o.noAssert, "no-assert", false, "[optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.")
+	cmd.Flags().StringSliceVar(&o.outputRules, "output-rule", nil, policyOutputRuleFlag)
 	cmd.MarkFlagsMutuallyExclusive("assert", "no-assert")
 }
 
@@ -254,13 +257,13 @@ func parseParams(raw string) (map[string]any, error) {
 	return params, nil
 }
 
-func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool) error {
+func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, outputRules []string) error {
 	policySource, err := loadPolicy(policyRef)
 	if err != nil {
 		return err
 	}
 
-	result, err := evaluate.Evaluate(string(policySource), input, params)
+	result, err := evaluate.Evaluate(string(policySource), input, params, outputRules...)
 	if err != nil {
 		return err
 	}
@@ -370,6 +373,11 @@ func (o *commonEvaluateOptions) refuseWhatTheServerCannotDo() error {
 		return fmt.Errorf(
 			"--show-input is not supported with --server-side; " +
 				"the server does not return the input it evaluated")
+	}
+	if len(o.outputRules) > 0 {
+		return fmt.Errorf(
+			"--output-rule is not supported with --server-side; " +
+				"the server only returns allow and violations")
 	}
 	return nil
 }
@@ -533,10 +541,27 @@ func policyBundleKey(ref string) string {
 
 // printEvaluateResult renders a verdict, whatever produced it, so that every
 // evaluation path prints the same bytes for the same verdict.
+var evaluateResultKeys = []string{"allow", "violations", "input", "params", "decision_attestation_id"}
+
+func validateOutputRules(rules []string) error {
+	for _, rule := range rules {
+		if slices.Contains(evaluateResultKeys, rule) {
+			return fmt.Errorf("--output-rule cannot be '%s', it is already part of the output", rule)
+		}
+	}
+	return nil
+}
+
 func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, decisionID string) error {
 	auditResult := map[string]any{
 		"allow":      result.Allow,
 		"violations": result.Violations,
+	}
+	for rule, value := range result.Outputs {
+		auditResult[rule] = value
+	}
+	if len(result.Outputs) > 0 && outputFormat == "table" {
+		logger.Warn("--output-rule values are only shown with --output json")
 	}
 	// Absent everywhere else, so a caller reading a verdict alone parses the
 	// same page as before.

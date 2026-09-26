@@ -594,6 +594,7 @@
   "input-file": "string",
   "no-assert": "bool",
   "output": "string",
+  "output-rule": "stringSlice",
   "params": "string",
   "policy": "string",
   "show-input": "bool"
@@ -616,6 +617,7 @@
   "flow": "string",
   "no-assert": "bool",
   "output": "string",
+  "output-rule": "stringSlice",
   "params": "string",
   "policy": "string",
   "server-side": "bool",
@@ -627,6 +629,7 @@
   "flow": "string",
   "no-assert": "bool",
   "output": "string",
+  "output-rule": "stringSlice",
   "params": "string",
   "policy": "string",
   "server-side": "bool",

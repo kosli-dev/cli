@@ -109,6 +109,19 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsCmd() {
 			cmd:         fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --assert --no-assert %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
 			goldenRegex: `none of the others can be.*\[assert no-assert\] were all set`,
 		},
+		{
+			name: "--output-rule adds one rule value covering all the trails",
+			cmd:  fmt.Sprintf(`evaluate trails %s %s --flow %s --policy testdata/policies/trails-report.rego --output-rule report --output json %s`, suite.trailName, suite.trailName2, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{
+				{"report.trails", 2.0},
+			},
+		},
+		{
+			wantError:   true,
+			name:        "--output-rule clashing with an output key is refused",
+			cmd:         fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --output-rule allow %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: `--output-rule cannot be 'allow', it is already part of the output`,
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
