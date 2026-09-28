@@ -106,10 +106,10 @@ func newAttestSbomCmd(out io.Writer) *cobra.Command {
 	}
 	cmd := &cobra.Command{
 		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
-		Use:         "sbom [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:       attestSbomShortDesc,
-		Long:        attestSbomLongDesc,
-		Example:     attestSbomExample,
+		Use:     "sbom [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:   attestSbomShortDesc,
+		Long:    attestSbomLongDesc,
+		Example: attestSbomExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := CustomMaximumNArgs(1, args)
 			if err != nil {
