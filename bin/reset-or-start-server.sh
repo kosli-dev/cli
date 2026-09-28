@@ -40,7 +40,7 @@ restart_server()
     docker compose down || true
     echo -e "\033[38;5;208musing server image\033[0m ${KOSLI_SERVER_IMAGE}"
     docker compose up -d
-    ./mongo/ip_wait.sh localhost:9010/minio/health/live
+    ./mongo/ip_wait.sh localhost:9010/health
     ./mongo/ip_wait.sh localhost:8001/ready
     check_success
 }
