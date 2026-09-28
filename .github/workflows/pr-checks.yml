@@ -18,7 +18,7 @@ jobs:
     # Run only when the PR comes from the same repository, not from a fork
     #if: github.event.pull_request.head.repo.full_name == github.repository
     name: Validate PR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -37,7 +37,7 @@ jobs:
     # Run only when the PR comes from the same repository, not from a fork
     #if: github.event.pull_request.head.repo.full_name == github.repository
     name: Label PRs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1

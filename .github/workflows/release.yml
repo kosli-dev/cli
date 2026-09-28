@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   notify-start:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -24,7 +24,7 @@ jobs:
           stage: start
 
   pre-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
       trail_name: ${{ steps.prep.outputs.trail_name }}
@@ -131,7 +131,7 @@ jobs:
 
   goreleaser:
     needs: [test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
       id-token: write
@@ -252,7 +252,7 @@ jobs:
 
   docs-repo-dispatch:
     needs: [pre-build, goreleaser]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -269,7 +269,7 @@ jobs:
 
   evidence-reporter-upload-package-and-deploy:
     needs: [pre-build, goreleaser, environment-reporter-upload-layer]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -286,7 +286,7 @@ jobs:
 
   environment-reporter-upload-package-and-deploy:
     needs: [pre-build, goreleaser, environment-reporter-upload-layer]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -326,7 +326,7 @@ jobs:
         environment-reporter-upload-layer
       ]
     if: always() && needs.notify-start.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       actions: read     # ← needed to fetch run_started_at for duration
       contents: read    # ← needed to read release notes via `gh release view`

@@ -71,7 +71,7 @@ jobs:
   lint:
     if: ${{ inputs.run_lint }}
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write
       contents: write
@@ -120,7 +120,7 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write
       contents: write
@@ -196,7 +196,7 @@ jobs:
   snyk-code-test:
     if: ${{ inputs.run_snyk }}
     name: Snyk Code Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write
       contents: write
@@ -250,7 +250,7 @@ jobs:
   snyk-dependency-test:
     if: ${{ inputs.run_snyk }}
     name: Snyk Dependency Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write
       contents: write

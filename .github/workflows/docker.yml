@@ -59,7 +59,7 @@ jobs:
   # ---------------------------------------------------------------------------
   prepare:
     name: Prepare build matrix
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       version: ${{ steps.set-version.outputs.version }}
@@ -75,7 +75,7 @@ jobs:
           PLATFORMS: ${{ inputs.platforms }}
           RUNNER_MAP: |
             {
-              "linux/amd64": "ubuntu-latest",
+              "linux/amd64": "ubuntu-26.04",
               "linux/arm64": "ubuntu-24.04-arm"
             }
         run: |
@@ -197,7 +197,7 @@ jobs:
   # ---------------------------------------------------------------------------
   merge:
     name: Docker Merge & Attest
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: [prepare, build]
     permissions:
       id-token: write
