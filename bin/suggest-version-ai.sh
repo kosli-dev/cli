@@ -103,7 +103,7 @@ BODY=$(jq -n \
   --arg model "$CLAUDE_MODEL" \
   --arg prompt "$PROMPT" \
   --rawfile diff "$DIFF_FILE" \
-  '{model: $model, max_tokens: 1024, messages: [{role: "user", content: ($prompt + "\n\n--- diff ---\n\n" + $diff)}]}')
+  '{model: $model, max_tokens: 4096, messages: [{role: "user", content: ($prompt + "\n\n--- diff ---\n\n" + $diff)}]}')
 
 RESPONSE=$(curl -s -S -X POST "https://api.anthropic.com/v1/messages" \
   -H "x-api-key: $ANTHROPIC_API_KEY" \
@@ -111,7 +111,8 @@ RESPONSE=$(curl -s -S -X POST "https://api.anthropic.com/v1/messages" \
   -H "Content-Type: application/json" \
   -d "$BODY")
 
-CONTENT=$(echo "$RESPONSE" | jq -r '.content[0].text // empty')
+# The response may start with a thinking block, so join all text blocks instead of reading content[0].
+CONTENT=$(echo "$RESPONSE" | jq -r '[.content[]? | select(.type == "text") | .text] | join("")')
 if [ -z "$CONTENT" ]; then
   echo "ERROR: Anthropic API failed or returned no content. Response:" >&2
   echo "$RESPONSE" | jq . >&2
