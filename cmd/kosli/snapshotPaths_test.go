@@ -36,7 +36,7 @@ func (suite *SnapshotPathsTestSuite) TestSnapshotPathsCmd() {
 			cmd:       fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/does-not-exist.yml %s %s`, suite.envName, suite.defaultKosliArguments),
 			// Anchored at both ends; the only loose part is the absolute path
 			// prefix of the search dir, which varies by checkout location.
-			goldenRegex: `\AError: failed to parse path spec file \[testdata/paths-files/does-not-exist\.yml\] : Config File "does-not-exist" Not Found in "\[[^"\]]*/cli/cmd/kosli/testdata/paths-files\]"\n\z`,
+			goldenRegex: `\AError: failed to parse path spec file \[testdata/paths-files/does-not-exist\.yml\] : Config File "does-not-exist" Not Found in "\[[^"\]]*cmd/kosli/testdata/paths-files\]"\n\z`,
 		},
 		{
 			wantError: true,
