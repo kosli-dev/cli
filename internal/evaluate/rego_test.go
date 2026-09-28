@@ -181,3 +181,67 @@ allow = true
 	require.NoError(t, err)
 	require.True(t, result.Allow, "params not referenced by policy should have no effect")
 }
+
+func TestEvaluate_OutputRules(t *testing.T) {
+	for _, allow := range []string{"true", "false"} {
+		t.Run("allow = "+allow, func(t *testing.T) {
+			policy := `package policy
+
+allow = ` + allow + `
+
+report := {"compliant": ` + allow + `}
+`
+			result, err := Evaluate(policy, map[string]any{}, nil, "report")
+			require.NoError(t, err)
+			require.Equal(t, map[string]any{"report": map[string]any{"compliant": allow == "true"}}, result.Outputs)
+		})
+	}
+}
+
+func TestEvaluate_OutputRuleNotDeclared(t *testing.T) {
+	policy := `package policy
+
+allow = true
+`
+	_, err := Evaluate(policy, map[string]any{}, nil, "report")
+	require.EqualError(t, err, "policy does not declare a 'report' rule")
+}
+
+func TestEvaluate_OutputRuleUndefined(t *testing.T) {
+	policy := `package policy
+
+allow = true
+
+report := "never" if {
+	input.never_there
+}
+`
+	result, err := Evaluate(policy, map[string]any{}, nil, "report")
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{"report": nil}, result.Outputs)
+}
+
+func TestEvaluate_OutputRuleDeclaredWithRefHead(t *testing.T) {
+	policy := `package policy
+
+allow = true
+
+report.summary := "all good"
+`
+	result, err := Evaluate(policy, map[string]any{}, nil, "report")
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{"report": map[string]any{"summary": "all good"}}, result.Outputs)
+}
+
+func TestEvaluate_OutputRuleWithInvalidName(t *testing.T) {
+	policy := `package policy
+
+allow = true
+`
+	for _, name := range []string{"", "report.summary", "report[0]", "1report"} {
+		t.Run(name, func(t *testing.T) {
+			_, err := Evaluate(policy, map[string]any{}, nil, name)
+			require.EqualError(t, err, "'"+name+"' is not a valid rule name")
+		})
+	}
+}

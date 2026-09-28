@@ -370,6 +370,11 @@ func (suite *EvaluateServerSideTestSuite) TestItRefusesWhatTheServerCannotDo() {
 			extra:   "--show-input",
 			message: "--show-input is not supported with --server-side",
 		},
+		{
+			name:    "adding policy rules to the output",
+			extra:   "--output-rule report",
+			message: "--output-rule is not supported with --server-side",
+		},
 	} {
 		suite.Run(test.name, func() {
 			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
