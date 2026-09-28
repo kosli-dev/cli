@@ -70,6 +70,9 @@ jobs:
       - name: Helm regenerate repo index
         run: helm repo index package/. --url https://charts.kosli.com/ --merge package/old-index.yaml
 
+      - name: Check every chart URL is on charts.kosli.com
+        run: ./scripts/check-helm-index-urls.sh package/index.yaml
+
       - name: Upload new chart and the update index.yaml to S3
         run: |
           rm package/old-index.yaml
