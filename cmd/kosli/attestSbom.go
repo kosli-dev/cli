@@ -110,7 +110,6 @@ func newAttestSbomCmd(out io.Writer) *cobra.Command {
 		Short:       attestSbomShortDesc,
 		Long:        attestSbomLongDesc,
 		Example:     attestSbomExample,
-		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := CustomMaximumNArgs(1, args)
 			if err != nil {
