@@ -220,3 +220,28 @@ report := "never" if {
 	require.NoError(t, err)
 	require.Equal(t, map[string]any{"report": nil}, result.Outputs)
 }
+
+func TestEvaluate_OutputRuleDeclaredWithRefHead(t *testing.T) {
+	policy := `package policy
+
+allow = true
+
+report.summary := "all good"
+`
+	result, err := Evaluate(policy, map[string]any{}, nil, "report")
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{"report": map[string]any{"summary": "all good"}}, result.Outputs)
+}
+
+func TestEvaluate_OutputRuleWithInvalidName(t *testing.T) {
+	policy := `package policy
+
+allow = true
+`
+	for _, name := range []string{"", "report.summary", "report[0]", "1report"} {
+		t.Run(name, func(t *testing.T) {
+			_, err := Evaluate(policy, map[string]any{}, nil, name)
+			require.EqualError(t, err, "'"+name+"' is not a valid rule name")
+		})
+	}
+}

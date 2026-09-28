@@ -3,11 +3,14 @@ package evaluate
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 )
+
+var ruleName = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 
 // Result holds the outcome of a policy evaluation.
 type Result struct {
@@ -95,6 +98,9 @@ func validatePolicy(policySource string, outputRules []string) error {
 		return fmt.Errorf("policy must declare an 'allow' rule")
 	}
 	for _, rule := range outputRules {
+		if !ruleName.MatchString(rule) {
+			return fmt.Errorf("'%s' is not a valid rule name", rule)
+		}
 		if !declared[rule] {
 			return fmt.Errorf("policy does not declare a '%s' rule", rule)
 		}
