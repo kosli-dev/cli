@@ -258,6 +258,10 @@ func parseParams(raw string) (map[string]any, error) {
 }
 
 func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, outputRules []string) error {
+	if err := validateOutputRules(outputRules); err != nil {
+		return err
+	}
+
 	policySource, err := loadPolicy(policyRef)
 	if err != nil {
 		return err
@@ -266,6 +270,9 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]an
 	result, err := evaluate.Evaluate(string(policySource), input, params, outputRules...)
 	if err != nil {
 		return err
+	}
+	if len(outputRules) > 0 && outputFormat == "table" {
+		logger.Warn("--output-rule values are only shown with --output json")
 	}
 
 	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny, "")
@@ -539,8 +546,6 @@ func policyBundleKey(ref string) string {
 	return base
 }
 
-// printEvaluateResult renders a verdict, whatever produced it, so that every
-// evaluation path prints the same bytes for the same verdict.
 var evaluateResultKeys = []string{"allow", "violations", "input", "params", "decision_attestation_id"}
 
 func validateOutputRules(rules []string) error {
@@ -552,6 +557,8 @@ func validateOutputRules(rules []string) error {
 	return nil
 }
 
+// printEvaluateResult renders a verdict, whatever produced it, so that every
+// evaluation path prints the same bytes for the same verdict.
 func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, decisionID string) error {
 	auditResult := map[string]any{
 		"allow":      result.Allow,
@@ -559,9 +566,6 @@ func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[strin
 	}
 	for rule, value := range result.Outputs {
 		auditResult[rule] = value
-	}
-	if len(result.Outputs) > 0 && outputFormat == "table" {
-		logger.Warn("--output-rule values are only shown with --output json")
 	}
 	// Absent everywhere else, so a caller reading a verdict alone parses the
 	// same page as before.

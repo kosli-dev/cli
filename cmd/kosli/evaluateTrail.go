@@ -119,10 +119,6 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
-	if err := validateOutputRules(o.outputRules); err != nil {
-		return err
-	}
-
 	if o.serverSide {
 		return evaluateServerSide(out, &o.commonEvaluateOptions,
 			[]evaluations.TrailRef{{Flow: o.flowName, Trail: args[0]}})

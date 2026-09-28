@@ -112,10 +112,6 @@ func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
-	if err := validateOutputRules(o.outputRules); err != nil {
-		return err
-	}
-
 	if o.serverSide {
 		refs := make([]evaluations.TrailRef, 0, len(args))
 		for _, trailName := range args {

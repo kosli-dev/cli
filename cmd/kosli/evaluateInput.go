@@ -116,10 +116,6 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateInputOptions) run(out io.Writer, in io.Reader) error {
-	if err := validateOutputRules(o.outputRules); err != nil {
-		return err
-	}
-
 	var input map[string]any
 	var err error
 
