@@ -18,22 +18,47 @@ replay itself works, and once with the field emptied. The difference between the
 two answers is the server's, and it is an answer about every client rather than
 about the CLI.
 
+A third replay asks whether an accepted empty value reaches the record. The
+resource the `set` run created still holds a real value, so replaying the emptied
+payload without freshening it names that same resource, and the spec's own verify
+steps say whether reading it back afterwards shows the empty value.
+
+What the server did underneath is not measured, and it differs by endpoint: some
+commands write a field in place, while the attest and report commands append a
+document that a later read answers with, destroying nothing. Both appear here as
+the empty value reaching the record, which is the question the API is being asked
+- whether accepting an empty value for this field is right - rather than a claim
+about anything being lost.
+
+This is the one question freshening destroys: a fresh name every time leaves no
+record holding a value for the empty one to reach.
+
 Everything here talks to the local test server. It never points at app.kosli.com.
 """
 
 import argparse
+import datetime
+import hashlib
 import json
+import pathlib
 import re
+import subprocess
 import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
 
-from audit import (HOST, SPEC, TOKEN, invocation_for, normalise, prepare,
-                   reset_server, run)
+from audit import (GLOBALS, HOST, SERVER_CONTAINER, SPEC, TOKEN, expand,
+                   invocation_for, normalise, prepare, reset_server, run)
 
 RESULTS = "results-api.tsv"
+
+# Everything volatile or bulky goes here rather than into RESULTS, whose worth is
+# that two runs of it diff line by line. A timestamp or a whole response body in a
+# column would end that.
+EVIDENCE_FILE = "results-api-evidence.jsonl"
+EVIDENCE = []
 
 # The line --debug prints before a request body, naming what it is sending to
 # where. requests.go logs the method beside the URL for this.
@@ -54,6 +79,8 @@ READ_VERBS = ("get ", "list ", "log ", "diff ", "search")
 # Payload fields that must differ between replays. A replay of a create is a
 # create: sending the captured payload twice would update the first resource
 # rather than make a second, and the control would then be measuring an update.
+# Asking whether an empty value reaches the record needs the captured name kept,
+# so that replay is the one that goes unfreshened.
 FRESHEN = ["name"]
 
 
@@ -95,7 +122,10 @@ def captured_read(text, command):
     if not match:
         return None
     url = match.group(1)
-    return "GET", url, dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(url).query))
+    # keep_blank_values, or a parameter sent as blank reads as one that was never
+    # sent, and the diff against the other run names the wrong parameter.
+    return "GET", url, dict(urllib.parse.parse_qsl(
+        urllib.parse.urlsplit(url).query, keep_blank_values=True))
 
 
 def controlled_parameters(omitted, given):
@@ -107,12 +137,80 @@ def controlled_parameters(omitted, given):
 
 
 def with_parameter(url, parameter, value):
-    """Return the url with one query parameter set to value."""
+    """Return the url with one query parameter set to value.
+
+    keep_blank_values, or a parameter the url already carries as blank is dropped
+    rather than kept, so the replayed request differs from the captured one by more
+    than the parameter under test and its verdict is about something else.
+    """
     parts = urllib.parse.urlsplit(url)
-    query = dict(urllib.parse.parse_qsl(parts.query))
+    query = dict(urllib.parse.parse_qsl(parts.query, keep_blank_values=True))
     query[parameter] = value
     return urllib.parse.urlunsplit(parts._replace(
         query=urllib.parse.urlencode(query)))
+
+
+def server_log(since):
+    """Return the server's own log from when a request was sent, or why not.
+
+    Fetched only for a 5xx, where the answer body says nothing and the traceback
+    says everything: a 4xx is the server explaining itself and needs no log. A
+    second is taken off the start because the request and the log entry are
+    timestamped by different clocks.
+    """
+    window = (since - datetime.timedelta(seconds=1)).isoformat()
+    try:
+        done = subprocess.run(
+            ["docker", "logs", SERVER_CONTAINER, "--since", window],
+            capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return f"unavailable: {exc}"
+    return (done.stdout + done.stderr).strip().splitlines()[-200:]
+
+
+def only_this_parameter_changed(control_url, emptied_url, parameter):
+    """Return why the emptied url differs from the control beyond one parameter.
+
+    A row's verdict is only about the parameter it names if that is the one thing
+    the two requests do not share. Without this, a verdict can be recorded against
+    a request that could not have produced it, and the row reads as a finding.
+    """
+    control, emptied_parts = (urllib.parse.urlsplit(control_url),
+                              urllib.parse.urlsplit(emptied_url))
+    if (control.scheme, control.netloc, control.path) != (
+            emptied_parts.scheme, emptied_parts.netloc, emptied_parts.path):
+        return (f"the emptied request went to {emptied_parts.path} rather than"
+                f" {control.path}")
+    # keep_blank_values, or a parameter that is already blank looks like one that
+    # is absent, and dropping it counts as a second change.
+    before = dict(urllib.parse.parse_qsl(control.query, keep_blank_values=True))
+    after = dict(urllib.parse.parse_qsl(emptied_parts.query, keep_blank_values=True))
+    changed = {key for key in set(before) | set(after)
+               if before.get(key) != after.get(key)}
+    if changed != {parameter}:
+        return (f"the emptied request changed {sorted(changed)} rather than only"
+                f" {parameter}")
+    if after.get(parameter) != "":
+        return f"the emptied request did not empty {parameter}"
+    return None
+
+
+def only_this_field_changed(control, emptied_payload, field):
+    """Return why the emptied payload differs from the control beyond one field.
+
+    FRESHEN's fields are expected to differ, because each replay of a create needs
+    a name of its own.
+    """
+    if control is None or emptied_payload is None:
+        return None
+    changed = {key for key in set(control) | set(emptied_payload)
+               if control.get(key) != emptied_payload.get(key)}
+    unexpected = changed - {field} - set(FRESHEN)
+    if unexpected:
+        return f"the emptied request also changed {sorted(unexpected)}"
+    if emptied_payload.get(field) not in ("", [""]):
+        return f"the emptied request did not empty {field}"
+    return None
 
 
 def controlled_fields(omitted, given):
@@ -171,26 +269,105 @@ def freshened(payload):
     return copy
 
 
-def replay(method, url, payload):
-    """Send one payload to the local server and return (status, first line).
+def replay(method, url, payload, label="replay"):
+    """Send one payload to the local server and return (status, answer).
 
     A 4xx arrives as an exception rather than a response, and it is the answer
     being looked for, so it is read from the exception instead of raised.
+
+    The answer is returned whole, and the request and answer are both appended to
+    EVIDENCE. The results file keeps only the first 120 characters, because a
+    field holding a whole listing stops the file being read or diffed, and a
+    truncated answer is the one thing that cannot be recovered afterwards: a row
+    whose verdict surprises you is answered by its body, and by the request that
+    earned it.
     """
     if not url.startswith(HOST):
         raise SystemExit(f"refusing to send anywhere but {HOST}: {url}")
     # A read carries nothing. Sending it an empty body rather than no body is a
     # different request from the one the CLI made.
     body = None if payload is None else json.dumps(payload).encode()
-    request = urllib.request.Request(
-        url, method=method, data=body,
-        headers={"Content-Type": "application/json; charset=utf-8",
-                 "Authorization": f"Bearer {TOKEN}"})
+    headers = {"Content-Type": "application/json; charset=utf-8",
+               "Authorization": f"Bearer {TOKEN}"}
+    request = urllib.request.Request(url, method=method, data=body, headers=headers)
+    started = datetime.datetime.now(datetime.timezone.utc)
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            return response.status, response.read().decode()[:120]
+            status, answer = response.status, response.read().decode()
     except urllib.error.HTTPError as error:
-        return error.code, error.read().decode()[:120]
+        status, answer = error.code, error.read().decode()
+    item = {
+        "label": label,
+        "at": started.isoformat(),
+        "method": method,
+        "url": url,
+        # The headers are here because a request that cannot be seen has to be
+        # guessed at: this GET carries a Content-Type, which is not obvious from
+        # the row and took a reading of this function to discover.
+        "headers": dict(headers, Authorization="Bearer <token>"),
+        "sent": payload,
+        "status": status,
+        "answer": answer,
+    }
+    if status >= 500:
+        item["server_log"] = server_log(started)
+    EVIDENCE.append(item)
+    return status, answer
+
+
+def read_back(binary, entry, command, key, captured, home):
+    """Return what the spec's verify steps read back, or None if it has none.
+
+    The steps the audit uses to see what a command did, run here to see whether
+    an emptied field reached the store. A command with no verify step cannot
+    answer the question, which is reported rather than guessed at.
+    """
+    steps = entry.get("verify", [])
+    if not steps:
+        return None
+    return "\n".join(
+        run(binary, [expand(a, command, key, captured) for a in step] + GLOBALS,
+            False, home)[2]
+        for step in steps)
+
+
+def stored_answer(binary, entry, command, method, url, carried, field, owned,
+                  runs, home):
+    """Say whether an accepted empty value reaches the record.
+
+    Asked of the resource the `set` run already created, by replaying the
+    emptied payload without freshening it, so the request names that resource
+    rather than a new one. The comparison is of everything the verify steps
+    print, before against after, because what a read calls a field is not always
+    what the payload calls it.
+
+    Says nothing about how the server got there, deliberately. A command that
+    writes a field in place and one that appends a document a later read answers
+    with both come out as the empty value reaching the record; which of the two
+    happened is a property of the endpoint, and reading it off this measurement
+    would be inventing it.
+    """
+    key, captured = owned
+    before = read_back(binary, entry, command, key, captured, home)
+    if before is None:
+        return "not asked, the command has no verify step"
+    status, _ = replay(method, url, emptied(carried, field),
+                       label=f"{command} {field} emptied, unfreshened")
+    if not 200 <= status < 300:
+        return f"not an answer, the replay was itself refused with {status}"
+    after = read_back(binary, entry, command, key, captured, home)
+    # A changed read-back is evidence and outranks the status, which does not
+    # say which record was reached: reporting an artifact that already exists
+    # answers 201 and the empty value is what a read returns afterwards. The
+    # status is consulted only when nothing changed, where a 201 leaves it open
+    # whether the record was reached and kept its value or a separate record was
+    # named instead.
+    if normalise(before, command, runs) != normalise(after, command, runs):
+        return "reaches the record"
+    if status == 201:
+        return ("not an answer, the reply was 201 and nothing changed, so the"
+                " replay may have named a separate record")
+    return "does not reach the record"
 
 
 def capture(binary, entry, command, flag, how, home):
@@ -216,8 +393,9 @@ def probe(binary, entry, command, flag, home):
     omitted = capture(binary, entry, command, flag, "omitted", home)
     given = capture(binary, entry, command, flag, "set", home)
     if not given:
-        return [f"{command}\t--{flag}\t\t\t\t\t\tnothing to read\tthe run with"
-                f" the flag set sent no request"]
+        return [f"{command}\t--{flag}\t\t\t\t\t\tnothing to read"
+                f"\tnot asked, nothing was replayed"
+                f"\tthe run with the flag set sent no request"]
 
     method, url, carried, owned = given
     runs = [owned] + ([omitted[3]] if omitted else [])
@@ -229,15 +407,32 @@ def probe(binary, entry, command, flag, home):
         without_fixtures(omitted[2], command, runs) if omitted else None,
         without_fixtures(carried, command, runs))
     if not fields:
-        return [f"{command}\t--{flag}\t{method}\t{url}\t\t\t\tno field\tthe flag"
-                f" changes no field of the payload"]
+        return [f"{command}\t--{flag}\t{method}\t{url}\t\t\t\tno field"
+                f"\tnot asked, nothing was replayed"
+                f"\tthe flag changes no field of the payload"]
 
     rows = []
-    for field in fields:
-        control = replay(method, url, freshened(carried))
-        answer = replay(method, url, emptied(freshened(carried), field))
+    for index, field in enumerate(fields):
+        control_payload = freshened(carried)
+        emptied_payload = emptied(freshened(carried), field)
+        control = replay(method, url, control_payload,
+                         label=f"{command} --{flag} {field} control")
+        answer = replay(method, url, emptied_payload,
+                        label=f"{command} --{flag} {field} emptied")
+        suspect = only_this_field_changed(control_payload, emptied_payload, field)
+        outcome = f"suspect, {suspect}" if suspect else verdict(control[0], answer[0])
+        if suspect:
+            stored = "not asked, the emptied request was not the one intended"
+        elif outcome != "the server accepts it":
+            stored = f"not asked, {outcome}"
+        elif index:
+            stored = ("not asked, an earlier field of this flag already changed"
+                      " the resource")
+        else:
+            stored = stored_answer(binary, entry, command, method, url, carried,
+                                   field, owned, runs, home)
         rows.append(f"{command}\t--{flag}\t{method}\t{url}\t{field}"
-                    f"\t{control[0]}\t{answer[0]}\t{verdict(control[0], answer[0])}"
+                    f"\t{control[0]}\t{answer[0]}\t{outcome}\t{stored}"
                     f"\t{answer[1].strip()[:120]}")
     return rows
 
@@ -252,14 +447,23 @@ def read_rows(command, flag, method, url, query, omitted_query):
     """
     parameters = controlled_parameters(omitted_query, query)
     if not parameters:
-        return [f"{command}\t--{flag}\t{method}\t{url}\t\t\t\tno field\tthe flag"
-                f" changes no query parameter"]
+        return [f"{command}\t--{flag}\t{method}\t{url}\t\t\t\tno field"
+                f"\tnot asked, nothing was replayed"
+                f"\tthe flag changes no query parameter"]
     rows = []
     for parameter in parameters:
-        control = replay(method, url, None)
-        answer = replay(method, with_parameter(url, parameter, ""), None)
+        emptied_url = with_parameter(url, parameter, "")
+        control = replay(method, url, None,
+                         label=f"{command} --{flag} {parameter} control")
+        answer = replay(method, emptied_url, None,
+                        label=f"{command} --{flag} {parameter} emptied")
+        suspect = only_this_parameter_changed(url, emptied_url, parameter)
+        outcome = f"suspect, {suspect}" if suspect else verdict(control[0], answer[0])
+        stored = ("not asked, the emptied request was not the one intended"
+                  if suspect else "not asked, a read stores nothing")
         rows.append(f"{command}\t--{flag}\t{method}\t{url}\t{parameter}"
-                    f"\t{control[0]}\t{answer[0]}\t{verdict(control[0], answer[0])}"
+                    f"\t{control[0]}\t{answer[0]}\t{outcome}"
+                    f"\t{stored}"
                     f"\t{answer[1].strip()[:120]}")
     return rows
 
@@ -280,6 +484,41 @@ def verdict(control, emptied_status):
     return "the server refuses it"
 
 
+def provenance(binary):
+    """Name what this run was against, so two runs can be told apart.
+
+    A row that answers differently between runs raises one question first: was it
+    the same server? Answering it from memory costs a rebuild and a re-run, so it
+    is recorded here instead. The CLI is identified by the hash of the binary
+    rather than by `kosli version`, which reports what was built, not which build
+    is on disk.
+    """
+    def said(argv):
+        """Return a command's whole output, or why there is none."""
+        try:
+            done = subprocess.run(argv, capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError) as exc:
+            return f"unavailable: {exc}"
+        return (done.stdout or done.stderr).strip()
+
+    binary_path = pathlib.Path(binary)
+    changed = said(["git", "status", "--porcelain", "."])
+    return {
+        "label": "provenance",
+        "at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "host": HOST,
+        "server_image": said(
+            ["docker", "inspect", SERVER_CONTAINER, "--format", "{{.Image}}"]),
+        "server_started": said(
+            ["docker", "inspect", SERVER_CONTAINER, "--format", "{{.State.StartedAt}}"]),
+        "cli_binary": str(binary_path),
+        "cli_sha256": hashlib.sha256(binary_path.read_bytes()).hexdigest()
+        if binary_path.is_file() else "unavailable: not a file",
+        "audit_commit": said(["git", "rev-parse", "HEAD"]),
+        "audit_uncommitted": changed.splitlines(),
+    }
+
+
 def main():
     """Replay every named combination and write what the server answered."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -290,9 +529,11 @@ def main():
 
     spec = json.loads(SPEC.read_text())
     reset_server()
+    EVIDENCE.append(provenance(args.binary))
     home = tempfile.mkdtemp(prefix="kosli-replay-home-")
 
-    rows = ["command\tflag\tmethod\turl\tfield\tcontrol\temptied\tverdict\tanswer"]
+    rows = ["command\tflag\tmethod\turl\tfield\tcontrol\temptied\tverdict"
+            "\tstored\tanswer"]
     for command, entry in sorted(spec.items()):
         if args.only and args.only not in command:
             continue
@@ -311,7 +552,11 @@ def main():
 
     out = SPEC.parent / RESULTS
     out.write_text("\n".join(rows) + "\n")
+    evidence = SPEC.parent / EVIDENCE_FILE
+    evidence.write_text(
+        "".join(json.dumps(item) + "\n" for item in EVIDENCE))
     print(f"\nwrote {out}")
+    print(f"wrote {evidence}")
 
 
 if __name__ == "__main__":
