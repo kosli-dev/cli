@@ -46,3 +46,18 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+  # Docker Compose images
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "11:00"
+    commit-message:
+      prefix: 'chore(deps)'
+    # The other images are built locally or set from a variable
+    allow:
+      - dependency-name: "rustfs/rustfs"
+    labels:
+      - "dependencies"
+      - "docker"
