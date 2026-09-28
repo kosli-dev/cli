@@ -112,7 +112,7 @@ RESPONSE=$(curl -s -S -X POST "https://api.anthropic.com/v1/messages" \
   -d "$BODY")
 
 # The response may start with a thinking block, so join all text blocks instead of reading content[0].
-CONTENT=$(echo "$RESPONSE" | jq -r '[.content[]? | select(.type == "text") | .text] | join("")')
+CONTENT=$(echo "$RESPONSE" | jq -r '[.content[]? | select(.type == "text") | .text] | join("\n")')
 if [ -z "$CONTENT" ]; then
   echo "ERROR: Anthropic API failed or returned no content. Response:" >&2
   echo "$RESPONSE" | jq . >&2
