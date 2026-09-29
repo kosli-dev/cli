@@ -367,7 +367,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.snyk_token }}
         run:
-          snyk container test ${{ env.IMAGE }}:${{ inputs.tag }}
+          snyk container test ${{ env.IMAGE }}@${{ steps.docker_build.outputs.digest }}
              --file=Dockerfile
              --sarif
              --policy-path=.snyk
