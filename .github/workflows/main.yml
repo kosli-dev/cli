@@ -13,7 +13,12 @@ concurrency:
 
 jobs:
   pre-build:
-    if: github.event_name == 'push' || github.actor == 'dependabot[bot]'
+    # github.actor is who caused this event (e.g. the last push), not who
+    # opened the PR, so check the PR author and that its branch is in this repo.
+    if: >-
+      github.event_name == 'push' ||
+      (github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.prep.outputs.tag }}
