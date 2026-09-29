@@ -13,8 +13,8 @@ concurrency:
 
 jobs:
   pre-build:
-    # github.actor is whoever triggered this run, so check who opened the PR,
-    # and that its branch is in this repo, as Dependabot's always are.
+    # github.actor is who caused this event (e.g. the last push), not who
+    # opened the PR, so check the PR author and that its branch is in this repo.
     if: >-
       github.event_name == 'push' ||
       (github.event.pull_request.user.login == 'dependabot[bot]' &&
