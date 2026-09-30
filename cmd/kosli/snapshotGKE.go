@@ -35,6 +35,8 @@ Asset Inventory is eventually consistent, so a snapshot can lag behind recent po
 
 Skip ^--clusters^, ^--clusters-regex^ and ^--locations^ to report the pods of every cluster in
 scope, and skip the namespace flags to report every namespace. Filters are case-sensitive.
+With ^--folder^ or ^--organization^, ^--clusters^ and ^--clusters-regex^ match cluster names in
+every project under the scope.
 
 All selected clusters report to one environment, and the report does not carry the cluster
 name: pods with the same namespace and name in two clusters (e.g. StatefulSet pods) are
@@ -63,8 +65,7 @@ kosli snapshot gke yourEnvironmentName \
 	--org yourOrgName
 `
 
-// gkePodLister is the seam between the command and the GCP client. Tests
-// override newGKEClient with a stub that returns canned pods.
+// gkePodLister lets tests replace the Asset Inventory client through newGKEClient.
 type gkePodLister interface {
 	ListPods(ctx context.Context, parent string) ([]gke.Pod, error)
 }
@@ -127,8 +128,7 @@ func newSnapshotGKECmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-// validateRegexFlags rejects an invalid pattern before listing, because Select
-// only reports one that a pod reaches, and nested filters let many go unchecked.
+// validateRegexFlags rejects invalid patterns up front, since Select reports only those a pod reaches.
 func (o *snapshotGKEOptions) validateRegexFlags() error {
 	for _, f := range []struct {
 		name     string
@@ -147,7 +147,6 @@ func (o *snapshotGKEOptions) validateRegexFlags() error {
 	return nil
 }
 
-// parent is the Asset Inventory scope the pods are listed under.
 func (o *snapshotGKEOptions) parent() string {
 	switch {
 	case o.folder != "":

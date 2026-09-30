@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Classify wraps an Asset Inventory error with a user-actionable message based
-// on its gRPC status. Errors without a recognised code (or non-gRPC errors)
-// pass through unchanged. parent is the scope that was listed, e.g. "projects/p".
+// Classify adds an actionable message to an Asset Inventory error based on its
+// gRPC status; other errors pass through unchanged. parent is the listed scope,
+// e.g. "projects/p".
 func Classify(err error, parent string) error {
 	if err == nil {
 		return nil

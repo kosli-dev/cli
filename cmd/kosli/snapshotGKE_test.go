@@ -55,9 +55,7 @@ func stubGKEPod(location, cluster, namespace, name string, phase corev1.PodPhase
 	}
 }
 
-// stubGKEPods spans two clusters, two locations and two namespaces so filter
-// tests can check inclusion and exclusion in one run. Digests are full 64-char
-// hex because the server's K8S report model rejects anything else.
+// Digests are 64-char hex because the server's K8S report model rejects anything else.
 func stubGKEPods() []gke.Pod {
 	return []gke.Pod{
 		stubGKEPod("europe-west1", "prod-eu", "payments", "api", corev1.PodRunning, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
@@ -176,8 +174,6 @@ func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd() {
 	runTestCmd(suite.T(), tests)
 }
 
-// runDryRun executes a dry-run snapshot and returns the combined output for
-// substring assertions on which pods are reported.
 func (suite *SnapshotGKETestSuite) runDryRun(args string) string {
 	cmd := fmt.Sprintf(`snapshot gke %s --dry-run %s %s`, suite.envName, args, suite.defaultKosliArguments)
 	_, combined, _, _, err := executeCommandC(cmd)
@@ -262,9 +258,7 @@ func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_WarnsWhenFiltersSelectNoPo
 	require.NotContains(suite.T(), suite.runDryRun("--project p"), warning)
 }
 
-// TestSnapshotGKECmd_HappyPathReportsToServer exercises the CLI → local Kosli
-// server roundtrip with the Asset Inventory client stubbed: 2 Running pods and
-// 1 Failed pod are reported, the Succeeded pod is not.
+// 2 Running pods and 1 Failed pod are reported; the Succeeded pod is not.
 func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_HappyPathReportsToServer() {
 	cmd := fmt.Sprintf(`snapshot gke %s --project p %s`, suite.envName, suite.defaultKosliArguments)
 	_, combined, _, _, err := executeCommandC(cmd)
@@ -273,9 +267,6 @@ func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_HappyPathReportsToServer()
 	require.Contains(suite.T(), combined, fmt.Sprintf("[3] pods were reported to environment %s", suite.envName))
 }
 
-// TestSnapshotGKECmd_PermissionDeniedReturnsFriendlyError verifies that a gRPC
-// PermissionDenied from Asset Inventory surfaces the permissions to grant
-// rather than a raw SDK string.
 func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_PermissionDeniedReturnsFriendlyError() {
 	newGKEClient = func(_ context.Context) (gkePodLister, error) {
 		return stubGKEPodLister{err: status.Error(codes.PermissionDenied, "denied")}, nil

@@ -281,7 +281,7 @@ func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOption
 	}
 }
 
-// ProcessPods returns the PodData of the Running and Failed pods among pods
+// ProcessPods returns the PodData of the Running and Failed pods among pods.
 func ProcessPods(pods []corev1.Pod, logger *logger.Logger) ([]*PodData, error) {
 	podsData := []*PodData{}
 	var (

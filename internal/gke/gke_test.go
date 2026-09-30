@@ -15,7 +15,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// fakeAPI is the in-memory test double for apiClient.
 type fakeAPI struct {
 	assets []*assetpb.Asset
 	err    error

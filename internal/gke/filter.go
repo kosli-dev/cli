@@ -7,9 +7,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// Filter selects pods by the cluster, location and namespace they run in. An
-// unset part selects every value. Asset Inventory's ListAssets has no content
-// filter, so selection happens client side.
+// Filter selects pods by cluster, location and namespace; an unset part selects
+// every value. Selection runs client side because ListAssets has no content filter.
 type Filter struct {
 	Clusters   filters.ResourceFilterOptions
 	Locations  []string

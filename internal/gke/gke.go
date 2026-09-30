@@ -1,8 +1,5 @@
-// Package gke reads GKE Pods from Cloud Asset Inventory for snapshot
-// reporting. It needs only Google Cloud IAM permissions: no kubeconfig, no
-// Kubernetes RBAC and no network path to a cluster control plane. Production
-// code uses the real Asset Inventory API behind the unexported apiClient
-// interface, which tests replace with a fake.
+// Package gke lists GKE Pods from Cloud Asset Inventory, which needs only Google
+// Cloud IAM permissions: no kubeconfig, Kubernetes RBAC or control plane access.
 package gke
 
 import (
@@ -23,10 +20,8 @@ import (
 
 const (
 	podAssetType = "k8s.io/Pod"
-	// pageSize is the ListAssets maximum; the default of 100 multiplies the
-	// calls counted against the Asset Inventory quota.
-	pageSize = 1000
-	// podAssetPrefix precedes projects/P/locations/L/clusters/C/k8s/namespaces/NS/pods/NAME
+	// pageSize is the ListAssets maximum; the default of 100 takes 10x the quota-counted calls.
+	pageSize       = 1000
 	podAssetPrefix = "//container.googleapis.com/"
 )
 
@@ -37,7 +32,7 @@ type Pod struct {
 	Pod      corev1.Pod
 }
 
-// apiClient is the unexported seam that lets tests substitute a fake.
+// apiClient lets tests replace the Asset Inventory API.
 type apiClient interface {
 	listPodAssets(ctx context.Context, parent string) ([]*assetpb.Asset, error)
 }
@@ -57,8 +52,7 @@ func New(ctx context.Context) (*Client, error) {
 	return &Client{api: &gcpAPI{client: client}}, nil
 }
 
-// Close releases the underlying gRPC connection. Safe to call on a Client
-// constructed with a fake apiClient (returns nil).
+// Close releases the underlying gRPC connection.
 func (c *Client) Close() error {
 	g, ok := c.api.(*gcpAPI)
 	if !ok {
@@ -85,8 +79,7 @@ func (c *Client) ListPods(ctx context.Context, parent string) ([]Pod, error) {
 	return pods, nil
 }
 
-// toPod decodes the Pod object that Asset Inventory stores as a JSON-shaped
-// struct, so it is read with the Kubernetes API types' own JSON tags.
+// toPod decodes the asset's struct data through JSON so the Kubernetes types' JSON tags apply.
 func toPod(a *assetpb.Asset) (Pod, error) {
 	location, cluster, err := parseAssetName(a.GetName())
 	if err != nil {
@@ -115,13 +108,11 @@ func parseAssetName(name string) (location, cluster string, err error) {
 	return parts[3], parts[5], nil
 }
 
-// gcpAPI is the production apiClient backed by the Cloud Asset Inventory API.
 type gcpAPI struct {
 	client *asset.Client
 }
 
-// listRetry adds ResourceExhausted to the SDK's default retry codes, so an
-// organization-wide scan backs off on the Asset Inventory quota rather than failing.
+// listRetry also retries ResourceExhausted, so organization-wide scans back off on the quota.
 var listRetry = gax.WithRetry(func() gax.Retryer {
 	return gax.OnCodes([]codes.Code{
 		codes.DeadlineExceeded,
