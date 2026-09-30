@@ -25,7 +25,7 @@ Coverage:
 | Cloud Functions 1st gen | No (Google packages the source) | ✗ | |
 | App Engine Standard | No (gVisor sandbox, not a container) | ✗ | Not currently supported in the CLI. |
 | App Engine Flexible | Yes (containers on managed VMs) | ✗ | |
-| GKE (Standard / Autopilot) | Yes | ✗ | Use ^kosli snapshot k8s^ instead. |
+| GKE (Standard / Autopilot) | Yes | ✗ | Use ^kosli snapshot gke^ or ^kosli snapshot k8s^ instead. |
 | Cloud Run for Anthos | Yes (knative on GKE) | ✗ | |
 | Compute Engine + Container-Optimized OS | Yes (Docker on a VM) | ✗ | |
 

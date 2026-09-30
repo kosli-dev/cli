@@ -20,13 +20,43 @@ Cloud Asset Inventory, so it needs no kubeconfig, no Kubernetes RBAC and no netw
 cluster control plane. The reported data matches ^kosli snapshot k8s^: container image digests,
 creation timestamps and owners of the Running and Failed pods.
 
+GCP authentication uses Application Default Credentials. On a developer machine, run
+^gcloud auth application-default login^; in GCE/GKE/Cloud Run the metadata server / Workload
+Identity is used automatically. The Cloud Asset API (^cloudasset.googleapis.com^) must be enabled
+in the quota project of the caller's credentials.
+
+The caller needs ^cloudasset.assets.listContainerPod^ and ^serviceusage.services.use^ on the
+project, folder or organization. Grant them through a custom role for least privilege:
+^roles/cloudasset.viewer^ also works, but it can list every asset type, including ^k8s.io/Secret^.
+
+Asset Inventory is eventually consistent, so a snapshot can lag behind recent pod changes.
+
 Skip ^--clusters^, ^--clusters-regex^ and ^--locations^ to report the pods of every cluster in
-scope, and skip the namespace flags to report every namespace.`
+scope, and skip the namespace flags to report every namespace. Filters are case-sensitive.
+
+All selected clusters report to one environment, and the report does not carry the cluster
+name: pods with the same namespace and name in two clusters (e.g. StatefulSet pods) are
+indistinguishable. Snapshot such clusters to separate environments.`
 
 const snapshotGKEExample = `
 # report the pods of every GKE cluster in a project:
 kosli snapshot gke yourEnvironmentName \
 	--project yourGCPProject \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report the pods of every GKE cluster in all projects under a folder:
+kosli snapshot gke yourEnvironmentName \
+	--folder yourGCPFolderID \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report the pods of one cluster, excluding system namespaces:
+kosli snapshot gke yourEnvironmentName \
+	--project yourGCPProject \
+	--clusters yourClusterName \
+	--locations europe-west1 \
+	--exclude-namespaces-regex "^kube-,^gke-" \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
