@@ -38,9 +38,11 @@ scope, and skip the namespace flags to report every namespace. Filters are case-
 With ^--folder^ or ^--organization^, ^--clusters^ and ^--clusters-regex^ match cluster names in
 every project under the scope.
 
-All selected clusters report to one environment, and the report does not carry the cluster
-name: pods with the same namespace and name in two clusters (e.g. StatefulSet pods) are
-indistinguishable. Snapshot such clusters to separate environments.`
+The snapshot captures every pod that matches the filters, across all selected clusters, and
+reports them to one environment. With no cluster or location filter, that is every GKE cluster
+in the scope. The report does not record which cluster a pod runs in, so pods with the same
+namespace and name in two clusters (e.g. StatefulSet pods such as ^web-0^) cannot be told apart
+by name. To keep clusters apart, snapshot each one with ^--clusters^ to its own environment.`
 
 const snapshotGKEExample = `
 # report the pods of every GKE cluster in a project:
@@ -55,7 +57,7 @@ kosli snapshot gke yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report the pods of one cluster, excluding system namespaces:
+# report the pods of one cluster to its own environment, excluding system namespaces:
 kosli snapshot gke yourEnvironmentName \
 	--project yourGCPProject \
 	--clusters yourClusterName \
