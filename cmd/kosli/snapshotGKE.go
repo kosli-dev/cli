@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 
 	"github.com/kosli-dev/cli/internal/gke"
 	"github.com/kosli-dev/cli/internal/kube"
@@ -104,7 +106,7 @@ func newSnapshotGKECmd(out io.Writer) *cobra.Command {
 					return err
 				}
 			}
-			return nil
+			return o.validateRegexFlags()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -123,6 +125,26 @@ func newSnapshotGKECmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVar(&o.filter.Namespaces.ExcludeNamesRegex, "exclude-namespaces-regex", []string{}, gkeExcludeNamespacesRegexFlag)
 	addDryRunFlag(cmd)
 	return cmd
+}
+
+// validateRegexFlags rejects an invalid pattern before listing, because Select
+// only reports one that a pod reaches, and nested filters let many go unchecked.
+func (o *snapshotGKEOptions) validateRegexFlags() error {
+	for _, f := range []struct {
+		name     string
+		patterns []string
+	}{
+		{"clusters-regex", o.filter.Clusters.IncludeNamesRegex},
+		{"namespaces-regex", o.filter.Namespaces.IncludeNamesRegex},
+		{"exclude-namespaces-regex", o.filter.Namespaces.ExcludeNamesRegex},
+	} {
+		for _, pattern := range f.patterns {
+			if _, err := regexp.Compile(pattern); err != nil {
+				return fmt.Errorf("invalid --%s pattern '%s': %v", f.name, pattern, err)
+			}
+		}
+	}
+	return nil
 }
 
 // parent is the Asset Inventory scope the pods are listed under.

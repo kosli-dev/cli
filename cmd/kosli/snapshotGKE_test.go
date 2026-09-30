@@ -153,7 +153,13 @@ func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd() {
 			wantError:   true,
 			name:        "snapshot gke fails if --clusters-regex is an invalid regex",
 			cmd:         fmt.Sprintf(`snapshot gke %s --project p --clusters-regex "[invalid" --dry-run %s`, suite.envName, suite.defaultKosliArguments),
-			goldenRegex: `invalid include name regex pattern \[invalid: error parsing regexp: missing closing \]`,
+			goldenRegex: `Error: invalid --clusters-regex pattern '\[invalid': error parsing regexp: missing closing \]`,
+		},
+		{
+			wantError:   true,
+			name:        "snapshot gke fails if --namespaces-regex is an invalid regex that no pod reaches",
+			cmd:         fmt.Sprintf(`snapshot gke %s --project p --clusters nope --namespaces-regex "[invalid" --dry-run %s`, suite.envName, suite.defaultKosliArguments),
+			goldenRegex: `Error: invalid --namespaces-regex pattern '\[invalid'`,
 		},
 		{
 			name:        "snapshot gke dry-runs a K8S report built from the listed pods",
@@ -233,6 +239,21 @@ func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_Filters() {
 			}
 		})
 	}
+}
+
+func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_RejectsInvalidRegexWithoutListingPods() {
+	listed := false
+	newGKEClient = func(_ context.Context) (gkePodLister, error) {
+		listed = true
+		return stubGKEPodLister{}, nil
+	}
+
+	cmd := fmt.Sprintf(`snapshot gke %s --project p --exclude-namespaces-regex "^kube-,[invalid" --dry-run %s`, suite.envName, suite.defaultKosliArguments)
+	_, combined, _, _, err := executeCommandC(cmd)
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, "invalid --exclude-namespaces-regex pattern '[invalid'")
+	require.False(suite.T(), listed, "an invalid pattern must be rejected before Asset Inventory is called")
 }
 
 func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_WarnsWhenFiltersSelectNoPods() {
