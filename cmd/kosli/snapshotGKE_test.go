@@ -217,6 +217,8 @@ func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_Filters() {
 		{args: "--clusters prod-eu", want: []string{"api", "dns"}},
 		{args: `--clusters-regex "^staging-"`, want: []string{"worker"}},
 		{args: "--locations us-central1-a", want: []string{"worker"}},
+		{args: "--locations us-central1", want: []string{"worker"}},
+		{args: "--locations europe-west1-b", want: []string{}},
 		{args: "--namespaces kube-system", want: []string{"dns"}},
 		{args: `--namespaces-regex "^pay"`, want: []string{"api", "worker"}},
 		{args: "--exclude-namespaces kube-system", want: []string{"api", "worker"}},

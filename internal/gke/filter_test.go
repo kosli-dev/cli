@@ -101,3 +101,34 @@ func TestFilterSelect(t *testing.T) {
 		})
 	}
 }
+
+func TestFilterSelectLocations(t *testing.T) {
+	pods := []Pod{
+		testPod("europe-west1", "regional", "ns", "a"),
+		testPod("europe-west1-b", "zonal-b", "ns", "b"),
+		testPod("europe-west1-c", "zonal-c", "ns", "c"),
+		testPod("europe-west10", "other-region", "ns", "d"),
+		testPod("europe-west10-a", "other-region-zonal", "ns", "e"),
+	}
+
+	for _, tt := range []struct {
+		name      string
+		locations []string
+		want      []string
+	}{
+		{name: "region matches its regional and zonal clusters", locations: []string{"europe-west1"}, want: []string{"a", "b", "c"}},
+		{name: "zone matches only that zone", locations: []string{"europe-west1-b"}, want: []string{"b"}},
+		{name: "region with a numeric suffix is another region", locations: []string{"europe-west10"}, want: []string{"d", "e"}},
+		{name: "several locations", locations: []string{"europe-west1-c", "europe-west10"}, want: []string{"c", "d", "e"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Filter{Locations: tt.locations}.Select(pods)
+			require.NoError(t, err)
+			names := []string{}
+			for _, p := range got {
+				names = append(names, p.Name)
+			}
+			require.Equal(t, tt.want, names)
+		})
+	}
+}

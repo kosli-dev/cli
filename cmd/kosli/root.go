@@ -258,7 +258,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	gkeOrganizationFlag             = "[conditional] The Google Cloud organization ID to snapshot GKE pods from, covering every project under it. Exactly one of --project, --folder or --organization is required."
 	gkeClustersFlag                 = "[optional] The comma-separated list of GKE cluster names to snapshot. Defaults to every cluster in scope."
 	gkeClustersRegexFlag            = "[optional] The comma-separated list of GKE cluster name regex patterns to snapshot. Defaults to every cluster in scope."
-	gkeLocationsFlag                = "[optional] The comma-separated list of GKE cluster locations (regions or zones, e.g. europe-west1,us-central1-a) to snapshot. Defaults to every location."
+	gkeLocationsFlag                = "[optional] The comma-separated list of GKE cluster locations (regions or zones, e.g. europe-west1,us-central1-a) to snapshot. A region also matches the zonal clusters in it. Defaults to every location."
 	gkeExcludeNamespacesFlag        = "[optional] The comma separated list of namespaces names to exclude from reporting artifacts info from. Can't be used together with --namespaces or --namespaces-regex."
 	gkeNamespacesRegexFlag          = "[optional] The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespaces or --exclude-namespaces-regex."
 	gkeExcludeNamespacesRegexFlag   = "[optional] The comma separated list of namespaces regex patterns to exclude from reporting artifacts info from. Can't be used together with --namespaces or --namespaces-regex."
