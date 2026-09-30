@@ -384,7 +384,7 @@ func (o *commonEvaluateOptions) refuseWhatTheServerCannotDo() error {
 	if len(o.outputRules) > 0 {
 		return fmt.Errorf(
 			"--output-rule is not supported with --server-side; " +
-				"the server only returns allow and violations")
+				"the server returns what the policy annotates as an entrypoint")
 	}
 	return nil
 }
@@ -441,15 +441,32 @@ func serverSideFailure(evaluation *evaluations.Evaluation) error {
 		evaluation.Failure.Kind, evaluation.Failure.Message)
 }
 
-// serverVerdict maps a server verdict onto the shared one. An empty list of
-// violations becomes no list at all, because the local evaluator returns
-// nothing rather than an empty slice and the two paths have to print alike.
+// serverVerdict maps a server verdict onto the shared one, carrying every
+// output the policy returned. An empty list of violations becomes no list at
+// all, because the local evaluator returns nothing rather than an empty slice
+// and the two paths have to print alike. Any other output named like a key the
+// page already gives a meaning is left out, as --output-rule refuses it on the
+// local path, so an output cannot change the verdict the exit code is read from.
 func serverVerdict(result *evaluations.Result) *evaluate.Result {
-	violations := result.Violations
-	if len(violations) == 0 {
-		violations = nil
+	verdict := &evaluate.Result{Allow: result.Allow, Violations: result.Violations}
+	for rule, value := range result.Outputs {
+		if rule != "violations" && slices.Contains(evaluateResultKeys, rule) {
+			continue
+		}
+		if rule == "violations" {
+			if list, ok := value.([]any); ok && len(list) == 0 {
+				continue
+			}
+		}
+		if verdict.Outputs == nil {
+			verdict.Outputs = map[string]any{}
+		}
+		verdict.Outputs[rule] = value
 	}
-	return &evaluate.Result{Allow: result.Allow, Violations: violations}
+	if len(verdict.Violations) == 0 {
+		verdict.Violations = nil
+	}
+	return verdict
 }
 
 // policyBundle reads what --policy names as the bundle the API takes. The caps
@@ -630,17 +647,19 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 
 		rows = append(rows, "RESULT:\tDENIED")
 
-		if violations, ok := result["violations"].([]any); ok && len(violations) > 0 {
+		if violations := violationList(result["violations"]); len(violations) > 0 {
+			messages := make([]string, len(violations))
 			for i, v := range violations {
+				messages[i] = violationText(v)
 				if i == 0 {
-					rows = append(rows, fmt.Sprintf("VIOLATIONS:\t%s", v))
+					rows = append(rows, fmt.Sprintf("VIOLATIONS:\t%s", messages[i]))
 				} else {
-					rows = append(rows, fmt.Sprintf("\t%s", v))
+					rows = append(rows, fmt.Sprintf("\t%s", messages[i]))
 				}
 			}
 			tabFormattedPrint(out, []string{}, append(rows, decisionRow...))
 			if assertOnDeny {
-				return fmt.Errorf("policy denied: %v", violations)
+				return fmt.Errorf("policy denied: %v", messages)
 			}
 			return nil
 		}
@@ -649,5 +668,30 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 			return fmt.Errorf("policy denied")
 		}
 		return nil
+	}
+}
+
+// violationText is a violation as a line of text. A message is printed as it
+// is; a structured violation is printed as its JSON.
+func violationText(violation any) string {
+	if message, ok := violation.(string); ok {
+		return message
+	}
+	// Decoded from JSON, so it always encodes back.
+	encoded, _ := json.Marshal(violation)
+	return string(encoded)
+}
+
+// violationList is the violations to print one per row. A server-side policy
+// shapes its own violations, so a value that is not a list is one violation
+// rather than none.
+func violationList(violations any) []any {
+	switch value := violations.(type) {
+	case nil:
+		return nil
+	case []any:
+		return value
+	default:
+		return []any{value}
 	}
 }

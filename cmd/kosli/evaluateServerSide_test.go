@@ -44,6 +44,18 @@ const (
 		`"result":{"allow":true}}`
 	verdictDenied = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
 		`"result":{"allow":false,"violations":["change is not approved"]}}`
+	verdictAllowedOutputsNoViolations = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"result":{"allow":true,"outputs":{"violations":[]}}}`
+	verdictAllowedNoOutputs = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"result":{"allow":true,"outputs":{}}}`
+	verdictDeniedWithOutputs = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"result":{"allow":false,"outputs":{"violations":["change is not approved"],"report":{"compliant":false}}}}`
+	verdictDeniedStructured = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"result":{"allow":false,"outputs":{"violations":[{"check":"approved","cause":"absent"}]}}}`
+	verdictDeniedReservedOutputs = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"result":{"allow":false,"outputs":{"allow":true,"decision_attestation_id":"01FORGED","violations":["change is not approved"]}}}`
+	verdictDeniedKeyedViolations = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"result":{"allow":false,"outputs":{"violations":{"approved":"absent"}}}}`
 	verdictAllowedWithDecision = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
 		`"result":{"allow":true},"decision_attestation_id":"01DECISION"}`
 
@@ -165,6 +177,8 @@ func (suite *EvaluateServerSideTestSuite) TestItPrintsTheSameJsonAsTheLocalPath(
 	}{
 		{"the server sent an empty violations list", verdictAllowed},
 		{"the server sent no violations list at all", verdictAllowedNoList},
+		{"the server sent an empty violations output", verdictAllowedOutputsNoViolations},
+		{"the server sent no outputs", verdictAllowedNoOutputs},
 	} {
 		suite.Run(test.name, func() {
 			server, _ := newFakeEvaluations(suite.T(), test.verdict)
@@ -205,6 +219,75 @@ func (suite *EvaluateServerSideTestSuite) TestADenialStillAssertsInJson() {
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), combined, `"allow": false`)
 	require.Contains(suite.T(), combined, "change is not approved")
+}
+
+// The policy decides what it outputs, so everything the server returns is
+// printed, beside allow as a local --output-rule value would be.
+func (suite *EvaluateServerSideTestSuite) TestEveryOutputIsPrintedInJson() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDeniedWithOutputs)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, "--output json --no-assert"))
+
+	require.NoError(suite.T(), err)
+	var printed map[string]any
+	require.NoError(suite.T(), json.Unmarshal([]byte(combined), &printed))
+	require.Equal(suite.T(), map[string]any{
+		"allow":      false,
+		"violations": []any{"change is not approved"},
+		"report":     map[string]any{"compliant": false},
+	}, printed)
+}
+
+func (suite *EvaluateServerSideTestSuite) TestADenialFromTheOutputsIsPrintedAndAsserted() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDeniedWithOutputs)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "change is not approved")
+	require.Regexp(suite.T(), `VIOLATIONS:\s+change is not approved`, combined)
+	require.NotContains(suite.T(), combined, "compliant", "other outputs are JSON only")
+}
+
+// A violation may be a record rather than a message, and a table row shows it
+// as the JSON it is rather than as Go's rendering of a map.
+func (suite *EvaluateServerSideTestSuite) TestAStructuredViolationIsPrintedAsJson() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDeniedStructured)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, `{"cause":"absent","check":"approved"}`)
+	require.Contains(suite.T(), err.Error(), `{"cause":"absent","check":"approved"}`)
+	require.NotContains(suite.T(), combined, "map[")
+}
+
+// An output cannot stand in for a key the page already gives a meaning, or it
+// could flip the verdict the exit code is read from.
+func (suite *EvaluateServerSideTestSuite) TestAnOutputNamedLikeAReservedKeyIsLeftOut() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDeniedReservedOutputs)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, "--output json --no-assert"))
+
+	require.NoError(suite.T(), err)
+	var printed map[string]any
+	require.NoError(suite.T(), json.Unmarshal([]byte(combined), &printed))
+	require.Equal(suite.T(), map[string]any{
+		"allow":      false,
+		"violations": []any{"change is not approved"},
+	}, printed)
+}
+
+// violations is the policy's own shape, so a denial keeps its reason when it
+// is not a list.
+func (suite *EvaluateServerSideTestSuite) TestViolationsThatAreNotAListArePrintedAsOneRow() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDeniedKeyedViolations)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Regexp(suite.T(), `VIOLATIONS:\s+\{"approved":"absent"\}`, combined)
+	require.Contains(suite.T(), err.Error(), `{"approved":"absent"}`)
 }
 
 // Without the flag nothing about the command changes, which is the promise the
@@ -373,7 +456,7 @@ func (suite *EvaluateServerSideTestSuite) TestItRefusesWhatTheServerCannotDo() {
 		{
 			name:    "adding policy rules to the output",
 			extra:   "--output-rule report",
-			message: "--output-rule is not supported with --server-side",
+			message: "--output-rule is not supported with --server-side; the server returns what the policy annotates",
 		},
 	} {
 		suite.Run(test.name, func() {

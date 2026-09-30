@@ -51,9 +51,14 @@ type Decision struct {
 }
 
 // Result is the policy's verdict. A denial is a result, not a failure.
+//
+// Outputs holds each rule the policy annotates as an entrypoint, in the rule's
+// own shape. Violations is where a result recorded before outputs existed
+// carries them.
 type Result struct {
-	Allow      bool     `json:"allow"`
-	Violations []string `json:"violations"`
+	Allow      bool           `json:"allow"`
+	Outputs    map[string]any `json:"outputs"`
+	Violations []string       `json:"violations"`
 }
 
 // Failure is a defect the evaluator classified, such as a policy that does not
