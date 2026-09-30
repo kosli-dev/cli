@@ -187,7 +187,10 @@ func (o *snapshotGKEOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	if len(pods) > 0 && len(selected) == 0 {
+	switch {
+	case len(pods) == 0:
+		logger.Warn("Asset Inventory returned no GKE pods in %s; reporting an empty snapshot to environment %s", parent, envName)
+	case len(selected) == 0:
 		logger.Warn("none of the %d pods in %s matched the cluster, location and namespace filters; reporting an empty snapshot to environment %s", len(pods), parent, envName)
 	}
 	podsData, err := kube.ProcessPods(selected, logger)

@@ -252,6 +252,15 @@ func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_RejectsInvalidRegexWithout
 	require.False(suite.T(), listed, "an invalid pattern must be rejected before Asset Inventory is called")
 }
 
+func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_WarnsWhenAssetInventoryReturnsNoPods() {
+	newGKEClient = func(_ context.Context) (gkePodLister, error) {
+		return stubGKEPodLister{}, nil
+	}
+	out := suite.runDryRun("--project p")
+	require.Contains(suite.T(), out, "Asset Inventory returned no GKE pods in projects/p; reporting an empty snapshot to environment snapshot-gke-env")
+	require.NotContains(suite.T(), out, "matched the cluster, location and namespace filters")
+}
+
 func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_WarnsWhenFiltersSelectNoPods() {
 	const warning = "none of the 4 pods in projects/p matched the cluster, location and namespace filters"
 	require.Contains(suite.T(), suite.runDryRun("--project p --clusters nope"), warning)
