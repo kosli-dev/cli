@@ -223,7 +223,7 @@ func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOption
 		if err != nil {
 			return podsData, fmt.Errorf("could not list pods on cluster scope: %v ", err)
 		}
-		return processPods(list, logger)
+		return ProcessPods(list.Items, logger)
 	} else {
 		list := &corev1.PodList{}
 		filteredNamespaces, err := clientset.filterNamespaces(filter)
@@ -277,12 +277,12 @@ func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOption
 			return podsData, <-errs
 		}
 
-		return processPods(list, logger)
+		return ProcessPods(list.Items, logger)
 	}
 }
 
-// processPods returns podData list for a list of Pods
-func processPods(list *corev1.PodList, logger *logger.Logger) ([]*PodData, error) {
+// ProcessPods returns the PodData of the Running and Failed pods among pods.
+func ProcessPods(pods []corev1.Pod, logger *logger.Logger) ([]*PodData, error) {
 	podsData := []*PodData{}
 	var (
 		wg    sync.WaitGroup
@@ -293,7 +293,7 @@ func processPods(list *corev1.PodList, logger *logger.Logger) ([]*PodData, error
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Make sure it's called to release resources even if no errors
 
-	for _, pod := range list.Items {
+	for _, pod := range pods {
 		wg.Add(1)
 		go func(pod corev1.Pod) {
 			defer wg.Done()

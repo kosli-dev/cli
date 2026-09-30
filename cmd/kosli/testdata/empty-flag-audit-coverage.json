@@ -851,6 +851,19 @@
   "services": "stringSlice",
   "services-regex": "stringSlice"
  },
+ "snapshot gke": {
+  "clusters": "stringSlice",
+  "clusters-regex": "stringSlice",
+  "dry-run": "bool",
+  "exclude-namespaces": "stringSlice",
+  "exclude-namespaces-regex": "stringSlice",
+  "folder": "string",
+  "locations": "stringSlice",
+  "namespaces": "stringSlice",
+  "namespaces-regex": "stringSlice",
+  "organization": "string",
+  "project": "string"
+ },
  "snapshot k8s": {
   "config-file": "string",
   "dry-run": "bool",
