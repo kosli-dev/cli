@@ -52,6 +52,10 @@ const (
 		`"result":{"allow":false,"outputs":{"violations":["change is not approved"],"report":{"compliant":false}}}}`
 	verdictDeniedStructured = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
 		`"result":{"allow":false,"outputs":{"violations":[{"check":"approved","cause":"absent"}]}}}`
+	verdictDeniedReservedOutputs = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"result":{"allow":false,"outputs":{"allow":true,"decision_attestation_id":"01FORGED","violations":["change is not approved"]}}}`
+	verdictDeniedKeyedViolations = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"result":{"allow":false,"outputs":{"violations":{"approved":"absent"}}}}`
 	verdictAllowedWithDecision = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
 		`"result":{"allow":true},"decision_attestation_id":"01DECISION"}`
 
@@ -256,6 +260,34 @@ func (suite *EvaluateServerSideTestSuite) TestAStructuredViolationIsPrintedAsJso
 	require.Contains(suite.T(), combined, `{"cause":"absent","check":"approved"}`)
 	require.Contains(suite.T(), err.Error(), `{"cause":"absent","check":"approved"}`)
 	require.NotContains(suite.T(), combined, "map[")
+}
+
+// An output cannot stand in for a key the page already gives a meaning, or it
+// could flip the verdict the exit code is read from.
+func (suite *EvaluateServerSideTestSuite) TestAnOutputNamedLikeAReservedKeyIsLeftOut() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDeniedReservedOutputs)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, "--output json --no-assert"))
+
+	require.NoError(suite.T(), err)
+	var printed map[string]any
+	require.NoError(suite.T(), json.Unmarshal([]byte(combined), &printed))
+	require.Equal(suite.T(), map[string]any{
+		"allow":      false,
+		"violations": []any{"change is not approved"},
+	}, printed)
+}
+
+// violations is the policy's own shape, so a denial keeps its reason when it
+// is not a list.
+func (suite *EvaluateServerSideTestSuite) TestViolationsThatAreNotAListArePrintedAsOneRow() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDeniedKeyedViolations)
+
+	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Regexp(suite.T(), `VIOLATIONS:\s+\{"approved":"absent"\}`, combined)
+	require.Contains(suite.T(), err.Error(), `{"approved":"absent"}`)
 }
 
 // Without the flag nothing about the command changes, which is the promise the

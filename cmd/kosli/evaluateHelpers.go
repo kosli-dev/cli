@@ -444,12 +444,19 @@ func serverSideFailure(evaluation *evaluations.Evaluation) error {
 // serverVerdict maps a server verdict onto the shared one, carrying every
 // output the policy returned. An empty list of violations becomes no list at
 // all, because the local evaluator returns nothing rather than an empty slice
-// and the two paths have to print alike.
+// and the two paths have to print alike. Any other output named like a key the
+// page already gives a meaning is left out, as --output-rule refuses it on the
+// local path, so an output cannot change the verdict the exit code is read from.
 func serverVerdict(result *evaluations.Result) *evaluate.Result {
 	verdict := &evaluate.Result{Allow: result.Allow, Violations: result.Violations}
 	for rule, value := range result.Outputs {
-		if list, ok := value.([]any); ok && rule == "violations" && len(list) == 0 {
+		if rule != "violations" && slices.Contains(evaluateResultKeys, rule) {
 			continue
+		}
+		if rule == "violations" {
+			if list, ok := value.([]any); ok && len(list) == 0 {
+				continue
+			}
 		}
 		if verdict.Outputs == nil {
 			verdict.Outputs = map[string]any{}
@@ -640,7 +647,7 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 
 		rows = append(rows, "RESULT:\tDENIED")
 
-		if violations, ok := result["violations"].([]any); ok && len(violations) > 0 {
+		if violations := violationList(result["violations"]); len(violations) > 0 {
 			messages := make([]string, len(violations))
 			for i, v := range violations {
 				messages[i] = violationText(v)
@@ -673,4 +680,18 @@ func violationText(violation any) string {
 	// Decoded from JSON, so it always encodes back.
 	encoded, _ := json.Marshal(violation)
 	return string(encoded)
+}
+
+// violationList is the violations to print one per row. A server-side policy
+// shapes its own violations, so a value that is not a list is one violation
+// rather than none.
+func violationList(violations any) []any {
+	switch value := violations.(type) {
+	case nil:
+		return nil
+	case []any:
+		return value
+	default:
+		return []any{value}
+	}
 }
