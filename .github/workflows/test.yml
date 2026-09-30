@@ -277,6 +277,8 @@ jobs:
     - name: Run Snyk to check dependencies for vulnerabilities
       env:
         SNYK_TOKEN: ${{ secrets.snyk_token }}
+        # The unified test API path reports licence issues that .snyk ignores.
+        SNYK_FORCE_LEGACY_CLI: "true"
       run:
           snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-dependency.sarif --prune-repeated-subdependencies
 
