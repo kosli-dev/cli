@@ -127,9 +127,10 @@ func (o *snapshotGKEOptions) run(args []string) error {
 	if closer, ok := client.(io.Closer); ok {
 		defer func() { _ = closer.Close() }()
 	}
-	pods, err := client.ListPods(ctx, o.parent())
+	parent := o.parent()
+	pods, err := client.ListPods(ctx, parent)
 	if err != nil {
-		return err
+		return gke.Classify(err, parent)
 	}
 	selected, err := o.filter.Select(pods)
 	if err != nil {

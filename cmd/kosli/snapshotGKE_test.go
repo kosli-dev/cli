@@ -11,6 +11,8 @@ import (
 	"github.com/kosli-dev/cli/internal/gke"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -242,6 +244,22 @@ func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_HappyPathReportsToServer()
 
 	require.NoError(suite.T(), err, "command failed: %s", combined)
 	require.Contains(suite.T(), combined, fmt.Sprintf("[3] pods were reported to environment %s", suite.envName))
+}
+
+// TestSnapshotGKECmd_PermissionDeniedReturnsFriendlyError verifies that a gRPC
+// PermissionDenied from Asset Inventory surfaces the permissions to grant
+// rather than a raw SDK string.
+func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_PermissionDeniedReturnsFriendlyError() {
+	newGKEClient = func(_ context.Context) (gkePodLister, error) {
+		return stubGKEPodLister{err: status.Error(codes.PermissionDenied, "denied")}, nil
+	}
+
+	cmd := fmt.Sprintf(`snapshot gke %s --project p %s`, suite.envName, suite.defaultKosliArguments)
+	_, combined, _, _, err := executeCommandC(cmd)
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, `GCP permission denied: the caller needs 'cloudasset.assets.listContainerPod'`)
+	require.Contains(suite.T(), combined, `"projects/p"`)
 }
 
 func TestSnapshotGKECommandTestSuite(t *testing.T) {
