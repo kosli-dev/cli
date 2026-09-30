@@ -466,8 +466,8 @@ func TestProcessPodsWithFailedPodsWithoutImageIDs(t *testing.T) {
 		},
 	}
 
-	result, err := processPods(pods, testLogger)
-	require.NoError(t, err, "processPods should not return an error")
+	result, err := ProcessPods(pods.Items, testLogger)
+	require.NoError(t, err, "ProcessPods should not return an error")
 
 	// We should only get 2 pods (the two running ones), not 4
 	require.Equal(t, 2, len(result), "Expected only running pods to be included")
@@ -707,7 +707,7 @@ func TestProcessPodsWithRunningPodWithoutImageID(t *testing.T) {
 		},
 	}
 
-	result, err := processPods(pods, logger.NewStandardLogger())
+	result, err := ProcessPods(pods.Items, logger.NewStandardLogger())
 	require.NoError(t, err, "a Running pod without an image ID must not abort the snapshot")
 
 	podNames := []string{}
