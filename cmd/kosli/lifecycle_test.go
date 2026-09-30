@@ -50,6 +50,16 @@ func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
 	}
 }
 
+func TestLifecycleSnapshotGKEIsBetaAndVisible(t *testing.T) {
+	cmd := newSnapshotGKECmd(io.Discard)
+	if cmd.Hidden {
+		t.Error("expected snapshot gke to be visible (not Hidden)")
+	}
+	if !isBeta(cmd) {
+		t.Error("expected snapshot gke to be beta")
+	}
+}
+
 func TestLifecycleControlCommandsAreBeta(t *testing.T) {
 	global = &GlobalOpts{}
 	cmds := map[string]*cobra.Command{

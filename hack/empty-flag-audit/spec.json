@@ -2990,6 +2990,63 @@
       ]
     ]
   },
+  "snapshot gke": {
+    "args": [
+      "{env}"
+    ],
+    "flags": {
+      "project": "probe-project"
+    },
+    "baseline_ok": false,
+    "error": "Error: [kosli snapshot gke] GCP client setup failed: credentials: could not find default credentials. See https://cloud.google.com/docs/authentication/external/set-up-adc for more information",
+    "needs": "google cloud",
+    "flags_to_test": [
+      "clusters",
+      "clusters-regex",
+      "dry-run",
+      "exclude-namespaces",
+      "exclude-namespaces-regex",
+      "folder",
+      "locations",
+      "namespaces",
+      "namespaces-regex",
+      "organization",
+      "project"
+    ],
+    "flag_values": {
+      "clusters": "probe-clusters",
+      "clusters-regex": "probe-clusters-regex",
+      "dry-run": "true",
+      "exclude-namespaces": "probe-exclude-namespaces",
+      "exclude-namespaces-regex": "probe-exclude-namespaces-regex",
+      "folder": "probe-folder",
+      "locations": "probe-locations",
+      "namespaces": "probe-namespaces",
+      "namespaces-regex": "probe-namespaces-regex",
+      "organization": "probe-organization",
+      "project": "probe-project"
+    },
+    "setup": [
+      {
+        "argv": [
+          "create",
+          "environment",
+          "{env}",
+          "--type",
+          "K8S"
+        ]
+      }
+    ],
+    "verify": [
+      [
+        "get",
+        "environment",
+        "{env}",
+        "--output",
+        "json"
+      ]
+    ]
+  },
   "snapshot k8s": {
     "args": [
       "{env}"
