@@ -235,6 +235,12 @@ func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_Filters() {
 	}
 }
 
+func (suite *SnapshotGKETestSuite) TestSnapshotGKECmd_WarnsWhenFiltersSelectNoPods() {
+	const warning = "none of the 4 pods in projects/p matched the cluster, location and namespace filters"
+	require.Contains(suite.T(), suite.runDryRun("--project p --clusters nope"), warning)
+	require.NotContains(suite.T(), suite.runDryRun("--project p"), warning)
+}
+
 // TestSnapshotGKECmd_HappyPathReportsToServer exercises the CLI → local Kosli
 // server roundtrip with the Asset Inventory client stubbed: 2 Running pods and
 // 1 Failed pod are reported, the Succeeded pod is not.
