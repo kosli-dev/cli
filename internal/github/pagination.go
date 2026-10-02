@@ -172,7 +172,7 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, r
 					Reviews struct {
 						Nodes    []graphqlReviewNode
 						PageInfo pageInfo
-					} `graphql:"reviews(first: 100, states: APPROVED, after: $cursor)"`
+					} `graphql:"latestOpinionatedReviews(first: 100, writersOnly: true, after: $cursor)"`
 				} `graphql:"pullRequest(number: $prNumber)"`
 			} `graphql:"repository(owner: $owner, name: $repo)"`
 		}

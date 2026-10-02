@@ -47,6 +47,8 @@ type Commit struct {
 	URL            string  `json:"url,omitempty"`
 	Verified       *bool   `json:"verified,omitempty"`
 	SignatureState *string `json:"signature_state,omitempty"`
+	SignerUsername string  `json:"signer_username,omitempty"`
+	SignedByGitHub *bool   `json:"signed_by_github,omitempty"`
 }
 
 type PRRetriever interface {

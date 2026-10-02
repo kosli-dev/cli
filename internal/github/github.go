@@ -274,17 +274,27 @@ type graphqlCommitNode struct {
 				Login graphql.String
 			}
 		}
-		Signature *struct {
-			IsValid graphql.Boolean
-			State   graphql.String
-		}
+		Signature *graphqlSignature
 	}
 }
 
-// graphqlReviewNode is the shared GraphQL node type for approved reviews on a PR.
+type graphqlSignature struct {
+	IsValid           graphql.Boolean
+	State             graphql.String
+	WasSignedByGitHub graphql.Boolean
+	// The account behind the signing key, or null when it matches none. For a
+	// commit GitHub signed this is GitHub's own web-flow account.
+	Signer *struct {
+		Login graphql.String
+	}
+}
+
+// graphqlReviewNode is the shared GraphQL node type for each reviewer's latest
+// approving or change-requesting review on a PR.
 type graphqlReviewNode struct {
 	Author struct {
-		Login graphql.String
+		Typename graphql.String `graphql:"__typename"`
+		Login    graphql.String
 	}
 	State       graphql.String
 	SubmittedAt graphql.String
@@ -348,13 +358,19 @@ func buildPREvidence(
 		// Capture the commit signature when present. A nil signature node means
 		// the commit is unsigned, which must stay distinct from a present but
 		// invalid signature (verified=false) — so leave the fields nil (server#5892).
-		var verified *bool
+		var verified, signedByGitHub *bool
 		var signatureState *string
-		if n.Commit.Signature != nil {
-			v := bool(n.Commit.Signature.IsValid)
-			s := string(n.Commit.Signature.State)
+		signerUsername := ""
+		if sig := n.Commit.Signature; sig != nil {
+			v := bool(sig.IsValid)
+			s := string(sig.State)
+			g := bool(sig.WasSignedByGitHub)
 			verified = &v
 			signatureState = &s
+			signedByGitHub = &g
+			if sig.Signer != nil && !g {
+				signerUsername = string(sig.Signer.Login)
+			}
 		}
 		evidence.Commits = append(evidence.Commits, types.Commit{
 			SHA:            string(n.Commit.Oid),
@@ -366,10 +382,16 @@ func buildPREvidence(
 			URL:            string(n.Commit.URL),
 			Verified:       verified,
 			SignatureState: signatureState,
+			SignerUsername: signerUsername,
+			SignedByGitHub: signedByGitHub,
 		})
 	}
 
 	for _, r := range reviewNodes {
+		// A bot's approval is not a second person's review.
+		if r.State != "APPROVED" || r.Author.Typename != "User" {
+			continue
+		}
 		submittedAt, err := time.Parse(time.RFC3339, string(r.SubmittedAt))
 		if err != nil {
 			return nil, err
@@ -424,7 +446,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 				Reviews struct {
 					Nodes    []graphqlReviewNode
 					PageInfo pageInfo
-				} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
+				} `graphql:"latestOpinionatedReviews(first: 100, writersOnly: true, after: $reviewCursor)"`
 			} `graphql:"pullRequest(number: $prNumber)"`
 		} `graphql:"repository(owner: $owner, name: $repo)"`
 	}
@@ -517,7 +539,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							Reviews struct {
 								Nodes    []graphqlReviewNode
 								PageInfo pageInfo
-							} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
+							} `graphql:"latestOpinionatedReviews(first: 100, writersOnly: true, after: $reviewCursor)"`
 						}
 						// Intentionally not paginated, so no cursor is selected: a
 						// commit with more than 100 associated PRs is not a realistic

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/types"
 	"github.com/shurcooL/graphql"
 	"github.com/stretchr/testify/require"
 )
@@ -132,10 +133,7 @@ func TestBuildPREvidence_RecordsCommitSignature(t *testing.T) {
 	node.Commit.CommittedDate = "2026-03-01T12:00:00Z"
 	node.Commit.Author.Name = "Steve Tooke"
 	node.Commit.Author.Email = "tooky@kosli.com"
-	node.Commit.Signature = &struct {
-		IsValid graphql.Boolean
-		State   graphql.String
-	}{IsValid: true, State: "VALID"}
+	node.Commit.Signature = &graphqlSignature{IsValid: true, State: "VALID"}
 
 	evidence, err := buildPREvidence(
 		"https://github.com/kosli-dev/cli/pull/671",
@@ -208,8 +206,7 @@ func TestBuildPREvidence_UnsignedCommitHasNoSignatureFields(t *testing.T) {
 // An approval whose commit GitHub no longer has must leave commit_sha out of
 // the payload rather than send an empty string, and so must an unknown head.
 func TestBuildPREvidence_OmitsUnknownReviewedAndHeadCommits(t *testing.T) {
-	review := graphqlReviewNode{State: "APPROVED", SubmittedAt: "2026-03-01T13:00:00Z"}
-	review.Author.Login = "grace"
+	review := reviewNode("User", "grace", "APPROVED")
 
 	evidence, err := buildPREvidence(
 		"https://github.com/kosli-dev/cli/pull/671",
@@ -225,4 +222,75 @@ func TestBuildPREvidence_OmitsUnknownReviewedAndHeadCommits(t *testing.T) {
 	require.Contains(t, string(payload), `"username":"grace"`)
 	require.NotContains(t, string(payload), "commit_sha")
 	require.NotContains(t, string(payload), "head_sha")
+}
+
+func signedCommitNode(sha string, sig *graphqlSignature) graphqlCommitNode {
+	node := graphqlCommitNode{}
+	node.Commit.Oid = graphql.String(sha)
+	node.Commit.CommittedDate = "2026-03-01T12:00:00Z"
+	node.Commit.Signature = sig
+	return node
+}
+
+// A verified signature names who signed, which the commit's own author
+// fields cannot: whoever writes the commit sets those.
+func TestBuildPREvidence_RecordsCommitSigner(t *testing.T) {
+	bySigner := &graphqlSignature{IsValid: true, State: "VALID"}
+	bySigner.Signer = &struct{ Login graphql.String }{Login: "alice"}
+	byGitHub := &graphqlSignature{IsValid: true, State: "VALID", WasSignedByGitHub: true}
+	byGitHub.Signer = &struct{ Login graphql.String }{Login: "web-flow"}
+
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature", "main", "",
+		[]graphqlCommitNode{
+			signedCommitNode("1111111111111111111111111111111111111111", bySigner),
+			signedCommitNode("2222222222222222222222222222222222222222", byGitHub),
+			signedCommitNode("3333333333333333333333333333333333333333", nil),
+		}, nil,
+	)
+	require.NoError(t, err)
+	require.Len(t, evidence.Commits, 3)
+
+	require.Equal(t, "alice", evidence.Commits[0].SignerUsername)
+	require.NotNil(t, evidence.Commits[0].SignedByGitHub)
+	require.False(t, *evidence.Commits[0].SignedByGitHub)
+
+	require.Equal(t, "", evidence.Commits[1].SignerUsername,
+		"GitHub's own signing account is not who made the commit")
+	require.NotNil(t, evidence.Commits[1].SignedByGitHub)
+	require.True(t, *evidence.Commits[1].SignedByGitHub)
+
+	unsigned, err := json.Marshal(evidence.Commits[2])
+	require.NoError(t, err)
+	require.NotContains(t, string(unsigned), "signer_username")
+	require.NotContains(t, string(unsigned), "signed_by_github")
+}
+
+func reviewNode(typename, login, state string) graphqlReviewNode {
+	r := graphqlReviewNode{State: graphql.String(state), SubmittedAt: "2026-03-01T13:00:00Z"}
+	r.Author.Typename = graphql.String(typename)
+	r.Author.Login = graphql.String(login)
+	return r
+}
+
+// Only a person's approval counts: a bot's does not, and nor does a later
+// request for changes, which GitHub returns as that reviewer's latest review.
+func TestBuildPREvidence_KeepsOnlyHumanApprovals(t *testing.T) {
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature", "main", "",
+		nil, []graphqlReviewNode{
+			reviewNode("User", "grace", "APPROVED"),
+			reviewNode("Bot", "github-actions", "APPROVED"),
+			reviewNode("User", "linus", "CHANGES_REQUESTED"),
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, evidence.Approvers, 1)
+	require.Equal(t, "grace", evidence.Approvers[0].(types.PRApprovals).Username)
 }

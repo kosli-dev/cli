@@ -73,13 +73,13 @@ func commitNodeJSON(sha string) string {
 // reviewNodeJSON is one node of a GraphQL reviews connection, given on the
 // commit "reviewed-by-<login>".
 func reviewNodeJSON(login string) string {
-	return fmt.Sprintf(`{"author":{"login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z",`+
+	return fmt.Sprintf(`{"author":{"__typename":"User","login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z",`+
 		`"commit":{"oid":"reviewed-by-%s"}}`, login, login)
 }
 
 // reviewNodeWithoutCommitJSON is a review whose commit GitHub no longer has.
 func reviewNodeWithoutCommitJSON(login string) string {
-	return fmt.Sprintf(`{"author":{"login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z",`+
+	return fmt.Sprintf(`{"author":{"__typename":"User","login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z",`+
 		`"commit":null}`, login)
 }
 
@@ -96,7 +96,7 @@ func prJSON(commits, reviews string) string {
 	return fmt.Sprintf(`{"title":"A PR","state":"MERGED","headRefName":"feature","headRefOid":"head-sha","baseRefName":"main",`+
 		`"url":"https://github.com/o/r/pull/1","createdAt":"2026-03-01T11:00:00Z",`+
 		`"mergedAt":"2026-03-01T14:00:00Z","mergeCommit":{"oid":"merge-sha"},`+
-		`"author":{"login":"ada"},"commits":%s,"reviews":%s}`, commits, reviews)
+		`"author":{"login":"ada"},"commits":%s,"latestOpinionatedReviews":%s}`, commits, reviews)
 }
 
 func byPRNumberResponse(commits, reviews string) string {
@@ -111,7 +111,7 @@ func commitsPageResponse(nodes []string, nextCursor string) string {
 
 // reviewsPageResponse is a follow-up page reply selecting only reviews.
 func reviewsPageResponse(nodes []string, nextCursor string) string {
-	return fmt.Sprintf(`{"data":{"repository":{"pullRequest":{"reviews":%s}}}}`,
+	return fmt.Sprintf(`{"data":{"repository":{"pullRequest":{"latestOpinionatedReviews":%s}}}}`,
 		connectionJSON(nodes, nextCursor))
 }
 
@@ -139,7 +139,7 @@ func TestPREvidenceByPRNumber_FollowsCommitPages(t *testing.T) {
 	require.Equal(t, []string{"sha1", "sha2", "sha3"}, shasOf(t, newPaginationConfig(ts), 1))
 	require.Len(t, ts.bodies, 2)
 	require.Contains(t, ts.bodies[1], "c1", "follow-up must carry the cursor")
-	require.NotContains(t, ts.bodies[1], "reviews(", "follow-up must not re-fetch reviews")
+	require.NotContains(t, ts.bodies[1], "latestOpinionatedReviews(", "follow-up must not re-fetch reviews")
 }
 
 func TestPREvidenceByPRNumber_FollowsReviewPages(t *testing.T) {
@@ -209,7 +209,7 @@ func v2PRNodeInRepoJSON(owner, repo string, number int, commits, reviews string)
 		`"title":"A PR","state":"MERGED","headRefName":"feature","headRefOid":"head-sha-%d",`+
 		`"baseRefName":"main","url":"https://github.com/%s/%s/pull/%d",`+
 		`"createdAt":"2026-03-01T11:00:00Z","mergedAt":"2026-03-01T14:00:00Z",`+
-		`"author":{"login":"ada"},"commits":%s,"reviews":%s}`,
+		`"author":{"login":"ada"},"commits":%s,"latestOpinionatedReviews":%s}`,
 		number, repo, owner, number, owner, repo, number, commits, reviews)
 }
 
@@ -384,6 +384,32 @@ func TestPREvidenceByPRNumber_RecordsHeadAndReviewedCommits(t *testing.T) {
 	require.Contains(t, ts.bodies[0], "headRefOid")
 	require.Contains(t, ts.bodies[0], "commit{oid}")
 	require.Contains(t, ts.bodies[1], "commit{oid}")
+	for _, body := range ts.bodies {
+		require.Contains(t, body, "latestOpinionatedReviews(first: 100, writersOnly: true")
+		require.Contains(t, body, "author{__typename,login}")
+	}
+}
+
+func TestPREvidenceByPRNumber_RecordsCommitSigners(t *testing.T) {
+	signed := func(sha, signer string, byGitHub bool) string {
+		return strings.Replace(commitNodeJSON(sha), `"signature":null`,
+			fmt.Sprintf(`"signature":{"isValid":true,"state":"VALID","wasSignedByGitHub":%t,"signer":{"login":%q}}`, byGitHub, signer), 1)
+	}
+	ts := newGraphQLTestServer(t, byPRNumberResponse(
+		connectionJSON([]string{signed("sha1", "ada", false), signed("sha2", "web-flow", true), commitNodeJSON("sha3")}, ""),
+		connectionJSON(nil, ""),
+	))
+
+	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Len(t, evidence.Commits, 3)
+	require.Equal(t, "ada", evidence.Commits[0].SignerUsername)
+	require.False(t, *evidence.Commits[0].SignedByGitHub)
+	require.Equal(t, "", evidence.Commits[1].SignerUsername)
+	require.True(t, *evidence.Commits[1].SignedByGitHub)
+	require.Nil(t, evidence.Commits[2].SignedByGitHub, "an unsigned commit records no signature facts")
+	require.Contains(t, ts.bodies[0], "signer{login}")
+	require.Contains(t, ts.bodies[0], "wasSignedByGitHub")
 }
 
 func TestPREvidenceForCommitV2_RecordsHeadAndReviewedCommits(t *testing.T) {
@@ -400,4 +426,6 @@ func TestPREvidenceForCommitV2_RecordsHeadAndReviewedCommits(t *testing.T) {
 	require.Equal(t, []string{"reviewed-by-ada"}, approverCommitSHAs(prs[0]))
 	require.Contains(t, ts.bodies[0], "headRefOid")
 	require.Contains(t, ts.bodies[0], "commit{oid}")
+	require.Contains(t, ts.bodies[0], "latestOpinionatedReviews(first: 100, writersOnly: true")
+	require.Contains(t, ts.bodies[0], "signer{login}")
 }
