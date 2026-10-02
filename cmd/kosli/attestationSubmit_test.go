@@ -13,6 +13,7 @@ import (
 
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,9 +36,17 @@ func newFakeAttestationServer(t *testing.T) (*httptest.Server, *fakeAttestationS
 	t.Helper()
 	fake := &fakeAttestationServer{}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.NoError(t, r.ParseMultipartForm(1<<20))
+		// The handler runs off the test goroutine, where require's FailNow
+		// is unsafe, so failures are reported with assert and answered.
+		if !assert.NoError(t, r.ParseMultipartForm(1<<20)) {
+			http.Error(w, "unparseable form", http.StatusInternalServerError)
+			return
+		}
 		req := recordedAttestationRequest{method: r.Method, path: r.URL.Path, files: map[string]string{}}
-		require.NoError(t, json.Unmarshal([]byte(r.FormValue("data_json")), &req.dataJSON))
+		if !assert.NoError(t, json.Unmarshal([]byte(r.FormValue("data_json")), &req.dataJSON)) {
+			http.Error(w, "unparseable data_json", http.StatusInternalServerError)
+			return
+		}
 		for field, headers := range r.MultipartForm.File {
 			req.files[field] = headers[0].Filename
 		}
@@ -250,4 +259,35 @@ func TestAttestationSubmitterUploadsEvidenceAlreadyInMemory(t *testing.T) {
 	require.Len(t, fake.recorded, 1)
 	require.Equal(t, "unit-tests", fake.recorded[0].dataJSON["attestation_name"])
 	require.Equal(t, map[string]string{"attachment_file": "sbom.json"}, fake.recorded[0].files)
+}
+
+func TestAttestationSubmitterRemovesTheStagingDirWhenAnAttachmentIsMissing(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("TMPDIR", tmp)
+	server, fake := newFakeAttestationServer(t)
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	attachments := twoEvidenceFiles(t)
+	submission.attachments = []string{attachments[0], filepath.Join(filepath.Dir(attachments[0]), "missing.txt")}
+
+	err := submitter.submit(submission)
+
+	require.ErrorContains(t, err, "missing.txt")
+	require.Empty(t, fake.recorded)
+	left, readErr := os.ReadDir(tmp)
+	require.NoError(t, readErr)
+	require.Empty(t, left, "the staging directory must not outlive a failed copy")
+}
+
+func TestAttestationSubmitterRejectsEvidenceTogetherWithAttachments(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.evidence = &requests.FileBytes{Name: "sbom.json", Data: []byte(`{}`)}
+	submission.attachments = twoEvidenceFiles(t)
+
+	err := submitter.submit(submission)
+
+	require.Error(t, err)
+	require.Empty(t, fake.recorded)
 }

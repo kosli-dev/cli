@@ -45,8 +45,8 @@ type attestationSubmission struct {
 	label       string
 	payload     attestationPayload
 	attachments []string
-	// evidence is an attachment already read into memory; it replaces
-	// attachments.
+	// evidence is an attachment already read into memory; it cannot be
+	// combined with attachments.
 	evidence *requests.FileBytes
 	// assertFailures fail the command after the Attestation is recorded, so
 	// the evidence is kept even when --assert rejects it.
@@ -60,7 +60,7 @@ type attestationPayload interface {
 }
 
 func (s *attestationSubmitter) submit(a attestationSubmission) error {
-	url, err := url.JoinPath(s.host, "api/v2/attestations", s.org, a.flow, "trail", a.trail, a.slug)
+	endpoint, err := url.JoinPath(s.host, "api/v2/attestations", s.org, a.flow, "trail", a.trail, a.slug)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (s *attestationSubmitter) submit(a attestationSubmission) error {
 
 	_, err = s.client.Do(&requests.RequestParams{
 		Method: http.MethodPost,
-		URL:    url,
+		URL:    endpoint,
 		Form:   form,
 		DryRun: s.dryRun,
 		Token:  s.token,
@@ -101,6 +101,9 @@ func (s *attestationSubmitter) form(a attestationSubmission) ([]requests.FormIte
 	}
 	noCleanup := func() {}
 
+	if a.evidence != nil && len(a.attachments) > 0 {
+		return nil, noCleanup, fmt.Errorf("an attestation carries either in-memory evidence or attachments, not both")
+	}
 	if a.evidence != nil {
 		return append(form, requests.FormItem{Type: "file-bytes", FieldName: "attachment_file", Content: *a.evidence}), noCleanup, nil
 	}
@@ -108,7 +111,7 @@ func (s *attestationSubmitter) form(a attestationSubmission) ([]requests.FormIte
 		return form, noCleanup, nil
 	}
 
-	evidencePath, cleanupNeeded, err := getPathOfEvidenceFileToUpload(a.attachments)
+	evidencePath, cleanupNeeded, err := getPathOfEvidenceFileToUpload(a.attachments, s.logger)
 	if err != nil {
 		return nil, noCleanup, err
 	}
@@ -141,7 +144,7 @@ func wrapAttestationError(err error) error {
 // path of the generated tar file is returned
 // - if multiple paths are provided, they are packaged into a tar file and the
 // path of the generated tar file is returned
-func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error) {
+func getPathOfEvidenceFileToUpload(evidencePaths []string, logger *log.Logger) (string, bool, error) {
 	cleanupNeeded := false
 	if len(evidencePaths) == 0 {
 		return "", cleanupNeeded, fmt.Errorf("no evidence paths provided")
@@ -172,6 +175,11 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 		if err != nil {
 			return "", cleanupNeeded, err
 		}
+		defer func() {
+			if err := os.RemoveAll(tmpDir); err != nil {
+				logger.Warn("failed to remove temporary directory %s: %v", tmpDir, err)
+			}
+		}()
 
 		logger.Debug("[%d] paths are provided as evidence. They will be tarred from %s", len(evidencePaths), tmpDir)
 
@@ -193,11 +201,6 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 			}
 		}
 		dirToTar = tmpDir
-		defer func() {
-			if err := os.RemoveAll(tmpDir); err != nil {
-				logger.Warn("failed to remove temporary directory %s: %v", tmpDir, err)
-			}
-		}()
 	}
 
 	// tar the required dir and return the path of the tar file
