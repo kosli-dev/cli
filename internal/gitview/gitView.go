@@ -1,6 +1,7 @@
 package gitview
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -45,6 +46,16 @@ type GitView struct {
 
 const redactedCommitInfoValue = "**REDACTED**"
 
+// TODO: remove this guard once go-git supports sha256 (v6) and the Kosli backend accepts sha256 commits.
+
+// ErrUnsupportedObjectFormat is returned by New for a repository using the sha256 object format.
+var ErrUnsupportedObjectFormat = errors.New("the repository uses the sha256 object format, which the Kosli CLI does not support yet")
+
+func isUnsupportedObjectFormat(err error) bool {
+	return (errors.Is(err, git.ErrUnsupportedExtensionRepositoryFormatVersion) || errors.Is(err, git.ErrUnknownExtension)) &&
+		strings.Contains(err.Error(), "objectformat")
+}
+
 // New opens a git repository from the given path. It detects if the
 // repository is bare or a normal one. If the path doesn't contain a valid
 // repository ErrRepositoryNotExists is returned
@@ -52,6 +63,9 @@ func New(repositoryRoot string) (*GitView, error) {
 	repository, err := git.PlainOpenWithOptions(repositoryRoot, &git.PlainOpenOptions{
 		EnableDotGitCommonDir: true,
 	})
+	if isUnsupportedObjectFormat(err) {
+		return nil, fmt.Errorf("failed to open git repository at %s: %w (%v)", repositoryRoot, ErrUnsupportedObjectFormat, err)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to open git repository at %s: %v", repositoryRoot, err)
 	}

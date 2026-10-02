@@ -51,6 +51,18 @@ func (suite *GitViewTestSuite) TestNewGitView() {
 
 	_, err = New(filepath.Join(suite.tmpDir, "non-existing"))
 	require.Error(suite.T(), err)
+	require.NotErrorIs(suite.T(), err, ErrUnsupportedObjectFormat)
+}
+
+func (suite *GitViewTestSuite) TestNewGitViewSha256Repo() {
+	dirPath := filepath.Join(suite.tmpDir, "sha256Repo")
+	cmd := exec.Command("git", "init", "--object-format=sha256", dirPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(suite.T(), err, "git init failed: %s", string(output))
+
+	_, err = New(dirPath)
+	require.ErrorIs(suite.T(), err, ErrUnsupportedObjectFormat)
+	require.Contains(suite.T(), err.Error(), "sha256")
 }
 
 func (suite *GitViewTestSuite) TestNewGitViewFromWorktree() {
