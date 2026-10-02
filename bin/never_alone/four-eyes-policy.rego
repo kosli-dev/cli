@@ -26,17 +26,22 @@ attestation_name := name if {
 	is_string(name)
 } else := "pr-review"
 
+# The repository whose PRs count, as "owner/repo". Required: a PR elsewhere,
+# such as in a fork, is one whose approvers the author may choose.
+repository := lower(data.params.repository) if is_string(data.params.repository)
+
 # ---------------------------------------------------------------------------
 # Compliance
 # ---------------------------------------------------------------------------
 
-# A commit is compliant when an associated PR has independent approval
-# covering every author after the latest code commit. There is no exemption
-# based on the git author string: it is user-controlled, so matching on it
-# would let anyone skip review.
+# A commit is compliant when an associated PR in the evaluated repository has
+# independent approval, on the PR's final commit, covering every author. There
+# is no exemption based on the git author string: it is user-controlled, so
+# matching on it would let anyone skip review.
 trail_compliant(trail) if {
 	attest := pr_attest(trail)
 	some pr in attest.pull_requests
+	pr_in_repo(pr)
 	all_authors_resolved(pr)
 	has_independent_approval(trail, pr)
 }
@@ -66,28 +71,51 @@ is_resolved_username(u) if {
 	u != "ghost"
 }
 
-# GitHub usernames of all PR branch commit authors.
-pr_commit_authors(pr) := {c.author_username |
+# GitHub usernames of everyone who wrote PR branch commits: the named author,
+# and the signer, who is who actually made the commit.
+pr_commit_authors(pr) := {u |
 	some c in pr.commits
-	is_resolved_username(c.author_username)
+	some u in [object.get(c, "author_username", null), object.get(c, "signer_username", null)]
+	is_resolved_username(u)
 }
 
-# Approver usernames that can satisfy four-eyes for commits up to cutoff.
-approved_approvers_after_cutoff(pr, cutoff) := {a.username |
+# Approver usernames whose approval was given on the PR's final commit. Commit
+# dates are not used: whoever writes a commit sets them.
+approvers_on_head(pr) := {a.username |
 	some a in pr.approvers
 	a.state == "APPROVED"
 	is_resolved_username(a.username)
-	a.timestamp > cutoff
+	is_string(pr.head_sha)
+	pr.head_sha != ""
+	a.commit_sha == pr.head_sha
 }
 
-# Latest Unix timestamp among PR branch commits.
-latest_commit_ts(pr) := max({c.timestamp | some c in pr.commits})
+# The PR URL is https://<host>/<owner>/<repo>/pull/<number>.
+pr_in_repo(pr) if {
+	parts := split(pr.url, "/")
+	count(parts) == 7
+	parts[5] == "pull"
+	lower(concat("/", [parts[3], parts[4]])) == repository
+}
 
-# Every commit on the PR has an author linked to a GitHub account.
+# Every commit on the PR has an author linked to a GitHub account and a
+# verified signature, by a known account or by GitHub. Without the signature
+# the author is only what the commit says, which its writer chooses.
 all_authors_resolved(pr) if {
 	every c in pr.commits {
 		is_resolved_username(object.get(c, "author_username", null))
+		signed_by_known_identity(c)
 	}
+}
+
+signed_by_known_identity(c) if {
+	c.verified == true
+	is_resolved_username(object.get(c, "signer_username", null))
+}
+
+signed_by_known_identity(c) if {
+	c.verified == true
+	c.signed_by_github == true
 }
 
 # A commit is the merge commit when the PR's merge_commit field matches the
@@ -96,12 +124,11 @@ is_merge_commit(trail, pr) if {
 	trail.name == pr.merge_commit
 }
 
-# Regular commit: PR branch authors + PR author all need independent approval after last code commit.
+# Regular commit: PR branch authors + PR author all need independent approval on the final commit.
 has_independent_approval(trail, pr) if {
 	not is_merge_commit(trail, pr)
-	cutoff := latest_commit_ts(pr)
 	all_authors := pr_commit_authors(pr) | {pr.author}
-	eligible_approvers := approved_approvers_after_cutoff(pr, cutoff)
+	eligible_approvers := approvers_on_head(pr)
 	count(all_authors) > 0
 
 	# At least one approver must exist to satisfy four-eyes.
@@ -116,9 +143,8 @@ has_independent_approval(trail, pr) if {
 # The merge button clicker did not write code and requires no separate review.
 has_independent_approval(trail, pr) if {
 	is_merge_commit(trail, pr)
-	cutoff := latest_commit_ts(pr)
 	all_authors := pr_commit_authors(pr)
-	eligible_approvers := approved_approvers_after_cutoff(pr, cutoff)
+	eligible_approvers := approvers_on_head(pr)
 	count(all_authors) > 0
 
 	# At least one approver must exist to satisfy four-eyes.
@@ -146,6 +172,10 @@ violations contains "Policy error: input.trails is empty - nothing to evaluate" 
 	count(input.trails) == 0
 }
 
+violations contains "Policy error: data.params.repository is not set - pass --params '{\"repository\": \"owner/repo\"}'" if {
+	not repository
+}
+
 # Missing attestation: no PR review data collected for this commit.
 violations contains msg if {
 	some trail in input.trails
@@ -169,6 +199,20 @@ violations contains msg if {
 	)
 }
 
+# Unverifiable signer: commit has no verified signature by a known account or GitHub.
+violations contains msg if {
+	some trail in input.trails
+	not trail_compliant(trail)
+	attest := pr_attest(trail)
+	some pr in attest.pull_requests
+	some c in pr.commits
+	not signed_by_known_identity(c)
+	msg := sprintf(
+		"PR %v: commit %v has no verified signature - who made it is unverifiable",
+		[pr.url, c.sha1],
+	)
+}
+
 # Missing PR: commit has no associated merged PR.
 violations contains msg if {
 	some trail in input.trails
@@ -187,8 +231,8 @@ violations contains msg if {
 	count(attest.pull_requests) > 0
 	not any_pr_fully_approved(trail, attest)
 	msg := sprintf(
-		"Commit %v: no independent approval after latest code commit",
-		[trail.name],
+		"Commit %v: no PR in %v has an independent approval on its final commit",
+		[trail.name, repository],
 	)
 }
 
@@ -197,6 +241,7 @@ violations contains msg if {
 # "unverifiable identity".
 any_pr_fully_approved(trail, attest) if {
 	some pr in attest.pull_requests
+	pr_in_repo(pr)
 	all_authors_resolved(pr)
 	has_independent_approval(trail, pr)
 }
