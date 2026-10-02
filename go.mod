@@ -5,7 +5,7 @@ go 1.26.7
 require (
 	cloud.google.com/go/asset v1.29.0
 	cloud.google.com/go/run v1.23.0
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.1
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.2
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.1
 	github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry v0.2.3
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2 v2.3.0
@@ -15,7 +15,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.47.1
 	github.com/aws/aws-sdk-go-v2/config v1.33.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.6
-	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.4.10
+	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.4.11
 	github.com/aws/aws-sdk-go-v2/service/ecs v1.99.1
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.110.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.113.4
