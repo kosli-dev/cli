@@ -3,11 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
-	"os"
 
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -157,12 +153,7 @@ func newAttestCustomCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *attestCustomOptions) run(args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/attestations", global.Org, o.flowName, "trail", o.trailName, "custom")
-	if err != nil {
-		return err
-	}
-
-	err = o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
+	err := o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err
 	}
@@ -172,29 +163,12 @@ func (o *attestCustomOptions) run(args []string) error {
 		return fmt.Errorf("failed to load attestation data. %s", err)
 	}
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
-	if err != nil {
-		return err
-	}
-	// if we created a tar package, remove it after uploading it
-	if cleanupNeeded {
-		defer func() {
-			if err := os.Remove(evidencePath); err != nil {
-				logger.Warn("failed to remove evidence file: %v", err)
-			}
-		}()
-	}
-
-	reqParams := &requests.RequestParams{
-		Method: http.MethodPost,
-		URL:    url,
-		Form:   form,
-		DryRun: global.DryRun,
-		Token:  global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("custom:%s attestation '%s' is reported to trail: %s", o.payload.TypeName, o.payload.AttestationName, o.trailName)
-	}
-	return wrapAttestationError(err)
+	return newAttestationSubmitter().submit(attestationSubmission{
+		flow:        o.flowName,
+		trail:       o.trailName,
+		slug:        "custom",
+		label:       "custom:" + o.payload.TypeName,
+		payload:     o.payload,
+		attachments: o.attachments,
+	})
 }
