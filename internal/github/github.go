@@ -274,27 +274,41 @@ type graphqlCommitNode struct {
 				Login graphql.String
 			}
 		}
-		Signature *struct {
-			IsValid graphql.Boolean
-			State   graphql.String
-		}
+		Signature *graphqlSignature
 	}
 }
 
-// graphqlReviewNode is the shared GraphQL node type for approved reviews on a PR.
+type graphqlSignature struct {
+	IsValid           graphql.Boolean
+	State             graphql.String
+	WasSignedByGitHub graphql.Boolean
+	// The account behind the signing key, or null when it matches none. For a
+	// commit GitHub signed this is GitHub's own web-flow account.
+	Signer *struct {
+		Login graphql.String
+	}
+}
+
+// graphqlReviewNode is the shared GraphQL node type for each reviewer's latest
+// approving or change-requesting review on a PR.
 type graphqlReviewNode struct {
 	Author struct {
-		Login graphql.String
+		Typename graphql.String `graphql:"__typename"`
+		Login    graphql.String
 	}
 	State       graphql.String
 	SubmittedAt graphql.String
+	// Null when GitHub no longer has the commit the review was given on.
+	Commit *struct {
+		Oid graphql.String
+	}
 }
 
 // buildPREvidence constructs a PREvidence from pre-resolved fields and the
 // raw GraphQL commit/review nodes. mergeCommit must be resolved by the caller
 // (it differs between commit-SHA queries and PR-number queries).
 func buildPREvidence(
-	url, mergeCommit, state, author, createdAtStr, mergedAtStr, title, headRef, baseRef string,
+	url, mergeCommit, state, author, createdAtStr, mergedAtStr, title, headRef, baseRef, headSHA string,
 	commitNodes []graphqlCommitNode,
 	reviewNodes []graphqlReviewNode,
 ) (*types.PREvidence, error) {
@@ -320,6 +334,7 @@ func buildPREvidence(
 		MergedAt:    mergedAt,
 		Title:       title,
 		HeadRef:     headRef,
+		HeadSHA:     headSHA,
 		BaseRef:     baseRef,
 		Approvers:   []any{},
 		Commits:     []types.Commit{},
@@ -343,13 +358,19 @@ func buildPREvidence(
 		// Capture the commit signature when present. A nil signature node means
 		// the commit is unsigned, which must stay distinct from a present but
 		// invalid signature (verified=false) — so leave the fields nil (server#5892).
-		var verified *bool
+		var verified, signedByGitHub *bool
 		var signatureState *string
-		if n.Commit.Signature != nil {
-			v := bool(n.Commit.Signature.IsValid)
-			s := string(n.Commit.Signature.State)
+		signerUsername := ""
+		if sig := n.Commit.Signature; sig != nil {
+			v := bool(sig.IsValid)
+			s := string(sig.State)
+			g := bool(sig.WasSignedByGitHub)
 			verified = &v
 			signatureState = &s
+			signedByGitHub = &g
+			if sig.Signer != nil && !g {
+				signerUsername = string(sig.Signer.Login)
+			}
 		}
 		evidence.Commits = append(evidence.Commits, types.Commit{
 			SHA:            string(n.Commit.Oid),
@@ -361,19 +382,29 @@ func buildPREvidence(
 			URL:            string(n.Commit.URL),
 			Verified:       verified,
 			SignatureState: signatureState,
+			SignerUsername: signerUsername,
+			SignedByGitHub: signedByGitHub,
 		})
 	}
 
 	for _, r := range reviewNodes {
+		// A bot's approval is not a second person's review.
+		if r.State != "APPROVED" || r.Author.Typename != "User" {
+			continue
+		}
 		submittedAt, err := time.Parse(time.RFC3339, string(r.SubmittedAt))
 		if err != nil {
 			return nil, err
 		}
-		evidence.Approvers = append(evidence.Approvers, types.PRApprovals{
+		approval := types.PRApprovals{
 			Username:  string(r.Author.Login),
 			State:     string(r.State),
 			Timestamp: submittedAt.Unix(),
-		})
+		}
+		if r.Commit != nil {
+			approval.CommitSHA = string(r.Commit.Oid)
+		}
+		evidence.Approvers = append(evidence.Approvers, approval)
 	}
 
 	return evidence, nil
@@ -397,6 +428,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 				Title       graphql.String
 				State       graphql.String
 				HeadRefName graphql.String
+				HeadRefOid  graphql.String
 				BaseRefName graphql.String
 				URL         graphql.String
 				CreatedAt   graphql.String
@@ -414,7 +446,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 				Reviews struct {
 					Nodes    []graphqlReviewNode
 					PageInfo pageInfo
-				} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
+				} `graphql:"latestOpinionatedReviews(first: 100, writersOnly: true, after: $reviewCursor)"`
 			} `graphql:"pullRequest(number: $prNumber)"`
 		} `graphql:"repository(owner: $owner, name: $repo)"`
 	}
@@ -454,7 +486,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 
 	return buildPREvidence(
 		string(pr.URL), mergeCommit, string(pr.State), string(pr.Author.Login),
-		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
+		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName), string(pr.HeadRefOid),
 		commits, reviews,
 	)
 }
@@ -489,6 +521,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							Title       graphql.String
 							State       graphql.String
 							HeadRefName graphql.String
+							HeadRefOid  graphql.String
 							BaseRefName graphql.String
 							URL         graphql.String
 							CreatedAt   graphql.String
@@ -506,7 +539,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							Reviews struct {
 								Nodes    []graphqlReviewNode
 								PageInfo pageInfo
-							} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
+							} `graphql:"latestOpinionatedReviews(first: 100, writersOnly: true, after: $reviewCursor)"`
 						}
 						// Intentionally not paginated, so no cursor is selected: a
 						// commit with more than 100 associated PRs is not a realistic
@@ -559,7 +592,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		// so the commit is by definition the merge commit.
 		evidence, err := buildPREvidence(
 			string(pr.URL), commit, string(pr.State), string(pr.Author.Login),
-			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
+			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName), string(pr.HeadRefOid),
 			commits, reviews,
 		)
 		if err != nil {
