@@ -4,8 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 
@@ -172,14 +170,7 @@ func newAttestSbomCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *attestSbomOptions) run(args []string) error {
-	// The slug is the attestation family, not the type. The server tells them
-	// apart by type_name in the body.
-	url, err := url.JoinPath(global.Host, "api/v2/attestations", global.Org, o.flowName, "trail", o.trailName, "system")
-	if err != nil {
-		return err
-	}
-
-	err = o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
+	err := o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err
 	}
@@ -189,18 +180,16 @@ func (o *attestSbomOptions) run(args []string) error {
 		return err
 	}
 
-	reqParams := &requests.RequestParams{
-		Method: http.MethodPost,
-		URL:    url,
-		Form:   o.attestationForm(content),
-		DryRun: global.DryRun,
-		Token:  global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("sbom attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
-	}
-	return wrapAttestationError(err)
+	return newAttestationSubmitter().submit(attestationSubmission{
+		flow:  o.flowName,
+		trail: o.trailName,
+		// The slug is the attestation family, not the type. The server tells
+		// them apart by type_name in the body.
+		slug:     "system",
+		label:    "sbom",
+		payload:  o.payload,
+		evidence: o.evidence(content),
+	})
 }
 
 func (o *attestSbomOptions) loadSbom() ([]byte, error) {
@@ -273,21 +262,17 @@ func (o *attestSbomOptions) rejectAttachments(cmd *cobra.Command) error {
 	)
 }
 
-// attestationForm is the request body: the JSON payload and the SBOM bytes that
-// were hashed, never a path. Handing the uploader a path would make it open and
+// evidence is the attachment: the SBOM bytes that were hashed, never a path. Handing the uploader a path would make it open and
 // read the file a second time, and a file still being written would then be
 // uploaded as different bytes from the ones sbom_sha256 describes.
 //
-// The bytes are a parameter rather than a field, so the body cannot be built
-// before the file has been read. Built from an empty field, it would be a
-// well-formed request carrying no attachment and a fingerprint of nothing.
-func (o *attestSbomOptions) attestationForm(content []byte) []requests.FormItem {
-	return []requests.FormItem{
-		{Type: "field", FieldName: "data_json", Content: o.payload},
-		{Type: "file-bytes", FieldName: "attachment_file", Content: requests.FileBytes{
-			Name: filepath.Base(o.sbomFilePath),
-			Data: content,
-		}},
+// The bytes are a parameter rather than a field, so the attachment cannot be
+// built before the file has been read. Built from an empty field, it would be
+// a well-formed request carrying no attachment and a fingerprint of nothing.
+func (o *attestSbomOptions) evidence(content []byte) *requests.FileBytes {
+	return &requests.FileBytes{
+		Name: filepath.Base(o.sbomFilePath),
+		Data: content,
 	}
 }
 

@@ -237,3 +237,17 @@ func TestAttestationSubmitterDropsAssertFailuresInDryRun(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+func TestAttestationSubmitterUploadsEvidenceAlreadyInMemory(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.evidence = &requests.FileBytes{Name: "sbom.json", Data: []byte(`{"bomFormat":"CycloneDX"}`)}
+
+	err := submitter.submit(submission)
+
+	require.NoError(t, err)
+	require.Len(t, fake.recorded, 1)
+	require.Equal(t, "unit-tests", fake.recorded[0].dataJSON["attestation_name"])
+	require.Equal(t, map[string]string{"attachment_file": "sbom.json"}, fake.recorded[0].files)
+}
