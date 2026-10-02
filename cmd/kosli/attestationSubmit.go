@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/url"
+	"os"
 
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -36,9 +37,16 @@ func (s *attestationSubmitter) submit(a attestationSubmission) error {
 		return err
 	}
 
-	form, _, _, err := newAttestationForm(a.payload, a.attachments)
+	form, cleanupNeeded, evidencePath, err := newAttestationForm(a.payload, a.attachments)
 	if err != nil {
 		return err
+	}
+	if cleanupNeeded {
+		defer func() {
+			if err := os.Remove(evidencePath); err != nil {
+				s.logger.Warn("failed to remove evidence file: %v", err)
+			}
+		}()
 	}
 
 	_, err = s.client.Do(&requests.RequestParams{
