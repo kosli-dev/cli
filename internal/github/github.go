@@ -288,13 +288,17 @@ type graphqlReviewNode struct {
 	}
 	State       graphql.String
 	SubmittedAt graphql.String
+	// Null when GitHub no longer has the commit the review was given on.
+	Commit *struct {
+		Oid graphql.String
+	}
 }
 
 // buildPREvidence constructs a PREvidence from pre-resolved fields and the
 // raw GraphQL commit/review nodes. mergeCommit must be resolved by the caller
 // (it differs between commit-SHA queries and PR-number queries).
 func buildPREvidence(
-	url, mergeCommit, state, author, createdAtStr, mergedAtStr, title, headRef, baseRef string,
+	url, mergeCommit, state, author, createdAtStr, mergedAtStr, title, headRef, baseRef, headSHA string,
 	commitNodes []graphqlCommitNode,
 	reviewNodes []graphqlReviewNode,
 ) (*types.PREvidence, error) {
@@ -320,6 +324,7 @@ func buildPREvidence(
 		MergedAt:    mergedAt,
 		Title:       title,
 		HeadRef:     headRef,
+		HeadSHA:     headSHA,
 		BaseRef:     baseRef,
 		Approvers:   []any{},
 		Commits:     []types.Commit{},
@@ -369,11 +374,15 @@ func buildPREvidence(
 		if err != nil {
 			return nil, err
 		}
-		evidence.Approvers = append(evidence.Approvers, types.PRApprovals{
+		approval := types.PRApprovals{
 			Username:  string(r.Author.Login),
 			State:     string(r.State),
 			Timestamp: submittedAt.Unix(),
-		})
+		}
+		if r.Commit != nil {
+			approval.CommitSHA = string(r.Commit.Oid)
+		}
+		evidence.Approvers = append(evidence.Approvers, approval)
 	}
 
 	return evidence, nil
@@ -397,6 +406,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 				Title       graphql.String
 				State       graphql.String
 				HeadRefName graphql.String
+				HeadRefOid  graphql.String
 				BaseRefName graphql.String
 				URL         graphql.String
 				CreatedAt   graphql.String
@@ -454,7 +464,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 
 	return buildPREvidence(
 		string(pr.URL), mergeCommit, string(pr.State), string(pr.Author.Login),
-		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
+		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName), string(pr.HeadRefOid),
 		commits, reviews,
 	)
 }
@@ -489,6 +499,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							Title       graphql.String
 							State       graphql.String
 							HeadRefName graphql.String
+							HeadRefOid  graphql.String
 							BaseRefName graphql.String
 							URL         graphql.String
 							CreatedAt   graphql.String
@@ -559,7 +570,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		// so the commit is by definition the merge commit.
 		evidence, err := buildPREvidence(
 			string(pr.URL), commit, string(pr.State), string(pr.Author.Login),
-			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
+			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName), string(pr.HeadRefOid),
 			commits, reviews,
 		)
 		if err != nil {

@@ -70,9 +70,17 @@ func commitNodeJSON(sha string) string {
 		`"signature":null}}`, sha, sha, sha)
 }
 
-// reviewNodeJSON is one node of a GraphQL reviews connection.
+// reviewNodeJSON is one node of a GraphQL reviews connection, given on the
+// commit "reviewed-by-<login>".
 func reviewNodeJSON(login string) string {
-	return fmt.Sprintf(`{"author":{"login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z"}`, login)
+	return fmt.Sprintf(`{"author":{"login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z",`+
+		`"commit":{"oid":"reviewed-by-%s"}}`, login, login)
+}
+
+// reviewNodeWithoutCommitJSON is a review whose commit GitHub no longer has.
+func reviewNodeWithoutCommitJSON(login string) string {
+	return fmt.Sprintf(`{"author":{"login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z",`+
+		`"commit":null}`, login)
 }
 
 // connectionJSON wraps nodes with a pageInfo block. An empty cursor means the
@@ -85,7 +93,7 @@ func connectionJSON(nodes []string, nextCursor string) string {
 
 // prJSON is a full pullRequest object with the given commit and review connections.
 func prJSON(commits, reviews string) string {
-	return fmt.Sprintf(`{"title":"A PR","state":"MERGED","headRefName":"feature","baseRefName":"main",`+
+	return fmt.Sprintf(`{"title":"A PR","state":"MERGED","headRefName":"feature","headRefOid":"head-sha","baseRefName":"main",`+
 		`"url":"https://github.com/o/r/pull/1","createdAt":"2026-03-01T11:00:00Z",`+
 		`"mergedAt":"2026-03-01T14:00:00Z","mergeCommit":{"oid":"merge-sha"},`+
 		`"author":{"login":"ada"},"commits":%s,"reviews":%s}`, commits, reviews)
@@ -198,11 +206,11 @@ func v2PRNodeJSON(number int, commits, reviews string) string {
 // which need not be the configured repository.
 func v2PRNodeInRepoJSON(owner, repo string, number int, commits, reviews string) string {
 	return fmt.Sprintf(`{"number":%d,"repository":{"name":%q,"owner":{"login":%q}},`+
-		`"title":"A PR","state":"MERGED","headRefName":"feature",`+
+		`"title":"A PR","state":"MERGED","headRefName":"feature","headRefOid":"head-sha-%d",`+
 		`"baseRefName":"main","url":"https://github.com/%s/%s/pull/%d",`+
 		`"createdAt":"2026-03-01T11:00:00Z","mergedAt":"2026-03-01T14:00:00Z",`+
 		`"author":{"login":"ada"},"commits":%s,"reviews":%s}`,
-		number, repo, owner, owner, repo, number, commits, reviews)
+		number, repo, owner, number, owner, repo, number, commits, reviews)
 }
 
 // forCommitResponse carries no pageInfo for the PR connection: the query does
@@ -348,4 +356,48 @@ func TestPREvidenceByPRNumber_ApprovalDrainErrorNamesThePullRequest(t *testing.T
 	_, err := newPaginationConfig(ts).PREvidenceByPRNumber(7)
 	require.ErrorContains(t, err, "test-org/test-repo#7")
 	require.ErrorContains(t, err, "approvals")
+}
+
+func approverCommitSHAs(evidence *types.PREvidence) []string {
+	shas := []string{}
+	for _, a := range evidence.Approvers {
+		shas = append(shas, a.(types.PRApprovals).CommitSHA)
+	}
+	return shas
+}
+
+func TestPREvidenceByPRNumber_RecordsHeadAndReviewedCommits(t *testing.T) {
+	ts := newGraphQLTestServer(t,
+		byPRNumberResponse(
+			connectionJSON([]string{commitNodeJSON("sha1")}, ""),
+			connectionJSON([]string{reviewNodeJSON("ada")}, "r1"),
+		),
+		reviewsPageResponse([]string{reviewNodeJSON("grace"), reviewNodeWithoutCommitJSON("linus")}, ""),
+	)
+
+	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Equal(t, "head-sha", evidence.HeadSHA)
+	require.Equal(t, []string{"reviewed-by-ada", "reviewed-by-grace", ""}, approverCommitSHAs(evidence),
+		"each approval keeps its own commit, on later review pages too; a missing commit stays empty")
+	// The fake replies whatever is asked, so the field names GitHub must see are checked in the query.
+	require.Contains(t, ts.bodies[0], "headRefOid")
+	require.Contains(t, ts.bodies[0], "commit{oid}")
+	require.Contains(t, ts.bodies[1], "commit{oid}")
+}
+
+func TestPREvidenceForCommitV2_RecordsHeadAndReviewedCommits(t *testing.T) {
+	ts := newGraphQLTestServer(t, forCommitResponse(
+		v2PRNodeJSON(7,
+			connectionJSON([]string{commitNodeJSON("sha1")}, ""),
+			connectionJSON([]string{reviewNodeJSON("ada")}, "")),
+	))
+
+	prs, err := newPaginationConfig(ts).PREvidenceForCommitV2("merge-sha")
+	require.NoError(t, err)
+	require.Len(t, prs, 1)
+	require.Equal(t, "head-sha-7", prs[0].HeadSHA)
+	require.Equal(t, []string{"reviewed-by-ada"}, approverCommitSHAs(prs[0]))
+	require.Contains(t, ts.bodies[0], "headRefOid")
+	require.Contains(t, ts.bodies[0], "commit{oid}")
 }

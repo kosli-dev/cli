@@ -40,7 +40,7 @@ func TestBuildPREvidence_RecordsAuthorNotCommitter(t *testing.T) {
 		"",
 		"Introduce kosli evaluate",
 		"introduce-kosli-evaluate",
-		"main",
+		"main", "",
 		[]graphqlCommitNode{node},
 		nil,
 	)
@@ -71,7 +71,7 @@ func TestBuildPREvidence_UsesAuthoredDate(t *testing.T) {
 		"https://github.com/kosli-dev/cli/pull/671",
 		"0e723254516c841126e81f76100be57258ff1386",
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
-		"Introduce kosli evaluate", "introduce-kosli-evaluate", "main",
+		"Introduce kosli evaluate", "introduce-kosli-evaluate", "main", "",
 		[]graphqlCommitNode{node}, nil,
 	)
 	require.NoError(t, err)
@@ -97,7 +97,7 @@ func TestBuildPREvidence_FallsBackToCommittedDate(t *testing.T) {
 		"https://github.com/kosli-dev/cli/pull/671",
 		"0e723254516c841126e81f76100be57258ff1386",
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
-		"title", "branch", "main",
+		"title", "branch", "main", "",
 		[]graphqlCommitNode{node}, nil,
 	)
 	require.NoError(t, err)
@@ -115,7 +115,7 @@ func TestBuildPREvidence_RecordsBaseRef(t *testing.T) {
 		"https://github.com/kosli-dev/cli/pull/671",
 		"0e723254516c841126e81f76100be57258ff1386",
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
-		"title", "feature-branch", "main",
+		"title", "feature-branch", "main", "",
 		nil, nil,
 	)
 	require.NoError(t, err)
@@ -141,7 +141,7 @@ func TestBuildPREvidence_RecordsCommitSignature(t *testing.T) {
 		"https://github.com/kosli-dev/cli/pull/671",
 		"0e723254516c841126e81f76100be57258ff1386",
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
-		"title", "feature", "main",
+		"title", "feature", "main", "",
 		[]graphqlCommitNode{node}, nil,
 	)
 	require.NoError(t, err)
@@ -167,7 +167,7 @@ func TestBuildPREvidence_EmptyAuthorIsPreserved(t *testing.T) {
 		"2026-03-01T12:00:00Z",
 		"Fix something",
 		"fix-branch",
-		"main",
+		"main", "",
 		nil, nil,
 	)
 	require.NoError(t, err)
@@ -196,11 +196,33 @@ func TestBuildPREvidence_UnsignedCommitHasNoSignatureFields(t *testing.T) {
 		"https://github.com/kosli-dev/cli/pull/671",
 		"0e723254516c841126e81f76100be57258ff1386",
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
-		"title", "feature", "main",
+		"title", "feature", "main", "",
 		[]graphqlCommitNode{node}, nil,
 	)
 	require.NoError(t, err)
 	require.Len(t, evidence.Commits, 1)
 	require.Nil(t, evidence.Commits[0].Verified, "unsigned commit must leave verified nil")
 	require.Nil(t, evidence.Commits[0].SignatureState)
+}
+
+// An approval whose commit GitHub no longer has must leave commit_sha out of
+// the payload rather than send an empty string, and so must an unknown head.
+func TestBuildPREvidence_OmitsUnknownReviewedAndHeadCommits(t *testing.T) {
+	review := graphqlReviewNode{State: "APPROVED", SubmittedAt: "2026-03-01T13:00:00Z"}
+	review.Author.Login = "grace"
+
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature-branch", "main", "",
+		nil, []graphqlReviewNode{review},
+	)
+	require.NoError(t, err)
+
+	payload, err := json.Marshal(evidence)
+	require.NoError(t, err)
+	require.Contains(t, string(payload), `"username":"grace"`)
+	require.NotContains(t, string(payload), "commit_sha")
+	require.NotContains(t, string(payload), "head_sha")
 }
