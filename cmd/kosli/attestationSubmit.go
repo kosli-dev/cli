@@ -19,6 +19,17 @@ type attestationSubmitter struct {
 	logger *log.Logger
 }
 
+func newAttestationSubmitter() *attestationSubmitter {
+	return &attestationSubmitter{
+		client: kosliClient,
+		host:   global.Host,
+		org:    global.Org,
+		token:  global.ApiToken,
+		dryRun: global.DryRun,
+		logger: logger,
+	}
+}
+
 // attestationSubmission is one Attestation to record on a Trail.
 type attestationSubmission struct {
 	flow  string
