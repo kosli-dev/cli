@@ -38,6 +38,10 @@ type CommonAttestationPayload struct {
 	Annotations         map[string]string        `json:"annotations,omitempty"`
 }
 
+func (p *CommonAttestationPayload) attestationName() string {
+	return p.AttestationName
+}
+
 type CommonAttestationOptions struct {
 	fingerprintOptions      *fingerprintOptions
 	attestationNameTemplate string

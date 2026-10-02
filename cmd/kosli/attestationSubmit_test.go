@@ -152,3 +152,50 @@ func TestAttestationSubmitterRemovesTheTarballWhenTheServerRejects(t *testing.T)
 	require.EqualError(t, err, "rejected")
 	require.Empty(t, tarballsLeftIn(t, tmp))
 }
+
+func TestAttestationSubmitterLogsTheRecordedAttestation(t *testing.T) {
+	server, _ := newFakeAttestationServer(t)
+	submitter, out := newTestAttestationSubmitter(t, server.URL, false)
+
+	err := submitter.submit(genericSubmission("unit-tests"))
+
+	require.NoError(t, err)
+	require.Equal(t, "generic attestation 'unit-tests' is reported to trail: my-trail\n", out.String())
+}
+
+func TestAttestationSubmitterSendsNothingAndLogsNoSuccessInDryRun(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	submitter, out := newTestAttestationSubmitter(t, server.URL, true)
+
+	err := submitter.submit(genericSubmission("unit-tests"))
+
+	require.NoError(t, err)
+	require.Empty(t, fake.recorded)
+	require.Contains(t, out.String(), "THIS IS A DRY-RUN")
+	require.NotContains(t, out.String(), "is reported to trail")
+}
+
+func TestAttestationSubmitterLogsNoSuccessWhenTheServerRejects(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.status = http.StatusBadRequest
+	fake.body = `{"message":"rejected"}`
+	submitter, out := newTestAttestationSubmitter(t, server.URL, false)
+
+	err := submitter.submit(genericSubmission("unit-tests"))
+
+	require.EqualError(t, err, "rejected")
+	require.NotContains(t, out.String(), "is reported to trail")
+}
+
+func TestAttestationSubmitterExplainsHowToBindTheAttestation(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.status = http.StatusBadRequest
+	fake.body = `{"message":"Input payload requires at least one of: artifact_fingerprint or git_commit_info."}`
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+
+	err := submitter.submit(genericSubmission("unit-tests"))
+
+	require.EqualError(t, err, "Input payload requires at least one of: specifying the fingerprint "+
+		"(either by calculating it using the artifact name/path and --artifact-type, or by providing it using --fingerprint) "+
+		"or providing --commit (requires an available git repo to access commit details)")
+}

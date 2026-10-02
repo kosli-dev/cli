@@ -27,8 +27,14 @@ type attestationSubmission struct {
 	slug string
 	// label names the attestation type in the success message.
 	label       string
-	payload     any
+	payload     attestationPayload
 	attachments []string
+}
+
+// attestationPayload is the body of any Attestation type; every one embeds
+// CommonAttestationPayload, which provides the name.
+type attestationPayload interface {
+	attestationName() string
 }
 
 func (s *attestationSubmitter) submit(a attestationSubmission) error {
@@ -56,5 +62,8 @@ func (s *attestationSubmitter) submit(a attestationSubmission) error {
 		DryRun: s.dryRun,
 		Token:  s.token,
 	})
-	return err
+	if err == nil && !s.dryRun {
+		s.logger.Info("%s attestation '%s' is reported to trail: %s", a.label, a.payload.attestationName(), a.trail)
+	}
+	return wrapAttestationError(err)
 }
