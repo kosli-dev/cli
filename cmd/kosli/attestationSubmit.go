@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -40,6 +41,9 @@ type attestationSubmission struct {
 	label       string
 	payload     attestationPayload
 	attachments []string
+	// assertFailures fail the command after the Attestation is recorded, so
+	// the evidence is kept even when --assert rejects it.
+	assertFailures []error
 }
 
 // attestationPayload is the body of any Attestation type; every one embeds
@@ -75,6 +79,15 @@ func (s *attestationSubmitter) submit(a attestationSubmission) error {
 	})
 	if err == nil && !s.dryRun {
 		s.logger.Info("%s attestation '%s' is reported to trail: %s", a.label, a.payload.attestationName(), a.trail)
+	}
+	if !s.dryRun {
+		for _, failure := range a.assertFailures {
+			if err != nil {
+				err = fmt.Errorf("%s\nError: %s", err.Error(), failure.Error())
+			} else {
+				err = failure
+			}
+		}
 	}
 	return wrapAttestationError(err)
 }

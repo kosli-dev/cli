@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -198,4 +199,41 @@ func TestAttestationSubmitterExplainsHowToBindTheAttestation(t *testing.T) {
 	require.EqualError(t, err, "Input payload requires at least one of: specifying the fingerprint "+
 		"(either by calculating it using the artifact name/path and --artifact-type, or by providing it using --fingerprint) "+
 		"or providing --commit (requires an available git repo to access commit details)")
+}
+
+func TestAttestationSubmitterReportsAssertFailuresAfterRecording(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	submitter, out := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.assertFailures = []error{errors.New("no references found"), errors.New("1 reference not found")}
+
+	err := submitter.submit(submission)
+
+	require.EqualError(t, err, "no references found\nError: 1 reference not found")
+	require.Len(t, fake.recorded, 1)
+	require.Equal(t, "generic attestation 'unit-tests' is reported to trail: my-trail\n", out.String())
+}
+
+func TestAttestationSubmitterJoinsAssertFailuresAfterTheServerError(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.status = http.StatusBadRequest
+	fake.body = `{"message":"rejected"}`
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.assertFailures = []error{errors.New("no references found")}
+
+	err := submitter.submit(submission)
+
+	require.EqualError(t, err, "rejected\nError: no references found")
+}
+
+func TestAttestationSubmitterDropsAssertFailuresInDryRun(t *testing.T) {
+	server, _ := newFakeAttestationServer(t)
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, true)
+	submission := genericSubmission("unit-tests")
+	submission.assertFailures = []error{errors.New("no references found")}
+
+	err := submitter.submit(submission)
+
+	require.NoError(t, err)
 }
