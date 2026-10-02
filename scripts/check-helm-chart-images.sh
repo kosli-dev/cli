@@ -12,7 +12,9 @@ set -euo pipefail
 dir="${1:?usage: $0 <directory of packaged charts>}"
 # Whole value, one token: a multi-document or block-scalar values.yaml makes yq
 # print several lines, and a per-line prefix match would pass if any one matched.
-allowed='^ghcr\.io/kosli-dev/[^[:space:]]+$'
+# No ':' or '@': the template appends its own tag, so a value carrying one would
+# render an invalid image reference.
+allowed='^ghcr\.io/kosli-dev/[^[:space:]:@]+$'
 
 shopt -s nullglob
 charts=("$dir"/*.tgz)
@@ -41,7 +43,7 @@ for chart in "${charts[@]}"; do
     continue
   }
   if ! [[ $repo =~ $allowed ]]; then
-    echo "$chart: image.repository is $repo, must be one image reference under ghcr.io/kosli-dev/" >&2
+    echo "$chart: image.repository is $repo, must be a repository under ghcr.io/kosli-dev/ with no tag or digest" >&2
     status=1
     continue
   fi
