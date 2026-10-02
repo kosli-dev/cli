@@ -54,6 +54,9 @@ jobs:
       - name: Helm Package
         run: helm package charts/k8s-reporter --destination package
 
+      - name: Check every packaged chart pulls its image from ghcr.io/kosli-dev
+        run: ./scripts/check-helm-chart-images.sh package
+
       # Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
