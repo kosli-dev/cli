@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/gitview"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/pflag"
 )
 
@@ -36,6 +35,10 @@ type CommonAttestationPayload struct {
 	UserData            any                      `json:"user_data,omitempty"`
 	Description         string                   `json:"description,omitempty"`
 	Annotations         map[string]string        `json:"annotations,omitempty"`
+}
+
+func (p *CommonAttestationPayload) attestationName() string {
+	return p.AttestationName
 }
 
 type CommonAttestationOptions struct {
@@ -276,14 +279,6 @@ func processExternalURLs(externalURLs, externalFingerprints map[string]string) (
 	return processedExternalURLs, nil
 }
 
-func prepareAttestationForm(payload any, evidencePaths []string) ([]requests.FormItem, bool, string, error) {
-	form, cleanupNeeded, evidencePath, err := newAttestationForm(payload, evidencePaths)
-	if err != nil {
-		return []requests.FormItem{}, cleanupNeeded, evidencePath, err
-	}
-	return form, cleanupNeeded, evidencePath, nil
-}
-
 func parseAttestationNameTemplate(template string) (string, string, error) {
 	p1, p2, found := strings.Cut(template, ".")
 	// No dot: treat the whole string as the attestation name
@@ -295,39 +290,6 @@ func parseAttestationNameTemplate(template string) (string, string, error) {
 		return "", "", fmt.Errorf("invalid attestation name format: %s", template)
 	}
 	return p1, p2, nil
-}
-
-// newAttestationForm constructs a list of FormItems for an attestation
-// form submission.
-func newAttestationForm(payload any, attachments []string) (
-	[]requests.FormItem, bool, string, error,
-) {
-	form := []requests.FormItem{
-		{Type: "field", FieldName: "data_json", Content: payload},
-	}
-
-	var evidencePath string
-	var cleanupNeeded bool
-	var err error
-
-	if len(attachments) > 0 {
-		evidencePath, cleanupNeeded, err = getPathOfEvidenceFileToUpload(attachments)
-		if err != nil {
-			return form, cleanupNeeded, evidencePath, err
-		}
-		form = append(form, requests.FormItem{Type: "file", FieldName: "attachment_file", Content: evidencePath})
-		logger.Debug("evidence file %s will be uploaded", evidencePath)
-	}
-
-	return form, cleanupNeeded, evidencePath, nil
-}
-
-func wrapAttestationError(err error) error {
-	if err != nil {
-		return fmt.Errorf("%s", strings.Replace(err.Error(), "requires at least one of: artifact_fingerprint or git_commit_info.",
-			"requires at least one of: specifying the fingerprint (either by calculating it using the artifact name/path and --artifact-type, or by providing it using --fingerprint) or providing --commit (requires an available git repo to access commit details)", 1))
-	}
-	return err
 }
 
 func getGitRepoInfoFromEnvironment() (*gitview.GitRepoInfo, error) {

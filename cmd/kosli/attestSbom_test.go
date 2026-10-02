@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -225,11 +224,7 @@ func TestSbomUploadsTheBytesItHashed(t *testing.T) {
 	content, err := o.loadSbom()
 	require.NoError(t, err)
 
-	form := o.attestationForm(content)
-	require.Len(t, form, 2, "the JSON payload and exactly one attachment")
-	require.Equal(t, "file-bytes", form[1].Type, "a path here would be read a second time by the uploader")
-	fb, ok := form[1].Content.(requests.FileBytes)
-	require.True(t, ok)
+	fb := o.evidence(content)
 	require.Equal(t, "cyclonedx.json", fb.Name)
 
 	uploaded := fmt.Sprintf("%x", sha256.Sum256(fb.Data))

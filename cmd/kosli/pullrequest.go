@@ -2,11 +2,7 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"net/url"
-	"os"
 
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/types"
 )
 
@@ -28,13 +24,8 @@ func (o *attestPROptions) getRetriever() types.PRRetriever {
 }
 
 func (o *attestPROptions) run(args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/attestations", global.Org, o.flowName, "trail", o.trailName, "pull_request")
-	if err != nil {
-		return err
-	}
-
 	o.commitRequiredFor = "find pull requests"
-	err = o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
+	err := o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err
 	}
@@ -50,39 +41,20 @@ func (o *attestPROptions) run(args []string) error {
 
 	o.payload.PullRequests = pullRequestsEvidence
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
-	if err != nil {
-		return err
-	}
-	// if we created a tar package, remove it after uploading it
-	if cleanupNeeded {
-		defer func() {
-			if err := os.Remove(evidencePath); err != nil {
-				logger.Warn("failed to remove evidence file %s: %v", evidencePath, err)
-			}
-		}()
-	}
-
 	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.payload.Commit.Sha1)
 
-	reqParams := &requests.RequestParams{
-		Method: http.MethodPost,
-		URL:    url,
-		Form:   form,
-		DryRun: global.DryRun,
-		Token:  global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("%s %s attestation '%s' is reported to trail: %s", o.payload.GitProvider, label, o.payload.AttestationName, o.trailName)
-	}
-	if len(pullRequestsEvidence) == 0 && o.assert && !global.DryRun {
-		errString := ""
-		if err != nil {
-			errString = fmt.Sprintf("%s\nError: ", err.Error())
-		}
-		err = fmt.Errorf("%sassert failed: no %s found for the given commit: %s", errString, label, o.payload.Commit.Sha1)
+	var assertFailures []error
+	if o.assert && len(pullRequestsEvidence) == 0 {
+		assertFailures = append(assertFailures, fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.Commit.Sha1))
 	}
 
-	return wrapAttestationError(err)
+	return newAttestationSubmitter().submit(attestationSubmission{
+		flow:           o.flowName,
+		trail:          o.trailName,
+		slug:           "pull_request",
+		label:          o.payload.GitProvider + " " + label,
+		payload:        o.payload,
+		attachments:    o.attachments,
+		assertFailures: assertFailures,
+	})
 }

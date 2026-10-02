@@ -1259,7 +1259,7 @@ func (suite *CliUtilsTestSuite) TestGetPathOfEvidenceFileToUploadMultiplePaths()
 	root := suite.T().TempDir()
 	dir, file := evidenceFixture(suite.T(), root)
 
-	tarPath, cleanupNeeded, err := getPathOfEvidenceFileToUpload([]string{dir, file})
+	tarPath, cleanupNeeded, err := getPathOfEvidenceFileToUpload([]string{dir, file}, logger)
 	require.NoError(suite.T(), err)
 	require.True(suite.T(), cleanupNeeded, "a generated tarball must be cleaned up by the caller")
 	defer func() { _ = os.RemoveAll(filepath.Dir(tarPath)) }()
@@ -1296,7 +1296,7 @@ func (suite *CliUtilsTestSuite) TestGetPathOfEvidenceFileToUploadDoesNotPreserve
 	require.NoError(suite.T(), os.Chown(filepath.Join(dir, "junit.xml"), foreignUID, foreignGID),
 		"the fixture stands in for evidence written by a docker container")
 
-	tarPath, _, err := getPathOfEvidenceFileToUpload([]string{dir, file})
+	tarPath, _, err := getPathOfEvidenceFileToUpload([]string{dir, file}, logger)
 	require.NoError(suite.T(), err,
 		"evidence owned by another user must still be packaged")
 	defer func() { _ = os.RemoveAll(filepath.Dir(tarPath)) }()
@@ -1318,7 +1318,7 @@ func (suite *CliUtilsTestSuite) TestGetPathOfEvidenceFileToUploadNamesTheFailing
 	_, file := evidenceFixture(suite.T(), root)
 	missing := filepath.Join(root, "does-not-exist")
 
-	_, _, err := getPathOfEvidenceFileToUpload([]string{file, missing})
+	_, _, err := getPathOfEvidenceFileToUpload([]string{file, missing}, logger)
 
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), missing,

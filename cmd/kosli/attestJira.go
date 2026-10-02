@@ -3,9 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -13,7 +10,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/jira"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -325,13 +321,8 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *attestJiraOptions) run(args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/attestations", global.Org, o.flowName, "trail", o.trailName, "jira")
-	if err != nil {
-		return err
-	}
-
 	o.commitRequiredFor = "search for Jira issue keys"
-	err = o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
+	err := o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err
 	}
@@ -418,53 +409,29 @@ func (o *attestJiraOptions) run(args []string) error {
 		logger.Warn("%s", jiraUnconfirmedWarning(unconfirmedIDs, unconfirmedReasons))
 	}
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
-	if err != nil {
-		return err
+	var assertFailures []error
+	if o.assert && len(issueIDs) == 0 {
+		assertFailures = append(assertFailures, fmt.Errorf("no Jira references are found in %s", issueSource))
 	}
-	// if we created a tar package, remove it after uploading it
-	if cleanupNeeded {
-		defer func() {
-			if err := os.Remove(evidencePath); err != nil {
-				logger.Warn("failed to remove evidence file: %v", err)
-			}
-		}()
-	}
-
-	reqParams := &requests.RequestParams{
-		Method: http.MethodPost,
-		URL:    url,
-		Form:   form,
-		DryRun: global.DryRun,
-		Token:  global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("jira attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
-	}
-
-	if len(issueIDs) == 0 && o.assert && !global.DryRun {
-		errString := ""
-		if err != nil {
-			errString = fmt.Sprintf("%s\nError: ", err.Error())
-		}
-		err = fmt.Errorf("%sno Jira references are found in %s", errString, issueSource)
-	}
-
-	if issueFoundCount != len(issueIDs) && o.assert && !global.DryRun {
-		errString := ""
-		if err != nil {
-			errString = fmt.Sprintf("%s\nError: ", err.Error())
-		}
+	if o.assert && issueFoundCount != len(issueIDs) {
 		// prefixed, so it does not read as another entry in the issue list it follows
 		reasonLog := ""
 		for _, reason := range unconfirmedReasons {
 			reasonLog += fmt.Sprintf("\n\treason: %s", reason)
 		}
-		err = fmt.Errorf("%s%s from references found in %s%s%s", errString,
-			jiraAssertHeadline(len(issueIDs)-issueFoundCount-len(unconfirmedIDs), len(unconfirmedIDs)), issueSource, issueLog, reasonLog)
+		assertFailures = append(assertFailures, fmt.Errorf("%s from references found in %s%s%s",
+			jiraAssertHeadline(len(issueIDs)-issueFoundCount-len(unconfirmedIDs), len(unconfirmedIDs)), issueSource, issueLog, reasonLog))
 	}
-	return wrapAttestationError(err)
+
+	return newAttestationSubmitter().submit(attestationSubmission{
+		flow:           o.flowName,
+		trail:          o.trailName,
+		slug:           "jira",
+		label:          "jira",
+		payload:        o.payload,
+		attachments:    o.attachments,
+		assertFailures: assertFailures,
+	})
 }
 
 // jiraAssertHeadline names what went wrong in the first line of an --assert failure. A
