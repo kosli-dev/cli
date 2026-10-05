@@ -475,9 +475,14 @@ func serverVerdict(result *evaluations.Result) *evaluate.Result {
 // bundle is named as such rather than rejected as an opaque 422, and the byte
 // cap counts the names as well as the sources, exactly as the API counts.
 func policyBundle(refs []string) (map[string]string, error) {
+	roots, err := policyRoots(refs)
+	if err != nil {
+		return nil, err
+	}
+
 	files := map[string]string{}
 	sentFrom := map[string]string{}
-	for _, ref := range refs {
+	for _, ref := range roots {
 		rootFiles, err := policyBundleFiles(ref)
 		if err != nil {
 			return nil, err
@@ -512,6 +517,48 @@ func policyBundle(refs []string) (map[string]string, error) {
 			size, serverPolicyMaxBytes)
 	}
 	return files, nil
+}
+
+// policyRoots drops a --policy that names a root already given, however it is
+// spelled, and refuses one inside another: each file below the inner root would
+// travel under two names, and the evaluator would read both as modules.
+func policyRoots(refs []string) ([]string, error) {
+	type local struct{ ref, absolute string }
+	var roots []string
+	var locals []local
+	for _, ref := range refs {
+		if isRemotePolicyRef(ref) {
+			roots = append(roots, ref)
+			continue
+		}
+		absolute, err := filepath.Abs(ref)
+		if err != nil {
+			return nil, err
+		}
+		repeated := false
+		for _, other := range locals {
+			if absolute == other.absolute {
+				repeated = true
+				break
+			}
+			if isWithin(absolute, other.absolute) {
+				return nil, fmt.Errorf("--policy %s is inside --policy %s, so its files would be sent twice", ref, other.ref)
+			}
+			if isWithin(other.absolute, absolute) {
+				return nil, fmt.Errorf("--policy %s is inside --policy %s, so its files would be sent twice", other.ref, ref)
+			}
+		}
+		if !repeated {
+			roots = append(roots, ref)
+			locals = append(locals, local{ref, absolute})
+		}
+	}
+	return roots, nil
+}
+
+func isWithin(path, dir string) bool {
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && rel != "." && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 // evaluatorLoads mirrors the rule the evaluator reads a bundle by: modules
@@ -585,8 +632,9 @@ func policyDirectory(root string) (map[string]string, error) {
 // policyBundleKey names the policy inside the uploaded bundle. Only the base
 // name travels: the server refuses a path that is absolute or that climbs out
 // of the bundle, and where the file sits on this machine is not its business.
-// The name is a label rather than a selector, since the evaluator parses every
-// entry as a module whatever it is called, so no extension is imposed here.
+// The name is kept as given rather than forced to .rego: the evaluator loads a
+// file by its name, as evaluatorLoads does, so a file it would not load, such as
+// a README, still travels as one.
 func policyBundleKey(ref string) string {
 	base := filepath.Base(ref)
 	if isRemotePolicyRef(ref) {

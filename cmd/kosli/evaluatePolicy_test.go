@@ -648,6 +648,44 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheFirstPolicyKeepsANameOnlyPeo
 	}
 }
 
+// A script that repeats the flag means the same policy, not a clash with itself.
+func (suite *EvaluatePolicyCommandTestSuite) TestARepeatedRootIsSentOnce() {
+	control := suite.T().TempDir()
+	writeFile(suite.T(), filepath.Join(control, "policy.rego"), "package policy\n")
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.policyCmd(server.URL, control, control+"/", control+"/../"+filepath.Base(control)))
+
+	require.NoError(suite.T(), err)
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
+	require.Equal(suite.T(), []string{"policy.rego"}, sortedKeys(files))
+}
+
+// A root inside another sends each of its files under two names, which the
+// evaluator reads as two modules declaring the same rules.
+func (suite *EvaluatePolicyCommandTestSuite) TestARootInsideAnotherIsRefused() {
+	control := suite.T().TempDir()
+	writeFile(suite.T(), filepath.Join(control, "policy.rego"), "package policy\n")
+	writeFile(suite.T(), filepath.Join(control, "lib", "x.rego"), "package lib\n")
+	inner := filepath.Join(control, "lib")
+	for name, roots := range map[string][]string{
+		"directory after":  {control, inner},
+		"directory before": {inner, control},
+		"file":             {control, filepath.Join(inner, "x.rego")},
+	} {
+		suite.Run(name, func() {
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, _, _, _, err := executeCommandC(suite.policyCmd(server.URL, roots...))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), roots[0])
+			require.Contains(suite.T(), err.Error(), roots[1])
+			require.Empty(suite.T(), fake.created, "nothing is sent")
+		})
+	}
+}
+
 func (suite *EvaluatePolicyCommandTestSuite) TestTheCapsCountEveryRootTogether() {
 	first := suite.T().TempDir()
 	second := suite.T().TempDir()
@@ -762,6 +800,29 @@ func sortedKeys(files map[string]any) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// The rule is a copy of the evaluator's loader, so each case is pinned here
+// to show drift from it.
+func TestEvaluatorLoads(t *testing.T) {
+	for name, loads := range map[string]bool{
+		"policy.rego":         true,
+		"lib/helpers.rego":    true,
+		"policy_test.rego":    false,
+		"data.json":           true,
+		"data.yaml":           true,
+		"a/data.yml":          true,
+		"x.ergo.yaml":         true,
+		"controls/x.ergo.yml": true,
+		"README.md":           false,
+		"notdata.json":        false,
+		"requirements.yaml":   false,
+		"data.json.bak":       false,
+	} {
+		t.Run(name, func(t *testing.T) {
+			require.Equal(t, loads, evaluatorLoads(name))
+		})
+	}
 }
 
 func TestEvaluatePolicyCommandTestSuite(t *testing.T) {
