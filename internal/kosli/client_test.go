@@ -136,3 +136,37 @@ func TestStatusHelpersDoNotMatchOtherStatusesOrOtherErrors(t *testing.T) {
 		require.False(t, is(nil))
 	}
 }
+
+func TestDryRunStillSendsAGet(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusOK, `{"name":"trail-1"}`)
+	client := New(DryRun(newHTTPClient(t)), server.URL, "test-org", "test-token")
+
+	endpoint, err := client.endpoint("trails", "test-org", "flow-1", "trail-1")
+	require.NoError(t, err)
+	result, err := client.send(context.Background(), &requests.RequestParams{Method: http.MethodGet, URL: endpoint})
+
+	require.NoError(t, err)
+	require.Equal(t, 1, seen.hits)
+	require.JSONEq(t, `{"name":"trail-1"}`, string(result.Raw))
+}
+
+func TestDryRunDoesNotSendAWriteAndReturnsAnEmptyResult(t *testing.T) {
+	for _, method := range []string{http.MethodPut, http.MethodPost, http.MethodPatch, http.MethodDelete} {
+		t.Run(method, func(t *testing.T) {
+			server, seen := newFakeServer(t, http.StatusCreated, `"OK"`)
+			client := New(DryRun(newHTTPClient(t)), server.URL, "test-org", "test-token")
+
+			endpoint, err := client.endpoint("flows", "test-org")
+			require.NoError(t, err)
+			result, err := client.send(context.Background(), &requests.RequestParams{
+				Method:  method,
+				URL:     endpoint,
+				Payload: map[string]string{"name": "flow-1"},
+			})
+
+			require.NoError(t, err)
+			require.Equal(t, 0, seen.hits)
+			require.Equal(t, &Result{}, result)
+		})
+	}
+}

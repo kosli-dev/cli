@@ -48,6 +48,10 @@ func (c *Client) send(ctx context.Context, params *requests.RequestParams) (*Res
 	if err != nil {
 		return nil, err
 	}
+	if response == nil {
+		// A dry run logs the request instead of sending it.
+		return &Result{}, nil
+	}
 	return &Result{
 		Raw:     []byte(response.Body),
 		Created: response.Resp.StatusCode == http.StatusCreated,
