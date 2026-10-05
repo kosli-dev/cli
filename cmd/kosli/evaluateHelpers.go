@@ -508,9 +508,9 @@ func policyBundleFiles(ref string) (map[string]string, error) {
 	return map[string]string{policyBundleKey(ref): string(source)}, nil
 }
 
-// policyDirectory collects every file below root, keyed by its path relative
-// to it. Nothing is left out by name: a rule here would refuse bundles the
-// evaluator that runs them would have accepted.
+// policyDirectory collects every file below root outside a dot-directory,
+// keyed by its path relative to it. Files the evaluator does not load still
+// travel, so a policy's notes stay with it.
 func policyDirectory(root string) (map[string]string, error) {
 	files := map[string]string{}
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
@@ -518,6 +518,11 @@ func policyDirectory(root string) (map[string]string, error) {
 			return err
 		}
 		if entry.IsDir() {
+			// .git and .github belong to the repository a policy is kept in,
+			// not to the policy.
+			if path != root && strings.HasPrefix(entry.Name(), ".") {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		source, err := os.ReadFile(path)

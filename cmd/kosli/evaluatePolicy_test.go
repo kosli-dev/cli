@@ -511,6 +511,24 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADirectoryTravelsAsOneBundle() 
 	require.Contains(suite.T(), files["lib/helpers.rego"], "package lib.helpers")
 }
 
+// A policy kept at a repository's root would otherwise send its git objects
+// and CI configuration, and run into the file cap.
+func (suite *EvaluatePolicyCommandTestSuite) TestADirectoryLeavesItsDotDirectoriesBehind() {
+	directory := suite.T().TempDir()
+	for _, name := range []string{"policy.rego", ".git/HEAD", ".github/workflows/ci.yml", "lib/.hidden/x.rego"} {
+		writeFile(suite.T(), filepath.Join(directory, name), "package policy\n")
+	}
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate policy --context trail=my-flow/my-trail --policy %s "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", directory, server.URL))
+
+	require.NoError(suite.T(), err)
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
+	require.Equal(suite.T(), []string{"policy.rego"}, sortedKeys(files))
+}
+
 // The API takes at least one file.
 func (suite *EvaluatePolicyCommandTestSuite) TestAnEmptyDirectoryIsRefused() {
 	directory := suite.T().TempDir()
@@ -594,6 +612,12 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADryRunSendsNothing() {
 	require.Empty(suite.T(), fake.created)
 	require.Equal(suite.T(), 0, fake.reads, "nothing was created, so there is no verdict to wait for")
 	require.NotContains(suite.T(), combined, "RESULT")
+}
+
+func writeFile(t *testing.T, path, content string) {
+	t.Helper()
+	require.NoError(t, os.MkdirAll(filepath.Dir(path), 0755))
+	require.NoError(t, os.WriteFile(path, []byte(content), 0644))
 }
 
 func sortedKeys(files map[string]any) []string {
