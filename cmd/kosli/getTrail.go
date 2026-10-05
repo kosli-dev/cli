@@ -1,22 +1,22 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"sort"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
 const getTrailDesc = `Get the metadata of a specific trail.`
 
 type getTrailOptions struct {
+	ctx      context.Context
 	flowName string
 	output   string
 }
@@ -36,6 +36,7 @@ func newGetTrailCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.ctx = cmd.Context()
 			return o.run(out, args)
 		},
 	}
@@ -52,22 +53,12 @@ func newGetTrailCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getTrailOptions) run(out io.Writer, args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/trails", global.Org, o.flowName, args[0])
+	trail, err := kosliAPI().GetTrail(o.ctx, o.flowName, args[0])
 	if err != nil {
 		return err
 	}
 
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    url,
-		Token:  global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
-	if err != nil {
-		return err
-	}
-
-	return output.FormattedPrint(response.Body, o.output, out, 0,
+	return output.FormattedPrint(string(trail.Raw), o.output, out, 0,
 		map[string]output.FormatOutputFunc{
 			"table":    printTrailAsTable,
 			"json":     output.PrintJson,
