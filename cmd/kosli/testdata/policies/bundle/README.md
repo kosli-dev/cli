@@ -1,1 +1,1 @@
-The bundle's own notes, which are not a policy and do not travel with it.
+The bundle's own notes. They travel with it, and the evaluator does not load them.
