@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	log "github.com/kosli-dev/cli/internal/logger"
@@ -23,6 +24,7 @@ type recordedSnapshotRequest struct {
 }
 
 type fakeSnapshotServer struct {
+	mu       sync.Mutex
 	recorded []recordedSnapshotRequest
 	// status and body answer every request; zero status means 201.
 	status int
@@ -45,7 +47,9 @@ func newFakeSnapshotServer(t *testing.T) (*httptest.Server, *fakeSnapshotServer)
 			http.Error(w, "body is not JSON", http.StatusInternalServerError)
 			return
 		}
+		fake.mu.Lock()
 		fake.recorded = append(fake.recorded, req)
+		fake.mu.Unlock()
 		status := fake.status
 		if status == 0 {
 			status = http.StatusCreated
@@ -191,4 +195,27 @@ func TestSnapshotReporterEnsuresEachEnvironmentOnce(t *testing.T) {
 
 	require.Equal(t, []string{"prod/server", "staging/server"}, ensured.calls)
 	require.Len(t, fake.recorded, 3)
+}
+
+// snapshot paths --watch reports from one goroutine per watched path through
+// a shared reporter.
+func TestSnapshotReporterIsSafeForConcurrentReports(t *testing.T) {
+	server, _ := newFakeSnapshotServer(t)
+	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
+	var mu sync.Mutex
+	reporter.ensure = func(envName, envType string) error {
+		mu.Lock()
+		defer mu.Unlock()
+		return ensured.ensure(envName, envType)
+	}
+
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Go(func() {
+			assert.NoError(t, reporter.report("prod", "server", twoContainers))
+		})
+	}
+	wg.Wait()
+
+	require.Equal(t, []string{"prod/server"}, ensured.calls)
 }
