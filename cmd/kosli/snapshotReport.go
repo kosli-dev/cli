@@ -19,6 +19,9 @@ type snapshotReporter struct {
 	// ensure prepares the Environment before its first report, e.g. by
 	// creating it under --auto-environment.
 	ensure func(envName, envType string) error
+	// ensured holds the Environments already prepared, so watch mode and
+	// multi-environment runs prepare each one only before its first report.
+	ensured map[string]bool
 }
 
 // snapshotCollector gathers a Snapshot: the request payload for the
@@ -26,12 +29,22 @@ type snapshotReporter struct {
 type snapshotCollector func() (payload any, reported string, err error)
 
 func (r *snapshotReporter) report(envName, envType string, collect snapshotCollector) error {
+	if !r.ensured[envName] {
+		if err := r.ensure(envName, envType); err != nil {
+			return err
+		}
+		if r.ensured == nil {
+			r.ensured = map[string]bool{}
+		}
+		r.ensured[envName] = true
+	}
+
 	endpoint, err := url.JoinPath(r.host, "api/v2/environments", r.org, envName, "report", envType)
 	if err != nil {
 		return err
 	}
 
-	payload, _, err := collect()
+	payload, reported, err := collect()
 	if err != nil {
 		return err
 	}
@@ -43,5 +56,8 @@ func (r *snapshotReporter) report(envName, envType string, collect snapshotColle
 		DryRun:  r.dryRun,
 		Token:   r.token,
 	})
+	if err == nil && !r.dryRun {
+		r.logger.Info("%s", reported)
+	}
 	return err
 }

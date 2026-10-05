@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -101,4 +102,93 @@ func TestSnapshotReporterPutsThePayloadToTheEnvironmentTypeURL(t *testing.T) {
 	require.Equal(t, http.MethodPut, fake.recorded[0].method)
 	require.Equal(t, "/api/v2/environments/acme/prod/report/docker", fake.recorded[0].path)
 	require.Len(t, fake.recorded[0].body["artifacts"], 2)
+}
+
+func TestSnapshotReporterEnsuresTheEnvironmentBeforeCollecting(t *testing.T) {
+	server, _ := newFakeSnapshotServer(t)
+	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
+	var ensuredWhenCollecting []string
+
+	err := reporter.report("prod", "docker", func() (any, string, error) {
+		ensuredWhenCollecting = append([]string{}, ensured.calls...)
+		return twoContainers()
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"prod/docker"}, ensuredWhenCollecting)
+}
+
+func TestSnapshotReporterStopsWhenTheEnvironmentCannotBeEnsured(t *testing.T) {
+	server, fake := newFakeSnapshotServer(t)
+	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
+	ensured.err = errors.New("environment prod already exists with type K8S")
+	collected := false
+
+	err := reporter.report("prod", "docker", func() (any, string, error) {
+		collected = true
+		return twoContainers()
+	})
+
+	require.EqualError(t, err, "environment prod already exists with type K8S")
+	require.False(t, collected)
+	require.Empty(t, fake.recorded)
+}
+
+func TestSnapshotReporterSendsNothingWhenCollectingFails(t *testing.T) {
+	server, fake := newFakeSnapshotServer(t)
+	reporter, _, out := newTestSnapshotReporter(t, server.URL, false)
+
+	err := reporter.report("prod", "docker", func() (any, string, error) {
+		return nil, "", errors.New("cannot reach docker daemon")
+	})
+
+	require.EqualError(t, err, "cannot reach docker daemon")
+	require.Empty(t, fake.recorded)
+	require.Empty(t, out.String())
+}
+
+func TestSnapshotReporterLogsTheReportedLine(t *testing.T) {
+	server, _ := newFakeSnapshotServer(t)
+	reporter, _, out := newTestSnapshotReporter(t, server.URL, false)
+
+	err := reporter.report("prod", "docker", twoContainers)
+
+	require.NoError(t, err)
+	require.Equal(t, "[2] containers were reported to environment prod\n", out.String())
+}
+
+func TestSnapshotReporterSendsNothingAndLogsNoSuccessInDryRun(t *testing.T) {
+	server, fake := newFakeSnapshotServer(t)
+	reporter, _, out := newTestSnapshotReporter(t, server.URL, true)
+
+	err := reporter.report("prod", "docker", twoContainers)
+
+	require.NoError(t, err)
+	require.Empty(t, fake.recorded)
+	require.Contains(t, out.String(), "THIS IS A DRY-RUN")
+	require.NotContains(t, out.String(), "were reported to environment")
+}
+
+func TestSnapshotReporterReturnsTheServerErrorAndLogsNoSuccess(t *testing.T) {
+	server, fake := newFakeSnapshotServer(t)
+	fake.status = http.StatusBadRequest
+	fake.body = `{"message":"Environment named 'prod' does not exist"}`
+	reporter, _, out := newTestSnapshotReporter(t, server.URL, false)
+
+	err := reporter.report("prod", "docker", twoContainers)
+
+	require.EqualError(t, err, "Environment named 'prod' does not exist")
+	require.Empty(t, out.String())
+}
+
+func TestSnapshotReporterEnsuresEachEnvironmentOnce(t *testing.T) {
+	server, fake := newFakeSnapshotServer(t)
+	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
+
+	require.NoError(t, reporter.report("prod", "server", twoContainers))
+	require.NoError(t, reporter.report("prod", "server", twoContainers))
+	require.NoError(t, reporter.report("staging", "server", twoContainers))
+
+	require.Equal(t, []string{"prod/server", "staging/server"}, ensured.calls)
+	require.Len(t, fake.recorded, 3)
 }
