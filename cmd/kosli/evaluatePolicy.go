@@ -38,6 +38,19 @@ Every other file is carried but not read.
 Two loaded files under one name are refused, naming both. For any other file the
 first ` + "`--policy`" + ` given wins, and the copy left behind is named on stderr.
 
+The policy package is the one that declares ` + "`allow`" + `; every other package is a
+library. Where several packages declare ` + "`allow`" + `, annotate an entrypoint in exactly
+one of them to say which is the policy. In the policy package:
+  - ` + "`allow`" + ` is always evaluated, whether annotated or not. It must be a boolean
+    for every input, so give it a default (` + "`default allow := false`" + `): an undefined
+    ` + "`allow`" + ` fails the evaluation rather than denying.
+  - Every rule annotated with ` + "`# METADATA`" + ` and ` + "`# entrypoint: true`" + ` is evaluated
+    too, and printed under its rule name, such as ` + "`violations`" + ` or ` + "`report`" + `. A
+    rule undefined for this input is left out. An output named ` + "`input`" + `, ` + "`params`" + `
+    or ` + "`decision_attestation_id`" + ` is not printed, as those names are taken.
+  - Every other rule is evaluated only as far as those rules need it.
+An entrypoint annotated outside the policy package, or on a function, is refused.
+
 Pass ` + "`--control`" + ` to record the outcome as a decision against that control, in the
 ` + "`--flow`" + ` and ` + "`--trail`" + ` given. The decision is recorded where the policy runs, so
 the verdict is never asserted from here. Without ` + "`--control`" + ` nothing is recorded.

@@ -71,6 +71,19 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheHelpSaysWhatTravelsAndWhatIs
 	}
 }
 
+// What comes back is decided by the policy's annotations, not by a flag, so
+// the help is the only place an author can learn it.
+func (suite *EvaluatePolicyCommandTestSuite) TestTheHelpSaysWhichRulesAreEvaluated() {
+	_, help, _, _, err := executeCommandC("evaluate policy --help")
+
+	require.NoError(suite.T(), err)
+	for _, says := range []string{
+		"`allow`", "default allow", "entrypoint: true", "policy package", "undefined",
+	} {
+		require.Contains(suite.T(), help, says)
+	}
+}
+
 func (suite *EvaluatePolicyCommandTestSuite) TestItNamesTheRequiredFlagItWasNotGiven() {
 	for _, test := range []struct {
 		missing string
