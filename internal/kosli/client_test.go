@@ -10,6 +10,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,7 +33,8 @@ func newFakeServer(t *testing.T, status int, responseBody string) (*httptest.Ser
 		seen.authHeader = r.Header.Get("Authorization")
 		w.WriteHeader(status)
 		_, err := w.Write([]byte(responseBody))
-		require.NoError(t, err)
+		// assert, not require: FailNow must not be called off the test goroutine.
+		assert.NoError(t, err)
 	}))
 	t.Cleanup(server.Close)
 	return server, seen
