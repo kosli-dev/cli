@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/cloudrun"
 	"github.com/kosli-dev/cli/internal/filters"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -148,69 +146,50 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotCloudRunOptions) run(args []string) error {
 	envName := args[0]
+	return newSnapshotReporter().report(envName, "cloud-run", func() (any, string, error) {
+		// compile the filter patterns once, instead of once per service and job
+		compiledFilter := o.resourceFilter.Compile()
 
-	if err := ensureEnvironment(envName, "cloud-run"); err != nil {
-		return err
-	}
-
-	reportURL, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/cloud-run")
-	if err != nil {
-		return err
-	}
-
-	// compile the filter patterns once, instead of once per service and job
-	compiledFilter := o.resourceFilter.Compile()
-
-	ctx := context.Background()
-	client, err := newCloudRunClient(ctx, o.resolveNames)
-	if err != nil {
-		return err
-	}
-	if closer, ok := client.(io.Closer); ok {
-		defer func() { _ = closer.Close() }()
-	}
-	services, err := client.ListServices(ctx, o.project, o.region)
-	if err != nil {
-		return cloudrun.Classify(err, o.project, o.region)
-	}
-	jobs, err := client.ListJobs(ctx, o.project, o.region)
-	if err != nil {
-		return cloudrun.Classify(err, o.project, o.region)
-	}
-
-	filteredServices := make([]cloudrun.Service, 0, len(services))
-	for _, svc := range services {
-		included, err := compiledFilter.ShouldInclude(svc.Name)
+		ctx := context.Background()
+		client, err := newCloudRunClient(ctx, o.resolveNames)
 		if err != nil {
-			return err
+			return nil, "", err
 		}
-		if included {
-			filteredServices = append(filteredServices, svc)
+		if closer, ok := client.(io.Closer); ok {
+			defer func() { _ = closer.Close() }()
 		}
-	}
-	filteredJobs := make([]cloudrun.Job, 0, len(jobs))
-	for _, job := range jobs {
-		included, err := compiledFilter.ShouldInclude(job.Name)
+		services, err := client.ListServices(ctx, o.project, o.region)
 		if err != nil {
-			return err
+			return nil, "", cloudrun.Classify(err, o.project, o.region)
 		}
-		if included {
-			filteredJobs = append(filteredJobs, job)
+		jobs, err := client.ListJobs(ctx, o.project, o.region)
+		if err != nil {
+			return nil, "", cloudrun.Classify(err, o.project, o.region)
 		}
-	}
 
-	payload := cloudrun.ToEnvRequest(filteredServices, filteredJobs)
+		filteredServices := make([]cloudrun.Service, 0, len(services))
+		for _, svc := range services {
+			included, err := compiledFilter.ShouldInclude(svc.Name)
+			if err != nil {
+				return nil, "", err
+			}
+			if included {
+				filteredServices = append(filteredServices, svc)
+			}
+		}
+		filteredJobs := make([]cloudrun.Job, 0, len(jobs))
+		for _, job := range jobs {
+			included, err := compiledFilter.ShouldInclude(job.Name)
+			if err != nil {
+				return nil, "", err
+			}
+			if included {
+				filteredJobs = append(filteredJobs, job)
+			}
+		}
 
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     reportURL,
-		Payload: payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
-	}
-	return err
+		payload := cloudrun.ToEnvRequest(filteredServices, filteredJobs)
+		reported := fmt.Sprintf("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
+		return payload, reported, nil
+	})
 }

@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,7 +10,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/kube"
-	"github.com/kosli-dev/cli/internal/requests"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -230,7 +227,7 @@ func (o *snapshotK8SOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	return o.reportEnvironment(clientset, args[0], o.filter)
+	return o.reportEnvironment(newSnapshotReporter(), clientset, args[0], o.filter)
 }
 
 func (o *snapshotK8SOptions) runMultiEnv() error {
@@ -244,9 +241,10 @@ func (o *snapshotK8SOptions) runMultiEnv() error {
 		return err
 	}
 
+	reporter := newSnapshotReporter()
 	var errs []string
 	for _, env := range config.Environments {
-		if err := o.reportEnvironment(clientset, env.Name, env.toFilter()); err != nil {
+		if err := o.reportEnvironment(reporter, clientset, env.Name, env.toFilter()); err != nil {
 			errs = append(errs, fmt.Sprintf("environment '%s': %v", env.Name, err))
 		}
 	}
@@ -257,33 +255,15 @@ func (o *snapshotK8SOptions) runMultiEnv() error {
 	return nil
 }
 
-func (o *snapshotK8SOptions) reportEnvironment(clientset *kube.K8SConnection, envName string, filter *filters.ResourceFilterOptions) error {
-	if err := ensureEnvironment(envName, "K8S"); err != nil {
-		return err
-	}
-
-	podsData, err := clientset.GetPodsData(filter, logger)
-	if err != nil {
-		return err
-	}
-
-	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/K8S")
-	if err != nil {
-		return err
-	}
-
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: &kube.K8sEnvRequest{Artifacts: podsData},
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("[%d] pods were reported to environment %s", len(podsData), envName)
-	}
-	return err
+func (o *snapshotK8SOptions) reportEnvironment(reporter *snapshotReporter, clientset *kube.K8SConnection, envName string, filter *filters.ResourceFilterOptions) error {
+	return reporter.report(envName, "K8S", func() (any, string, error) {
+		podsData, err := clientset.GetPodsData(filter, logger)
+		if err != nil {
+			return nil, "", err
+		}
+		reported := fmt.Sprintf("[%d] pods were reported to environment %s", len(podsData), envName)
+		return &kube.K8sEnvRequest{Artifacts: podsData}, reported, nil
+	})
 }
 
 func defaultKubeConfigPath() string {
