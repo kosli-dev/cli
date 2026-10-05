@@ -197,3 +197,30 @@ func TestDecodeOfABodyThatDoesNotMatchIsAnError(t *testing.T) {
 
 	require.Error(t, err)
 }
+
+func TestACancelledContextStopsTheRequestBeforeItReachesTheServer(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusOK, `{}`)
+	client := newTestClient(t, server.URL)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	endpoint, err := client.endpoint("flows", "test-org")
+	require.NoError(t, err)
+	_, err = client.send(ctx, &requests.RequestParams{Method: http.MethodGet, URL: endpoint})
+
+	require.ErrorIs(t, err, context.Canceled)
+	require.Equal(t, 0, seen.hits)
+}
+
+func TestANilContextIsTreatedAsBackground(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusOK, `{}`)
+	client := newTestClient(t, server.URL)
+
+	endpoint, err := client.endpoint("flows", "test-org")
+	require.NoError(t, err)
+	//nolint:staticcheck // a command's run called directly by a test has no context
+	_, err = client.send(nil, &requests.RequestParams{Method: http.MethodGet, URL: endpoint})
+
+	require.NoError(t, err)
+	require.Equal(t, 1, seen.hits)
+}
