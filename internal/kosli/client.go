@@ -4,6 +4,8 @@ package kosli
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -36,6 +38,23 @@ type Result struct {
 	// Created is true when the server created the resource (201) rather than
 	// updating one that already existed (200).
 	Created bool
+}
+
+// Response is a Result with its body decoded.
+type Response[T any] struct {
+	Result
+	Value T
+}
+
+func decode[T any](result *Result) (*Response[T], error) {
+	response := &Response[T]{Result: *result}
+	if len(result.Raw) == 0 {
+		return response, nil
+	}
+	if err := json.Unmarshal(result.Raw, &response.Value); err != nil {
+		return nil, fmt.Errorf("failed to decode the Kosli API response: %w", err)
+	}
+	return response, nil
 }
 
 func (c *Client) endpoint(segments ...string) (string, error) {
