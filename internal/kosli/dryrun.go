@@ -17,8 +17,11 @@ type dryRunSender struct {
 }
 
 func (s dryRunSender) Do(params *requests.RequestParams) (*requests.HTTPResponse, error) {
-	if params.Method != http.MethodGet {
-		params.DryRun = true
+	switch params.Method {
+	case http.MethodGet, http.MethodHead, http.MethodOptions:
+		return s.next.Do(params)
 	}
-	return s.next.Do(params)
+	write := *params
+	write.DryRun = true
+	return s.next.Do(&write)
 }

@@ -152,6 +152,43 @@ func TestDryRunStillSendsAGet(t *testing.T) {
 	require.JSONEq(t, `{"name":"trail-1"}`, string(result.Raw))
 }
 
+func TestDryRunStillSendsTheOtherSafeMethods(t *testing.T) {
+	for _, method := range []string{http.MethodHead, http.MethodOptions} {
+		t.Run(method, func(t *testing.T) {
+			server, seen := newFakeServer(t, http.StatusOK, ``)
+			client := New(DryRun(newHTTPClient(t)), server.URL, "test-org", "test-token")
+
+			endpoint, err := client.endpoint("flows", "test-org")
+			require.NoError(t, err)
+			_, err = client.send(context.Background(), &requests.RequestParams{Method: method, URL: endpoint})
+
+			require.NoError(t, err)
+			require.Equal(t, 1, seen.hits)
+		})
+	}
+}
+
+func TestDryRunLeavesTheCallersParamsUnchanged(t *testing.T) {
+	recorder := &recordingSender{}
+	params := &requests.RequestParams{Method: http.MethodPut, URL: "https://app.kosli.com/api/v2/flows/test-org"}
+
+	_, err := DryRun(recorder).Do(params)
+
+	require.NoError(t, err)
+	require.False(t, params.DryRun)
+	require.True(t, recorder.got.DryRun)
+}
+
+// recordingSender keeps the params it was given instead of sending them.
+type recordingSender struct {
+	got *requests.RequestParams
+}
+
+func (s *recordingSender) Do(params *requests.RequestParams) (*requests.HTTPResponse, error) {
+	s.got = params
+	return nil, nil
+}
+
 func TestDryRunDoesNotSendAWriteAndReturnsAnEmptyResult(t *testing.T) {
 	for _, method := range []string{http.MethodPut, http.MethodPost, http.MethodPatch, http.MethodDelete} {
 		t.Run(method, func(t *testing.T) {
