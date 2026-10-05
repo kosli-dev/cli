@@ -77,6 +77,58 @@ type assertArtifactOptions struct {
 	output             string
 }
 
+type assertArtifactResult struct {
+	Scope             string             `json:"scope"`
+	Compliant         bool               `json:"compliant"`
+	Environment       string             `json:"environment"`
+	HTMLURL           string             `json:"html_url"`
+	PolicyEvaluations []policyEvaluation `json:"policy_evaluations"`
+	Flows             []assertedFlow     `json:"flows"`
+}
+
+type policyEvaluation struct {
+	PolicyName      string           `json:"policy_name"`
+	Status          string           `json:"status"`
+	RuleEvaluations []ruleEvaluation `json:"rule_evaluations"`
+}
+
+type ruleEvaluation struct {
+	Ignored     bool             `json:"ignored"`
+	Satisfied   bool             `json:"satisfied"`
+	Rule        evaluatedRule    `json:"rule"`
+	Resolutions []ruleResolution `json:"resolutions"`
+}
+
+type evaluatedRule struct {
+	Definition struct {
+		Name string `json:"name"`
+		Type string `json:"type"`
+	} `json:"definition"`
+}
+
+type ruleResolution struct {
+	Type    string `json:"type"`
+	Context struct {
+		ForControl string `json:"for_control"`
+	} `json:"context"`
+}
+
+type assertedFlow struct {
+	Flow             string `json:"flow"`
+	Trail            string `json:"trail"`
+	ComplianceStatus struct {
+		AttestationsStatuses []attestationStatus `json:"attestations_statuses"`
+	} `json:"compliance_status"`
+}
+
+type attestationStatus struct {
+	AttestationName string `json:"attestation_name"`
+	AttestationType string `json:"attestation_type"`
+	Status          string `json:"status"`
+	IsCompliant     bool   `json:"is_compliant"`
+	Unexpected      bool   `json:"unexpected"`
+}
+
 func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	o := &assertArtifactOptions{}
 	o.fingerprintOptions = new(fingerprintOptions)
@@ -176,58 +228,6 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		return fmt.Errorf("Artifact is not compliant")
 	}
 	return nil
-}
-
-type assertArtifactResult struct {
-	Scope             string             `json:"scope"`
-	Compliant         bool               `json:"compliant"`
-	Environment       string             `json:"environment"`
-	HTMLURL           string             `json:"html_url"`
-	PolicyEvaluations []policyEvaluation `json:"policy_evaluations"`
-	Flows             []assertedFlow     `json:"flows"`
-}
-
-type policyEvaluation struct {
-	PolicyName      string           `json:"policy_name"`
-	Status          string           `json:"status"`
-	RuleEvaluations []ruleEvaluation `json:"rule_evaluations"`
-}
-
-type ruleEvaluation struct {
-	Ignored     bool             `json:"ignored"`
-	Satisfied   bool             `json:"satisfied"`
-	Rule        evaluatedRule    `json:"rule"`
-	Resolutions []ruleResolution `json:"resolutions"`
-}
-
-type evaluatedRule struct {
-	Definition struct {
-		Name string `json:"name"`
-		Type string `json:"type"`
-	} `json:"definition"`
-}
-
-type ruleResolution struct {
-	Type    string `json:"type"`
-	Context struct {
-		ForControl string `json:"for_control"`
-	} `json:"context"`
-}
-
-type assertedFlow struct {
-	Flow             string `json:"flow"`
-	Trail            string `json:"trail"`
-	ComplianceStatus struct {
-		AttestationsStatuses []attestationStatus `json:"attestations_statuses"`
-	} `json:"compliance_status"`
-}
-
-type attestationStatus struct {
-	AttestationName string `json:"attestation_name"`
-	AttestationType string `json:"attestation_type"`
-	Status          string `json:"status"`
-	IsCompliant     bool   `json:"is_compliant"`
-	Unexpected      bool   `json:"unexpected"`
 }
 
 func printAssertAsTable(raw string, out io.Writer, page int) error {

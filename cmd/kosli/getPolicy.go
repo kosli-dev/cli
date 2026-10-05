@@ -19,6 +19,18 @@ type getPolicyOptions struct {
 	output string
 }
 
+type policyResponse struct {
+	Name          string          `json:"name"`
+	Description   string          `json:"description"`
+	CreatedAt     json.Number     `json:"created_at"`
+	ConsumingEnvs []string        `json:"consuming_envs"`
+	Versions      []policyVersion `json:"versions"`
+}
+
+type policyVersion struct {
+	PolicyYaml string `json:"policy_yaml"`
+}
+
 func newGetPolicyCmd(out io.Writer) *cobra.Command {
 	o := new(getPolicyOptions)
 	cmd := &cobra.Command{
@@ -64,18 +76,6 @@ func (o *getPolicyOptions) run(out io.Writer, args []string) error {
 			"table": printPolicyAsTable,
 			"json":  output.PrintJson,
 		})
-}
-
-type policyResponse struct {
-	Name          string          `json:"name"`
-	Description   string          `json:"description"`
-	CreatedAt     json.Number     `json:"created_at"`
-	ConsumingEnvs []string        `json:"consuming_envs"`
-	Versions      []policyVersion `json:"versions"`
-}
-
-type policyVersion struct {
-	PolicyYaml string `json:"policy_yaml"`
 }
 
 func printPolicyAsTable(raw string, out io.Writer, page int) error {

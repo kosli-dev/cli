@@ -62,6 +62,33 @@ type getArtifactOptions struct {
 	trail  string
 }
 
+type artifactResponse struct {
+	Filename              string           `json:"filename"`
+	FlowName              string           `json:"flow_name"`
+	TrailName             string           `json:"trail_name"`
+	TemplateReferenceName string           `json:"template_reference_name"`
+	Fingerprint           string           `json:"fingerprint"`
+	CreatedAt             json.Number      `json:"created_at"`
+	GitCommit             string           `json:"git_commit"`
+	CommitURL             string           `json:"commit_url"`
+	BuildURL              string           `json:"build_url"`
+	HTMLURL               string           `json:"html_url"`
+	State                 string           `json:"state"`
+	Running               []environmentRef `json:"running"`
+	Exited                []environmentRef `json:"exited"`
+	History               []artifactEvent  `json:"history"`
+}
+
+type environmentRef struct {
+	EnvironmentName string  `json:"environment_name"`
+	SnapshotIndex   float64 `json:"snapshot_index"`
+}
+
+type artifactEvent struct {
+	Event     string      `json:"event"`
+	Timestamp json.Number `json:"timestamp"`
+}
+
 func newGetArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(getArtifactOptions)
 	cmd := &cobra.Command{
@@ -135,33 +162,6 @@ func printArtifactAsTableWrapper(artifactRaw string, out io.Writer, pageNumber i
 		artifactRaw = "[" + artifactRaw + "]"
 	}
 	return printArtifactsAsTable(artifactRaw, out, pageNumber)
-}
-
-type artifactResponse struct {
-	Filename              string           `json:"filename"`
-	FlowName              string           `json:"flow_name"`
-	TrailName             string           `json:"trail_name"`
-	TemplateReferenceName string           `json:"template_reference_name"`
-	Fingerprint           string           `json:"fingerprint"`
-	CreatedAt             json.Number      `json:"created_at"`
-	GitCommit             string           `json:"git_commit"`
-	CommitURL             string           `json:"commit_url"`
-	BuildURL              string           `json:"build_url"`
-	HTMLURL               string           `json:"html_url"`
-	State                 string           `json:"state"`
-	Running               []environmentRef `json:"running"`
-	Exited                []environmentRef `json:"exited"`
-	History               []artifactEvent  `json:"history"`
-}
-
-type environmentRef struct {
-	EnvironmentName string  `json:"environment_name"`
-	SnapshotIndex   float64 `json:"snapshot_index"`
-}
-
-type artifactEvent struct {
-	Event     string      `json:"event"`
-	Timestamp json.Number `json:"timestamp"`
 }
 
 func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) error {
