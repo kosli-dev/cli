@@ -57,6 +57,20 @@ func (suite *EvaluatePolicyCommandTestSuite) TestItOffersOnlyItsOwnFlags() {
 	}
 }
 
+// An author cannot see the evaluator, so the help is where they learn which
+// of their files decide the verdict and which only travel with it.
+func (suite *EvaluatePolicyCommandTestSuite) TestTheHelpSaysWhatTravelsAndWhatIsLoaded() {
+	_, help, _, _, err := executeCommandC("evaluate policy --help")
+
+	require.NoError(suite.T(), err)
+	for _, says := range []string{
+		"more than once", "*_test.rego", "data.json", "data.yaml", "data.yml",
+		"*.ergo.yaml", "*.ergo.yml", "README.md", "dot-directories", "first `--policy`",
+	} {
+		require.Contains(suite.T(), help, says)
+	}
+}
+
 func (suite *EvaluatePolicyCommandTestSuite) TestItNamesTheRequiredFlagItWasNotGiven() {
 	for _, test := range []struct {
 		missing string

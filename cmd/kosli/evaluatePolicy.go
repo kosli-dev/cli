@@ -19,8 +19,24 @@ recorded it, and the verdict is printed here.
 Name what to evaluate with ` + "`--context trail=<flow>/<trail>`" + `, repeated once per
 trail. Trails named in one command are all evaluated at the same instant.
 
-` + "`--policy`" + ` takes a single Rego file or a directory. A directory travels as one
-bundle of every file below it, keyed by its path relative to that directory.
+` + "`--policy`" + ` takes a Rego file or a directory, and can be given more than once,
+so a policy and a shared library are sent together from wherever each is kept.
+Every ` + "`--policy`" + ` joins one bundle. A file is keyed by its own name, and a file
+in a directory by its path relative to that directory. Files in dot-directories,
+such as ` + "`.git`" + `, are left out; every other file travels, so notes such as
+` + "`README.md`" + ` stay with the policy.
+
+Of what travels, the evaluator loads only:
+  - Rego modules: ` + "`*.rego`" + `, other than tests (` + "`*_test.rego`" + `). Modules import
+    each other by package, so where each file sits does not matter.
+  - Data files: ` + "`data.json`" + `, ` + "`data.yaml`" + `, ` + "`data.yml`" + `, ` + "`*.ergo.yaml`" + ` and
+    ` + "`*.ergo.yml`" + `. Each is read into ` + "`data`" + ` at its directory's path in the
+    bundle, so ` + "`controls/x/data.yaml`" + ` becomes ` + "`data.controls.x`" + `. A data file
+    cannot write ` + "`data.params`" + `, which belongs to ` + "`--params`" + `.
+Every other file is carried but not read.
+
+Two loaded files under one name are refused, naming both. For any other file the
+first ` + "`--policy`" + ` given wins, and the copy left behind is named on stderr.
 
 Pass ` + "`--control`" + ` to record the outcome as a decision against that control, in the
 ` + "`--flow`" + ` and ` + "`--trail`" + ` given. The decision is recorded where the policy runs, so
@@ -35,6 +51,14 @@ const evaluatePolicyExample = `
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
 	--policy yourPolicyFile.rego \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate a policy directory with a shared library kept elsewhere:
+kosli evaluate policy \
+	--context trail=yourFlowName/yourTrailName \
+	--policy yourPolicyDirectory \
+	--policy path/to/ergo/ergo.rego \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -110,7 +134,7 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringArrayVar(&o.contexts, "context", []string{}, policyContextFlag)
-	cmd.Flags().StringArrayVarP(&o.policyRefs, "policy", "p", []string{}, "Path of a Rego policy file, or of a directory sent as one bundle.")
+	cmd.Flags().StringArrayVarP(&o.policyRefs, "policy", "p", []string{}, "Path of a Rego policy file, or of a directory sent as one bundle. Repeat it to send a policy with libraries kept elsewhere.")
 	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, policyAssertFlag)
