@@ -255,18 +255,18 @@ func TestBuildPREvidence_RecordsCommitSigner(t *testing.T) {
 	require.Len(t, evidence.Commits, 3)
 
 	require.Equal(t, "alice", evidence.Commits[0].SignerUsername)
-	require.NotNil(t, evidence.Commits[0].SignedByGitHub)
-	require.False(t, *evidence.Commits[0].SignedByGitHub)
+	require.NotNil(t, evidence.Commits[0].SignedByPlatform)
+	require.False(t, *evidence.Commits[0].SignedByPlatform)
 
 	require.Equal(t, "", evidence.Commits[1].SignerUsername,
 		"GitHub's own signing account is not who made the commit")
-	require.NotNil(t, evidence.Commits[1].SignedByGitHub)
-	require.True(t, *evidence.Commits[1].SignedByGitHub)
+	require.NotNil(t, evidence.Commits[1].SignedByPlatform)
+	require.True(t, *evidence.Commits[1].SignedByPlatform)
 
 	unsigned, err := json.Marshal(evidence.Commits[2])
 	require.NoError(t, err)
 	require.NotContains(t, string(unsigned), "signer_username")
-	require.NotContains(t, string(unsigned), "signed_by_github")
+	require.NotContains(t, string(unsigned), "signed_by_platform")
 }
 
 func reviewNode(typename, login, state string) graphqlReviewNode {

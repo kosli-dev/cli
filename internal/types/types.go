@@ -38,17 +38,17 @@ type PRApprovals struct {
 }
 
 type Commit struct {
-	SHA            string  `json:"sha1"`
-	Message        string  `json:"message"`
-	Author         string  `json:"author"`
-	AuthorUsername string  `json:"author_username,omitempty"`
-	Timestamp      int64   `json:"timestamp"`
-	Branch         string  `json:"branch"`
-	URL            string  `json:"url,omitempty"`
-	Verified       *bool   `json:"verified,omitempty"`
-	SignatureState *string `json:"signature_state,omitempty"`
-	SignerUsername string  `json:"signer_username,omitempty"`
-	SignedByGitHub *bool   `json:"signed_by_github,omitempty"`
+	SHA              string  `json:"sha1"`
+	Message          string  `json:"message"`
+	Author           string  `json:"author"`
+	AuthorUsername   string  `json:"author_username,omitempty"`
+	Timestamp        int64   `json:"timestamp"`
+	Branch           string  `json:"branch"`
+	URL              string  `json:"url,omitempty"`
+	Verified         *bool   `json:"verified,omitempty"`
+	SignatureState   *string `json:"signature_state,omitempty"`
+	SignerUsername   string  `json:"signer_username,omitempty"`
+	SignedByPlatform *bool   `json:"signed_by_platform,omitempty"`
 }
 
 type PRRetriever interface {

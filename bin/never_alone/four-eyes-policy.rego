@@ -115,7 +115,7 @@ signed_by_known_identity(c) if {
 
 signed_by_known_identity(c) if {
 	c.verified == true
-	c.signed_by_github == true
+	c.signed_by_platform == true
 }
 
 # A commit is the merge commit when the PR's merge_commit field matches the

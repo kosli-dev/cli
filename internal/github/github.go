@@ -358,7 +358,7 @@ func buildPREvidence(
 		// Capture the commit signature when present. A nil signature node means
 		// the commit is unsigned, which must stay distinct from a present but
 		// invalid signature (verified=false) — so leave the fields nil (server#5892).
-		var verified, signedByGitHub *bool
+		var verified, signedByPlatform *bool
 		var signatureState *string
 		signerUsername := ""
 		if sig := n.Commit.Signature; sig != nil {
@@ -367,23 +367,23 @@ func buildPREvidence(
 			g := bool(sig.WasSignedByGitHub)
 			verified = &v
 			signatureState = &s
-			signedByGitHub = &g
+			signedByPlatform = &g
 			if sig.Signer != nil && !g {
 				signerUsername = string(sig.Signer.Login)
 			}
 		}
 		evidence.Commits = append(evidence.Commits, types.Commit{
-			SHA:            string(n.Commit.Oid),
-			Message:        string(n.Commit.MessageHeadline),
-			Author:         fmt.Sprintf("%s <%s>", string(n.Commit.Author.Name), string(n.Commit.Author.Email)),
-			AuthorUsername: authorUsername,
-			Timestamp:      timestamp.Unix(),
-			Branch:         headRef,
-			URL:            string(n.Commit.URL),
-			Verified:       verified,
-			SignatureState: signatureState,
-			SignerUsername: signerUsername,
-			SignedByGitHub: signedByGitHub,
+			SHA:              string(n.Commit.Oid),
+			Message:          string(n.Commit.MessageHeadline),
+			Author:           fmt.Sprintf("%s <%s>", string(n.Commit.Author.Name), string(n.Commit.Author.Email)),
+			AuthorUsername:   authorUsername,
+			Timestamp:        timestamp.Unix(),
+			Branch:           headRef,
+			URL:              string(n.Commit.URL),
+			Verified:         verified,
+			SignatureState:   signatureState,
+			SignerUsername:   signerUsername,
+			SignedByPlatform: signedByPlatform,
 		})
 	}
 

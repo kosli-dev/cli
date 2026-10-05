@@ -19,7 +19,7 @@ commit(sha, ts, user) := signed_commit(sha, ts, user, user)
 # A commit naming author as its author, with a verified signature by signer.
 signed_commit(sha, ts, author, signer) := {
 	"sha1": sha, "author": sprintf("%v <%v@example.com>", [author, author]), "author_username": author, "timestamp": ts,
-	"verified": true, "signer_username": signer, "signed_by_github": false,
+	"verified": true, "signer_username": signer, "signed_by_platform": false,
 }
 
 approval(user, sha) := {"username": user, "state": "APPROVED", "timestamp": 1000050, "commit_sha": sha}
@@ -176,7 +176,7 @@ test_empty_commit_author_blocks_approval if {
 }
 
 test_unsigned_commit_blocks_approval if {
-	not allowed([pr([object.remove(commit(first, 1000000, "alice"), ["verified", "signer_username", "signed_by_github"])], [approval("bob", first)], first)])
+	not allowed([pr([object.remove(commit(first, 1000000, "alice"), ["verified", "signer_username", "signed_by_platform"])], [approval("bob", first)], first)])
 }
 
 test_invalid_signature_blocks_approval if {
@@ -191,8 +191,8 @@ test_ghost_signer_blocks_approval if {
 	not allowed([pr([signed_commit(first, 1000000, "alice", "ghost")], [approval("bob", first)], first)])
 }
 
-test_commit_signed_by_github_passes if {
-	allowed([pr([object.union(object.remove(commit(first, 1000000, "alice"), ["signer_username"]), {"signed_by_github": true})], [approval("bob", first)], first)])
+test_commit_signed_by_platform_passes if {
+	allowed([pr([object.union(object.remove(commit(first, 1000000, "alice"), ["signer_username"]), {"signed_by_platform": true})], [approval("bob", first)], first)])
 }
 
 # Naming someone else as the author doesn't let the signer approve their own work.
@@ -205,7 +205,7 @@ test_independent_approval_covers_author_and_signer if {
 }
 
 test_unsigned_commit_violation_says_why if {
-	unsigned := object.remove(commit(first, 1000000, "alice"), ["verified", "signer_username", "signed_by_github"])
+	unsigned := object.remove(commit(first, 1000000, "alice"), ["verified", "signer_username", "signed_by_platform"])
 	v := policy.violations with input as {"trails": [trail(merge, [pr([unsigned], [approval("bob", first)], first)])]}
 		with data.params as params
 	some msg in v
@@ -213,7 +213,7 @@ test_unsigned_commit_violation_says_why if {
 }
 
 test_invalid_github_signature_blocks_approval if {
-	not allowed([pr([object.union(object.remove(commit(first, 1000000, "alice"), ["signer_username"]), {"signed_by_github": true, "verified": false})], [approval("bob", first)], first)])
+	not allowed([pr([object.union(object.remove(commit(first, 1000000, "alice"), ["signer_username"]), {"signed_by_platform": true, "verified": false})], [approval("bob", first)], first)])
 }
 
 test_non_merge_trail_with_old_approval_fails if {

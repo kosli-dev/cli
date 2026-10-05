@@ -404,10 +404,10 @@ func TestPREvidenceByPRNumber_RecordsCommitSigners(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, evidence.Commits, 3)
 	require.Equal(t, "ada", evidence.Commits[0].SignerUsername)
-	require.False(t, *evidence.Commits[0].SignedByGitHub)
+	require.False(t, *evidence.Commits[0].SignedByPlatform)
 	require.Equal(t, "", evidence.Commits[1].SignerUsername)
-	require.True(t, *evidence.Commits[1].SignedByGitHub)
-	require.Nil(t, evidence.Commits[2].SignedByGitHub, "an unsigned commit records no signature facts")
+	require.True(t, *evidence.Commits[1].SignedByPlatform)
+	require.Nil(t, evidence.Commits[2].SignedByPlatform, "an unsigned commit records no signature facts")
 	require.Contains(t, ts.bodies[0], "signer{login}")
 	require.Contains(t, ts.bodies[0], "wasSignedByGitHub")
 }
