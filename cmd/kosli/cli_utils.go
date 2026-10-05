@@ -581,6 +581,15 @@ func formattedTimestamp(timestamp any, short bool) (string, error) {
 	var shortFormat string
 	var unixTime time.Time
 
+	// the API returns some timestamps as numbers and others as numeric strings;
+	// json.Number decodes both, and is empty when the field is absent
+	if n, ok := timestamp.(json.Number); ok {
+		if n == "" {
+			return "N/A", nil
+		}
+		timestamp = string(n)
+	}
+
 	switch t := timestamp.(type) {
 	case int64:
 		intTimestamp = timestamp.(int64)
@@ -588,17 +597,6 @@ func formattedTimestamp(timestamp any, short bool) (string, error) {
 		intTimestamp = int64(timestamp.(float64))
 	case string:
 		floatTimestamp, err := strconv.ParseFloat(timestamp.(string), 64)
-		if err != nil {
-			return "", err
-		}
-		intTimestamp = int64(floatTimestamp)
-	case json.Number:
-		// the API returns some timestamps as numbers and others as numeric strings;
-		// json.Number decodes both, and is empty when the field is absent
-		if t == "" {
-			return "N/A", nil
-		}
-		floatTimestamp, err := t.Float64()
 		if err != nil {
 			return "", err
 		}

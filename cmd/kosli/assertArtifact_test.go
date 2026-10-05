@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -264,8 +265,7 @@ func TestAssertArtifactCommandTestSuite(t *testing.T) {
 
 func TestPrintAssertAsTableToleratesMissingFields(t *testing.T) {
 	var buf bytes.Buffer
-	logger.SetInfoOut(&buf)
-	defer logger.SetInfoOut(logger.Out)
+	defer restoreLogger(log.NewLogger(&buf, &buf, false))()
 
 	require.NotPanics(t, func() {
 		require.NoError(t, printAssertAsTable(`{"compliant":true}`, &buf, 0))
@@ -275,8 +275,7 @@ func TestPrintAssertAsTableToleratesMissingFields(t *testing.T) {
 
 func TestPrintAssertAsTableReportsForControl(t *testing.T) {
 	var buf bytes.Buffer
-	logger.SetInfoOut(&buf)
-	defer logger.SetInfoOut(logger.Out)
+	defer restoreLogger(log.NewLogger(&buf, &buf, false))()
 
 	raw := `{
 	  "scope": "environment", "compliant": false, "environment": "prod", "html_url": "https://app/x",

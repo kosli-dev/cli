@@ -65,8 +65,8 @@ type getArtifactOptions struct {
 type artifactResponse struct {
 	Filename              string           `json:"filename"`
 	FlowName              string           `json:"flow_name"`
-	TrailName             string           `json:"trail_name"`
-	TemplateReferenceName string           `json:"template_reference_name"`
+	TrailName             *string          `json:"trail_name"`
+	TemplateReferenceName *string          `json:"template_reference_name"`
 	Fingerprint           string           `json:"fingerprint"`
 	CreatedAt             json.Number      `json:"created_at"`
 	GitCommit             string           `json:"git_commit"`
@@ -191,11 +191,12 @@ func artifactTableRows(artifact artifactResponse) ([]string, error) {
 		fmt.Sprintf("Name:\t%s", artifact.Filename),
 		fmt.Sprintf("Flow:\t%s", artifact.FlowName),
 	}
-	if artifact.TrailName != "" {
-		rows = append(rows, fmt.Sprintf("Trail:\t%s", artifact.TrailName))
+	// pointers, so a key sent with an empty value still prints its row
+	if artifact.TrailName != nil {
+		rows = append(rows, fmt.Sprintf("Trail:\t%s", *artifact.TrailName))
 	}
-	if artifact.TemplateReferenceName != "" {
-		rows = append(rows, fmt.Sprintf("Name in template:\t%s", artifact.TemplateReferenceName))
+	if artifact.TemplateReferenceName != nil {
+		rows = append(rows, fmt.Sprintf("Name in template:\t%s", *artifact.TemplateReferenceName))
 	}
 	rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifact.Fingerprint))
 	createdAt, err := formattedTimestamp(artifact.CreatedAt, false)

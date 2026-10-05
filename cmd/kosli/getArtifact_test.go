@@ -133,3 +133,15 @@ func TestPrintArtifactsAsTableAcceptsStringTimestamps(t *testing.T) {
 	require.Contains(t, out, "History:\n")
 	require.Contains(t, out, "    cli reported")
 }
+
+func TestPrintArtifactsAsTablePrintsPresentButEmptyTrailRows(t *testing.T) {
+	// a key the server sends prints its row even when empty; only an absent
+	// or null key leaves the row out
+	raw := `[{"filename":"arti","flow_name":"flow-1","fingerprint":"abc",
+	  "trail_name":"","template_reference_name":""}]`
+	var buf bytes.Buffer
+	require.NoError(t, printArtifactsAsTable(raw, &buf, 0))
+	out := buf.String()
+	require.Regexp(t, `(?m)^Trail:\s*$`, out)
+	require.Regexp(t, `(?m)^Name in template:\s*$`, out)
+}
