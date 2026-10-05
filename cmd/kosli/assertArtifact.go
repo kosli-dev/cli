@@ -220,8 +220,16 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	var result assertArtifactResult
-	if err := json.Unmarshal([]byte(response.Body), &result); err != nil {
+	return assertCompliant(response.Body)
+}
+
+// assertCompliant decodes only the compliant field, so the exit code CI gates
+// on does not depend on the shape of anything the table printer reads.
+func assertCompliant(raw string) error {
+	var result struct {
+		Compliant bool `json:"compliant"`
+	}
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
 		return err
 	}
 	if !result.Compliant {

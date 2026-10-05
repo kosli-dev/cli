@@ -295,3 +295,18 @@ func TestPrintAssertAsTableReportsForControl(t *testing.T) {
 	require.Contains(t, out, "Environment: prod\n")
 	require.Contains(t, out, "artifact is missing required decision for control 'ctl-1'\n")
 }
+
+func TestAssertCompliantDependsOnlyOnCompliant(t *testing.T) {
+	// the exit code CI gates on must survive a type change in any field the
+	// table printer reads
+	raw := `{"compliant":true,"policy_evaluations":"not-a-list","flows":{"oops":1}}`
+	require.NoError(t, assertCompliant(raw))
+}
+
+func TestAssertCompliantFailsWhenNotCompliant(t *testing.T) {
+	require.EqualError(t, assertCompliant(`{"compliant":false}`), "Artifact is not compliant")
+}
+
+func TestAssertCompliantFailsWhenCompliantIsMissing(t *testing.T) {
+	require.EqualError(t, assertCompliant(`{"scope":"environment"}`), "Artifact is not compliant")
+}
