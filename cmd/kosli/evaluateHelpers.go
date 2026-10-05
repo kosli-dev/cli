@@ -55,6 +55,7 @@ const serverPolicyMaxBytes = 1 << 20 // 1 MiB
 var serverSideWaitOptions = evaluations.WaitOptions{}
 
 type commonEvaluateOptions struct {
+	ctx          context.Context
 	flowName     string
 	policyRef    string
 	output       string
@@ -100,24 +101,14 @@ func (o *commonEvaluateOptions) assertOnDeny() bool {
 	return !o.noAssert
 }
 
-func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (any, error) {
-	trailURL, err := url.JoinPath(global.Host, "api/v2/trails", global.Org, flowName, trailName)
-	if err != nil {
-		return nil, err
-	}
-
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    trailURL,
-		Token:  global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
+func fetchAndEnrichTrail(ctx context.Context, flowName, trailName string, attestations []string) (any, error) {
+	trail, err := kosliAPI().GetTrail(ctx, flowName, trailName)
 	if err != nil {
 		return nil, err
 	}
 
 	var trailData any
-	err = json.Unmarshal([]byte(response.Body), &trailData)
+	err = json.Unmarshal(trail.Raw, &trailData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse trail response: %v", err)
 	}

@@ -96,6 +96,7 @@ func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.ctx = cmd.Context()
 			return o.run(out, args)
 		},
 	}
@@ -122,7 +123,7 @@ func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
 
 	var trails []any
 	for _, trailName := range args {
-		trailData, err := fetchAndEnrichTrail(o.flowName, trailName, o.attestations)
+		trailData, err := fetchAndEnrichTrail(o.ctx, o.flowName, trailName, o.attestations)
 		if err != nil {
 			return err
 		}
