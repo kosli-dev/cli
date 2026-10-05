@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -287,7 +288,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 	}
 
 	return runServerEvaluation(out, serverEvaluation{
-		policyRef:    o.policyRef,
+		policyRefs:   []string{o.policyRef},
 		params:       o.params,
 		trails:       trails,
 		output:       o.output,
@@ -296,7 +297,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 }
 
 type serverEvaluation struct {
-	policyRef    string
+	policyRefs   []string
 	params       string
 	trails       []evaluations.TrailRef
 	decision     *evaluations.Decision
@@ -319,7 +320,7 @@ func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
 		return err
 	}
 
-	files, err := policyBundle(spec.policyRef)
+	files, err := policyBundle(spec.policyRefs)
 	if err != nil {
 		return err
 	}
@@ -469,14 +470,33 @@ func serverVerdict(result *evaluations.Result) *evaluate.Result {
 	return verdict
 }
 
-// policyBundle reads what --policy names as the bundle the API takes. The caps
-// are checked here so an oversized bundle is named as such rather than rejected
-// as an opaque 422, and the byte cap counts the names as well as the sources,
-// exactly as the API counts.
-func policyBundle(ref string) (map[string]string, error) {
-	files, err := policyBundleFiles(ref)
-	if err != nil {
-		return nil, err
+// policyBundle reads every --policy given as the one bundle the API takes, each
+// keyed relative to its own root. The caps are checked here so an oversized
+// bundle is named as such rather than rejected as an opaque 422, and the byte
+// cap counts the names as well as the sources, exactly as the API counts.
+func policyBundle(refs []string) (map[string]string, error) {
+	files := map[string]string{}
+	sentFrom := map[string]string{}
+	for _, ref := range refs {
+		rootFiles, err := policyBundleFiles(ref)
+		if err != nil {
+			return nil, err
+		}
+		for _, name := range slices.Sorted(maps.Keys(rootFiles)) {
+			first, clash := sentFrom[name]
+			if !clash {
+				files[name] = rootFiles[name]
+				sentFrom[name] = ref
+				continue
+			}
+			// Keeping either copy of a file the evaluator loads would decide
+			// for the author which policy runs.
+			if evaluatorLoads(name) {
+				return nil, fmt.Errorf("%s is in both --policy %s and --policy %s; "+
+					"the evaluator would load only one of them", name, first, ref)
+			}
+			logger.Warn("%s from --policy %s is not sent, as --policy %s already sends one", name, ref, first)
+		}
 	}
 
 	if len(files) > maxPolicyBundleFiles {
@@ -492,6 +512,19 @@ func policyBundle(ref string) (map[string]string, error) {
 			size, serverPolicyMaxBytes)
 	}
 	return files, nil
+}
+
+// evaluatorLoads mirrors the rule the evaluator reads a bundle by: modules
+// other than tests, and data files. Every other entry travels unread.
+func evaluatorLoads(name string) bool {
+	switch path.Base(name) {
+	case "data.json", "data.yaml", "data.yml":
+		return true
+	}
+	if strings.HasSuffix(name, ".ergo.yaml") || strings.HasSuffix(name, ".ergo.yml") {
+		return true
+	}
+	return strings.HasSuffix(name, ".rego") && !strings.HasSuffix(name, "_test.rego")
 }
 
 func policyBundleFiles(ref string) (map[string]string, error) {

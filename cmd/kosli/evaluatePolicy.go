@@ -75,7 +75,7 @@ kosli evaluate policy \
 
 type evaluatePolicyOptions struct {
 	contexts    []string
-	policyRef   string
+	policyRefs  []string
 	params      string
 	output      string
 	assert      bool
@@ -110,7 +110,7 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringArrayVar(&o.contexts, "context", []string{}, policyContextFlag)
-	cmd.Flags().StringVarP(&o.policyRef, "policy", "p", "", "Path of a Rego policy file, or of a directory sent as one bundle.")
+	cmd.Flags().StringArrayVarP(&o.policyRefs, "policy", "p", []string{}, "Path of a Rego policy file, or of a directory sent as one bundle.")
 	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, policyAssertFlag)
@@ -131,8 +131,10 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 func (o *evaluatePolicyOptions) run(out io.Writer) error {
 	// Fetching a policy from a URL is on its way out, so this command does not
 	// offer it, though the older evaluate commands still do.
-	if isRemotePolicyRef(o.policyRef) {
-		return fmt.Errorf("--policy takes a file or a directory on this machine, not a URL")
+	for _, ref := range o.policyRefs {
+		if isRemotePolicyRef(ref) {
+			return fmt.Errorf("--policy takes a file or a directory on this machine, not a URL")
+		}
 	}
 
 	// Refused before the request: a format refused where it is printed would
@@ -152,7 +154,7 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 	}
 
 	return runServerEvaluation(out, serverEvaluation{
-		policyRef:    o.policyRef,
+		policyRefs:   o.policyRefs,
 		params:       o.params,
 		trails:       trails,
 		decision:     decision,

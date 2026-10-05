@@ -529,6 +529,114 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADirectoryLeavesItsDotDirectori
 	require.Equal(suite.T(), []string{"policy.rego"}, sortedKeys(files))
 }
 
+func (suite *EvaluatePolicyCommandTestSuite) policyCmd(host string, roots ...string) string {
+	policies := ""
+	for _, root := range roots {
+		policies += " --policy " + root
+	}
+	return fmt.Sprintf("evaluate policy --context trail=my-flow/my-trail%s "+
+		"--host %s --org test-org --api-token test-token --max-api-retries 0", policies, host)
+}
+
+// A library is imported by its package, not its path, so it can be kept
+// wherever its own repository keeps it.
+func (suite *EvaluatePolicyCommandTestSuite) TestAPolicyAndALibraryTravelAsOneBundle() {
+	control := suite.T().TempDir()
+	writeFile(suite.T(), filepath.Join(control, "policy.rego"), "package policy\nimport data.ergo\n")
+	writeFile(suite.T(), filepath.Join(control, "README.md"), "control notes\n")
+	library := suite.T().TempDir()
+	writeFile(suite.T(), filepath.Join(library, "ergo.rego"), "package ergo\n")
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.policyCmd(server.URL, control, filepath.Join(library, "ergo.rego")))
+
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), fake.created, 1, "one evaluation, not one per --policy")
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
+	require.Equal(suite.T(), []string{"README.md", "ergo.rego", "policy.rego"}, sortedKeys(files))
+	require.Equal(suite.T(), "package ergo\n", files["ergo.rego"])
+}
+
+// The evaluator reads a data file into data at its directory's path, so each
+// root keeps its own layout, as with opa eval -d one -d two.
+func (suite *EvaluatePolicyCommandTestSuite) TestEachRootIsKeyedRelativeToItself() {
+	control := suite.T().TempDir()
+	writeFile(suite.T(), filepath.Join(control, "policy.rego"), "package policy\n")
+	library := suite.T().TempDir()
+	writeFile(suite.T(), filepath.Join(library, "lib", "ergo.rego"), "package ergo\n")
+	writeFile(suite.T(), filepath.Join(library, "controls", "x", "data.yaml"), "a: 1\n")
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.policyCmd(server.URL, control, library))
+
+	require.NoError(suite.T(), err)
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
+	require.Equal(suite.T(), []string{"controls/x/data.yaml", "lib/ergo.rego", "policy.rego"}, sortedKeys(files))
+}
+
+// Keeping either one would change what the policy decides.
+func (suite *EvaluatePolicyCommandTestSuite) TestTwoLoadedFilesUnderOneNameAreRefused() {
+	for _, name := range []string{"policy.rego", "data.yaml", "data.json", "policy.ergo.yml"} {
+		suite.Run(name, func() {
+			first := suite.T().TempDir()
+			second := suite.T().TempDir()
+			writeFile(suite.T(), filepath.Join(first, "main.rego"), "package policy\n")
+			writeFile(suite.T(), filepath.Join(first, name), "x\n")
+			writeFile(suite.T(), filepath.Join(second, name), "y\n")
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, _, _, _, err := executeCommandC(suite.policyCmd(server.URL, first, second))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), name)
+			require.Contains(suite.T(), err.Error(), first)
+			require.Contains(suite.T(), err.Error(), second)
+			require.Empty(suite.T(), fake.created, "nothing is sent")
+		})
+	}
+}
+
+// Two files that are only read by people cannot change the verdict, and the
+// policy named first is the one whose notes a reader expects.
+func (suite *EvaluatePolicyCommandTestSuite) TestTheFirstPolicyKeepsANameOnlyPeopleRead() {
+	for _, name := range []string{"README.md", "policy_test.rego"} {
+		suite.Run(name, func() {
+			first := suite.T().TempDir()
+			second := suite.T().TempDir()
+			writeFile(suite.T(), filepath.Join(first, "policy.rego"), "package policy\n")
+			writeFile(suite.T(), filepath.Join(first, name), "first\n")
+			writeFile(suite.T(), filepath.Join(second, "ergo.rego"), "package ergo\n")
+			writeFile(suite.T(), filepath.Join(second, name), "second\n")
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, _, _, stderr, err := executeCommandC(suite.policyCmd(server.URL, first, second))
+
+			require.NoError(suite.T(), err)
+			files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
+			require.Equal(suite.T(), "first\n", files[name])
+			require.Contains(suite.T(), files, "ergo.rego")
+			require.Contains(suite.T(), stderr, name)
+			require.Contains(suite.T(), stderr, second, "the copy left behind is named")
+		})
+	}
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestTheCapsCountEveryRootTogether() {
+	first := suite.T().TempDir()
+	second := suite.T().TempDir()
+	for i := 0; i <= maxPolicyBundleFiles/2; i++ {
+		writeFile(suite.T(), filepath.Join(first, fmt.Sprintf("a-%d.rego", i)), "package a\n")
+		writeFile(suite.T(), filepath.Join(second, fmt.Sprintf("b-%d.rego", i)), "package b\n")
+	}
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.policyCmd(server.URL, first, second))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), fmt.Sprintf("%d", maxPolicyBundleFiles))
+	require.Empty(suite.T(), fake.created)
+}
+
 // The API takes at least one file.
 func (suite *EvaluatePolicyCommandTestSuite) TestAnEmptyDirectoryIsRefused() {
 	directory := suite.T().TempDir()
