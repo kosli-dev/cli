@@ -20,9 +20,12 @@ type snapshotReporter struct {
 	// ensure prepares the Environment before its first report, e.g. by
 	// creating it under --auto-environment.
 	ensure func(envName, envType string) error
-	// ensured holds the Environments already prepared, so watch mode and
-	// multi-environment runs prepare each one only before its first report.
-	// mu guards it: snapshot paths --watch reports from one goroutine per path.
+	// ensured holds the Environment name and type pairs already prepared, so
+	// watch mode and multi-environment runs prepare each one only before its
+	// first report. A failed ensure is not recorded, so the next report retries.
+	// mu guards it and is held across ensure on purpose: snapshot paths --watch
+	// reports from one goroutine per path, and two concurrent first reports
+	// must not both create the Environment.
 	mu      sync.Mutex
 	ensured map[string]bool
 }
@@ -74,7 +77,8 @@ func (r *snapshotReporter) report(envName, envType string, collect snapshotColle
 func (r *snapshotReporter) ensureOnce(envName, envType string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if r.ensured[envName] {
+	key := envName + "/" + envType
+	if r.ensured[key] {
 		return nil
 	}
 	if err := r.ensure(envName, envType); err != nil {
@@ -83,6 +87,6 @@ func (r *snapshotReporter) ensureOnce(envName, envType string) error {
 	if r.ensured == nil {
 		r.ensured = map[string]bool{}
 	}
-	r.ensured[envName] = true
+	r.ensured[key] = true
 	return nil
 }

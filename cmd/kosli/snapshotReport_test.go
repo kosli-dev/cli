@@ -219,3 +219,26 @@ func TestSnapshotReporterIsSafeForConcurrentReports(t *testing.T) {
 
 	require.Equal(t, []string{"prod/server"}, ensured.calls)
 }
+
+func TestSnapshotReporterEnsuresAnEnvironmentAgainForAnotherType(t *testing.T) {
+	server, _ := newFakeSnapshotServer(t)
+	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
+
+	require.NoError(t, reporter.report("prod", "server", twoContainers))
+	require.NoError(t, reporter.report("prod", "docker", twoContainers))
+
+	require.Equal(t, []string{"prod/server", "prod/docker"}, ensured.calls)
+}
+
+func TestSnapshotReporterRetriesAnEnvironmentItCouldNotEnsure(t *testing.T) {
+	server, fake := newFakeSnapshotServer(t)
+	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
+	ensured.err = errors.New("network unreachable")
+
+	require.EqualError(t, reporter.report("prod", "server", twoContainers), "network unreachable")
+	ensured.err = nil
+	require.NoError(t, reporter.report("prod", "server", twoContainers))
+
+	require.Equal(t, []string{"prod/server", "prod/server"}, ensured.calls)
+	require.Len(t, fake.recorded, 1)
+}
