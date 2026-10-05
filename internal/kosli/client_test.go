@@ -86,3 +86,12 @@ func TestSendReportsA201AsCreated(t *testing.T) {
 		})
 	}
 }
+
+func TestEndpointEscapesEachPathSegment(t *testing.T) {
+	client := New(nil, "https://app.kosli.com", "test-org", "test-token")
+
+	endpoint, err := client.endpoint("trails", "test-org", "my flow", "trail?#1")
+
+	require.NoError(t, err)
+	require.Equal(t, "https://app.kosli.com/api/v2/trails/test-org/my%20flow/trail%3F%231", endpoint)
+}
