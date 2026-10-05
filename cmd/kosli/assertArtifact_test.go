@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
+	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -259,4 +261,52 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 // a normal test function and pass our suite to suite.Run
 func TestAssertArtifactCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(AssertArtifactCommandTestSuite))
+}
+
+func TestPrintAssertAsTableToleratesMissingFields(t *testing.T) {
+	var buf bytes.Buffer
+	defer restoreLogger(log.NewLogger(&buf, &buf, false))()
+
+	require.NotPanics(t, func() {
+		require.NoError(t, printAssertAsTable(`{"compliant":true}`, &buf, 0))
+	})
+	require.Equal(t, "COMPLIANT\n", buf.String())
+}
+
+func TestPrintAssertAsTableReportsForControl(t *testing.T) {
+	var buf bytes.Buffer
+	defer restoreLogger(log.NewLogger(&buf, &buf, false))()
+
+	raw := `{
+	  "scope": "environment", "compliant": false, "environment": "prod", "html_url": "https://app/x",
+	  "policy_evaluations": [{
+	    "policy_name": "p1", "status": "NON_COMPLIANT",
+	    "rule_evaluations": [{
+	      "ignored": false, "satisfied": false,
+	      "rule": {"definition": {"name": "decision", "type": "decision"}},
+	      "resolutions": [{"type": "missing_attestation", "context": {"for_control": "ctl-1"}}]
+	    }]
+	  }],
+	  "flows": []
+	}`
+	require.NoError(t, printAssertAsTable(raw, &buf, 0))
+	out := buf.String()
+	require.Contains(t, out, "Error: NON-COMPLIANT\n")
+	require.Contains(t, out, "Environment: prod\n")
+	require.Contains(t, out, "artifact is missing required decision for control 'ctl-1'\n")
+}
+
+func TestAssertCompliantDependsOnlyOnCompliant(t *testing.T) {
+	// the exit code CI gates on must survive a type change in any field the
+	// table printer reads
+	raw := `{"compliant":true,"policy_evaluations":"not-a-list","flows":{"oops":1}}`
+	require.NoError(t, assertCompliant(raw))
+}
+
+func TestAssertCompliantFailsWhenNotCompliant(t *testing.T) {
+	require.EqualError(t, assertCompliant(`{"compliant":false}`), "Artifact is not compliant")
+}
+
+func TestAssertCompliantFailsWhenCompliantIsMissing(t *testing.T) {
+	require.EqualError(t, assertCompliant(`{"scope":"environment"}`), "Artifact is not compliant")
 }

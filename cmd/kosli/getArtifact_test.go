@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
@@ -103,4 +104,44 @@ func (suite *GetArtifactCommandTestSuite) TestGetArtifactCmd() {
 // a normal test function and pass our suite to suite.Run
 func TestGetArtifactCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(GetArtifactCommandTestSuite))
+}
+
+func TestPrintArtifactsAsTableToleratesMissingCollections(t *testing.T) {
+	// a server response without created_at, running, exited or history must
+	// render N/A and omit those sections rather than panic
+	raw := `[{"filename":"arti","flow_name":"flow-1","fingerprint":"abc","git_commit":"0fc1ba9",
+	  "commit_url":"https://c","build_url":"https://b","html_url":"https://h","state":"COMPLIANT"}]`
+	var buf bytes.Buffer
+	require.NotPanics(t, func() {
+		require.NoError(t, printArtifactsAsTable(raw, &buf, 0))
+	})
+	out := buf.String()
+	require.Regexp(t, `Created on:\s+N/A\n`, out)
+	require.NotContains(t, out, "History:")
+	require.NotContains(t, out, "Running in environments:")
+	require.NotContains(t, out, "Trail:")
+}
+
+func TestPrintArtifactsAsTableAcceptsStringTimestamps(t *testing.T) {
+	// the artifacts API returns created_at as a numeric string, not a number
+	raw := `[{"filename":"arti","flow_name":"flow-1","fingerprint":"abc","created_at":"1452902400.25",
+	  "history":[{"event":"cli reported","timestamp":"1452902400"}]}]`
+	var buf bytes.Buffer
+	require.NoError(t, printArtifactsAsTable(raw, &buf, 0))
+	out := buf.String()
+	require.NotRegexp(t, `Created on:\s+N/A`, out)
+	require.Contains(t, out, "History:\n")
+	require.Contains(t, out, "    cli reported")
+}
+
+func TestPrintArtifactsAsTablePrintsPresentButEmptyTrailRows(t *testing.T) {
+	// a key the server sends prints its row even when empty; only an absent
+	// or null key leaves the row out
+	raw := `[{"filename":"arti","flow_name":"flow-1","fingerprint":"abc",
+	  "trail_name":"","template_reference_name":""}]`
+	var buf bytes.Buffer
+	require.NoError(t, printArtifactsAsTable(raw, &buf, 0))
+	out := buf.String()
+	require.Regexp(t, `(?m)^Trail:\s*$`, out)
+	require.Regexp(t, `(?m)^Name in template:\s*$`, out)
 }

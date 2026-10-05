@@ -77,6 +77,58 @@ type assertArtifactOptions struct {
 	output             string
 }
 
+type assertArtifactResult struct {
+	Scope             string             `json:"scope"`
+	Compliant         bool               `json:"compliant"`
+	Environment       string             `json:"environment"`
+	HTMLURL           string             `json:"html_url"`
+	PolicyEvaluations []policyEvaluation `json:"policy_evaluations"`
+	Flows             []assertedFlow     `json:"flows"`
+}
+
+type policyEvaluation struct {
+	PolicyName      string           `json:"policy_name"`
+	Status          string           `json:"status"`
+	RuleEvaluations []ruleEvaluation `json:"rule_evaluations"`
+}
+
+type ruleEvaluation struct {
+	Ignored     bool             `json:"ignored"`
+	Satisfied   bool             `json:"satisfied"`
+	Rule        evaluatedRule    `json:"rule"`
+	Resolutions []ruleResolution `json:"resolutions"`
+}
+
+type evaluatedRule struct {
+	Definition struct {
+		Name string `json:"name"`
+		Type string `json:"type"`
+	} `json:"definition"`
+}
+
+type ruleResolution struct {
+	Type    string `json:"type"`
+	Context struct {
+		ForControl string `json:"for_control"`
+	} `json:"context"`
+}
+
+type assertedFlow struct {
+	Flow             string `json:"flow"`
+	Trail            string `json:"trail"`
+	ComplianceStatus struct {
+		AttestationsStatuses []attestationStatus `json:"attestations_statuses"`
+	} `json:"compliance_status"`
+}
+
+type attestationStatus struct {
+	AttestationName string `json:"attestation_name"`
+	AttestationType string `json:"attestation_type"`
+	Status          string `json:"status"`
+	IsCompliant     bool   `json:"is_compliant"`
+	Unexpected      bool   `json:"unexpected"`
+}
+
 func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	o := &assertArtifactOptions{}
 	o.fingerprintOptions = new(fingerprintOptions)
@@ -168,119 +220,98 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	var evaluationResult map[string]any
-	err = json.Unmarshal([]byte(response.Body), &evaluationResult)
-	if err != nil {
+	return assertCompliant(response.Body)
+}
+
+// assertCompliant decodes only the compliant field, so the exit code CI gates
+// on does not depend on the shape of anything the table printer reads.
+func assertCompliant(raw string) error {
+	var result struct {
+		Compliant bool `json:"compliant"`
+	}
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
 		return err
 	}
-
-	isCompliant := evaluationResult["compliant"].(bool)
-	if !isCompliant {
+	if !result.Compliant {
 		return fmt.Errorf("Artifact is not compliant")
 	}
 	return nil
 }
 
 func printAssertAsTable(raw string, out io.Writer, page int) error {
-	var evaluationResult map[string]any
-	err := json.Unmarshal([]byte(raw), &evaluationResult)
-	if err != nil {
+	var result assertArtifactResult
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
 		return err
 	}
-	scope := evaluationResult["scope"].(string)
-	isCompliant := evaluationResult["compliant"].(bool)
 
-	if isCompliant {
+	if result.Compliant {
 		logger.Info("COMPLIANT")
 	} else {
 		logger.Info("Error: NON-COMPLIANT")
 	}
 
-	if scope == "environment" || scope == "policy" {
-		if scope == "environment" {
-			logger.Info("Environment: %v", evaluationResult["environment"].(string))
+	if result.Scope == "environment" || result.Scope == "policy" {
+		if result.Scope == "environment" {
+			logger.Info("Environment: %v", result.Environment)
 		}
 		logger.Info("%-32v %-30v", "Policy-name", "status")
-		policyEvaluations := evaluationResult["policy_evaluations"].([]any)
-		for _, item := range policyEvaluations {
-			policyEvaluation := item.(map[string]any)
-			policyName := policyEvaluation["policy_name"]
-			policyStatus := policyEvaluation["status"]
-			logger.Info("  %-32v %-30v", policyName, policyStatus)
-			if policyStatus != "COMPLIANT" {
-				ruleEvaluations := policyEvaluation["rule_evaluations"].([]any)
-				var failures []string
-				for _, item2 := range ruleEvaluations {
-					ruleEvaluation := item2.(map[string]any)
-					ignored := ruleEvaluation["ignored"].(bool)
-					satisfied, _ := ruleEvaluation["satisfied"].(bool)
-					if !ignored && !satisfied {
-						rule := ruleEvaluation["rule"].(map[string]any)
-						resolutions := ruleEvaluation["resolutions"].([]any)
-						for _, item3 := range resolutions {
-							resolution := item3.(map[string]any)
-							resolutionType := resolution["type"].(string)
-							ruleDefinition := rule["definition"].(map[string]any)
-							attestationName := ruleDefinition["name"]
-							attestationType := ruleDefinition["type"]
-							context, _ := resolution["context"].(map[string]any)
-							forControl, _ := context["for_control"].(string)
-							switch resolutionType {
-							case "legacy_flow":
-								failures = append(failures, "artifact comes from a legacy flow and does not have the new attestations")
-							case "missing_attestation":
-								if forControl != "" {
-									failures = append(failures, fmt.Sprintf("artifact is missing required %v for control '%v'", attestationType, forControl))
-								} else {
-									failures = append(failures, fmt.Sprintf("artifact is missing required '%v' (type: %v) attestation in trail", attestationName, attestationType))
-								}
-							case "non_compliant_attestation":
-								if forControl != "" {
-									failures = append(failures, fmt.Sprintf("decision for control '%v' is non-compliant in trail", forControl))
-								} else {
-									failures = append(failures, fmt.Sprintf("attestation '%v' is non-compliant in trail", attestationName))
-								}
-							case "non_compliant_in_trail":
-								failures = append(failures, "artifact is not compliant in trail")
-							}
-						}
-					}
-				}
-				for _, fail := range failures {
-					logger.Info("    %v", fail)
-				}
+		for _, pe := range result.PolicyEvaluations {
+			logger.Info("  %-32v %-30v", pe.PolicyName, pe.Status)
+			if pe.Status == "COMPLIANT" {
+				continue
+			}
+			for _, failure := range policyFailures(pe) {
+				logger.Info("    %v", failure)
 			}
 		}
 		logger.Info("")
 	}
 
-	flows := evaluationResult["flows"].([]any)
-	for _, item := range flows {
-		item := item.(map[string]any)
-		flow := item["flow"].(string)
-		trail, _ := item["trail"].(string)
-		complianceStatus, _ := item["compliance_status"].(map[string]any)
-		attestationsStatuses, _ := complianceStatus["attestations_statuses"].([]any)
-
-		logger.Info("Flow: %v\n  Trail: %v", flow, trail)
+	for _, flow := range result.Flows {
+		logger.Info("Flow: %v\n  Trail: %v", flow.Flow, flow.Trail)
 		logger.Info("  %-32v %-30v %-15v %-10v", "Attestation-name", "type", "status", "compliant")
-
-		for _, item := range attestationsStatuses {
-			attestation := item.(map[string]any)
-			name := attestation["attestation_name"]
-			attType := attestation["attestation_type"]
-			status := attestation["status"]
-			isCompliant, _ := attestation["is_compliant"].(bool)
-			unexpected, _ := attestation["unexpected"].(bool)
+		for _, att := range flow.ComplianceStatus.AttestationsStatuses {
 			unexpectedStr := ""
-			if unexpected {
+			if att.Unexpected {
 				unexpectedStr = "unexpected"
 			}
-
-			logger.Info("    %-32v %-30v %-15v %-10v %-10v", name, attType, status, isCompliant, unexpectedStr)
+			logger.Info("    %-32v %-30v %-15v %-10v %-10v", att.AttestationName, att.AttestationType, att.Status, att.IsCompliant, unexpectedStr)
 		}
-		logger.Info("  See more details at %s", evaluationResult["html_url"].(string))
+		logger.Info("  See more details at %s", result.HTMLURL)
 	}
 
 	return nil
+}
+
+func policyFailures(pe policyEvaluation) []string {
+	var failures []string
+	for _, re := range pe.RuleEvaluations {
+		if re.Ignored || re.Satisfied {
+			continue
+		}
+		name := re.Rule.Definition.Name
+		attType := re.Rule.Definition.Type
+		for _, res := range re.Resolutions {
+			forControl := res.Context.ForControl
+			switch res.Type {
+			case "legacy_flow":
+				failures = append(failures, "artifact comes from a legacy flow and does not have the new attestations")
+			case "missing_attestation":
+				if forControl != "" {
+					failures = append(failures, fmt.Sprintf("artifact is missing required %v for control '%v'", attType, forControl))
+				} else {
+					failures = append(failures, fmt.Sprintf("artifact is missing required '%v' (type: %v) attestation in trail", name, attType))
+				}
+			case "non_compliant_attestation":
+				if forControl != "" {
+					failures = append(failures, fmt.Sprintf("decision for control '%v' is non-compliant in trail", forControl))
+				} else {
+					failures = append(failures, fmt.Sprintf("attestation '%v' is non-compliant in trail", name))
+				}
+			case "non_compliant_in_trail":
+				failures = append(failures, "artifact is not compliant in trail")
+			}
+		}
+	}
+	return failures
 }

@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -1398,4 +1399,17 @@ func TestValidateSliceValues(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFormattedTimestampTreatsEmptyJSONNumberAsMissing(t *testing.T) {
+	got, err := formattedTimestamp(json.Number(""), false)
+	require.NoError(t, err)
+	require.Equal(t, "N/A", got)
+
+	got, err = formattedTimestamp(json.Number("1452902400.5"), false)
+	require.NoError(t, err)
+	require.NotEqual(t, "N/A", got)
+
+	_, err = formattedTimestamp(json.Number("not-a-number"), false)
+	require.Error(t, err)
 }

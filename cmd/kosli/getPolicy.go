@@ -19,6 +19,18 @@ type getPolicyOptions struct {
 	output string
 }
 
+type policyResponse struct {
+	Name          string          `json:"name"`
+	Description   string          `json:"description"`
+	CreatedAt     json.Number     `json:"created_at"`
+	ConsumingEnvs []string        `json:"consuming_envs"`
+	Versions      []policyVersion `json:"versions"`
+}
+
+type policyVersion struct {
+	PolicyYaml string `json:"policy_yaml"`
+}
+
 func newGetPolicyCmd(out io.Writer) *cobra.Command {
 	o := new(getPolicyOptions)
 	cmd := &cobra.Command{
@@ -67,35 +79,30 @@ func (o *getPolicyOptions) run(out io.Writer, args []string) error {
 }
 
 func printPolicyAsTable(raw string, out io.Writer, page int) error {
-	var policy map[string]any
-	err := json.Unmarshal([]byte(raw), &policy)
+	var policy policyResponse
+	if err := json.Unmarshal([]byte(raw), &policy); err != nil {
+		return err
+	}
+	if len(policy.Versions) == 0 {
+		return fmt.Errorf("policy '%s' has no versions", policy.Name)
+	}
+	createdAt, err := formattedTimestamp(policy.CreatedAt, false)
 	if err != nil {
 		return err
 	}
 
-	createdAt, err := formattedTimestamp(policy["created_at"], false)
-	if err != nil {
-		return err
+	latest := policy.Versions[len(policy.Versions)-1]
+	policyYamlIndented := "\t" + strings.ReplaceAll(latest.PolicyYaml, "\n", "\n\t")
+
+	rows := []string{
+		fmt.Sprintf("Name:\t%s", policy.Name),
+		fmt.Sprintf("Description:\t%s", policy.Description),
+		fmt.Sprintf("Created At:\t%s", createdAt),
+		fmt.Sprintf("Versions:\t%d", len(policy.Versions)),
+		fmt.Sprintf("Attached to environments:\t%s", policy.ConsumingEnvs),
+		fmt.Sprintf("Policy content:\n%s", policyYamlIndented),
 	}
-
-	consumingEnvs := policy["consuming_envs"].([]any)
-
-	versions := policy["versions"].([]any)
-
-	latestVersion := versions[len(versions)-1].(map[string]any)
-	policyYaml := latestVersion["policy_yaml"].(string)
-	policyYamlIndented := "\t" + strings.ReplaceAll(policyYaml, "\n", "\n\t")
-
-	header := []string{}
-	rows := []string{}
-	rows = append(rows, fmt.Sprintf("Name:\t%s", policy["name"]))
-	rows = append(rows, fmt.Sprintf("Description:\t%s", policy["description"]))
-	rows = append(rows, fmt.Sprintf("Created At:\t%s", createdAt))
-	rows = append(rows, fmt.Sprintf("Versions:\t%d", len(versions)))
-	rows = append(rows, fmt.Sprintf("Attached to environments:\t%s", consumingEnvs))
-	rows = append(rows, fmt.Sprintf("Policy content:\n%s", policyYamlIndented))
-
-	tabFormattedPrint(out, header, rows)
+	tabFormattedPrint(out, []string{}, rows)
 
 	return nil
 }
