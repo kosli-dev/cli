@@ -3,11 +3,8 @@ package main
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/aws"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -139,36 +136,14 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotS3Options) run(args []string) error {
 	envName := args[0]
-
-	if err := ensureEnvironment(envName, "S3"); err != nil {
-		return err
-	}
-
-	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/S3")
-	if err != nil {
-		return err
-	}
-
-	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, o.downloadLimits, logger)
-	if err != nil {
-		return err
-	}
-	payload := &aws.S3EnvRequest{
-		Artifacts: s3Data,
-	}
-
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("bucket %s was reported to environment %s", o.bucket, envName)
-	}
-	return err
+	return newSnapshotReporter().report(envName, "S3", func() (any, string, error) {
+		s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, o.downloadLimits, logger)
+		if err != nil {
+			return nil, "", err
+		}
+		reported := fmt.Sprintf("bucket %s was reported to environment %s", o.bucket, envName)
+		return &aws.S3EnvRequest{Artifacts: s3Data}, reported, nil
+	})
 }
 
 // defaultDownloadBudget is aws.DefaultDownloadLimits.BytesInFlight as the flag

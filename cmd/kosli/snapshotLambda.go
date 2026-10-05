@@ -1,13 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/aws"
 	"github.com/kosli-dev/cli/internal/filters"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -148,34 +146,12 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotLambdaOptions) run(args []string) error {
 	envName := args[0]
-
-	if err := ensureEnvironment(envName, "lambda"); err != nil {
-		return err
-	}
-
-	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/lambda")
-	if err != nil {
-		return err
-	}
-	lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.filter)
-	if err != nil {
-		return err
-	}
-
-	payload := &aws.LambdaEnvRequest{
-		Artifacts: lambdaData,
-	}
-
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("%d lambda functions were reported to environment %s", len(lambdaData), envName)
-	}
-	return err
+	return newSnapshotReporter().report(envName, "lambda", func() (any, string, error) {
+		lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.filter)
+		if err != nil {
+			return nil, "", err
+		}
+		reported := fmt.Sprintf("%d lambda functions were reported to environment %s", len(lambdaData), envName)
+		return &aws.LambdaEnvRequest{Artifacts: lambdaData}, reported, nil
+	})
 }

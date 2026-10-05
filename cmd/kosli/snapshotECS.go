@@ -1,13 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/aws"
 	"github.com/kosli-dev/cli/internal/filters"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -194,35 +192,12 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
-
-	if err := ensureEnvironment(envName, "ECS"); err != nil {
-		return err
-	}
-
-	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/ECS")
-	if err != nil {
-		return err
-	}
-
-	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.clustersFilter, o.serviceFilter, logger)
-	if err != nil {
-		return err
-	}
-
-	payload := &aws.EcsEnvRequest{
-		Artifacts: tasksData,
-	}
-
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("[%d] containers were reported to environment %s", len(payload.Artifacts), envName)
-	}
-	return err
+	return newSnapshotReporter().report(envName, "ECS", func() (any, string, error) {
+		tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.clustersFilter, o.serviceFilter, logger)
+		if err != nil {
+			return nil, "", err
+		}
+		reported := fmt.Sprintf("[%d] containers were reported to environment %s", len(tasksData), envName)
+		return &aws.EcsEnvRequest{Artifacts: tasksData}, reported, nil
+	})
 }
