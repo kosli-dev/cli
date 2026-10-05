@@ -62,6 +62,10 @@ func (c *Client) endpoint(segments ...string) (string, error) {
 }
 
 func (c *Client) send(ctx context.Context, params *requests.RequestParams) (*Result, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	params.Context = ctx
 	params.Token = c.token
 	response, err := c.sender.Do(params)
 	if err != nil {

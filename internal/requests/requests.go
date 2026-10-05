@@ -124,6 +124,9 @@ type RequestParams struct {
 	Password          string
 	Token             string
 	DryRun            bool
+	// Context cancels the request, including its retries. Nil means
+	// context.Background().
+	Context context.Context
 	// DisableConflictRetry stops the client retrying on HTTP 409 for this
 	// request. By default 409 is retried (it signals a transient lock
 	// conflict), but some endpoints use 409 for a permanent client error
@@ -163,7 +166,11 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]any, error) 
 		}
 	}
 
-	req, err := http.NewRequest(p.Method, p.URL, body)
+	ctx := p.Context
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	req, err := http.NewRequestWithContext(ctx, p.Method, p.URL, body)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create %s request to %s : %v", p.Method, p.URL, err)
 	}
@@ -312,7 +319,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		resp, err := c.HttpClient.Do(req)
 		if err != nil {
 			// err from retryable client is detailed enough
-			return nil, fmt.Errorf("%v", err)
+			return nil, fmt.Errorf("%w", err)
 		}
 
 		defer func() {
