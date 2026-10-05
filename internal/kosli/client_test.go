@@ -170,3 +170,30 @@ func TestDryRunDoesNotSendAWriteAndReturnsAnEmptyResult(t *testing.T) {
 		})
 	}
 }
+
+type namedThing struct {
+	Name string `json:"name"`
+}
+
+func TestDecodeFillsTheValueAndKeepsTheResult(t *testing.T) {
+	result := &Result{Raw: []byte(`{"name":"trail-1","unread":true}`), Created: true}
+
+	response, err := decode[namedThing](result)
+
+	require.NoError(t, err)
+	require.Equal(t, namedThing{Name: "trail-1"}, response.Value)
+	require.Equal(t, *result, response.Result)
+}
+
+func TestDecodeOfADryRunResultLeavesTheValueZero(t *testing.T) {
+	response, err := decode[namedThing](&Result{})
+
+	require.NoError(t, err)
+	require.Equal(t, namedThing{}, response.Value)
+}
+
+func TestDecodeOfABodyThatDoesNotMatchIsAnError(t *testing.T) {
+	_, err := decode[namedThing](&Result{Raw: []byte(`["not","an","object"]`)})
+
+	require.Error(t, err)
+}
