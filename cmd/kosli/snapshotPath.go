@@ -3,15 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
 
 	"github.com/rjeczalik/notify"
 
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/server"
 	"github.com/spf13/cobra"
 )
@@ -87,10 +84,6 @@ func newSnapshotPathCmd(out io.Writer) *cobra.Command {
 func (o *snapshotPathOptions) run(args []string) error {
 	envName := args[0]
 
-	if err := ensureEnvironment(envName, "server"); err != nil {
-		return err
-	}
-
 	// load path spec from flags
 	ps := &server.PathsSpec{
 		Version: 1,
@@ -102,13 +95,14 @@ func (o *snapshotPathOptions) run(args []string) error {
 		},
 	}
 
-	err := reportArtifacts(ps, envName)
+	reporter := newSnapshotReporter()
+	err := reportArtifacts(reporter, ps, envName)
 	if err != nil {
 		return err
 	}
 
 	if o.watch {
-		err := watchPath(ps, o.path, envName)
+		err := watchPath(reporter, ps, o.path, envName)
 		if err != nil {
 			return err
 		}
@@ -117,34 +111,18 @@ func (o *snapshotPathOptions) run(args []string) error {
 	return nil
 }
 
-func reportArtifacts(ps *server.PathsSpec, envName string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/server")
-	if err != nil {
-		return err
-	}
-	artifacts, err := server.CreatePathsArtifactsData(ps, logger)
-	if err != nil {
-		return err
-	}
-	payload := &server.ServerEnvRequest{
-		Artifacts: artifacts,
-	}
-
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
-	}
-	return err
+func reportArtifacts(reporter *snapshotReporter, ps *server.PathsSpec, envName string) error {
+	return reporter.report(envName, "server", func() (any, string, error) {
+		artifacts, err := server.CreatePathsArtifactsData(ps, logger)
+		if err != nil {
+			return nil, "", err
+		}
+		reported := fmt.Sprintf("[%d] artifacts were reported to environment %s", len(artifacts), envName)
+		return &server.ServerEnvRequest{Artifacts: artifacts}, reported, nil
+	})
 }
 
-func watchPath(ps *server.PathsSpec, path, envName string) error {
+func watchPath(reporter *snapshotReporter, ps *server.PathsSpec, path, envName string) error {
 	events := make(chan notify.EventInfo, 1)
 	if err := watchRecursive(path, events); err != nil {
 		return fmt.Errorf("error setting up watcher: %v", err)
@@ -162,7 +140,7 @@ func watchPath(ps *server.PathsSpec, path, envName string) error {
 		case event := <-events:
 			logger.Info("event detected: %s on %s", event.Event().String(), event.Path())
 
-			err := reportArtifacts(ps, envName)
+			err := reportArtifacts(reporter, ps, envName)
 			if err != nil {
 				return err
 			}

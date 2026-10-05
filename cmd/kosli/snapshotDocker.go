@@ -3,15 +3,13 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 	"strings"
 
 	cerrdefs "github.com/containerd/errdefs"
 	"github.com/kosli-dev/cli/internal/digest"
 	log "github.com/kosli-dev/cli/internal/logger"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/server"
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
@@ -66,37 +64,14 @@ func newSnapshotDockerCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotDockerOptions) run(args []string) error {
 	envName := args[0]
-
-	if err := ensureEnvironment(envName, "docker"); err != nil {
-		return err
-	}
-
-	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/docker")
-	if err != nil {
-		return err
-	}
-
-	artifacts, err := CreateDockerArtifactsData()
-	if err != nil {
-		return err
-	}
-
-	payload := &server.ServerEnvRequest{
-		Artifacts: artifacts,
-	}
-
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("[%d] containers were reported to environment %s", len(payload.Artifacts), envName)
-	}
-	return err
+	return newSnapshotReporter().report(envName, "docker", func() (any, string, error) {
+		artifacts, err := CreateDockerArtifactsData()
+		if err != nil {
+			return nil, "", err
+		}
+		reported := fmt.Sprintf("[%d] containers were reported to environment %s", len(artifacts), envName)
+		return &server.ServerEnvRequest{Artifacts: artifacts}, reported, nil
+	})
 }
 
 func CreateDockerArtifactsData() ([]*server.ServerData, error) {

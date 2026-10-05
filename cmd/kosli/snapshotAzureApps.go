@@ -3,11 +3,8 @@ package main
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/azure"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -128,33 +125,12 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotAzureAppsOptions) run(args []string) error {
 	envName := args[0]
-
-	if err := ensureEnvironment(envName, "azure-apps"); err != nil {
-		return err
-	}
-
-	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/azure-apps")
-	if err != nil {
-		return err
-	}
-
-	webAppsData, err := o.azureStaticCredentials.GetAzureAppsData(logger)
-	if err != nil {
-		return err
-	}
-	payload := &azure.AzureAppsRequest{
-		Artifacts: webAppsData,
-	}
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("%d azure apps were reported to environment %s", len(webAppsData), envName)
-	}
-	return err
+	return newSnapshotReporter().report(envName, "azure-apps", func() (any, string, error) {
+		webAppsData, err := o.azureStaticCredentials.GetAzureAppsData(logger)
+		if err != nil {
+			return nil, "", err
+		}
+		reported := fmt.Sprintf("%d azure apps were reported to environment %s", len(webAppsData), envName)
+		return &azure.AzureAppsRequest{Artifacts: webAppsData}, reported, nil
+	})
 }

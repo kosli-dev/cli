@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 	"regexp"
 
 	"github.com/kosli-dev/cli/internal/gke"
 	"github.com/kosli-dev/cli/internal/kube"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -162,54 +159,35 @@ func (o *snapshotGKEOptions) parent() string {
 
 func (o *snapshotGKEOptions) run(args []string) error {
 	envName := args[0]
-
-	if err := ensureEnvironment(envName, "K8S"); err != nil {
-		return err
-	}
-
-	reportURL, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/K8S")
-	if err != nil {
-		return err
-	}
-
-	ctx := context.Background()
-	client, err := newGKEClient(ctx)
-	if err != nil {
-		return err
-	}
-	if closer, ok := client.(io.Closer); ok {
-		defer func() { _ = closer.Close() }()
-	}
-	parent := o.parent()
-	pods, err := client.ListPods(ctx, parent)
-	if err != nil {
-		return gke.Classify(err, parent)
-	}
-	selected, err := o.filter.Select(pods)
-	if err != nil {
-		return err
-	}
-	switch {
-	case len(pods) == 0:
-		logger.Warn("Asset Inventory returned no GKE pods in %s; reporting an empty snapshot to environment %s", parent, envName)
-	case len(selected) == 0:
-		logger.Warn("none of the %d pods in %s matched the cluster, location and namespace filters; reporting an empty snapshot to environment %s", len(pods), parent, envName)
-	}
-	podsData, err := kube.ProcessPods(selected, logger)
-	if err != nil {
-		return err
-	}
-
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     reportURL,
-		Payload: &kube.K8sEnvRequest{Artifacts: podsData},
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("[%d] pods were reported to environment %s", len(podsData), envName)
-	}
-	return err
+	return newSnapshotReporter().report(envName, "K8S", func() (any, string, error) {
+		ctx := context.Background()
+		client, err := newGKEClient(ctx)
+		if err != nil {
+			return nil, "", err
+		}
+		if closer, ok := client.(io.Closer); ok {
+			defer func() { _ = closer.Close() }()
+		}
+		parent := o.parent()
+		pods, err := client.ListPods(ctx, parent)
+		if err != nil {
+			return nil, "", gke.Classify(err, parent)
+		}
+		selected, err := o.filter.Select(pods)
+		if err != nil {
+			return nil, "", err
+		}
+		switch {
+		case len(pods) == 0:
+			logger.Warn("Asset Inventory returned no GKE pods in %s; reporting an empty snapshot to environment %s", parent, envName)
+		case len(selected) == 0:
+			logger.Warn("none of the %d pods in %s matched the cluster, location and namespace filters; reporting an empty snapshot to environment %s", len(pods), parent, envName)
+		}
+		podsData, err := kube.ProcessPods(selected, logger)
+		if err != nil {
+			return nil, "", err
+		}
+		reported := fmt.Sprintf("[%d] pods were reported to environment %s", len(podsData), envName)
+		return &kube.K8sEnvRequest{Artifacts: podsData}, reported, nil
+	})
 }
