@@ -64,3 +64,25 @@ func TestSendRequestsTheEndpointWithTheTokenAndReturnsTheRawBody(t *testing.T) {
 	require.Equal(t, "Bearer test-token", seen.authHeader)
 	require.JSONEq(t, `{"name":"trail-1"}`, string(result.Raw))
 }
+
+func TestSendReportsA201AsCreated(t *testing.T) {
+	for _, tc := range []struct {
+		status  int
+		created bool
+	}{
+		{http.StatusCreated, true},
+		{http.StatusOK, false},
+	} {
+		t.Run(http.StatusText(tc.status), func(t *testing.T) {
+			server, _ := newFakeServer(t, tc.status, `"OK"`)
+			client := newTestClient(t, server.URL)
+
+			endpoint, err := client.endpoint("flows", "test-org")
+			require.NoError(t, err)
+			result, err := client.send(context.Background(), &requests.RequestParams{Method: http.MethodPut, URL: endpoint})
+
+			require.NoError(t, err)
+			require.Equal(t, tc.created, result.Created)
+		})
+	}
+}
