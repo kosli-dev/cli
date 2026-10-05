@@ -90,17 +90,14 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 func (o *snapshotPathsOptions) run(args []string) error {
 	envName := args[0]
 
-	if err := ensureEnvironment(envName, "server"); err != nil {
-		return err
-	}
-
 	// load path spec from file
 	ps, err := processPathSpecFile(o.pathSpecFile)
 	if err != nil {
 		return err
 	}
 
-	err = reportArtifacts(ps, envName)
+	reporter := newSnapshotReporter()
+	err = reportArtifacts(reporter, ps, envName)
 	if err != nil {
 		return err
 	}
@@ -111,7 +108,7 @@ func (o *snapshotPathsOptions) run(args []string) error {
 			wg.Add(1)
 			go func(path string) {
 				defer wg.Done()
-				err := watchPath(ps, path, envName)
+				err := watchPath(reporter, ps, path, envName)
 				if err != nil {
 					logger.Error("error watching path %s: %v", path, err)
 				}
