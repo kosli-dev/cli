@@ -4,6 +4,7 @@ package kosli
 
 import (
 	"context"
+	"net/http"
 	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
@@ -32,6 +33,9 @@ type Result struct {
 	// Raw is the response body exactly as the server sent it, so a command
 	// can print it for --output json without re-encoding.
 	Raw []byte
+	// Created is true when the server created the resource (201) rather than
+	// updating one that already existed (200).
+	Created bool
 }
 
 func (c *Client) endpoint(segments ...string) (string, error) {
@@ -44,5 +48,8 @@ func (c *Client) send(ctx context.Context, params *requests.RequestParams) (*Res
 	if err != nil {
 		return nil, err
 	}
-	return &Result{Raw: []byte(response.Body)}, nil
+	return &Result{
+		Raw:     []byte(response.Body),
+		Created: response.Resp.StatusCode == http.StatusCreated,
+	}, nil
 }
