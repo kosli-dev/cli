@@ -24,6 +24,18 @@ type snapshotReporter struct {
 	ensured map[string]bool
 }
 
+func newSnapshotReporter() *snapshotReporter {
+	return &snapshotReporter{
+		client: kosliClient,
+		host:   global.Host,
+		org:    global.Org,
+		token:  global.ApiToken,
+		dryRun: global.DryRun,
+		logger: logger,
+		ensure: ensureEnvironment,
+	}
+}
+
 // snapshotCollector gathers a Snapshot: the request payload for the
 // Environment type, and the line to log once Kosli has recorded it.
 type snapshotCollector func() (payload any, reported string, err error)
