@@ -35,9 +35,13 @@ pr(commits, reviews, head) := {
 	"author": "alice",
 	"merge_commit": merge,
 	"head_sha": head,
+	"merged_at": merged_at,
 	"commits": commits,
+	"commit_count": count(commits),
 	"reviews": reviews,
 }
+
+merged_at := 2000000
 
 trail(name, prs) := {
 	"name": name,
@@ -150,7 +154,7 @@ test_missing_repository_param_fails_and_says_why if {
 test_unapproved_commit_violation_names_the_repository if {
 	v := policy.violations with input as {"trails": [trail(merge, [pr(backdated_push, [approval("bob", first)], later)])]}
 		with data.params as params
-	v == {sprintf("Commit %v: no PR in o/r has an independent approval on its final commit", [merge])}
+	v == {sprintf("Commit %v: no PR in o/r has an independent approval on its final commit before merge", [merge])}
 }
 
 test_null_head_and_reviewed_commit_fails if {
@@ -309,4 +313,84 @@ test_platform_signed_commit_author_cannot_self_approve if {
 
 test_platform_signed_commit_without_signer_passes if {
 	allowed([pr([object.union(object.remove(commit(first, 1000000, "alice"), ["signer_username"]), {"signed_by_platform": true})], [approval("bob", first)], first)])
+}
+
+test_approval_after_merge_fails if {
+	not allowed([pr(one_commit, [review("bob", first, "APPROVED", merged_at + 1)], first)])
+}
+
+test_approval_at_merge_time_passes if {
+	allowed([pr(one_commit, [review("bob", first, "APPROVED", merged_at)], first)])
+}
+
+test_unmerged_pr_fails if {
+	not allowed([object.remove(pr(one_commit, [approval("bob", first)], first), ["merged_at"])])
+}
+
+test_pr_listing_fewer_commits_than_github_counts_fails if {
+	p := object.union(pr(one_commit, [approval("bob", first)], first), {"commit_count": 251})
+	not allowed([p])
+	v := policy.violations with input as {"trails": [trail(merge, [p])]} with data.params as params
+	some msg in v
+	contains(msg, "lists 1 commits but GitHub counts 251")
+}
+
+test_pr_without_commit_count_fails if {
+	not allowed([object.remove(pr(one_commit, [approval("bob", first)], first), ["commit_count"])])
+}
+
+# An AI agent's commit names the person who asked for it as co-author.
+agent_commit := object.union(commit(first, 1000000, "Copilot"), {"signer_username": "web-flow", "signed_by_platform": true, "co_author_usernames": ["alice"]})
+
+test_co_author_cannot_self_approve if {
+	not allowed([pr([agent_commit], [approval("alice", first)], first)])
+}
+
+test_co_authored_commit_with_independent_approval_passes if {
+	allowed([pr([agent_commit], [approval("bob", first)], first)])
+}
+
+test_null_merge_time_and_commit_count_fail if {
+	not allowed([object.union(pr(one_commit, [approval("bob", first)], first), {"merged_at": null})])
+	not allowed([object.union(pr(one_commit, [approval("bob", first)], first), {"commit_count": null})])
+	not allowed([object.union(pr(one_commit, [approval("bob", first)], first), {"commit_count": "1"})])
+}
+
+test_wrong_type_merge_time_fails if {
+	not allowed([object.union(pr(one_commit, [review("bob", first, "APPROVED", merged_at + 1)], first), {"merged_at": "0"})])
+}
+
+test_pr_listing_more_commits_than_github_counts_fails if {
+	not allowed([object.union(pr(one_commit, [approval("bob", first)], first), {"commit_count": 0})])
+}
+
+test_co_authors_as_a_string_fails if {
+	not allowed([pr([object.union(commit(first, 1000000, "Copilot"), {"co_author_usernames": "alice"})], [approval("bob", first)], first)])
+}
+
+test_missing_commit_count_says_to_reattest if {
+	p := object.remove(pr(one_commit, [approval("bob", first)], first), ["commit_count"])
+	v := policy.violations with input as {"trails": [trail(merge, [p])]} with data.params as params
+	some msg in v
+	contains(msg, "no commit count recorded")
+}
+
+test_co_author_entries_must_be_accounts if {
+	not allowed([pr([object.union(commit(first, 1000000, "Copilot"), {"co_author_usernames": [["alice"]]})], [approval("alice", first)], first)])
+	not allowed([pr([object.union(commit(first, 1000000, "Copilot"), {"co_author_usernames": ["ghost"]})], [approval("bob", first)], first)])
+}
+
+test_non_merge_trail_needs_a_resolved_pr_author if {
+	every author in [null, "", "ghost"] {
+		not policy.allow with input as {"trails": [trail(later, [object.union(pr(one_commit, [approval("bob", first)], first), {"author": author})])]}
+			with data.params as params
+	}
+}
+
+test_null_commit_count_gives_no_count_mismatch_message if {
+	p := object.union(pr(one_commit, [approval("bob", first)], first), {"commit_count": null})
+	v := policy.violations with input as {"trails": [trail(merge, [p])]} with data.params as params
+	every msg in v {
+		not contains(msg, "GitHub counts")
+	}
 }

@@ -42,6 +42,7 @@ trail_compliant(trail) if {
 	attest := pr_attest(trail)
 	some pr in attest.pull_requests
 	pr_in_repo(pr)
+	all_commits_listed(pr)
 	all_authors_resolved(pr)
 	has_independent_approval(trail, pr)
 }
@@ -71,10 +72,14 @@ is_resolved_username(u) if {
 	u != "ghost"
 }
 
-# GitHub usernames on PR branch commits: each named author and signing account.
+# GitHub usernames on PR branch commits: each named author, signing account and co-author.
 pr_commit_authors(pr) := {u |
 	some c in pr.commits
 	some u in [object.get(c, "author_username", null), object.get(c, "signer_username", null)]
+	is_resolved_username(u)
+} | {u |
+	some c in pr.commits
+	some u in object.get(c, "co_author_usernames", [])
 	is_resolved_username(u)
 }
 
@@ -91,6 +96,7 @@ approvers_on_head(pr) := {a.username |
 	is_string(pr.head_sha)
 	pr.head_sha != ""
 	a.commit_sha == pr.head_sha
+	given_before_merge(a, pr)
 	not withdrawn(a, pr)
 }
 
@@ -101,6 +107,12 @@ withdrawn(approval, pr) if {
 	r.username == approval.username
 	r.state in {"CHANGES_REQUESTED", "DISMISSED"}
 	not earlier(r, approval)
+}
+
+# An approval after merge means the code reached main unreviewed.
+given_before_merge(approval, pr) if {
+	is_number(pr.merged_at)
+	approval.timestamp <= pr.merged_at
 }
 
 earlier(r, approval) if {
@@ -116,11 +128,20 @@ pr_in_repo(pr) if {
 	lower(concat("/", [parts[3], parts[4]])) == repository
 }
 
+# The PR lists every commit GitHub counts. GitHub returns at most 250, so on a
+# longer PR the oldest commits' authors would go unchecked.
+all_commits_listed(pr) if {
+	count(pr.commits) == pr.commit_count
+}
+
 # Every commit on the PR has an author linked to a GitHub account and a
 # verified signature, by a known account or by GitHub. Without the signature
 # the author is only what the commit says, which its writer chooses.
 all_authors_resolved(pr) if {
 	every c in pr.commits {
+		every u in object.get(c, "co_author_usernames", []) {
+			is_resolved_username(u)
+		}
 		is_resolved_username(object.get(c, "author_username", null))
 		signed_by_known_identity(c)
 	}
@@ -145,6 +166,7 @@ is_merge_commit(trail, pr) if {
 # Regular commit: PR branch authors + PR author all need independent approval on the final commit.
 has_independent_approval(trail, pr) if {
 	not is_merge_commit(trail, pr)
+	is_resolved_username(pr.author)
 	all_authors := pr_commit_authors(pr) | {pr.author}
 	eligible_approvers := approvers_on_head(pr)
 	count(all_authors) > 0
@@ -231,6 +253,29 @@ violations contains msg if {
 	)
 }
 
+# Unlisted commits: the PR lists a different number of commits than GitHub counts.
+violations contains msg if {
+	some trail in input.trails
+	not trail_compliant(trail)
+	attest := pr_attest(trail)
+	some pr in attest.pull_requests
+	is_number(pr.commit_count)
+	not all_commits_listed(pr)
+	msg := sprintf(
+		"PR %v: lists %v commits but GitHub counts %v - some authors can't be checked",
+		[pr.url, count(pr.commits), pr.commit_count],
+	)
+}
+
+violations contains msg if {
+	some trail in input.trails
+	not trail_compliant(trail)
+	attest := pr_attest(trail)
+	some pr in attest.pull_requests
+	not is_number(object.get(pr, "commit_count", null))
+	msg := sprintf("PR %v: no commit count recorded - re-attest with a current Kosli CLI", [pr.url])
+}
+
 # Missing PR: commit has no associated merged PR.
 violations contains msg if {
 	some trail in input.trails
@@ -249,7 +294,7 @@ violations contains msg if {
 	count(attest.pull_requests) > 0
 	not any_pr_fully_approved(trail, attest)
 	msg := sprintf(
-		"Commit %v: no PR in %v has an independent approval on its final commit",
+		"Commit %v: no PR in %v has an independent approval on its final commit before merge",
 		[trail.name, repository],
 	)
 }
@@ -260,6 +305,7 @@ violations contains msg if {
 any_pr_fully_approved(trail, attest) if {
 	some pr in attest.pull_requests
 	pr_in_repo(pr)
+	all_commits_listed(pr)
 	all_authors_resolved(pr)
 	has_independent_approval(trail, pr)
 }
