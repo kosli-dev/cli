@@ -430,3 +430,40 @@ func TestPREvidenceForCommitV2_RecordsHeadAndReviewedCommits(t *testing.T) {
 	require.Contains(t, ts.bodies[0], "reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED]")
 	require.Contains(t, ts.bodies[0], "signer{login}")
 }
+
+func withCommitTotal(connection string, total int) string {
+	return strings.Replace(connection, `{"nodes":`, fmt.Sprintf(`{"totalCount":%d,"nodes":`, total), 1)
+}
+
+func TestPREvidenceForCommitV2_RecordsGitHubsMergeCommitAndCommitTotal(t *testing.T) {
+	merged := strings.Replace(
+		v2PRNodeJSON(7, withCommitTotal(connectionJSON([]string{commitNodeJSON("sha1")}, ""), 260), connectionJSON(nil, "")),
+		`"author":`, `"mergeCommit":{"oid":"real-merge-sha"},"author":`, 1)
+	open := v2PRNodeJSON(9, withCommitTotal(connectionJSON(nil, ""), 0), connectionJSON(nil, ""))
+	ts := newGraphQLTestServer(t, forCommitResponse(merged, open))
+
+	prs, err := newPaginationConfig(ts).PREvidenceForCommitV2("queried-sha")
+	require.NoError(t, err)
+	require.Len(t, prs, 2)
+	require.Equal(t, "real-merge-sha", prs[0].MergeCommit, "the merge commit is GitHub's, not the commit asked about")
+	require.Equal(t, 260, *prs[0].CommitCount)
+	require.Equal(t, "", prs[1].MergeCommit, "an unmerged PR has no merge commit")
+	require.Equal(t, 0, *prs[1].CommitCount)
+	require.Contains(t, ts.bodies[0], "mergeCommit{oid}")
+	require.Contains(t, ts.bodies[0], "associatedPullRequests(first: 10)")
+	require.Contains(t, ts.bodies[0], "totalCount")
+	require.Contains(t, ts.bodies[0], "authors(first: 100){nodes{user{login}}}")
+}
+
+func TestPREvidenceByPRNumber_RecordsCommitTotal(t *testing.T) {
+	ts := newGraphQLTestServer(t, byPRNumberResponse(
+		withCommitTotal(connectionJSON([]string{commitNodeJSON("sha1")}, ""), 260),
+		connectionJSON(nil, ""),
+	))
+
+	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Equal(t, 260, *evidence.CommitCount)
+	require.Contains(t, ts.bodies[0], "totalCount")
+	require.Contains(t, ts.bodies[0], "authors(first: 100){nodes{user{login}}}")
+}

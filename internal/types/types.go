@@ -18,6 +18,8 @@ type PREvidence struct {
 	HeadSHA   string         `json:"head_sha,omitempty"`
 	BaseRef   string         `json:"base_ref,omitempty"`
 	Commits   []Commit       `json:"commits"`
+	// The provider's total, which exceeds len(Commits) when it caps the list.
+	CommitCount *int `json:"commit_count,omitempty"`
 }
 
 // MarshalJSON keeps "commits" in the payload even when a provider returns no
@@ -29,6 +31,14 @@ func (e PREvidence) MarshalJSON() ([]byte, error) {
 	out := prEvidence(e)
 	if out.Commits == nil {
 		out.Commits = []Commit{}
+	}
+	// The server accepts an empty merge_commit only in the older shape, which has
+	// no reviews; in this shape it rejects the whole attestation.
+	if out.Reviews != nil && out.MergeCommit == "" {
+		return json.Marshal(struct {
+			prEvidence
+			MergeCommit string `json:"merge_commit,omitempty"`
+		}{prEvidence: out})
 	}
 	return json.Marshal(out)
 }
@@ -55,6 +65,8 @@ type Commit struct {
 	SignatureState   *string `json:"signature_state,omitempty"`
 	SignerUsername   string  `json:"signer_username,omitempty"`
 	SignedByPlatform *bool   `json:"signed_by_platform,omitempty"`
+	// Accounts named in Co-authored-by trailers, as the provider resolves them.
+	CoAuthorUsernames []string `json:"co_author_usernames,omitempty"`
 }
 
 type PRRetriever interface {

@@ -40,3 +40,33 @@ func TestPREvidenceAlwaysSerialisesCommits(t *testing.T) {
 		})
 	}
 }
+
+// The server rejects an empty merge_commit on a PR that records reviews, so an
+// open PR (no merge commit yet) must leave the field out rather than send "".
+func TestPREvidenceMergeCommitWhenEmpty(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		evidence PREvidence
+		want     *string
+	}{
+		{"recorded reviews, no merge commit: omitted", PREvidence{Reviews: &[]PRApprovals{}}, nil},
+		{"recorded reviews, merge commit: kept", PREvidence{Reviews: &[]PRApprovals{}, MergeCommit: "abc"}, ptr("abc")},
+		{"no reviews recorded, no merge commit: kept empty", PREvidence{}, ptr("")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			payload, err := json.Marshal(tc.evidence)
+			require.NoError(t, err)
+			var decoded map[string]any
+			require.NoError(t, json.Unmarshal(payload, &decoded))
+			got, present := decoded["merge_commit"]
+			if tc.want == nil {
+				require.False(t, present, "merge_commit must be left out: %s", payload)
+				return
+			}
+			require.Equal(t, *tc.want, got)
+			require.Contains(t, decoded, "commits", "the other fields are still serialised")
+		})
+	}
+}
+
+func ptr(s string) *string { return &s }

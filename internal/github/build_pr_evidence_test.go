@@ -337,3 +337,34 @@ func TestBuildPREvidence_RecordsNoReviewsAsEmptyList(t *testing.T) {
 	require.NoError(t, err)
 	require.NotContains(t, string(notRecorded), "reviews")
 }
+
+// GitHub lists the git author first, then one entry per Co-authored-by trailer;
+// a trailer it can't match to an account has no user.
+func TestBuildPREvidence_RecordsCoAuthors(t *testing.T) {
+	type author = struct {
+		User *struct {
+			Login graphql.String
+		}
+	}
+	login := func(l string) author {
+		return author{User: &struct{ Login graphql.String }{Login: graphql.String(l)}}
+	}
+	node := graphqlCommitNode{}
+	node.Commit.Oid = "6a1c03b5d2f84f9e1f0c1b7c0e5d8d1a2b3c4d5e"
+	node.Commit.CommittedDate = "2026-03-01T12:00:00Z"
+	node.Commit.Authors.Nodes = []author{login("Copilot"), login("alice"), {}, login("bob")}
+	plain := graphqlCommitNode{}
+	plain.Commit.Oid = "0b9e2a7f4c3d1e5a6b8c9d0e1f2a3b4c5d6e7f80"
+	plain.Commit.CommittedDate = "2026-03-01T12:00:00Z"
+	plain.Commit.Authors.Nodes = []author{login("carol")}
+
+	evidence, err := buildPREvidence(
+		"https://github.com/o/r/pull/1", "", "MERGED", "Copilot",
+		"2026-03-01T11:00:00Z", "", "t", "feature", "main", "",
+		[]graphqlCommitNode{node, plain}, nil,
+	)
+	require.NoError(t, err)
+	require.Equal(t, []string{"alice", "bob"}, evidence.Commits[0].CoAuthorUsernames,
+		"the git author is not a co-author, and an unmatched trailer has no account to record")
+	require.Nil(t, evidence.Commits[1].CoAuthorUsernames)
+}

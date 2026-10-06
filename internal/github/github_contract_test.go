@@ -10,9 +10,9 @@ import (
 )
 
 // runGitHubContractTests exercises the types.PRRetriever contract against any
-// implementation. commitWithPR must be a commit SHA that has at least one
-// associated pull request. commitUnknown must be a validly-formatted SHA that
-// does not exist in the repository.
+// implementation. commitWithPR must be the merge commit of a pull request.
+// commitUnknown must be a validly-formatted SHA that does not exist in the
+// repository.
 //
 // V1 and V2 have different contracts for unknown commits:
 //   - V2 (GraphQL) returns empty with no error — the GraphQL API returns null
@@ -30,7 +30,7 @@ func runGitHubContractTests(t *testing.T, provider types.PRRetriever, commitWith
 		require.NotEmpty(t, prs)
 		require.NotEmpty(t, prs[0].URL, "URL should be present")
 		require.NotEmpty(t, prs[0].State, "State should be present")
-		require.Equal(t, commitWithPR, prs[0].MergeCommit, "V2 sets MergeCommit to the queried commit SHA")
+		require.Equal(t, commitWithPR, prs[0].MergeCommit, "MergeCommit is the PR's merge commit")
 	})
 
 	t.Run("V2 returns empty with no error for unknown commit", func(t *testing.T) {

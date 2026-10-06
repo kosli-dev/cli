@@ -275,6 +275,14 @@ type graphqlCommitNode struct {
 			}
 		}
 		Signature *graphqlSignature
+		// GitHub lists the git author first, then each Co-authored-by trailer.
+		Authors struct {
+			Nodes []struct {
+				User *struct {
+					Login graphql.String
+				}
+			}
+		} `graphql:"authors(first: 100)"`
 	}
 }
 
@@ -304,8 +312,7 @@ type graphqlReviewNode struct {
 }
 
 // buildPREvidence constructs a PREvidence from pre-resolved fields and the
-// raw GraphQL commit/review nodes. mergeCommit must be resolved by the caller
-// (it differs between commit-SHA queries and PR-number queries).
+// raw GraphQL commit/review nodes.
 func buildPREvidence(
 	url, mergeCommit, state, author, createdAtStr, mergedAtStr, title, headRef, baseRef, headSHA string,
 	commitNodes []graphqlCommitNode,
@@ -371,18 +378,25 @@ func buildPREvidence(
 				signerUsername = string(sig.Signer.Login)
 			}
 		}
+		var coAuthors []string
+		for i, a := range n.Commit.Authors.Nodes {
+			if i > 0 && a.User != nil {
+				coAuthors = append(coAuthors, string(a.User.Login))
+			}
+		}
 		evidence.Commits = append(evidence.Commits, types.Commit{
-			SHA:              string(n.Commit.Oid),
-			Message:          string(n.Commit.MessageHeadline),
-			Author:           fmt.Sprintf("%s <%s>", string(n.Commit.Author.Name), string(n.Commit.Author.Email)),
-			AuthorUsername:   authorUsername,
-			Timestamp:        timestamp.Unix(),
-			Branch:           headRef,
-			URL:              string(n.Commit.URL),
-			Verified:         verified,
-			SignatureState:   signatureState,
-			SignerUsername:   signerUsername,
-			SignedByPlatform: signedByPlatform,
+			SHA:               string(n.Commit.Oid),
+			Message:           string(n.Commit.MessageHeadline),
+			Author:            fmt.Sprintf("%s <%s>", string(n.Commit.Author.Name), string(n.Commit.Author.Email)),
+			AuthorUsername:    authorUsername,
+			Timestamp:         timestamp.Unix(),
+			Branch:            headRef,
+			URL:               string(n.Commit.URL),
+			Verified:          verified,
+			SignatureState:    signatureState,
+			SignerUsername:    signerUsername,
+			SignedByPlatform:  signedByPlatform,
+			CoAuthorUsernames: coAuthors,
 		})
 	}
 
@@ -459,8 +473,9 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 					Login graphql.String
 				}
 				Commits struct {
-					Nodes    []graphqlCommitNode
-					PageInfo pageInfo
+					TotalCount graphql.Int
+					Nodes      []graphqlCommitNode
+					PageInfo   pageInfo
 				} `graphql:"commits(first: 100, after: $commitCursor)"`
 				Reviews struct {
 					Nodes    []graphqlReviewNode
@@ -503,11 +518,17 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 		return nil, err
 	}
 
-	return buildPREvidence(
+	evidence, err := buildPREvidence(
 		string(pr.URL), mergeCommit, string(pr.State), string(pr.Author.Login),
 		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName), string(pr.HeadRefOid),
 		commits, reviews,
 	)
+	if err != nil {
+		return nil, err
+	}
+	commitCount := int(pr.Commits.TotalCount)
+	evidence.CommitCount = &commitCount
+	return evidence, nil
 }
 
 func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
@@ -545,14 +566,18 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							URL         graphql.String
 							CreatedAt   graphql.String
 							MergedAt    graphql.String
+							MergeCommit *struct {
+								Oid graphql.String
+							}
 
 							Author struct {
 								Login graphql.String
 							}
 
 							Commits struct {
-								Nodes    []graphqlCommitNode
-								PageInfo pageInfo
+								TotalCount graphql.Int
+								Nodes      []graphqlCommitNode
+								PageInfo   pageInfo
 							} `graphql:"commits(first: 100, after: $commitCursor)"`
 
 							Reviews struct {
@@ -560,11 +585,11 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 								PageInfo pageInfo
 							} `graphql:"reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED], after: $reviewCursor)"`
 						}
-						// Intentionally not paginated, so no cursor is selected: a
-						// commit with more than 100 associated PRs is not a realistic
-						// case, and draining it would mean nesting a page walk per
-						// PR page (#1082).
-					} `graphql:"associatedPullRequests(first: 100)"`
+						// Not paginated: on the default branch GitHub returns only the PR
+						// that merged the commit. Each PR asked for adds every commit's
+						// authors list to the query's cost and node count, so 10 keeps
+						// the cost at 10 points.
+					} `graphql:"associatedPullRequests(first: 10)"`
 				} `graphql:"... on Commit"`
 			} `graphql:"object(oid: $commitSHA)"`
 		} `graphql:"repository(owner: $owner, name: $repo)"`
@@ -607,16 +632,20 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
-		// MergeCommit is set to the queried commit SHA — V2 queries by commit SHA
-		// so the commit is by definition the merge commit.
+		mergeCommit := ""
+		if pr.MergeCommit != nil {
+			mergeCommit = string(pr.MergeCommit.Oid)
+		}
 		evidence, err := buildPREvidence(
-			string(pr.URL), commit, string(pr.State), string(pr.Author.Login),
+			string(pr.URL), mergeCommit, string(pr.State), string(pr.Author.Login),
 			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName), string(pr.HeadRefOid),
 			commits, reviews,
 		)
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
+		commitCount := int(pr.Commits.TotalCount)
+		evidence.CommitCount = &commitCount
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 	}
 	return pullRequestsEvidence, nil
