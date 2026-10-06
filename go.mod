@@ -15,27 +15,27 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.47.1
 	github.com/aws/aws-sdk-go-v2/config v1.33.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.6
-	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.4.11
-	github.com/aws/aws-sdk-go-v2/service/ecs v1.99.1
+	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.4.13
+	github.com/aws/aws-sdk-go-v2/service/ecs v1.100.0
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.110.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.113.4
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.0
 	github.com/containerd/errdefs v1.0.0
 	github.com/containers/image/v5 v5.36.2
 	github.com/distribution/reference v0.6.0
-	github.com/go-git/go-billy/v5 v5.9.1
+	github.com/go-git/go-billy/v5 v5.9.2
 	github.com/go-git/go-git/v5 v5.19.2
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/google/go-github/v42 v42.0.0
 	github.com/googleapis/gax-go/v2 v2.26.2
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/joshdk/go-junit v1.0.0
-	github.com/mattn/go-shellwords v1.0.15
+	github.com/mattn/go-shellwords v1.0.16
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/moby/moby/api v1.56.0
-	github.com/moby/moby/client v0.6.0
-	github.com/open-policy-agent/opa v1.21.0
+	github.com/moby/moby/api v1.56.1
+	github.com/moby/moby/client v0.6.1
+	github.com/open-policy-agent/opa v1.21.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/otiai10/copy v1.14.1
 	github.com/owenrumney/go-sarif/v2 v2.3.3
@@ -54,7 +54,7 @@ require (
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sync v0.23.0
 	golang.org/x/term v0.46.0
-	google.golang.org/api v0.299.0
+	google.golang.org/api v0.300.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260921155816-b14227669459
 	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
@@ -71,9 +71,9 @@ require (
 	cel.dev/expr v0.25.2 // indirect
 	cloud.google.com/go v0.123.0 // indirect
 	cloud.google.com/go/accesscontextmanager v1.15.0 // indirect
-	cloud.google.com/go/auth v0.23.3 // indirect
-	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
-	cloud.google.com/go/compute/metadata v0.9.1 // indirect
+	cloud.google.com/go/auth v0.24.0 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.3.0 // indirect
+	cloud.google.com/go/compute/metadata v0.10.0 // indirect
 	cloud.google.com/go/iam v1.12.0 // indirect
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	cloud.google.com/go/orgpolicy v1.20.0 // indirect
@@ -121,7 +121,7 @@ require (
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker v28.3.2+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.3 // indirect
-	github.com/docker/go-connections v0.7.0 // indirect
+	github.com/docker/go-connections v0.8.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
