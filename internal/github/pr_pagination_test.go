@@ -73,13 +73,13 @@ func commitNodeJSON(sha string) string {
 // reviewNodeJSON is one node of a GraphQL reviews connection, given on the
 // commit "reviewed-by-<login>".
 func reviewNodeJSON(login string) string {
-	return fmt.Sprintf(`{"author":{"__typename":"User","login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z",`+
+	return fmt.Sprintf(`{"author":{"__typename":"User","login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z","authorCanPushToRepository":true,`+
 		`"commit":{"oid":"reviewed-by-%s"}}`, login, login)
 }
 
 // reviewNodeWithoutCommitJSON is a review whose commit GitHub no longer has.
 func reviewNodeWithoutCommitJSON(login string) string {
-	return fmt.Sprintf(`{"author":{"__typename":"User","login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z",`+
+	return fmt.Sprintf(`{"author":{"__typename":"User","login":%q},"state":"APPROVED","submittedAt":"2026-03-01T13:00:00Z","authorCanPushToRepository":true,`+
 		`"commit":null}`, login)
 }
 
@@ -96,7 +96,7 @@ func prJSON(commits, reviews string) string {
 	return fmt.Sprintf(`{"title":"A PR","state":"MERGED","headRefName":"feature","headRefOid":"head-sha","baseRefName":"main",`+
 		`"url":"https://github.com/o/r/pull/1","createdAt":"2026-03-01T11:00:00Z",`+
 		`"mergedAt":"2026-03-01T14:00:00Z","mergeCommit":{"oid":"merge-sha"},`+
-		`"author":{"login":"ada"},"commits":%s,"latestOpinionatedReviews":%s}`, commits, reviews)
+		`"author":{"login":"ada"},"commits":%s,"reviews":%s}`, commits, reviews)
 }
 
 func byPRNumberResponse(commits, reviews string) string {
@@ -111,7 +111,7 @@ func commitsPageResponse(nodes []string, nextCursor string) string {
 
 // reviewsPageResponse is a follow-up page reply selecting only reviews.
 func reviewsPageResponse(nodes []string, nextCursor string) string {
-	return fmt.Sprintf(`{"data":{"repository":{"pullRequest":{"latestOpinionatedReviews":%s}}}}`,
+	return fmt.Sprintf(`{"data":{"repository":{"pullRequest":{"reviews":%s}}}}`,
 		connectionJSON(nodes, nextCursor))
 }
 
@@ -139,7 +139,7 @@ func TestPREvidenceByPRNumber_FollowsCommitPages(t *testing.T) {
 	require.Equal(t, []string{"sha1", "sha2", "sha3"}, shasOf(t, newPaginationConfig(ts), 1))
 	require.Len(t, ts.bodies, 2)
 	require.Contains(t, ts.bodies[1], "c1", "follow-up must carry the cursor")
-	require.NotContains(t, ts.bodies[1], "latestOpinionatedReviews(", "follow-up must not re-fetch reviews")
+	require.NotContains(t, ts.bodies[1], "reviews(", "follow-up must not re-fetch reviews")
 }
 
 func TestPREvidenceByPRNumber_FollowsReviewPages(t *testing.T) {
@@ -209,7 +209,7 @@ func v2PRNodeInRepoJSON(owner, repo string, number int, commits, reviews string)
 		`"title":"A PR","state":"MERGED","headRefName":"feature","headRefOid":"head-sha-%d",`+
 		`"baseRefName":"main","url":"https://github.com/%s/%s/pull/%d",`+
 		`"createdAt":"2026-03-01T11:00:00Z","mergedAt":"2026-03-01T14:00:00Z",`+
-		`"author":{"login":"ada"},"commits":%s,"latestOpinionatedReviews":%s}`,
+		`"author":{"login":"ada"},"commits":%s,"reviews":%s}`,
 		number, repo, owner, number, owner, repo, number, commits, reviews)
 }
 
@@ -355,13 +355,13 @@ func TestPREvidenceByPRNumber_ApprovalDrainErrorNamesThePullRequest(t *testing.T
 
 	_, err := newPaginationConfig(ts).PREvidenceByPRNumber(7)
 	require.ErrorContains(t, err, "test-org/test-repo#7")
-	require.ErrorContains(t, err, "approvals")
+	require.ErrorContains(t, err, "reviews")
 }
 
-func approverCommitSHAs(evidence *types.PREvidence) []string {
+func reviewCommitSHAs(evidence *types.PREvidence) []string {
 	shas := []string{}
-	for _, a := range evidence.Approvers {
-		shas = append(shas, a.(types.PRApprovals).CommitSHA)
+	for _, r := range *evidence.Reviews {
+		shas = append(shas, r.CommitSHA)
 	}
 	return shas
 }
@@ -378,15 +378,16 @@ func TestPREvidenceByPRNumber_RecordsHeadAndReviewedCommits(t *testing.T) {
 	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
 	require.NoError(t, err)
 	require.Equal(t, "head-sha", evidence.HeadSHA)
-	require.Equal(t, []string{"reviewed-by-ada", "reviewed-by-grace", ""}, approverCommitSHAs(evidence),
+	require.Equal(t, []string{"reviewed-by-ada", "reviewed-by-grace", ""}, reviewCommitSHAs(evidence),
 		"each approval keeps its own commit, on later review pages too; a missing commit stays empty")
 	// The fake replies whatever is asked, so the field names GitHub must see are checked in the query.
 	require.Contains(t, ts.bodies[0], "headRefOid")
 	require.Contains(t, ts.bodies[0], "commit{oid}")
 	require.Contains(t, ts.bodies[1], "commit{oid}")
 	for _, body := range ts.bodies {
-		require.Contains(t, body, "latestOpinionatedReviews(first: 100, writersOnly: true")
+		require.Contains(t, body, "reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED]")
 		require.Contains(t, body, "author{__typename,login}")
+		require.Contains(t, body, "authorCanPushToRepository")
 	}
 }
 
@@ -405,7 +406,7 @@ func TestPREvidenceByPRNumber_RecordsCommitSigners(t *testing.T) {
 	require.Len(t, evidence.Commits, 3)
 	require.Equal(t, "ada", evidence.Commits[0].SignerUsername)
 	require.False(t, *evidence.Commits[0].SignedByPlatform)
-	require.Equal(t, "", evidence.Commits[1].SignerUsername)
+	require.Equal(t, "web-flow", evidence.Commits[1].SignerUsername)
 	require.True(t, *evidence.Commits[1].SignedByPlatform)
 	require.Nil(t, evidence.Commits[2].SignedByPlatform, "an unsigned commit records no signature facts")
 	require.Contains(t, ts.bodies[0], "signer{login}")
@@ -423,9 +424,9 @@ func TestPREvidenceForCommitV2_RecordsHeadAndReviewedCommits(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, prs, 1)
 	require.Equal(t, "head-sha-7", prs[0].HeadSHA)
-	require.Equal(t, []string{"reviewed-by-ada"}, approverCommitSHAs(prs[0]))
+	require.Equal(t, []string{"reviewed-by-ada"}, reviewCommitSHAs(prs[0]))
 	require.Contains(t, ts.bodies[0], "headRefOid")
 	require.Contains(t, ts.bodies[0], "commit{oid}")
-	require.Contains(t, ts.bodies[0], "latestOpinionatedReviews(first: 100, writersOnly: true")
+	require.Contains(t, ts.bodies[0], "reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED]")
 	require.Contains(t, ts.bodies[0], "signer{login}")
 }

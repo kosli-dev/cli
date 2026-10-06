@@ -22,15 +22,21 @@ signed_commit(sha, ts, author, signer) := {
 	"verified": true, "signer_username": signer, "signed_by_platform": false,
 }
 
-approval(user, sha) := {"username": user, "state": "APPROVED", "timestamp": 1000050, "commit_sha": sha}
+# A submitted review by a person with write access.
+review(user, sha, state, ts) := {
+	"username": user, "state": state, "timestamp": ts, "commit_sha": sha,
+	"author_type": "user", "has_write_access": true,
+}
 
-pr(commits, approvers, head) := {
+approval(user, sha) := review(user, sha, "APPROVED", 1000050)
+
+pr(commits, reviews, head) := {
 	"url": "https://github.com/o/r/pull/1",
 	"author": "alice",
 	"merge_commit": merge,
 	"head_sha": head,
 	"commits": commits,
-	"approvers": approvers,
+	"reviews": reviews,
 }
 
 trail(name, prs) := {
@@ -192,7 +198,7 @@ test_ghost_signer_blocks_approval if {
 }
 
 test_commit_signed_by_platform_passes if {
-	allowed([pr([object.union(object.remove(commit(first, 1000000, "alice"), ["signer_username"]), {"signed_by_platform": true})], [approval("bob", first)], first)])
+	allowed([pr([object.union(commit(first, 1000000, "alice"), {"signer_username": "web-flow", "signed_by_platform": true})], [approval("bob", first)], first)])
 }
 
 # Naming someone else as the author doesn't let the signer approve their own work.
@@ -213,7 +219,7 @@ test_unsigned_commit_violation_says_why if {
 }
 
 test_invalid_github_signature_blocks_approval if {
-	not allowed([pr([object.union(object.remove(commit(first, 1000000, "alice"), ["signer_username"]), {"signed_by_platform": true, "verified": false})], [approval("bob", first)], first)])
+	not allowed([pr([object.union(commit(first, 1000000, "alice"), {"signer_username": "web-flow", "signed_by_platform": true, "verified": false})], [approval("bob", first)], first)])
 }
 
 test_non_merge_trail_with_old_approval_fails if {
@@ -233,4 +239,74 @@ test_non_merge_trail_pr_author_needs_independent_approval if {
 test_dismissed_review_on_head_fails_on_non_merge_trail if {
 	not policy.allow with input as {"trails": [trail(later, [pr(one_commit, [object.union(approval("bob", first), {"state": "DISMISSED"})], first)])]}
 		with data.params as params
+}
+
+test_bot_approval_does_not_count if {
+	not allowed([pr(one_commit, [object.union(approval("bob", first), {"author_type": "bot"})], first)])
+}
+
+test_approval_from_other_actor_type_does_not_count if {
+	not allowed([pr(one_commit, [object.union(approval("bob", first), {"author_type": "other"})], first)])
+}
+
+test_approval_without_write_access_does_not_count if {
+	not allowed([pr(one_commit, [object.union(approval("bob", first), {"has_write_access": false})], first)])
+}
+
+test_approval_with_unknown_write_access_does_not_count if {
+	not allowed([pr(one_commit, [object.remove(approval("bob", first), ["has_write_access"])], first)])
+}
+
+test_later_request_for_changes_withdraws_approval if {
+	not allowed([pr(one_commit, [approval("bob", first), review("bob", first, "CHANGES_REQUESTED", 1000060)], first)])
+}
+
+test_same_second_request_for_changes_withdraws_approval if {
+	not allowed([pr(one_commit, [approval("bob", first), review("bob", first, "CHANGES_REQUESTED", 1000050)], first)])
+}
+
+test_later_dismissal_withdraws_approval if {
+	not allowed([pr(one_commit, [approval("bob", first), review("bob", first, "DISMISSED", 1000060)], first)])
+}
+
+test_request_for_changes_without_time_withdraws_approval if {
+	not allowed([pr(one_commit, [approval("bob", first), object.remove(review("bob", first, "CHANGES_REQUESTED", 0), ["timestamp"])], first)])
+}
+
+test_earlier_request_for_changes_does_not_withdraw if {
+	allowed([pr(one_commit, [review("bob", first, "CHANGES_REQUESTED", 1000040), approval("bob", first)], first)])
+}
+
+test_later_comment_does_not_withdraw if {
+	allowed([pr(one_commit, [approval("bob", first), review("bob", first, "COMMENTED", 1000060)], first)])
+}
+
+test_another_reviewers_request_for_changes_does_not_withdraw if {
+	allowed([pr(one_commit, [approval("bob", first), review("carol", first, "CHANGES_REQUESTED", 1000060)], first)])
+}
+
+test_approval_without_time_does_not_count if {
+	not allowed([pr(one_commit, [object.remove(approval("bob", first), ["timestamp"])], first)])
+}
+
+# Attestations from a CLI that records approvers only, with no reviews.
+test_pr_without_reviews_fails if {
+	not allowed([object.union(object.remove(pr(one_commit, [], first), ["reviews"]), {"approvers": [approval("bob", first)]})])
+}
+
+test_request_for_changes_with_null_time_withdraws_approval if {
+	not allowed([pr(one_commit, [approval("bob", first), object.union(review("bob", first, "CHANGES_REQUESTED", 0), {"timestamp": null})], first)])
+}
+
+test_comment_alone_is_not_an_approval if {
+	not allowed([pr(one_commit, [review("bob", first, "COMMENTED", 1000050)], first)])
+}
+
+# A commit GitHub signed names web-flow as signer; the named author still needs an independent approval.
+test_platform_signed_commit_author_cannot_self_approve if {
+	not allowed([pr([object.union(commit(first, 1000000, "alice"), {"signer_username": "web-flow", "signed_by_platform": true})], [approval("alice", first)], first)])
+}
+
+test_platform_signed_commit_without_signer_passes if {
+	allowed([pr([object.union(object.remove(commit(first, 1000000, "alice"), ["signer_username"]), {"signed_by_platform": true})], [approval("bob", first)], first)])
 }

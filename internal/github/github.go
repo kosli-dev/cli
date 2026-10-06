@@ -282,22 +282,21 @@ type graphqlSignature struct {
 	IsValid           graphql.Boolean
 	State             graphql.String
 	WasSignedByGitHub graphql.Boolean
-	// The account behind the signing key, or null when it matches none. For a
-	// commit GitHub signed this is GitHub's own web-flow account.
+	// The account behind the signing key, or null when it matches none.
 	Signer *struct {
 		Login graphql.String
 	}
 }
 
-// graphqlReviewNode is the shared GraphQL node type for each reviewer's latest
-// approving or change-requesting review on a PR.
+// graphqlReviewNode is the shared GraphQL node type for submitted reviews on a PR.
 type graphqlReviewNode struct {
 	Author struct {
 		Typename graphql.String `graphql:"__typename"`
 		Login    graphql.String
 	}
-	State       graphql.String
-	SubmittedAt graphql.String
+	State                     graphql.String
+	SubmittedAt               graphql.String
+	AuthorCanPushToRepository graphql.Boolean
 	// Null when GitHub no longer has the commit the review was given on.
 	Commit *struct {
 		Oid graphql.String
@@ -368,7 +367,7 @@ func buildPREvidence(
 			verified = &v
 			signatureState = &s
 			signedByPlatform = &g
-			if sig.Signer != nil && !g {
+			if sig.Signer != nil {
 				signerUsername = string(sig.Signer.Login)
 			}
 		}
@@ -387,27 +386,47 @@ func buildPREvidence(
 		})
 	}
 
+	reviews := []types.PRApprovals{}
 	for _, r := range reviewNodes {
-		// A bot's approval is not a second person's review.
-		if r.State != "APPROVED" || r.Author.Typename != "User" {
-			continue
-		}
 		submittedAt, err := time.Parse(time.RFC3339, string(r.SubmittedAt))
 		if err != nil {
 			return nil, err
 		}
-		approval := types.PRApprovals{
-			Username:  string(r.Author.Login),
-			State:     string(r.State),
-			Timestamp: submittedAt.Unix(),
+		canPush := bool(r.AuthorCanPushToRepository)
+		review := types.PRApprovals{
+			Username:       string(r.Author.Login),
+			State:          string(r.State),
+			Timestamp:      submittedAt.Unix(),
+			AuthorType:     reviewAuthorType(string(r.Author.Typename)),
+			HasWriteAccess: &canPush,
 		}
 		if r.Commit != nil {
-			approval.CommitSHA = string(r.Commit.Oid)
+			review.CommitSHA = string(r.Commit.Oid)
 		}
-		evidence.Approvers = append(evidence.Approvers, approval)
+		reviews = append(reviews, review)
+		if r.State == "APPROVED" {
+			evidence.Approvers = append(evidence.Approvers, types.PRApprovals{
+				Username:  review.Username,
+				State:     review.State,
+				Timestamp: review.Timestamp,
+			})
+		}
 	}
+	evidence.Reviews = &reviews
 
 	return evidence, nil
+}
+
+// reviewAuthorType maps GitHub's actor type onto the neutral author_type values.
+func reviewAuthorType(typename string) string {
+	switch typename {
+	case "User":
+		return "user"
+	case "Bot":
+		return "bot"
+	default:
+		return "other"
+	}
 }
 
 // PREvidenceByPRNumber fetches full PR evidence for a single PR number via
@@ -446,7 +465,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 				Reviews struct {
 					Nodes    []graphqlReviewNode
 					PageInfo pageInfo
-				} `graphql:"latestOpinionatedReviews(first: 100, writersOnly: true, after: $reviewCursor)"`
+				} `graphql:"reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED], after: $reviewCursor)"`
 			} `graphql:"pullRequest(number: $prNumber)"`
 		} `graphql:"repository(owner: $owner, name: $repo)"`
 	}
@@ -539,7 +558,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							Reviews struct {
 								Nodes    []graphqlReviewNode
 								PageInfo pageInfo
-							} `graphql:"latestOpinionatedReviews(first: 100, writersOnly: true, after: $reviewCursor)"`
+							} `graphql:"reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED], after: $reviewCursor)"`
 						}
 						// Intentionally not paginated, so no cursor is selected: a
 						// commit with more than 100 associated PRs is not a realistic

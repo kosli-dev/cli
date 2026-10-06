@@ -206,7 +206,7 @@ func TestBuildPREvidence_UnsignedCommitHasNoSignatureFields(t *testing.T) {
 // An approval whose commit GitHub no longer has must leave commit_sha out of
 // the payload rather than send an empty string, and so must an unknown head.
 func TestBuildPREvidence_OmitsUnknownReviewedAndHeadCommits(t *testing.T) {
-	review := reviewNode("User", "grace", "APPROVED")
+	review := reviewNode("User", "grace", "APPROVED", true)
 
 	evidence, err := buildPREvidence(
 		"https://github.com/kosli-dev/cli/pull/671",
@@ -258,8 +258,8 @@ func TestBuildPREvidence_RecordsCommitSigner(t *testing.T) {
 	require.NotNil(t, evidence.Commits[0].SignedByPlatform)
 	require.False(t, *evidence.Commits[0].SignedByPlatform)
 
-	require.Equal(t, "", evidence.Commits[1].SignerUsername,
-		"GitHub's own signing account is not who made the commit")
+	require.Equal(t, "web-flow", evidence.Commits[1].SignerUsername,
+		"the signer is recorded as GitHub reports it, even when GitHub signed")
 	require.NotNil(t, evidence.Commits[1].SignedByPlatform)
 	require.True(t, *evidence.Commits[1].SignedByPlatform)
 
@@ -269,28 +269,71 @@ func TestBuildPREvidence_RecordsCommitSigner(t *testing.T) {
 	require.NotContains(t, string(unsigned), "signed_by_platform")
 }
 
-func reviewNode(typename, login, state string) graphqlReviewNode {
-	r := graphqlReviewNode{State: graphql.String(state), SubmittedAt: "2026-03-01T13:00:00Z"}
+func reviewNode(typename, login, state string, canPush bool) graphqlReviewNode {
+	r := graphqlReviewNode{State: graphql.String(state), SubmittedAt: "2026-03-01T13:00:00Z",
+		AuthorCanPushToRepository: graphql.Boolean(canPush)}
 	r.Author.Typename = graphql.String(typename)
 	r.Author.Login = graphql.String(login)
 	return r
 }
 
-// Only a person's approval counts: a bot's does not, and nor does a later
-// request for changes, which GitHub returns as that reviewer's latest review.
-func TestBuildPREvidence_KeepsOnlyHumanApprovals(t *testing.T) {
+// Every review is recorded with who wrote it and their access; deciding which
+// ones count is the policy's job. Approvers keeps only the approvals.
+func TestBuildPREvidence_RecordsEveryReviewAsFacts(t *testing.T) {
+	approved := reviewNode("User", "grace", "APPROVED", true)
+	approved.Commit = &struct{ Oid graphql.String }{Oid: "0e723254516c841126e81f76100be57258ff1386"}
 	evidence, err := buildPREvidence(
 		"https://github.com/kosli-dev/cli/pull/671",
 		"0e723254516c841126e81f76100be57258ff1386",
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
 		"title", "feature", "main", "",
 		nil, []graphqlReviewNode{
-			reviewNode("User", "grace", "APPROVED"),
-			reviewNode("Bot", "github-actions", "APPROVED"),
-			reviewNode("User", "linus", "CHANGES_REQUESTED"),
+			approved,
+			reviewNode("Bot", "github-actions", "APPROVED", true),
+			reviewNode("User", "linus", "CHANGES_REQUESTED", false),
+			reviewNode("Mannequin", "ghost-import", "COMMENTED", false),
 		},
 	)
 	require.NoError(t, err)
-	require.Len(t, evidence.Approvers, 1)
-	require.Equal(t, "grace", evidence.Approvers[0].(types.PRApprovals).Username)
+
+	type fact struct {
+		user, state, authorType string
+		canPush                 bool
+	}
+	got := []fact{}
+	for _, r := range *evidence.Reviews {
+		require.NotNil(t, r.HasWriteAccess)
+		got = append(got, fact{r.Username, r.State, r.AuthorType, *r.HasWriteAccess})
+	}
+	require.Equal(t, []fact{
+		{"grace", "APPROVED", "user", true},
+		{"github-actions", "APPROVED", "bot", true},
+		{"linus", "CHANGES_REQUESTED", "user", false},
+		{"ghost-import", "COMMENTED", "other", false},
+	}, got)
+
+	require.Equal(t, []any{
+		types.PRApprovals{Username: "grace", State: "APPROVED", Timestamp: 1772370000},
+		types.PRApprovals{Username: "github-actions", State: "APPROVED", Timestamp: 1772370000},
+	}, evidence.Approvers, "approvers keeps every approval, in the shape it had before")
+}
+
+// A PR with no reviews records an empty list, which a policy can tell apart
+// from evidence where reviews weren't recorded at all.
+func TestBuildPREvidence_RecordsNoReviewsAsEmptyList(t *testing.T) {
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature", "main", "",
+		nil, nil,
+	)
+	require.NoError(t, err)
+	payload, err := json.Marshal(evidence)
+	require.NoError(t, err)
+	require.Contains(t, string(payload), `"reviews":[]`)
+
+	notRecorded, err := json.Marshal(types.PREvidence{})
+	require.NoError(t, err)
+	require.NotContains(t, string(notRecorded), "reviews")
 }

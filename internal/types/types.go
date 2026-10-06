@@ -3,18 +3,21 @@ package types
 import "encoding/json"
 
 type PREvidence struct {
-	MergeCommit string   `json:"merge_commit"`
-	URL         string   `json:"url"`
-	State       string   `json:"state"`
-	Approvers   []any    `json:"approvers"`
-	Author      string   `json:"author"`
-	CreatedAt   int64    `json:"created_at,omitempty"`
-	MergedAt    int64    `json:"merged_at,omitempty"`
-	Title       string   `json:"title,omitempty"`
-	HeadRef     string   `json:"head_ref,omitempty"`
-	HeadSHA     string   `json:"head_sha,omitempty"`
-	BaseRef     string   `json:"base_ref,omitempty"`
-	Commits     []Commit `json:"commits"`
+	MergeCommit string `json:"merge_commit"`
+	URL         string `json:"url"`
+	State       string `json:"state"`
+	Approvers   []any  `json:"approvers"`
+	// Every submitted review, in any state; Approvers holds the approvals only.
+	// Nil when the provider's reviews are not recorded, so "none" stays distinct.
+	Reviews   *[]PRApprovals `json:"reviews,omitempty"`
+	Author    string         `json:"author"`
+	CreatedAt int64          `json:"created_at,omitempty"`
+	MergedAt  int64          `json:"merged_at,omitempty"`
+	Title     string         `json:"title,omitempty"`
+	HeadRef   string         `json:"head_ref,omitempty"`
+	HeadSHA   string         `json:"head_sha,omitempty"`
+	BaseRef   string         `json:"base_ref,omitempty"`
+	Commits   []Commit       `json:"commits"`
 }
 
 // MarshalJSON keeps "commits" in the payload even when a provider returns no
@@ -35,6 +38,9 @@ type PRApprovals struct {
 	State     string `json:"state,omitempty"`
 	Timestamp int64  `json:"timestamp,omitempty"`
 	CommitSHA string `json:"commit_sha,omitempty"`
+	// "user", "bot" or "other"
+	AuthorType     string `json:"author_type,omitempty"`
+	HasWriteAccess *bool  `json:"has_write_access,omitempty"`
 }
 
 type Commit struct {

@@ -162,7 +162,7 @@ func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, r
 	return commits, nil
 }
 
-// allPRReviews returns every approved review on prNumber, seeded as above.
+// allPRReviews returns every submitted review on prNumber, seeded as above.
 func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, ref prRef,
 	seed []graphqlReviewNode, first pageInfo) ([]graphqlReviewNode, error) {
 	reviews, err := paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlReviewNode, pageInfo, error) {
@@ -172,7 +172,7 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, r
 					Reviews struct {
 						Nodes    []graphqlReviewNode
 						PageInfo pageInfo
-					} `graphql:"latestOpinionatedReviews(first: 100, writersOnly: true, after: $cursor)"`
+					} `graphql:"reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED], after: $cursor)"`
 				} `graphql:"pullRequest(number: $prNumber)"`
 			} `graphql:"repository(owner: $owner, name: $repo)"`
 		}
@@ -183,7 +183,7 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, r
 		return page.Nodes, page.PageInfo, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("draining approvals for %s: %w", ref, err)
+		return nil, fmt.Errorf("draining reviews for %s: %w", ref, err)
 	}
 	return reviews, nil
 }
