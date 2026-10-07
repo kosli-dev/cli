@@ -81,7 +81,7 @@ services:
 
   minio:
     networks: [ cli_net ]
-    image: rustfs/rustfs:1.0.0
+    image: rustfs/rustfs:1.0.1
     container_name: minio_cli
     ports: ["9010:9000", "9099:9090"]
     environment:
@@ -103,7 +103,7 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-    image: rustfs/rustfs:1.0.0
+    image: rustfs/rustfs:1.0.1
     container_name: cli_s3_init
     entrypoint: ["/bin/sh", "-c"]
     command:
