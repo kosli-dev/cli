@@ -24,6 +24,15 @@ reach.
 - Both are measured instances of the gap the decision document argues about:
   refusing empty flag values in the CLI does nothing for a customer calling the
   API directly, so neither of these closes.
+- **Both were closed on the server on 2026-08-19.** The figures in this document
+  are the measurement that prompted that work, and are left as they were taken;
+  `results-api.tsv` has since been re-run against the fixed server and now reads
+  22 acceptances and 56 refusals. What changed, and why the obvious way to change
+  it would have broken reads of existing records, is in
+  `2026-08-13-empty-value-decision.md` under "Refusing an empty value on the
+  server"; which rows moved is in "What the re-run changed" below.
+- `replay.py` now also answers, for an accepted value, whether it reaches the
+  record - the `stored` column, described in the README.
 - Every emptied filter is accepted: `tag=`, `search=`, `name=` are answered 200
   rather than refused. What that means then differs by endpoint - an empty tag
   matches nothing, an empty repo name matches everything - and the status does
@@ -117,8 +126,8 @@ customer can empty by calling the API however the CLI behaves:
 `create flow --template` is the one to look at. `--template ""` is refused by the
 CLI, by the wrapper every flag's value carries (`cmd/kosli/nonEmptyValue.go`,
 applied by the walk in `cmd/kosli/root.go`).
-Sending `template: [""]` straight to the API is accepted, and reading the flow
-back shows it stored:
+Sending `template: [""]` straight to the API was accepted, and reading the flow
+back showed it stored:
 
 ```
 version: 1
@@ -138,8 +147,8 @@ document's proposal, which says a CLI rule can only reach CLI traffic, with a
 measured instance behind it instead of a worked example.
 
 The four rows reaching `filename` say the same thing about a different field,
-and it is the one a customer would feel. The server accepts an artifact whose
-`filename` is empty, stores it, and serves it back that way:
+and it is the one a customer would feel. The server accepted an artifact whose
+`filename` is empty, stored it, and served it back that way:
 
 ```
 $ kosli get artifact FLOW@aaaa...
@@ -319,3 +328,54 @@ It also gives the server-side work a test list. What the server has to enforce
 is not "refuse an empty value" but "an absent field means what the verb says it
 means", and a probe that replays every captured request with one field emptied,
 and again with it removed, is how that gets checked rather than asserted.
+
+That test list was used. The two rows with a named consequence - `template` and
+`filename` - were closed on the server on 2026-08-19, each with an endpoint test
+asserting the refusal and a second test asserting that a record already holding
+the empty value still loads. The second test is the one this probe could not have
+suggested: measuring what a request does says nothing about what a schema change
+would do to data already stored, and that is where the obvious fix turned out to
+be an outage. See "Refusing an empty value on the server" in
+`2026-08-13-empty-value-decision.md`.
+
+The 25 acceptances also collapse further than the row count suggests. Four rows
+reach one `filename` field on one endpoint, so they are four CLI routes to a
+single server-side defect rather than four defects. A row count is a count of
+command-and-flag pairs, not of things to fix.
+
+## What the re-run changed (2026-08-19)
+
+Re-run against a server built from kosli-dev/server master at b9e213d9. Eight of
+the 417 rows moved. Five are the fixes:
+
+| Row | Field | Now |
+|---|---|---|
+| `attest artifact --artifact-type` | `filename` | refuses |
+| `attest artifact --display-name` | `filename` | refuses |
+| `report artifact --artifact-type` | `filename` | refuses |
+| `report artifact --name` | `filename` | refuses |
+| `create flow --template` | `template` | refuses |
+
+Three moved for reasons other than this work, and the third of them turned out not
+to be a move at all:
+
+- `attest override --commit` went from an unusable control to a real refusal,
+  because [server#6504](https://github.com/kosli-dev/server/issues/6504) is closed
+  and the control request now succeeds.
+- `create environment --included-environments` went from refusing to accepting,
+  because [server#6503](https://github.com/kosli-dev/server/issues/6503) is closed
+  and a logical environment with nothing included is now a record the server can
+  handle. Its `stored` answer is "does not reach the record".
+- `list flows --name` went from refusing to accepting, and this is **not
+  attributable to the fixes**. Running the whole audit against the pre-fix image
+  again gives "accepts" for that row, with all 416 other rows identical to the
+  earlier pre-fix run, so the row differs between runs of the same server rather
+  than between servers. The 400 it recorded on 2026-08-18, `{"message":"Empty
+  string is not allowed for flow names."}`, could not be reproduced by curl, by an
+  isolated probe of that row, or by a full run, and its message can only come from
+  a create or a rename, neither of which a GET of the list endpoint reaches. Cause
+  unknown; treat the row as unstable rather than as a finding.
+
+Every write acceptance that remains is either a description field, which is out of
+scope by decision, or a value that does not reach the record. Nothing with a named
+consequence is still open.
