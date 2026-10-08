@@ -584,17 +584,50 @@ func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []strin
 	return objects, nil
 }
 
+// s3DigestSource is where the fingerprint pipeline gets each object's content
+// sha256 once the tree is known. Content mode downloads the object into the
+// pipeline's temp dir and hashes it; a source that reads S3's stored checksum
+// never touches the disk. Everything else -- key rule, .kosli_ignore, the tree
+// walk -- is shared, so the two sources cannot fingerprint the same bucket
+// differently.
+type s3DigestSource struct {
+	// sha256 returns the hex digest of one object's content. tempDir is scratch
+	// space the pipeline owns and removes when it is done.
+	sha256 func(ctx context.Context, tempDir string, object s3Object) (string, error)
+	// usesDisk reports whether an object's listed size occupies temp disk while
+	// sha256 runs, and so counts against DownloadLimits.BytesInFlight.
+	usesDisk bool
+}
+
+// downloadDigests is the content-mode source: download, hash, remove.
+func downloadDigests(downloader S3DownloadAPI, bucket string, logger *logger.Logger) s3DigestSource {
+	return s3DigestSource{
+		sha256: func(ctx context.Context, tempDir string, object s3Object) (string, error) {
+			return downloadAndHashS3Object(ctx, downloader, tempDir, bucket, object.key, nil, logger)
+		},
+		usesDisk: true,
+	}
+}
+
 // fingerprintS3Objects fingerprints the objects as the directory their keys
-// describe, without ever using a key as a local file name. Each object is
-// downloaded to an anonymous temp file, hashed and removed; the fingerprint is
-// then computed from the (key, sha256) pairs by digest.VirtualDirSha256, which
-// reproduces what digest.DirSha256 gives the same tree on disk. A single object
-// is fingerprinted as that file and named after it, as before.
-//
-// A root .kosli_ignore is downloaded first so its rules can be applied, and
-// objects the rules exclude are not downloaded at all. The remaining objects
-// download in parallel within limits; the first failure cancels the rest.
+// describe, downloading each one to an anonymous temp file, hashing it and
+// removing it. See fingerprintS3Tree for the pipeline.
 func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
+	return fingerprintS3Tree(downloader, downloadDigests(downloader, bucket, logger), bucket, objects, limits, logger)
+}
+
+// fingerprintS3Tree fingerprints the objects as the directory their keys
+// describe, without ever using a key as a local file name. Each object's
+// content sha256 comes from source; the fingerprint is then computed from the
+// (key, sha256) pairs by digest.VirtualDirSha256, which reproduces what
+// digest.DirSha256 gives the same tree on disk. A single object is
+// fingerprinted as that file and named after it, as before.
+//
+// A root .kosli_ignore is always downloaded first, whatever the source, because
+// its rules decide which other objects take part; objects the rules exclude are
+// not fetched at all. The remaining objects are fetched in parallel within
+// limits, and the first failure cancels the rest.
+func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
 	keys := make([]string, len(objects))
 	for i, object := range objects {
 		keys[i] = object.key
@@ -623,7 +656,7 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 	// One object is fingerprinted as that file and named after it, as it was
 	// when the objects were laid out on disk.
 	if file, ok := digest.SingleVirtualFile(files); ok {
-		sha256, err := downloadAndHashS3Object(context.TODO(), downloader, tempDir, bucket, objects[0].key, nil, logger)
+		sha256, err := source.sha256(context.TODO(), tempDir, objects[0])
 		if err != nil {
 			return "", "", err
 		}
@@ -672,9 +705,9 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 		files[i].Sha256 = sha256
 	}
 
-	// Each download writes its own slot, so the manifest stays in listing order
-	// however the downloads interleave.
-	if err := downloadS3ObjectsInParallel(downloader, tempDir, bucket, objects, toDownload, files, limits, logger); err != nil {
+	// Each fetch writes its own slot, so the manifest stays in listing order
+	// however the fetches interleave.
+	if err := fetchS3DigestsInParallel(source, tempDir, objects, toDownload, files, limits, logger); err != nil {
 		return "", "", err
 	}
 
@@ -694,11 +727,12 @@ func ignoreRuleError(err error) error {
 	return err
 }
 
-// downloadS3ObjectsInParallel fetches the objects at indexes and writes each
-// digest into files at the same index. A fixed worker pool bounds downloads and
-// goroutines alike, a weighted semaphore bounds their listed bytes, and the
-// first error cancels the context so nothing further starts.
-func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket string, objects []s3Object, indexes []int,
+// fetchS3DigestsInParallel reads the digests of the objects at indexes from
+// source and writes each into files at the same index. A fixed worker pool
+// bounds fetches and goroutines alike, a weighted semaphore bounds the listed
+// bytes of sources that use the disk, and the first error cancels the context
+// so nothing further starts.
+func fetchS3DigestsInParallel(source s3DigestSource, tempDir string, objects []s3Object, indexes []int,
 	files []digest.VirtualFile, limits DownloadLimits, logger *logger.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -722,11 +756,15 @@ func downloadS3ObjectsInParallel(downloader S3DownloadAPI, tempDir, bucket strin
 			for i := range work {
 				object := objects[i]
 				// An object larger than the budget takes all of it and so runs alone.
-				weight := max(min(object.size, limits.BytesInFlight), 1)
-				if err := budget.Acquire(ctx, weight); err != nil {
-					return // cancelled while waiting
+				// A source that never touches the disk owes the budget nothing.
+				var weight int64
+				if source.usesDisk {
+					weight = max(min(object.size, limits.BytesInFlight), 1)
+					if err := budget.Acquire(ctx, weight); err != nil {
+						return // cancelled while waiting
+					}
 				}
-				sha256, err := downloadAndHashS3Object(ctx, downloader, tempDir, bucket, object.key, nil, logger)
+				sha256, err := source.sha256(ctx, tempDir, object)
 				budget.Release(weight)
 				if err != nil {
 					fail(err)
