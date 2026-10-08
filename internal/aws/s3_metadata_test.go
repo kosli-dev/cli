@@ -313,6 +313,38 @@ func (suite *S3MetadataTestSuite) TestErrors() {
 	}
 }
 
+// Only a "-N" part-count suffix marks a composite checksum. A "-" anywhere
+// else cannot occur in standard Base64, so such a value is undecodable rather
+// than composite, and must not send the user to copy-object, which would not
+// help.
+func (suite *S3MetadataTestSuite) TestCompositeDetectionKeysOffThePartCountSuffix() {
+	readme := []byte(fakeReadmeBody)
+	for _, t := range []struct {
+		name          string
+		checksum      FakeS3Checksum
+		wantComposite bool
+	}{
+		{name: "a part-count suffix with no type", checksum: FakeS3Checksum{SHA256: base64Sha256(readme) + "-4"}, wantComposite: true},
+		{name: "a COMPOSITE type with no suffix", checksum: FakeS3Checksum{SHA256: base64Sha256(readme), Type: s3Types.ChecksumTypeComposite}, wantComposite: true},
+		{name: "a dash that is not a suffix", checksum: FakeS3Checksum{SHA256: "S0tL-S0tLS0_LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0=", Type: s3Types.ChecksumTypeFullObject}},
+		{name: "a dash followed by more than digits", checksum: FakeS3Checksum{SHA256: base64Sha256(readme) + "-4a"}},
+		{name: "a trailing dash", checksum: FakeS3Checksum{SHA256: base64Sha256(readme) + "-"}},
+	} {
+		suite.Run(t.name, func() {
+			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{"README.md": readme},
+				Checksums: map[string]FakeS3Checksum{"README.md": t.checksum}}
+			_, err := snapshotMetadata(suite.T(), client, nil)
+			require.Error(suite.T(), err)
+			if t.wantComposite {
+				require.Contains(suite.T(), err.Error(), "multipart (composite)")
+				return
+			}
+			require.Contains(suite.T(), err.Error(), "cannot be decoded")
+			require.NotContains(suite.T(), err.Error(), "copy-object", "an undecodable checksum is not fixed by collapsing parts")
+		})
+	}
+}
+
 // Whether an object's checksum is usable is a property of the object, not of
 // the connection, so one run reports every such object rather than stopping at
 // the first; a bucket-wide migration is then not a guess-and-retry loop.

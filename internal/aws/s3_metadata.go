@@ -91,11 +91,10 @@ func objectChecksumSha256(bucket, key string, out *s3.HeadObjectOutput) (string,
 
 	// A composite checksum hashes the part checksums rather than the object, so
 	// it is not the object's digest. S3 reports it two ways -- an explicit
-	// COMPOSITE type, and a "-N" part-count suffix on the value -- and the SDK's
-	// own response validation keys off the "-". Check both, so neither a missing
-	// type nor a missing suffix lets a composite through.
+	// COMPOSITE type, and a "-N" part-count suffix on the value. Check both, so
+	// neither a missing type nor a missing suffix lets a composite through.
 	checksum := *out.ChecksumSHA256
-	if out.ChecksumType == s3Types.ChecksumTypeComposite || strings.Contains(checksum, "-") {
+	if out.ChecksumType == s3Types.ChecksumTypeComposite || hasPartCountSuffix(checksum) {
 		return "", unusableChecksumError{fmt.Sprintf("object key [%s] has a multipart (composite) SHA256 checksum "+
 			"[%s], which hashes the part checksums rather than the object content. Collapse it into a single "+
 			"part in place: aws s3api copy-object --checksum-algorithm SHA256 --copy-source %s/%s --bucket %s "+
@@ -109,6 +108,24 @@ func objectChecksumSha256(bucket, key string, out *s3.HeadObjectOutput) (string,
 			key, checksum, err)}
 	}
 	return sha256, nil
+}
+
+// hasPartCountSuffix reports whether checksum ends in the "-N" part count S3
+// appends to a composite checksum. The SDK's own response validation treats any
+// "-" as the marker, which is sound for standard Base64; requiring digits after
+// the last one means any other "-" is reported as an undecodable value rather
+// than as a composite that copy-object would not fix.
+func hasPartCountSuffix(checksum string) bool {
+	dash := strings.LastIndex(checksum, "-")
+	if dash <= 0 || dash == len(checksum)-1 {
+		return false
+	}
+	for _, r := range checksum[dash+1:] {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // combineUnusableChecksumErrors reports every object whose checksum cannot be
