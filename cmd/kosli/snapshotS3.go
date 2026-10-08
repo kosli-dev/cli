@@ -68,12 +68,19 @@ kosli snapshot s3 yourEnvironmentName \
 	--org yourOrgName
 `
 
+// fingerprint sources accepted by --fingerprint-source
+const (
+	fingerprintSourceContent  = "content"
+	fingerprintSourceMetadata = "metadata"
+)
+
 type snapshotS3Options struct {
 	bucket              string
 	includePaths        []string
 	includeRegex        []string
 	excludePaths        []string
 	excludeRegex        []string
+	fingerprintSource   string
 	downloadConcurrency int
 	downloadBudget      string
 	downloadLimits      aws.DownloadLimits
@@ -109,6 +116,12 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 				}
 			}
 
+			if o.fingerprintSource != fingerprintSourceContent && o.fingerprintSource != fingerprintSourceMetadata {
+				return ErrorBeforePrintingUsage(cmd, fmt.Sprintf(
+					"%s is not a valid fingerprint source. Valid sources are: [%s]",
+					o.fingerprintSource, validS3FingerprintSources))
+			}
+
 			return o.resolveDownloadLimits()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -121,6 +134,7 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVar(&o.includeRegex, "include-regex", []string{}, bucketPathsRegexFlag)
 	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludeBucketPathsFlag)
 	cmd.Flags().StringSliceVar(&o.excludeRegex, "exclude-regex", []string{}, excludeBucketPathsRegexFlag)
+	cmd.Flags().StringVar(&o.fingerprintSource, "fingerprint-source", fingerprintSourceContent, s3FingerprintSourceFlag)
 	cmd.Flags().IntVar(&o.downloadConcurrency, "download-concurrency", aws.DefaultDownloadLimits.Concurrency, downloadConcurrencyFlag)
 	cmd.Flags().StringVar(&o.downloadBudget, "download-budget", defaultDownloadBudget, downloadBudgetFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
@@ -136,8 +150,13 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotS3Options) run(args []string) error {
 	envName := args[0]
+	harvest := o.awsStaticCreds.GetS3Data
+	if o.fingerprintSource == fingerprintSourceMetadata {
+		harvest = o.awsStaticCreds.GetS3DataFromMetadata
+	}
+
 	return newSnapshotReporter().report(envName, "S3", func() (any, string, error) {
-		s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, o.downloadLimits, logger)
+		s3Data, err := harvest(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, o.downloadLimits, logger)
 		if err != nil {
 			return nil, "", err
 		}
