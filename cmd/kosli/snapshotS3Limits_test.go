@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/aws"
@@ -41,4 +42,10 @@ func TestResolveDownloadLimitsPicksTheConcurrencyForTheSource(t *testing.T) {
 func TestDefaultMetadataConcurrencyIsWiderThanTheDownloadDefault(t *testing.T) {
 	require.Greater(t, aws.DefaultMetadataConcurrency, aws.DefaultDownloadLimits.Concurrency,
 		"a source that holds no buffers should not be throttled below the download default")
+}
+
+// cobra prints only the flag's own default, so the metadata default is spelt
+// out in the help text, and has to keep matching the constant.
+func TestDownloadConcurrencyHelpStatesTheMetadataDefault(t *testing.T) {
+	require.Contains(t, downloadConcurrencyFlag, fmt.Sprintf("defaults to %d", aws.DefaultMetadataConcurrency))
 }
