@@ -545,6 +545,14 @@ type DownloadLimits struct {
 // Lambda's default /tmp, and part buffers near 320 MiB of memory.
 var DefaultDownloadLimits = DownloadLimits{Concurrency: 8, BytesInFlight: 512 << 20}
 
+// DefaultMetadataConcurrency is how many checksum reads run at once when a
+// bucket is fingerprinted from S3 metadata. A HeadObject holds no part buffers
+// and no temp disk, so the download default says nothing about it. At a 30 ms
+// round trip, 32 in flight is around a thousand objects a second: a million in
+// under twenty minutes, and still well under the 5,500 reads a second S3
+// supports per prefix. The adaptive retryer absorbs throttling beyond that.
+const DefaultMetadataConcurrency = 32
+
 // listMatchingS3Objects lists the bucket, dropping folder markers and keys the
 // filters exclude, in the order S3 returns them.
 func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []string, includeRegex []*regexp.Regexp,
