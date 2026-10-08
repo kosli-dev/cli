@@ -207,6 +207,26 @@ func (suite *S3MetadataTestSuite) TestReadsMetadataNotContent() {
 	require.Zero(suite.T(), client.checksumModeMissing, "every HeadObject must ask for the stored checksum")
 }
 
+// The root .kosli_ignore is downloaded in metadata mode whatever else the bucket
+// holds, so a checksum is never required of it -- including when it is the
+// only object and so takes the single-file branch rather than the ignore pass.
+func (suite *S3MetadataTestSuite) TestALoneIgnoreFileNeedsNoChecksum() {
+	objects := map[string][]byte{".kosli_ignore": []byte("logs\n")}
+	downloads := &recordingDownloader{S3API: &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects}}
+	client := &countingHeader{S3API: downloads}
+
+	metadata, err := getS3DataFromMetadataClient(client, fakeS3TestBucketName, nil, nil, nil, nil,
+		DefaultDownloadLimits, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), []string{".kosli_ignore"}, downloads.downloadedKeys())
+	require.Empty(suite.T(), client.calls, "the ignore file must not be read through HeadObject")
+
+	content, err := getS3DataFromClient(&FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects}, fakeS3TestBucketName,
+		nil, nil, nil, nil, DefaultDownloadLimits, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), content, metadata)
+}
+
 // A source that reads metadata occupies no temp disk, so the byte budget must
 // not throttle it: with a one-byte budget the HEADs still overlap up to the
 // worker count.
