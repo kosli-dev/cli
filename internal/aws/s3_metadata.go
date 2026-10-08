@@ -13,21 +13,10 @@ import (
 	"github.com/kosli-dev/cli/internal/logger"
 )
 
-// GetS3DataFromMetadata returns a digest and metadata of the S3 bucket content,
-// taking each object's SHA256 from the checksum S3 stores for it instead of
-// downloading the object and hashing it.
-//
-// The fingerprint is identical to the one GetS3Data produces: both run the
-// same pipeline over the same keys and .kosli_ignore rules, and differ only in
-// where an object's digest comes from. What this saves is the download, the
-// temp disk and the hashing -- not permissions: AWS requires s3:GetObject to
-// read an object's checksum, the same permission downloading it needs.
-//
-// Every object that contributes to the fingerprint must carry a full-object
-// SHA256 checksum, which S3 only stores when the upload asked for one. A root
-// .kosli_ignore is still downloaded, because its rules decide which objects
-// contribute; objects the rules exclude are never fetched, so they need no
-// checksum.
+// GetS3DataFromMetadata returns what GetS3Data returns, but takes each
+// object's SHA256 from the checksum S3 stores for it instead of downloading
+// the object. Every contributing object needs a full-object SHA256 checksum.
+// Reading one needs s3:GetObject, the same permission as a download.
 func (staticCreds *AWSStaticCreds) GetS3DataFromMetadata(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, logger *logger.Logger) ([]*S3Data, error) {
 	client, err := NewS3ClientFunc(staticCreds)
 	if err != nil {
@@ -43,11 +32,10 @@ func getS3DataFromMetadataClient(client S3API, bucket string, includePaths, incl
 }
 
 // metadataDigests is the source that reads each object's stored SHA256 with a
-// HeadObject and never touches the disk.
+// HeadObject.
 func metadataDigests(client S3HeadAPI, bucket string, logger *logger.Logger) s3DigestSource {
 	return s3DigestSource{
 		sha256: func(ctx context.Context, _ string, object s3Object) (string, error) {
-			// S3 only returns a stored checksum when the request asks for it.
 			out, err := client.HeadObject(ctx, &s3.HeadObjectInput{
 				Bucket:       aws.String(bucket),
 				Key:          aws.String(object.key),
@@ -68,11 +56,9 @@ func metadataDigests(client S3HeadAPI, bucket string, logger *logger.Logger) s3D
 	}
 }
 
-// unusableChecksumError says why one object's stored checksum cannot stand in
-// for its content digest. It describes the object, not the connection, so the
-// fan-out keeps going and reports every such object at once rather than
-// stopping at the first: a bucket-wide migration is then one run, not a
-// guess-and-retry loop.
+// unusableChecksumError is a problem with one object's checksum rather than
+// the connection, so the fan-out reports every such object in one run instead
+// of stopping at the first.
 type unusableChecksumError struct {
 	msg string
 }
@@ -89,10 +75,8 @@ func objectChecksumSha256(bucket, key string, out *s3.HeadObjectOutput) (string,
 			key, bucket, key)}
 	}
 
-	// A composite checksum hashes the part checksums rather than the object, so
-	// it is not the object's digest. S3 reports it two ways -- an explicit
-	// COMPOSITE type, and a "-N" part-count suffix on the value. Check both, so
-	// neither a missing type nor a missing suffix lets a composite through.
+	// A composite checksum hashes the part checksums, not the object. S3 may mark
+	// it with the COMPOSITE type, the "-N" suffix or both, so either is enough.
 	checksum := *out.ChecksumSHA256
 	if out.ChecksumType == s3Types.ChecksumTypeComposite || hasPartCountSuffix(checksum) {
 		return "", unusableChecksumError{fmt.Sprintf("object key [%s] has a multipart (composite) SHA256 checksum "+
@@ -110,11 +94,9 @@ func objectChecksumSha256(bucket, key string, out *s3.HeadObjectOutput) (string,
 	return sha256, nil
 }
 
-// hasPartCountSuffix reports whether checksum ends in the "-N" part count S3
-// appends to a composite checksum. The SDK's own response validation treats any
-// "-" as the marker, which is sound for standard Base64; requiring digits after
-// the last one means any other "-" is reported as an undecodable value rather
-// than as a composite that copy-object would not fix.
+// hasPartCountSuffix reports whether checksum ends in a composite's "-N" part
+// count. Any other "-" is left to fail decoding, rather than be reported as a
+// composite that copy-object would not fix.
 func hasPartCountSuffix(checksum string) bool {
 	dash := strings.LastIndex(checksum, "-")
 	if dash <= 0 || dash == len(checksum)-1 {
@@ -128,8 +110,8 @@ func hasPartCountSuffix(checksum string) bool {
 	return true
 }
 
-// combineUnusableChecksumErrors reports every object whose checksum cannot be
-// used, capped like key problems are so a whole-bucket problem stays readable.
+// combineUnusableChecksumErrors joins the per-object errors into one, listing
+// at most maxReportedS3KeyProblems of them.
 func combineUnusableChecksumErrors(errs []error) error {
 	// The workers finish in any order; sorting keeps the message stable.
 	messages := make([]string, 0, len(errs))

@@ -40,8 +40,7 @@ func (suite *SnapshotS3TestSuite) SetupTest() {
 		"README.md":                  []byte("# kosli cli public\n"),
 		"dummy/dummy_2/template.yml": []byte("key: value\n"),
 	}
-	// Only README.md carries a stored checksum, so the metadata cases cover both
-	// an object that can be fingerprinted from metadata and one that cannot.
+	// Only README.md has a stored checksum, so the metadata cases can cover both outcomes.
 	readmeSum := sha256.Sum256(objects["README.md"])
 	aws.NewS3ClientFunc = func(_ *aws.AWSStaticCreds) (aws.S3API, error) {
 		return &aws.FakeS3Client{

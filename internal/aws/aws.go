@@ -151,12 +151,9 @@ type S3DownloadAPI interface {
 	DownloadObject(ctx context.Context, params *transfermanager.DownloadObjectInput, optFns ...func(*transfermanager.Options)) (*transfermanager.DownloadObjectOutput, error)
 }
 
-// S3HeadAPI reads an object's metadata without reading the object itself,
-// including the checksum S3 stores for it. The real *s3.Client satisfies this
-// implicitly.
-//
-// The stored checksum is only returned when the request sets ChecksumMode to
-// ChecksumModeEnabled.
+// S3HeadAPI reads an object's metadata, including the checksum S3 stores for
+// it, which is returned only when the request sets ChecksumMode to
+// ChecksumModeEnabled. The real *s3.Client satisfies this implicitly.
 type S3HeadAPI interface {
 	HeadObject(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
 }
@@ -400,9 +397,8 @@ func formatLambdaLastModified(lastModified string) (time.Time, error) {
 	return time.Parse(layout, lastModified)
 }
 
-// decodeBase64Sha256 converts a Base64-encoded SHA256 digest into the hex form
-// Kosli fingerprints use. AWS reports stored digests in Base64: Lambda's
-// CodeSha256 and an S3 object's checksum both arrive this way.
+// decodeBase64Sha256 converts a Base64 SHA256 digest, the form AWS reports
+// stored digests in, into the hex form Kosli fingerprints use.
 func decodeBase64Sha256(fingerprint string) (string, error) {
 	sha256base64, err := base64.StdEncoding.DecodeString(fingerprint)
 	if err != nil {
@@ -479,8 +475,7 @@ func getS3DataFromClient(client S3API, bucket string, includePaths, includeRegex
 }
 
 // getS3DataWithSource lists and filters the bucket, then fingerprints what is
-// left with digests from source. Everything but the digest source is shared, so
-// the sources cannot disagree on which objects a snapshot covers.
+// left with digests from source.
 func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, logger *logger.Logger) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
 
@@ -545,12 +540,10 @@ type DownloadLimits struct {
 // Lambda's default /tmp, and part buffers near 320 MiB of memory.
 var DefaultDownloadLimits = DownloadLimits{Concurrency: 8, BytesInFlight: 512 << 20}
 
-// DefaultMetadataConcurrency is how many checksum reads run at once when a
-// bucket is fingerprinted from S3 metadata. A HeadObject holds no part buffers
-// and no temp disk, so the download default says nothing about it. At a 30 ms
-// round trip, 32 in flight is around a thousand objects a second: a million in
-// under twenty minutes, and still well under the 5,500 reads a second S3
-// supports per prefix. The adaptive retryer absorbs throttling beyond that.
+// DefaultMetadataConcurrency is how many checksum reads run at once when
+// fingerprinting from S3 metadata. A HeadObject holds no part buffers or temp
+// disk, so it is sized against S3's request rate instead: 32 at a 30 ms round
+// trip is about 1,000 reads a second, well under the 5,500 S3 allows per prefix.
 const DefaultMetadataConcurrency = 32
 
 // listMatchingS3Objects lists the bucket, dropping folder markers and keys the
@@ -602,18 +595,15 @@ func listMatchingS3Objects(client S3ListAPI, bucket string, includePaths []strin
 	return objects, nil
 }
 
-// s3DigestSource is where the fingerprint pipeline gets each object's content
-// sha256 once the tree is known. Content mode downloads the object into the
-// pipeline's temp dir and hashes it; a source that reads S3's stored checksum
-// never touches the disk. Everything else -- key rule, .kosli_ignore, the tree
-// walk -- is shared, so the two sources cannot fingerprint the same bucket
-// differently.
+// s3DigestSource supplies each object's content sha256 to the fingerprint
+// pipeline. It is the only part that varies by source, so two sources cannot
+// fingerprint the same bucket differently.
 type s3DigestSource struct {
-	// sha256 returns the hex digest of one object's content. tempDir is scratch
-	// space the pipeline owns and removes when it is done.
+	// sha256 returns the hex digest of an object's content. tempDir is scratch
+	// space the pipeline removes afterwards.
 	sha256 func(ctx context.Context, tempDir string, object s3Object) (string, error)
-	// usesDisk reports whether an object's listed size occupies temp disk while
-	// sha256 runs, and so counts against DownloadLimits.BytesInFlight.
+	// usesDisk means an object's listed size occupies temp disk while sha256
+	// runs, so it counts against DownloadLimits.BytesInFlight.
 	usesDisk bool
 }
 
@@ -627,24 +617,19 @@ func downloadDigests(downloader S3DownloadAPI, bucket string, logger *logger.Log
 	}
 }
 
-// fingerprintS3Objects fingerprints the objects as the directory their keys
-// describe, downloading each one to an anonymous temp file, hashing it and
-// removing it. See fingerprintS3Tree for the pipeline.
+// fingerprintS3Objects fingerprints the objects with the download source.
 func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
 	return fingerprintS3Tree(downloader, downloadDigests(downloader, bucket, logger), bucket, objects, limits, logger)
 }
 
 // fingerprintS3Tree fingerprints the objects as the directory their keys
-// describe, without ever using a key as a local file name. Each object's
-// content sha256 comes from source; the fingerprint is then computed from the
-// (key, sha256) pairs by digest.VirtualDirSha256, which reproduces what
-// digest.DirSha256 gives the same tree on disk. A single object is
-// fingerprinted as that file and named after it, as before.
+// describe, without using a key as a local file name: digest.VirtualDirSha256
+// combines the (key, sha256) pairs from source exactly as digest.DirSha256
+// would on disk. A single object is fingerprinted as that file and named
+// after it.
 //
-// A root .kosli_ignore is always downloaded first, whatever the source, because
-// its rules decide which other objects take part; objects the rules exclude are
-// not fetched at all. The remaining objects are fetched in parallel within
-// limits, and the first failure cancels the rest.
+// The root .kosli_ignore is always downloaded, whatever the source, because its
+// rules decide which other objects are fetched at all.
 func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
 	keys := make([]string, len(objects))
 	for i, object := range objects {
@@ -675,8 +660,7 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 	// when the objects were laid out on disk.
 	if file, ok := digest.SingleVirtualFile(files); ok {
 		fetch := source
-		// The root ignore file is always downloaded, so no source ever asks it
-		// for a checksum -- even alone, when its rules have nothing to decide.
+		// The ignore file is downloaded even when alone, so no source needs its checksum.
 		if file.Path == digest.IgnoreFileName {
 			fetch = downloadDigests(downloader, bucket, logger)
 		}
@@ -755,9 +739,8 @@ func ignoreRuleError(err error) error {
 // source and writes each into files at the same index. A fixed worker pool
 // bounds fetches and goroutines alike, a weighted semaphore bounds the listed
 // bytes of sources that use the disk, and the first transport error cancels the
-// context so nothing further starts. An unusableChecksumError is about one
-// object rather than the connection, so those are collected and reported
-// together once the rest have run.
+// context so nothing further starts. unusableChecksumErrors are collected
+// and reported together instead.
 func fetchS3DigestsInParallel(source s3DigestSource, tempDir string, objects []s3Object, indexes []int,
 	files []digest.VirtualFile, limits DownloadLimits, logger *logger.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -786,7 +769,6 @@ func fetchS3DigestsInParallel(source s3DigestSource, tempDir string, objects []s
 			for i := range work {
 				object := objects[i]
 				// An object larger than the budget takes all of it and so runs alone.
-				// A source that never touches the disk owes the budget nothing.
 				var weight int64
 				if source.usesDisk {
 					weight = max(min(object.size, limits.BytesInFlight), 1)
