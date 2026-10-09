@@ -311,6 +311,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	externalFingerprintFlag         = "[optional] A SHA256 fingerprint of an external attachment represented by --external-url. The format is label=fingerprint (labels cannot contain '.' or '='). This flag can be set multiple times. There must be an external url with a matching label for each external fingerprint."
 	externalURLFlag                 = "[optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint"
 	annotationFlag                  = "[optional] Annotate the attestation with data using key=value."
+	recordBuildCommandFlag          = "[defaulted] Record the build command given after -- in the build_command annotation, with secret values masked."
 	attestationDescription          = "[optional] attestation description"
 	attestationOverrideReasonFlag   = "The reason for overriding the attestation."
 	newComplianceStatusFlag         = "The new compliance status to set on the attestation."

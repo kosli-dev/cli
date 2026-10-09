@@ -1,13 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/kosli-dev/cli/internal/buildexec"
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -30,6 +37,7 @@ type attestArtifactOptions struct {
 	repoProvider         string
 	repoNameExplicit     bool
 	buildCmd             []string
+	recordBuildCommand   bool
 }
 
 type AttestArtifactPayload struct {
@@ -147,7 +155,13 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
-			return o.run(args[:len(args)-len(o.buildCmd)])
+			args = args[:len(args)-len(o.buildCmd)]
+			if len(o.buildCmd) > 0 {
+				if err := o.runBuild(args[0], cmd.InOrStdin(), out, cmd.ErrOrStderr()); err != nil {
+					return err
+				}
+			}
+			return o.run(args)
 		},
 	}
 
@@ -165,6 +179,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
+	cmd.Flags().BoolVar(&o.recordBuildCommand, "record-build-command", true, recordBuildCommandFlag)
 	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
 	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), attestationRepoNameFlag)
 	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
@@ -208,7 +223,74 @@ func validateBuildCommand(buildCmd []string, fingerprint string) error {
 	if hasMultipleHosts(strings.Split(global.Host, ","), strings.Split(global.ApiToken, ",")) {
 		return fmt.Errorf("a build command is not supported with multiple hosts yet")
 	}
-	return fmt.Errorf("build commands are not supported yet")
+	return nil
+}
+
+// runBuild runs the build command, then fingerprints the artifact it built and
+// records the build in the attestation's annotations.
+func (o *attestArtifactOptions) runBuild(artifactName string, stdin io.Reader, stdout, stderr io.Writer) error {
+	var before string
+	if o.fingerprintOptions.artifactType == "file" || o.fingerprintOptions.artifactType == "dir" {
+		before, _ = GetSha256Digest(artifactName, o.fingerprintOptions, logger)
+	}
+
+	result, err := buildexec.Run(context.Background(), o.buildCmd, []string{"KOSLI_SHIM_DISABLED=1"}, stdin, stdout, stderr)
+	if err != nil {
+		return &buildFailedError{code: result.ExitCode, err: err}
+	}
+
+	o.payload.Fingerprint, err = GetSha256Digest(artifactName, o.fingerprintOptions, logger)
+	if err != nil {
+		return fmt.Errorf("build command succeeded but artifact %s was not found: %w", artifactName, err)
+	}
+	// A warning only: reproducible builds legitimately rewrite identical bytes.
+	if before != "" && before == o.payload.Fingerprint {
+		logger.Warn("artifact %s was not modified by the build command", artifactName)
+	}
+
+	cmdline := maskSecrets(strings.Join(o.buildCmd, " "), os.Environ(), os.Getenv("KOSLI_API_TOKEN"), global.ApiToken)
+	o.annotations = addBuildAnnotations(o.annotations, cmdline, result.Duration, o.recordBuildCommand)
+	return nil
+}
+
+var secretEnvNameRegexp = regexp.MustCompile(`(?i)(TOKEN|SECRET|PASSWORD|PASSWD|KEY|CREDENTIAL)`)
+
+// maskSecrets replaces, in cmdline, the values of environment variables whose
+// names look secret, and every extra value, with "***".
+func maskSecrets(cmdline string, environ []string, extra ...string) string {
+	secrets := slices.Clone(extra)
+	for _, entry := range environ {
+		name, value, _ := strings.Cut(entry, "=")
+		if len(value) >= 6 && secretEnvNameRegexp.MatchString(name) {
+			secrets = append(secrets, value)
+		}
+	}
+	// Longest first, so a secret that contains another is masked whole.
+	slices.SortFunc(secrets, func(a, b string) int { return len(b) - len(a) })
+	for _, secret := range secrets {
+		if secret != "" {
+			cmdline = strings.ReplaceAll(cmdline, secret, "***")
+		}
+	}
+	return cmdline
+}
+
+// addBuildAnnotations adds the build command and duration to annotations,
+// keeping any value the user set for the same key.
+func addBuildAnnotations(annotations map[string]string, cmdline string, duration time.Duration, recordCommand bool) map[string]string {
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+	derived := map[string]string{"build_duration_seconds": strconv.FormatFloat(duration.Seconds(), 'f', 1, 64)}
+	if recordCommand {
+		derived["build_command"] = cmdline
+	}
+	for key, value := range derived {
+		if _, ok := annotations[key]; !ok {
+			annotations[key] = value
+		}
+	}
+	return annotations
 }
 
 func (o *attestArtifactOptions) run(args []string) error {
