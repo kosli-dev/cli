@@ -63,7 +63,12 @@ const attestArtifactLongDesc = attestArtifactShortDesc + `
 This command always requires access to a git repository to associate the artifact to the git commit it originates from.
 ` + commitRepoDesc + ` ^--commit^ defaults to the CI commit in some CIs, otherwise to HEAD.
 The command fails if no repository is found at ^--repo-root^, even when ^--fingerprint^ is given.
-` + commitDetailsDesc
+` + commitDetailsDesc + `
+
+Everything after ^--^ runs as a build command, and the artifact is attested only if the build succeeds.
+Its fingerprint is calculated after the build. The build command (with secret values masked) and its duration
+are recorded in the ^build_command^ and ^build_duration_seconds^ annotations; use ^--record-build-command=false^
+to leave out the command. If the build fails, nothing is attested and Kosli exits with the build's exit code.`
 
 const attestArtifactExample = `
 # Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
@@ -104,6 +109,16 @@ kosli attest artifact ANOTHER_FILE.txt \
 	--name yourTemplateArtifactName \
 	--api-token yourApiToken \
 	--org yourOrgName
+
+# Build an artifact and attest it in one step (the attestation only happens if the build succeeds)
+kosli attest artifact dist/app \
+	--artifact-type file \
+	--name yourTemplateArtifactName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--api-token yourApiToken \
+	--org yourOrgName \
+	-- go build -o dist/app ./cmd/app
 `
 
 func newAttestArtifactCmd(out io.Writer) *cobra.Command {
