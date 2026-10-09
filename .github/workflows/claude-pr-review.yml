@@ -25,7 +25,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
         with:
           egress-policy: audit
 
@@ -35,7 +35,7 @@ jobs:
           fetch-depth: 0
 
       - name: Claude review (dependency updates)
-        uses: anthropics/claude-code-action@v1.0.241
+        uses: anthropics/claude-code-action@v1.0.244
 
         env:
           GH_TOKEN: ${{ github.token }}
@@ -80,7 +80,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
         with:
           egress-policy: audit
 
@@ -97,7 +97,7 @@ jobs:
 
       - name: Claude review (general)
         if: github.event.action != 'synchronize'
-        uses: anthropics/claude-code-action@v1.0.241
+        uses: anthropics/claude-code-action@v1.0.244
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -154,7 +154,7 @@ jobs:
       # ── Follow-up on pushes: only the delta and existing findings ────────────
       - name: Follow-up Claude review (new commits only)
         if: github.event.action == 'synchronize'
-        uses: anthropics/claude-code-action@v1.0.241
+        uses: anthropics/claude-code-action@v1.0.244
         env:
           GH_TOKEN: ${{ github.token }}
         with:
