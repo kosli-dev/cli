@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -18,11 +20,13 @@ type AttestArtifactCommandTestSuite struct {
 	trailName string
 	suite.Suite
 	defaultKosliArguments string
+	builtArtifact         string
 }
 
 func (suite *AttestArtifactCommandTestSuite) SetupTest() {
 	suite.flowName = "attest-artifact"
 	suite.trailName = "test-123"
+	suite.builtArtifact = suite.T().TempDir() + "/built.bin"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user",
@@ -67,6 +71,11 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			name:   "can attest a file artifact named after --",
 			cmd:    fmt.Sprintf("attest artifact --artifact-type file --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com %s -- testdata/file1", suite.defaultKosliArguments),
 			golden: "artifact file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
+		},
+		{
+			name:   "can attest a file artifact built by a build command",
+			cmd:    fmt.Sprintf("attest artifact %s --artifact-type file --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com %s -- cp testdata/file1 %s", suite.builtArtifact, suite.defaultKosliArguments, suite.builtArtifact),
+			golden: "artifact built.bin was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
 		},
 		{
 			name:   "can attest an artifact with --fingerprint",
@@ -202,14 +211,107 @@ func TestAttestArtifactBuildCommandValidation(t *testing.T) {
 			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file %s --host http://localhost:8001,http://localhost:8001 --api-token a,b -- true", baseArgs),
 			golden:    "Error: a build command is not supported with multiple hosts yet\n",
 		},
+	}
+	runTestCmd(t, tests)
+}
+
+// TestAttestArtifactBuildCommandDryRun runs build commands with --dry-run, so
+// no server is needed.
+func TestAttestArtifactBuildCommandDryRun(t *testing.T) {
+	t.Setenv("KOSLI_TEST_SECRET_TOKEN", "s3cr3t-value")
+	sha := "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+	dir := t.TempDir()
+	out := dir + "/out.bin"
+	missing := dir + "/missing.bin"
+	unchanged := dir + "/unchanged.bin"
+	require.NoError(t, os.WriteFile(unchanged, []byte("same"), 0o644))
+	shim := dir + "/shim.txt"
+	args := "--artifact-type file --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --flow attest-artifact --trail test-123 --repo-root ../.. --host http://localhost:8001 --org docs-cmd-test-user --api-token secret-token --dry-run"
+
+	tests := []cmdTestCase{
+		{
+			name:        "attests the artifact built by the build command",
+			cmd:         fmt.Sprintf("attest artifact %s %s -- cp testdata/file1 %s", out, args, out),
+			goldenRegex: fmt.Sprintf(`"fingerprint": "%s"(.|\n)*"build_command": "cp testdata/file1 %s"(.|\n)*"build_duration_seconds": "\d+\.\d"`, sha, out),
+		},
 		{
 			wantError: true,
-			name:      "fails when a build command is given",
-			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file %s -- true", singleHost),
-			golden:    "Error: build commands are not supported yet\n",
+			name:      "fails with the build's exit code and does not attest",
+			cmd:       fmt.Sprintf("attest artifact %s %s -- sh -c 'exit 3'", out, args),
+			golden:    "Error: build command failed with exit code 3\n",
+		},
+		{
+			wantError:   true,
+			name:        "fails when the build succeeds but the artifact is missing",
+			cmd:         fmt.Sprintf("attest artifact %s %s -- true", missing, args),
+			goldenRegex: fmt.Sprintf(`^Error: build command succeeded but artifact %s was not found: .*no such file or directory\n$`, missing),
+		},
+		{
+			name:        "warns when the build leaves the artifact unchanged",
+			cmd:         fmt.Sprintf("attest artifact %s %s -- true", unchanged, args),
+			goldenRegex: fmt.Sprintf(`^\[warning\] artifact %s was not modified by the build command\n(.|\n)*"fingerprint"`, unchanged),
+		},
+		{
+			name:        "masks secrets in the build command",
+			cmd:         fmt.Sprintf("attest artifact %s %s -- sh -c 'cp testdata/file1 %s' s3cr3t-value secret-token", out, args, out),
+			goldenRegex: fmt.Sprintf(`"build_command": "sh -c cp testdata/file1 %s \*\*\* \*\*\*"`, out),
+		},
+		{
+			name:        "user annotations win over build annotations",
+			cmd:         fmt.Sprintf("attest artifact %s %s --annotate build_command=custom -- cp testdata/file1 %s", out, args, out),
+			goldenRegex: `"build_command": "custom"`,
+		},
+		{
+			name:        "--record-build-command=false omits the build command",
+			cmd:         fmt.Sprintf("attest artifact %s %s --record-build-command=false -- cp testdata/file1 %s", out, args, out),
+			goldenRegex: `"annotations": \{\s*"build_duration_seconds": "\d+\.\d"\s*\}`,
+		},
+		{
+			name:        "the build command runs with KOSLI_SHIM_DISABLED=1",
+			cmd:         fmt.Sprintf(`attest artifact %s %s -- sh -c 'echo "$KOSLI_SHIM_DISABLED" > %s'`, shim, args, shim),
+			goldenRegex: `"fingerprint": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"`,
 		},
 	}
 	runTestCmd(t, tests)
+}
+
+func TestMaskSecrets(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		cmdline string
+		environ []string
+		extra   []string
+		want    string
+	}{
+		{name: "masks values of secret-named env vars", cmdline: "deploy --token abcdef123", environ: []string{"MY_TOKEN=abcdef123"}, want: "deploy --token ***"},
+		{name: "matches names case-insensitively", cmdline: "login hunter22", environ: []string{"db_password=hunter22"}, want: "login ***"},
+		{name: "ignores other env vars", cmdline: "build abcdef123", environ: []string{"MY_VALUE=abcdef123"}, want: "build abcdef123"},
+		{name: "ignores values shorter than 6 characters", cmdline: "build abc", environ: []string{"MY_KEY=abc"}, want: "build abc"},
+		{name: "ignores empty values", cmdline: "build", environ: []string{"MY_KEY="}, extra: []string{""}, want: "build"},
+		{name: "masks the longer of two overlapping secrets whole", cmdline: "run abcdef-extra", environ: []string{"A_KEY=abcdef", "B_KEY=abcdef-extra"}, want: "run ***"},
+		{name: "always masks extra values", cmdline: "run tok", extra: []string{"tok"}, want: "run ***"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, maskSecrets(tt.cmdline, tt.environ, tt.extra...))
+		})
+	}
+}
+
+func TestAddBuildAnnotations(t *testing.T) {
+	t.Run("adds build command and duration", func(t *testing.T) {
+		got := addBuildAnnotations(nil, "go build", 1250*time.Millisecond, true)
+		require.Equal(t, map[string]string{"build_command": "go build", "build_duration_seconds": "1.2"}, got)
+	})
+
+	t.Run("keeps user annotations", func(t *testing.T) {
+		got := addBuildAnnotations(map[string]string{"build_command": "custom"}, "go build", time.Second, true)
+		require.Equal(t, map[string]string{"build_command": "custom", "build_duration_seconds": "1.0"}, got)
+	})
+
+	t.Run("omits the build command when not recorded", func(t *testing.T) {
+		got := addBuildAnnotations(map[string]string{}, "go build", time.Second, false)
+		require.Equal(t, map[string]string{"build_duration_seconds": "1.0"}, got)
+	})
 }
 
 // TestAttestArtifactPayload_RepoInfoOmittedWhenNil ensures that when GitRepoInfo
