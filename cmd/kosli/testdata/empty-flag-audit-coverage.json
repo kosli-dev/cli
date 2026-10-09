@@ -98,6 +98,7 @@
   "fingerprint": "string",
   "flow": "string",
   "name": "string",
+  "record-build-command": "bool",
   "redact-commit-info": "stringSlice",
   "registry-password": "string",
   "registry-provider": "string",
