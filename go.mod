@@ -23,7 +23,7 @@ require (
 	github.com/containers/image/v5 v5.36.2
 	github.com/distribution/reference v0.6.0
 	github.com/go-git/go-billy/v5 v5.9.2
-	github.com/go-git/go-git/v5 v5.19.2
+	github.com/go-git/go-git/v5 v5.19.3
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/google/go-github/v42 v42.0.0
 	github.com/googleapis/gax-go/v2 v2.26.2
@@ -178,7 +178,6 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
@@ -209,7 +208,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/pjbgf/sha1cd v0.6.0 // indirect
+	github.com/pjbgf/sha1cd v0.7.0 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.24.1 // indirect
