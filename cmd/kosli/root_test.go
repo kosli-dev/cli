@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os/exec"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/version"
@@ -460,4 +461,45 @@ func TestEnrichError(t *testing.T) {
 		got := enrichError(leaf(true, "cyber-dojo", "live-snyk-scan"), sentinel)
 		require.ErrorIs(t, got, sentinel)
 	})
+}
+
+func TestBuildExitCode(t *testing.T) {
+	t.Run("other errors have no build exit code", func(t *testing.T) {
+		_, ok := buildExitCode(errors.New("boom"))
+		require.False(t, ok)
+	})
+
+	t.Run("returns the build's exit code through wrapping", func(t *testing.T) {
+		code, ok := buildExitCode(fmt.Errorf("[kosli attest artifact] %w", &buildFailedError{code: 3}))
+		require.True(t, ok)
+		require.Equal(t, 3, code)
+	})
+}
+
+func TestBuildFailedErrorMessage(t *testing.T) {
+	exitErr := exec.Command("sh", "-c", "exit 3").Run()
+	require.Error(t, exitErr)
+	require.EqualError(t, &buildFailedError{code: 3, err: exitErr}, "build command failed with exit code 3")
+	require.EqualError(t, &buildFailedError{code: 127, err: errors.New(`exec: "nope": executable file not found in $PATH`)},
+		`build command failed with exit code 127: exec: "nope": executable file not found in $PATH`)
+}
+
+func TestInnerMainReturnsBuildFailureUnderDryRun(t *testing.T) {
+	saved := global
+	defer func() { global = saved }()
+	global = &GlobalOpts{DryRun: true}
+
+	cmd := &cobra.Command{
+		Use:           "kosli",
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		RunE: func(*cobra.Command, []string) error {
+			return &buildFailedError{code: 3}
+		},
+	}
+	cmd.SetArgs([]string{})
+
+	code, ok := buildExitCode(innerMain(cmd, []string{"kosli"}))
+	require.True(t, ok)
+	require.Equal(t, 3, code)
 }

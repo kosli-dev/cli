@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -38,9 +40,40 @@ func main() {
 			err = innerMain(cmd, os.Args)
 		}
 	}
+	if code, ok := buildExitCode(err); ok {
+		_, _ = fmt.Fprintf(logger.ErrOut, "Error: %s\n", err)
+		os.Exit(code)
+	}
 	if err != nil {
 		logger.Error(err.Error())
 	}
+}
+
+// buildFailedError reports a build command that did not succeed. kosli exits
+// with the build's exit code instead of 1.
+type buildFailedError struct {
+	code int
+	err  error
+}
+
+func (e *buildFailedError) Error() string {
+	msg := fmt.Sprintf("build command failed with exit code %d", e.code)
+	var exitErr *exec.ExitError
+	if e.err != nil && !errors.As(e.err, &exitErr) {
+		msg += ": " + e.err.Error()
+	}
+	return msg
+}
+
+func (e *buildFailedError) Unwrap() error { return e.err }
+
+// buildExitCode returns the exit code of a failed build command wrapped in err.
+func buildExitCode(err error) (int, bool) {
+	var buildErr *buildFailedError
+	if errors.As(err, &buildErr) {
+		return buildErr.code, true
+	}
+	return 0, false
 }
 
 // enrichError prefixes err with the failing command's identity so users
@@ -198,6 +231,10 @@ func innerMain(cmd *cobra.Command, args []string) error {
 			// enriched-error print below.
 			return nil
 		}
+	}
+	// --dry-run tolerates Kosli errors, but a failed build must never exit 0.
+	if _, ok := buildExitCode(err); ok {
+		return enrichError(executedCmd, err)
 	}
 	if global.DryRun {
 		logger.Info("Error: %s", enrichError(executedCmd, err).Error())
