@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -28,6 +29,7 @@ type attestArtifactOptions struct {
 	repoURL              string
 	repoProvider         string
 	repoNameExplicit     bool
+	buildCmd             []string
 }
 
 type AttestArtifactPayload struct {
@@ -101,13 +103,23 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		//Args:    cobra.MaximumNArgs(1), // See CustomMaximumNArgs() below
-		Use:     "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH}",
+		Use:     "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [-- BUILD-COMMAND...]",
 		Short:   attestArtifactShortDesc,
 		Long:    attestArtifactLongDesc,
 		Example: attestArtifactExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			args, buildCmd, err := splitArtifactAndBuildArgs(cmd.ArgsLenAtDash(), args)
+			if err != nil {
+				return err
+			}
+			o.buildCmd = buildCmd
 
-			err := CustomMaximumNArgs(1, args)
+			err = CustomMaximumNArgs(1, args)
+			if err != nil {
+				return err
+			}
+
+			err = validateBuildCommand(o.buildCmd, o.payload.Fingerprint)
 			if err != nil {
 				return err
 			}
@@ -135,7 +147,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
-			return o.run(args)
+			return o.run(args[:len(args)-len(o.buildCmd)])
 		},
 	}
 
@@ -167,6 +179,36 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+// splitArtifactAndBuildArgs splits the positional args at "--" (dash is
+// cobra's ArgsLenAtDash) into the artifact args and the build command.
+func splitArtifactAndBuildArgs(dash int, args []string) (artifactArgs, buildCmd []string, err error) {
+	if dash < 0 {
+		return args, nil, nil
+	}
+	// "-- NAME" predates build commands and lets an artifact name start with "-".
+	if dash == 0 && len(args) == 1 {
+		return args, nil, nil
+	}
+	if dash == len(args) {
+		return nil, nil, fmt.Errorf("no build command given after --")
+	}
+	return args[:dash], args[dash:], nil
+}
+
+func validateBuildCommand(buildCmd []string, fingerprint string) error {
+	if len(buildCmd) == 0 {
+		return nil
+	}
+	if fingerprint != "" {
+		return fmt.Errorf("--fingerprint cannot be combined with a build command")
+	}
+	// Multi-host mode re-runs the command per host and appends host flags after "--".
+	if hasMultipleHosts(strings.Split(global.Host, ","), strings.Split(global.ApiToken, ",")) {
+		return fmt.Errorf("a build command is not supported with multiple hosts yet")
+	}
+	return fmt.Errorf("build commands are not supported yet")
 }
 
 func (o *attestArtifactOptions) run(args []string) error {

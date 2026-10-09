@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -50,7 +51,7 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			wantError: true,
 			name:      "fails when --fingerprint is invalid sha256 digest",
 			cmd:       fmt.Sprintf("attest artifact foo --fingerprint xxxx --name bar --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com  %s", suite.defaultKosliArguments),
-			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]\n",
+			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [-- BUILD-COMMAND...] [flags]\n",
 		},
 		{
 			name:   "works when --name does not match artifact name in the template (extra artifact)",
@@ -60,6 +61,11 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 		{
 			name:   "can attest a file artifact",
 			cmd:    fmt.Sprintf("attest artifact testdata/file1 --artifact-type file --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com  %s", suite.defaultKosliArguments),
+			golden: "artifact file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
+		},
+		{
+			name:   "can attest a file artifact named after --",
+			cmd:    fmt.Sprintf("attest artifact --artifact-type file --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com %s -- testdata/file1", suite.defaultKosliArguments),
 			golden: "artifact file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
 		},
 		{
@@ -136,6 +142,74 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+func TestSplitArtifactAndBuildArgs(t *testing.T) {
+	for _, tt := range []struct {
+		name         string
+		dash         int
+		args         []string
+		wantArtifact []string
+		wantBuild    []string
+		wantErr      string
+	}{
+		{name: "no dash keeps all args as artifact args", dash: -1, args: []string{"app"}, wantArtifact: []string{"app"}},
+		{name: "single arg after leading dash is the artifact", dash: 0, args: []string{"-odd.tgz"}, wantArtifact: []string{"-odd.tgz"}},
+		{name: "args after dash are the build command", dash: 1, args: []string{"app", "go", "build"}, wantArtifact: []string{"app"}, wantBuild: []string{"go", "build"}},
+		{name: "several args after leading dash are the build command", dash: 0, args: []string{"go", "build"}, wantArtifact: []string{}, wantBuild: []string{"go", "build"}},
+		{name: "trailing dash is an error", dash: 1, args: []string{"app"}, wantErr: "no build command given after --"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			artifactArgs, buildCmd, err := splitArtifactAndBuildArgs(tt.dash, tt.args)
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tt.wantArtifact, artifactArgs)
+			require.Equal(t, tt.wantBuild, buildCmd)
+		})
+	}
+}
+
+// TestAttestArtifactBuildCommandValidation covers cases that fail or stop at
+// --dry-run before reaching the server.
+func TestAttestArtifactBuildCommandValidation(t *testing.T) {
+	sha := "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+	baseArgs := "--name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --flow attest-artifact --trail test-123 --repo-root ../.. --org docs-cmd-test-user"
+	singleHost := baseArgs + " --host http://localhost:8001 --api-token secret-token"
+	tests := []cmdTestCase{
+		{
+			name:        "a single arg after -- is still the artifact name",
+			cmd:         fmt.Sprintf("attest artifact --artifact-type file %s --dry-run -- testdata/file1", singleHost),
+			goldenRegex: fmt.Sprintf(`"fingerprint": "%s"`, sha),
+		},
+		{
+			wantError: true,
+			name:      "fails when -- is not followed by a build command",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file %s --", singleHost),
+			golden:    "Error: no build command given after --\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when --fingerprint is combined with a build command",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint %s %s -- true", sha, singleHost),
+			golden:    "Error: --fingerprint cannot be combined with a build command\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when a build command is used with multiple hosts",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file %s --host http://localhost:8001,http://localhost:8001 --api-token a,b -- true", baseArgs),
+			golden:    "Error: a build command is not supported with multiple hosts yet\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when a build command is given",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file %s -- true", singleHost),
+			golden:    "Error: build commands are not supported yet\n",
+		},
+	}
+	runTestCmd(t, tests)
 }
 
 // TestAttestArtifactPayload_RepoInfoOmittedWhenNil ensures that when GitRepoInfo
