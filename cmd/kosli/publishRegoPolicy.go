@@ -170,14 +170,16 @@ func (o *publishRegoPolicyOptions) run(out io.Writer, identifier, path string) e
 	if !version.IsTerminal() {
 		version, err = client.WaitForTerminal(context.Background(), global.Org, identifier,
 			published.Version, regoPolicyWaitOptions)
-		var stillPending *regopolicies.StillPendingError
-		if errors.As(err, &stillPending) {
+		if err != nil {
 			if printErr := o.printIfJSON(out, published); printErr != nil {
 				return printErr
 			}
-		}
-		if err != nil {
-			return err
+			var stillPending *regopolicies.StillPendingError
+			if errors.As(err, &stillPending) {
+				return err
+			}
+			return fmt.Errorf("rego policy '%s' version %d was published, but could not be read back: %w",
+				identifier, published.Version, err)
 		}
 	}
 	if version.Status != regopolicies.StatusValid {

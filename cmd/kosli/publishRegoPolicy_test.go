@@ -43,9 +43,11 @@ type fakeRegoPolicies struct {
 	published     []map[string]any
 	publishURL    string
 	reads         []string
-	readCount     int
-	readURL       string
-	unexpected    int
+	// Zero means a version read answers 200.
+	readStatus int
+	readCount  int
+	readURL    string
+	unexpected int
 }
 
 func newFakeRegoPolicies(t *testing.T, reads ...string) (*httptest.Server, *fakeRegoPolicies) {
@@ -69,7 +71,11 @@ func newFakeRegoPolicies(t *testing.T, reads ...string) (*httptest.Server, *fake
 
 		case r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/versions/"):
 			fake.readURL = r.URL.Path
-			w.WriteHeader(http.StatusOK)
+			status := fake.readStatus
+			if status == 0 {
+				status = http.StatusOK
+			}
+			w.WriteHeader(status)
 			_, _ = fmt.Fprint(w, fake.reads[min(fake.readCount, len(fake.reads)-1)])
 			fake.readCount++
 
@@ -237,6 +243,35 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestAFailedVersionWithNoReasonIs
 		"validation of rego policy 'pr-approved' version 1 failed on the Kosli side, with no reason given; "+
 			"this is not a fault in the policy, publish again to retry",
 		err.Error())
+}
+
+func (suite *PublishRegoPolicyCommandTestSuite) TestAFailedReadNamesTheVersionThatWasPublished() {
+	for _, test := range []struct {
+		name, output string
+	}{
+		{"table", "table"},
+		{"json", "json"},
+	} {
+		suite.Run(test.name, func() {
+			server, fake := newFakeRegoPolicies(suite.T(), `{"message":"Rego policy 'pr-approved' does not exist"}`)
+			fake.readStatus = http.StatusNotFound
+
+			_, _, stdout, _, err := executeCommandC(suite.publishCmd(server.URL,
+				"pr-approved testdata/policies/allow-all.rego --input-schema trail --output "+test.output))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(),
+				"rego policy 'pr-approved' version 1 was published, but could not be read back: ")
+			require.Contains(suite.T(), err.Error(), "does not exist")
+			if test.output == "json" {
+				var printed map[string]any
+				require.NoError(suite.T(), json.Unmarshal([]byte(stdout), &printed), "stdout is JSON: %s", stdout)
+				require.Equal(suite.T(), "pending", printed["status"])
+			} else {
+				require.Empty(suite.T(), stdout)
+			}
+		})
+	}
 }
 
 func (suite *PublishRegoPolicyCommandTestSuite) TestJsonOutputIsThePendingVersionWhenTheWaitExpires() {
