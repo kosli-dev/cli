@@ -3,6 +3,7 @@ package regopolicies
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -19,6 +20,7 @@ type received struct {
 	hits        int
 	method      string
 	path        string
+	escapedPath string
 	authHeader  string
 	contentType string
 	body        map[string]any
@@ -31,6 +33,7 @@ func newFakeServer(t *testing.T, status int, responseBody string) (*httptest.Ser
 		seen.hits++
 		seen.method = r.Method
 		seen.path = r.URL.Path
+		seen.escapedPath = r.URL.EscapedPath()
 		seen.authHeader = r.Header.Get("Authorization")
 		seen.contentType = r.Header.Get("Content-Type")
 
@@ -174,4 +177,41 @@ func TestPublishSendsNothingOnADryRun(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, version)
 	require.Equal(t, 0, seen.hits)
+}
+
+// The identifier is one path segment: a slash in it must not reach another
+// route, least of all one outside the org.
+func TestPublishKeepsTheIdentifierInOneSegment(t *testing.T) {
+	for identifier, escaped := range map[string]string{
+		"a/b":        "/api/v2/rego-policies/my-org/a%2Fb",
+		"../other/x": "/api/v2/rego-policies/my-org/..%2Fother%2Fx",
+	} {
+		t.Run(identifier, func(t *testing.T) {
+			server, seen := newFakeServer(t, http.StatusAccepted, pendingBody)
+			request := aPublishRequest()
+			request.Identifier = identifier
+
+			_, err := newTestClient(t, server.URL, false).Publish("my-org", request)
+			require.NoError(t, err)
+
+			require.Equal(t, escaped, seen.escapedPath)
+		})
+	}
+}
+
+// Escaping cannot keep these in their segment: a URL path resolves them.
+func TestPublishRefusesAnIdentifierThatIsNotASegment(t *testing.T) {
+	for _, identifier := range []string{"", ".", ".."} {
+		t.Run(identifier, func(t *testing.T) {
+			server, seen := newFakeServer(t, http.StatusAccepted, pendingBody)
+			request := aPublishRequest()
+			request.Identifier = identifier
+
+			version, err := newTestClient(t, server.URL, false).Publish("my-org", request)
+
+			require.Nil(t, version)
+			require.EqualError(t, err, fmt.Sprintf("%q is not a valid rego policy identifier", identifier))
+			require.Equal(t, 0, seen.hits)
+		})
+	}
 }

@@ -139,3 +139,14 @@ func TestWaitOptionsFallBackToTheDefaultBudget(t *testing.T) {
 	require.Equal(t, DefaultWaitOptions, filled)
 	require.Equal(t, 30*time.Second, filled.Timeout)
 }
+
+// The route in the message is one a reader can paste, so it is escaped the way
+// the request was.
+func TestStillPendingNamesTheEscapedRoute(t *testing.T) {
+	err := &StillPendingError{Org: "my-org", Identifier: "a/b", Version: 2, Waited: time.Second}
+
+	require.Equal(t,
+		"version 2 of rego policy a/b is still pending after 1s; "+
+			"read it later with GET /api/v2/rego-policies/my-org/a%2Fb/versions/2",
+		err.Error())
+}

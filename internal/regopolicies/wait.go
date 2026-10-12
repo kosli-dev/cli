@@ -49,9 +49,14 @@ type StillPendingError struct {
 }
 
 func (e *StillPendingError) Error() string {
-	return fmt.Sprintf(
-		"version %d of rego policy %s is still pending after %s; read it later with GET /api/v2/rego-policies/%s/%s/versions/%d",
-		e.Version, e.Identifier, e.Waited, e.Org, e.Identifier, e.Version)
+	route, err := policyRoute(e.Org, e.Identifier)
+	if err != nil {
+		// Unreachable: the wait reads the version through the same route first.
+		return fmt.Sprintf("version %d of rego policy %s is still pending after %s",
+			e.Version, e.Identifier, e.Waited)
+	}
+	return fmt.Sprintf("version %d of rego policy %s is still pending after %s; read it later with GET %s/versions/%d",
+		e.Version, e.Identifier, e.Waited, route, e.Version)
 }
 
 // WaitForTerminal polls until the version is validated, the caller gives up, or

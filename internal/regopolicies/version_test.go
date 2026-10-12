@@ -92,3 +92,22 @@ func TestOnlyAValidatedVersionIsTerminal(t *testing.T) {
 		require.Equal(t, terminal, (&Version{Status: status}).IsTerminal(), status)
 	}
 }
+
+func TestGetVersionKeepsTheIdentifierInOneSegment(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusOK, validBody)
+
+	_, err := newTestClient(t, server.URL, false).GetVersion("my-org", "../other/x", 3)
+	require.NoError(t, err)
+
+	require.Equal(t, "/api/v2/rego-policies/my-org/..%2Fother%2Fx/versions/3", seen.escapedPath)
+}
+
+func TestGetVersionRefusesAnIdentifierThatIsNotASegment(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusOK, validBody)
+
+	version, err := newTestClient(t, server.URL, false).GetVersion("my-org", "..", 3)
+
+	require.Nil(t, version)
+	require.EqualError(t, err, `".." is not a valid rego policy identifier`)
+	require.Equal(t, 0, seen.hits)
+}

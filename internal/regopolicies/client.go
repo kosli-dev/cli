@@ -81,7 +81,11 @@ func NewClient(httpClient *requests.Client, host, token string, dryRun bool) *Cl
 // Publish stores the next version of a policy and returns it pending. A dry run
 // sends nothing and returns no version.
 func (c *Client) Publish(org string, request PublishRequest) (*Version, error) {
-	endpoint, err := url.JoinPath(c.host, "api/v2/rego-policies", org, request.Identifier)
+	route, err := policyRoute(org, request.Identifier)
+	if err != nil {
+		return nil, err
+	}
+	endpoint, err := url.JoinPath(c.host, route)
 	if err != nil {
 		return nil, err
 	}
@@ -111,8 +115,11 @@ func (c *Client) Publish(org string, request PublishRequest) (*Version, error) {
 // GetVersion reads one version of a policy. A pending one is a normal answer,
 // not an error.
 func (c *Client) GetVersion(org, identifier string, version int) (*Version, error) {
-	endpoint, err := url.JoinPath(c.host, "api/v2/rego-policies", org, identifier,
-		"versions", strconv.Itoa(version))
+	route, err := policyRoute(org, identifier)
+	if err != nil {
+		return nil, err
+	}
+	endpoint, err := url.JoinPath(c.host, route, "versions", strconv.Itoa(version))
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +139,18 @@ func (c *Client) GetVersion(org, identifier string, version int) (*Version, erro
 		return nil, errors.New("no rego policy version was read back")
 	}
 	return decodeVersion(response.Body)
+}
+
+// policyRoute is the escaped API path of one policy. The identifier is a single
+// segment, so a slash in it is escaped rather than read as a separator, and the
+// names a URL path resolves on its own are refused: escaping cannot keep "."
+// or ".." in their segment.
+func policyRoute(org, identifier string) (string, error) {
+	switch identifier {
+	case "", ".", "..":
+		return "", fmt.Errorf("%q is not a valid rego policy identifier", identifier)
+	}
+	return "/api/v2/rego-policies/" + url.PathEscape(org) + "/" + url.PathEscape(identifier), nil
 }
 
 // The payload type is separate from PublishRequest because the server forbids
