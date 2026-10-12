@@ -211,7 +211,7 @@ func (o *publishRegoPolicyOptions) printIfJSON(out io.Writer, version *regopolic
 	return regoPolicyPrinters["json"](out, version, "")
 }
 
-// The JSON printer ignores note: its output is the server's answer as sent.
+// The JSON printer ignores note, so a script reads only the fields of Version.
 var regoPolicyPrinters = map[string]func(out io.Writer, version *regopolicies.Version, note string) error{
 	"table": func(out io.Writer, version *regopolicies.Version, note string) error {
 		line := fmt.Sprintf("rego policy '%s' version %d is valid (%s)",
