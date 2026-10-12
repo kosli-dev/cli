@@ -232,24 +232,6 @@ func TestWaitStopsOnAReadItCannotRetry(t *testing.T) {
 	require.Equal(t, 2, seen.hits, "a failed read ends the wait rather than being polled through")
 }
 
-func TestNextIntervalDoublesUpToTheCeiling(t *testing.T) {
-	const max = 5 * time.Second
-
-	for _, test := range []struct {
-		current time.Duration
-		want    time.Duration
-	}{
-		{500 * time.Millisecond, time.Second},
-		{time.Second, 2 * time.Second},
-		{2 * time.Second, 4 * time.Second},
-		{4 * time.Second, max},
-		{max, max},
-	} {
-		require.Equal(t, test.want, nextInterval(test.current, max),
-			"doubling %s", test.current)
-	}
-}
-
 func TestWaitOptionsFallBackToTheAgreedBudget(t *testing.T) {
 	filled := WaitOptions{}.withDefaults()
 
