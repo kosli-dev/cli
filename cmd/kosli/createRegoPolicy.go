@@ -166,10 +166,15 @@ func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) er
 		return nil
 	}
 
-	version, err := client.WaitForTerminal(context.Background(), global.Org, identifier,
-		published.Version, regoPolicyWaitOptions)
-	if err != nil {
-		return err
+	// A publish of content the newest version already holds answers with that
+	// version, which can already be terminal.
+	version := published
+	if !version.IsTerminal() {
+		version, err = client.WaitForTerminal(context.Background(), global.Org, identifier,
+			published.Version, regoPolicyWaitOptions)
+		if err != nil {
+			return err
+		}
 	}
 	if version.Status != regopolicies.StatusValid {
 		return notValidError(identifier, version)

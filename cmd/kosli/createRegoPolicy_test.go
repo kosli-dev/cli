@@ -39,12 +39,14 @@ const (
 // fakeRegoPolicies records each publish and answers each version read with the
 // next body in reads, repeating the last one once they run out.
 type fakeRegoPolicies struct {
-	published  []map[string]any
-	publishURL string
-	reads      []string
-	readCount  int
-	readURL    string
-	unexpected int
+	// What the publish answers with; empty means a pending version.
+	publishAnswer string
+	published     []map[string]any
+	publishURL    string
+	reads         []string
+	readCount     int
+	readURL       string
+	unexpected    int
 }
 
 func newFakeRegoPolicies(t *testing.T, reads ...string) (*httptest.Server, *fakeRegoPolicies) {
@@ -60,7 +62,11 @@ func newFakeRegoPolicies(t *testing.T, reads ...string) (*httptest.Server, *fake
 			fake.published = append(fake.published, body)
 			fake.publishURL = r.URL.Path
 			w.WriteHeader(http.StatusAccepted)
-			_, _ = fmt.Fprint(w, regoPolicyPending)
+			answer := fake.publishAnswer
+			if answer == "" {
+				answer = regoPolicyPending
+			}
+			_, _ = fmt.Fprint(w, answer)
 
 		case r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/versions/"):
 			fake.readURL = r.URL.Path
@@ -328,6 +334,20 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestADryRunSendsNothingAndWaitsFo
 	require.Contains(suite.T(), combined, "THIS IS A DRY-RUN")
 	require.Contains(suite.T(), combined, "/api/v2/rego-policies/test-org/pr-approved")
 	require.NotContains(suite.T(), combined, "is valid")
+}
+
+// Publishing content the newest valid version already holds stores nothing and
+// answers with that version, so there is nothing left to wait for.
+func (suite *CreateRegoPolicyCommandTestSuite) TestAPublishAnsweredWithAValidVersionIsNotPolled() {
+	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyPending)
+	fake.publishAnswer = regoPolicyValid
+
+	_, combined, _, _, err := executeCommandC(suite.createCmd(server.URL,
+		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
+
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), 0, fake.readCount)
+	require.Contains(suite.T(), combined, "rego policy 'pr-approved' version 1 is valid (sha256:abc123)")
 }
 
 func (suite *CreateRegoPolicyCommandTestSuite) TestItNeedsAnIdentifierAndAPath() {
