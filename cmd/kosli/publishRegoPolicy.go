@@ -189,11 +189,13 @@ func (o *publishRegoPolicyOptions) run(out io.Writer, identifier, path string) e
 		return notValidError(identifier, version)
 	}
 
+	// A new version is stored pending and with the comment it was sent, so a
+	// terminal answer, or one with another comment, is an existing version.
+	commentDropped := o.comment != "" && published.Comment != o.comment
 	note := ""
-	if published.IsTerminal() {
-		// A new version is always stored pending, so a terminal answer is an existing one.
+	if published.IsTerminal() || commentDropped {
 		note = "nothing new was stored, as the files and input schema are the same as this version"
-		if o.comment != "" {
+		if commentDropped {
 			note += ", so --comment was not kept"
 		}
 	}

@@ -423,26 +423,38 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestADryRunSendsNothingAndWaitsF
 	require.NotContains(suite.T(), combined, "is valid")
 }
 
-func (suite *PublishRegoPolicyCommandTestSuite) TestAPublishAnsweredWithAValidVersionIsNotPolled() {
+// A new version keeps the comment it was published with, so a different
+// comment on the answer means the server stored nothing.
+func (suite *PublishRegoPolicyCommandTestSuite) TestItSaysWhenAPublishStoredNothingNew() {
+	const unchanged = "rego policy 'pr-approved' version 1 is valid (sha256:abc123); nothing new was stored, " +
+		"as the files and input schema are the same as this version"
+	withComment := func(body, comment string) string {
+		return strings.Replace(body, `"comment":""`, `"comment":"`+comment+`"`, 1)
+	}
 	for _, test := range []struct {
-		name, flags, want string
+		name, answer, flags, want string
+		reads                     int
 	}{
-		{"without a comment", "",
-			"rego policy 'pr-approved' version 1 is valid (sha256:abc123); nothing new was stored, " +
-				"as the files and input schema are the same as this version\n"},
-		{"with a comment", ` --comment "Second try"`,
-			"rego policy 'pr-approved' version 1 is valid (sha256:abc123); nothing new was stored, " +
-				"as the files and input schema are the same as this version, so --comment was not kept\n"},
+		{"valid, no comment given", regoPolicyValid, "",
+			unchanged + "\n", 0},
+		{"valid, same comment", withComment(regoPolicyValid, "First"), ` --comment "First"`,
+			unchanged + "\n", 0},
+		{"valid, other comment", regoPolicyValid, ` --comment "Second try"`,
+			unchanged + ", so --comment was not kept\n", 0},
+		{"pending, other comment", withComment(regoPolicyPending, "First"), ` --comment "Second try"`,
+			unchanged + ", so --comment was not kept\n", 1},
+		{"new version, same comment", withComment(regoPolicyPending, "Second try"), ` --comment "Second try"`,
+			"rego policy 'pr-approved' version 1 is valid (sha256:abc123)\n", 1},
 	} {
 		suite.Run(test.name, func() {
-			server, fake := newFakeRegoPolicies(suite.T(), regoPolicyPending)
-			fake.publishAnswer = regoPolicyValid
+			server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
+			fake.publishAnswer = test.answer
 
 			_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
 				"pr-approved testdata/policies/allow-all.rego --input-schema trail"+test.flags))
 
 			require.NoError(suite.T(), err)
-			require.Equal(suite.T(), 0, fake.readCount)
+			require.Equal(suite.T(), test.reads, fake.readCount, "a terminal answer is not polled")
 			require.Equal(suite.T(), test.want, combined)
 		})
 	}
