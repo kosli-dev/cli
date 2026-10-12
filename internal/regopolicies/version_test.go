@@ -79,8 +79,7 @@ func TestGetVersionSurfacesAMissingVersion(t *testing.T) {
 	require.Equal(t, message, apiError.Message)
 }
 
-// An unknown status means the server has added one; reading it as terminal
-// would report an unfinished validation as an outcome.
+// An unknown status is one the server added later, not an outcome.
 func TestOnlyAValidatedVersionIsTerminal(t *testing.T) {
 	for status, terminal := range map[string]bool{
 		StatusPending:  false,

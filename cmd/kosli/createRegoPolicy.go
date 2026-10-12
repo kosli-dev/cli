@@ -76,8 +76,7 @@ kosli create rego-policy pr-approved ./policies/pr-approved/ \
 	--org yourOrgName
 `
 
-// regoPolicyWaitOptions is how long validation is waited for, and the seam a
-// test shortens it through.
+// A variable so that tests can shorten the wait.
 var regoPolicyWaitOptions = regopolicies.WaitOptions{}
 
 var regoPolicyInputSchemas = []string{"trail", "trails"}
@@ -98,7 +97,7 @@ func newCreateRegoPolicyCmd(out io.Writer) *cobra.Command {
 		Long:    createRegoPolicyLongDesc,
 		Example: createRegoPolicyExample,
 		Args:    cobra.ExactArgs(2),
-		// Hidden while the server endpoint is behind a feature flag.
+		// Hidden while the server gates the endpoint behind is-server-side-evaluation-enabled.
 		Hidden:      true,
 		Annotations: map[string]string{docgen.DocHiddenAnnotation: "", betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -129,8 +128,7 @@ func newCreateRegoPolicyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) error {
-	// Refused before publishing: a format refused where it is printed would
-	// leave a version published by a command that reported an error.
+	// Checked before publishing, so a bad format cannot fail a command whose version is stored.
 	printVersion, known := regoPolicyPrinters[o.output]
 	if !known {
 		return fmt.Errorf("unsupported output format: %s. Valid formats are: [table, json]", o.output)
@@ -138,8 +136,7 @@ func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) er
 	if !slices.Contains(regoPolicyInputSchemas, o.inputSchema) {
 		return fmt.Errorf("--input-schema must be one of %v, got %q", regoPolicyInputSchemas, o.inputSchema)
 	}
-	// A published version is cited by decisions, so its source must be what
-	// the author has on disk, not whatever a URL serves at the moment.
+	// Decisions cite a published version, so its source must be on disk, not behind a URL.
 	if isRemotePolicyRef(path) {
 		return fmt.Errorf("PATH takes a file or a directory on this machine, not a URL")
 	}
@@ -162,12 +159,11 @@ func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) er
 		return err
 	}
 	if published == nil {
-		// A dry run sent nothing, so there is no version to wait for.
+		// Nil on a dry run.
 		return nil
 	}
 
-	// A publish of content the newest version already holds answers with that
-	// version, which can already be terminal.
+	// Publishing the content of the newest version answers with that version, which can be terminal.
 	version := published
 	if !version.IsTerminal() {
 		version, err = client.WaitForTerminal(context.Background(), global.Org, identifier,
@@ -198,9 +194,7 @@ var regoPolicyPrinters = map[string]func(io.Writer, *regopolicies.Version) error
 	},
 }
 
-// notValidError reports a version that will never be evaluated. A rejected
-// version is the policy's fault and a failed one is Kosli's, so the two are
-// worded apart: the author of a failed version has nothing to fix.
+// notValidError words a rejected version as the policy's fault and a failed one as Kosli's.
 func notValidError(identifier string, version *regopolicies.Version) error {
 	subject := fmt.Sprintf("rego policy '%s' version %d", identifier, version.Version)
 	switch version.Status {

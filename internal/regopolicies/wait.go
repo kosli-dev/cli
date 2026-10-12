@@ -9,17 +9,15 @@ import (
 	"github.com/kosli-dev/cli/internal/poll"
 )
 
-// DefaultWaitOptions gives validation the same thirty seconds the platform
-// states for an evaluation. A bundle at the size cap takes about ten seconds to
-// compile, so this is ample without hiding a stuck version.
+// DefaultWaitOptions allows 30 s: a bundle at the size cap takes about 10 s to
+// validate.
 var DefaultWaitOptions = WaitOptions{
 	Timeout: 30 * time.Second,
 	Initial: 500 * time.Millisecond,
 	Max:     5 * time.Second,
 }
 
-// WaitOptions bounds how long a version is asked about and how often, with the
-// same meaning as poll.Options. A zero field takes its default.
+// WaitOptions are poll.Options in which a zero field takes its default.
 type WaitOptions struct {
 	Timeout time.Duration
 	Initial time.Duration
@@ -39,8 +37,7 @@ func (o WaitOptions) withDefaults() WaitOptions {
 	return o
 }
 
-// StillPendingError says the wait expired before the version was validated. It
-// carries no version, so an unfinished validation is never read as an outcome.
+// StillPendingError says the wait expired before the version was validated.
 type StillPendingError struct {
 	Org        string
 	Identifier string

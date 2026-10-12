@@ -22,8 +22,7 @@ var DefaultWaitOptions = WaitOptions{
 	Max:     5 * time.Second,
 }
 
-// WaitOptions bounds how long an evaluation is asked about and how often, with
-// the same meaning as poll.Options. A zero field takes its default.
+// WaitOptions are poll.Options in which a zero field takes its default.
 type WaitOptions struct {
 	Timeout time.Duration
 	Initial time.Duration

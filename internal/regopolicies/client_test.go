@@ -14,8 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// received is what the fake server saw, so a test can assert on the request
-// rather than only on what came back.
 type received struct {
 	hits        int
 	method      string
@@ -179,8 +177,6 @@ func TestPublishSendsNothingOnADryRun(t *testing.T) {
 	require.Equal(t, 0, seen.hits)
 }
 
-// The identifier is one path segment: a slash in it must not reach another
-// route, least of all one outside the org.
 func TestPublishKeepsTheIdentifierInOneSegment(t *testing.T) {
 	for identifier, escaped := range map[string]string{
 		"a/b":        "/api/v2/rego-policies/my-org/a%2Fb",
@@ -199,7 +195,6 @@ func TestPublishKeepsTheIdentifierInOneSegment(t *testing.T) {
 	}
 }
 
-// Escaping cannot keep these in their segment: a URL path resolves them.
 func TestPublishRefusesAnIdentifierThatIsNotASegment(t *testing.T) {
 	for _, identifier := range []string{"", ".", ".."} {
 		t.Run(identifier, func(t *testing.T) {
@@ -216,8 +211,6 @@ func TestPublishRefusesAnIdentifierThatIsNotASegment(t *testing.T) {
 	}
 }
 
-// A 409 from this endpoint is a refusal, not a lock to wait out: the server
-// re-runs a lost race itself. Retrying would delay the answer and lose its words.
 func TestPublishDoesNotRetryAConflict(t *testing.T) {
 	const message = "Rego policy 'pr-approved' is being published by another request"
 	server, seen := newFakeServer(t, http.StatusConflict, `{"message":"`+message+`"}`)

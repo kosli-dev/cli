@@ -9,8 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Short enough that a test that must wait the budget out finishes quickly, and
-// long enough that a test that must not hit the budget never does.
+// testOptions has a Timeout that expires only when a test shortens it.
 func testOptions() Options {
 	return Options{
 		Timeout: 2 * time.Second,
@@ -19,8 +18,7 @@ func testOptions() Options {
 	}
 }
 
-// sequence answers each read with the next state in turn, and repeats the
-// last one once it runs out.
+// sequence repeats the last state once the states run out.
 func sequence(states ...string) (func() (string, bool, error), *int) {
 	reads := 0
 	return func() (string, bool, error) {

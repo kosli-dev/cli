@@ -1,6 +1,5 @@
-// Package regopolicies talks to the Kosli rego policy API: it publishes a
-// versioned Rego bundle under an identifier, and reads its versions back. It
-// compiles and validates nothing itself; the server does that asynchronously.
+// Package regopolicies publishes versioned Rego bundles to Kosli and reads their
+// validation back.
 package regopolicies
 
 import (
@@ -23,8 +22,7 @@ const (
 	StatusFailed   = "failed"
 )
 
-// PublishRequest describes one publish of a policy. An empty Name or
-// Description is left out, so the server keeps the value it has.
+// PublishRequest leaves an empty Name or Description out, so the server keeps its value.
 type PublishRequest struct {
 	Identifier  string
 	Name        string
@@ -59,8 +57,8 @@ func (v *Version) IsTerminal() bool {
 	return v.Status == StatusValid || v.Status == StatusRejected || v.Status == StatusFailed
 }
 
-// ValidationError says why a version is not valid. Kind is a plain string: the
-// set belongs to the evaluator, and an unknown kind must still reach the user.
+// ValidationError says why a version is not valid. Kind is a plain string because
+// the evaluator owns the set, and an unknown kind must still reach the user.
 type ValidationError struct {
 	Kind    string `json:"kind"`
 	Message string `json:"message"`
@@ -127,7 +125,7 @@ func (c *Client) GetVersion(org, identifier string, version int) (*Version, erro
 		return nil, err
 	}
 
-	// DryRun is deliberately not set: a read writes nothing.
+	// Not a dry run: a read writes nothing.
 	response, err := c.http.Do(&requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    endpoint,
@@ -137,17 +135,14 @@ func (c *Client) GetVersion(org, identifier string, version int) (*Version, erro
 		return nil, err
 	}
 	if response == nil {
-		// The shared client answers a suppressed request with nothing at all,
-		// so a later change that suppresses this read meets this, not a panic.
+		// Do returns no response for a dry-run request.
 		return nil, errors.New("no rego policy version was read back")
 	}
 	return decodeVersion(response.Body)
 }
 
-// policyRoute is the escaped API path of one policy. The identifier is a single
-// segment, so a slash in it is escaped rather than read as a separator, and the
-// names a URL path resolves on its own are refused: escaping cannot keep "."
-// or ".." in their segment.
+// policyRoute escapes the identifier into one path segment. It refuses "." and
+// "..", which a URL path resolves however they are escaped.
 func policyRoute(org, identifier string) (string, error) {
 	switch identifier {
 	case "", ".", "..":
@@ -156,8 +151,7 @@ func policyRoute(org, identifier string) (string, error) {
 	return "/api/v2/rego-policies/" + url.PathEscape(org) + "/" + url.PathEscape(identifier), nil
 }
 
-// The payload type is separate from PublishRequest because the server forbids
-// unknown fields: the wire shape has to be stated exactly here.
+// The server refuses unknown fields, so the wire shape is stated here exactly.
 type publishPayload struct {
 	Name        string            `json:"name,omitempty"`
 	Description string            `json:"description,omitempty"`

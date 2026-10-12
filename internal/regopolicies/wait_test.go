@@ -17,8 +17,7 @@ type fakeResponse struct {
 	body   string
 }
 
-// newSequencedServer answers each request with the next response in turn, and
-// repeats the last one once the sequence runs out.
+// newSequencedServer repeats the last response once the sequence runs out.
 func newSequencedServer(t *testing.T, responses ...fakeResponse) (*httptest.Server, *received) {
 	t.Helper()
 	seen := &received{}
@@ -36,8 +35,7 @@ func newSequencedServer(t *testing.T, responses ...fakeResponse) (*httptest.Serv
 	return server, seen
 }
 
-// Short enough that a test that must wait the budget out finishes quickly, and
-// long enough that a test that must not hit the budget never does.
+// testWaitOptions has a Timeout that expires only when a test shortens it.
 func testWaitOptions() WaitOptions {
 	return WaitOptions{
 		Timeout: 2 * time.Second,
@@ -66,8 +64,6 @@ func TestWaitReturnsTheVersionOnceItIsValidated(t *testing.T) {
 	require.Equal(t, "/api/v2/rego-policies/my-org/pr-approved/versions/3", seen.path)
 }
 
-// A rejected policy is an answer, not a failure to get one: the caller decides
-// what it means.
 func TestWaitReturnsARejectedVersionAsAnOutcome(t *testing.T) {
 	server, _ := newSequencedServer(t,
 		fakeResponse{http.StatusOK, pendingBody},
@@ -140,8 +136,6 @@ func TestWaitOptionsFallBackToTheDefaultBudget(t *testing.T) {
 	require.Equal(t, 30*time.Second, filled.Timeout)
 }
 
-// The route in the message is one a reader can paste, so it is escaped the way
-// the request was.
 func TestStillPendingNamesTheEscapedRoute(t *testing.T) {
 	err := &StillPendingError{Org: "my-org", Identifier: "a/b", Version: 2, Waited: time.Second}
 

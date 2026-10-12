@@ -36,10 +36,9 @@ const (
 		`"error":{"kind":"lambda_timeout","message":"validation timed out after 3 attempts"}}`
 )
 
-// fakeRegoPolicies records each publish and answers each version read with the
-// next body in reads, repeating the last one once they run out.
+// fakeRegoPolicies answers version reads with the next of reads, repeating the last.
 type fakeRegoPolicies struct {
-	// What the publish answers with; empty means a pending version.
+	// Empty means the publish answers with a pending version.
 	publishAnswer string
 	published     []map[string]any
 	publishURL    string
@@ -161,8 +160,7 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestItWaitsThroughPendingReads() 
 	require.Contains(suite.T(), combined, "is valid")
 }
 
-// A directory travels as `evaluate policy` sends it, so the same directory
-// gives the same digest on both paths.
+// The same directory must give the same digest here as in `evaluate policy`.
 func (suite *CreateRegoPolicyCommandTestSuite) TestADirectoryTravelsKeyedByRelativePath() {
 	dir := suite.T().TempDir()
 	require.NoError(suite.T(), os.MkdirAll(filepath.Join(dir, "lib"), 0o755))
@@ -208,8 +206,6 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestARejectedVersionWithNoReasonS
 		err.Error())
 }
 
-// A failed version is our fault, not the policy's: the author must not go
-// looking for a defect in the policy, and publishing again is the way back.
 func (suite *CreateRegoPolicyCommandTestSuite) TestAFailedVersionIsNotBlamedOnThePolicy() {
 	_, err := suite.publishExpectingError(regoPolicyFailed)
 
@@ -241,8 +237,6 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAWaitThatExpiresSaysHowToRead
 		"read it later with GET /api/v2/rego-policies/test-org/pr-approved/versions/1")
 }
 
-// refusedBeforeSending runs args against a fake server and returns the error,
-// requiring that nothing reached the server.
 func (suite *CreateRegoPolicyCommandTestSuite) refusedBeforeSending(args string) error {
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
@@ -280,8 +274,7 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestABundleOverTheFileCapIsRefuse
 	require.Equal(suite.T(), "policy bundle holds 101 files, over the limit of 100", err.Error())
 }
 
-// An unset variable in `--description "$DESC"` must not clear a description,
-// so an empty value is refused like on every other flag.
+// An unset variable in `--description "$DESC"` must not clear a description.
 func (suite *CreateRegoPolicyCommandTestSuite) TestAnEmptyDescriptionIsRefused() {
 	err := suite.refusedBeforeSending(
 		`pr-approved testdata/policies/allow-all.rego --input-schema trail --description ""`)
@@ -313,8 +306,6 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsTheValidVersion()
 	}, printed, "fields the server left out stay out")
 }
 
-// Refused before publishing: a format refused where it is printed would leave
-// a version published by a command that reported an error.
 func (suite *CreateRegoPolicyCommandTestSuite) TestAnUnknownOutputFormatIsRefused() {
 	err := suite.refusedBeforeSending(
 		"pr-approved testdata/policies/allow-all.rego --input-schema trail --output yaml")
@@ -336,8 +327,6 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestADryRunSendsNothingAndWaitsFo
 	require.NotContains(suite.T(), combined, "is valid")
 }
 
-// Publishing content the newest valid version already holds stores nothing and
-// answers with that version, so there is nothing left to wait for.
 func (suite *CreateRegoPolicyCommandTestSuite) TestAPublishAnsweredWithAValidVersionIsNotPolled() {
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyPending)
 	fake.publishAnswer = regoPolicyValid
