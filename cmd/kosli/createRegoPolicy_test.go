@@ -282,6 +282,39 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAnEmptyDescriptionIsRefused()
 	require.Contains(suite.T(), err.Error(), "flag '--description' was given an empty value")
 }
 
+func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsPrintedForAVersionThatIsNotValid() {
+	for _, test := range []struct {
+		name, body, status, kind string
+	}{
+		{"rejected", regoPolicyRejected, "rejected", "compile"},
+		{"failed", regoPolicyFailed, "failed", "lambda_timeout"},
+	} {
+		suite.Run(test.name, func() {
+			server, _ := newFakeRegoPolicies(suite.T(), test.body)
+
+			_, _, stdout, _, err := executeCommandC(suite.createCmd(server.URL,
+				"pr-approved testdata/policies/allow-all.rego --input-schema trail --output json"))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), test.status)
+			var printed map[string]any
+			require.NoError(suite.T(), json.Unmarshal([]byte(stdout), &printed), "stdout is JSON: %s", stdout)
+			require.Equal(suite.T(), test.status, printed["status"])
+			require.Equal(suite.T(), test.kind, printed["error"].(map[string]any)["kind"])
+		})
+	}
+}
+
+func (suite *CreateRegoPolicyCommandTestSuite) TestTableOutputPrintsNothingForAVersionThatIsNotValid() {
+	server, _ := newFakeRegoPolicies(suite.T(), regoPolicyRejected)
+
+	_, _, stdout, _, err := executeCommandC(suite.createCmd(server.URL,
+		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
+
+	require.Error(suite.T(), err)
+	require.Empty(suite.T(), stdout)
+}
+
 func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsTheValidVersion() {
 	server, _ := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 

@@ -39,6 +39,8 @@ seconds for the result:
   - failed: Kosli could not validate the version. Publish again to retry. The
     command exits 1.
 If the wait expires, the command exits 1 and says how to read the version later.
+With ^--output json^, the version is printed for each of the three results,
+with the reason for a rejected or failed one.
 
 An evaluation runs the highest-numbered valid version, so a rejected or failed
 version leaves the policy in service unchanged.`
@@ -173,6 +175,12 @@ func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) er
 		}
 	}
 	if version.Status != regopolicies.StatusValid {
+		// JSON carries the reason for a script to read; the table has only the error.
+		if o.output == "json" {
+			if err := printVersion(out, version); err != nil {
+				return err
+			}
+		}
 		return notValidError(identifier, version)
 	}
 
