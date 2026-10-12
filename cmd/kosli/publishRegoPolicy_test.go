@@ -245,6 +245,18 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestAFailedVersionWithNoReasonIs
 		err.Error())
 }
 
+func (suite *PublishRegoPolicyCommandTestSuite) TestAnAnswerWithNoVersionIsNotReadBack() {
+	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
+	fake.publishAnswer = `{"identifier":"pr-approved","status":"pending"}`
+
+	_, _, _, _, err := executeCommandC(suite.publishCmd(server.URL,
+		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
+
+	require.EqualError(suite.T(), err,
+		"the Kosli server accepted the publish but named no version, so it cannot be read back")
+	require.Equal(suite.T(), 0, fake.readCount)
+}
+
 func (suite *PublishRegoPolicyCommandTestSuite) TestAFailedReadNamesTheVersionThatWasPublished() {
 	for _, test := range []struct {
 		name, output string

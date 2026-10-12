@@ -164,6 +164,10 @@ func (o *publishRegoPolicyOptions) run(out io.Writer, identifier, path string) e
 		// Nil on a dry run.
 		return nil
 	}
+	if published.Version < 1 {
+		// Versions count from 1, so any read would be of a version that does not exist.
+		return errors.New("the Kosli server accepted the publish but named no version, so it cannot be read back")
+	}
 
 	// Publishing the content of the newest version answers with that version, which can be terminal.
 	version := published
