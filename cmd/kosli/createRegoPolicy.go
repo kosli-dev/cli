@@ -16,12 +16,32 @@ import (
 const createRegoPolicyShortDesc = `Publish a new version of a rego policy in a Kosli org.`
 
 const createRegoPolicyLongDesc = createRegoPolicyShortDesc + `
-The policy is addressed by IDENTIFIER, which cannot be changed after the first
-publish. PATH is a Rego file or a directory, sent as one bundle in the same way
-as ^kosli evaluate policy --policy^ sends it.
+The policy is addressed by IDENTIFIER, which decisions cite and which cannot be
+changed after the first publish. ^--name^ is required on the first publish only.
+Only an org admin can publish.
 
-Kosli validates the new version after it is stored. The command waits for that
-result, and exits 0 only when the version is valid.`
+PATH is a Rego file or a directory on this machine. A directory is sent as one
+bundle, by the same rules as ^kosli evaluate policy --policy^: files in
+dot-directories are left out, and the bundle can hold at most 100 files and
+1 MiB.
+
+Each publish stores the next version, with ^--comment^ kept on it. A change to
+the files or to ^--input-schema^ makes a new version. When the files and the
+input schema are the same as the newest version, and that version is pending or
+valid, nothing new is stored and that version is reported. A change to only
+^--name^ or ^--description^ makes no new version.
+
+Kosli validates each version after it is stored, and the command waits up to 30
+seconds for the result:
+  - valid: the version can be evaluated. The command exits 0.
+  - rejected: the policy is at fault, for example it does not compile. The
+    command prints the reason and exits 1.
+  - failed: Kosli could not validate the version. Publish again to retry. The
+    command exits 1.
+If the wait expires, the command exits 1 and says how to read the version later.
+
+An evaluation runs the highest-numbered valid version, so a rejected or failed
+version leaves the policy in service unchanged.`
 
 const createRegoPolicyExample = `
 # publish the first version of a rego policy from a directory:
@@ -30,6 +50,28 @@ kosli create rego-policy pr-approved ./policies/pr-approved/ \
 	--name "Pull request approved" \
 	--description "Every change reached main through an approved PR" \
 	--comment "Initial version" \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# publish a new version of an existing rego policy from one file:
+kosli create rego-policy pr-approved ./policies/pr-approved.rego \
+	--input-schema trail \
+	--comment "Also require two approvers" \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# publish a policy written against a set of trails, and print the version as JSON:
+kosli create rego-policy release-ready ./policies/release-ready/ \
+	--input-schema trails \
+	--name "Release ready" \
+	--output json \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# show what would be published, without sending it:
+kosli create rego-policy pr-approved ./policies/pr-approved/ \
+	--input-schema trail \
+	--dry-run \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `

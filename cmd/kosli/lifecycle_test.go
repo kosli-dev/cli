@@ -50,6 +50,22 @@ func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
 	}
 }
 
+// Hidden while the rego-policies API is behind the
+// is-server-side-evaluation-enabled flag on the server.
+func TestLifecycleCreateRegoPolicyIsBetaAndHidden(t *testing.T) {
+	global = &GlobalOpts{}
+	cmd := newCreateRegoPolicyCmd(io.Discard)
+	if !cmd.Hidden {
+		t.Error("expected create rego-policy to be Hidden")
+	}
+	if !isBeta(cmd) {
+		t.Error("expected create rego-policy to be beta")
+	}
+	if !isDocHidden(cmd) {
+		t.Error("expected create rego-policy to be left out of the docs")
+	}
+}
+
 func TestLifecycleSnapshotGKEIsBetaAndVisible(t *testing.T) {
 	cmd := newSnapshotGKECmd(io.Discard)
 	if cmd.Hidden {
