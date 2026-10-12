@@ -109,7 +109,7 @@ func TestWaitGivesUpNamingTheVersionAndHowToReadItLater(t *testing.T) {
 	require.GreaterOrEqual(t, stillPending.Waited+time.Millisecond, options.Timeout)
 	require.Equal(t,
 		"version 1 of rego policy pr-approved is still pending after "+stillPending.Waited.String()+
-			"; read it later with GET /api/v2/rego-policies/my-org/pr-approved/versions/1",
+			"; read it later with GET "+server.URL+"/api/v2/rego-policies/my-org/pr-approved/versions/1",
 		err.Error())
 }
 
@@ -137,10 +137,11 @@ func TestWaitOptionsFallBackToTheDefaultBudget(t *testing.T) {
 }
 
 func TestStillPendingNamesTheEscapedRoute(t *testing.T) {
-	err := &StillPendingError{Org: "my-org", Identifier: "a/b", Version: 2, Waited: time.Second}
+	err := &StillPendingError{
+		Host: "https://app.kosli.com", Org: "my-org", Identifier: "a/b", Version: 2, Waited: time.Second}
 
 	require.Equal(t,
 		"version 2 of rego policy a/b is still pending after 1s; "+
-			"read it later with GET /api/v2/rego-policies/my-org/a%2Fb/versions/2",
+			"read it later with GET https://app.kosli.com/api/v2/rego-policies/my-org/a%2Fb/versions/2",
 		err.Error())
 }

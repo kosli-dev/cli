@@ -233,8 +233,9 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAWaitThatExpiresSaysHowToRead
 	_, err := suite.publishExpectingError(regoPolicyPending)
 
 	require.Contains(suite.T(), err.Error(), "version 1 of rego policy pr-approved is still pending after")
-	require.Contains(suite.T(), err.Error(),
-		"read it later with GET /api/v2/rego-policies/test-org/pr-approved/versions/1")
+	require.Regexp(suite.T(),
+		`read it later with GET http://127\.0\.0\.1:\d+/api/v2/rego-policies/test-org/pr-approved/versions/1$`,
+		err.Error())
 }
 
 func (suite *CreateRegoPolicyCommandTestSuite) refusedBeforeSending(args string) error {

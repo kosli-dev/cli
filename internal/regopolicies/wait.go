@@ -39,6 +39,7 @@ func (o WaitOptions) withDefaults() WaitOptions {
 
 // StillPendingError says the wait expired before the version was validated.
 type StillPendingError struct {
+	Host       string
 	Org        string
 	Identifier string
 	Version    int
@@ -46,14 +47,14 @@ type StillPendingError struct {
 }
 
 func (e *StillPendingError) Error() string {
-	route, err := policyRoute(e.Org, e.Identifier)
+	pending := fmt.Sprintf("version %d of rego policy %s is still pending after %s",
+		e.Version, e.Identifier, e.Waited)
+	endpoint, err := versionURL(e.Host, e.Org, e.Identifier, e.Version)
 	if err != nil {
-		// Unreachable: the wait reads the version through the same route first.
-		return fmt.Sprintf("version %d of rego policy %s is still pending after %s",
-			e.Version, e.Identifier, e.Waited)
+		// Unreachable: the wait reads the version from the same URL first.
+		return pending
 	}
-	return fmt.Sprintf("version %d of rego policy %s is still pending after %s; read it later with GET %s/versions/%d",
-		e.Version, e.Identifier, e.Waited, route, e.Version)
+	return pending + "; read it later with GET " + endpoint
 }
 
 // WaitForTerminal polls until the version is validated, the caller gives up, or
@@ -71,7 +72,7 @@ func (c *Client) WaitForTerminal(ctx context.Context, org, identifier string, ve
 	var expired *poll.ExpiredError
 	if errors.As(err, &expired) {
 		return nil, &StillPendingError{
-			Org: org, Identifier: identifier, Version: version, Waited: expired.Waited}
+			Host: c.host, Org: org, Identifier: identifier, Version: version, Waited: expired.Waited}
 	}
 	return read, err
 }

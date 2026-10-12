@@ -116,11 +116,7 @@ func (c *Client) Publish(org string, request PublishRequest) (*Version, error) {
 // GetVersion reads one version of a policy. A pending one is a normal answer,
 // not an error.
 func (c *Client) GetVersion(org, identifier string, version int) (*Version, error) {
-	route, err := policyRoute(org, identifier)
-	if err != nil {
-		return nil, err
-	}
-	endpoint, err := url.JoinPath(c.host, route, "versions", strconv.Itoa(version))
+	endpoint, err := versionURL(c.host, org, identifier, version)
 	if err != nil {
 		return nil, err
 	}
@@ -149,6 +145,14 @@ func policyRoute(org, identifier string) (string, error) {
 		return "", fmt.Errorf("%q is not a valid rego policy identifier", identifier)
 	}
 	return "/api/v2/rego-policies/" + url.PathEscape(org) + "/" + url.PathEscape(identifier), nil
+}
+
+func versionURL(host, org, identifier string, version int) (string, error) {
+	route, err := policyRoute(org, identifier)
+	if err != nil {
+		return "", err
+	}
+	return url.JoinPath(host, route, "versions", strconv.Itoa(version))
 }
 
 // The server refuses unknown fields, so the wire shape is stated here exactly.
