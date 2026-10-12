@@ -561,6 +561,12 @@
   "dry-run": "bool",
   "type": "string"
  },
+ "create rego-policy": {
+  "comment": "string",
+  "description": "string",
+  "input-schema": "string",
+  "name": "string"
+ },
  "create service-account": {
   "description": "string",
   "dry-run": "bool",
@@ -608,7 +614,7 @@
   "name": "string",
   "output": "string",
   "params": "string",
-  "policy": "string",
+  "policy": "stringArray",
   "trail": "string"
  },
  "evaluate trail": {
