@@ -5,9 +5,11 @@ package regopolicies
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/kosli-dev/cli/internal/requests"
 )
@@ -42,6 +44,26 @@ type Version struct {
 	Comment     string  `json:"comment"`
 	CreatedAt   float64 `json:"created_at"`
 	CreatedBy   string  `json:"created_by"`
+	// Nil while the version is pending.
+	ValidatedAt *float64 `json:"validated_at"`
+	OPAVersion  string   `json:"opa_version"`
+	// Set only on a valid version; ParamsSchema only when the policy declares one.
+	Entrypoint   string         `json:"entrypoint"`
+	ParamsSchema map[string]any `json:"params_schema"`
+	// Set only on a rejected or failed version.
+	Error *ValidationError `json:"error"`
+}
+
+// IsTerminal reports whether the version has left pending, which it does once.
+func (v *Version) IsTerminal() bool {
+	return v.Status == StatusValid || v.Status == StatusRejected || v.Status == StatusFailed
+}
+
+// ValidationError says why a version is not valid. Kind is a plain string: the
+// set belongs to the evaluator, and an unknown kind must still reach the user.
+type ValidationError struct {
+	Kind    string `json:"kind"`
+	Message string `json:"message"`
 }
 
 // Client is a Kosli API client scoped to the rego policy endpoints.
@@ -82,6 +104,32 @@ func (c *Client) Publish(org string, request PublishRequest) (*Version, error) {
 	}
 	if response == nil {
 		return nil, nil
+	}
+	return decodeVersion(response.Body)
+}
+
+// GetVersion reads one version of a policy. A pending one is a normal answer,
+// not an error.
+func (c *Client) GetVersion(org, identifier string, version int) (*Version, error) {
+	endpoint, err := url.JoinPath(c.host, "api/v2/rego-policies", org, identifier,
+		"versions", strconv.Itoa(version))
+	if err != nil {
+		return nil, err
+	}
+
+	// DryRun is deliberately not set: a read writes nothing.
+	response, err := c.http.Do(&requests.RequestParams{
+		Method: http.MethodGet,
+		URL:    endpoint,
+		Token:  c.token,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if response == nil {
+		// The shared client answers a suppressed request with nothing at all,
+		// so a later change that suppresses this read meets this, not a panic.
+		return nil, errors.New("no rego policy version was read back")
 	}
 	return decodeVersion(response.Body)
 }
