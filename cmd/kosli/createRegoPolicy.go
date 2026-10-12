@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 
 	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/regopolicies"
@@ -34,6 +35,8 @@ kosli create rego-policy pr-approved ./policies/pr-approved/ \
 // regoPolicyWaitOptions is how long validation is waited for, and the seam a
 // test shortens it through.
 var regoPolicyWaitOptions = regopolicies.WaitOptions{}
+
+var regoPolicyInputSchemas = []string{"trail", "trails"}
 
 type createRegoPolicyOptions struct {
 	name        string
@@ -79,6 +82,15 @@ func newCreateRegoPolicyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) error {
+	if !slices.Contains(regoPolicyInputSchemas, o.inputSchema) {
+		return fmt.Errorf("--input-schema must be one of %v, got %q", regoPolicyInputSchemas, o.inputSchema)
+	}
+	// A published version is cited by decisions, so its source must be what
+	// the author has on disk, not whatever a URL serves at the moment.
+	if isRemotePolicyRef(path) {
+		return fmt.Errorf("PATH takes a file or a directory on this machine, not a URL")
+	}
+
 	files, err := policyBundle([]string{path})
 	if err != nil {
 		return err

@@ -235,6 +235,54 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAWaitThatExpiresSaysHowToRead
 		"read it later with GET /api/v2/rego-policies/test-org/pr-approved/versions/1")
 }
 
+// refusedBeforeSending runs args against a fake server and returns the error,
+// requiring that nothing reached the server.
+func (suite *CreateRegoPolicyCommandTestSuite) refusedBeforeSending(args string) error {
+	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
+
+	_, _, _, _, err := executeCommandC(suite.createCmd(server.URL, args))
+
+	require.Error(suite.T(), err)
+	require.Empty(suite.T(), fake.published, "nothing may be published")
+	require.Equal(suite.T(), 0, fake.unexpected)
+	return err
+}
+
+func (suite *CreateRegoPolicyCommandTestSuite) TestAnUnknownInputSchemaIsRefused() {
+	err := suite.refusedBeforeSending(
+		"pr-approved testdata/policies/allow-all.rego --input-schema many")
+
+	require.Equal(suite.T(), `--input-schema must be one of [trail trails], got "many"`, err.Error())
+}
+
+func (suite *CreateRegoPolicyCommandTestSuite) TestAPolicyAtAURLIsRefused() {
+	err := suite.refusedBeforeSending(
+		"pr-approved https://example.com/policy.rego --input-schema trail")
+
+	require.Equal(suite.T(), "PATH takes a file or a directory on this machine, not a URL", err.Error())
+}
+
+func (suite *CreateRegoPolicyCommandTestSuite) TestABundleOverTheFileCapIsRefused() {
+	dir := suite.T().TempDir()
+	for i := range maxPolicyBundleFiles + 1 {
+		name := filepath.Join(dir, fmt.Sprintf("p%03d.rego", i))
+		require.NoError(suite.T(), os.WriteFile(name, []byte("package p\n"), 0o644))
+	}
+
+	err := suite.refusedBeforeSending("pr-approved " + dir + " --input-schema trail")
+
+	require.Equal(suite.T(), "policy bundle holds 101 files, over the limit of 100", err.Error())
+}
+
+// An unset variable in `--description "$DESC"` must not clear a description,
+// so an empty value is refused like on every other flag.
+func (suite *CreateRegoPolicyCommandTestSuite) TestAnEmptyDescriptionIsRefused() {
+	err := suite.refusedBeforeSending(
+		`pr-approved testdata/policies/allow-all.rego --input-schema trail --description ""`)
+
+	require.Contains(suite.T(), err.Error(), "flag '--description' was given an empty value")
+}
+
 func (suite *CreateRegoPolicyCommandTestSuite) TestItNeedsAnIdentifierAndAPath() {
 	_, _, _, _, err := executeCommandC(suite.createCmd("http://localhost:1",
 		"pr-approved --input-schema trail"))
