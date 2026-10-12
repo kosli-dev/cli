@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -60,8 +61,17 @@ func TestLifecycleCreateRegoPolicyIsBetaAndHidden(t *testing.T) {
 	if !isBeta(cmd) {
 		t.Error("expected create rego-policy to be beta")
 	}
-	if !isDocHidden(cmd) {
-		t.Error("expected create rego-policy to be left out of the docs")
+
+	dir := t.TempDir()
+	if _, _, _, _, err := executeCommandC("docs --dir " + dir); err != nil {
+		t.Fatalf("docs generation failed: %v", err)
+	}
+	pages, err := filepath.Glob(filepath.Join(dir, "*rego-policy*"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pages) > 0 {
+		t.Errorf("expected no docs page for a hidden rego-policy command, got %v", pages)
 	}
 }
 

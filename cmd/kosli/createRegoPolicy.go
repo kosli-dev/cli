@@ -8,7 +8,6 @@ import (
 	"io"
 	"slices"
 
-	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/regopolicies"
 	"github.com/spf13/cobra"
@@ -102,7 +101,7 @@ func newCreateRegoPolicyCmd(out io.Writer) *cobra.Command {
 		Args:    cobra.ExactArgs(2),
 		// Hidden while the server gates the endpoint behind is-server-side-evaluation-enabled.
 		Hidden:      true,
-		Annotations: map[string]string{docgen.DocHiddenAnnotation: "", betaCLIAnnotation: ""},
+		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
