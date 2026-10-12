@@ -189,6 +189,7 @@ func TestWaitGivesUpWithTheEvaluationIdAndNoVerdict(t *testing.T) {
 	var stillPending *StillPendingError
 	require.True(t, errors.As(err, &stillPending), "expected a still-pending error, got %T", err)
 	require.Equal(t, "01JABCDEF", stillPending.ID)
+	require.Equal(t, server.URL+"/api/v2/evaluations/my-org/01JABCDEF", stillPending.URL)
 	// The time actually spent, not the budget: a read carries no deadline of
 	// its own, so the two can differ and only the first answers "did the
 	// platform meet its promise".

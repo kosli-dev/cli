@@ -30,20 +30,14 @@ type WaitOptions = poll.Options
 // not answered must never be reported as a denial. The id is on it so the
 // caller can point at the evaluation that is still running.
 type StillPendingError struct {
-	Host   string
-	Org    string
 	ID     string
+	URL    string
 	Waited time.Duration
 }
 
 func (e *StillPendingError) Error() string {
-	pending := fmt.Sprintf("evaluation %s is still pending after %s", e.ID, e.Waited)
-	endpoint, err := evaluationURL(e.Host, e.Org, e.ID)
-	if err != nil {
-		// Unreachable: the wait reads the evaluation from the same URL first.
-		return pending
-	}
-	return pending + "; read it later with GET " + endpoint
+	return fmt.Sprintf("evaluation %s is still pending after %s; read it later with GET %s",
+		e.ID, e.Waited, e.URL)
 }
 
 // Get reads one evaluation. A pending one is a normal answer, not an error.
@@ -76,6 +70,10 @@ func (c *Client) Get(org, id string) (*Evaluation, error) {
 // the budget expires. It returns an evaluation only when that evaluation is
 // terminal, so a caller never has to ask whether the answer it holds is final.
 func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options WaitOptions) (*Evaluation, error) {
+	endpoint, err := evaluationURL(c.host, org, id)
+	if err != nil {
+		return nil, err
+	}
 	evaluation, err := poll.Until(ctx, options.Or(DefaultWaitOptions),
 		func() (*Evaluation, bool, error) {
 			evaluation, err := c.Get(org, id)
@@ -87,7 +85,7 @@ func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options Wa
 
 	var expired *poll.ExpiredError
 	if errors.As(err, &expired) {
-		return nil, &StillPendingError{Host: c.host, Org: org, ID: id, Waited: expired.Waited}
+		return nil, &StillPendingError{ID: id, URL: endpoint, Waited: expired.Waited}
 	}
 	return evaluation, err
 }

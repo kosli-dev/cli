@@ -103,7 +103,7 @@ func TestWaitGivesUpNamingTheVersionAndHowToReadItLater(t *testing.T) {
 	require.Nil(t, version, "a wait that expired must never carry a version")
 	var stillPending *StillPendingError
 	require.True(t, errors.As(err, &stillPending), "expected a still-pending error, got %T", err)
-	require.Equal(t, "my-org", stillPending.Org)
+	require.Equal(t, server.URL+"/api/v2/rego-policies/my-org/pr-approved/versions/1", stillPending.URL)
 	require.Equal(t, "pr-approved", stillPending.Identifier)
 	require.Equal(t, 1, stillPending.Version)
 	require.GreaterOrEqual(t, stillPending.Waited+time.Millisecond, options.Timeout)
@@ -133,12 +133,14 @@ func TestTheDefaultBudgetIsThirtySeconds(t *testing.T) {
 	require.Equal(t, 30*time.Second, DefaultWaitOptions.Timeout)
 }
 
-func TestStillPendingNamesTheEscapedRoute(t *testing.T) {
-	err := &StillPendingError{
-		Host: "https://app.kosli.com", Org: "my-org", Identifier: "a/b", Version: 2, Waited: time.Second}
+func TestStillPendingNamesTheEscapedURL(t *testing.T) {
+	server, _ := newSequencedServer(t, fakeResponse{http.StatusOK, pendingBody})
+	options := testWaitOptions()
+	options.Timeout = 20 * time.Millisecond
 
-	require.Equal(t,
-		"version 2 of rego policy a/b is still pending after 1s; "+
-			"read it later with GET https://app.kosli.com/api/v2/rego-policies/my-org/a%2Fb/versions/2",
-		err.Error())
+	_, err := newTestClient(t, server.URL, false).
+		WaitForTerminal(context.Background(), "my-org", "a/b", 2, options)
+
+	require.ErrorContains(t, err,
+		"read it later with GET "+server.URL+"/api/v2/rego-policies/my-org/a%2Fb/versions/2")
 }
