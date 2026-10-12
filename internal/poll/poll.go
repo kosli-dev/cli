@@ -15,6 +15,20 @@ type Options struct {
 	Max     time.Duration
 }
 
+// Or fills each field that is not positive from defaults.
+func (o Options) Or(defaults Options) Options {
+	if o.Timeout <= 0 {
+		o.Timeout = defaults.Timeout
+	}
+	if o.Initial <= 0 {
+		o.Initial = defaults.Initial
+	}
+	if o.Max <= 0 {
+		o.Max = defaults.Max
+	}
+	return o
+}
+
 // ExpiredError says the budget ran out before the read reported done.
 type ExpiredError struct {
 	Waited time.Duration

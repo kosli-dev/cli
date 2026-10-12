@@ -232,9 +232,6 @@ func TestWaitStopsOnAReadItCannotRetry(t *testing.T) {
 	require.Equal(t, 2, seen.hits, "a failed read ends the wait rather than being polled through")
 }
 
-func TestWaitOptionsFallBackToTheAgreedBudget(t *testing.T) {
-	filled := WaitOptions{}.withDefaults()
-
-	require.Equal(t, DefaultWaitOptions, filled)
-	require.Equal(t, 30*time.Second, filled.Timeout, "the enqueue-to-terminal ceiling")
+func TestTheDefaultBudgetIsTheAgreedOne(t *testing.T) {
+	require.Equal(t, 30*time.Second, DefaultWaitOptions.Timeout, "the enqueue-to-terminal ceiling")
 }

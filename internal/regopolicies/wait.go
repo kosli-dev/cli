@@ -17,25 +17,8 @@ var DefaultWaitOptions = WaitOptions{
 	Max:     5 * time.Second,
 }
 
-// WaitOptions are poll.Options in which a zero field takes its default.
-type WaitOptions struct {
-	Timeout time.Duration
-	Initial time.Duration
-	Max     time.Duration
-}
-
-func (o WaitOptions) withDefaults() WaitOptions {
-	if o.Timeout <= 0 {
-		o.Timeout = DefaultWaitOptions.Timeout
-	}
-	if o.Initial <= 0 {
-		o.Initial = DefaultWaitOptions.Initial
-	}
-	if o.Max <= 0 {
-		o.Max = DefaultWaitOptions.Max
-	}
-	return o
-}
+// WaitOptions are poll.Options in which a field that is not set takes its default.
+type WaitOptions = poll.Options
 
 // StillPendingError says the wait expired before the version was validated.
 type StillPendingError struct {
@@ -60,7 +43,7 @@ func (e *StillPendingError) Error() string {
 // WaitForTerminal polls until the version is validated, the caller gives up, or
 // the budget expires. It returns a version only when that version is terminal.
 func (c *Client) WaitForTerminal(ctx context.Context, org, identifier string, version int, options WaitOptions) (*Version, error) {
-	read, err := poll.Until(ctx, poll.Options(options.withDefaults()),
+	read, err := poll.Until(ctx, options.Or(DefaultWaitOptions),
 		func() (*Version, bool, error) {
 			read, err := c.GetVersion(org, identifier, version)
 			if err != nil {

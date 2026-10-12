@@ -129,11 +129,8 @@ func TestWaitStopsOnAReadItCannotRetry(t *testing.T) {
 	require.Equal(t, 2, seen.hits)
 }
 
-func TestWaitOptionsFallBackToTheDefaultBudget(t *testing.T) {
-	filled := WaitOptions{}.withDefaults()
-
-	require.Equal(t, DefaultWaitOptions, filled)
-	require.Equal(t, 30*time.Second, filled.Timeout)
+func TestTheDefaultBudgetIsThirtySeconds(t *testing.T) {
+	require.Equal(t, 30*time.Second, DefaultWaitOptions.Timeout)
 }
 
 func TestStillPendingNamesTheEscapedRoute(t *testing.T) {

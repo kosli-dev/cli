@@ -100,3 +100,15 @@ func TestNextIntervalDoublesUpToTheCeiling(t *testing.T) {
 			"doubling %s", test.current)
 	}
 }
+
+func TestOrFillsOnlyTheFieldsThatAreNotSet(t *testing.T) {
+	defaults := Options{Timeout: 30 * time.Second, Initial: 500 * time.Millisecond, Max: 5 * time.Second}
+
+	require.Equal(t, defaults, Options{}.Or(defaults))
+	require.Equal(t,
+		Options{Timeout: time.Second, Initial: 500 * time.Millisecond, Max: 5 * time.Second},
+		Options{Timeout: time.Second}.Or(defaults))
+	require.Equal(t,
+		Options{Timeout: 30 * time.Second, Initial: 500 * time.Millisecond, Max: 5 * time.Second},
+		Options{Timeout: -time.Second}.Or(defaults), "a negative field is not set")
+}

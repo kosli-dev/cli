@@ -22,25 +22,8 @@ var DefaultWaitOptions = WaitOptions{
 	Max:     5 * time.Second,
 }
 
-// WaitOptions are poll.Options in which a zero field takes its default.
-type WaitOptions struct {
-	Timeout time.Duration
-	Initial time.Duration
-	Max     time.Duration
-}
-
-func (o WaitOptions) withDefaults() WaitOptions {
-	if o.Timeout <= 0 {
-		o.Timeout = DefaultWaitOptions.Timeout
-	}
-	if o.Initial <= 0 {
-		o.Initial = DefaultWaitOptions.Initial
-	}
-	if o.Max <= 0 {
-		o.Max = DefaultWaitOptions.Max
-	}
-	return o
-}
+// WaitOptions are poll.Options in which a field that is not set takes its default.
+type WaitOptions = poll.Options
 
 // StillPendingError says the wait expired with the evaluation unfinished. It
 // is deliberately not a verdict and carries no result: an evaluation that has
@@ -88,7 +71,7 @@ func (c *Client) Get(org, id string) (*Evaluation, error) {
 // the budget expires. It returns an evaluation only when that evaluation is
 // terminal, so a caller never has to ask whether the answer it holds is final.
 func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options WaitOptions) (*Evaluation, error) {
-	evaluation, err := poll.Until(ctx, poll.Options(options.withDefaults()),
+	evaluation, err := poll.Until(ctx, options.Or(DefaultWaitOptions),
 		func() (*Evaluation, bool, error) {
 			evaluation, err := c.Get(org, id)
 			if err != nil {
