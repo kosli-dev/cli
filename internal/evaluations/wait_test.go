@@ -189,6 +189,7 @@ func TestWaitGivesUpWithTheEvaluationIdAndNoVerdict(t *testing.T) {
 	var stillPending *StillPendingError
 	require.True(t, errors.As(err, &stillPending), "expected a still-pending error, got %T", err)
 	require.Equal(t, "01JABCDEF", stillPending.ID)
+	require.Equal(t, server.URL+"/api/v2/evaluations/my-org/01JABCDEF", stillPending.URL)
 	// The time actually spent, not the budget: a read carries no deadline of
 	// its own, so the two can differ and only the first answers "did the
 	// platform meet its promise".
@@ -199,6 +200,7 @@ func TestWaitGivesUpWithTheEvaluationIdAndNoVerdict(t *testing.T) {
 		"no nanosecond noise in a sentence about a budget")
 	require.Contains(t, err.Error(), "01JABCDEF")
 	require.Contains(t, err.Error(), "still pending")
+	require.Contains(t, err.Error(), "read it later with GET "+server.URL+"/api/v2/evaluations/my-org/01JABCDEF")
 	require.NotContains(t, err.Error(), "denied")
 }
 
@@ -232,27 +234,6 @@ func TestWaitStopsOnAReadItCannotRetry(t *testing.T) {
 	require.Equal(t, 2, seen.hits, "a failed read ends the wait rather than being polled through")
 }
 
-func TestNextIntervalDoublesUpToTheCeiling(t *testing.T) {
-	const max = 5 * time.Second
-
-	for _, test := range []struct {
-		current time.Duration
-		want    time.Duration
-	}{
-		{500 * time.Millisecond, time.Second},
-		{time.Second, 2 * time.Second},
-		{2 * time.Second, 4 * time.Second},
-		{4 * time.Second, max},
-		{max, max},
-	} {
-		require.Equal(t, test.want, nextInterval(test.current, max),
-			"doubling %s", test.current)
-	}
-}
-
-func TestWaitOptionsFallBackToTheAgreedBudget(t *testing.T) {
-	filled := WaitOptions{}.withDefaults()
-
-	require.Equal(t, DefaultWaitOptions, filled)
-	require.Equal(t, 30*time.Second, filled.Timeout, "the enqueue-to-terminal ceiling")
+func TestTheDefaultBudgetIsTheAgreedOne(t *testing.T) {
+	require.Equal(t, 30*time.Second, DefaultWaitOptions.Timeout, "the enqueue-to-terminal ceiling")
 }

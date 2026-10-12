@@ -327,7 +327,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 
 		c.Logger.Debug("request made to %s and got status %d", req.URL, resp.StatusCode)
 
-		if resp.StatusCode != 200 && resp.StatusCode != 201 {
+		if !isSuccess(resp.StatusCode) {
 			var respBody any
 			err := json.Unmarshal([]byte(body), &respBody)
 			if err != nil {
@@ -405,6 +405,16 @@ func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, mes
 		}
 	}
 	return nil
+}
+
+// isSuccess accepts only statuses whose body is the whole answer, as every caller
+// reads it: a 204 has no body, and a 206 or 207 only part of one.
+func isSuccess(status int) bool {
+	switch status {
+	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
+		return true
+	}
+	return false
 }
 
 func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {

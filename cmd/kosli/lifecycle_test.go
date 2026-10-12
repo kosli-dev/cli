@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -47,6 +48,30 @@ func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
 	}
 	if isDocHidden(cmd) {
 		t.Error("expected isDocHidden to be false for attest decision")
+	}
+}
+
+// Hidden while the server gates the endpoint behind is-server-side-evaluation-enabled.
+func TestLifecyclePublishRegoPolicyIsBetaAndHidden(t *testing.T) {
+	global = &GlobalOpts{}
+	cmd := newPublishRegoPolicyCmd(io.Discard)
+	if !cmd.Hidden {
+		t.Error("expected publish rego-policy to be Hidden")
+	}
+	if !isBeta(cmd) {
+		t.Error("expected publish rego-policy to be beta")
+	}
+
+	dir := t.TempDir()
+	if _, _, _, _, err := executeCommandC("docs --dir " + dir); err != nil {
+		t.Fatalf("docs generation failed: %v", err)
+	}
+	pages, err := filepath.Glob(filepath.Join(dir, "*rego-policy*"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pages) > 0 {
+		t.Errorf("expected no docs page for a hidden rego-policy command, got %v", pages)
 	}
 }
 

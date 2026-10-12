@@ -31,6 +31,17 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Reply(201).
 		BodyString(`{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f","name": "artifact"}`)
 	suite.fakeService.NewHandler().
+		Put("/accepted/").
+		Reply(202).
+		BodyString(`{"status": "pending"}`)
+	suite.fakeService.NewHandler().
+		Delete("/no-content/").
+		Reply(204)
+	suite.fakeService.NewHandler().
+		Get("/partial/").
+		Reply(206).
+		BodyString(`{"message": "partial`)
+	suite.fakeService.NewHandler().
 		Put("/html").
 		Reply(200).
 		BodyString(`<!DOCTYPE html>
@@ -292,6 +303,32 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/artifacts/1"),
 			},
 			expectedBody: `{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f","name": "artifact"}`,
+		},
+		{
+			name: "202 is a success and returns its body",
+			params: &RequestParams{
+				Method: http.MethodPut,
+				URL:    suite.fakeService.ResolveURL("/accepted/"),
+			},
+			expectedBody: `{"status": "pending"}`,
+		},
+		{
+			name: "204 is not a success: callers read the body as the answer",
+			params: &RequestParams{
+				Method: http.MethodDelete,
+				URL:    suite.fakeService.ResolveURL("/no-content/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: "unexpected end of JSON input",
+		},
+		{
+			name: "206 is not a success: a partial body is not the answer",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/partial/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: "unexpected end of JSON input",
 		},
 		{
 			name: "GET request to 404 endpoint",

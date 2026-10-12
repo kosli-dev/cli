@@ -608,7 +608,7 @@
   "name": "string",
   "output": "string",
   "params": "string",
-  "policy": "string",
+  "policy": "stringArray",
   "trail": "string"
  },
  "evaluate trail": {
@@ -780,6 +780,14 @@
   "reverse": "bool",
   "start": "string",
   "start-ts": "float64"
+ },
+ "publish rego-policy": {
+  "comment": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "input-schema": "string",
+  "name": "string",
+  "output": "string"
  },
  "rename environment": {
   "dry-run": "bool"
