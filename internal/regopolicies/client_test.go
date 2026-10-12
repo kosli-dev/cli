@@ -215,3 +215,21 @@ func TestPublishRefusesAnIdentifierThatIsNotASegment(t *testing.T) {
 		})
 	}
 }
+
+// A 409 from this endpoint is a refusal, not a lock to wait out: the server
+// re-runs a lost race itself. Retrying would delay the answer and lose its words.
+func TestPublishDoesNotRetryAConflict(t *testing.T) {
+	const message = "Rego policy 'pr-approved' is being published by another request"
+	server, seen := newFakeServer(t, http.StatusConflict, `{"message":"`+message+`"}`)
+	httpClient, err := requests.NewKosliClient("", 2, false, logger.NewLogger(io.Discard, io.Discard, false))
+	require.NoError(t, err)
+
+	version, err := NewClient(httpClient, server.URL, "test-token", false).Publish("my-org", aPublishRequest())
+
+	require.Nil(t, version)
+	var apiError *requests.APIError
+	require.True(t, errors.As(err, &apiError), "expected an API error, got %T: %v", err, err)
+	require.Equal(t, http.StatusConflict, apiError.StatusCode)
+	require.Equal(t, message, apiError.Message)
+	require.Equal(t, 1, seen.hits)
+}

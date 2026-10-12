@@ -95,6 +95,9 @@ func (c *Client) Publish(org string, request PublishRequest) (*Version, error) {
 		URL:    endpoint,
 		Token:  c.token,
 		DryRun: c.dryRun,
+		// The server re-runs a publish that loses a race, so a 409 here is a
+		// refusal to report, not a lock to wait out.
+		DisableConflictRetry: true,
 		Payload: publishPayload{
 			Name:        request.Name,
 			Description: request.Description,
