@@ -21,7 +21,6 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 		newCreateEnvironmentCmd(out),
 		newCreateFlowCmd(out),
 		newCreatePolicyCmd(out),
-		newCreateRegoPolicyCmd(out),
 		newCreateAttestationTypeCmd(out),
 		newCreateControlCmd(out),
 		newCreateApiKeyCmd(out),

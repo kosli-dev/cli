@@ -82,12 +82,12 @@ func newFakeRegoPolicies(t *testing.T, reads ...string) (*httptest.Server, *fake
 	return server, fake
 }
 
-type CreateRegoPolicyCommandTestSuite struct {
+type PublishRegoPolicyCommandTestSuite struct {
 	suite.Suite
 	originalWait regopolicies.WaitOptions
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) SetupTest() {
+func (suite *PublishRegoPolicyCommandTestSuite) SetupTest() {
 	suite.originalWait = regoPolicyWaitOptions
 	regoPolicyWaitOptions = regopolicies.WaitOptions{
 		Timeout: 2 * time.Second,
@@ -96,27 +96,39 @@ func (suite *CreateRegoPolicyCommandTestSuite) SetupTest() {
 	}
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TearDownTest() {
+func (suite *PublishRegoPolicyCommandTestSuite) TearDownTest() {
 	regoPolicyWaitOptions = suite.originalWait
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) createCmd(host, args string) string {
-	return fmt.Sprintf("create rego-policy %s --host %s --org test-org --api-token test-token --max-api-retries 0",
+func (suite *PublishRegoPolicyCommandTestSuite) publishCmd(host, args string) string {
+	return fmt.Sprintf("publish rego-policy %s --host %s --org test-org --api-token test-token --max-api-retries 0",
 		args, host)
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestItIsHiddenFromHelp() {
-	_, combined, _, _, err := executeCommandC("create --help")
+// The publish verb has no visible subcommand, so it is hidden as well.
+func (suite *PublishRegoPolicyCommandTestSuite) TestItIsHiddenFromHelp() {
+	_, combined, _, _, err := executeCommandC("--help")
 
 	require.NoError(suite.T(), err)
-	require.NotContains(suite.T(), combined, "rego-policy")
-	require.Contains(suite.T(), combined, "flow", "the rest of the help still renders")
+	require.NotContains(suite.T(), combined, "publish")
+	require.Contains(suite.T(), combined, "create", "the rest of the help still renders")
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestItPublishesTheFileAndReportsTheValidVersion() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestItIsNoLongerACreateCommand() {
+	root, err := newRootCmd(io.Discard, io.Discard, nil)
+	require.NoError(suite.T(), err)
+	create, _, err := root.Find([]string{"create"})
+	require.NoError(suite.T(), err)
+
+	for _, sub := range create.Commands() {
+		require.NotEqual(suite.T(), "rego-policy", sub.Name())
+	}
+}
+
+func (suite *PublishRegoPolicyCommandTestSuite) TestItPublishesTheFileAndReportsTheValidVersion() {
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
-	_, combined, _, _, err := executeCommandC(suite.createCmd(server.URL,
+	_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
 		`pr-approved testdata/policies/allow-all.rego --input-schema trail `+
 			`--name "Pull request approved" --description "Approved PRs only" --comment "Initial version"`))
 
@@ -138,10 +150,10 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestItPublishesTheFileAndReportsT
 	require.Contains(suite.T(), combined, "rego policy 'pr-approved' version 1 is valid (sha256:abc123)")
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestItLeavesOutTheNameAndDescriptionWhenNotGiven() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestItLeavesOutTheNameAndDescriptionWhenNotGiven() {
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
-	_, _, _, _, err := executeCommandC(suite.createCmd(server.URL,
+	_, _, _, _, err := executeCommandC(suite.publishCmd(server.URL,
 		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
 
 	require.NoError(suite.T(), err)
@@ -149,10 +161,10 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestItLeavesOutTheNameAndDescript
 	require.NotContains(suite.T(), fake.published[0], "description")
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestItWaitsThroughPendingReads() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestItWaitsThroughPendingReads() {
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyPending, regoPolicyPending, regoPolicyValid)
 
-	_, combined, _, _, err := executeCommandC(suite.createCmd(server.URL,
+	_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
 		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
 
 	require.NoError(suite.T(), err)
@@ -161,14 +173,14 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestItWaitsThroughPendingReads() 
 }
 
 // The same directory must give the same digest here as in `evaluate policy`.
-func (suite *CreateRegoPolicyCommandTestSuite) TestADirectoryTravelsKeyedByRelativePath() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestADirectoryTravelsKeyedByRelativePath() {
 	dir := suite.T().TempDir()
 	require.NoError(suite.T(), os.MkdirAll(filepath.Join(dir, "lib"), 0o755))
 	require.NoError(suite.T(), os.WriteFile(filepath.Join(dir, "policy.rego"), []byte("package policy\n"), 0o644))
 	require.NoError(suite.T(), os.WriteFile(filepath.Join(dir, "lib", "helpers.rego"), []byte("package lib\n"), 0o644))
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
-	_, _, _, _, err := executeCommandC(suite.createCmd(server.URL,
+	_, _, _, _, err := executeCommandC(suite.publishCmd(server.URL,
 		"pr-approved "+dir+" --input-schema trails"))
 
 	require.NoError(suite.T(), err)
@@ -179,16 +191,16 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestADirectoryTravelsKeyedByRelat
 	require.Equal(suite.T(), "trails", fake.published[0]["input_schema"])
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) publishExpectingError(reads ...string) (string, error) {
+func (suite *PublishRegoPolicyCommandTestSuite) publishExpectingError(reads ...string) (string, error) {
 	server, _ := newFakeRegoPolicies(suite.T(), reads...)
-	_, combined, _, _, err := executeCommandC(suite.createCmd(server.URL,
+	_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
 		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
 	require.Error(suite.T(), err)
 	require.NotContains(suite.T(), combined, "is valid")
 	return combined, err
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestARejectedVersionNamesTheErrorInThePolicy() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestARejectedVersionNamesTheErrorInThePolicy() {
 	_, err := suite.publishExpectingError(regoPolicyRejected)
 
 	require.Equal(suite.T(),
@@ -197,7 +209,7 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestARejectedVersionNamesTheError
 		err.Error())
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestARejectedVersionWithNoReasonSaysSo() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestARejectedVersionWithNoReasonSaysSo() {
 	_, err := suite.publishExpectingError(
 		strings.Replace(regoPolicyValid, `"status":"valid"`, `"status":"rejected"`, 1))
 
@@ -206,7 +218,7 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestARejectedVersionWithNoReasonS
 		err.Error())
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestAFailedVersionIsNotBlamedOnThePolicy() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestAFailedVersionIsNotBlamedOnThePolicy() {
 	_, err := suite.publishExpectingError(regoPolicyFailed)
 
 	require.Equal(suite.T(),
@@ -217,7 +229,7 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAFailedVersionIsNotBlamedOnTh
 	require.NotContains(suite.T(), err.Error(), "rejected")
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestAFailedVersionWithNoReasonIsStillNotBlamedOnThePolicy() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestAFailedVersionWithNoReasonIsStillNotBlamedOnThePolicy() {
 	_, err := suite.publishExpectingError(
 		strings.Replace(regoPolicyValid, `"status":"valid"`, `"status":"failed"`, 1))
 
@@ -227,11 +239,11 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAFailedVersionWithNoReasonIsS
 		err.Error())
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsThePendingVersionWhenTheWaitExpires() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestJsonOutputIsThePendingVersionWhenTheWaitExpires() {
 	regoPolicyWaitOptions.Timeout = 20 * time.Millisecond
 	server, _ := newFakeRegoPolicies(suite.T(), regoPolicyPending)
 
-	_, _, stdout, _, err := executeCommandC(suite.createCmd(server.URL,
+	_, _, stdout, _, err := executeCommandC(suite.publishCmd(server.URL,
 		"pr-approved testdata/policies/allow-all.rego --input-schema trail --output json"))
 
 	require.Error(suite.T(), err)
@@ -242,7 +254,7 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsThePendingVersion
 	require.Equal(suite.T(), float64(1), printed["version"])
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestAWaitThatExpiresSaysHowToReadTheVersionLater() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestAWaitThatExpiresSaysHowToReadTheVersionLater() {
 	regoPolicyWaitOptions.Timeout = 20 * time.Millisecond
 
 	_, err := suite.publishExpectingError(regoPolicyPending)
@@ -253,10 +265,10 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAWaitThatExpiresSaysHowToRead
 		err.Error())
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) refusedBeforeSending(args string) error {
+func (suite *PublishRegoPolicyCommandTestSuite) refusedBeforeSending(args string) error {
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
-	_, _, _, _, err := executeCommandC(suite.createCmd(server.URL, args))
+	_, _, _, _, err := executeCommandC(suite.publishCmd(server.URL, args))
 
 	require.Error(suite.T(), err)
 	require.Empty(suite.T(), fake.published, "nothing may be published")
@@ -264,21 +276,21 @@ func (suite *CreateRegoPolicyCommandTestSuite) refusedBeforeSending(args string)
 	return err
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestAnUnknownInputSchemaIsRefused() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestAnUnknownInputSchemaIsRefused() {
 	err := suite.refusedBeforeSending(
 		"pr-approved testdata/policies/allow-all.rego --input-schema many")
 
 	require.Equal(suite.T(), `--input-schema must be one of [trail trails], got "many"`, err.Error())
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestAPolicyAtAURLIsRefused() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestAPolicyAtAURLIsRefused() {
 	err := suite.refusedBeforeSending(
 		"pr-approved https://example.com/policy.rego --input-schema trail")
 
 	require.Equal(suite.T(), "PATH takes a file or a directory on this machine, not a URL", err.Error())
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestABundleOverTheFileCapIsRefused() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestABundleOverTheFileCapIsRefused() {
 	dir := suite.T().TempDir()
 	for i := range maxPolicyBundleFiles + 1 {
 		name := filepath.Join(dir, fmt.Sprintf("p%03d.rego", i))
@@ -291,14 +303,14 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestABundleOverTheFileCapIsRefuse
 }
 
 // An unset variable in `--description "$DESC"` must not clear a description.
-func (suite *CreateRegoPolicyCommandTestSuite) TestAnEmptyDescriptionIsRefused() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestAnEmptyDescriptionIsRefused() {
 	err := suite.refusedBeforeSending(
 		`pr-approved testdata/policies/allow-all.rego --input-schema trail --description ""`)
 
 	require.Contains(suite.T(), err.Error(), "flag '--description' was given an empty value")
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsPrintedForAVersionThatIsNotValid() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestJsonOutputIsPrintedForAVersionThatIsNotValid() {
 	for _, test := range []struct {
 		name, body, status, kind string
 	}{
@@ -308,7 +320,7 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsPrintedForAVersio
 		suite.Run(test.name, func() {
 			server, _ := newFakeRegoPolicies(suite.T(), test.body)
 
-			_, _, stdout, _, err := executeCommandC(suite.createCmd(server.URL,
+			_, _, stdout, _, err := executeCommandC(suite.publishCmd(server.URL,
 				"pr-approved testdata/policies/allow-all.rego --input-schema trail --output json"))
 
 			require.Error(suite.T(), err)
@@ -321,20 +333,20 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsPrintedForAVersio
 	}
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestTableOutputPrintsNothingForAVersionThatIsNotValid() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestTableOutputPrintsNothingForAVersionThatIsNotValid() {
 	server, _ := newFakeRegoPolicies(suite.T(), regoPolicyRejected)
 
-	_, _, stdout, _, err := executeCommandC(suite.createCmd(server.URL,
+	_, _, stdout, _, err := executeCommandC(suite.publishCmd(server.URL,
 		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
 
 	require.Error(suite.T(), err)
 	require.Empty(suite.T(), stdout)
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsTheValidVersion() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestJsonOutputIsTheValidVersion() {
 	server, _ := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
-	_, _, stdout, _, err := executeCommandC(suite.createCmd(server.URL,
+	_, _, stdout, _, err := executeCommandC(suite.publishCmd(server.URL,
 		"pr-approved testdata/policies/allow-all.rego --input-schema trail --output json"))
 	require.NoError(suite.T(), err)
 
@@ -355,17 +367,17 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsTheValidVersion()
 	}, printed, "fields the server left out stay out")
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestAnUnknownOutputFormatIsRefused() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestAnUnknownOutputFormatIsRefused() {
 	err := suite.refusedBeforeSending(
 		"pr-approved testdata/policies/allow-all.rego --input-schema trail --output yaml")
 
 	require.Equal(suite.T(), "unsupported output format: yaml. Valid formats are: [table, json]", err.Error())
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestADryRunSendsNothingAndWaitsForNothing() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestADryRunSendsNothingAndWaitsForNothing() {
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
-	_, combined, _, _, err := executeCommandC(suite.createCmd(server.URL,
+	_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
 		"pr-approved testdata/policies/allow-all.rego --input-schema trail --dry-run"))
 
 	require.NoError(suite.T(), err)
@@ -376,7 +388,7 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestADryRunSendsNothingAndWaitsFo
 	require.NotContains(suite.T(), combined, "is valid")
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestAPublishAnsweredWithAValidVersionIsNotPolled() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestAPublishAnsweredWithAValidVersionIsNotPolled() {
 	for _, test := range []struct {
 		name, flags, want string
 	}{
@@ -391,7 +403,7 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAPublishAnsweredWithAValidVer
 			server, fake := newFakeRegoPolicies(suite.T(), regoPolicyPending)
 			fake.publishAnswer = regoPolicyValid
 
-			_, combined, _, _, err := executeCommandC(suite.createCmd(server.URL,
+			_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
 				"pr-approved testdata/policies/allow-all.rego --input-schema trail"+test.flags))
 
 			require.NoError(suite.T(), err)
@@ -401,22 +413,22 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAPublishAnsweredWithAValidVer
 	}
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestItNeedsAnIdentifierAndAPath() {
-	_, _, _, _, err := executeCommandC(suite.createCmd("http://localhost:1",
+func (suite *PublishRegoPolicyCommandTestSuite) TestItNeedsAnIdentifierAndAPath() {
+	_, _, _, _, err := executeCommandC(suite.publishCmd("http://localhost:1",
 		"pr-approved --input-schema trail"))
 
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), "accepts 2 arg(s), received 1")
 }
 
-func (suite *CreateRegoPolicyCommandTestSuite) TestItNeedsAnInputSchema() {
-	_, _, _, _, err := executeCommandC(suite.createCmd("http://localhost:1",
+func (suite *PublishRegoPolicyCommandTestSuite) TestItNeedsAnInputSchema() {
+	_, _, _, _, err := executeCommandC(suite.publishCmd("http://localhost:1",
 		"pr-approved testdata/policies/allow-all.rego"))
 
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), `required flag(s) "input-schema" not set`)
 }
 
-func TestCreateRegoPolicyCommandTestSuite(t *testing.T) {
-	suite.Run(t, new(CreateRegoPolicyCommandTestSuite))
+func TestPublishRegoPolicyCommandTestSuite(t *testing.T) {
+	suite.Run(t, new(PublishRegoPolicyCommandTestSuite))
 }

@@ -561,14 +561,6 @@
   "dry-run": "bool",
   "type": "string"
  },
- "create rego-policy": {
-  "comment": "string",
-  "description": "string",
-  "dry-run": "bool",
-  "input-schema": "string",
-  "name": "string",
-  "output": "string"
- },
  "create service-account": {
   "description": "string",
   "dry-run": "bool",
@@ -788,6 +780,14 @@
   "reverse": "bool",
   "start": "string",
   "start-ts": "float64"
+ },
+ "publish rego-policy": {
+  "comment": "string",
+  "description": "string",
+  "dry-run": "bool",
+  "input-schema": "string",
+  "name": "string",
+  "output": "string"
  },
  "rename environment": {
   "dry-run": "bool"

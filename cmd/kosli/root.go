@@ -592,6 +592,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		// New syntax commands
 		newGetCmd(out),
 		newCreateCmd(out),
+		newPublishCmd(out),
 		newBeginCmd(out),
 		newAttestCmd(out),
 		newReportCmd(out),

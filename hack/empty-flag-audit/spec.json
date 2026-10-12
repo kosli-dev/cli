@@ -1521,7 +1521,7 @@
       ]
     ]
   },
-  "create rego-policy": {
+  "publish rego-policy": {
     "args": [
       "{policy}",
       "cmd/kosli/testdata/policies/allow-all.rego"

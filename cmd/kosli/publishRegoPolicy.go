@@ -13,9 +13,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const createRegoPolicyShortDesc = `Publish a new version of a rego policy in a Kosli org.`
+const publishRegoPolicyShortDesc = `Publish a new version of a rego policy in a Kosli org.`
 
-const createRegoPolicyLongDesc = createRegoPolicyShortDesc + `
+const publishRegoPolicyLongDesc = publishRegoPolicyShortDesc + `
 The policy is addressed by IDENTIFIER, which decisions cite and which cannot be
 changed after the first publish. ^--name^ is required on the first publish only.
 Only an org admin can publish.
@@ -45,9 +45,9 @@ rejected or failed one, and as pending when the wait expires.
 An evaluation runs the highest-numbered valid version, so a rejected or failed
 version leaves the policy in service unchanged.`
 
-const createRegoPolicyExample = `
+const publishRegoPolicyExample = `
 # publish the first version of a rego policy from a directory:
-kosli create rego-policy pr-approved ./policies/pr-approved/ \
+kosli publish rego-policy pr-approved ./policies/pr-approved/ \
 	--input-schema trail \
 	--name "Pull request approved" \
 	--description "Every change reached main through an approved PR" \
@@ -56,14 +56,14 @@ kosli create rego-policy pr-approved ./policies/pr-approved/ \
 	--org yourOrgName
 
 # publish a new version of an existing rego policy from one file:
-kosli create rego-policy pr-approved ./policies/pr-approved.rego \
+kosli publish rego-policy pr-approved ./policies/pr-approved.rego \
 	--input-schema trail \
 	--comment "Also require two approvers" \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # publish a policy written against a set of trails, and print the version as JSON:
-kosli create rego-policy release-ready ./policies/release-ready/ \
+kosli publish rego-policy release-ready ./policies/release-ready/ \
 	--input-schema trails \
 	--name "Release ready" \
 	--output json \
@@ -71,7 +71,7 @@ kosli create rego-policy release-ready ./policies/release-ready/ \
 	--org yourOrgName
 
 # show what would be published, without sending it:
-kosli create rego-policy pr-approved ./policies/pr-approved/ \
+kosli publish rego-policy pr-approved ./policies/pr-approved/ \
 	--input-schema trail \
 	--dry-run \
 	--api-token yourAPIToken \
@@ -83,7 +83,7 @@ var regoPolicyWaitOptions = regopolicies.WaitOptions{}
 
 var regoPolicyInputSchemas = []string{"trail", "trails"}
 
-type createRegoPolicyOptions struct {
+type publishRegoPolicyOptions struct {
 	name        string
 	description string
 	inputSchema string
@@ -91,13 +91,13 @@ type createRegoPolicyOptions struct {
 	output      string
 }
 
-func newCreateRegoPolicyCmd(out io.Writer) *cobra.Command {
-	o := new(createRegoPolicyOptions)
+func newPublishRegoPolicyCmd(out io.Writer) *cobra.Command {
+	o := new(publishRegoPolicyOptions)
 	cmd := &cobra.Command{
 		Use:     "rego-policy IDENTIFIER PATH",
-		Short:   createRegoPolicyShortDesc,
-		Long:    createRegoPolicyLongDesc,
-		Example: createRegoPolicyExample,
+		Short:   publishRegoPolicyShortDesc,
+		Long:    publishRegoPolicyLongDesc,
+		Example: publishRegoPolicyExample,
 		Args:    cobra.ExactArgs(2),
 		// Hidden while the server gates the endpoint behind is-server-side-evaluation-enabled.
 		Hidden:      true,
@@ -129,7 +129,7 @@ func newCreateRegoPolicyCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) error {
+func (o *publishRegoPolicyOptions) run(out io.Writer, identifier, path string) error {
 	// Checked before publishing, so a bad format cannot fail a command whose version is stored.
 	printVersion, known := regoPolicyPrinters[o.output]
 	if !known {
@@ -200,7 +200,7 @@ func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) er
 
 // printIfJSON gives a script the version even when the command fails, as JSON
 // carries what the error text does not, such as the version number.
-func (o *createRegoPolicyOptions) printIfJSON(out io.Writer, version *regopolicies.Version) error {
+func (o *publishRegoPolicyOptions) printIfJSON(out io.Writer, version *regopolicies.Version) error {
 	if o.output != "json" {
 		return nil
 	}
