@@ -564,8 +564,10 @@
  "create rego-policy": {
   "comment": "string",
   "description": "string",
+  "dry-run": "bool",
   "input-schema": "string",
-  "name": "string"
+  "name": "string",
+  "output": "string"
  },
  "create service-account": {
   "description": "string",

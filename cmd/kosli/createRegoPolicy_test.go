@@ -283,6 +283,53 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAnEmptyDescriptionIsRefused()
 	require.Contains(suite.T(), err.Error(), "flag '--description' was given an empty value")
 }
 
+func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsTheValidVersion() {
+	server, _ := newFakeRegoPolicies(suite.T(), regoPolicyValid)
+
+	_, _, stdout, _, err := executeCommandC(suite.createCmd(server.URL,
+		"pr-approved testdata/policies/allow-all.rego --input-schema trail --output json"))
+	require.NoError(suite.T(), err)
+
+	var printed map[string]any
+	require.NoError(suite.T(), json.Unmarshal([]byte(stdout), &printed), "stdout is JSON: %s", stdout)
+	require.Equal(suite.T(), map[string]any{
+		"identifier":   "pr-approved",
+		"version":      float64(1),
+		"status":       "valid",
+		"digest":       "sha256:abc123",
+		"input_schema": "trail",
+		"comment":      "",
+		"created_at":   1757000000.5,
+		"created_by":   "Jane Doe",
+		"validated_at": 1757000002.25,
+		"opa_version":  "1.21.1",
+		"entrypoint":   "policy",
+	}, printed, "fields the server left out stay out")
+}
+
+// Refused before publishing: a format refused where it is printed would leave
+// a version published by a command that reported an error.
+func (suite *CreateRegoPolicyCommandTestSuite) TestAnUnknownOutputFormatIsRefused() {
+	err := suite.refusedBeforeSending(
+		"pr-approved testdata/policies/allow-all.rego --input-schema trail --output yaml")
+
+	require.Equal(suite.T(), "unsupported output format: yaml. Valid formats are: [table, json]", err.Error())
+}
+
+func (suite *CreateRegoPolicyCommandTestSuite) TestADryRunSendsNothingAndWaitsForNothing() {
+	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
+
+	_, combined, _, _, err := executeCommandC(suite.createCmd(server.URL,
+		"pr-approved testdata/policies/allow-all.rego --input-schema trail --dry-run"))
+
+	require.NoError(suite.T(), err)
+	require.Empty(suite.T(), fake.published)
+	require.Equal(suite.T(), 0, fake.readCount)
+	require.Contains(suite.T(), combined, "THIS IS A DRY-RUN")
+	require.Contains(suite.T(), combined, "/api/v2/rego-policies/test-org/pr-approved")
+	require.NotContains(suite.T(), combined, "is valid")
+}
+
 func (suite *CreateRegoPolicyCommandTestSuite) TestItNeedsAnIdentifierAndAPath() {
 	_, _, _, _, err := executeCommandC(suite.createCmd("http://localhost:1",
 		"pr-approved --input-schema trail"))

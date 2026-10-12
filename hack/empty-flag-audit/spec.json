@@ -1535,14 +1535,18 @@
     "flags_to_test": [
       "comment",
       "description",
+      "dry-run",
       "input-schema",
-      "name"
+      "name",
+      "output"
     ],
     "flag_values": {
       "comment": "probe-comment",
       "description": "probe-description",
+      "dry-run": "true",
       "input-schema": "trail",
-      "name": "probe-name"
+      "name": "probe-name",
+      "output": "json"
     },
     "setup": [],
     "verify": []

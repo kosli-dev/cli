@@ -45,13 +45,13 @@ type Version struct {
 	CreatedAt   float64 `json:"created_at"`
 	CreatedBy   string  `json:"created_by"`
 	// Nil while the version is pending.
-	ValidatedAt *float64 `json:"validated_at"`
-	OPAVersion  string   `json:"opa_version"`
+	ValidatedAt *float64 `json:"validated_at,omitempty"`
+	OPAVersion  string   `json:"opa_version,omitempty"`
 	// Set only on a valid version; ParamsSchema only when the policy declares one.
-	Entrypoint   string         `json:"entrypoint"`
-	ParamsSchema map[string]any `json:"params_schema"`
+	Entrypoint   string         `json:"entrypoint,omitempty"`
+	ParamsSchema map[string]any `json:"params_schema,omitempty"`
 	// Set only on a rejected or failed version.
-	Error *ValidationError `json:"error"`
+	Error *ValidationError `json:"error,omitempty"`
 }
 
 // IsTerminal reports whether the version has left pending, which it does once.

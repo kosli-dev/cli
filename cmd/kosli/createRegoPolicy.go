@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"slices"
 
 	"github.com/kosli-dev/cli/internal/docgen"
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/regopolicies"
 	"github.com/spf13/cobra"
 )
@@ -43,6 +45,7 @@ type createRegoPolicyOptions struct {
 	description string
 	inputSchema string
 	comment     string
+	output      string
 }
 
 func newCreateRegoPolicyCmd(out io.Writer) *cobra.Command {
@@ -72,6 +75,8 @@ func newCreateRegoPolicyCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.name, "name", "", regoPolicyNameFlag)
 	cmd.Flags().StringVar(&o.description, "description", "", regoPolicyDescriptionFlag)
 	cmd.Flags().StringVar(&o.comment, "comment", "", regoPolicyCommentFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"input-schema"})
 	if err != nil {
@@ -82,6 +87,12 @@ func newCreateRegoPolicyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) error {
+	// Refused before publishing: a format refused where it is printed would
+	// leave a version published by a command that reported an error.
+	printVersion, known := regoPolicyPrinters[o.output]
+	if !known {
+		return fmt.Errorf("unsupported output format: %s. Valid formats are: [table, json]", o.output)
+	}
 	if !slices.Contains(regoPolicyInputSchemas, o.inputSchema) {
 		return fmt.Errorf("--input-schema must be one of %v, got %q", regoPolicyInputSchemas, o.inputSchema)
 	}
@@ -122,9 +133,22 @@ func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) er
 		return notValidError(identifier, version)
 	}
 
-	_, err = fmt.Fprintf(out, "rego policy '%s' version %d is valid (%s)\n",
-		identifier, version.Version, version.Digest)
-	return err
+	return printVersion(out, version)
+}
+
+var regoPolicyPrinters = map[string]func(io.Writer, *regopolicies.Version) error{
+	"table": func(out io.Writer, version *regopolicies.Version) error {
+		_, err := fmt.Fprintf(out, "rego policy '%s' version %d is valid (%s)\n",
+			version.Identifier, version.Version, version.Digest)
+		return err
+	},
+	"json": func(out io.Writer, version *regopolicies.Version) error {
+		raw, err := json.Marshal(version)
+		if err != nil {
+			return err
+		}
+		return output.PrintJson(string(raw), out, 0)
+	},
 }
 
 // notValidError reports a version that will never be evaluated. A rejected
