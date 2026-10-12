@@ -227,6 +227,21 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestAFailedVersionWithNoReasonIsS
 		err.Error())
 }
 
+func (suite *CreateRegoPolicyCommandTestSuite) TestJsonOutputIsThePendingVersionWhenTheWaitExpires() {
+	regoPolicyWaitOptions.Timeout = 20 * time.Millisecond
+	server, _ := newFakeRegoPolicies(suite.T(), regoPolicyPending)
+
+	_, _, stdout, _, err := executeCommandC(suite.createCmd(server.URL,
+		"pr-approved testdata/policies/allow-all.rego --input-schema trail --output json"))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "still pending")
+	var printed map[string]any
+	require.NoError(suite.T(), json.Unmarshal([]byte(stdout), &printed), "stdout is JSON: %s", stdout)
+	require.Equal(suite.T(), "pending", printed["status"])
+	require.Equal(suite.T(), float64(1), printed["version"])
+}
+
 func (suite *CreateRegoPolicyCommandTestSuite) TestAWaitThatExpiresSaysHowToReadTheVersionLater() {
 	regoPolicyWaitOptions.Timeout = 20 * time.Millisecond
 

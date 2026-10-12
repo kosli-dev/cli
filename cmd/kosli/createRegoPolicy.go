@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -39,8 +40,8 @@ seconds for the result:
   - failed: Kosli could not validate the version. Publish again to retry. The
     command exits 1.
 If the wait expires, the command exits 1 and says how to read the version later.
-With ^--output json^, the version is printed for each of the three results,
-with the reason for a rejected or failed one.
+With ^--output json^, the version is always printed: with the reason for a
+rejected or failed one, and as pending when the wait expires.
 
 An evaluation runs the highest-numbered valid version, so a rejected or failed
 version leaves the policy in service unchanged.`
@@ -170,21 +171,33 @@ func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) er
 	if !version.IsTerminal() {
 		version, err = client.WaitForTerminal(context.Background(), global.Org, identifier,
 			published.Version, regoPolicyWaitOptions)
+		var stillPending *regopolicies.StillPendingError
+		if errors.As(err, &stillPending) {
+			if printErr := o.printIfJSON(out, published); printErr != nil {
+				return printErr
+			}
+		}
 		if err != nil {
 			return err
 		}
 	}
 	if version.Status != regopolicies.StatusValid {
-		// JSON carries the reason for a script to read; the table has only the error.
-		if o.output == "json" {
-			if err := printVersion(out, version); err != nil {
-				return err
-			}
+		if err := o.printIfJSON(out, version); err != nil {
+			return err
 		}
 		return notValidError(identifier, version)
 	}
 
 	return printVersion(out, version)
+}
+
+// printIfJSON gives a script the version even when the command fails, as JSON
+// carries what the error text does not, such as the version number.
+func (o *createRegoPolicyOptions) printIfJSON(out io.Writer, version *regopolicies.Version) error {
+	if o.output != "json" {
+		return nil
+	}
+	return regoPolicyPrinters["json"](out, version)
 }
 
 var regoPolicyPrinters = map[string]func(io.Writer, *regopolicies.Version) error{
