@@ -199,6 +199,7 @@ func TestWaitGivesUpWithTheEvaluationIdAndNoVerdict(t *testing.T) {
 		"no nanosecond noise in a sentence about a budget")
 	require.Contains(t, err.Error(), "01JABCDEF")
 	require.Contains(t, err.Error(), "still pending")
+	require.Contains(t, err.Error(), "read it later with GET "+server.URL+"/api/v2/evaluations/my-org/01JABCDEF")
 	require.NotContains(t, err.Error(), "denied")
 }
 

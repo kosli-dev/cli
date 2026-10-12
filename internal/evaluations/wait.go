@@ -30,20 +30,25 @@ type WaitOptions = poll.Options
 // not answered must never be reported as a denial. The id is on it so the
 // caller can point at the evaluation that is still running.
 type StillPendingError struct {
+	Host   string
 	Org    string
 	ID     string
 	Waited time.Duration
 }
 
 func (e *StillPendingError) Error() string {
-	return fmt.Sprintf(
-		"evaluation %s is still pending after %s; read it later with GET /api/v2/evaluations/%s/%s",
-		e.ID, e.Waited, e.Org, e.ID)
+	pending := fmt.Sprintf("evaluation %s is still pending after %s", e.ID, e.Waited)
+	endpoint, err := evaluationURL(e.Host, e.Org, e.ID)
+	if err != nil {
+		// Unreachable: the wait reads the evaluation from the same URL first.
+		return pending
+	}
+	return pending + "; read it later with GET " + endpoint
 }
 
 // Get reads one evaluation. A pending one is a normal answer, not an error.
 func (c *Client) Get(org, id string) (*Evaluation, error) {
-	endpoint, err := url.JoinPath(c.host, "api/v2/evaluations", org, id)
+	endpoint, err := evaluationURL(c.host, org, id)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +87,11 @@ func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options Wa
 
 	var expired *poll.ExpiredError
 	if errors.As(err, &expired) {
-		return nil, &StillPendingError{Org: org, ID: id, Waited: expired.Waited}
+		return nil, &StillPendingError{Host: c.host, Org: org, ID: id, Waited: expired.Waited}
 	}
 	return evaluation, err
+}
+
+func evaluationURL(host, org, id string) (string, error) {
+	return url.JoinPath(host, "api/v2/evaluations", org, id)
 }
