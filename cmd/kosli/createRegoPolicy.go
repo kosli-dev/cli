@@ -188,7 +188,15 @@ func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) er
 		return notValidError(identifier, version)
 	}
 
-	return printVersion(out, version)
+	note := ""
+	if published.IsTerminal() {
+		// A new version is always stored pending, so a terminal answer is an existing one.
+		note = "nothing new was stored, as the files and input schema are the same as this version"
+		if o.comment != "" {
+			note += ", so --comment was not kept"
+		}
+	}
+	return printVersion(out, version, note)
 }
 
 // printIfJSON gives a script the version even when the command fails, as JSON
@@ -197,16 +205,21 @@ func (o *createRegoPolicyOptions) printIfJSON(out io.Writer, version *regopolici
 	if o.output != "json" {
 		return nil
 	}
-	return regoPolicyPrinters["json"](out, version)
+	return regoPolicyPrinters["json"](out, version, "")
 }
 
-var regoPolicyPrinters = map[string]func(io.Writer, *regopolicies.Version) error{
-	"table": func(out io.Writer, version *regopolicies.Version) error {
-		_, err := fmt.Fprintf(out, "rego policy '%s' version %d is valid (%s)\n",
+// The JSON printer ignores note: its output is the server's answer as sent.
+var regoPolicyPrinters = map[string]func(out io.Writer, version *regopolicies.Version, note string) error{
+	"table": func(out io.Writer, version *regopolicies.Version, note string) error {
+		line := fmt.Sprintf("rego policy '%s' version %d is valid (%s)",
 			version.Identifier, version.Version, version.Digest)
+		if note != "" {
+			line += "; " + note
+		}
+		_, err := fmt.Fprintln(out, line)
 		return err
 	},
-	"json": func(out io.Writer, version *regopolicies.Version) error {
+	"json": func(out io.Writer, version *regopolicies.Version, _ string) error {
 		raw, err := json.Marshal(version)
 		if err != nil {
 			return err

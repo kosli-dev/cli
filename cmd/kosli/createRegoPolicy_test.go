@@ -157,7 +157,7 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestItWaitsThroughPendingReads() 
 
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), 3, fake.readCount)
-	require.Contains(suite.T(), combined, "is valid")
+	require.Equal(suite.T(), "rego policy 'pr-approved' version 1 is valid (sha256:abc123)\n", combined)
 }
 
 // The same directory must give the same digest here as in `evaluate policy`.
@@ -377,15 +377,28 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestADryRunSendsNothingAndWaitsFo
 }
 
 func (suite *CreateRegoPolicyCommandTestSuite) TestAPublishAnsweredWithAValidVersionIsNotPolled() {
-	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyPending)
-	fake.publishAnswer = regoPolicyValid
+	for _, test := range []struct {
+		name, flags, want string
+	}{
+		{"without a comment", "",
+			"rego policy 'pr-approved' version 1 is valid (sha256:abc123); nothing new was stored, " +
+				"as the files and input schema are the same as this version\n"},
+		{"with a comment", ` --comment "Second try"`,
+			"rego policy 'pr-approved' version 1 is valid (sha256:abc123); nothing new was stored, " +
+				"as the files and input schema are the same as this version, so --comment was not kept\n"},
+	} {
+		suite.Run(test.name, func() {
+			server, fake := newFakeRegoPolicies(suite.T(), regoPolicyPending)
+			fake.publishAnswer = regoPolicyValid
 
-	_, combined, _, _, err := executeCommandC(suite.createCmd(server.URL,
-		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
+			_, combined, _, _, err := executeCommandC(suite.createCmd(server.URL,
+				"pr-approved testdata/policies/allow-all.rego --input-schema trail"+test.flags))
 
-	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), 0, fake.readCount)
-	require.Contains(suite.T(), combined, "rego policy 'pr-approved' version 1 is valid (sha256:abc123)")
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), 0, fake.readCount)
+			require.Equal(suite.T(), test.want, combined)
+		})
+	}
 }
 
 func (suite *CreateRegoPolicyCommandTestSuite) TestItNeedsAnIdentifierAndAPath() {
