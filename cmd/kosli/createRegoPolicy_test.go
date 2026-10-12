@@ -25,6 +25,15 @@ const (
 		`"digest":"sha256:abc123","input_schema":"trail","comment":"",` +
 		`"created_at":1757000000.5,"created_by":"Jane Doe","validated_at":1757000002.25,` +
 		`"opa_version":"1.21.1","entrypoint":"policy"}`
+	regoPolicyRejected = `{"identifier":"pr-approved","version":1,"status":"rejected",` +
+		`"digest":"sha256:abc123","input_schema":"trail","comment":"",` +
+		`"created_at":1757000000.5,"created_by":"Jane Doe","validated_at":1757000002.25,` +
+		`"opa_version":"1.21.1","error":{"kind":"compile",` +
+		`"message":"policy.rego:4: rego_parse_error: unexpected eof token"}}`
+	regoPolicyFailed = `{"identifier":"pr-approved","version":1,"status":"failed",` +
+		`"digest":"sha256:abc123","input_schema":"trail","comment":"",` +
+		`"created_at":1757000000.5,"created_by":"Jane Doe","validated_at":1757000040.0,` +
+		`"error":{"kind":"lambda_timeout","message":"validation timed out after 3 attempts"}}`
 )
 
 // fakeRegoPolicies records each publish and answers each version read with the
@@ -166,18 +175,64 @@ func (suite *CreateRegoPolicyCommandTestSuite) TestADirectoryTravelsKeyedByRelat
 	require.Equal(suite.T(), "trails", fake.published[0]["input_schema"])
 }
 
-// Until the outcomes are told apart, nothing but a valid version may read as
-// one.
-func (suite *CreateRegoPolicyCommandTestSuite) TestAVersionThatIsNotValidFails() {
-	rejected := strings.Replace(regoPolicyValid, `"status":"valid"`, `"status":"rejected"`, 1)
-	server, _ := newFakeRegoPolicies(suite.T(), rejected)
-
+func (suite *CreateRegoPolicyCommandTestSuite) publishExpectingError(reads ...string) (string, error) {
+	server, _ := newFakeRegoPolicies(suite.T(), reads...)
 	_, combined, _, _, err := executeCommandC(suite.createCmd(server.URL,
 		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
-
 	require.Error(suite.T(), err)
-	require.Contains(suite.T(), err.Error(), "rejected")
 	require.NotContains(suite.T(), combined, "is valid")
+	return combined, err
+}
+
+func (suite *CreateRegoPolicyCommandTestSuite) TestARejectedVersionNamesTheErrorInThePolicy() {
+	_, err := suite.publishExpectingError(regoPolicyRejected)
+
+	require.Equal(suite.T(),
+		"rego policy 'pr-approved' version 1 was rejected (compile): "+
+			"policy.rego:4: rego_parse_error: unexpected eof token",
+		err.Error())
+}
+
+func (suite *CreateRegoPolicyCommandTestSuite) TestARejectedVersionWithNoReasonSaysSo() {
+	_, err := suite.publishExpectingError(
+		strings.Replace(regoPolicyValid, `"status":"valid"`, `"status":"rejected"`, 1))
+
+	require.Equal(suite.T(),
+		"rego policy 'pr-approved' version 1 was rejected, and Kosli gave no reason",
+		err.Error())
+}
+
+// A failed version is our fault, not the policy's: the author must not go
+// looking for a defect in the policy, and publishing again is the way back.
+func (suite *CreateRegoPolicyCommandTestSuite) TestAFailedVersionIsNotBlamedOnThePolicy() {
+	_, err := suite.publishExpectingError(regoPolicyFailed)
+
+	require.Equal(suite.T(),
+		"validation of rego policy 'pr-approved' version 1 failed on the Kosli side (lambda_timeout): "+
+			"validation timed out after 3 attempts; "+
+			"this is not a fault in the policy, publish again to retry",
+		err.Error())
+	require.NotContains(suite.T(), err.Error(), "rejected")
+}
+
+func (suite *CreateRegoPolicyCommandTestSuite) TestAFailedVersionWithNoReasonIsStillNotBlamedOnThePolicy() {
+	_, err := suite.publishExpectingError(
+		strings.Replace(regoPolicyValid, `"status":"valid"`, `"status":"failed"`, 1))
+
+	require.Equal(suite.T(),
+		"validation of rego policy 'pr-approved' version 1 failed on the Kosli side, with no reason given; "+
+			"this is not a fault in the policy, publish again to retry",
+		err.Error())
+}
+
+func (suite *CreateRegoPolicyCommandTestSuite) TestAWaitThatExpiresSaysHowToReadTheVersionLater() {
+	regoPolicyWaitOptions.Timeout = 20 * time.Millisecond
+
+	_, err := suite.publishExpectingError(regoPolicyPending)
+
+	require.Contains(suite.T(), err.Error(), "version 1 of rego policy pr-approved is still pending after")
+	require.Contains(suite.T(), err.Error(),
+		"read it later with GET /api/v2/rego-policies/test-org/pr-approved/versions/1")
 }
 
 func (suite *CreateRegoPolicyCommandTestSuite) TestItNeedsAnIdentifierAndAPath() {

@@ -107,10 +107,32 @@ func (o *createRegoPolicyOptions) run(out io.Writer, identifier, path string) er
 		return err
 	}
 	if version.Status != regopolicies.StatusValid {
-		return fmt.Errorf("rego policy '%s' version %d is %s", identifier, version.Version, version.Status)
+		return notValidError(identifier, version)
 	}
 
 	_, err = fmt.Fprintf(out, "rego policy '%s' version %d is valid (%s)\n",
 		identifier, version.Version, version.Digest)
 	return err
+}
+
+// notValidError reports a version that will never be evaluated. A rejected
+// version is the policy's fault and a failed one is Kosli's, so the two are
+// worded apart: the author of a failed version has nothing to fix.
+func notValidError(identifier string, version *regopolicies.Version) error {
+	subject := fmt.Sprintf("rego policy '%s' version %d", identifier, version.Version)
+	switch version.Status {
+	case regopolicies.StatusRejected:
+		if version.Error == nil {
+			return fmt.Errorf("%s was rejected, and Kosli gave no reason", subject)
+		}
+		return fmt.Errorf("%s was rejected (%s): %s", subject, version.Error.Kind, version.Error.Message)
+	case regopolicies.StatusFailed:
+		reason := ", with no reason given"
+		if version.Error != nil {
+			reason = fmt.Sprintf(" (%s): %s", version.Error.Kind, version.Error.Message)
+		}
+		return fmt.Errorf("validation of %s failed on the Kosli side%s; "+
+			"this is not a fault in the policy, publish again to retry", subject, reason)
+	}
+	return fmt.Errorf("%s is %s", subject, version.Status)
 }
