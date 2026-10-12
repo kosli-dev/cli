@@ -1,0 +1,105 @@
+// Package regopolicies talks to the Kosli rego policy API: it publishes a
+// versioned Rego bundle under an identifier, and reads its versions back. It
+// compiles and validates nothing itself; the server does that asynchronously.
+package regopolicies
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+
+	"github.com/kosli-dev/cli/internal/requests"
+)
+
+// The statuses a version reports. A version leaves pending exactly once:
+// rejected means the policy is at fault, failed means the server is.
+const (
+	StatusPending  = "pending"
+	StatusValid    = "valid"
+	StatusRejected = "rejected"
+	StatusFailed   = "failed"
+)
+
+// PublishRequest describes one publish of a policy. An empty Name or
+// Description is left out, so the server keeps the value it has.
+type PublishRequest struct {
+	Identifier  string
+	Name        string
+	Description string
+	InputSchema string
+	Comment     string
+	Files       map[string]string
+}
+
+// Version is one published version of a policy, as the server reports it.
+type Version struct {
+	Identifier  string  `json:"identifier"`
+	Version     int     `json:"version"`
+	Status      string  `json:"status"`
+	Digest      string  `json:"digest"`
+	InputSchema string  `json:"input_schema"`
+	Comment     string  `json:"comment"`
+	CreatedAt   float64 `json:"created_at"`
+	CreatedBy   string  `json:"created_by"`
+}
+
+// Client is a Kosli API client scoped to the rego policy endpoints.
+type Client struct {
+	http   *requests.Client
+	host   string
+	token  string
+	dryRun bool
+}
+
+func NewClient(httpClient *requests.Client, host, token string, dryRun bool) *Client {
+	return &Client{http: httpClient, host: host, token: token, dryRun: dryRun}
+}
+
+// Publish stores the next version of a policy and returns it pending. A dry run
+// sends nothing and returns no version.
+func (c *Client) Publish(org string, request PublishRequest) (*Version, error) {
+	endpoint, err := url.JoinPath(c.host, "api/v2/rego-policies", org, request.Identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.http.Do(&requests.RequestParams{
+		Method: http.MethodPut,
+		URL:    endpoint,
+		Token:  c.token,
+		DryRun: c.dryRun,
+		Payload: publishPayload{
+			Name:        request.Name,
+			Description: request.Description,
+			InputSchema: request.InputSchema,
+			Comment:     request.Comment,
+			Files:       request.Files,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if response == nil {
+		return nil, nil
+	}
+	return decodeVersion(response.Body)
+}
+
+// The payload type is separate from PublishRequest because the server forbids
+// unknown fields: the wire shape has to be stated exactly here.
+type publishPayload struct {
+	Name        string            `json:"name,omitempty"`
+	Description string            `json:"description,omitempty"`
+	InputSchema string            `json:"input_schema"`
+	Comment     string            `json:"comment"`
+	Files       map[string]string `json:"files"`
+}
+
+func decodeVersion(body string) (*Version, error) {
+	var version Version
+	if err := json.Unmarshal([]byte(body), &version); err != nil {
+		return nil, fmt.Errorf("failed to parse the rego policy version: %w", err)
+	}
+	return &version, nil
+}
