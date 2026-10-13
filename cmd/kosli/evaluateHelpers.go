@@ -276,7 +276,7 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]an
 		logger.Warn("--output-rule values are only shown with --output json")
 	}
 
-	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny, "")
+	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny, "", nil)
 }
 
 // evaluateServerSide asks the Kosli server to evaluate the named trails and
@@ -297,8 +297,11 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 }
 
 type serverEvaluation struct {
-	identifier   string
-	policyRefs   []string
+	identifier string
+	policyRefs []string
+	// Only evaluate policy prints the policy that ran: the evaluate trail
+	// commands must print the same bytes on either path.
+	citePolicy   bool
 	params       string
 	trails       []evaluations.TrailRef
 	decision     *evaluations.Decision
@@ -364,8 +367,15 @@ func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
 		return serverSideFailure(evaluation)
 	}
 
-	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
-		spec.output, false, nil, spec.assertOnDeny, evaluation.DecisionAttestationID)
+	verdict := serverVerdict(evaluation.Result)
+	var cited *evaluations.PolicyCitation
+	if spec.citePolicy {
+		// A rule of that name cannot pass itself off as the policy that ran.
+		delete(verdict.Outputs, "policy")
+		cited = evaluation.Policy
+	}
+	return printEvaluateResult(out, verdict, nil,
+		spec.output, false, nil, spec.assertOnDeny, evaluation.DecisionAttestationID, cited)
 }
 
 // refuseWhatTheServerCannotDo rejects the options that have no server-side
@@ -667,7 +677,7 @@ func validateOutputRules(rules []string) error {
 
 // printEvaluateResult renders a verdict, whatever produced it, so that every
 // evaluation path prints the same bytes for the same verdict.
-func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, decisionID string) error {
+func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, decisionID string, policy *evaluations.PolicyCitation) error {
 	auditResult := map[string]any{
 		"allow":      result.Allow,
 		"violations": result.Violations,
@@ -679,6 +689,9 @@ func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[strin
 	// same page as before.
 	if decisionID != "" {
 		auditResult["decision_attestation_id"] = decisionID
+	}
+	if policy != nil {
+		auditResult["policy"] = policy
 	}
 	if showInput {
 		auditResult["input"] = input
@@ -725,6 +738,9 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 
 		allow, _ := result["allow"].(bool)
 		decisionRow := []string{}
+		if policy, ok := result["policy"].(map[string]any); ok {
+			decisionRow = append(decisionRow, fmt.Sprintf("POLICY:\t%s", citedPolicyText(policy)))
+		}
 		if id, ok := result["decision_attestation_id"].(string); ok && id != "" {
 			decisionRow = append(decisionRow, fmt.Sprintf("DECISION:\t%s", id))
 		}
@@ -760,6 +776,16 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 		}
 		return nil
 	}
+}
+
+// citedPolicyText names a published policy by its identifier and version, and
+// an inline one by its digest alone.
+func citedPolicyText(policy map[string]any) string {
+	identifier, _ := policy["identifier"].(string)
+	if identifier == "" {
+		return fmt.Sprintf("%s", policy["digest"])
+	}
+	return fmt.Sprintf("%s, version %.0f (%s)", identifier, policy["version"], policy["digest"])
 }
 
 // violationText is a violation as a line of text. A message is printed as it

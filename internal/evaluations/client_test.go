@@ -337,6 +337,18 @@ func TestGetReadsTheDecisionTheEvaluationWrote(t *testing.T) {
 	require.Equal(t, "01DECISION", evaluation.DecisionAttestationID)
 }
 
+func TestGetReadsThePolicyTheEvaluationRan(t *testing.T) {
+	server, _ := newFakeServer(t, http.StatusOK,
+		`{"id":"01JABCDEF","status":"completed","requested_at":1.0,"recorded_at":1.0,`+
+			`"policy":{"identifier":"pr-approved","version":3,"digest":"sha256:abc123"},"result":{"allow":true}}`)
+
+	evaluation, err := newTestClient(t, server.URL, false).Get("my-org", "01JABCDEF")
+	require.NoError(t, err)
+
+	require.Equal(t, &PolicyCitation{Identifier: "pr-approved", Version: 3, Digest: "sha256:abc123"},
+		evaluation.Policy)
+}
+
 // An evaluation asked for no decision names none.
 func TestGetReadsNoDecisionWhereNoneWasWritten(t *testing.T) {
 	server, _ := newFakeServer(t, http.StatusOK,

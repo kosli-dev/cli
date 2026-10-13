@@ -73,15 +73,25 @@ type Failure struct {
 	Message string `json:"message"`
 }
 
+// PolicyCitation is the policy an evaluation ran. Identifier and Version are
+// empty for a policy sent inline, which is cited by its digest alone.
+type PolicyCitation struct {
+	Identifier string `json:"identifier,omitempty"`
+	Version    int    `json:"version,omitempty"`
+	Digest     string `json:"digest"`
+}
+
 // Evaluation carries at most one of Result and Failure. Which one is present
 // follows from Status, so callers branch on Status rather than on presence.
 type Evaluation struct {
-	ID          string   `json:"id"`
-	Status      string   `json:"status"`
-	RequestedAt float64  `json:"requested_at"`
-	RecordedAt  float64  `json:"recorded_at"`
-	Result      *Result  `json:"result"`
-	Failure     *Failure `json:"error"`
+	ID          string  `json:"id"`
+	Status      string  `json:"status"`
+	RequestedAt float64 `json:"requested_at"`
+	RecordedAt  float64 `json:"recorded_at"`
+	// Absent from a server that does not cite the policy it ran.
+	Policy  *PolicyCitation `json:"policy"`
+	Result  *Result         `json:"result"`
+	Failure *Failure        `json:"error"`
 	// Empty until a decision that was asked for has been written.
 	DecisionAttestationID string `json:"decision_attestation_id"`
 }

@@ -121,6 +121,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheHelpSaysWhichRulesAreEvaluat
 	require.NoError(suite.T(), err)
 	for _, says := range []string{
 		"`allow`", "default allow", "entrypoint: true", "policy package", "undefined",
+		"`policy`", "as those names are taken",
 	} {
 		require.Contains(suite.T(), help, says)
 	}
@@ -606,6 +607,69 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheRecordedDecisionIsReportedIn
 
 	require.NoError(suite.T(), err)
 	require.Contains(suite.T(), combined, `"decision_attestation_id": "01DECISION"`)
+}
+
+// The evaluation cites the version it ran, which for a published policy can be
+// older than the newest one, so the caller sees what decided.
+func (suite *EvaluatePolicyCommandTestSuite) TestThePublishedPolicyThatRanIsReported() {
+	server, _ := newFakeEvaluations(suite.T(), verdictAllowedCitingAPublishedPolicy)
+
+	_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL, ""))
+
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(),
+		"RESULT:  ALLOWED\n"+
+			"POLICY:  pr-approved, version 3 (sha256:abc123)\n",
+		combined)
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestThePublishedPolicyThatRanIsReportedInJson() {
+	server, _ := newFakeEvaluations(suite.T(), verdictAllowedCitingAPublishedPolicy)
+
+	_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL, "--output json"))
+
+	require.NoError(suite.T(), err)
+	require.JSONEq(suite.T(),
+		`{"allow":true,"violations":null,`+
+			`"policy":{"identifier":"pr-approved","version":3,"digest":"sha256:abc123"}}`,
+		combined)
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAnInlinePolicyIsReportedByItsDigest() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDeniedCitingAnInlinePolicy)
+
+	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL, ""))
+	require.NoError(suite.T(), err)
+	require.Contains(suite.T(), combined, "VIOLATIONS:  change is not approved\n")
+	require.Contains(suite.T(), combined, "POLICY:      sha256:abc123\n")
+
+	_, combined, _, _, err = executeCommandC(suite.cmd(server.URL, "--output json"))
+	require.NoError(suite.T(), err)
+	require.Contains(suite.T(), combined, "\"policy\": {\n    \"digest\": \"sha256:abc123\"\n  }")
+}
+
+// A server from before the evaluation cited its policy sends none.
+func (suite *EvaluatePolicyCommandTestSuite) TestNoPolicyIsReportedWhereTheServerCitesNone() {
+	server, _ := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL, ""))
+	require.NoError(suite.T(), err)
+	require.NotContains(suite.T(), combined, "POLICY")
+
+	_, combined, _, _, err = executeCommandC(suite.cmd(server.URL, "--output json"))
+	require.NoError(suite.T(), err)
+	require.NotContains(suite.T(), combined, `"policy"`)
+}
+
+// A rule cannot pass itself off as the policy that ran.
+func (suite *EvaluatePolicyCommandTestSuite) TestAnOutputNamedPolicyIsNotPrinted() {
+	server, _ := newFakeEvaluations(suite.T(), verdictAllowedWithAPolicyOutput)
+
+	_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL, "--output json"))
+
+	require.NoError(suite.T(), err)
+	require.NotContains(suite.T(), combined, "forged")
+	require.Contains(suite.T(), combined, `"identifier": "pr-approved"`)
 }
 
 // A refusal is reported in the API's own words, whatever it refused, so the

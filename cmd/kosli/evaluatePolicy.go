@@ -51,8 +51,8 @@ one of them to say which is the policy. In the policy package:
     ` + "`allow`" + ` fails the evaluation rather than denying.
   - Every rule annotated with ` + "`# METADATA`" + ` and ` + "`# entrypoint: true`" + ` is evaluated
     too, and printed under its rule name, such as ` + "`violations`" + ` or ` + "`report`" + `. A
-    rule undefined for this input is left out. An output named ` + "`input`" + `, ` + "`params`" + `
-    or ` + "`decision_attestation_id`" + ` is not printed, as those names are taken.
+    rule undefined for this input is left out. An output named ` + "`input`" + `, ` + "`params`" + `,
+    ` + "`policy`" + ` or ` + "`decision_attestation_id`" + ` is not printed, as those names are taken.
   - Every other rule is evaluated only as far as those rules need it.
 An entrypoint annotated outside the policy package, or on a function, is refused.
 
@@ -63,6 +63,8 @@ the verdict is never asserted from here. Without ` + "`--control`" + ` nothing i
 Use ` + "`--params`" + ` to pass values the policy reads as ` + "`data.params`" + `. For a
 published policy, they must match the params schema of its current version.
 Pass ` + "`--assert`" + ` to exit with a non-zero status when the policy denies.
+The policy that ran is printed with the verdict: a published policy by its
+identifier, version and digest, and an inline one by its digest.
 Use ` + "`--output json`" + ` for structured output.`
 
 const evaluatePolicyExample = `
@@ -223,6 +225,7 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 
 	return runServerEvaluation(out, serverEvaluation{
 		identifier:   o.identifier,
+		citePolicy:   true,
 		policyRefs:   policyRefs,
 		params:       o.params,
 		trails:       trails,
