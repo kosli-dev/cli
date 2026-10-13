@@ -276,7 +276,7 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]an
 		logger.Warn("--output-rule values are only shown with --output json")
 	}
 
-	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny, "", nil)
+	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny, "")
 }
 
 // evaluateServerSide asks the Kosli server to evaluate the named trails and
@@ -297,11 +297,8 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 }
 
 type serverEvaluation struct {
-	identifier string
-	policyRefs []string
-	// Only evaluate policy prints the policy that ran: the evaluate trail
-	// commands must print the same bytes on either path.
-	citePolicy   bool
+	identifier   string
+	policyRefs   []string
 	params       string
 	trails       []evaluations.TrailRef
 	decision     *evaluations.Decision
@@ -309,11 +306,23 @@ type serverEvaluation struct {
 	assertOnDeny bool
 }
 
-// runServerEvaluation is shared by every command that evaluates away from this
-// machine, so they cannot drift on what they send or on how an outcome reads.
+// runServerEvaluation prints the outcome as the local evaluate trail path does,
+// so the two paths print the same bytes for the same verdict.
 func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
+	evaluation, err := awaitServerEvaluation(spec)
+	if err != nil || evaluation == nil {
+		return err
+	}
+	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
+		spec.output, false, nil, spec.assertOnDeny, evaluation.DecisionAttestationID)
+}
+
+// awaitServerEvaluation is shared by every command that evaluates away from
+// this machine, so they cannot drift on what they send or on which outcome is
+// a verdict. It returns nil after a dry run, which sends nothing.
+func awaitServerEvaluation(spec serverEvaluation) (*evaluations.Evaluation, error) {
 	if len(spec.trails) > maxServerSideTrails {
-		return fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
+		return nil, fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
 			maxServerSideTrails, len(spec.trails))
 	}
 
@@ -321,14 +330,14 @@ func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
 	// and a remote policy fetched first would be thrown away by a typo in it.
 	params, err := parseParams(spec.params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var files map[string]string
 	if spec.identifier == "" {
 		files, err = policyBundle(spec.policyRefs)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -341,41 +350,32 @@ func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
 		Decision:   spec.decision,
 	})
 	if err != nil {
-		return serverSideRequestError(err)
+		return nil, serverSideRequestError(err)
 	}
 	if created == nil {
 		// A dry run sent nothing, so there is no evaluation to wait for.
-		return nil
+		return nil, nil
 	}
 	if created.ID == "" {
 		// Without an id there is nothing to read the verdict back from, and
 		// asking anyway would fetch a different resource and blame the answer.
-		return errors.New("the Kosli server accepted the evaluation but named no id, " +
+		return nil, errors.New("the Kosli server accepted the evaluation but named no id, " +
 			"so its verdict cannot be read back")
 	}
 
 	evaluation, err := client.WaitForTerminal(context.Background(), global.Org, created.ID,
 		serverSideWaitOptions)
 	if err != nil {
-		return serverSideReadError(created.ID, err)
+		return nil, serverSideReadError(created.ID, err)
 	}
 	// Status decides, not the presence of a result: an evaluation that reports
 	// a failure has decided nothing, whatever else it carries. Reading it the
 	// other way round would let a stray result print as a verdict, which is the
 	// one outcome none of this may produce.
 	if evaluation.Status != evaluations.StatusCompleted || evaluation.Result == nil {
-		return serverSideFailure(evaluation)
+		return nil, serverSideFailure(evaluation)
 	}
-
-	verdict := serverVerdict(evaluation.Result)
-	var cited *evaluations.PolicyCitation
-	if spec.citePolicy {
-		// A rule of that name cannot pass itself off as the policy that ran.
-		delete(verdict.Outputs, "policy")
-		cited = evaluation.Policy
-	}
-	return printEvaluateResult(out, verdict, nil,
-		spec.output, false, nil, spec.assertOnDeny, evaluation.DecisionAttestationID, cited)
+	return evaluation, nil
 }
 
 // refuseWhatTheServerCannotDo rejects the options that have no server-side
@@ -678,7 +678,7 @@ func validateOutputRules(rules []string) error {
 
 // printEvaluateResult renders a verdict, whatever produced it, so that every
 // evaluation path prints the same bytes for the same verdict.
-func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, decisionID string, policy *evaluations.PolicyCitation) error {
+func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, decisionID string) error {
 	auditResult := map[string]any{
 		"allow":      result.Allow,
 		"violations": result.Violations,
@@ -690,9 +690,6 @@ func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[strin
 	// same page as before.
 	if decisionID != "" {
 		auditResult["decision_attestation_id"] = decisionID
-	}
-	if policy != nil {
-		auditResult["policy"] = policy
 	}
 	if showInput {
 		auditResult["input"] = input

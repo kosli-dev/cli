@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/evaluations"
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/spf13/cobra"
 )
 
@@ -50,9 +52,8 @@ one of them to say which is the policy. In the policy package:
     for every input, so give it a default (` + "`default allow := false`" + `): an undefined
     ` + "`allow`" + ` fails the evaluation rather than denying.
   - Every rule annotated with ` + "`# METADATA`" + ` and ` + "`# entrypoint: true`" + ` is evaluated
-    too, and printed under its rule name, such as ` + "`violations`" + ` or ` + "`report`" + `. A
-    rule undefined for this input is left out. An output named ` + "`input`" + `, ` + "`params`" + `,
-    ` + "`policy`" + ` or ` + "`decision_attestation_id`" + ` is not printed, as those names are taken.
+    too, and returned under its rule name in ` + "`result.outputs`" + `, such as
+    ` + "`violations`" + ` or ` + "`report`" + `. A rule undefined for this input is left out.
   - Every other rule is evaluated only as far as those rules need it.
 An entrypoint annotated outside the policy package, or on a function, is refused.
 
@@ -65,7 +66,7 @@ published policy, they must match the params schema of its current version.
 Pass ` + "`--assert`" + ` to exit with a non-zero status when the policy denies.
 The policy that ran is printed with the verdict: a published policy by its
 identifier, version and digest, and an inline one by its digest.
-Use ` + "`--output json`" + ` for structured output.`
+Use ` + "`--output json`" + ` to print the evaluation as Kosli returns it.`
 
 const evaluatePolicyExample = `
 # evaluate a policy against a trail:
@@ -223,16 +224,49 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 		return err
 	}
 
-	return runServerEvaluation(out, serverEvaluation{
-		identifier:   o.identifier,
-		citePolicy:   true,
-		policyRefs:   policyRefs,
-		params:       o.params,
-		trails:       trails,
-		decision:     decision,
-		output:       o.output,
-		assertOnDeny: o.assert,
+	evaluation, err := awaitServerEvaluation(serverEvaluation{
+		identifier: o.identifier,
+		policyRefs: policyRefs,
+		params:     o.params,
+		trails:     trails,
+		decision:   decision,
 	})
+	if err != nil || evaluation == nil {
+		return err
+	}
+	return printEvaluation(out, evaluation, o.output, o.assert)
+}
+
+// printEvaluation echoes the evaluation as the server gave it, so the policy's
+// outputs stay under result.outputs and cannot clash with the fields beside
+// them. The table is a summary of it.
+func printEvaluation(out io.Writer, evaluation *evaluations.Evaluation, format string, assertOnDeny bool) error {
+	if format == "json" {
+		if err := output.PrintJson(evaluation.Raw, out, 0); err != nil {
+			return err
+		}
+		if assertOnDeny && !evaluation.Result.Allow {
+			return fmt.Errorf("policy denied")
+		}
+		return nil
+	}
+
+	verdict := serverVerdict(evaluation.Result)
+	summary := map[string]any{"allow": verdict.Allow, "violations": verdict.Violations}
+	if violations, ok := verdict.Outputs["violations"]; ok {
+		summary["violations"] = violations
+	}
+	if evaluation.Policy != nil {
+		summary["policy"] = evaluation.Policy
+	}
+	if evaluation.DecisionAttestationID != "" {
+		summary["decision_attestation_id"] = evaluation.DecisionAttestationID
+	}
+	raw, err := json.Marshal(summary)
+	if err != nil {
+		return err
+	}
+	return printEvaluateResultAsTableFn(assertOnDeny)(string(raw), out, 0)
 }
 
 // decision resolves where the outcome is recorded, or nil where none was

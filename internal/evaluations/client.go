@@ -94,6 +94,8 @@ type Evaluation struct {
 	Failure *Failure        `json:"error"`
 	// Empty until a decision that was asked for has been written.
 	DecisionAttestationID string `json:"decision_attestation_id"`
+	// Raw is the body the server sent, so a caller can echo it unchanged.
+	Raw string `json:"-"`
 }
 
 // IsTerminal reports whether the evaluation has finished and will not change.
@@ -181,5 +183,6 @@ func decodeEvaluation(body string) (*Evaluation, error) {
 	if err := json.Unmarshal([]byte(body), &evaluation); err != nil {
 		return nil, fmt.Errorf("failed to parse the evaluation: %w", err)
 	}
+	evaluation.Raw = body
 	return &evaluation, nil
 }

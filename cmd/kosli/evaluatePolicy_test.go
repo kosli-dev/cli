@@ -121,7 +121,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheHelpSaysWhichRulesAreEvaluat
 	require.NoError(suite.T(), err)
 	for _, says := range []string{
 		"`allow`", "default allow", "entrypoint: true", "policy package", "undefined",
-		"`policy`", "as those names are taken",
+		"`result.outputs`",
 	} {
 		require.Contains(suite.T(), help, says)
 	}
@@ -298,14 +298,15 @@ func (suite *EvaluatePolicyCommandTestSuite) TestNoParamsTravelAsAnEmptyObject()
 	require.Equal(suite.T(), map[string]any{}, fake.created[0]["params"])
 }
 
-// A caller moving here from `evaluate trail` must not have to re-parse.
-func (suite *EvaluatePolicyCommandTestSuite) TestItPrintsTheSameJsonAsEvaluateTrail() {
-	server, _ := newFakeEvaluations(suite.T(), verdictAllowed)
+// The evaluation is echoed as the server gave it, so the policy's outputs stay
+// nested under result.outputs and no output name can clash with another field.
+func (suite *EvaluatePolicyCommandTestSuite) TestItPrintsTheEvaluationAsTheServerGaveIt() {
+	server, _ := newFakeEvaluations(suite.T(), verdictDeniedWithOutputs)
 
 	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL, "--output json"))
 
 	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), localAllowedJSON, combined)
+	require.JSONEq(suite.T(), verdictDeniedWithOutputs, combined)
 }
 
 // Asserting is opt-in: recording a decision is not a reason to fail the step
@@ -629,10 +630,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestThePublishedPolicyThatRanIsRepo
 	_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL, "--output json"))
 
 	require.NoError(suite.T(), err)
-	require.JSONEq(suite.T(),
-		`{"allow":true,"violations":null,`+
-			`"policy":{"identifier":"pr-approved","version":3,"digest":"sha256:abc123"}}`,
-		combined)
+	require.JSONEq(suite.T(), verdictAllowedCitingAPublishedPolicy, combined)
 }
 
 func (suite *EvaluatePolicyCommandTestSuite) TestAnInlinePolicyIsReportedByItsDigest() {
@@ -645,7 +643,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestAnInlinePolicyIsReportedByItsDi
 
 	_, combined, _, _, err = executeCommandC(suite.cmd(server.URL, "--output json"))
 	require.NoError(suite.T(), err)
-	require.Contains(suite.T(), combined, "\"policy\": {\n    \"digest\": \"sha256:abc123\"\n  }")
+	require.JSONEq(suite.T(), verdictDeniedCitingAnInlinePolicy, combined)
 }
 
 // A server from before the evaluation cited its policy sends none.
@@ -661,15 +659,19 @@ func (suite *EvaluatePolicyCommandTestSuite) TestNoPolicyIsReportedWhereTheServe
 	require.NotContains(suite.T(), combined, `"policy"`)
 }
 
-// A rule cannot pass itself off as the policy that ran.
-func (suite *EvaluatePolicyCommandTestSuite) TestAnOutputNamedPolicyIsNotPrinted() {
+// Outputs stay under result.outputs, so a rule named policy cannot pass itself
+// off as the policy that ran, and is still printed.
+func (suite *EvaluatePolicyCommandTestSuite) TestAnOutputNamedPolicyStaysAnOutput() {
 	server, _ := newFakeEvaluations(suite.T(), verdictAllowedWithAPolicyOutput)
 
 	_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL, "--output json"))
-
 	require.NoError(suite.T(), err)
+	require.JSONEq(suite.T(), verdictAllowedWithAPolicyOutput, combined)
+
+	_, combined, _, _, err = executeCommandC(suite.identifierCmd(server.URL, ""))
+	require.NoError(suite.T(), err)
+	require.Contains(suite.T(), combined, "POLICY:  pr-approved, version 3 (sha256:abc123)\n")
 	require.NotContains(suite.T(), combined, "forged")
-	require.Contains(suite.T(), combined, `"identifier": "pr-approved"`)
 }
 
 // A refusal is reported in the API's own words, whatever it refused, so the
