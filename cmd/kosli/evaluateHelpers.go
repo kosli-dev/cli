@@ -485,10 +485,11 @@ func serverVerdict(result *evaluations.Result) *evaluate.Result {
 	return verdict
 }
 
-// policyBundle reads every --policy given as the one bundle the API takes, each
-// keyed relative to its own root. The caps are checked here so an oversized
-// bundle is named as such rather than rejected as an opaque 422, and the byte
-// cap counts the names as well as the sources, exactly as the API counts.
+// policyBundle reads every --path given to evaluate policy, or the one --policy
+// of evaluate trail, as the one bundle the API takes, each keyed relative to
+// its own root. The caps are checked here so an oversized bundle is named as
+// such rather than rejected as an opaque 422, and the byte cap counts the names
+// as well as the sources, exactly as the API counts.
 func policyBundle(refs []string) (map[string]string, error) {
 	roots, err := policyRoots(refs)
 	if err != nil {
@@ -534,7 +535,7 @@ func policyBundle(refs []string) (map[string]string, error) {
 	return files, nil
 }
 
-// policyRoots drops a --policy that names a root already given, however it is
+// policyRoots drops a --path that names a root already given, however it is
 // spelled, and refuses one inside another: each file below the inner root would
 // travel under two names, and the evaluator would read both as modules.
 func policyRoots(refs []string) ([]string, error) {
