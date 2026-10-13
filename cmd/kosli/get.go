@@ -31,6 +31,7 @@ func newGetCmd(out io.Writer) *cobra.Command {
 		newGetRepoCmd(out),
 		newGetServiceAccountCmd(out),
 		newGetDefaultOrgCmd(out),
+		newGetRegoPolicyCmd(out),
 	)
 	return cmd
 }

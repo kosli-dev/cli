@@ -1551,6 +1551,25 @@
     "setup": [],
     "verify": []
   },
+  "get rego-policy": {
+    "args": [
+      "{policy}"
+    ],
+    "flags": {},
+    "baseline_ok": false,
+    "error": "the server the audit runs against does not offer the rego policy endpoints",
+    "needs": "server-side evaluation",
+    "flags_to_test": [
+      "output",
+      "version"
+    ],
+    "flag_values": {
+      "output": "json",
+      "version": "1"
+    },
+    "setup": [],
+    "verify": []
+  },
   "list rego-policies": {
     "args": [],
     "flags": {},
