@@ -158,6 +158,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	policyDecisionTrailFlag         = "[conditional] The Kosli trail the decision is recorded in. Only required with --control."
 	policyDecisionNameFlag          = "[defaulted] The attestation name the decision is recorded under. Defaults to <control>-decision."
 	policyDecisionFingerprintFlag   = "[optional] The SHA256 fingerprint of the artifact the decision is about. Without it the decision is about the trail."
+	regoPolicyPathFlag              = "Path of a Rego policy file, or of a directory sent as one bundle. Repeat it to publish a policy with libraries kept elsewhere."
 	regoPolicyInputSchemaFlag       = "The shape of the input the policy is written against: trail (one trail) or trails (a set of trails)."
 	regoPolicyNameFlag              = "[conditional] The display name of the rego policy. Only required when the identifier is new; without it the current name is kept."
 	regoPolicyDescriptionFlag       = "[optional] The description of the rego policy. Without it the current description is kept."

@@ -1523,11 +1523,11 @@
   },
   "publish rego-policy": {
     "args": [
-      "{policy}",
-      "cmd/kosli/testdata/policies/allow-all.rego"
+      "{policy}"
     ],
     "flags": {
-      "input-schema": "trail"
+      "input-schema": "trail",
+      "path": "cmd/kosli/testdata/policies/allow-all.rego"
     },
     "baseline_ok": false,
     "error": "the version is validated away from this machine, and the server the audit runs against does not offer it",
@@ -1538,7 +1538,8 @@
       "dry-run",
       "input-schema",
       "name",
-      "output"
+      "output",
+      "path"
     ],
     "flag_values": {
       "comment": "probe-comment",
@@ -1546,7 +1547,8 @@
       "dry-run": "true",
       "input-schema": "trail",
       "name": "probe-name",
-      "output": "json"
+      "output": "json",
+      "path": "cmd/kosli/testdata/policies/allow-all.rego"
     },
     "setup": [],
     "verify": []

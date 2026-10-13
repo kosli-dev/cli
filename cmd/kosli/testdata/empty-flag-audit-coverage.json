@@ -801,7 +801,8 @@
   "dry-run": "bool",
   "input-schema": "string",
   "name": "string",
-  "output": "string"
+  "output": "string",
+  "path": "stringArray"
  },
  "rename environment": {
   "dry-run": "bool"

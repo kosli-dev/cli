@@ -135,7 +135,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestItPublishesTheFileAndReports
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
 	_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
-		`pr-approved testdata/policies/allow-all.rego --input-schema trail `+
+		`pr-approved --path testdata/policies/allow-all.rego --input-schema trail `+
 			`--name "Pull request approved" --description "Approved PRs only" --comment "Initial version"`))
 
 	require.NoError(suite.T(), err)
@@ -160,7 +160,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestItLeavesOutTheNameAndDescrip
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
 	_, _, _, _, err := executeCommandC(suite.publishCmd(server.URL,
-		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
+		"pr-approved --path testdata/policies/allow-all.rego --input-schema trail"))
 
 	require.NoError(suite.T(), err)
 	require.NotContains(suite.T(), fake.published[0], "name")
@@ -171,7 +171,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestItWaitsThroughPendingReads()
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyPending, regoPolicyPending, regoPolicyValid)
 
 	_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
-		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
+		"pr-approved --path testdata/policies/allow-all.rego --input-schema trail"))
 
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), 3, fake.readCount)
@@ -187,7 +187,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestADirectoryTravelsKeyedByRela
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
 	_, _, _, _, err := executeCommandC(suite.publishCmd(server.URL,
-		"pr-approved "+dir+" --input-schema trails"))
+		"pr-approved --path "+dir+" --input-schema trails"))
 
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), map[string]any{
@@ -197,10 +197,27 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestADirectoryTravelsKeyedByRela
 	require.Equal(suite.T(), "trails", fake.published[0]["input_schema"])
 }
 
+// A policy and a library kept elsewhere are published as one version.
+func (suite *PublishRegoPolicyCommandTestSuite) TestSeveralPathsJoinOneBundle() {
+	lib := suite.T().TempDir()
+	require.NoError(suite.T(), os.WriteFile(filepath.Join(lib, "helpers.rego"), []byte("package lib\n"), 0o644))
+	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
+
+	_, _, _, _, err := executeCommandC(suite.publishCmd(server.URL,
+		"pr-approved --path testdata/policies/allow-all.rego -p "+lib+" --input-schema trail"))
+
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), fake.published, 1)
+	files := fake.published[0]["files"].(map[string]any)
+	require.Len(suite.T(), files, 2)
+	require.Contains(suite.T(), files["allow-all.rego"], "package policy")
+	require.Equal(suite.T(), "package lib\n", files["helpers.rego"])
+}
+
 func (suite *PublishRegoPolicyCommandTestSuite) publishExpectingError(reads ...string) (string, error) {
 	server, _ := newFakeRegoPolicies(suite.T(), reads...)
 	_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
-		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
+		"pr-approved --path testdata/policies/allow-all.rego --input-schema trail"))
 	require.Error(suite.T(), err)
 	require.NotContains(suite.T(), combined, "is valid")
 	return combined, err
@@ -250,7 +267,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestAnAnswerWithNoVersionIsNotRe
 	fake.publishAnswer = `{"identifier":"pr-approved","status":"pending"}`
 
 	_, _, _, _, err := executeCommandC(suite.publishCmd(server.URL,
-		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
+		"pr-approved --path testdata/policies/allow-all.rego --input-schema trail"))
 
 	require.EqualError(suite.T(), err,
 		"the Kosli server accepted the publish but named no version, so it cannot be read back")
@@ -269,7 +286,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestAFailedReadNamesTheVersionTh
 			fake.readStatus = http.StatusNotFound
 
 			_, _, stdout, _, err := executeCommandC(suite.publishCmd(server.URL,
-				"pr-approved testdata/policies/allow-all.rego --input-schema trail --output "+test.output))
+				"pr-approved --path testdata/policies/allow-all.rego --input-schema trail --output "+test.output))
 
 			require.Error(suite.T(), err)
 			require.Contains(suite.T(), err.Error(),
@@ -291,7 +308,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestJsonOutputIsThePendingVersio
 	server, _ := newFakeRegoPolicies(suite.T(), regoPolicyPending)
 
 	_, _, stdout, _, err := executeCommandC(suite.publishCmd(server.URL,
-		"pr-approved testdata/policies/allow-all.rego --input-schema trail --output json"))
+		"pr-approved --path testdata/policies/allow-all.rego --input-schema trail --output json"))
 
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), "still pending")
@@ -325,16 +342,25 @@ func (suite *PublishRegoPolicyCommandTestSuite) refusedBeforeSending(args string
 
 func (suite *PublishRegoPolicyCommandTestSuite) TestAnUnknownInputSchemaIsRefused() {
 	err := suite.refusedBeforeSending(
-		"pr-approved testdata/policies/allow-all.rego --input-schema many")
+		"pr-approved --path testdata/policies/allow-all.rego --input-schema many")
 
 	require.Equal(suite.T(), `--input-schema must be one of [trail trails], got "many"`, err.Error())
 }
 
 func (suite *PublishRegoPolicyCommandTestSuite) TestAPolicyAtAURLIsRefused() {
 	err := suite.refusedBeforeSending(
-		"pr-approved https://example.com/policy.rego --input-schema trail")
+		"pr-approved --path https://example.com/policy.rego --input-schema trail")
 
-	require.Equal(suite.T(), "PATH takes a file or a directory on this machine, not a URL", err.Error())
+	require.Equal(suite.T(), "--path takes a file or a directory on this machine, not a URL", err.Error())
+}
+
+func (suite *PublishRegoPolicyCommandTestSuite) TestAPathInsideAnotherPathIsRefused() {
+	err := suite.refusedBeforeSending(
+		"pr-approved --path testdata/policies --path testdata/policies/allow-all.rego --input-schema trail")
+
+	require.Equal(suite.T(),
+		"--path testdata/policies/allow-all.rego is inside --path testdata/policies, so its files would be sent twice",
+		err.Error())
 }
 
 func (suite *PublishRegoPolicyCommandTestSuite) TestABundleOverTheFileCapIsRefused() {
@@ -344,7 +370,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestABundleOverTheFileCapIsRefus
 		require.NoError(suite.T(), os.WriteFile(name, []byte("package p\n"), 0o644))
 	}
 
-	err := suite.refusedBeforeSending("pr-approved " + dir + " --input-schema trail")
+	err := suite.refusedBeforeSending("pr-approved --path " + dir + " --input-schema trail")
 
 	require.Equal(suite.T(), "policy bundle holds 101 files, over the limit of 100", err.Error())
 }
@@ -352,7 +378,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestABundleOverTheFileCapIsRefus
 // An unset variable in `--description "$DESC"` must not clear a description.
 func (suite *PublishRegoPolicyCommandTestSuite) TestAnEmptyDescriptionIsRefused() {
 	err := suite.refusedBeforeSending(
-		`pr-approved testdata/policies/allow-all.rego --input-schema trail --description ""`)
+		`pr-approved --path testdata/policies/allow-all.rego --input-schema trail --description ""`)
 
 	require.Contains(suite.T(), err.Error(), "flag '--description' was given an empty value")
 }
@@ -368,7 +394,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestJsonOutputIsPrintedForAVersi
 			server, _ := newFakeRegoPolicies(suite.T(), test.body)
 
 			_, _, stdout, _, err := executeCommandC(suite.publishCmd(server.URL,
-				"pr-approved testdata/policies/allow-all.rego --input-schema trail --output json"))
+				"pr-approved --path testdata/policies/allow-all.rego --input-schema trail --output json"))
 
 			require.Error(suite.T(), err)
 			require.Contains(suite.T(), err.Error(), test.status)
@@ -384,7 +410,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestTableOutputPrintsNothingForA
 	server, _ := newFakeRegoPolicies(suite.T(), regoPolicyRejected)
 
 	_, _, stdout, _, err := executeCommandC(suite.publishCmd(server.URL,
-		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
+		"pr-approved --path testdata/policies/allow-all.rego --input-schema trail"))
 
 	require.Error(suite.T(), err)
 	require.Empty(suite.T(), stdout)
@@ -394,7 +420,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestJsonOutputIsTheValidVersion(
 	server, _ := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
 	_, _, stdout, _, err := executeCommandC(suite.publishCmd(server.URL,
-		"pr-approved testdata/policies/allow-all.rego --input-schema trail --output json"))
+		"pr-approved --path testdata/policies/allow-all.rego --input-schema trail --output json"))
 	require.NoError(suite.T(), err)
 
 	var printed map[string]any
@@ -416,7 +442,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestJsonOutputIsTheValidVersion(
 
 func (suite *PublishRegoPolicyCommandTestSuite) TestAnUnknownOutputFormatIsRefused() {
 	err := suite.refusedBeforeSending(
-		"pr-approved testdata/policies/allow-all.rego --input-schema trail --output yaml")
+		"pr-approved --path testdata/policies/allow-all.rego --input-schema trail --output yaml")
 
 	require.Equal(suite.T(), "unsupported output format: yaml. Valid formats are: [table, json]", err.Error())
 }
@@ -425,7 +451,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestADryRunSendsNothingAndWaitsF
 	server, fake := newFakeRegoPolicies(suite.T(), regoPolicyValid)
 
 	_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
-		"pr-approved testdata/policies/allow-all.rego --input-schema trail --dry-run"))
+		"pr-approved --path testdata/policies/allow-all.rego --input-schema trail --dry-run"))
 
 	require.NoError(suite.T(), err)
 	require.Empty(suite.T(), fake.published)
@@ -463,7 +489,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestItSaysWhenAPublishStoredNoth
 			fake.publishAnswer = test.answer
 
 			_, combined, _, _, err := executeCommandC(suite.publishCmd(server.URL,
-				"pr-approved testdata/policies/allow-all.rego --input-schema trail"+test.flags))
+				"pr-approved --path testdata/policies/allow-all.rego --input-schema trail"+test.flags))
 
 			require.NoError(suite.T(), err)
 			require.Equal(suite.T(), test.reads, fake.readCount, "a terminal answer is not polled")
@@ -472,17 +498,34 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestItSaysWhenAPublishStoredNoth
 	}
 }
 
-func (suite *PublishRegoPolicyCommandTestSuite) TestItNeedsAnIdentifierAndAPath() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestItNeedsAnIdentifier() {
+	_, _, _, _, err := executeCommandC(suite.publishCmd("http://localhost:1",
+		"--path testdata/policies/allow-all.rego --input-schema trail"))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "accepts 1 arg(s), received 0")
+}
+
+func (suite *PublishRegoPolicyCommandTestSuite) TestItNeedsAPath() {
 	_, _, _, _, err := executeCommandC(suite.publishCmd("http://localhost:1",
 		"pr-approved --input-schema trail"))
 
 	require.Error(suite.T(), err)
-	require.Contains(suite.T(), err.Error(), "accepts 2 arg(s), received 1")
+	require.Contains(suite.T(), err.Error(), `required flag(s) "path" not set`)
+}
+
+// The path was once the second argument; it must not be taken as one now.
+func (suite *PublishRegoPolicyCommandTestSuite) TestAPathGivenAsAnArgumentIsRefused() {
+	_, _, _, _, err := executeCommandC(suite.publishCmd("http://localhost:1",
+		"pr-approved testdata/policies/allow-all.rego --input-schema trail"))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "accepts 1 arg(s), received 2")
 }
 
 func (suite *PublishRegoPolicyCommandTestSuite) TestItNeedsAnInputSchema() {
 	_, _, _, _, err := executeCommandC(suite.publishCmd("http://localhost:1",
-		"pr-approved testdata/policies/allow-all.rego"))
+		"pr-approved --path testdata/policies/allow-all.rego"))
 
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), err.Error(), `required flag(s) "input-schema" not set`)
