@@ -79,11 +79,7 @@ func NewClient(httpClient *requests.Client, host, token string, dryRun bool) *Cl
 // Publish stores the next version of a policy and returns it pending. A dry run
 // sends nothing and returns no version.
 func (c *Client) Publish(org string, request PublishRequest) (*Version, error) {
-	route, err := policyRoute(org, request.Identifier)
-	if err != nil {
-		return nil, err
-	}
-	endpoint, err := url.JoinPath(c.host, route)
+	endpoint, err := PolicyURL(c.host, org, request.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +112,7 @@ func (c *Client) Publish(org string, request PublishRequest) (*Version, error) {
 // GetVersion reads one version of a policy. A pending one is a normal answer,
 // not an error.
 func (c *Client) GetVersion(org, identifier string, version int) (*Version, error) {
-	endpoint, err := versionURL(c.host, org, identifier, version)
+	endpoint, err := VersionURL(c.host, org, identifier, version)
 	if err != nil {
 		return nil, err
 	}
@@ -137,22 +133,28 @@ func (c *Client) GetVersion(org, identifier string, version int) (*Version, erro
 	return decodeVersion(response.Body)
 }
 
-// policyRoute escapes the identifier into one path segment. It refuses "." and
+// ListURL is the endpoint that lists the rego policies of an org.
+func ListURL(host, org string) (string, error) {
+	return url.JoinPath(host, "/api/v2/rego-policies/"+url.PathEscape(org))
+}
+
+// PolicyURL escapes the identifier into one path segment. It refuses "." and
 // "..", which a URL path resolves however they are escaped.
-func policyRoute(org, identifier string) (string, error) {
+func PolicyURL(host, org, identifier string) (string, error) {
 	switch identifier {
 	case "", ".", "..":
 		return "", fmt.Errorf("%q is not a valid rego policy identifier", identifier)
 	}
-	return "/api/v2/rego-policies/" + url.PathEscape(org) + "/" + url.PathEscape(identifier), nil
+	return url.JoinPath(host, "/api/v2/rego-policies/"+url.PathEscape(org)+"/"+url.PathEscape(identifier))
 }
 
-func versionURL(host, org, identifier string, version int) (string, error) {
-	route, err := policyRoute(org, identifier)
+// VersionURL is the endpoint of one version of a policy.
+func VersionURL(host, org, identifier string, version int) (string, error) {
+	endpoint, err := PolicyURL(host, org, identifier)
 	if err != nil {
 		return "", err
 	}
-	return url.JoinPath(host, route, "versions", strconv.Itoa(version))
+	return url.JoinPath(endpoint, "versions", strconv.Itoa(version))
 }
 
 // The server refuses unknown fields, so the wire shape is stated here exactly.

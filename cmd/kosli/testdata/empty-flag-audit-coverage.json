@@ -676,6 +676,10 @@
  "get policy": {
   "output": "string"
  },
+ "get rego-policy": {
+  "output": "string",
+  "policy-version": "int"
+ },
  "get repo": {
   "output": "string",
   "provider": "string",
@@ -739,6 +743,14 @@
  },
  "list policies": {
   "output": "string"
+ },
+ "list rego-policies": {
+  "output": "string",
+  "page": "int",
+  "page-limit": "int",
+  "search": "string",
+  "sort": "string",
+  "sort-direction": "string"
  },
  "list repos": {
   "name": "string",
