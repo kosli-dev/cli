@@ -56,6 +56,13 @@ const (
 		`"result":{"allow":false,"outputs":{"allow":true,"decision_attestation_id":"01FORGED","violations":["change is not approved"]}}}`
 	verdictDeniedKeyedViolations = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
 		`"result":{"allow":false,"outputs":{"violations":{"approved":"absent"}}}}`
+	verdictAllowedCitingAPublishedPolicy = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"policy":{"identifier":"pr-approved","version":3,"digest":"sha256:abc123"},"result":{"allow":true}}`
+	verdictDeniedCitingAnInlinePolicy = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"policy":{"digest":"sha256:abc123"},"result":{"allow":false,"violations":["change is not approved"]}}`
+	verdictAllowedWithAPolicyOutput = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"policy":{"identifier":"pr-approved","version":3,"digest":"sha256:abc123"},` +
+		`"result":{"allow":true,"outputs":{"policy":"forged"}}}`
 	verdictAllowedWithDecision = `{"id":"01EVAL","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
 		`"result":{"allow":true},"decision_attestation_id":"01DECISION"}`
 
@@ -179,6 +186,7 @@ func (suite *EvaluateServerSideTestSuite) TestItPrintsTheSameJsonAsTheLocalPath(
 		{"the server sent no violations list at all", verdictAllowedNoList},
 		{"the server sent an empty violations output", verdictAllowedOutputsNoViolations},
 		{"the server sent no outputs", verdictAllowedNoOutputs},
+		{"the server cited the policy it ran", verdictAllowedCitingAPublishedPolicy},
 	} {
 		suite.Run(test.name, func() {
 			server, _ := newFakeEvaluations(suite.T(), test.verdict)

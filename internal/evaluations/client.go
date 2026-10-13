@@ -32,10 +32,13 @@ type TrailRef struct {
 // single instant, which is why several trails belong in one request rather
 // than in one request each.
 type CreateRequest struct {
-	Trails   []TrailRef
-	Files    map[string]string
-	Params   map[string]any
-	Decision *Decision
+	Trails []TrailRef
+	// Exactly one of Files and Identifier is set: Files sends the policy
+	// inline, Identifier names a published one whose current version runs.
+	Files      map[string]string
+	Identifier string
+	Params     map[string]any
+	Decision   *Decision
 }
 
 // Decision is where an evaluation records its outcome, and against which
@@ -70,17 +73,29 @@ type Failure struct {
 	Message string `json:"message"`
 }
 
+// PolicyCitation is the policy an evaluation ran. Identifier and Version are
+// empty for a policy sent inline, which is cited by its digest alone.
+type PolicyCitation struct {
+	Identifier string `json:"identifier,omitempty"`
+	Version    int    `json:"version,omitempty"`
+	Digest     string `json:"digest"`
+}
+
 // Evaluation carries at most one of Result and Failure. Which one is present
 // follows from Status, so callers branch on Status rather than on presence.
 type Evaluation struct {
-	ID          string   `json:"id"`
-	Status      string   `json:"status"`
-	RequestedAt float64  `json:"requested_at"`
-	RecordedAt  float64  `json:"recorded_at"`
-	Result      *Result  `json:"result"`
-	Failure     *Failure `json:"error"`
+	ID          string  `json:"id"`
+	Status      string  `json:"status"`
+	RequestedAt float64 `json:"requested_at"`
+	RecordedAt  float64 `json:"recorded_at"`
+	// Absent from a server that does not cite the policy it ran.
+	Policy  *PolicyCitation `json:"policy"`
+	Result  *Result         `json:"result"`
+	Failure *Failure        `json:"error"`
 	// Empty until a decision that was asked for has been written.
 	DecisionAttestationID string `json:"decision_attestation_id"`
+	// Raw is the body the server sent, so a caller can echo it unchanged.
+	Raw string `json:"-"`
 }
 
 // IsTerminal reports whether the evaluation has finished and will not change.
@@ -129,7 +144,7 @@ func (c *Client) Create(org string, request CreateRequest) (*Evaluation, error) 
 		DryRun: c.dryRun,
 		Payload: createPayload{
 			Context:  createContext{Trails: request.Trails},
-			Policy:   inlinePolicy{Files: request.Files},
+			Policy:   createPolicy{Files: request.Files, Identifier: request.Identifier},
 			Params:   params,
 			Decision: request.Decision,
 		},
@@ -148,7 +163,7 @@ func (c *Client) Create(org string, request CreateRequest) (*Evaluation, error) 
 // to be stated exactly here rather than inherited from a caller's struct.
 type createPayload struct {
 	Context  createContext  `json:"context"`
-	Policy   inlinePolicy   `json:"policy"`
+	Policy   createPolicy   `json:"policy"`
 	Params   map[string]any `json:"params"`
 	Decision *Decision      `json:"decision,omitempty"`
 }
@@ -157,8 +172,10 @@ type createContext struct {
 	Trails []TrailRef `json:"trails"`
 }
 
-type inlinePolicy struct {
-	Files map[string]string `json:"files"`
+// The server takes one of the two variants and refuses a policy with both.
+type createPolicy struct {
+	Files      map[string]string `json:"files,omitempty"`
+	Identifier string            `json:"identifier,omitempty"`
 }
 
 func decodeEvaluation(body string) (*Evaluation, error) {
@@ -166,5 +183,6 @@ func decodeEvaluation(body string) (*Evaluation, error) {
 	if err := json.Unmarshal([]byte(body), &evaluation); err != nil {
 		return nil, fmt.Errorf("failed to parse the evaluation: %w", err)
 	}
+	evaluation.Raw = body
 	return &evaluation, nil
 }

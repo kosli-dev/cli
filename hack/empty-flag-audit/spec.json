@@ -4918,7 +4918,7 @@
     "args": [],
     "flags": {
       "context": "trail={flow}/{trail}",
-      "policy": "cmd/kosli/testdata/policies/allow-all.rego"
+      "path": "cmd/kosli/testdata/policies/allow-all.rego"
     },
     "baseline_ok": false,
     "error": "the evaluation is created and run away from this machine, and the server the audit runs against does not offer it",
@@ -4929,9 +4929,11 @@
       "control",
       "fingerprint",
       "flow",
+      "identifier",
       "name",
       "output",
       "params",
+      "path",
       "policy",
       "trail"
     ],
@@ -4941,9 +4943,11 @@
       "control": "{control}",
       "fingerprint": "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01",
       "flow": "{flow}",
+      "identifier": "pr-approved",
       "name": "{name}",
       "output": "json",
       "params": "{}",
+      "path": "cmd/kosli/testdata/policies/allow-all.rego",
       "policy": "cmd/kosli/testdata/policies/allow-all.rego",
       "trail": "{trail}"
     },

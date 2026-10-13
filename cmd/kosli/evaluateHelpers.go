@@ -297,6 +297,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 }
 
 type serverEvaluation struct {
+	identifier   string
 	policyRefs   []string
 	params       string
 	trails       []evaluations.TrailRef
@@ -305,11 +306,23 @@ type serverEvaluation struct {
 	assertOnDeny bool
 }
 
-// runServerEvaluation is shared by every command that evaluates away from this
-// machine, so they cannot drift on what they send or on how an outcome reads.
+// runServerEvaluation prints the outcome as the local evaluate trail path does,
+// so the two paths print the same bytes for the same verdict.
 func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
+	evaluation, err := awaitServerEvaluation(spec)
+	if err != nil || evaluation == nil {
+		return err
+	}
+	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
+		spec.output, false, nil, spec.assertOnDeny, evaluation.DecisionAttestationID)
+}
+
+// awaitServerEvaluation is shared by every command that evaluates away from
+// this machine, so they cannot drift on what they send or on which outcome is
+// a verdict. It returns nil after a dry run, which sends nothing.
+func awaitServerEvaluation(spec serverEvaluation) (*evaluations.Evaluation, error) {
 	if len(spec.trails) > maxServerSideTrails {
-		return fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
+		return nil, fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
 			maxServerSideTrails, len(spec.trails))
 	}
 
@@ -317,50 +330,52 @@ func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
 	// and a remote policy fetched first would be thrown away by a typo in it.
 	params, err := parseParams(spec.params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	files, err := policyBundle(spec.policyRefs)
-	if err != nil {
-		return err
+	var files map[string]string
+	if spec.identifier == "" {
+		files, err = policyBundle(spec.policyRefs)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
 	created, err := client.Create(global.Org, evaluations.CreateRequest{
-		Trails:   spec.trails,
-		Files:    files,
-		Params:   params,
-		Decision: spec.decision,
+		Trails:     spec.trails,
+		Files:      files,
+		Identifier: spec.identifier,
+		Params:     params,
+		Decision:   spec.decision,
 	})
 	if err != nil {
-		return serverSideRequestError(err)
+		return nil, serverSideRequestError(err)
 	}
 	if created == nil {
 		// A dry run sent nothing, so there is no evaluation to wait for.
-		return nil
+		return nil, nil
 	}
 	if created.ID == "" {
 		// Without an id there is nothing to read the verdict back from, and
 		// asking anyway would fetch a different resource and blame the answer.
-		return errors.New("the Kosli server accepted the evaluation but named no id, " +
+		return nil, errors.New("the Kosli server accepted the evaluation but named no id, " +
 			"so its verdict cannot be read back")
 	}
 
 	evaluation, err := client.WaitForTerminal(context.Background(), global.Org, created.ID,
 		serverSideWaitOptions)
 	if err != nil {
-		return serverSideReadError(created.ID, err)
+		return nil, serverSideReadError(created.ID, err)
 	}
 	// Status decides, not the presence of a result: an evaluation that reports
 	// a failure has decided nothing, whatever else it carries. Reading it the
 	// other way round would let a stray result print as a verdict, which is the
 	// one outcome none of this may produce.
 	if evaluation.Status != evaluations.StatusCompleted || evaluation.Result == nil {
-		return serverSideFailure(evaluation)
+		return nil, serverSideFailure(evaluation)
 	}
-
-	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
-		spec.output, false, nil, spec.assertOnDeny, evaluation.DecisionAttestationID)
+	return evaluation, nil
 }
 
 // refuseWhatTheServerCannotDo rejects the options that have no server-side
@@ -470,10 +485,11 @@ func serverVerdict(result *evaluations.Result) *evaluate.Result {
 	return verdict
 }
 
-// policyBundle reads every --policy given as the one bundle the API takes, each
-// keyed relative to its own root. The caps are checked here so an oversized
-// bundle is named as such rather than rejected as an opaque 422, and the byte
-// cap counts the names as well as the sources, exactly as the API counts.
+// policyBundle reads every --path given to evaluate policy, or the one --policy
+// of evaluate trail, as the one bundle the API takes, each keyed relative to
+// its own root. The caps are checked here so an oversized bundle is named as
+// such rather than rejected as an opaque 422, and the byte cap counts the names
+// as well as the sources, exactly as the API counts.
 func policyBundle(refs []string) (map[string]string, error) {
 	roots, err := policyRoots(refs)
 	if err != nil {
@@ -497,10 +513,10 @@ func policyBundle(refs []string) (map[string]string, error) {
 			// Keeping either copy of a file the evaluator loads would decide
 			// for the author which policy runs.
 			if evaluatorLoads(name) {
-				return nil, fmt.Errorf("%s is in both --policy %s and --policy %s; "+
+				return nil, fmt.Errorf("%s is in both --path %s and --path %s; "+
 					"the evaluator would load only one of them", name, first, ref)
 			}
-			logger.Warn("%s from --policy %s is not sent, as --policy %s already sends one", name, ref, first)
+			logger.Warn("%s from --path %s is not sent, as --path %s already sends one", name, ref, first)
 		}
 	}
 
@@ -519,7 +535,7 @@ func policyBundle(refs []string) (map[string]string, error) {
 	return files, nil
 }
 
-// policyRoots drops a --policy that names a root already given, however it is
+// policyRoots drops a --path that names a root already given, however it is
 // spelled, and refuses one inside another: each file below the inner root would
 // travel under two names, and the evaluator would read both as modules.
 func policyRoots(refs []string) ([]string, error) {
@@ -542,10 +558,10 @@ func policyRoots(refs []string) ([]string, error) {
 				break
 			}
 			if isWithin(absolute, other.absolute) {
-				return nil, fmt.Errorf("--policy %s is inside --policy %s, so its files would be sent twice", ref, other.ref)
+				return nil, fmt.Errorf("--path %s is inside --path %s, so its files would be sent twice", ref, other.ref)
 			}
 			if isWithin(other.absolute, absolute) {
-				return nil, fmt.Errorf("--policy %s is inside --policy %s, so its files would be sent twice", other.ref, ref)
+				return nil, fmt.Errorf("--path %s is inside --path %s, so its files would be sent twice", other.ref, ref)
 			}
 		}
 		if !repeated {
@@ -720,6 +736,9 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 
 		allow, _ := result["allow"].(bool)
 		decisionRow := []string{}
+		if policy, ok := result["policy"].(map[string]any); ok {
+			decisionRow = append(decisionRow, fmt.Sprintf("POLICY:\t%s", citedPolicyText(policy)))
+		}
 		if id, ok := result["decision_attestation_id"].(string); ok && id != "" {
 			decisionRow = append(decisionRow, fmt.Sprintf("DECISION:\t%s", id))
 		}
@@ -755,6 +774,16 @@ func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
 		}
 		return nil
 	}
+}
+
+// citedPolicyText names a published policy by its identifier and version, and
+// an inline one by its digest alone.
+func citedPolicyText(policy map[string]any) string {
+	identifier, _ := policy["identifier"].(string)
+	if identifier == "" {
+		return fmt.Sprintf("%s", policy["digest"])
+	}
+	return fmt.Sprintf("%s, version %.0f (%s)", identifier, policy["version"], policy["digest"])
 }
 
 // violationText is a violation as a line of text. A message is printed as it

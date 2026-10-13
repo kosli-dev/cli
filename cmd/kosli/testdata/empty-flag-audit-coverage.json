@@ -605,9 +605,11 @@
   "control": "string",
   "fingerprint": "string",
   "flow": "string",
+  "identifier": "string",
   "name": "string",
   "output": "string",
   "params": "string",
+  "path": "stringArray",
   "policy": "stringArray",
   "trail": "string"
  },

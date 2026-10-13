@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/evaluations"
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/spf13/cobra"
 )
 
@@ -19,9 +21,14 @@ recorded it, and the verdict is printed here.
 Name what to evaluate with ` + "`--context trail=<flow>/<trail>`" + `, repeated once per
 trail. Trails named in one command are all evaluated at the same instant.
 
-` + "`--policy`" + ` takes a Rego file or a directory, and can be given more than once,
+Name the policy with one of:
+  - ` + "`--identifier`" + `: a rego policy published to Kosli. Its current version, the
+    highest-numbered valid one, is evaluated, and the evaluation cites that version.
+  - ` + "`--path`" + `: the policy's files on this machine, sent with the evaluation.
+
+` + "`--path`" + ` takes a Rego file or a directory, and can be given more than once,
 so a policy and a shared library are sent together from wherever each is kept.
-Every ` + "`--policy`" + ` joins one bundle. A file is keyed by its own name, and a file
+Every ` + "`--path`" + ` joins one bundle. A file is keyed by its own name, and a file
 in a directory by its path relative to that directory. Files in dot-directories,
 such as ` + "`.git`" + `, are left out; every other file travels, so notes such as
 ` + "`README.md`" + ` stay with the policy.
@@ -36,7 +43,7 @@ Of what travels, the evaluator loads only:
 Every other file is carried but not read.
 
 Two loaded files under one name are refused, naming both. For any other file the
-first ` + "`--policy`" + ` given wins, and the copy left behind is named on stderr.
+first ` + "`--path`" + ` given wins, and the copy left behind is named on stderr.
 
 The policy package is the one that declares ` + "`allow`" + `; every other package is a
 library. Where several packages declare ` + "`allow`" + `, annotate an entrypoint in exactly
@@ -45,9 +52,8 @@ one of them to say which is the policy. In the policy package:
     for every input, so give it a default (` + "`default allow := false`" + `): an undefined
     ` + "`allow`" + ` fails the evaluation rather than denying.
   - Every rule annotated with ` + "`# METADATA`" + ` and ` + "`# entrypoint: true`" + ` is evaluated
-    too, and printed under its rule name, such as ` + "`violations`" + ` or ` + "`report`" + `. A
-    rule undefined for this input is left out. An output named ` + "`input`" + `, ` + "`params`" + `
-    or ` + "`decision_attestation_id`" + ` is not printed, as those names are taken.
+    too, and returned under its rule name in ` + "`result.outputs`" + `, such as
+    ` + "`violations`" + ` or ` + "`report`" + `. A rule undefined for this input is left out.
   - Every other rule is evaluated only as far as those rules need it.
 An entrypoint annotated outside the policy package, or on a function, is refused.
 
@@ -55,23 +61,33 @@ Pass ` + "`--control`" + ` to record the outcome as a decision against that cont
 ` + "`--flow`" + ` and ` + "`--trail`" + ` given. The decision is recorded where the policy runs, so
 the verdict is never asserted from here. Without ` + "`--control`" + ` nothing is recorded.
 
-Use ` + "`--params`" + ` to pass values the policy reads as ` + "`data.params`" + `.
+Use ` + "`--params`" + ` to pass values the policy reads as ` + "`data.params`" + `. For a
+published policy, they must match the params schema of its current version.
 Pass ` + "`--assert`" + ` to exit with a non-zero status when the policy denies.
-Use ` + "`--output json`" + ` for structured output.`
+The policy that ran is printed with the verdict: a published policy by its
+identifier, version and digest, and an inline one by its digest.
+Use ` + "`--output json`" + ` to print the evaluation as Kosli returns it.`
 
 const evaluatePolicyExample = `
 # evaluate a policy against a trail:
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--policy yourPolicyFile.rego \
+	--path yourPolicyFile.rego \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate the current version of a published rego policy against a trail:
+kosli evaluate policy \
+	--context trail=yourFlowName/yourTrailName \
+	--identifier yourPolicyIdentifier \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # evaluate a policy directory with a shared library kept elsewhere:
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--policy yourPolicyDirectory \
-	--policy path/to/ergo/ergo.rego \
+	--path yourPolicyDirectory \
+	--path path/to/ergo/ergo.rego \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -79,14 +95,14 @@ kosli evaluate policy \
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
 	--context trail=anotherFlowName/anotherTrailName \
-	--policy yourPolicyFile.rego \
+	--path yourPolicyFile.rego \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # evaluate a policy with parameters (inline JSON or @file.json):
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--policy yourPolicyFile.rego \
+	--path yourPolicyFile.rego \
 	--params '{"protected_branch": "master"}' \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -94,7 +110,7 @@ kosli evaluate policy \
 # evaluate a policy and record the outcome as a decision:
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--policy yourPolicyFile.rego \
+	--path yourPolicyFile.rego \
 	--control yourControlIdentifier \
 	--flow yourFlowName \
 	--trail yourTrailName \
@@ -105,14 +121,16 @@ kosli evaluate policy \
 # evaluate a policy and fail the step when it denies:
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--policy yourPolicyFile.rego \
+	--path yourPolicyFile.rego \
 	--assert \
 	--api-token yourAPIToken \
 	--org yourOrgName`
 
 type evaluatePolicyOptions struct {
 	contexts    []string
-	policyRefs  []string
+	identifier  string
+	paths       []string
+	oldPolicies []string
 	params      string
 	output      string
 	assert      bool
@@ -147,7 +165,10 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringArrayVar(&o.contexts, "context", []string{}, policyContextFlag)
-	cmd.Flags().StringArrayVarP(&o.policyRefs, "policy", "p", []string{}, "Path of a Rego policy file, or of a directory sent as one bundle. Repeat it to send a policy with libraries kept elsewhere.")
+	cmd.Flags().StringVar(&o.identifier, "identifier", "", "Identifier of a rego policy published to Kosli. Its current version is evaluated.")
+	cmd.Flags().StringArrayVarP(&o.paths, "path", "p", []string{}, "Path of a Rego policy file, or of a directory sent as one bundle. Repeat it to send a policy with libraries kept elsewhere.")
+	// Kept one release because sdlc-policies runs the latest CLI and passes --policy.
+	cmd.Flags().StringArrayVar(&o.oldPolicies, "policy", []string{}, "Deprecated alias of --path.")
 	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, policyAssertFlag)
@@ -157,9 +178,13 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.name, "name", "", policyDecisionNameFlag)
 	cmd.Flags().StringVar(&o.fingerprint, "fingerprint", "", policyDecisionFingerprintFlag)
 
-	err := RequireFlags(cmd, []string{"context", "policy"})
+	err := RequireFlags(cmd, []string{"context"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
+	}
+	err = DeprecateFlags(cmd, map[string]string{"policy": "use --path instead"})
+	if err != nil {
+		logger.Error("failed to deprecate flags: %v", err)
 	}
 
 	return cmd
@@ -168,9 +193,18 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 func (o *evaluatePolicyOptions) run(out io.Writer) error {
 	// Fetching a policy from a URL is on its way out, so this command does not
 	// offer it, though the older evaluate commands still do.
-	for _, ref := range o.policyRefs {
+	policyRefs := append(append([]string{}, o.paths...), o.oldPolicies...)
+	// Checked on resolved values, so a KOSLI_IDENTIFIER exported by a pipeline
+	// is refused next to --path rather than quietly winning or losing.
+	if o.identifier != "" && len(policyRefs) > 0 {
+		return fmt.Errorf("only one of --identifier or --path can be given")
+	}
+	if o.identifier == "" && len(policyRefs) == 0 {
+		return fmt.Errorf("one of --identifier or --path is required")
+	}
+	for _, ref := range policyRefs {
 		if isRemotePolicyRef(ref) {
-			return fmt.Errorf("--policy takes a file or a directory on this machine, not a URL")
+			return fmt.Errorf("--path takes a file or a directory on this machine, not a URL")
 		}
 	}
 
@@ -190,14 +224,49 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 		return err
 	}
 
-	return runServerEvaluation(out, serverEvaluation{
-		policyRefs:   o.policyRefs,
-		params:       o.params,
-		trails:       trails,
-		decision:     decision,
-		output:       o.output,
-		assertOnDeny: o.assert,
+	evaluation, err := awaitServerEvaluation(serverEvaluation{
+		identifier: o.identifier,
+		policyRefs: policyRefs,
+		params:     o.params,
+		trails:     trails,
+		decision:   decision,
 	})
+	if err != nil || evaluation == nil {
+		return err
+	}
+	return printEvaluation(out, evaluation, o.output, o.assert)
+}
+
+// printEvaluation echoes the evaluation as the server gave it, so the policy's
+// outputs stay under result.outputs and cannot clash with the fields beside
+// them. The table is a summary of it.
+func printEvaluation(out io.Writer, evaluation *evaluations.Evaluation, format string, assertOnDeny bool) error {
+	if format == "json" {
+		if err := output.PrintJson(evaluation.Raw, out, 0); err != nil {
+			return err
+		}
+		if assertOnDeny && !evaluation.Result.Allow {
+			return fmt.Errorf("policy denied")
+		}
+		return nil
+	}
+
+	verdict := serverVerdict(evaluation.Result)
+	summary := map[string]any{"allow": verdict.Allow, "violations": verdict.Violations}
+	if violations, ok := verdict.Outputs["violations"]; ok {
+		summary["violations"] = violations
+	}
+	if evaluation.Policy != nil {
+		summary["policy"] = evaluation.Policy
+	}
+	if evaluation.DecisionAttestationID != "" {
+		summary["decision_attestation_id"] = evaluation.DecisionAttestationID
+	}
+	raw, err := json.Marshal(summary)
+	if err != nil {
+		return err
+	}
+	return printEvaluateResultAsTableFn(assertOnDeny)(string(raw), out, 0)
 }
 
 // decision resolves where the outcome is recorded, or nil where none was

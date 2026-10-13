@@ -107,6 +107,18 @@ func TestCreateSendsExactlyTheAgreedPayload(t *testing.T) {
 	require.Equal(t, map[string]any{"threshold": float64(2)}, seen.body["params"])
 }
 
+func TestCreateSendsOnlyTheIdentifierOfAPublishedPolicy(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusCreated, createdBody)
+	request := aCreateRequest()
+	request.Files = nil
+	request.Identifier = "pr-approved"
+
+	_, err := newTestClient(t, server.URL, false).Create("my-org", request)
+	require.NoError(t, err)
+
+	require.Equal(t, map[string]any{"identifier": "pr-approved"}, seen.body["policy"])
+}
+
 func TestCreateSendsEveryTrailInOneEvaluation(t *testing.T) {
 	server, seen := newFakeServer(t, http.StatusCreated, createdBody)
 
@@ -323,6 +335,31 @@ func TestGetReadsTheDecisionTheEvaluationWrote(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "01DECISION", evaluation.DecisionAttestationID)
+}
+
+func TestGetReadsThePolicyTheEvaluationRan(t *testing.T) {
+	server, _ := newFakeServer(t, http.StatusOK,
+		`{"id":"01JABCDEF","status":"completed","requested_at":1.0,"recorded_at":1.0,`+
+			`"policy":{"identifier":"pr-approved","version":3,"digest":"sha256:abc123"},"result":{"allow":true}}`)
+
+	evaluation, err := newTestClient(t, server.URL, false).Get("my-org", "01JABCDEF")
+	require.NoError(t, err)
+
+	require.Equal(t, &PolicyCitation{Identifier: "pr-approved", Version: 3, Digest: "sha256:abc123"},
+		evaluation.Policy)
+}
+
+// The body is kept so a caller can echo the evaluation as the server gave it,
+// fields this client does not know included.
+func TestGetKeepsTheBodyAsTheServerGaveIt(t *testing.T) {
+	body := `{"id":"01JABCDEF","status":"completed","requested_at":1.0,"recorded_at":1.0,` +
+		`"result":{"allow":true},"added_later":"kept"}`
+	server, _ := newFakeServer(t, http.StatusOK, body)
+
+	evaluation, err := newTestClient(t, server.URL, false).Get("my-org", "01JABCDEF")
+	require.NoError(t, err)
+
+	require.Equal(t, body, evaluation.Raw)
 }
 
 // An evaluation asked for no decision names none.
