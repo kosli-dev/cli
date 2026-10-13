@@ -20,10 +20,11 @@ The policy is addressed by IDENTIFIER, which decisions cite and which cannot be
 changed after the first publish. ^--name^ is required on the first publish only.
 Only an org admin can publish.
 
-PATH is a Rego file or a directory on this machine. A directory is sent as one
-bundle, by the same rules as ^kosli evaluate policy --policy^: files in
-dot-directories are left out, and the bundle can hold at most 100 files and
-1 MiB.
+^--path^ takes a Rego file or a directory on this machine, and can be given
+more than once, so a policy and a shared library are published together from
+wherever each is kept. Every ^--path^ joins one bundle, by the same rules as
+^kosli evaluate policy --path^: files in dot-directories are left out, and the
+bundle can hold at most 100 files and 1 MiB.
 
 Each publish stores the next version, with ^--comment^ kept on it. A change to
 the files or to ^--input-schema^ makes a new version. When the files and the
@@ -47,7 +48,8 @@ version leaves the policy in service unchanged.`
 
 const publishRegoPolicyExample = `
 # publish the first version of a rego policy from a directory:
-kosli publish rego-policy pr-approved ./policies/pr-approved/ \
+kosli publish rego-policy pr-approved \
+	--path ./policies/pr-approved/ \
 	--input-schema trail \
 	--name "Pull request approved" \
 	--description "Every change reached main through an approved PR" \
@@ -56,14 +58,24 @@ kosli publish rego-policy pr-approved ./policies/pr-approved/ \
 	--org yourOrgName
 
 # publish a new version of an existing rego policy from one file:
-kosli publish rego-policy pr-approved ./policies/pr-approved.rego \
+kosli publish rego-policy pr-approved \
+	--path ./policies/pr-approved.rego \
 	--input-schema trail \
 	--comment "Also require two approvers" \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
+# publish a policy directory with a shared library kept elsewhere:
+kosli publish rego-policy pr-approved \
+	--path ./policies/pr-approved/ \
+	--path path/to/ergo/ergo.rego \
+	--input-schema trail \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # publish a policy written against a set of trails, and print the version as JSON:
-kosli publish rego-policy release-ready ./policies/release-ready/ \
+kosli publish rego-policy release-ready \
+	--path ./policies/release-ready/ \
 	--input-schema trails \
 	--name "Release ready" \
 	--output json \
@@ -71,7 +83,8 @@ kosli publish rego-policy release-ready ./policies/release-ready/ \
 	--org yourOrgName
 
 # show what would be published, without sending it:
-kosli publish rego-policy pr-approved ./policies/pr-approved/ \
+kosli publish rego-policy pr-approved \
+	--path ./policies/pr-approved/ \
 	--input-schema trail \
 	--dry-run \
 	--api-token yourAPIToken \
@@ -88,17 +101,18 @@ type publishRegoPolicyOptions struct {
 	description string
 	inputSchema string
 	comment     string
+	paths       []string
 	output      string
 }
 
 func newPublishRegoPolicyCmd(out io.Writer) *cobra.Command {
 	o := new(publishRegoPolicyOptions)
 	cmd := &cobra.Command{
-		Use:     "rego-policy IDENTIFIER PATH",
+		Use:     "rego-policy IDENTIFIER",
 		Short:   publishRegoPolicyShortDesc,
 		Long:    publishRegoPolicyLongDesc,
 		Example: publishRegoPolicyExample,
-		Args:    cobra.ExactArgs(2),
+		Args:    cobra.ExactArgs(1),
 		// Hidden while the server gates the endpoint behind is-server-side-evaluation-enabled.
 		Hidden:      true,
 		Annotations: map[string]string{betaCLIAnnotation: ""},
@@ -110,10 +124,11 @@ func newPublishRegoPolicyCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out, args[0], args[1])
+			return o.run(out, args[0])
 		},
 	}
 
+	cmd.Flags().StringArrayVarP(&o.paths, "path", "p", []string{}, regoPolicyPathFlag)
 	cmd.Flags().StringVar(&o.inputSchema, "input-schema", "", regoPolicyInputSchemaFlag)
 	cmd.Flags().StringVar(&o.name, "name", "", regoPolicyNameFlag)
 	cmd.Flags().StringVar(&o.description, "description", "", regoPolicyDescriptionFlag)
@@ -121,7 +136,7 @@ func newPublishRegoPolicyCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"input-schema"})
+	err := RequireFlags(cmd, []string{"path", "input-schema"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -129,7 +144,7 @@ func newPublishRegoPolicyCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *publishRegoPolicyOptions) run(out io.Writer, identifier, path string) error {
+func (o *publishRegoPolicyOptions) run(out io.Writer, identifier string) error {
 	// Checked before publishing, so a bad format cannot fail a command whose version is stored.
 	printVersion, known := regoPolicyPrinters[o.output]
 	if !known {
@@ -139,11 +154,13 @@ func (o *publishRegoPolicyOptions) run(out io.Writer, identifier, path string) e
 		return fmt.Errorf("--input-schema must be one of %v, got %q", regoPolicyInputSchemas, o.inputSchema)
 	}
 	// Decisions cite a published version, so its source must be on disk, not behind a URL.
-	if isRemotePolicyRef(path) {
-		return fmt.Errorf("PATH takes a file or a directory on this machine, not a URL")
+	for _, path := range o.paths {
+		if isRemotePolicyRef(path) {
+			return fmt.Errorf("--path takes a file or a directory on this machine, not a URL")
+		}
 	}
 
-	files, err := policyBundle([]string{path})
+	files, err := policyBundle(o.paths)
 	if err != nil {
 		return err
 	}
