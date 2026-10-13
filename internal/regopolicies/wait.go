@@ -36,7 +36,7 @@ func (e *StillPendingError) Error() string {
 // WaitForTerminal polls until the version is validated, the caller gives up, or
 // the budget expires. It returns a version only when that version is terminal.
 func (c *Client) WaitForTerminal(ctx context.Context, org, identifier string, version int, options WaitOptions) (*Version, error) {
-	endpoint, err := versionURL(c.host, org, identifier, version)
+	endpoint, err := VersionURL(c.host, org, identifier, version)
 	if err != nil {
 		return nil, err
 	}

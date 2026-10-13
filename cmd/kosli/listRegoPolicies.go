@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/kosli-dev/cli/internal/output"
+	"github.com/kosli-dev/cli/internal/regopolicies"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -93,7 +94,7 @@ func newListRegoPoliciesCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listRegoPoliciesOptions) run(out io.Writer) error {
-	base, err := url.JoinPath(global.Host, "api/v2/rego-policies", global.Org)
+	base, err := regopolicies.ListURL(global.Host, global.Org)
 	if err != nil {
 		return err
 	}
