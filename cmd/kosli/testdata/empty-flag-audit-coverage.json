@@ -740,6 +740,14 @@
  "list policies": {
   "output": "string"
  },
+ "list rego-policies": {
+  "output": "string",
+  "page": "int",
+  "page-limit": "int",
+  "search": "string",
+  "sort": "string",
+  "sort-direction": "string"
+ },
  "list repos": {
   "name": "string",
   "output": "string",
