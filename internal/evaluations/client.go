@@ -32,10 +32,13 @@ type TrailRef struct {
 // single instant, which is why several trails belong in one request rather
 // than in one request each.
 type CreateRequest struct {
-	Trails   []TrailRef
-	Files    map[string]string
-	Params   map[string]any
-	Decision *Decision
+	Trails []TrailRef
+	// Exactly one of Files and Identifier is set: Files sends the policy
+	// inline, Identifier names a published one whose current version runs.
+	Files      map[string]string
+	Identifier string
+	Params     map[string]any
+	Decision   *Decision
 }
 
 // Decision is where an evaluation records its outcome, and against which
@@ -129,7 +132,7 @@ func (c *Client) Create(org string, request CreateRequest) (*Evaluation, error) 
 		DryRun: c.dryRun,
 		Payload: createPayload{
 			Context:  createContext{Trails: request.Trails},
-			Policy:   inlinePolicy{Files: request.Files},
+			Policy:   createPolicy{Files: request.Files, Identifier: request.Identifier},
 			Params:   params,
 			Decision: request.Decision,
 		},
@@ -148,7 +151,7 @@ func (c *Client) Create(org string, request CreateRequest) (*Evaluation, error) 
 // to be stated exactly here rather than inherited from a caller's struct.
 type createPayload struct {
 	Context  createContext  `json:"context"`
-	Policy   inlinePolicy   `json:"policy"`
+	Policy   createPolicy   `json:"policy"`
 	Params   map[string]any `json:"params"`
 	Decision *Decision      `json:"decision,omitempty"`
 }
@@ -157,8 +160,10 @@ type createContext struct {
 	Trails []TrailRef `json:"trails"`
 }
 
-type inlinePolicy struct {
-	Files map[string]string `json:"files"`
+// The server takes one of the two variants and refuses a policy with both.
+type createPolicy struct {
+	Files      map[string]string `json:"files,omitempty"`
+	Identifier string            `json:"identifier,omitempty"`
 }
 
 func decodeEvaluation(body string) (*Evaluation, error) {

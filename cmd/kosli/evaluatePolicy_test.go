@@ -126,13 +126,102 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheHelpSaysWhichRulesAreEvaluat
 	}
 }
 
+func (suite *EvaluatePolicyCommandTestSuite) identifierCmd(host, extra string) string {
+	return fmt.Sprintf(
+		"evaluate policy --context trail=my-flow/my-trail --identifier pr-approved "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0 %s",
+		host, extra)
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAnIdentifierSendsOnlyTheIdentifier() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL, ""))
+
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), fake.created, 1)
+	require.Equal(suite.T(), map[string]any{"identifier": "pr-approved"}, fake.created[0]["policy"])
+	require.Contains(suite.T(), combined, "RESULT")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestTheHelpOffersTheIdentifier() {
+	_, help, _, _, err := executeCommandC("evaluate policy --help")
+
+	require.NoError(suite.T(), err)
+	require.Contains(suite.T(), help, "--identifier")
+	require.Contains(suite.T(), help, "current version")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAnIdentifierAndFilesAreRefusedTogether() {
+	for _, files := range []string{"--path testdata/policies/allow-all.rego", "--policy testdata/policies/allow-all.rego"} {
+		suite.Run(files, func() {
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, _, _, _, err := executeCommandC(suite.identifierCmd(server.URL, files))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), "only one of --identifier or --path can be given")
+			require.Empty(suite.T(), fake.created, "nothing is sent")
+		})
+	}
+}
+
+// KOSLI_IDENTIFIER binds to --identifier, so a pipeline that exports it must
+// not have a --path quietly ignored or quietly preferred.
+func (suite *EvaluatePolicyCommandTestSuite) TestAnIdentifierFromTheEnvironmentIsRefusedWithAPath() {
+	suite.T().Setenv("KOSLI_IDENTIFIER", "pr-approved")
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.cmd(server.URL, ""))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "only one of --identifier or --path can be given")
+	require.Empty(suite.T(), fake.created, "nothing is sent")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAnEmptyIdentifierIsRefused() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate policy --context trail=my-flow/my-trail --identifier '' "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "flag '--identifier' was given an empty value")
+	require.Empty(suite.T(), fake.created, "nothing is sent")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAPublishedPolicyRefusalIsReportedAsTheServerPutIt() {
+	for _, test := range []struct {
+		name    string
+		status  int
+		message string
+	}{
+		{"an unknown policy", 404, "Rego policy 'pr-approved' does not exist in org 'test-org'"},
+		{"no valid version", 400, "Rego policy 'pr-approved' has no valid version to evaluate"},
+		{"too many trails", 400, "The policy evaluates one trail, but 2 were given"},
+		{"params off the schema", 400, "Params do not match the params schema of version 3: threshold: 'x' is not of type 'integer'"},
+	} {
+		suite.Run(test.name, func() {
+			server := newRefusingServer(suite.T(), test.status,
+				fmt.Sprintf(`{"message":%q}`, test.message))
+
+			_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL, ""))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), test.message)
+			require.NotContains(suite.T(), combined, "RESULT")
+		})
+	}
+}
+
 func (suite *EvaluatePolicyCommandTestSuite) TestItNamesTheRequiredFlagItWasNotGiven() {
 	for _, test := range []struct {
 		missing string
 		cmd     string
 	}{
 		{"context", "evaluate policy --path testdata/policies/allow-all.rego"},
-		{"--path", "evaluate policy --context trail=my-flow/my-trail"},
+		{"one of --identifier or --path is required", "evaluate policy --context trail=my-flow/my-trail"},
 	} {
 		suite.Run(test.missing, func() {
 			_, _, _, _, err := executeCommandC(test.cmd + " --org test-org --api-token test-token")

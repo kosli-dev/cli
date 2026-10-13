@@ -107,6 +107,18 @@ func TestCreateSendsExactlyTheAgreedPayload(t *testing.T) {
 	require.Equal(t, map[string]any{"threshold": float64(2)}, seen.body["params"])
 }
 
+func TestCreateSendsOnlyTheIdentifierOfAPublishedPolicy(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusCreated, createdBody)
+	request := aCreateRequest()
+	request.Files = nil
+	request.Identifier = "pr-approved"
+
+	_, err := newTestClient(t, server.URL, false).Create("my-org", request)
+	require.NoError(t, err)
+
+	require.Equal(t, map[string]any{"identifier": "pr-approved"}, seen.body["policy"])
+}
+
 func TestCreateSendsEveryTrailInOneEvaluation(t *testing.T) {
 	server, seen := newFakeServer(t, http.StatusCreated, createdBody)
 

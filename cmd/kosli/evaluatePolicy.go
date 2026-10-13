@@ -19,6 +19,11 @@ recorded it, and the verdict is printed here.
 Name what to evaluate with ` + "`--context trail=<flow>/<trail>`" + `, repeated once per
 trail. Trails named in one command are all evaluated at the same instant.
 
+Name the policy with one of:
+  - ` + "`--identifier`" + `: a rego policy published to Kosli. Its current version, the
+    highest-numbered valid one, is evaluated, and the evaluation cites that version.
+  - ` + "`--path`" + `: the policy's files on this machine, sent with the evaluation.
+
 ` + "`--path`" + ` takes a Rego file or a directory, and can be given more than once,
 so a policy and a shared library are sent together from wherever each is kept.
 Every ` + "`--path`" + ` joins one bundle. A file is keyed by its own name, and a file
@@ -55,7 +60,8 @@ Pass ` + "`--control`" + ` to record the outcome as a decision against that cont
 ` + "`--flow`" + ` and ` + "`--trail`" + ` given. The decision is recorded where the policy runs, so
 the verdict is never asserted from here. Without ` + "`--control`" + ` nothing is recorded.
 
-Use ` + "`--params`" + ` to pass values the policy reads as ` + "`data.params`" + `.
+Use ` + "`--params`" + ` to pass values the policy reads as ` + "`data.params`" + `. For a
+published policy, they must match the params schema of its current version.
 Pass ` + "`--assert`" + ` to exit with a non-zero status when the policy denies.
 Use ` + "`--output json`" + ` for structured output.`
 
@@ -64,6 +70,13 @@ const evaluatePolicyExample = `
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
 	--path yourPolicyFile.rego \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate the current version of a published rego policy against a trail:
+kosli evaluate policy \
+	--context trail=yourFlowName/yourTrailName \
+	--identifier yourPolicyIdentifier \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -112,6 +125,7 @@ kosli evaluate policy \
 
 type evaluatePolicyOptions struct {
 	contexts    []string
+	identifier  string
 	paths       []string
 	oldPolicies []string
 	params      string
@@ -148,6 +162,7 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringArrayVar(&o.contexts, "context", []string{}, policyContextFlag)
+	cmd.Flags().StringVar(&o.identifier, "identifier", "", "Identifier of a rego policy published to Kosli. Its current version is evaluated.")
 	cmd.Flags().StringArrayVarP(&o.paths, "path", "p", []string{}, "Path of a Rego policy file, or of a directory sent as one bundle. Repeat it to send a policy with libraries kept elsewhere.")
 	// Kept one release because sdlc-policies runs the latest CLI and passes --policy.
 	cmd.Flags().StringArrayVar(&o.oldPolicies, "policy", []string{}, "Deprecated alias of --path.")
@@ -176,8 +191,13 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 	// Fetching a policy from a URL is on its way out, so this command does not
 	// offer it, though the older evaluate commands still do.
 	policyRefs := append(append([]string{}, o.paths...), o.oldPolicies...)
-	if len(policyRefs) == 0 {
-		return fmt.Errorf("--path is required")
+	// Checked on resolved values, so a KOSLI_IDENTIFIER exported by a pipeline
+	// is refused next to --path rather than quietly winning or losing.
+	if o.identifier != "" && len(policyRefs) > 0 {
+		return fmt.Errorf("only one of --identifier or --path can be given")
+	}
+	if o.identifier == "" && len(policyRefs) == 0 {
+		return fmt.Errorf("one of --identifier or --path is required")
 	}
 	for _, ref := range policyRefs {
 		if isRemotePolicyRef(ref) {
@@ -202,6 +222,7 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 	}
 
 	return runServerEvaluation(out, serverEvaluation{
+		identifier:   o.identifier,
 		policyRefs:   policyRefs,
 		params:       o.params,
 		trails:       trails,

@@ -297,6 +297,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 }
 
 type serverEvaluation struct {
+	identifier   string
 	policyRefs   []string
 	params       string
 	trails       []evaluations.TrailRef
@@ -320,17 +321,21 @@ func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
 		return err
 	}
 
-	files, err := policyBundle(spec.policyRefs)
-	if err != nil {
-		return err
+	var files map[string]string
+	if spec.identifier == "" {
+		files, err = policyBundle(spec.policyRefs)
+		if err != nil {
+			return err
+		}
 	}
 
 	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
 	created, err := client.Create(global.Org, evaluations.CreateRequest{
-		Trails:   spec.trails,
-		Files:    files,
-		Params:   params,
-		Decision: spec.decision,
+		Trails:     spec.trails,
+		Files:      files,
+		Identifier: spec.identifier,
+		Params:     params,
+		Decision:   spec.decision,
 	})
 	if err != nil {
 		return serverSideRequestError(err)
