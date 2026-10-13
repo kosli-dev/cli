@@ -497,10 +497,10 @@ func policyBundle(refs []string) (map[string]string, error) {
 			// Keeping either copy of a file the evaluator loads would decide
 			// for the author which policy runs.
 			if evaluatorLoads(name) {
-				return nil, fmt.Errorf("%s is in both --policy %s and --policy %s; "+
+				return nil, fmt.Errorf("%s is in both --path %s and --path %s; "+
 					"the evaluator would load only one of them", name, first, ref)
 			}
-			logger.Warn("%s from --policy %s is not sent, as --policy %s already sends one", name, ref, first)
+			logger.Warn("%s from --path %s is not sent, as --path %s already sends one", name, ref, first)
 		}
 	}
 
@@ -542,10 +542,10 @@ func policyRoots(refs []string) ([]string, error) {
 				break
 			}
 			if isWithin(absolute, other.absolute) {
-				return nil, fmt.Errorf("--policy %s is inside --policy %s, so its files would be sent twice", ref, other.ref)
+				return nil, fmt.Errorf("--path %s is inside --path %s, so its files would be sent twice", ref, other.ref)
 			}
 			if isWithin(other.absolute, absolute) {
-				return nil, fmt.Errorf("--policy %s is inside --policy %s, so its files would be sent twice", other.ref, ref)
+				return nil, fmt.Errorf("--path %s is inside --path %s, so its files would be sent twice", other.ref, ref)
 			}
 		}
 		if !repeated {

@@ -22,7 +22,7 @@ type EvaluatePolicyCommandTestSuite struct {
 func (suite *EvaluatePolicyCommandTestSuite) cmd(host, extra string) string {
 	return fmt.Sprintf(
 		"evaluate policy --context trail=my-flow/my-trail "+
-			"--policy testdata/policies/allow-all.rego "+
+			"--path testdata/policies/allow-all.rego "+
 			"--host %s --org test-org --api-token test-token --max-api-retries 0 %s",
 		host, extra)
 }
@@ -49,12 +49,54 @@ func (suite *EvaluatePolicyCommandTestSuite) TestItOffersOnlyItsOwnFlags() {
 	_, combined, _, _, err := executeCommandC("evaluate policy --help")
 
 	require.NoError(suite.T(), err)
-	for _, flag := range []string{"--context", "--policy", "--params", "--output", "--assert"} {
+	for _, flag := range []string{"--context", "--path", "--params", "--output", "--assert"} {
 		require.Contains(suite.T(), combined, flag)
 	}
-	for _, flag := range []string{"--server-side", "--attestations", "--show-input", "--no-assert", "--sync"} {
+	for _, flag := range []string{"--server-side", "--attestations", "--show-input", "--no-assert", "--sync", "--policy"} {
 		require.NotContains(suite.T(), combined, flag)
 	}
+	require.Contains(suite.T(), combined, "-p, --path")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestTheShorthandSendsThePath() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate policy --context trail=my-flow/my-trail -p testdata/policies/allow-all.rego "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.NoError(suite.T(), err)
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
+	require.Equal(suite.T(), []string{"allow-all.rego"}, sortedKeys(files))
+}
+
+// --policy stays one release, because sdlc-policies runs the latest CLI and passes it.
+func (suite *EvaluatePolicyCommandTestSuite) TestTheOldPolicyFlagStillSendsTheBundleAndWarns() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, combined, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate policy --context trail=my-flow/my-trail --policy testdata/policies/allow-all.rego "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.NoError(suite.T(), err)
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
+	require.Equal(suite.T(), []string{"allow-all.rego"}, sortedKeys(files))
+	require.Contains(suite.T(), combined, "Flag --policy has been deprecated, use --path instead")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestThePathAndTheOldPolicyFlagJoinOneBundle() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate policy --context trail=my-flow/my-trail --path testdata/policies/bundle "+
+			"--policy testdata/policies/allow-all.rego "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), fake.created, 1)
+	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
+	require.Contains(suite.T(), files, "allow-all.rego")
+	require.Greater(suite.T(), len(files), 1)
 }
 
 // An author cannot see the evaluator, so the help is where they learn which
@@ -65,7 +107,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheHelpSaysWhatTravelsAndWhatIs
 	require.NoError(suite.T(), err)
 	for _, says := range []string{
 		"more than once", "*_test.rego", "data.json", "data.yaml", "data.yml",
-		"*.ergo.yaml", "*.ergo.yml", "README.md", "dot-directories", "first `--policy`",
+		"*.ergo.yaml", "*.ergo.yml", "README.md", "dot-directories", "first `--path`",
 	} {
 		require.Contains(suite.T(), help, says)
 	}
@@ -89,8 +131,8 @@ func (suite *EvaluatePolicyCommandTestSuite) TestItNamesTheRequiredFlagItWasNotG
 		missing string
 		cmd     string
 	}{
-		{"context", "evaluate policy --policy testdata/policies/allow-all.rego"},
-		{"policy", "evaluate policy --context trail=my-flow/my-trail"},
+		{"context", "evaluate policy --path testdata/policies/allow-all.rego"},
+		{"--path", "evaluate policy --context trail=my-flow/my-trail"},
 	} {
 		suite.Run(test.missing, func() {
 			_, _, _, _, err := executeCommandC(test.cmd + " --org test-org --api-token test-token")
@@ -294,7 +336,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestAMalformedContextIsRefusedBefor
 			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
 			_, combined, _, _, err := executeCommandC(fmt.Sprintf(
-				"evaluate policy --context %s --policy testdata/policies/allow-all.rego "+
+				"evaluate policy --context %s --path testdata/policies/allow-all.rego "+
 					"--host %s --org test-org --api-token test-token --max-api-retries 0",
 				test.value, server.URL))
 
@@ -316,7 +358,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTooManyContextsAreRefusedBefore
 	}
 
 	_, _, _, _, err := executeCommandC(fmt.Sprintf(
-		"evaluate policy %s--policy testdata/policies/allow-all.rego "+
+		"evaluate policy %s--path testdata/policies/allow-all.rego "+
 			"--host %s --org test-org --api-token test-token --max-api-retries 0",
 		contexts, server.URL))
 
@@ -527,7 +569,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADirectoryTravelsAsOneBundle() 
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
 	_, _, _, _, err := executeCommandC(fmt.Sprintf(
-		"evaluate policy --context trail=my-flow/my-trail --policy testdata/policies/bundle "+
+		"evaluate policy --context trail=my-flow/my-trail --path testdata/policies/bundle "+
 			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
 
 	require.NoError(suite.T(), err)
@@ -548,7 +590,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADirectoryLeavesItsDotDirectori
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
 	_, _, _, _, err := executeCommandC(fmt.Sprintf(
-		"evaluate policy --context trail=my-flow/my-trail --policy %s "+
+		"evaluate policy --context trail=my-flow/my-trail --path %s "+
 			"--host %s --org test-org --api-token test-token --max-api-retries 0", directory, server.URL))
 
 	require.NoError(suite.T(), err)
@@ -559,7 +601,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADirectoryLeavesItsDotDirectori
 func (suite *EvaluatePolicyCommandTestSuite) policyCmd(host string, roots ...string) string {
 	policies := ""
 	for _, root := range roots {
-		policies += " --policy " + root
+		policies += " --path " + root
 	}
 	return fmt.Sprintf("evaluate policy --context trail=my-flow/my-trail%s "+
 		"--host %s --org test-org --api-token test-token --max-api-retries 0", policies, host)
@@ -578,7 +620,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestAPolicyAndALibraryTravelAsOneBu
 	_, _, _, _, err := executeCommandC(suite.policyCmd(server.URL, control, filepath.Join(library, "ergo.rego")))
 
 	require.NoError(suite.T(), err)
-	require.Len(suite.T(), fake.created, 1, "one evaluation, not one per --policy")
+	require.Len(suite.T(), fake.created, 1, "one evaluation, not one per --path")
 	files := fake.created[0]["policy"].(map[string]any)["files"].(map[string]any)
 	require.Equal(suite.T(), []string{"README.md", "ergo.rego", "policy.rego"}, sortedKeys(files))
 	require.Equal(suite.T(), "package ergo\n", files["ergo.rego"])
@@ -616,8 +658,8 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTwoLoadedFilesUnderOneNameAreRe
 
 			require.Error(suite.T(), err)
 			require.Contains(suite.T(), err.Error(), name)
-			require.Contains(suite.T(), err.Error(), first)
-			require.Contains(suite.T(), err.Error(), second)
+			require.Contains(suite.T(), err.Error(), "--path "+first)
+			require.Contains(suite.T(), err.Error(), "--path "+second)
 			require.Empty(suite.T(), fake.created, "nothing is sent")
 		})
 	}
@@ -679,7 +721,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestARootInsideAnotherIsRefused() {
 			_, _, _, _, err := executeCommandC(suite.policyCmd(server.URL, roots...))
 
 			require.Error(suite.T(), err)
-			require.Contains(suite.T(), err.Error(), roots[0])
+			require.Contains(suite.T(), err.Error(), "--path "+roots[0])
 			require.Contains(suite.T(), err.Error(), roots[1])
 			require.Empty(suite.T(), fake.created, "nothing is sent")
 		})
@@ -708,7 +750,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestAnEmptyDirectoryIsRefused() {
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
 	_, _, _, _, err := executeCommandC(fmt.Sprintf(
-		"evaluate policy --context trail=my-flow/my-trail --policy %s "+
+		"evaluate policy --context trail=my-flow/my-trail --path %s "+
 			"--host %s --org test-org --api-token test-token --max-api-retries 0", directory, server.URL))
 
 	require.Error(suite.T(), err)
@@ -744,7 +786,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestABundleOverTheCapsIsRefusedWith
 			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
 			_, _, _, _, err := executeCommandC(fmt.Sprintf(
-				"evaluate policy --context trail=my-flow/my-trail --policy %s "+
+				"evaluate policy --context trail=my-flow/my-trail --path %s "+
 					"--host %s --org test-org --api-token test-token --max-api-retries 0",
 				directory, server.URL))
 
@@ -762,11 +804,11 @@ func (suite *EvaluatePolicyCommandTestSuite) TestARemotePolicyIsRefused() {
 			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
 			_, combined, _, _, err := executeCommandC(fmt.Sprintf(
-				"evaluate policy --context trail=my-flow/my-trail --policy %s "+
+				"evaluate policy --context trail=my-flow/my-trail --path %s "+
 					"--host %s --org test-org --api-token test-token --max-api-retries 0", ref, server.URL))
 
 			require.Error(suite.T(), err)
-			require.Contains(suite.T(), err.Error(), "--policy")
+			require.Contains(suite.T(), err.Error(), "--path")
 			require.Empty(suite.T(), fake.created, "nothing is sent")
 			require.NotContains(suite.T(), combined, "RESULT")
 		})
@@ -778,7 +820,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADryRunSendsNothing() {
 
 	_, combined, _, _, err := executeCommandC(fmt.Sprintf(
 		"evaluate policy --context trail=my-flow/my-trail "+
-			"--policy testdata/policies/allow-all.rego "+
+			"--path testdata/policies/allow-all.rego "+
 			"--host %s --org test-org --api-token DRY_RUN --max-api-retries 0", server.URL))
 
 	require.NoError(suite.T(), err)

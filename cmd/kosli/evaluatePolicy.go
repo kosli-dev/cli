@@ -19,9 +19,9 @@ recorded it, and the verdict is printed here.
 Name what to evaluate with ` + "`--context trail=<flow>/<trail>`" + `, repeated once per
 trail. Trails named in one command are all evaluated at the same instant.
 
-` + "`--policy`" + ` takes a Rego file or a directory, and can be given more than once,
+` + "`--path`" + ` takes a Rego file or a directory, and can be given more than once,
 so a policy and a shared library are sent together from wherever each is kept.
-Every ` + "`--policy`" + ` joins one bundle. A file is keyed by its own name, and a file
+Every ` + "`--path`" + ` joins one bundle. A file is keyed by its own name, and a file
 in a directory by its path relative to that directory. Files in dot-directories,
 such as ` + "`.git`" + `, are left out; every other file travels, so notes such as
 ` + "`README.md`" + ` stay with the policy.
@@ -36,7 +36,7 @@ Of what travels, the evaluator loads only:
 Every other file is carried but not read.
 
 Two loaded files under one name are refused, naming both. For any other file the
-first ` + "`--policy`" + ` given wins, and the copy left behind is named on stderr.
+first ` + "`--path`" + ` given wins, and the copy left behind is named on stderr.
 
 The policy package is the one that declares ` + "`allow`" + `; every other package is a
 library. Where several packages declare ` + "`allow`" + `, annotate an entrypoint in exactly
@@ -63,15 +63,15 @@ const evaluatePolicyExample = `
 # evaluate a policy against a trail:
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--policy yourPolicyFile.rego \
+	--path yourPolicyFile.rego \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # evaluate a policy directory with a shared library kept elsewhere:
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--policy yourPolicyDirectory \
-	--policy path/to/ergo/ergo.rego \
+	--path yourPolicyDirectory \
+	--path path/to/ergo/ergo.rego \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -79,14 +79,14 @@ kosli evaluate policy \
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
 	--context trail=anotherFlowName/anotherTrailName \
-	--policy yourPolicyFile.rego \
+	--path yourPolicyFile.rego \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # evaluate a policy with parameters (inline JSON or @file.json):
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--policy yourPolicyFile.rego \
+	--path yourPolicyFile.rego \
 	--params '{"protected_branch": "master"}' \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -94,7 +94,7 @@ kosli evaluate policy \
 # evaluate a policy and record the outcome as a decision:
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--policy yourPolicyFile.rego \
+	--path yourPolicyFile.rego \
 	--control yourControlIdentifier \
 	--flow yourFlowName \
 	--trail yourTrailName \
@@ -105,14 +105,15 @@ kosli evaluate policy \
 # evaluate a policy and fail the step when it denies:
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--policy yourPolicyFile.rego \
+	--path yourPolicyFile.rego \
 	--assert \
 	--api-token yourAPIToken \
 	--org yourOrgName`
 
 type evaluatePolicyOptions struct {
 	contexts    []string
-	policyRefs  []string
+	paths       []string
+	oldPolicies []string
 	params      string
 	output      string
 	assert      bool
@@ -147,7 +148,9 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringArrayVar(&o.contexts, "context", []string{}, policyContextFlag)
-	cmd.Flags().StringArrayVarP(&o.policyRefs, "policy", "p", []string{}, "Path of a Rego policy file, or of a directory sent as one bundle. Repeat it to send a policy with libraries kept elsewhere.")
+	cmd.Flags().StringArrayVarP(&o.paths, "path", "p", []string{}, "Path of a Rego policy file, or of a directory sent as one bundle. Repeat it to send a policy with libraries kept elsewhere.")
+	// Kept one release because sdlc-policies runs the latest CLI and passes --policy.
+	cmd.Flags().StringArrayVar(&o.oldPolicies, "policy", []string{}, "Deprecated alias of --path.")
 	cmd.Flags().StringVar(&o.params, "params", "", policyParamsFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, policyAssertFlag)
@@ -157,9 +160,13 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.name, "name", "", policyDecisionNameFlag)
 	cmd.Flags().StringVar(&o.fingerprint, "fingerprint", "", policyDecisionFingerprintFlag)
 
-	err := RequireFlags(cmd, []string{"context", "policy"})
+	err := RequireFlags(cmd, []string{"context"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
+	}
+	err = DeprecateFlags(cmd, map[string]string{"policy": "use --path instead"})
+	if err != nil {
+		logger.Error("failed to deprecate flags: %v", err)
 	}
 
 	return cmd
@@ -168,9 +175,13 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 func (o *evaluatePolicyOptions) run(out io.Writer) error {
 	// Fetching a policy from a URL is on its way out, so this command does not
 	// offer it, though the older evaluate commands still do.
-	for _, ref := range o.policyRefs {
+	policyRefs := append(append([]string{}, o.paths...), o.oldPolicies...)
+	if len(policyRefs) == 0 {
+		return fmt.Errorf("--path is required")
+	}
+	for _, ref := range policyRefs {
 		if isRemotePolicyRef(ref) {
-			return fmt.Errorf("--policy takes a file or a directory on this machine, not a URL")
+			return fmt.Errorf("--path takes a file or a directory on this machine, not a URL")
 		}
 	}
 
@@ -191,7 +202,7 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 	}
 
 	return runServerEvaluation(out, serverEvaluation{
-		policyRefs:   o.policyRefs,
+		policyRefs:   policyRefs,
 		params:       o.params,
 		trails:       trails,
 		decision:     decision,

@@ -608,6 +608,7 @@
   "name": "string",
   "output": "string",
   "params": "string",
+  "path": "stringArray",
   "policy": "stringArray",
   "trail": "string"
  },
