@@ -1561,11 +1561,11 @@
     "needs": "server-side evaluation",
     "flags_to_test": [
       "output",
-      "version"
+      "policy-version"
     ],
     "flag_values": {
       "output": "json",
-      "version": "1"
+      "policy-version": "1"
     },
     "setup": [],
     "verify": []

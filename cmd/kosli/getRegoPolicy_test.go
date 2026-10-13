@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,27 +20,6 @@ const (
 		`"newest_version":{"version":1,"status":"pending"},` +
 		`"created_at":1757000000.5,"created_by":"Jane Doe","updated_at":1757000000.5}`
 )
-
-// fakeRegoPolicyRead records the read and answers with body and status.
-type fakeRegoPolicyRead struct {
-	body        string
-	status      int
-	escapedPath string
-	calls       int
-}
-
-func newFakeRegoPolicyRead(t *testing.T, body string) (*httptest.Server, *fakeRegoPolicyRead) {
-	t.Helper()
-	fake := &fakeRegoPolicyRead{body: body, status: http.StatusOK}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fake.calls++
-		fake.escapedPath = r.URL.EscapedPath()
-		w.WriteHeader(fake.status)
-		_, _ = fmt.Fprint(w, fake.body)
-	}))
-	t.Cleanup(server.Close)
-	return server, fake
-}
 
 type GetRegoPolicyCommandTestSuite struct {
 	suite.Suite
@@ -66,6 +44,22 @@ func (suite *GetRegoPolicyCommandTestSuite) TestItIsHiddenAndBeta() {
 	require.Equal(suite.T(), "rego-policy", cmd.Name())
 	require.True(suite.T(), cmd.Hidden)
 	require.Contains(suite.T(), cmd.Annotations, betaCLIAnnotation)
+}
+
+func (suite *GetRegoPolicyCommandTestSuite) TestItNeedsTheOrgAndApiToken() {
+	server, fake := newFakeRegoPolicyRead(suite.T(), regoPolicyWithCurrentVersion)
+	noConfig := withoutOrgAndApiToken(suite.T())
+
+	_, combined, _, _, err := executeCommandC(fmt.Sprintf(
+		"get rego-policy pr-approved --api-token test-token --host %s %s", server.URL, noConfig))
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, "Error: --org is not set\n")
+
+	_, combined, _, _, err = executeCommandC(fmt.Sprintf(
+		"get rego-policy pr-approved --org test-org --host %s %s", server.URL, noConfig))
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, "Error: --api-token is not set\n")
+	require.Equal(suite.T(), 0, fake.calls)
 }
 
 func (suite *GetRegoPolicyCommandTestSuite) TestItTakesExactlyOneIdentifier() {
@@ -126,7 +120,7 @@ func (suite *GetRegoPolicyCommandTestSuite) TestItPrintsThePolicyAsJSON() {
 func (suite *GetRegoPolicyCommandTestSuite) TestItPrintsAValidVersion() {
 	server, fake := newFakeRegoPolicyRead(suite.T(), regoPolicyValid)
 
-	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --version 1"))
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --policy-version 1"))
 
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "/api/v2/rego-policies/test-org/pr-approved/versions/1", fake.escapedPath)
@@ -148,7 +142,7 @@ func (suite *GetRegoPolicyCommandTestSuite) TestItPrintsAValidVersion() {
 func (suite *GetRegoPolicyCommandTestSuite) TestItPrintsWhyAVersionIsNotValidAndExitsZero() {
 	server, _ := newFakeRegoPolicyRead(suite.T(), regoPolicyRejected)
 
-	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --version 1"))
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --policy-version 1"))
 
 	require.NoError(suite.T(), err)
 	require.Contains(suite.T(), combined, "Status:        rejected\n")
@@ -164,17 +158,28 @@ func (suite *GetRegoPolicyCommandTestSuite) TestItPrintsTheCommentAndParamsSchem
 		`"opa_version":"1.21.1","entrypoint":"policy","params_schema":{"type":"object"}}`
 	server, _ := newFakeRegoPolicyRead(suite.T(), body)
 
-	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --version 2"))
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --policy-version 2"))
 
 	require.NoError(suite.T(), err)
 	require.Contains(suite.T(), combined, "Comment:        Also require two approvers\n")
 	require.Contains(suite.T(), combined, "Params schema:  {\"type\":\"object\"}\n")
 }
 
+func (suite *GetRegoPolicyCommandTestSuite) TestItPrintsAVersionWithANullFieldWithoutFormatNoise() {
+	body := `{"identifier":"pr-approved","version":1,"status":"pending","digest":null,` +
+		`"input_schema":"trail","comment":"","created_at":1757000000.5,"created_by":null}`
+	server, _ := newFakeRegoPolicyRead(suite.T(), body)
+
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --policy-version 1"))
+
+	require.NoError(suite.T(), err)
+	require.NotContains(suite.T(), combined, "%!")
+}
+
 func (suite *GetRegoPolicyCommandTestSuite) TestItPrintsAVersionAsJSON() {
 	server, _ := newFakeRegoPolicyRead(suite.T(), regoPolicyRejected)
 
-	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --version 1 --output json"))
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --policy-version 1 --output json"))
 
 	require.NoError(suite.T(), err)
 	require.JSONEq(suite.T(), regoPolicyRejected, combined)
@@ -183,11 +188,22 @@ func (suite *GetRegoPolicyCommandTestSuite) TestItPrintsAVersionAsJSON() {
 func (suite *GetRegoPolicyCommandTestSuite) TestItRefusesAVersionThatIsNotPositive() {
 	server, fake := newFakeRegoPolicyRead(suite.T(), regoPolicyValid)
 
-	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --version 0"))
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --policy-version 0"))
 
 	require.Error(suite.T(), err)
-	require.Contains(suite.T(), combined, "--version must be a positive integer")
+	require.Contains(suite.T(), combined, "--policy-version must be a positive integer")
 	require.Equal(suite.T(), 0, fake.calls)
+}
+
+// KOSLI_VERSION often names the CLI version to install, so it must not pick a policy version.
+func (suite *GetRegoPolicyCommandTestSuite) TestKosliVersionInTheEnvironmentDoesNotPickAVersion() {
+	suite.T().Setenv("KOSLI_VERSION", "2")
+	server, fake := newFakeRegoPolicyRead(suite.T(), regoPolicyWithCurrentVersion)
+
+	_, _, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved"))
+
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), "/api/v2/rego-policies/test-org/pr-approved", fake.escapedPath)
 }
 
 func (suite *GetRegoPolicyCommandTestSuite) TestItKeepsTheIdentifierInOneSegment() {
@@ -214,7 +230,7 @@ func (suite *GetRegoPolicyCommandTestSuite) TestItReturnsANotFoundInTheServersWo
 		`{"message":"Rego policy 'pr-approved' has no version 9 in organization 'test-org'"}`)
 	fake.status = http.StatusNotFound
 
-	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --version 9"))
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "pr-approved --policy-version 9"))
 
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), combined, "Rego policy 'pr-approved' has no version 9 in organization 'test-org'")

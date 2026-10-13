@@ -678,7 +678,7 @@
  },
  "get rego-policy": {
   "output": "string",
-  "version": "int"
+  "policy-version": "int"
  },
  "get repo": {
   "output": "string",

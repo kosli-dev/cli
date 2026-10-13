@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"testing"
 
@@ -20,29 +19,6 @@ const (
 		`"created_at":1757000200.5,"created_by":"John Roe","updated_at":1757000300.5}]}`
 	regoPoliciesEmptyPage = `{"page":%d,"per_page":15,"total_pages":0,"total_count":0,"rego_policies":[]}`
 )
-
-// fakeRegoPolicyList records the list request and answers with body and status.
-type fakeRegoPolicyList struct {
-	body   string
-	status int
-	path   string
-	query  url.Values
-	calls  int
-}
-
-func newFakeRegoPolicyList(t *testing.T, body string) (*httptest.Server, *fakeRegoPolicyList) {
-	t.Helper()
-	fake := &fakeRegoPolicyList{body: body, status: http.StatusOK}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fake.calls++
-		fake.path = r.URL.Path
-		fake.query = r.URL.Query()
-		w.WriteHeader(fake.status)
-		_, _ = fmt.Fprint(w, fake.body)
-	}))
-	t.Cleanup(server.Close)
-	return server, fake
-}
 
 type ListRegoPoliciesCommandTestSuite struct {
 	suite.Suite
@@ -70,18 +46,23 @@ func (suite *ListRegoPoliciesCommandTestSuite) TestItIsHiddenAndBeta() {
 }
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItNeedsTheOrgAndApiToken() {
-	server, fake := newFakeRegoPolicyList(suite.T(), regoPoliciesPage)
+	server, fake := newFakeRegoPolicyRead(suite.T(), regoPoliciesPage)
+	noConfig := withoutOrgAndApiToken(suite.T())
 
-	_, combined, _, _, err := executeCommandC(
-		"list rego-policies --org '' --api-token '' --host " + server.URL)
-
+	_, combined, _, _, err := executeCommandC(fmt.Sprintf(
+		"list rego-policies --api-token test-token --host %s %s", server.URL, noConfig))
 	require.Error(suite.T(), err)
-	require.Contains(suite.T(), combined, "--org")
+	require.Contains(suite.T(), combined, "Error: --org is not set\n")
+
+	_, combined, _, _, err = executeCommandC(fmt.Sprintf(
+		"list rego-policies --org test-org --host %s %s", server.URL, noConfig))
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, "Error: --api-token is not set\n")
 	require.Equal(suite.T(), 0, fake.calls)
 }
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItTakesNoArguments() {
-	server, fake := newFakeRegoPolicyList(suite.T(), regoPoliciesPage)
+	server, fake := newFakeRegoPolicyRead(suite.T(), regoPoliciesPage)
 
 	_, combined, _, _, err := executeCommandC(suite.listCmd(server.URL, "pr-approved"))
 
@@ -91,17 +72,17 @@ func (suite *ListRegoPoliciesCommandTestSuite) TestItTakesNoArguments() {
 }
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItReadsTheFirstPageOf15ByDefault() {
-	server, fake := newFakeRegoPolicyList(suite.T(), regoPoliciesPage)
+	server, fake := newFakeRegoPolicyRead(suite.T(), regoPoliciesPage)
 
 	_, _, _, _, err := executeCommandC(suite.listCmd(server.URL, ""))
 
 	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), "/api/v2/rego-policies/test-org", fake.path)
+	require.Equal(suite.T(), "/api/v2/rego-policies/test-org", fake.escapedPath)
 	require.Equal(suite.T(), url.Values{"page": {"1"}, "per_page": {"15"}}, fake.query)
 }
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItPrintsATable() {
-	server, _ := newFakeRegoPolicyList(suite.T(), regoPoliciesPage)
+	server, _ := newFakeRegoPolicyRead(suite.T(), regoPoliciesPage)
 
 	_, combined, _, _, err := executeCommandC(suite.listCmd(server.URL, ""))
 
@@ -116,7 +97,7 @@ func (suite *ListRegoPoliciesCommandTestSuite) TestItPrintsATable() {
 }
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItSaysWhenThereAreNoPolicies() {
-	server, _ := newFakeRegoPolicyList(suite.T(), fmt.Sprintf(regoPoliciesEmptyPage, 1))
+	server, _ := newFakeRegoPolicyRead(suite.T(), fmt.Sprintf(regoPoliciesEmptyPage, 1))
 
 	_, combined, _, _, err := executeCommandC(suite.listCmd(server.URL, ""))
 
@@ -125,7 +106,7 @@ func (suite *ListRegoPoliciesCommandTestSuite) TestItSaysWhenThereAreNoPolicies(
 }
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItNamesThePageWhenAPageAfterTheFirstIsEmpty() {
-	server, _ := newFakeRegoPolicyList(suite.T(), fmt.Sprintf(regoPoliciesEmptyPage, 3))
+	server, _ := newFakeRegoPolicyRead(suite.T(), fmt.Sprintf(regoPoliciesEmptyPage, 3))
 
 	_, combined, _, _, err := executeCommandC(suite.listCmd(server.URL, "--page 3"))
 
@@ -134,7 +115,7 @@ func (suite *ListRegoPoliciesCommandTestSuite) TestItNamesThePageWhenAPageAfterT
 }
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItPrintsTheServerAnswerAsJSON() {
-	server, _ := newFakeRegoPolicyList(suite.T(), regoPoliciesPage)
+	server, _ := newFakeRegoPolicyRead(suite.T(), regoPoliciesPage)
 
 	_, combined, _, _, err := executeCommandC(suite.listCmd(server.URL, "--output json"))
 
@@ -143,7 +124,7 @@ func (suite *ListRegoPoliciesCommandTestSuite) TestItPrintsTheServerAnswerAsJSON
 }
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItSendsThePagingSearchAndSort() {
-	server, fake := newFakeRegoPolicyList(suite.T(), regoPoliciesPage)
+	server, fake := newFakeRegoPolicyRead(suite.T(), regoPoliciesPage)
 
 	_, _, _, _, err := executeCommandC(suite.listCmd(server.URL,
 		"--page 2 --page-limit 50 --search approved --sort identifier --sort-direction asc"))
@@ -160,7 +141,7 @@ func (suite *ListRegoPoliciesCommandTestSuite) TestItSendsThePagingSearchAndSort
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItRefusesAPageOrPageLimitThatIsNotPositive() {
 	for _, args := range []string{"--page 0", "--page-limit 0"} {
-		server, fake := newFakeRegoPolicyList(suite.T(), regoPoliciesPage)
+		server, fake := newFakeRegoPolicyRead(suite.T(), regoPoliciesPage)
 
 		_, combined, _, _, err := executeCommandC(suite.listCmd(server.URL, args))
 
@@ -171,7 +152,7 @@ func (suite *ListRegoPoliciesCommandTestSuite) TestItRefusesAPageOrPageLimitThat
 }
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItReturnsAServerError() {
-	server, fake := newFakeRegoPolicyList(suite.T(),
+	server, fake := newFakeRegoPolicyRead(suite.T(),
 		`{"message":"User 'jane' does not have access to organization 'test-org'"}`)
 	fake.status = http.StatusForbidden
 

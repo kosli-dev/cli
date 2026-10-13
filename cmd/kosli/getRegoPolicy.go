@@ -15,11 +15,11 @@ import (
 const getRegoPolicyShortDesc = `Get a rego policy, or one version of it.`
 
 const getRegoPolicyLongDesc = getRegoPolicyShortDesc + `
-Without ^--version^, the policy is shown with its newest version and its current
+Without ^--policy-version^, the policy is shown with its newest version and its current
 version. The current version is the highest-numbered valid version, which is the
 one an evaluation runs, so it can be older than the newest version.
 
-With ^--version^, that version is shown with its status, its digest, who
+With ^--policy-version^, that version is shown with its status, its digest, who
 published it and when, and the reason when it is rejected or failed. The command
 exits 0 whatever the status of the version.`
 
@@ -31,13 +31,13 @@ kosli get rego-policy pr-approved \
 
 # get version 3 of a rego policy:
 kosli get rego-policy pr-approved \
-	--version 3 \
+	--policy-version 3 \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # get version 3 of a rego policy as JSON:
 kosli get rego-policy pr-approved \
-	--version 3 \
+	--policy-version 3 \
 	--output json \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -64,8 +64,8 @@ func newGetRegoPolicyCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			if cmd.Flags().Changed("version") && o.version < 1 {
-				return ErrorBeforePrintingUsage(cmd, "--version must be a positive integer")
+			if cmd.Flags().Changed("policy-version") && o.version < 1 {
+				return ErrorBeforePrintingUsage(cmd, "--policy-version must be a positive integer")
 			}
 			return nil
 		},
@@ -74,18 +74,22 @@ func newGetRegoPolicyCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().IntVar(&o.version, "version", 0, regoPolicyVersionFlag)
+	cmd.Flags().IntVar(&o.version, "policy-version", 0, regoPolicyVersionFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 
 	return cmd
 }
 
 func (o *getRegoPolicyOptions) run(out io.Writer, identifier string) error {
-	endpoint, err := regopolicies.PolicyURL(global.Host, global.Org, identifier)
-	printTable := printRegoPolicyAsTable
+	var endpoint string
+	var err error
+	var printTable output.FormatOutputFunc
 	if o.version > 0 {
 		endpoint, err = regopolicies.VersionURL(global.Host, global.Org, identifier, o.version)
 		printTable = printRegoPolicyVersionAsTable
+	} else {
+		endpoint, err = regopolicies.PolicyURL(global.Host, global.Org, identifier)
+		printTable = printRegoPolicyAsTable
 	}
 	if err != nil {
 		return err
@@ -159,49 +163,47 @@ func printRegoPolicyAsTable(raw string, out io.Writer, page int) error {
 }
 
 func printRegoPolicyVersionAsTable(raw string, out io.Writer, page int) error {
-	var version map[string]any
+	var version regopolicies.Version
 	if err := json.Unmarshal([]byte(raw), &version); err != nil {
 		return err
 	}
 
 	rows := []string{
-		fmt.Sprintf("Identifier:\t%s", version["identifier"]),
-		fmt.Sprintf("Version:\t%.0f", version["version"]),
-		fmt.Sprintf("Status:\t%s", version["status"]),
+		fmt.Sprintf("Identifier:\t%s", version.Identifier),
+		fmt.Sprintf("Version:\t%d", version.Version),
+		fmt.Sprintf("Status:\t%s", version.Status),
 	}
-	if reason, ok := version["error"].(map[string]any); ok {
-		rows = append(rows, fmt.Sprintf("Error:\t%s: %s", reason["kind"], reason["message"]))
+	if version.Error != nil {
+		rows = append(rows, fmt.Sprintf("Error:\t%s: %s", version.Error.Kind, version.Error.Message))
 	}
 	rows = append(rows,
-		fmt.Sprintf("Digest:\t%s", version["digest"]),
-		fmt.Sprintf("Input schema:\t%s", version["input_schema"]),
+		fmt.Sprintf("Digest:\t%s", version.Digest),
+		fmt.Sprintf("Input schema:\t%s", version.InputSchema),
 	)
-	if comment, ok := version["comment"].(string); ok && comment != "" {
-		rows = append(rows, fmt.Sprintf("Comment:\t%s", comment))
+	if version.Comment != "" {
+		rows = append(rows, fmt.Sprintf("Comment:\t%s", version.Comment))
 	}
-	rows = append(rows, fmt.Sprintf("Published by:\t%s", version["created_by"]))
-	publishedAt, err := formattedTimestamp(version["created_at"], true)
+	rows = append(rows, fmt.Sprintf("Published by:\t%s", version.CreatedBy))
+	publishedAt, err := formattedTimestamp(version.CreatedAt, true)
 	if err != nil {
 		return err
 	}
 	rows = append(rows, fmt.Sprintf("Published at:\t%s", publishedAt))
-	if validatedAt, ok := version["validated_at"]; ok && validatedAt != nil {
-		at, err := formattedTimestamp(validatedAt, true)
+	if version.ValidatedAt != nil {
+		validatedAt, err := formattedTimestamp(*version.ValidatedAt, true)
 		if err != nil {
 			return err
 		}
-		rows = append(rows, fmt.Sprintf("Validated at:\t%s", at))
+		rows = append(rows, fmt.Sprintf("Validated at:\t%s", validatedAt))
 	}
-	for _, field := range []struct{ label, key string }{
-		{"OPA version", "opa_version"},
-		{"Entrypoint", "entrypoint"},
-	} {
-		if value, ok := version[field.key]; ok && value != nil {
-			rows = append(rows, fmt.Sprintf("%s:\t%s", field.label, value))
-		}
+	if version.OPAVersion != "" {
+		rows = append(rows, fmt.Sprintf("OPA version:\t%s", version.OPAVersion))
 	}
-	if schema, ok := version["params_schema"]; ok && schema != nil {
-		compact, err := json.Marshal(schema)
+	if version.Entrypoint != "" {
+		rows = append(rows, fmt.Sprintf("Entrypoint:\t%s", version.Entrypoint))
+	}
+	if version.ParamsSchema != nil {
+		compact, err := json.Marshal(version.ParamsSchema)
 		if err != nil {
 			return err
 		}
