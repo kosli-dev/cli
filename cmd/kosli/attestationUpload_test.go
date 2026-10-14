@@ -18,11 +18,15 @@ import (
 // kept so a test can assert on what the CLI sent.
 type uploadFake struct {
 	*httpfake.HTTPFake
-	mint      map[string]any
-	put       *http.Request
-	putBody   []byte
-	attest    map[string]any
-	attestReq *http.Request
+	mint    map[string]any
+	put     *http.Request
+	putBody []byte
+	// putStatus and putResponse are what the bucket answers; 200 and empty
+	// unless a test sets them.
+	putStatus   int
+	putResponse string
+	attest      map[string]any
+	attestReq   *http.Request
 }
 
 const (
@@ -33,7 +37,7 @@ const (
 
 func newUploadFake(t *testing.T, org, flow, trail string) *uploadFake {
 	t.Helper()
-	f := &uploadFake{HTTPFake: httpfake.New()}
+	f := &uploadFake{HTTPFake: httpfake.New(), putStatus: http.StatusOK}
 	t.Cleanup(f.Close)
 
 	f.NewHandler().Post("/api/v2/attestations/" + org + "/uploads").Handle(func(w http.ResponseWriter, r *http.Request, _ *httpfake.Request) {
@@ -54,7 +58,8 @@ func newUploadFake(t *testing.T, org, flow, trail string) *uploadFake {
 		body, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
 		f.putBody = body
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(f.putStatus)
+		_, _ = w.Write([]byte(f.putResponse))
 	})
 	f.NewHandler().Post(fmt.Sprintf("/api/v2/attestations/%s/%s/trail/%s/generic", org, flow, trail)).Handle(func(w http.ResponseWriter, r *http.Request, _ *httpfake.Request) {
 		f.attestReq = r
@@ -81,4 +86,66 @@ func TestAttestWithAttachmentMintsAnUploadForTheFile(t *testing.T) {
 		"size_bytes": float64(len(content)),
 		"sha256":     fmt.Sprintf("%x", sha256.Sum256(content)),
 	}, fake.mint)
+}
+
+func TestAttestWithAttachmentPutsTheFileAsMinted(t *testing.T) {
+	fake := newUploadFake(t, "org", "flow", "trail")
+	content, err := os.ReadFile("testdata/file1")
+	require.NoError(t, err)
+
+	_, _, _, _, err = executeCommandC(
+		`attest generic --name foo --attachments testdata/file1 ` +
+			`--flow flow --trail trail --org org --api-token tok --host ` + fake.Server.URL)
+
+	require.NoError(t, err)
+	require.NotNil(t, fake.put, "the file was not PUT to the minted URL")
+	require.Equal(t, "X-Amz-Signature=abc", fake.put.URL.RawQuery, "the signed query must reach the bucket untouched")
+	require.Equal(t, fakeChecksum, fake.put.Header.Get("x-amz-checksum-sha256"))
+	require.Empty(t, fake.put.Header.Get("Authorization"), "the Kosli token must not reach the bucket")
+	require.Equal(t, int64(len(content)), fake.put.ContentLength)
+	require.Equal(t, content, fake.putBody)
+}
+
+func TestAttestWithAttachmentSendsTheUploadIDAndNoFile(t *testing.T) {
+	fake := newUploadFake(t, "org", "flow", "trail")
+
+	_, _, _, _, err := executeCommandC(
+		`attest generic --name foo --attachments testdata/file1 ` +
+			`--flow flow --trail trail --org org --api-token tok --host ` + fake.Server.URL)
+
+	require.NoError(t, err)
+	require.NotNil(t, fake.attestReq, "the attestation was not recorded")
+	require.Equal(t, fakeUploadID, fake.attest["attachment_upload_id"])
+	require.Empty(t, fake.attestReq.MultipartForm.File, "the file must not travel with the attestation")
+}
+
+func TestAttestWithAttachmentFailsWhenMintIsRefused(t *testing.T) {
+	fake := httpfake.New()
+	t.Cleanup(fake.Close)
+	fake.NewHandler().Post("/api/v2/attestations/org/uploads").Reply(404).
+		BodyString(`{"message":"Direct uploads are not available on this server"}`)
+	fake.NewHandler().Post("/api/v2/attestations/org/flow/trail/trail/generic").Handle(func(w http.ResponseWriter, r *http.Request, _ *httpfake.Request) {
+		t.Error("nothing must be attested when the upload was refused")
+	})
+
+	_, _, _, _, err := executeCommandC(
+		`attest generic --name foo --attachments testdata/file1 ` +
+			`--flow flow --trail trail --org org --api-token tok --host ` + fake.Server.URL)
+
+	require.EqualError(t, err, "Direct uploads are not available on this server")
+}
+
+func TestAttestWithAttachmentFailsWhenTheBucketRefusesTheFile(t *testing.T) {
+	fake := newUploadFake(t, "org", "flow", "trail")
+	fake.putStatus = http.StatusForbidden
+	fake.putResponse = `<?xml version="1.0" encoding="UTF-8"?><Error><Code>BadDigest</Code>` +
+		`<Message>The SHA256 you specified did not match what we received</Message></Error>`
+
+	_, _, _, _, err := executeCommandC(
+		`attest generic --name foo --attachments testdata/file1 ` +
+			`--flow flow --trail trail --org org --api-token tok --host ` + fake.Server.URL)
+
+	require.EqualError(t, err, "failed to upload attachment testdata/file1: "+
+		"upload refused with HTTP 403: BadDigest: The SHA256 you specified did not match what we received")
+	require.Nil(t, fake.attestReq, "nothing must be attested when the upload failed")
 }
