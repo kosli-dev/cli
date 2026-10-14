@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -152,7 +153,7 @@ func (suite *MultiHostTestSuite) TestRunMultiHostRefusesAnEmptyHostInTheList() {
 	_, err := runMultiHost(args)
 
 	assert.EqualError(suite.T(), err,
-		"\n[]\n[kosli status] flag '--host' was given an empty value")
+		"\n[]\n[kosli status cli-version="+version.GetVersion()+"] flag '--host' was given an empty value")
 }
 
 // TestRunDoubledHostAcceptsSpaceSeparatedBoolFlag checks that a boolean flag

@@ -48,7 +48,8 @@ func main() {
 // calls) can tell which invocation failed. It prepends the command path and,
 // when present and non-empty, the --flow and --trail flag values. env-provided
 // values (KOSLI_FLOW/KOSLI_TRAIL) are included too, since bindFlags sets them
-// on the flag. Returns err unchanged when cmd or err is nil.
+// on the flag. It ends with cli-version= so support can reproduce errors on the
+// exact build. Returns err unchanged when cmd or err is nil.
 func enrichError(cmd *cobra.Command, err error) error {
 	if cmd == nil || err == nil {
 		return err
@@ -59,6 +60,7 @@ func enrichError(cmd *cobra.Command, err error) error {
 			parts = append(parts, fmt.Sprintf("%s=%s", name, f.Value.String()))
 		}
 	}
+	parts = append(parts, fmt.Sprintf("cli-version=%s", version.GetVersion()))
 	return fmt.Errorf("[%s] %w", strings.Join(parts, " "), err)
 }
 

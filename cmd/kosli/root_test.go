@@ -270,7 +270,7 @@ func (suite *RootCommandTestSuite) TestInnerMainEnrichesError() {
 
 	err = innerMain(cmd, append([]string{"kosli"}, args...))
 	suite.Require().Error(err)
-	suite.ErrorContains(err, "[kosli attest snyk flow=cyber-dojo trail=live-snyk-scan]")
+	suite.ErrorContains(err, "[kosli attest snyk flow=cyber-dojo trail=live-snyk-scan cli-version="+version.GetVersion()+"]")
 }
 
 // TestExecuteCommandCNormalizesSpaceSeparatedBoolFlag checks that the golden
@@ -436,20 +436,22 @@ func TestEnrichError(t *testing.T) {
 		require.Equal(t, e, enrichError(nil, e))
 	})
 
-	t.Run("command path only when no flow/trail flags exist", func(t *testing.T) {
+	cliVersion := "cli-version=" + version.GetVersion()
+
+	t.Run("command path and cli version when no flow/trail flags exist", func(t *testing.T) {
 		got := enrichError(leaf(false, "", ""), errors.New("server returned 404"))
-		require.EqualError(t, got, `[kosli attest snyk] server returned 404`)
+		require.EqualError(t, got, `[kosli attest snyk `+cliVersion+`] server returned 404`)
 	})
 
 	t.Run("includes flow and trail when set", func(t *testing.T) {
 		got := enrichError(leaf(true, "cyber-dojo", "live-snyk-scan"), errors.New("server returned 404"))
 		require.EqualError(t, got,
-			`[kosli attest snyk flow=cyber-dojo trail=live-snyk-scan] server returned 404`)
+			`[kosli attest snyk flow=cyber-dojo trail=live-snyk-scan `+cliVersion+`] server returned 404`)
 	})
 
 	t.Run("empty flag values are omitted", func(t *testing.T) {
 		got := enrichError(leaf(true, "", ""), errors.New("boom"))
-		require.EqualError(t, got, `[kosli attest snyk] boom`)
+		require.EqualError(t, got, `[kosli attest snyk `+cliVersion+`] boom`)
 	})
 
 	t.Run("preserves the wrapped error for errors.Is", func(t *testing.T) {
