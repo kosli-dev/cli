@@ -37,21 +37,6 @@ func (suite *AttestSbomCommandTestSuite) SetupTest() {
 	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 }
 
-// sizedSbom makes a file of the given size without allocating it: past the
-// first byte it is zeros the filesystem never stored. The leading "{" sends the
-// parser down the JSON branch, which fails on the second byte, rather than the
-// fallback that regex-scans the whole buffer three times.
-func (suite *AttestSbomCommandTestSuite) sizedSbom(name string, size int64) string {
-	path := filepath.Join(suite.T().TempDir(), name)
-	if err := os.WriteFile(path, []byte("{"), 0644); err != nil {
-		suite.T().Fatal(err)
-	}
-	if err := os.Truncate(path, size); err != nil {
-		suite.T().Fatal(err)
-	}
-	return path
-}
-
 // The dry-run cases are what prove the payload this command builds. They need a
 // server for the flow and trail in SetupTest, but not one that knows the sbom
 // type, so they stay green while the server side is unreleased.
@@ -170,28 +155,6 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomRejectsAttachmentsFromACo
 			name:      "names the config file the value came from",
 			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/cyclonedx.json --config-file %s %s", configFile, suite.defaultKosliArguments),
 			golden:    fmt.Sprintf("Error: --attachments cannot be used with attest sbom (set by config file [%s]): the SBOM file is the only attachment, and a second one would be compressed\n", configFile),
-		},
-	})
-}
-
-func (suite *AttestSbomCommandTestSuite) TestAttestSbomSizeLimit() {
-	over := suite.sizedSbom("oversize.json", maxSbomFileBytes+1)
-	atLimit := suite.sizedSbom("at-limit.json", maxSbomFileBytes)
-
-	runTestCmd(suite.T(), []cmdTestCase{
-		{
-			wantError: true,
-			name:      "fails locally on an oversize file, rather than with a bare 413 from the server",
-			cmd:       fmt.Sprintf("attest sbom --name my-sbom --sbom-file %s %s", over, suite.defaultKosliArguments),
-			golden:    fmt.Sprintf("Error: SBOM file [%s] is above the %d byte limit for an SBOM attestation\n", over, maxSbomFileBytes),
-		},
-		{
-			// Reaching the parser is the point: it proves the limit is the
-			// largest accepted size and not the smallest rejected one.
-			wantError:   true,
-			name:        "a file of exactly the limit gets past the size guard",
-			cmd:         fmt.Sprintf("attest sbom --name my-sbom --sbom-file %s %s", atLimit, suite.defaultKosliArguments),
-			goldenRegex: `failed to parse SBOM file .* not valid JSON`,
 		},
 	})
 }

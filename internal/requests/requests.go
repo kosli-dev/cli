@@ -27,10 +27,9 @@ type FormItem struct {
 	Content   any
 }
 
-// FileBytes is the Content of a "file-bytes" FormItem: a file the caller has
-// already read. Uploading these bytes, rather than a path the body builder
-// would open again, is what lets a caller promise that a checksum it recorded
-// describes the bytes the server received.
+// FileBytes is a file the caller has already read. Uploading these bytes,
+// rather than a path that would be opened again, is what lets a caller promise
+// that a checksum it recorded describes the bytes the bucket received.
 type FileBytes struct {
 	Name string
 	Data []byte
@@ -251,20 +250,6 @@ func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[st
 			}
 
 			_, err = io.Copy(part, file)
-			if err != nil {
-				return "", body, nil, err
-			}
-
-		case "file-bytes":
-			fb, ok := item.Content.(FileBytes)
-			if !ok {
-				return "", body, nil, fmt.Errorf("form item %s: file-bytes content must be a FileBytes", item.FieldName)
-			}
-			part, err := writer.CreateFormFile(item.FieldName, fb.Name)
-			if err != nil {
-				return "", body, nil, err
-			}
-			_, err = part.Write(fb.Data)
 			if err != nil {
 				return "", body, nil, err
 			}
