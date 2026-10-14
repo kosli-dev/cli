@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"log"
@@ -371,6 +372,65 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		}
 		return &HTTPResponse{string(body), resp}, nil
 	}
+}
+
+// UploadParams is a file sent to a pre-signed URL. The URL carries the
+// credentials, so no Kosli token goes with it, and Headers are the signed ones
+// the server handed back, sent exactly as given.
+type UploadParams struct {
+	Method  string
+	URL     string
+	Headers map[string]string
+	Body    io.ReadSeeker
+	Size    int64
+}
+
+// Upload sends p.Body to p.URL. The body is streamed, not read into memory,
+// and rewound on each retry.
+func (c *Client) Upload(p *UploadParams) error {
+	req, err := http.NewRequest(p.Method, p.URL, p.Body)
+	if err != nil {
+		return fmt.Errorf("failed to create %s request to %s : %v", p.Method, p.URL, err)
+	}
+	// The retry client rewinds a ReadSeeker on each attempt but leaves the
+	// length unknown, and S3 refuses a PUT without Content-Length.
+	req.ContentLength = p.Size
+	req.Header.Set("User-Agent", "Kosli/"+version.GetVersion())
+	for k, v := range p.Headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := c.HttpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("%v", err)
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			c.Logger.Warn("failed to close response body: %v", err)
+		}
+	}()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response from %s request to %s : %v", req.Method, req.URL, err)
+	}
+	c.Logger.Debug("request made to %s and got status %d", req.URL, resp.StatusCode)
+	if !isSuccess(resp.StatusCode) {
+		return &APIError{StatusCode: resp.StatusCode, Message: s3ErrorMessage(resp.StatusCode, body)}
+	}
+	return nil
+}
+
+// s3ErrorMessage renders an S3 error response, which is XML rather than the
+// JSON the Kosli API answers with.
+func s3ErrorMessage(status int, body []byte) string {
+	var s3Error struct {
+		Code    string `xml:"Code"`
+		Message string `xml:"Message"`
+	}
+	if err := xml.Unmarshal(body, &s3Error); err != nil || s3Error.Code == "" {
+		return fmt.Sprintf("upload refused with HTTP %d", status)
+	}
+	return fmt.Sprintf("upload refused with HTTP %d: %s: %s", status, s3Error.Code, s3Error.Message)
 }
 
 func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, message string) error {
