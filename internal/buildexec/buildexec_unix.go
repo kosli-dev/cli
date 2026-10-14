@@ -25,7 +25,7 @@ func setProcessGroup(cmd *exec.Cmd, stdin io.Reader) bool {
 }
 
 func notifySignals(c chan<- os.Signal) {
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 }
 
 func relaySignals(signals <-chan os.Signal, done <-chan struct{}, pid int, newGroup bool) {
@@ -38,8 +38,8 @@ func relaySignals(signals <-chan os.Signal, done <-chan struct{}, pid int, newGr
 		select {
 		case sig := <-signals:
 			// Without its own group the command shares kosli's terminal, which
-			// has already sent it the SIGINT.
-			if newGroup || sig != syscall.SIGINT {
+			// has already sent it any SIGINT, SIGQUIT or SIGHUP.
+			if newGroup || sig == syscall.SIGTERM {
 				_ = syscall.Kill(target, sig.(syscall.Signal))
 			}
 			if hardKill == nil {
