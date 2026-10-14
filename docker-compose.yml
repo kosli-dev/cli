@@ -48,6 +48,11 @@ services:
       SECRET_KEY: cli-integration-tests-only-not-a-secret
       EVIDENCE_BUCKET_ENDPOINT_URL: http://minio:9000
       EVIDENCE_BUCKET_NAME: cli-tests-evidence
+      LANDING_BUCKET_ENDPOINT_URL: http://minio:9000
+      LANDING_BUCKET_NAME: cli-tests-landing
+      # The signature covers Host, and the test process reaches RustFS through
+      # the published port, not the compose network name.
+      LANDING_BUCKET_SIGNING_ENDPOINT_URL: http://localhost:9010
       AWS_ACCESS_KEY_ID: ROOTUSER
       AWS_SECRET_ACCESS_KEY: ROOTUSER
     container_name: cli_kosli_server
@@ -111,4 +116,7 @@ services:
         curl -sS --fail-with-body --retry 5 --retry-delay 1 --max-time 30
         --aws-sigv4 aws:amz:us-east-1:s3 --user ROOTUSER:ROOTUSER
         -X PUT -H 'x-amz-bucket-object-lock-enabled: true'
-        http://minio:9000/cli-tests-evidence
+        http://minio:9000/cli-tests-evidence &&
+        curl -sS --fail-with-body --retry 5 --retry-delay 1 --max-time 30
+        --aws-sigv4 aws:amz:us-east-1:s3 --user ROOTUSER:ROOTUSER
+        -X PUT http://minio:9000/cli-tests-landing
