@@ -17,7 +17,8 @@ const assertPRGitlabShortDesc = `Assert a Gitlab merge request for a git commit 
 
 const assertPRGitlabLongDesc = assertPRGitlabShortDesc + `
 The command exits with non-zero exit code 
-if no merge requests were found for the commit.`
+if no merge requests were found for the commit.
+` + assertPRNoRepoDesc
 
 const assertPRGitlabExample = `
 kosli assert mergerequest gitlab \

@@ -96,7 +96,8 @@ https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#ap
 
 ` + kosliIgnoreDesc + `
 
-` + commitDescription
+` + commitRequiredDesc + `
+` + commitDetailsDesc
 
 const attestJiraExample = `
 # report a jira attestation about a pre-built docker artifact (kosli calculates the fingerprint):

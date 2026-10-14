@@ -11,13 +11,23 @@ import (
 	"github.com/spf13/pflag"
 )
 
-const commitDescription = `You can optionally associate the attestation to a git commit using ^--commit^ (requires access to a git repo).
-You can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^.
-Note that when the attestation is reported for an artifact that does not yet exist in Kosli, ^--commit^ is required to facilitate
-binding the attestation to the right artifact.
+const commitRepoDesc = `The commit is read from the git repository at ^--repo-root^, which must be the repository's top-level directory.`
+
+const commitDetailsDesc = `You can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^.
 To record repository information, all three of ^--repo-id^, ^--repo-url^, and ^--repository^ must be set together.
 These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
 In other CI systems, set them explicitly to capture repository metadata.`
+
+const commitDescription = `You can optionally associate the attestation to a git commit using ^--commit^.
+` + commitRepoDesc + ` Without ^--commit^, no git repository is needed.
+If ^--commit^ is only defaulted from CI and ^--repo-root^ is left at ^.^, a missing repository or commit
+prints a warning and the attestation is sent without commit info.
+Note that when the attestation is reported for an artifact that does not yet exist in Kosli, ^--commit^ is required to facilitate
+binding the attestation to the right artifact.
+` + commitDetailsDesc
+
+const commitRequiredDesc = `This command always requires ^--commit^ (defaulted in some CIs) and access to the git repository containing it.
+` + commitRepoDesc
 
 type URLInfo struct {
 	Href        string `json:"href"`

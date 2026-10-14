@@ -35,7 +35,10 @@ type ArtifactPayload struct {
 const reportArtifactShortDesc = `Report an artifact creation to a Kosli flow.  `
 
 const reportArtifactLongDesc = reportArtifactShortDesc + `
-` + fingerprintDesc + kosliIgnoreDesc
+` + fingerprintDesc + kosliIgnoreDesc + `
+
+This command always requires access to the git repository at ^--repo-root^ (its top-level directory)
+to read ^--git-commit^ and the commits since the previous artifact.`
 
 const reportArtifactExample = `
 # Report to a Kosli flow that a file type artifact has been created

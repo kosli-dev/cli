@@ -49,11 +49,11 @@ const attestArtifactShortDesc = `Attest an artifact creation to a Kosli flow.  `
 
 const attestArtifactLongDesc = attestArtifactShortDesc + `
 ` + fingerprintDesc + kosliIgnoreDesc + `
-This command requires access to a git repo to associate the artifact to the git commit it is originating from.
-You can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^.
-To record repository information, all three of ^--repo-id^, ^--repo-url^, and ^--repository^ must be set together.
-These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
-In other CI systems, set them explicitly to capture repository metadata.`
+
+This command always requires access to a git repository to associate the artifact to the git commit it originates from.
+` + commitRepoDesc + ` ^--commit^ defaults to the CI commit in some CIs, otherwise to HEAD.
+The command fails if no repository is found at ^--repo-root^, even when ^--fingerprint^ is given.
+` + commitDetailsDesc
 
 const attestArtifactExample = `
 # Attest that a file type artifact has been created, and let Kosli calculate its fingerprint

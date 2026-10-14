@@ -17,7 +17,8 @@ const assertPRAzureShortDesc = `Assert an Azure DevOps pull request for a git co
 
 const assertPRAzureLongDesc = assertPRAzureShortDesc + `
 The command exits with non-zero exit code 
-if no pull requests were found for the commit.`
+if no pull requests were found for the commit.
+` + assertPRNoRepoDesc
 
 const assertPRAzureExample = `
 kosli assert pullrequest azure \

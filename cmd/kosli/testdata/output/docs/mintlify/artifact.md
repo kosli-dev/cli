@@ -50,6 +50,9 @@ Paths the list already matches stay excluded whatever is later added there, so k
 Excluding the file with `--exclude` keeps it out of the fingerprint but still applies the paths it lists, which lets a writable directory change the list again.
 To drop the file from the fingerprint safely, move its entries to `--exclude` and delete it.
 
+This command always requires access to the git repository at `--repo-root` (its top-level directory)
+to read `--git-commit` and the commits since the previous artifact.
+
 ## Flags
 | Flag | Type | Description |
 | :--- | :--- | :--- |
@@ -60,13 +63,13 @@ To drop the file from the fingerprint safely, move its entries to `--exclude` an
 | `-x`, `--exclude` | strings | [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for `--artifact-type` dir. |
 | `-F`, `--fingerprint` | string | [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '`--artifact-type`'. |
 | `-f`, `--flow` | string | The Kosli flow name. |
-| `-g`, `--git-commit` | string | [defaulted] The git commit from which the artifact was created. (defaulted in some CIs: [docs](/integrations/ci_cd), otherwise defaults to HEAD ). |
+| `-g`, `--git-commit` | string | [defaulted] The git commit from which the artifact was created. (defaulted in some CIs: [docs](/integrations/ci_cd), otherwise defaults to HEAD ). The commit is read from the git repository at `--repo-root`. |
 | `-h`, `--help` | bool | help for artifact |
 | `-n`, `--name` | string | [optional] Artifact display name, if different from file, image or directory name. |
 | `--registry-password` | string | [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry and it is not already accessible via Docker/Podman auth files or a credential helper. |
 | `--registry-provider` | string | [deprecated] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry. (DEPRECATED: no longer used) |
 | `--registry-username` | string | [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry and it is not already accessible via Docker/Podman auth files or a credential helper. |
-| `--repo-root` | string | [defaulted] The directory where the source git repository is available. (default ".") |
+| `--repo-root` | string | [defaulted] The directory where the source git repository is available. It must be the repository's top-level directory. (default ".") |
 
 
 ## Examples Use Cases
