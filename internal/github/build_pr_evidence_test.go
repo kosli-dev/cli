@@ -258,6 +258,7 @@ func TestBuildPREvidence_RecordsWhoSignedACommit(t *testing.T) {
 		[]graphqlCommitNode{node}, nil,
 	)
 	require.NoError(t, err)
+	require.Len(t, evidence.Commits, 1)
 	c := evidence.Commits[0]
 	require.Equal(t, "octocat", c.AuthorUsername)
 	require.Equal(t, "tooky", c.SignerUsername)
@@ -280,7 +281,9 @@ func TestBuildPREvidence_RecordsACommitGitHubSigned(t *testing.T) {
 		[]graphqlCommitNode{node}, nil,
 	)
 	require.NoError(t, err)
+	require.Len(t, evidence.Commits, 1)
 	require.Equal(t, "web-flow", evidence.Commits[0].SignerUsername)
+	require.NotNil(t, evidence.Commits[0].SignedByPlatform)
 	require.True(t, *evidence.Commits[0].SignedByPlatform)
 }
 
@@ -298,6 +301,8 @@ func TestBuildPREvidence_RecordsASignatureWithNoSigner(t *testing.T) {
 		[]graphqlCommitNode{node}, nil,
 	)
 	require.NoError(t, err)
+	require.Len(t, evidence.Commits, 1)
 	require.Equal(t, "", evidence.Commits[0].SignerUsername)
+	require.NotNil(t, evidence.Commits[0].SignedByPlatform)
 	require.False(t, *evidence.Commits[0].SignedByPlatform)
 }

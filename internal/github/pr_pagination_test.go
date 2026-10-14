@@ -370,5 +370,6 @@ func TestPREvidenceForCommitV2_RecordsHeadSHA(t *testing.T) {
 
 	prs, err := newPaginationConfig(ts).PREvidenceForCommitV2("merge-sha")
 	require.NoError(t, err)
+	require.Len(t, prs, 1)
 	require.Equal(t, "head-sha", prs[0].HeadSHA)
 }
