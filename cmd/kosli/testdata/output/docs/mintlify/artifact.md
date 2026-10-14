@@ -50,8 +50,8 @@ Paths the list already matches stay excluded whatever is later added there, so k
 Excluding the file with `--exclude` keeps it out of the fingerprint but still applies the paths it lists, which lets a writable directory change the list again.
 To drop the file from the fingerprint safely, move its entries to `--exclude` and delete it.
 
-This command always requires access to the git repository at `--repo-root` (its top-level directory)
-to read `--git-commit` and the commits since the previous artifact.
+This command always requires access to a git repository to read `--git-commit` and the commits since the previous artifact.
+The commit is read from the git repository at `--repo-root`, which must be the repository's top-level directory.
 
 ## Flags
 | Flag | Type | Description |
@@ -63,7 +63,7 @@ to read `--git-commit` and the commits since the previous artifact.
 | `-x`, `--exclude` | strings | [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for `--artifact-type` dir. |
 | `-F`, `--fingerprint` | string | [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '`--artifact-type`'. |
 | `-f`, `--flow` | string | The Kosli flow name. |
-| `-g`, `--git-commit` | string | [defaulted] The git commit from which the artifact was created. (defaulted in some CIs: [docs](/integrations/ci_cd), otherwise defaults to HEAD ). The commit is read from the git repository at `--repo-root`. |
+| `-g`, `--git-commit` | string | [defaulted] The git commit from which the artifact was created. (defaulted in some CIs: [docs](/integrations/ci_cd), otherwise required ). The commit is read from the git repository at `--repo-root`. |
 | `-h`, `--help` | bool | help for artifact |
 | `-n`, `--name` | string | [optional] Artifact display name, if different from file, image or directory name. |
 | `--registry-password` | string | [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry and it is not already accessible via Docker/Podman auth files or a credential helper. |
