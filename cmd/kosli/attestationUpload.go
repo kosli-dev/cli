@@ -15,7 +15,7 @@ import (
 
 // dryRunUploadID stands in for the id a real mint would return, so a dry run
 // can still show the attestation payload the id goes in.
-const dryRunUploadID = "<upload id from the mint request>"
+const dryRunUploadID = "upload-id-returned-by-the-mint-request"
 
 type uploadRequest struct {
 	Filename  string `json:"filename"`

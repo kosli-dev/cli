@@ -149,3 +149,33 @@ func TestAttestWithAttachmentFailsWhenTheBucketRefusesTheFile(t *testing.T) {
 		"upload refused with HTTP 403: BadDigest: The SHA256 you specified did not match what we received")
 	require.Nil(t, fake.attestReq, "nothing must be attested when the upload failed")
 }
+
+func TestAttestWithSeveralAttachmentsUploadsOneTarball(t *testing.T) {
+	fake := newUploadFake(t, "org", "flow", "trail")
+
+	_, _, _, _, err := executeCommandC(
+		`attest generic --name foo --attachments testdata/file1 --attachments testdata/valid_template.yml ` +
+			`--flow flow --trail trail --org org --api-token tok --host ` + fake.Server.URL)
+
+	require.NoError(t, err)
+	require.Equal(t, "evidence.tgz", fake.mint["filename"])
+	require.Equal(t, fake.mint["size_bytes"], float64(len(fake.putBody)))
+	require.Equal(t, fmt.Sprintf("%x", sha256.Sum256(fake.putBody)), fake.mint["sha256"])
+}
+
+func TestAttestWithAttachmentDryRunShowsBothRequestsAndSendsNothing(t *testing.T) {
+	fake := newUploadFake(t, "org", "flow", "trail")
+
+	_, out, _, _, err := executeCommandC(
+		`attest generic --name foo --attachments testdata/file1 --dry-run ` +
+			`--flow flow --trail trail --org org --api-token tok --host ` + fake.Server.URL)
+
+	require.NoError(t, err)
+	require.Nil(t, fake.mint, "a dry run must not mint")
+	require.Nil(t, fake.put, "a dry run must not upload")
+	require.Nil(t, fake.attestReq, "a dry run must not attest")
+	require.Contains(t, out, fake.Server.URL+"/api/v2/attestations/org/uploads")
+	require.Contains(t, out, `"sha256": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"`)
+	require.Contains(t, out, fake.Server.URL+"/api/v2/attestations/org/flow/trail/trail/generic")
+	require.Contains(t, out, `"attachment_upload_id": "`+dryRunUploadID+`"`)
+}
