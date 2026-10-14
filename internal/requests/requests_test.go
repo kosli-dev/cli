@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"testing"
@@ -681,4 +682,16 @@ func TestCreateMultipartRequestBodyRejectsAnUnknownItemType(t *testing.T) {
 		{Type: "file_bytes", FieldName: "attachment_file", Content: "a/path"},
 	})
 	require.Error(t, err)
+}
+
+// The retry client logs every attempt with its full URL. For a pre-signed
+// upload that URL carries the task's session token, which is blanked before
+// the line is written; the rest of the query stays for debugging.
+func TestCustomLoggerRedactsTheSecurityToken(t *testing.T) {
+	var out bytes.Buffer
+	cl := &CustomLogger{Logger: log.New(&out, "", 0)}
+
+	cl.Printf("[DEBUG] %s %s", "PUT", "https://h/uploads/k?X-Amz-Credential=ASIA%2Fs3&X-Amz-Security-Token=IQoJsecret%2F%2F&X-Amz-Signature=abc")
+
+	require.Equal(t, " PUT https://h/uploads/k?X-Amz-Credential=ASIA%2Fs3&X-Amz-Security-Token=<redacted>&X-Amz-Signature=abc\n", out.String())
 }

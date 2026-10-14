@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
@@ -78,6 +79,7 @@ func (cl *CustomLogger) Printf(format string, args ...any) {
 
 	// Remove the hardcoded [DEBUG] prefix if it exists
 	msg = strings.TrimPrefix(msg, "[DEBUG]")
+	msg = RedactSecurityToken(msg)
 
 	// Call the underlying log.Logger's Printf method with the cleaned message
 	cl.Print(msg)
@@ -359,6 +361,15 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 	}
 }
 
+var securityTokenInURL = regexp.MustCompile(`X-Amz-Security-Token=[^&\s]*`)
+
+// RedactSecurityToken blanks the session token in any pre-signed URL in text,
+// so a debug log can show where a request went without reproducing the
+// credential it carried. The rest of the query stays for debugging.
+func RedactSecurityToken(text string) string {
+	return securityTokenInURL.ReplaceAllString(text, "X-Amz-Security-Token=<redacted>")
+}
+
 // UploadParams is a file sent to a pre-signed URL. The URL carries the
 // credentials, so no Kosli token goes with it, and Headers are the signed ones
 // the server handed back, sent exactly as given.
@@ -398,7 +409,7 @@ func (c *Client) Upload(p *UploadParams) error {
 	if err != nil {
 		return fmt.Errorf("failed to read response from %s request to %s : %v", req.Method, req.URL, err)
 	}
-	c.Logger.Debug("request made to %s and got status %d", req.URL, resp.StatusCode)
+	c.Logger.Debug("request made to %s and got status %d", RedactSecurityToken(req.URL.String()), resp.StatusCode)
 	if !isSuccess(resp.StatusCode) {
 		return &APIError{StatusCode: resp.StatusCode, Message: s3ErrorMessage(resp.StatusCode, body)}
 	}

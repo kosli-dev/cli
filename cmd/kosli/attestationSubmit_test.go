@@ -28,9 +28,10 @@ type recordedAttestationRequest struct {
 }
 
 const (
-	fakeUploadID  = "2ee4c953-e472-47af-bef3-999de17c"
-	fakeChecksum  = "dQnlvaDHYtK6x/kNdYtbImP6Acy8VCq1498WO+CObKk="
-	fakeUploadKey = "/uploads/landing/acme/uploads/" + fakeUploadID + "/file1"
+	fakeUploadID    = "2ee4c953-e472-47af-bef3-999de17c"
+	fakeChecksum    = "dQnlvaDHYtK6x/kNdYtbImP6Acy8VCq1498WO+CObKk="
+	fakeUploadKey   = "/uploads/landing/acme/uploads/" + fakeUploadID + "/file1"
+	fakeSignedQuery = "X-Amz-Security-Token=IQoJsecret&X-Amz-Signature=abc"
 )
 
 // fakeAttestationServer plays both Kosli and the landing bucket: it mints an
@@ -86,7 +87,7 @@ func (fake *fakeAttestationServer) serveMint(t *testing.T, w http.ResponseWriter
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"upload_id":             fakeUploadID,
-		"url":                   serverURL + fakeUploadKey + "?X-Amz-Signature=abc",
+		"url":                   serverURL + fakeUploadKey + "?" + fakeSignedQuery,
 		"method":                "PUT",
 		"headers":               map[string]string{"x-amz-checksum-sha256": fakeChecksum},
 		"upload_url_expires_at": 1791959246.0,
@@ -233,7 +234,7 @@ func TestAttestationSubmitterPutsTheAttachmentAsMinted(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, fake.put, "the file was not PUT to the minted URL")
 	require.Equal(t, fakeUploadKey, fake.put.URL.Path)
-	require.Equal(t, "X-Amz-Signature=abc", fake.put.URL.RawQuery, "the signed query must reach the bucket untouched")
+	require.Equal(t, fakeSignedQuery, fake.put.URL.RawQuery, "the signed query must reach the bucket untouched")
 	require.Equal(t, fakeChecksum, fake.put.Header.Get("x-amz-checksum-sha256"))
 	require.Empty(t, fake.put.Header.Get("Authorization"), "the Kosli token must not reach the bucket")
 	require.Equal(t, int64(len(content)), fake.put.ContentLength)
@@ -472,4 +473,23 @@ func TestAttestationSubmitterRejectsEvidenceTogetherWithAttachments(t *testing.T
 
 	require.Error(t, err)
 	require.Empty(t, fake.recorded)
+}
+
+// The signed URL carries the server's session token. A debug run in CI must
+// not leave it in the job log.
+func TestAttestationSubmitterDebugLogDoesNotShowTheSecurityToken(t *testing.T) {
+	server, _ := newFakeAttestationServer(t)
+	var out bytes.Buffer
+	l := log.NewLogger(&out, &out, true)
+	client, err := requests.NewKosliClient("", 0, true, l)
+	require.NoError(t, err)
+	submitter := &attestationSubmitter{client: client, host: server.URL, org: "acme", token: "secret", logger: l}
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+
+	err = submitter.submit(submission)
+
+	require.NoError(t, err)
+	require.Contains(t, out.String(), fakeUploadKey+"?X-Amz-Security-Token=<redacted>&X-Amz-Signature=abc")
+	require.NotContains(t, out.String(), "IQoJsecret")
 }

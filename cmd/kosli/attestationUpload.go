@@ -99,7 +99,7 @@ func (s *attestationSubmitter) upload(name string, body io.ReadSeeker, size int6
 		return "", fmt.Errorf("failed to parse the upload response: %w", err)
 	}
 
-	s.logger.Debug("uploading %s (%d bytes) to %s", name, size, minted.URL)
+	s.logger.Debug("uploading %s (%d bytes) to %s", name, size, requests.RedactSecurityToken(minted.URL))
 	err = s.client.Upload(&requests.UploadParams{
 		Method:  minted.Method,
 		URL:     minted.URL,
