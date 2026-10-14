@@ -49,8 +49,10 @@ type Commit struct {
 	SignatureState *string `json:"signature_state,omitempty"`
 	// SignerUsername is the account whose key made the signature, which the
 	// author fields cannot show: git lets anyone set those.
-	SignerUsername   string `json:"signer_username,omitempty"`
-	SignedByPlatform *bool  `json:"signed_by_platform,omitempty"`
+	SignerUsername string `json:"signer_username,omitempty"`
+	// SignedByPlatform is true when the platform signed the commit, not a
+	// person's key; nil when the commit is unsigned or the provider does not say.
+	SignedByPlatform *bool `json:"signed_by_platform,omitempty"`
 }
 
 type PRRetriever interface {
