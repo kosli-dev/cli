@@ -282,7 +282,7 @@ func TestAttestationSubmitterAttestsNothingWhenMintIsRefused(t *testing.T) {
 
 	err := submitter.submit(submission)
 
-	require.EqualError(t, err, "Direct uploads are not available on this server")
+	require.EqualError(t, err, "failed to upload attachment testdata/file1: Direct uploads are not available on this server")
 	require.Nil(t, fake.put)
 	require.Empty(t, fake.recorded)
 }
@@ -425,14 +425,22 @@ func TestAttestationSubmitterUploadsEvidenceAlreadyInMemory(t *testing.T) {
 	server, fake := newFakeAttestationServer(t)
 	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
 	submission := genericSubmission("unit-tests")
-	submission.evidence = &requests.FileBytes{Name: "sbom.json", Data: []byte(`{"bomFormat":"CycloneDX"}`)}
+	data := []byte(`{"bomFormat":"CycloneDX"}`)
+	submission.evidence = &requests.FileBytes{Name: "sbom.json", Data: data}
 
 	err := submitter.submit(submission)
 
 	require.NoError(t, err)
+	require.Equal(t, map[string]any{
+		"filename":   "sbom.json",
+		"size_bytes": float64(len(data)),
+		"sha256":     fmt.Sprintf("%x", sha256.Sum256(data)),
+	}, fake.mint)
+	require.Equal(t, data, fake.putBody)
+	require.Equal(t, int64(len(data)), fake.put.ContentLength)
 	require.Len(t, fake.recorded, 1)
-	require.Equal(t, "unit-tests", fake.recorded[0].dataJSON["attestation_name"])
-	require.Equal(t, map[string]string{"attachment_file": "sbom.json"}, fake.recorded[0].files)
+	require.Equal(t, fakeUploadID, fake.recorded[0].dataJSON["attachment_upload_id"])
+	require.Empty(t, fake.recorded[0].files, "the bytes must not travel with the attestation")
 }
 
 func TestAttestationSubmitterRemovesTheStagingDirWhenAnAttachmentIsMissing(t *testing.T) {

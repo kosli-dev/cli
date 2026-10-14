@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -32,8 +33,7 @@ type uploadResponse struct {
 
 // uploadAttachment mints an upload for the file at path, sends the file to the
 // landing bucket and returns the upload id the attestation attaches it by.
-// The server never carries the bytes: S3 checks them against the SHA-256 the
-// mint declared.
+// The file is hashed and sent from disk, never held in memory.
 func (s *attestationSubmitter) uploadAttachment(path string) (string, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -51,7 +51,28 @@ func (s *attestationSubmitter) uploadAttachment(path string) (string, error) {
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
 		return "", err
 	}
+	uploadID, err := s.upload(filepath.Base(path), file, info.Size(), fmt.Sprintf("%x", hasher.Sum(nil)))
+	if err != nil {
+		return "", fmt.Errorf("failed to upload attachment %s: %w", path, err)
+	}
+	return uploadID, nil
+}
 
+// uploadBytes is uploadAttachment for evidence a command already holds in
+// memory, so the bytes it hashed are the bytes the bucket receives.
+func (s *attestationSubmitter) uploadBytes(evidence requests.FileBytes) (string, error) {
+	uploadID, err := s.upload(evidence.Name, bytes.NewReader(evidence.Data), int64(len(evidence.Data)),
+		fmt.Sprintf("%x", sha256.Sum256(evidence.Data)))
+	if err != nil {
+		return "", fmt.Errorf("failed to upload attachment %s: %w", evidence.Name, err)
+	}
+	return uploadID, nil
+}
+
+// upload mints an upload for body and sends it to the landing bucket. The
+// server never carries the bytes: S3 checks them against the SHA-256 the
+// mint declared.
+func (s *attestationSubmitter) upload(name string, body io.ReadSeeker, size int64, sha256Hex string) (string, error) {
 	mintURL, err := url.JoinPath(s.host, "api/v2/attestations", s.org, "uploads")
 	if err != nil {
 		return "", err
@@ -60,9 +81,9 @@ func (s *attestationSubmitter) uploadAttachment(path string) (string, error) {
 		Method: http.MethodPost,
 		URL:    mintURL,
 		Payload: uploadRequest{
-			Filename:  filepath.Base(path),
-			SizeBytes: info.Size(),
-			Sha256:    fmt.Sprintf("%x", hasher.Sum(nil)),
+			Filename:  name,
+			SizeBytes: size,
+			Sha256:    sha256Hex,
 		},
 		DryRun: s.dryRun,
 		Token:  s.token,
@@ -78,16 +99,16 @@ func (s *attestationSubmitter) uploadAttachment(path string) (string, error) {
 		return "", fmt.Errorf("failed to parse the upload response: %w", err)
 	}
 
-	s.logger.Debug("uploading %s (%d bytes) to %s", path, info.Size(), minted.URL)
+	s.logger.Debug("uploading %s (%d bytes) to %s", name, size, minted.URL)
 	err = s.client.Upload(&requests.UploadParams{
 		Method:  minted.Method,
 		URL:     minted.URL,
 		Headers: minted.Headers,
-		Body:    file,
-		Size:    info.Size(),
+		Body:    body,
+		Size:    size,
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to upload attachment %s: %w", path, err)
+		return "", err
 	}
 	return minted.UploadID, nil
 }

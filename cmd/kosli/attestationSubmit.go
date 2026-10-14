@@ -104,7 +104,12 @@ func (s *attestationSubmitter) form(a attestationSubmission) ([]requests.FormIte
 		return nil, fmt.Errorf("an attestation carries either in-memory evidence or attachments, not both")
 	}
 	if a.evidence != nil {
-		return append(form, requests.FormItem{Type: "file-bytes", FieldName: "attachment_file", Content: *a.evidence}), nil
+		uploadID, err := s.uploadBytes(*a.evidence)
+		if err != nil {
+			return nil, err
+		}
+		a.payload.setAttachmentUploadID(uploadID)
+		return form, nil
 	}
 	if len(a.attachments) == 0 {
 		return form, nil
