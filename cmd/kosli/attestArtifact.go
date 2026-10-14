@@ -66,9 +66,11 @@ The command fails if no repository is found at ^--repo-root^, even when ^--finge
 ` + commitDetailsDesc + `
 
 Everything after ^--^ runs as a build command, and the artifact is attested only if the build succeeds.
-Its fingerprint is calculated after the build. The build command (with secret values masked) and its duration
-are recorded in the ^build_command^ and ^build_duration_seconds^ annotations; use ^--record-build-command=false^
-to leave out the command. If the build fails, nothing is attested and Kosli exits with the build's exit code.`
+Its fingerprint is calculated after the build. The build command and its duration are recorded in the
+^build_command^ and ^build_duration_seconds^ annotations. Masking in ^build_command^ only covers the API token and the
+values of environment variables whose names look secret (e.g. containing TOKEN, SECRET, PASS, KEY or AUTH); a secret
+typed literally in the command is recorded as is, so use ^--record-build-command=false^ to leave out the command.
+If the build fails, nothing is attested and Kosli exits with the build's exit code.`
 
 const attestArtifactExample = `
 # Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
@@ -245,7 +247,8 @@ func validateBuildCommand(buildCmd []string, fingerprint string) error {
 // records the build in the attestation's annotations.
 func (o *attestArtifactOptions) runBuild(artifactName string, stdin io.Reader, stdout, stderr io.Writer) error {
 	var before string
-	if o.fingerprintOptions.artifactType == "file" || o.fingerprintOptions.artifactType == "dir" {
+	// Only files: hashing a large directory twice would slow down every build.
+	if o.fingerprintOptions.artifactType == "file" {
 		before, _ = GetSha256Digest(artifactName, o.fingerprintOptions, logger)
 	}
 
@@ -268,7 +271,7 @@ func (o *attestArtifactOptions) runBuild(artifactName string, stdin io.Reader, s
 	return nil
 }
 
-var secretEnvNameRegexp = regexp.MustCompile(`(?i)(TOKEN|SECRET|PASSWORD|PASSWD|KEY|CREDENTIAL)`)
+var secretEnvNameRegexp = regexp.MustCompile(`(?i)(TOKEN|SECRET|PASS|KEY|CREDENTIAL|AUTH|PRIVATE|CERT|PAT\b)`)
 
 // maskSecrets replaces, in cmdline, the values of environment variables whose
 // names look secret, and every extra value, with "***".
