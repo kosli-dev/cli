@@ -252,6 +252,11 @@ func TestAttestArtifactBuildCommandDryRun(t *testing.T) {
 			goldenRegex: fmt.Sprintf(`^\[warning\] artifact %s was not modified by the build command\n(.|\n)*"fingerprint"`, unchanged),
 		},
 		{
+			name:        "does not check whether a dir artifact was modified",
+			cmd:         fmt.Sprintf("attest artifact %s %s -- true", dir, strings.Replace(args, "--artifact-type file", "--artifact-type dir", 1)),
+			goldenRegex: `^(\[warning\] Repo information[^\n]*\n)?###############`,
+		},
+		{
 			name:        "masks secrets in the build command",
 			cmd:         fmt.Sprintf("attest artifact %s %s -- sh -c 'cp testdata/file1 %s' s3cr3t-value secret-token", out, args, out),
 			goldenRegex: fmt.Sprintf(`"build_command": "sh -c cp testdata/file1 %s \*\*\* \*\*\*"`, out),
@@ -290,6 +295,10 @@ func TestMaskSecrets(t *testing.T) {
 		{name: "ignores empty values", cmdline: "build", environ: []string{"MY_KEY="}, extra: []string{""}, want: "build"},
 		{name: "masks the longer of two overlapping secrets whole", cmdline: "run abcdef-extra", environ: []string{"A_KEY=abcdef", "B_KEY=abcdef-extra"}, want: "run ***"},
 		{name: "always masks extra values", cmdline: "run tok", extra: []string{"tok"}, want: "run ***"},
+		{name: "masks other common secret names", cmdline: "push npm-auth-1 gh-pat-1 db-pass-1 pem-private-1 tls-cert-1",
+			environ: []string{"NPM_AUTH=npm-auth-1", "GH_PAT=gh-pat-1", "DB_PASS=db-pass-1", "SIGNING_PRIVATE=pem-private-1", "CLIENT_CERT=tls-cert-1"},
+			want:    "push *** *** *** *** ***"},
+		{name: "does not treat PATH as a personal access token", cmdline: "run /usr/local/bin", environ: []string{"PATH=/usr/local/bin"}, want: "run /usr/local/bin"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, maskSecrets(tt.cmdline, tt.environ, tt.extra...))
