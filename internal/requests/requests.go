@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -381,10 +382,19 @@ type UploadParams struct {
 	Size    int64
 }
 
+// seekCloser keeps Seek visible on a request body. http.NewRequest wraps a
+// plain ReadSeeker in io.NopCloser, which hides it, and the retry client then
+// copies the whole body into memory to be able to resend it; with Seek in
+// view it rewinds instead.
+type seekCloser struct{ io.ReadSeeker }
+
+func (seekCloser) Close() error { return nil }
+
 // Upload sends p.Body to p.URL. The body is streamed, not read into memory,
-// and rewound on each retry.
+// and rewound on each retry. A transport error names the URL, so it is
+// returned with the session token blanked.
 func (c *Client) Upload(p *UploadParams) error {
-	req, err := http.NewRequest(p.Method, p.URL, p.Body)
+	req, err := http.NewRequest(p.Method, p.URL, seekCloser{p.Body})
 	if err != nil {
 		return fmt.Errorf("failed to create %s request to %s : %v", p.Method, p.URL, err)
 	}
@@ -398,7 +408,7 @@ func (c *Client) Upload(p *UploadParams) error {
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return errors.New(RedactSecurityToken(err.Error()))
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -407,7 +417,7 @@ func (c *Client) Upload(p *UploadParams) error {
 	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response from %s request to %s : %v", req.Method, req.URL, err)
+		return fmt.Errorf("failed to read response from %s request to %s : %v", req.Method, RedactSecurityToken(req.URL.String()), err)
 	}
 	c.Logger.Debug("request made to %s and got status %d", RedactSecurityToken(req.URL.String()), resp.StatusCode)
 	if !isSuccess(resp.StatusCode) {

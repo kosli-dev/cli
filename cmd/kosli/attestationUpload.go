@@ -98,6 +98,11 @@ func (s *attestationSubmitter) upload(name string, body io.ReadSeeker, size int6
 	if err := json.Unmarshal([]byte(resp.Body), &minted); err != nil {
 		return "", fmt.Errorf("failed to parse the upload response: %w", err)
 	}
+	// An empty id would be dropped from the attestation by omitempty, and the
+	// attestation recorded without its evidence and without a word.
+	if minted.UploadID == "" || minted.URL == "" || minted.Method == "" {
+		return "", fmt.Errorf("the upload response is missing upload_id, url or method")
+	}
 
 	s.logger.Debug("uploading %s (%d bytes) to %s", name, size, requests.RedactSecurityToken(minted.URL))
 	err = s.client.Upload(&requests.UploadParams{

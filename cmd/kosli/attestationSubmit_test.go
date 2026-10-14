@@ -52,6 +52,10 @@ type fakeAttestationServer struct {
 	putBody     []byte
 	putStatus   int
 	putResponse string
+	// putFailuresLeft is how many PUTs to answer 500 before one succeeds.
+	putFailuresLeft int
+	// putDrop closes the connection mid-PUT instead of answering.
+	putDrop bool
 }
 
 func newFakeAttestationServer(t *testing.T) (*httptest.Server, *fakeAttestationServer) {
@@ -98,12 +102,25 @@ func (fake *fakeAttestationServer) serveMint(t *testing.T, w http.ResponseWriter
 
 func (fake *fakeAttestationServer) servePut(t *testing.T, w http.ResponseWriter, r *http.Request) {
 	fake.put = r
+	if fake.putDrop {
+		conn, _, err := w.(http.Hijacker).Hijack()
+		if assert.NoError(t, err) {
+			_ = conn.Close()
+		}
+		return
+	}
 	body, err := io.ReadAll(r.Body)
 	if !assert.NoError(t, err) {
 		http.Error(w, "unreadable body", http.StatusInternalServerError)
 		return
 	}
 	fake.putBody = body
+	if fake.putFailuresLeft > 0 {
+		fake.putFailuresLeft--
+		fake.putBody = nil
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	status := fake.putStatus
 	if status == 0 {
 		status = http.StatusOK
@@ -164,10 +181,14 @@ func twoEvidenceFiles(t *testing.T) []string {
 }
 
 func newTestAttestationSubmitter(t *testing.T, host string, dryRun bool) (*attestationSubmitter, *bytes.Buffer) {
+	return newRetryingTestAttestationSubmitter(t, host, dryRun, 0)
+}
+
+func newRetryingTestAttestationSubmitter(t *testing.T, host string, dryRun bool, retries int) (*attestationSubmitter, *bytes.Buffer) {
 	t.Helper()
 	var out bytes.Buffer
 	l := log.NewLogger(&out, &out, false)
-	client, err := requests.NewKosliClient("", 0, false, l)
+	client, err := requests.NewKosliClient("", retries, false, l)
 	require.NoError(t, err)
 	return &attestationSubmitter{
 		client: client,
@@ -302,6 +323,58 @@ func TestAttestationSubmitterAttestsNothingWhenTheBucketRefusesTheFile(t *testin
 	require.EqualError(t, err, "failed to upload attachment testdata/file1: "+
 		"upload refused with HTTP 403: BadDigest: The SHA256 you specified did not match what we received")
 	require.Empty(t, fake.recorded)
+}
+
+func TestAttestationSubmitterAttestsNothingWhenTheMintResponseIsEmpty(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.mintStatus = http.StatusCreated
+	fake.mintBody = `{}`
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+
+	err := submitter.submit(submission)
+
+	require.EqualError(t, err, "failed to upload attachment testdata/file1: "+
+		"the upload response is missing upload_id, url or method")
+	require.Nil(t, fake.put)
+	require.Empty(t, fake.recorded, "an attestation without its evidence must not be recorded")
+}
+
+// A transport failure is reported with the URL it happened on, by net/http
+// and by the retry client alike. The session token in that URL must not
+// reach stderr, which is read without --debug.
+func TestAttestationSubmitterTransportErrorDoesNotShowTheSecurityToken(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.putDrop = true
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+
+	err := submitter.submit(submission)
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), fakeUploadKey+"?X-Amz-Security-Token=<redacted>&X-Amz-Signature=abc")
+	require.NotContains(t, err.Error(), "IQoJsecret")
+	require.Empty(t, fake.recorded)
+}
+
+// A retried PUT must send the whole file again, from the start.
+func TestAttestationSubmitterResendsTheWholeFileOnRetry(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.putFailuresLeft = 1
+	submitter, _ := newRetryingTestAttestationSubmitter(t, server.URL, false, 1)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+	content, err := os.ReadFile("testdata/file1")
+	require.NoError(t, err)
+
+	err = submitter.submit(submission)
+
+	require.NoError(t, err)
+	require.Equal(t, 0, fake.putFailuresLeft, "the first PUT was answered 500")
+	require.Equal(t, content, fake.putBody, "the retry must carry the file from its first byte")
+	require.Len(t, fake.recorded, 1)
 }
 
 func TestAttestationSubmitterShowsBothRequestsAndSendsNothingInDryRun(t *testing.T) {
