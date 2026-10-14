@@ -31,10 +31,13 @@ Paths the list already matches stay excluded whatever is later added there, so k
 Excluding the file with `--exclude` keeps it out of the fingerprint but still applies the paths it lists, which lets a writable directory change the list again.
 To drop the file from the fingerprint safely, move its entries to `--exclude` and delete it.
 
-You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo).
-You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
+You can optionally associate the attestation to a git commit using `--commit`.
+The commit is read from the git repository at `--repo-root`, which must be the repository's top-level directory. Without `--commit`, no git repository is needed.
+If `--commit` is only defaulted from CI and `--repo-root` is left at `.`, a missing repository or commit
+prints a warning and the attestation is sent without commit info.
 Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` is required to facilitate
 binding the attestation to the right artifact.
+You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
 To record repository information, all three of `--repo-id`, `--repo-url`, and `--repository` must be set together.
 These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
 In other CI systems, set them explicitly to capture repository metadata.
@@ -62,7 +65,7 @@ In other CI systems, set them explicitly to capture repository metadata.
 | `--registry-username` | string | [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry and it is not already accessible via Docker/Podman auth files or a credential helper. |
 | `--repo-id` | string | [conditional] The stable, unique identifier for the repository in your VCS provider (e.g. a numeric ID). Do not use the repository name as it can change if the repo is renamed. All three of `--repo-id`, `--repo-url` and `--repository` must be set to record repository information (defaulted in some CIs: [docs](/integrations/ci_cd) ). |
 | `--repo-provider` | string | [optional] The source code hosting provider. One of: github, gitlab, bitbucket, bitbucket_cloud, bitbucket_dc, azure-devops, azure_devops_services, azure_devops_server, git, subversion (defaulted in some CIs: [docs](/integrations/ci_cd) ). |
-| `--repo-root` | string | [defaulted] The directory where the source git repository is available. Only used if `--commit` is used or defaulted in CI, see [docs](/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables) . (default ".") |
+| `--repo-root` | string | [defaulted] The directory where the source git repository is available. It must be the repository's top-level directory. Only used if `--commit` is used or defaulted in CI, see [docs](/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables) . (default ".") |
 | `--repo-url` | string | [conditional] The URL of the repository. Must be a valid URL. All three of `--repo-id`, `--repo-url` and `--repository` must be set to record repository information (defaulted in some CIs: [docs](/integrations/ci_cd) ). |
 | `--repository` | string | [conditional] The name of the repository (e.g. owner/repo-name). All three of `--repo-id`, `--repo-url` and `--repository` must be set to record repository information (defaulted in some CIs: [docs](/integrations/ci_cd) ). |
 | `-R`, `--scan-results` | string | The path to Snyk scan SARIF results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault. |

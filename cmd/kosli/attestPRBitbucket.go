@@ -16,7 +16,9 @@ Authentication to Bitbucket can be done with an access token (recommended) or an
 Bitbucket app passwords are no longer supported as of 28 July 2026; replace any app passwords with API tokens. Credentials need to have read access for both repos and pull requests.
 ` + attestationBindingDesc + `
 
-` + kosliIgnoreDesc
+` + kosliIgnoreDesc + `
+
+` + commitRequiredDesc
 
 const attestPRBitbucketExample = `
 # report a Bitbucket pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint):

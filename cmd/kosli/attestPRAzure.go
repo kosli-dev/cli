@@ -14,7 +14,9 @@ const attestPRAzureLongDesc = attestPRAzureShortDesc + `
 It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request attestation to the artifact in Kosli.
 ` + attestationBindingDesc + `
 
-` + kosliIgnoreDesc
+` + kosliIgnoreDesc + `
+
+` + commitRequiredDesc
 
 const attestPRAzureExample = `
 # report an Azure Devops pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint):

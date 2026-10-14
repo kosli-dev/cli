@@ -18,7 +18,8 @@ const assertPRGithubShortDesc = `Assert a Github pull request for a git commit e
 
 const assertPRGithubLongDesc = assertPRGithubShortDesc + `
 The command exits with non-zero exit code
-if no pull requests were found for the commit.`
+if no pull requests were found for the commit.
+` + assertPRNoRepoDesc
 
 const assertPRGithubExample = `
 kosli assert pullrequest github \

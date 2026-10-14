@@ -16,11 +16,11 @@ const beginTrailShortDesc = `Begin or update a Kosli flow trail.`
 
 const beginTrailLongDesc = beginTrailShortDesc + `
 
-You can optionally associate the trail to a git commit using ^--commit^ (requires access to a git repo). And you
-can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^.
-To record repository information, all three of ^--repo-id^, ^--repo-url^, and ^--repository^ must be set together.
-These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
-In other CI systems, set them explicitly to capture repository metadata.
+You can optionally associate the trail to a git commit using ^--commit^.
+` + commitRepoDesc + ` Without ^--commit^, no git repository is needed.
+If ^--commit^ is only defaulted from CI and ^--repo-root^ is left at ^.^, a missing repository or commit
+prints a warning and the trail is begun without commit info.
+` + commitDetailsDesc + `
 
 ^TRAIL-NAME^s must start with a letter or number, and only contain letters, numbers, ^.^, ^-^, ^_^, and ^~^.
 `

@@ -35,7 +35,10 @@ type ArtifactPayload struct {
 const reportArtifactShortDesc = `Report an artifact creation to a Kosli flow.  `
 
 const reportArtifactLongDesc = reportArtifactShortDesc + `
-` + fingerprintDesc + kosliIgnoreDesc
+` + fingerprintDesc + kosliIgnoreDesc + `
+
+This command always requires access to a git repository to read ^--git-commit^ and the commits since the previous artifact.
+` + commitRepoDesc
 
 const reportArtifactExample = `
 # Report to a Kosli flow that a file type artifact has been created
@@ -88,7 +91,7 @@ func newReportArtifactCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.gitReference, "git-commit", "g", DefaultValueForCommit(ci, false), gitCommitFlag)
+	cmd.Flags().StringVarP(&o.gitReference, "git-commit", "g", DefaultValueForCommit(ci, false), reportArtifactGitCommitFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
