@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
@@ -26,10 +29,9 @@ type FormItem struct {
 	Content   any
 }
 
-// FileBytes is the Content of a "file-bytes" FormItem: a file the caller has
-// already read. Uploading these bytes, rather than a path the body builder
-// would open again, is what lets a caller promise that a checksum it recorded
-// describes the bytes the server received.
+// FileBytes is a file the caller has already read. Uploading these bytes,
+// rather than a path that would be opened again, is what lets a caller promise
+// that a checksum it recorded describes the bytes the bucket received.
 type FileBytes struct {
 	Name string
 	Data []byte
@@ -78,6 +80,7 @@ func (cl *CustomLogger) Printf(format string, args ...any) {
 
 	// Remove the hardcoded [DEBUG] prefix if it exists
 	msg = strings.TrimPrefix(msg, "[DEBUG]")
+	msg = RedactSecurityToken(msg)
 
 	// Call the underlying log.Logger's Printf method with the cleaned message
 	cl.Print(msg)
@@ -254,20 +257,6 @@ func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[st
 				return "", body, nil, err
 			}
 
-		case "file-bytes":
-			fb, ok := item.Content.(FileBytes)
-			if !ok {
-				return "", body, nil, fmt.Errorf("form item %s: file-bytes content must be a FileBytes", item.FieldName)
-			}
-			part, err := writer.CreateFormFile(item.FieldName, fb.Name)
-			if err != nil {
-				return "", body, nil, err
-			}
-			_, err = part.Write(fb.Data)
-			if err != nil {
-				return "", body, nil, err
-			}
-
 		default:
 			// Skipping silently would post a body with a part missing, and a
 			// caller that recorded a checksum for that part would never know.
@@ -371,6 +360,83 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		}
 		return &HTTPResponse{string(body), resp}, nil
 	}
+}
+
+var securityTokenInURL = regexp.MustCompile(`X-Amz-Security-Token=[^&\s]*`)
+
+// RedactSecurityToken blanks the session token in any pre-signed URL in text,
+// so a debug log can show where a request went without reproducing the
+// credential it carried. The rest of the query stays for debugging.
+func RedactSecurityToken(text string) string {
+	return securityTokenInURL.ReplaceAllString(text, "X-Amz-Security-Token=<redacted>")
+}
+
+// UploadParams is a file sent to a pre-signed URL. The URL carries the
+// credentials, so no Kosli token goes with it, and Headers are the signed ones
+// the server handed back, sent exactly as given.
+type UploadParams struct {
+	Method  string
+	URL     string
+	Headers map[string]string
+	Body    io.ReadSeeker
+	Size    int64
+}
+
+// seekCloser keeps Seek visible on a request body. http.NewRequest wraps a
+// plain ReadSeeker in io.NopCloser, which hides it, and the retry client then
+// copies the whole body into memory to be able to resend it; with Seek in
+// view it rewinds instead.
+type seekCloser struct{ io.ReadSeeker }
+
+func (seekCloser) Close() error { return nil }
+
+// Upload sends p.Body to p.URL. The body is streamed, not read into memory,
+// and rewound on each retry. A transport error names the URL, so it is
+// returned with the session token blanked.
+func (c *Client) Upload(p *UploadParams) error {
+	req, err := http.NewRequest(p.Method, p.URL, seekCloser{p.Body})
+	if err != nil {
+		return fmt.Errorf("failed to create %s request to %s : %v", p.Method, p.URL, err)
+	}
+	// The retry client rewinds a ReadSeeker on each attempt but leaves the
+	// length unknown, and S3 refuses a PUT without Content-Length.
+	req.ContentLength = p.Size
+	req.Header.Set("User-Agent", "Kosli/"+version.GetVersion())
+	for k, v := range p.Headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := c.HttpClient.Do(req)
+	if err != nil {
+		return errors.New(RedactSecurityToken(err.Error()))
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			c.Logger.Warn("failed to close response body: %v", err)
+		}
+	}()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response from %s request to %s : %v", req.Method, RedactSecurityToken(req.URL.String()), err)
+	}
+	c.Logger.Debug("request made to %s and got status %d", RedactSecurityToken(req.URL.String()), resp.StatusCode)
+	if !isSuccess(resp.StatusCode) {
+		return &APIError{StatusCode: resp.StatusCode, Message: s3ErrorMessage(resp.StatusCode, body)}
+	}
+	return nil
+}
+
+// s3ErrorMessage renders an S3 error response, which is XML rather than the
+// JSON the Kosli API answers with.
+func s3ErrorMessage(status int, body []byte) string {
+	var s3Error struct {
+		Code    string `xml:"Code"`
+		Message string `xml:"Message"`
+	}
+	if err := xml.Unmarshal(body, &s3Error); err != nil || s3Error.Code == "" {
+		return fmt.Sprintf("upload refused with HTTP %d", status)
+	}
+	return fmt.Sprintf("upload refused with HTTP %d: %s: %s", status, s3Error.Code, s3Error.Message)
 }
 
 func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, message string) error {

@@ -57,6 +57,7 @@ type attestationSubmission struct {
 // CommonAttestationPayload, which provides the name.
 type attestationPayload interface {
 	attestationName() string
+	setAttachmentUploadID(id string)
 }
 
 func (s *attestationSubmitter) submit(a attestationSubmission) error {
@@ -65,11 +66,10 @@ func (s *attestationSubmitter) submit(a attestationSubmission) error {
 		return err
 	}
 
-	form, cleanup, err := s.form(a)
+	form, err := s.form(a)
 	if err != nil {
 		return err
 	}
-	defer cleanup()
 
 	_, err = s.client.Do(&requests.RequestParams{
 		Method: http.MethodPost,
@@ -93,38 +93,45 @@ func (s *attestationSubmitter) submit(a attestationSubmission) error {
 	return wrapAttestationError(err)
 }
 
-// form returns the multipart form for a, and a cleanup that removes any
-// evidence tarball the form refers to.
-func (s *attestationSubmitter) form(a attestationSubmission) ([]requests.FormItem, func(), error) {
+// form returns the multipart form for a. Attachments are uploaded first and
+// named by id in the payload, so the form carries no file for them.
+func (s *attestationSubmitter) form(a attestationSubmission) ([]requests.FormItem, error) {
 	form := []requests.FormItem{
 		{Type: "field", FieldName: "data_json", Content: a.payload},
 	}
-	noCleanup := func() {}
 
 	if a.evidence != nil && len(a.attachments) > 0 {
-		return nil, noCleanup, fmt.Errorf("an attestation carries either in-memory evidence or attachments, not both")
+		return nil, fmt.Errorf("an attestation carries either in-memory evidence or attachments, not both")
 	}
 	if a.evidence != nil {
-		return append(form, requests.FormItem{Type: "file-bytes", FieldName: "attachment_file", Content: *a.evidence}), noCleanup, nil
+		uploadID, err := s.uploadBytes(*a.evidence)
+		if err != nil {
+			return nil, err
+		}
+		a.payload.setAttachmentUploadID(uploadID)
+		return form, nil
 	}
 	if len(a.attachments) == 0 {
-		return form, noCleanup, nil
+		return form, nil
 	}
 
 	evidencePath, cleanupNeeded, err := getPathOfEvidenceFileToUpload(a.attachments, s.logger)
 	if err != nil {
-		return nil, noCleanup, err
+		return nil, err
 	}
-	s.logger.Debug("evidence file %s will be uploaded", evidencePath)
-	form = append(form, requests.FormItem{Type: "file", FieldName: "attachment_file", Content: evidencePath})
-	if !cleanupNeeded {
-		return form, noCleanup, nil
+	if cleanupNeeded {
+		defer func() {
+			if err := os.Remove(evidencePath); err != nil {
+				s.logger.Warn("failed to remove evidence file: %v", err)
+			}
+		}()
 	}
-	return form, func() {
-		if err := os.Remove(evidencePath); err != nil {
-			s.logger.Warn("failed to remove evidence file: %v", err)
-		}
-	}, nil
+	uploadID, err := s.uploadAttachment(evidencePath)
+	if err != nil {
+		return nil, err
+	}
+	a.payload.setAttachmentUploadID(uploadID)
+	return form, nil
 }
 
 // wrapAttestationError turns the server's binding error into one naming the

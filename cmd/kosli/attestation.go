@@ -35,10 +35,15 @@ type CommonAttestationPayload struct {
 	UserData            any                      `json:"user_data,omitempty"`
 	Description         string                   `json:"description,omitempty"`
 	Annotations         map[string]string        `json:"annotations,omitempty"`
+	AttachmentUploadID  string                   `json:"attachment_upload_id,omitempty"`
 }
 
 func (p *CommonAttestationPayload) attestationName() string {
 	return p.AttestationName
+}
+
+func (p *CommonAttestationPayload) setAttachmentUploadID(id string) {
+	p.AttachmentUploadID = id
 }
 
 type CommonAttestationOptions struct {

@@ -12,14 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// The API rejects a request body over 10MB, and the JSON payload is counted
-// alongside the file, so this leaves room for it rather than sitting on the
-// limit. The margin is a guess at a small payload, not a bound: --user-data
-// embeds an arbitrary JSON file in the same body and can push the total past
-// 10MB on its own. Lifting the ceiling needs direct-to-S3 upload, tracked
-// separately.
-const maxSbomFileBytes = 9 * 1024 * 1024
-
 // Both are also carried inside attestation_data, where the server's schema can
 // enforce them. These are the copy a reader sees on the trail page.
 const (
@@ -214,18 +206,12 @@ func (o *attestSbomOptions) loadSbom() ([]byte, error) {
 	defer func() { _ = file.Close() }()
 
 	// One read serves the fingerprint, the summary and the upload, so the
-	// recorded checksum describes the bytes the server receives even if the file
-	// is still being written. Reading one byte past the limit is what makes the
-	// limit a bound rather than a claim about a size measured earlier.
-	content, err := io.ReadAll(io.LimitReader(file, maxSbomFileBytes+1))
+	// recorded checksum describes the bytes the bucket receives even if the
+	// file is still being written. The size is bounded by the org's upload
+	// limit, which the server checks when the upload is minted.
+	content, err := io.ReadAll(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
-	}
-	if int64(len(content)) > maxSbomFileBytes {
-		return nil, fmt.Errorf(
-			"SBOM file [%s] is above the %d byte limit for an SBOM attestation",
-			o.sbomFilePath, maxSbomFileBytes,
-		)
 	}
 	fingerprint := fmt.Sprintf("%x", sha256.Sum256(content))
 
@@ -277,7 +263,7 @@ func (o *attestSbomOptions) evidence(content []byte) *requests.FileBytes {
 }
 
 // rejectReservedAnnotations runs in PreRunE: it needs nothing from the file, so
-// a typo should not cost a repository walk and a pass over nine megabytes first.
+// a typo should not cost a repository walk and a pass over the whole file first.
 func (o *attestSbomOptions) rejectReservedAnnotations() error {
 	for _, reserved := range []string{sbomFormatAnnotation, sbomSha256Annotation} {
 		if _, taken := o.annotations[reserved]; taken {

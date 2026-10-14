@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"testing"
@@ -675,29 +676,22 @@ func TestRequestsTestSuite(t *testing.T) {
 	suite.Run(t, new(RequestsTestSuite))
 }
 
-// A file-bytes item must put exactly the caller's bytes on the wire, under the
-// caller's name. This is what lets an attestation promise that a checksum it
-// recorded describes what the server received.
-func TestCreateMultipartRequestBodyFileBytes(t *testing.T) {
-	data := []byte(`{"bomFormat":"CycloneDX"}`)
-	_, body, jsonFields, err := createMultipartRequestBody([]FormItem{
-		{Type: "field", FieldName: "data_json", Content: map[string]string{"a": "b"}},
-		{Type: "file-bytes", FieldName: "attachment_file", Content: FileBytes{Name: "bom.json", Data: data}},
+// A misspelled form item type must fail rather than silently drop the part.
+func TestCreateMultipartRequestBodyRejectsAnUnknownItemType(t *testing.T) {
+	_, _, _, err := createMultipartRequestBody([]FormItem{
+		{Type: "file_bytes", FieldName: "attachment_file", Content: "a/path"},
 	})
-	require.NoError(t, err)
-	raw := body.String()
-	require.Contains(t, raw, `name="attachment_file"; filename="bom.json"`)
-	require.Contains(t, raw, string(data))
-	// Only JSON fields are surfaced for dry-run logging; the file is not one of them.
-	require.NotContains(t, jsonFields, "attachment_file")
+	require.Error(t, err)
+}
 
-	_, _, _, err = createMultipartRequestBody([]FormItem{
-		{Type: "file-bytes", FieldName: "attachment_file", Content: "a/path/instead"},
-	})
-	require.Error(t, err, "a path must not be accepted where bytes are expected")
+// The retry client logs every attempt with its full URL. For a pre-signed
+// upload that URL carries the task's session token, which is blanked before
+// the line is written; the rest of the query stays for debugging.
+func TestCustomLoggerRedactsTheSecurityToken(t *testing.T) {
+	var out bytes.Buffer
+	cl := &CustomLogger{Logger: log.New(&out, "", 0)}
 
-	_, _, _, err = createMultipartRequestBody([]FormItem{
-		{Type: "file_bytes", FieldName: "attachment_file", Content: FileBytes{Name: "bom.json", Data: data}},
-	})
-	require.Error(t, err, "a misspelled type must fail, not silently drop the part")
+	cl.Printf("[DEBUG] %s %s", "PUT", "https://h/uploads/k?X-Amz-Credential=ASIA%2Fs3&X-Amz-Security-Token=IQoJsecret%2F%2F&X-Amz-Signature=abc")
+
+	require.Equal(t, " PUT https://h/uploads/k?X-Amz-Credential=ASIA%2Fs3&X-Amz-Security-Token=<redacted>&X-Amz-Signature=abc\n", out.String())
 }

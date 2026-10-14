@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -25,41 +27,128 @@ type recordedAttestationRequest struct {
 	files map[string]string
 }
 
+const (
+	fakeUploadID    = "2ee4c953-e472-47af-bef3-999de17c"
+	fakeChecksum    = "dQnlvaDHYtK6x/kNdYtbImP6Acy8VCq1498WO+CObKk="
+	fakeUploadKey   = "/uploads/landing/acme/uploads/" + fakeUploadID + "/file1"
+	fakeSignedQuery = "X-Amz-Security-Token=IQoJsecret&X-Amz-Signature=abc"
+)
+
+// fakeAttestationServer plays both Kosli and the landing bucket: it mints an
+// upload, takes the PUT and records the attestation.
 type fakeAttestationServer struct {
 	recorded []recordedAttestationRequest
-	// status and body answer every request; zero status means 201.
+	// status and body answer every attestation request; zero status means 201.
 	status int
 	body   string
+	// mintStatus and mintBody answer the mint request; zero status means 201
+	// with a URL back to this server.
+	mintStatus int
+	mintBody   string
+	mint       map[string]any
+	// put is the request that delivered the file, answered with putStatus and
+	// putResponse; zero status means 200.
+	put         *http.Request
+	putBody     []byte
+	putStatus   int
+	putResponse string
+	// putFailuresLeft is how many PUTs to answer 500 before one succeeds.
+	putFailuresLeft int
+	// putDrop closes the connection mid-PUT instead of answering.
+	putDrop bool
 }
 
 func newFakeAttestationServer(t *testing.T) (*httptest.Server, *fakeAttestationServer) {
 	t.Helper()
 	fake := &fakeAttestationServer{}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// The handler runs off the test goroutine, where require's FailNow
 		// is unsafe, so failures are reported with assert and answered.
-		if !assert.NoError(t, r.ParseMultipartForm(1<<20)) {
-			http.Error(w, "unparseable form", http.StatusInternalServerError)
-			return
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v2/attestations/acme/uploads":
+			fake.serveMint(t, w, r, server.URL)
+		case r.Method == http.MethodPut:
+			fake.servePut(t, w, r)
+		default:
+			fake.serveAttestation(t, w, r)
 		}
-		req := recordedAttestationRequest{method: r.Method, path: r.URL.Path, files: map[string]string{}}
-		if !assert.NoError(t, json.Unmarshal([]byte(r.FormValue("data_json")), &req.dataJSON)) {
-			http.Error(w, "unparseable data_json", http.StatusInternalServerError)
-			return
-		}
-		for field, headers := range r.MultipartForm.File {
-			req.files[field] = headers[0].Filename
-		}
-		fake.recorded = append(fake.recorded, req)
-		status := fake.status
-		if status == 0 {
-			status = http.StatusCreated
-		}
-		w.WriteHeader(status)
-		_, _ = fmt.Fprint(w, fake.body)
 	}))
 	t.Cleanup(server.Close)
 	return server, fake
+}
+
+func (fake *fakeAttestationServer) serveMint(t *testing.T, w http.ResponseWriter, r *http.Request, serverURL string) {
+	if !assert.NoError(t, json.NewDecoder(r.Body).Decode(&fake.mint)) {
+		http.Error(w, "unparseable mint request", http.StatusInternalServerError)
+		return
+	}
+	if fake.mintStatus != 0 {
+		w.WriteHeader(fake.mintStatus)
+		_, _ = fmt.Fprint(w, fake.mintBody)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"upload_id":             fakeUploadID,
+		"url":                   serverURL + fakeUploadKey + "?" + fakeSignedQuery,
+		"method":                "PUT",
+		"headers":               map[string]string{"x-amz-checksum-sha256": fakeChecksum},
+		"upload_url_expires_at": 1791959246.0,
+		"upload_id_expires_at":  1791962246.0,
+		"max_size_bytes":        104857600,
+	})
+}
+
+func (fake *fakeAttestationServer) servePut(t *testing.T, w http.ResponseWriter, r *http.Request) {
+	fake.put = r
+	if fake.putDrop {
+		conn, _, err := w.(http.Hijacker).Hijack()
+		if assert.NoError(t, err) {
+			_ = conn.Close()
+		}
+		return
+	}
+	body, err := io.ReadAll(r.Body)
+	if !assert.NoError(t, err) {
+		http.Error(w, "unreadable body", http.StatusInternalServerError)
+		return
+	}
+	fake.putBody = body
+	if fake.putFailuresLeft > 0 {
+		fake.putFailuresLeft--
+		fake.putBody = nil
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	status := fake.putStatus
+	if status == 0 {
+		status = http.StatusOK
+	}
+	w.WriteHeader(status)
+	_, _ = fmt.Fprint(w, fake.putResponse)
+}
+
+func (fake *fakeAttestationServer) serveAttestation(t *testing.T, w http.ResponseWriter, r *http.Request) {
+	if !assert.NoError(t, r.ParseMultipartForm(1<<20)) {
+		http.Error(w, "unparseable form", http.StatusInternalServerError)
+		return
+	}
+	req := recordedAttestationRequest{method: r.Method, path: r.URL.Path, files: map[string]string{}}
+	if !assert.NoError(t, json.Unmarshal([]byte(r.FormValue("data_json")), &req.dataJSON)) {
+		http.Error(w, "unparseable data_json", http.StatusInternalServerError)
+		return
+	}
+	for field, headers := range r.MultipartForm.File {
+		req.files[field] = headers[0].Filename
+	}
+	fake.recorded = append(fake.recorded, req)
+	status := fake.status
+	if status == 0 {
+		status = http.StatusCreated
+	}
+	w.WriteHeader(status)
+	_, _ = fmt.Fprint(w, fake.body)
 }
 
 func genericSubmission(name string) attestationSubmission {
@@ -92,10 +181,14 @@ func twoEvidenceFiles(t *testing.T) []string {
 }
 
 func newTestAttestationSubmitter(t *testing.T, host string, dryRun bool) (*attestationSubmitter, *bytes.Buffer) {
+	return newRetryingTestAttestationSubmitter(t, host, dryRun, 0)
+}
+
+func newRetryingTestAttestationSubmitter(t *testing.T, host string, dryRun bool, retries int) (*attestationSubmitter, *bytes.Buffer) {
 	t.Helper()
 	var out bytes.Buffer
 	l := log.NewLogger(&out, &out, false)
-	client, err := requests.NewKosliClient("", 0, false, l)
+	client, err := requests.NewKosliClient("", retries, false, l)
 	require.NoError(t, err)
 	return &attestationSubmitter{
 		client: client,
@@ -131,7 +224,59 @@ func TestAttestationSubmitterSendsThePayloadAsDataJSONWithoutAttachments(t *test
 	require.Empty(t, fake.recorded[0].files)
 }
 
-func TestAttestationSubmitterUploadsAttachmentsAndRemovesTheTarball(t *testing.T) {
+func TestAttestationSubmitterMintsAnUploadForTheAttachment(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+	content, err := os.ReadFile("testdata/file1")
+	require.NoError(t, err)
+
+	err = submitter.submit(submission)
+
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{
+		"filename":   "file1",
+		"size_bytes": float64(len(content)),
+		"sha256":     fmt.Sprintf("%x", sha256.Sum256(content)),
+	}, fake.mint)
+}
+
+func TestAttestationSubmitterPutsTheAttachmentAsMinted(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+	content, err := os.ReadFile("testdata/file1")
+	require.NoError(t, err)
+
+	err = submitter.submit(submission)
+
+	require.NoError(t, err)
+	require.NotNil(t, fake.put, "the file was not PUT to the minted URL")
+	require.Equal(t, fakeUploadKey, fake.put.URL.Path)
+	require.Equal(t, fakeSignedQuery, fake.put.URL.RawQuery, "the signed query must reach the bucket untouched")
+	require.Equal(t, fakeChecksum, fake.put.Header.Get("x-amz-checksum-sha256"))
+	require.Empty(t, fake.put.Header.Get("Authorization"), "the Kosli token must not reach the bucket")
+	require.Equal(t, int64(len(content)), fake.put.ContentLength)
+	require.Equal(t, content, fake.putBody)
+}
+
+func TestAttestationSubmitterSendsTheUploadIDInsteadOfTheFile(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+
+	err := submitter.submit(submission)
+
+	require.NoError(t, err)
+	require.Len(t, fake.recorded, 1)
+	require.Equal(t, fakeUploadID, fake.recorded[0].dataJSON["attachment_upload_id"])
+	require.Empty(t, fake.recorded[0].files, "the file must not travel with the attestation")
+}
+
+func TestAttestationSubmitterUploadsSeveralAttachmentsAsOneTarballAndRemovesIt(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("TMPDIR", tmp)
 	server, fake := newFakeAttestationServer(t)
@@ -142,9 +287,112 @@ func TestAttestationSubmitterUploadsAttachmentsAndRemovesTheTarball(t *testing.T
 	err := submitter.submit(submission)
 
 	require.NoError(t, err)
+	require.Equal(t, "evidence.tgz", fake.mint["filename"])
+	require.Equal(t, float64(len(fake.putBody)), fake.mint["size_bytes"])
+	require.Equal(t, fmt.Sprintf("%x", sha256.Sum256(fake.putBody)), fake.mint["sha256"])
 	require.Len(t, fake.recorded, 1)
-	require.Equal(t, map[string]string{"attachment_file": "evidence.tgz"}, fake.recorded[0].files)
 	require.Empty(t, tarballsLeftIn(t, tmp))
+}
+
+func TestAttestationSubmitterAttestsNothingWhenMintIsRefused(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.mintStatus = http.StatusNotFound
+	fake.mintBody = `{"message":"Direct uploads are not available on this server"}`
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+
+	err := submitter.submit(submission)
+
+	require.EqualError(t, err, "failed to upload attachment testdata/file1: Direct uploads are not available on this server")
+	require.Nil(t, fake.put)
+	require.Empty(t, fake.recorded)
+}
+
+func TestAttestationSubmitterAttestsNothingWhenTheBucketRefusesTheFile(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.putStatus = http.StatusForbidden
+	fake.putResponse = `<?xml version="1.0" encoding="UTF-8"?><Error><Code>BadDigest</Code>` +
+		`<Message>The SHA256 you specified did not match what we received</Message></Error>`
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+
+	err := submitter.submit(submission)
+
+	require.EqualError(t, err, "failed to upload attachment testdata/file1: "+
+		"upload refused with HTTP 403: BadDigest: The SHA256 you specified did not match what we received")
+	require.Empty(t, fake.recorded)
+}
+
+func TestAttestationSubmitterAttestsNothingWhenTheMintResponseIsEmpty(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.mintStatus = http.StatusCreated
+	fake.mintBody = `{}`
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+
+	err := submitter.submit(submission)
+
+	require.EqualError(t, err, "failed to upload attachment testdata/file1: "+
+		"the upload response is missing upload_id, url or method")
+	require.Nil(t, fake.put)
+	require.Empty(t, fake.recorded, "an attestation without its evidence must not be recorded")
+}
+
+// A transport failure is reported with the URL it happened on, by net/http
+// and by the retry client alike. The session token in that URL must not
+// reach stderr, which is read without --debug.
+func TestAttestationSubmitterTransportErrorDoesNotShowTheSecurityToken(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.putDrop = true
+	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+
+	err := submitter.submit(submission)
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), fakeUploadKey+"?X-Amz-Security-Token=<redacted>&X-Amz-Signature=abc")
+	require.NotContains(t, err.Error(), "IQoJsecret")
+	require.Empty(t, fake.recorded)
+}
+
+// A retried PUT must send the whole file again, from the start.
+func TestAttestationSubmitterResendsTheWholeFileOnRetry(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	fake.putFailuresLeft = 1
+	submitter, _ := newRetryingTestAttestationSubmitter(t, server.URL, false, 1)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+	content, err := os.ReadFile("testdata/file1")
+	require.NoError(t, err)
+
+	err = submitter.submit(submission)
+
+	require.NoError(t, err)
+	require.Equal(t, 0, fake.putFailuresLeft, "the first PUT was answered 500")
+	require.Equal(t, content, fake.putBody, "the retry must carry the file from its first byte")
+	require.Len(t, fake.recorded, 1)
+}
+
+func TestAttestationSubmitterShowsBothRequestsAndSendsNothingInDryRun(t *testing.T) {
+	server, fake := newFakeAttestationServer(t)
+	submitter, out := newTestAttestationSubmitter(t, server.URL, true)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+
+	err := submitter.submit(submission)
+
+	require.NoError(t, err)
+	require.Nil(t, fake.mint, "a dry run must not mint")
+	require.Nil(t, fake.put, "a dry run must not upload")
+	require.Empty(t, fake.recorded, "a dry run must not attest")
+	require.Contains(t, out.String(), server.URL+"/api/v2/attestations/acme/uploads")
+	require.Contains(t, out.String(), `"sha256": "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"`)
+	require.Contains(t, out.String(), server.URL+"/api/v2/attestations/acme/my-flow/trail/my-trail/generic")
+	require.Contains(t, out.String(), `"attachment_upload_id": "`+dryRunUploadID+`"`)
 }
 
 func TestAttestationSubmitterRemovesTheTarballWhenTheServerRejects(t *testing.T) {
@@ -251,14 +499,22 @@ func TestAttestationSubmitterUploadsEvidenceAlreadyInMemory(t *testing.T) {
 	server, fake := newFakeAttestationServer(t)
 	submitter, _ := newTestAttestationSubmitter(t, server.URL, false)
 	submission := genericSubmission("unit-tests")
-	submission.evidence = &requests.FileBytes{Name: "sbom.json", Data: []byte(`{"bomFormat":"CycloneDX"}`)}
+	data := []byte(`{"bomFormat":"CycloneDX"}`)
+	submission.evidence = &requests.FileBytes{Name: "sbom.json", Data: data}
 
 	err := submitter.submit(submission)
 
 	require.NoError(t, err)
+	require.Equal(t, map[string]any{
+		"filename":   "sbom.json",
+		"size_bytes": float64(len(data)),
+		"sha256":     fmt.Sprintf("%x", sha256.Sum256(data)),
+	}, fake.mint)
+	require.Equal(t, data, fake.putBody)
+	require.Equal(t, int64(len(data)), fake.put.ContentLength)
 	require.Len(t, fake.recorded, 1)
-	require.Equal(t, "unit-tests", fake.recorded[0].dataJSON["attestation_name"])
-	require.Equal(t, map[string]string{"attachment_file": "sbom.json"}, fake.recorded[0].files)
+	require.Equal(t, fakeUploadID, fake.recorded[0].dataJSON["attachment_upload_id"])
+	require.Empty(t, fake.recorded[0].files, "the bytes must not travel with the attestation")
 }
 
 func TestAttestationSubmitterRemovesTheStagingDirWhenAnAttachmentIsMissing(t *testing.T) {
@@ -290,4 +546,23 @@ func TestAttestationSubmitterRejectsEvidenceTogetherWithAttachments(t *testing.T
 
 	require.Error(t, err)
 	require.Empty(t, fake.recorded)
+}
+
+// The signed URL carries the server's session token. A debug run in CI must
+// not leave it in the job log.
+func TestAttestationSubmitterDebugLogDoesNotShowTheSecurityToken(t *testing.T) {
+	server, _ := newFakeAttestationServer(t)
+	var out bytes.Buffer
+	l := log.NewLogger(&out, &out, true)
+	client, err := requests.NewKosliClient("", 0, true, l)
+	require.NoError(t, err)
+	submitter := &attestationSubmitter{client: client, host: server.URL, org: "acme", token: "secret", logger: l}
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1"}
+
+	err = submitter.submit(submission)
+
+	require.NoError(t, err)
+	require.Contains(t, out.String(), fakeUploadKey+"?X-Amz-Security-Token=<redacted>&X-Amz-Signature=abc")
+	require.NotContains(t, out.String(), "IQoJsecret")
 }
