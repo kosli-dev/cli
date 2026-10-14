@@ -5,6 +5,7 @@ package buildexec
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -54,27 +55,31 @@ func TestRunPassesStreamsAndEnv(t *testing.T) {
 	require.Equal(t, "err", stderr)
 }
 
-func TestRunForwardsSIGTERMToGrandchild(t *testing.T) {
-	dir := t.TempDir()
-	ready := filepath.Join(dir, "ready")
-	marker := filepath.Join(dir, "marker")
-	// "; true" stops the outer shell from exec-ing the inner one, so the inner
-	// shell is a grandchild of kosli.
-	inner := `trap "touch ` + marker + `; exit 0" TERM; touch ` + ready + `; while :; do sleep 0.1; done`
-	done := make(chan Result)
-	go func() {
-		res, _, _, _ := run(t, "sh", "-c", `sh -c '`+inner+`'; true`)
-		done <- res
-	}()
+func TestRunForwardsSignalsToGrandchild(t *testing.T) {
+	for _, sig := range []syscall.Signal{syscall.SIGTERM, syscall.SIGHUP} {
+		t.Run(sig.String(), func(t *testing.T) {
+			dir := t.TempDir()
+			ready := filepath.Join(dir, "ready")
+			marker := filepath.Join(dir, "marker")
+			// "; true" stops the outer shell from exec-ing the inner one, so the
+			// inner shell is a grandchild of kosli.
+			inner := fmt.Sprintf(`trap "touch %s; exit 0" %d; touch %s; while :; do sleep 0.1; done`, marker, int(sig), ready)
+			done := make(chan Result)
+			go func() {
+				res, _, _, _ := run(t, "sh", "-c", `sh -c '`+inner+`'; true`)
+				done <- res
+			}()
 
-	require.Eventually(t, func() bool { _, err := os.Stat(ready); return err == nil }, 5*time.Second, 20*time.Millisecond)
-	require.NoError(t, syscall.Kill(os.Getpid(), syscall.SIGTERM))
+			require.Eventually(t, func() bool { _, err := os.Stat(ready); return err == nil }, 5*time.Second, 20*time.Millisecond)
+			require.NoError(t, syscall.Kill(os.Getpid(), sig))
 
-	select {
-	case res := <-done:
-		require.Equal(t, 128+int(syscall.SIGTERM), res.ExitCode)
-	case <-time.After(5 * time.Second):
-		t.Fatal("build command was not stopped by SIGTERM")
+			select {
+			case res := <-done:
+				require.Equal(t, 128+int(sig), res.ExitCode)
+			case <-time.After(5 * time.Second):
+				t.Fatalf("build command was not stopped by %s", sig)
+			}
+			require.Eventually(t, func() bool { _, err := os.Stat(marker); return err == nil }, 5*time.Second, 20*time.Millisecond)
+		})
 	}
-	require.Eventually(t, func() bool { _, err := os.Stat(marker); return err == nil }, 5*time.Second, 20*time.Millisecond)
 }
