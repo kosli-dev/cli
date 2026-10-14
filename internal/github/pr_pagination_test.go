@@ -349,3 +349,26 @@ func TestPREvidenceByPRNumber_ApprovalDrainErrorNamesThePullRequest(t *testing.T
 	require.ErrorContains(t, err, "test-org/test-repo#7")
 	require.ErrorContains(t, err, "approvals")
 }
+
+// withHeadSHA adds the head commit to a PR node, which the shared helpers leave out.
+func withHeadSHA(prNode string) string {
+	return strings.Replace(prNode, `"title":`, `"headRefOid":"head-sha","title":`, 1)
+}
+
+func TestPREvidenceByPRNumber_RecordsHeadSHA(t *testing.T) {
+	ts := newGraphQLTestServer(t, fmt.Sprintf(`{"data":{"repository":{"pullRequest":%s}}}`,
+		withHeadSHA(prJSON(connectionJSON([]string{commitNodeJSON("sha1")}, ""), connectionJSON(nil, "")))))
+
+	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Equal(t, "head-sha", evidence.HeadSHA)
+}
+
+func TestPREvidenceForCommitV2_RecordsHeadSHA(t *testing.T) {
+	ts := newGraphQLTestServer(t, forCommitResponse(withHeadSHA(
+		v2PRNodeJSON(7, connectionJSON([]string{commitNodeJSON("sha1")}, ""), connectionJSON(nil, "")))))
+
+	prs, err := newPaginationConfig(ts).PREvidenceForCommitV2("merge-sha")
+	require.NoError(t, err)
+	require.Equal(t, "head-sha", prs[0].HeadSHA)
+}
