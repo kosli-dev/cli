@@ -219,15 +219,14 @@ func gitlabApprovers(approvedBy []*gitlab.MergeRequestApproverUser, version int6
 func gitlabReviews(approvedBy []*gitlab.MergeRequestApproverUser, reviewers []*gitlab.MergeRequestReviewer) []types.PRApprovals {
 	reviewerStates := map[string]string{}
 	for _, r := range reviewers {
-		reviewerStates[gitlabUserName(r.User)] = r.State
+		reviewerStates[r.User.Username] = r.State
 	}
 	reviews := []types.PRApprovals{}
 	approved := map[string]bool{}
 	for _, a := range approvedBy {
-		name := gitlabUserName(a.User)
-		approved[name] = true
-		if reviewerStates[name] != "requested_changes" {
-			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewApproved})
+		approved[a.User.Username] = true
+		if reviewerStates[a.User.Username] != "requested_changes" {
+			reviews = append(reviews, types.PRApprovals{Username: gitlabUserName(a.User), State: types.ReviewApproved})
 		}
 	}
 	for _, r := range reviewers {
@@ -235,7 +234,7 @@ func gitlabReviews(approvedBy []*gitlab.MergeRequestApproverUser, reviewers []*g
 		switch {
 		case r.State == "requested_changes":
 			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewChangesRequested})
-		case r.State == "reviewed" && !approved[name]:
+		case r.State == "reviewed" && !approved[r.User.Username]:
 			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewCommented})
 		}
 	}

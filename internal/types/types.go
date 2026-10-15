@@ -24,11 +24,20 @@ type PREvidence struct {
 // commits. The API requires the field on FoundPullRequestV2, so omitting it —
 // or sending null for a nil slice — produces a payload matching neither
 // attestation schema (#1081).
+//
+// It also sends an empty reviews list, which omitempty would drop: a missing
+// field means reviews were not collected, an empty one that there were none.
 func (e PREvidence) MarshalJSON() ([]byte, error) {
 	type prEvidence PREvidence // sheds the method set, so this does not recurse
-	out := prEvidence(e)
+	out := struct {
+		prEvidence
+		Reviews *[]PRApprovals `json:"reviews,omitempty"` // shadows the embedded field
+	}{prEvidence: prEvidence(e)}
 	if out.Commits == nil {
 		out.Commits = []Commit{}
+	}
+	if e.Reviews != nil {
+		out.Reviews = &e.Reviews
 	}
 	return json.Marshal(out)
 }

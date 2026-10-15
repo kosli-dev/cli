@@ -273,6 +273,19 @@ func TestBuildPREvidence_RecordsEveryReviewAndEachApprovalOnce(t *testing.T) {
 	}, evidence.Approvers)
 }
 
+func TestBuildPREvidence_RecordsThatAPRHasNoReviews(t *testing.T) {
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature", "main", "",
+		nil, nil,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, evidence.Reviews, "no reviews is a fact, not a gap")
+	require.Empty(t, evidence.Reviews)
+}
+
 func TestBuildPREvidence_RecordsWhoSignedACommit(t *testing.T) {
 	node := graphqlCommitNode{}
 	node.Commit.Oid = "0e723254516c841126e81f76100be57258ff1386"

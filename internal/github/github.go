@@ -334,6 +334,7 @@ func buildPREvidence(
 		HeadSHA:     headSHA,
 		BaseRef:     baseRef,
 		Commits:     []types.Commit{},
+		Reviews:     []types.PRApprovals{},
 	}
 
 	for _, n := range commitNodes {

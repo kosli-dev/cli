@@ -65,6 +65,16 @@ func TestGitlabReviews(t *testing.T) {
 			want:       []types.PRApprovals{{Username: "ADA (@ada)", State: types.ReviewChangesRequested}},
 		},
 		{
+			name: "people are matched on username, not on display name",
+			approvedBy: []*gitlab.MergeRequestApproverUser{
+				{User: &gitlab.BasicUser{Name: "Ada L", Username: "ada"}},
+			},
+			reviewers: []*gitlab.MergeRequestReviewer{
+				{User: &gitlab.BasicUser{Name: "Ada Lovelace", Username: "ada"}, State: "requested_changes"},
+			},
+			want: []types.PRApprovals{{Username: "Ada Lovelace (@ada)", State: types.ReviewChangesRequested}},
+		},
+		{
 			name:       "a comment does not add a second entry beside an approval",
 			approvedBy: approvedBy("ada"),
 			reviewers:  []*gitlab.MergeRequestReviewer{reviewer("ada", "reviewed")},

@@ -41,12 +41,16 @@ func TestPREvidenceAlwaysSerialisesCommits(t *testing.T) {
 	}
 }
 
-func TestPREvidenceOmitsReviewsWhenNoneAreRecorded(t *testing.T) {
-	for _, reviews := range [][]PRApprovals{nil, {}} {
-		payload, err := json.Marshal(PREvidence{Reviews: reviews})
-		require.NoError(t, err)
-		require.NotContains(t, string(payload), `"reviews"`)
-	}
+// A missing reviews field means reviews were not collected; an empty list
+// means they were, and there were none.
+func TestPREvidenceSendsReviewsOnlyWhenCollected(t *testing.T) {
+	payload, err := json.Marshal(PREvidence{})
+	require.NoError(t, err)
+	require.NotContains(t, string(payload), `"reviews"`)
+
+	payload, err = json.Marshal(PREvidence{Reviews: []PRApprovals{}})
+	require.NoError(t, err)
+	require.Contains(t, string(payload), `"reviews":[]`)
 }
 
 func TestApprovalsFromKeepsTheLatestApprovalOfEachCommitPerReviewer(t *testing.T) {
