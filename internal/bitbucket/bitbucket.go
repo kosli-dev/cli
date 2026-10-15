@@ -190,11 +190,61 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 				return evidence, err
 			}
 			evidence.Commits = prCommits
+
+			evidence.Reviews, err = bitbucketReviews(participants)
+			if err != nil {
+				return evidence, err
+			}
 		}
 	} else {
 		return evidence, fmt.Errorf("failed to get PR details, got HTTP status %d. Please review repository permissions", response.Resp.StatusCode)
 	}
 	return evidence, nil
+}
+
+// bitbucketReviews gives each participant's current decision. A participant
+// with no state who has commented is a comment; one who has done neither is
+// left out.
+func bitbucketReviews(participants []any) ([]types.PRApprovals, error) {
+	reviews := []types.PRApprovals{}
+	for _, participantInterface := range participants {
+		p := participantInterface.(map[string]any)
+		user, _ := p["user"].(map[string]any)
+		username, _ := user["display_name"].(string)
+		participatedOn, _ := p["participated_on"].(string)
+		var state string
+		switch p["state"] {
+		case "approved":
+			state = types.ReviewApproved
+		case "changes_requested":
+			state = types.ReviewChangesRequested
+		case nil:
+			if participatedOn == "" {
+				continue
+			}
+			state = types.ReviewCommented
+		default:
+			continue
+		}
+		// A change request is kept without a name: dropping it would read as
+		// none given.
+		if username == "" && state != types.ReviewChangesRequested {
+			continue
+		}
+		review := types.PRApprovals{
+			Username: username,
+			State:    state,
+		}
+		if participatedOn != "" {
+			timestamp, err := parseRFC3339NanoTimestamp(participatedOn, "participated_on")
+			if err != nil {
+				return nil, err
+			}
+			review.Timestamp = timestamp
+		}
+		reviews = append(reviews, review)
+	}
+	return reviews, nil
 }
 
 // bitbucketBranchName extracts a branch name from a Bitbucket PR response for

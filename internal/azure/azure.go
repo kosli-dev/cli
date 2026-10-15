@@ -140,7 +140,7 @@ func (c *AzureConfig) newPRAzureEvidenceV2(pr git.GitPullRequest) (*types.PREvid
 		return evidence, err
 	}
 	evidence.Commits = commits
-	evidence.Approvers, err = c.GetPullRequestApprovers(*pr.PullRequestId, 2)
+	evidence.Approvers, evidence.Reviews, err = c.GetPullRequestReviews(*pr.PullRequestId)
 	if err != nil {
 		return evidence, err
 	}
@@ -233,25 +233,49 @@ func (c *AzureConfig) PullRequestsForCommit(commit string) ([]git.GitPullRequest
 
 // GetPullRequestApprovers returns a list of approvers for a given pull request
 func (c *AzureConfig) GetPullRequestApprovers(prNumber, version int) ([]any, error) {
-	var approvers []any
+	reviewers, err := c.pullRequestReviewers(prNumber)
+	if err != nil {
+		return nil, err
+	}
+	return azureApprovers(reviewers, version), nil
+}
+
+// GetPullRequestReviews returns a PR's approvers and its reviews: each
+// reviewer's current vote, since Azure keeps no history of them.
+func (c *AzureConfig) GetPullRequestReviews(prNumber int) ([]any, []types.PRApprovals, error) {
+	reviewers, err := c.pullRequestReviewers(prNumber)
+	if err != nil {
+		return nil, nil, err
+	}
+	return azureApprovers(reviewers, 2), azureReviews(reviewers), nil
+}
+
+func (c *AzureConfig) pullRequestReviewers(prNumber int) ([]git.IdentityRefWithVote, error) {
 	ctx := context.Background()
 	client, err := NewAzureClientFromToken(ctx, c.Token, c.OrgURL)
 	if err != nil {
-		return approvers, err
+		return nil, err
 	}
-
 	reviewers, err := client.GetPullRequestReviewers(ctx, git.GetPullRequestReviewersArgs{
 		RepositoryId:  &c.Repository,
 		PullRequestId: &prNumber,
 		Project:       &c.Project,
 	})
 	if err != nil {
-		return approvers, err
+		return nil, err
 	}
+	return *reviewers, nil
+}
 
-	for _, r := range *reviewers {
+func azureReviewerName(r git.IdentityRefWithVote) string {
+	return fmt.Sprintf("%s (%s)", *r.DisplayName, *r.UniqueName)
+}
+
+func azureApprovers(reviewers []git.IdentityRefWithVote, version int) []any {
+	var approvers []any
+	for _, r := range reviewers {
 		if *r.Vote == 10 {
-			approverName := fmt.Sprintf("%s (%s)", *r.DisplayName, *r.UniqueName)
+			approverName := azureReviewerName(r)
 			if version == 1 {
 				approvers = append(approvers, approverName)
 			} else {
@@ -262,5 +286,27 @@ func (c *AzureConfig) GetPullRequestApprovers(prNumber, version int) ([]any, err
 			}
 		}
 	}
-	return approvers, nil
+	return approvers
+}
+
+// azureReviews leaves out groups: a group's vote is its members' votes, and
+// each member who voted is listed in their own right.
+func azureReviews(reviewers []git.IdentityRefWithVote) []types.PRApprovals {
+	reviews := []types.PRApprovals{}
+	for _, r := range reviewers {
+		if (r.IsContainer != nil && *r.IsContainer) || r.Vote == nil {
+			continue
+		}
+		var state string
+		switch {
+		case *r.Vote > 0:
+			state = types.ReviewApproved
+		case *r.Vote < 0:
+			state = types.ReviewChangesRequested
+		default:
+			continue
+		}
+		reviews = append(reviews, types.PRApprovals{Username: azureReviewerName(r), State: state})
+	}
+	return reviews
 }

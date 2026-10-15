@@ -287,7 +287,8 @@ type graphqlSignature struct {
 	WasSignedByGitHub graphql.Boolean
 }
 
-// graphqlReviewNode is the shared GraphQL node type for approved reviews on a PR.
+// graphqlReviewNode is the shared GraphQL node type for reviews on a PR.
+// PENDING is never queried: it is unsubmitted, so it has no submittedAt.
 type graphqlReviewNode struct {
 	Author struct {
 		Login graphql.String
@@ -332,7 +333,6 @@ func buildPREvidence(
 		HeadRef:     headRef,
 		HeadSHA:     headSHA,
 		BaseRef:     baseRef,
-		Approvers:   []any{},
 		Commits:     []types.Commit{},
 	}
 
@@ -388,16 +388,17 @@ func buildPREvidence(
 		if err != nil {
 			return nil, err
 		}
-		approval := types.PRApprovals{
+		review := types.PRApprovals{
 			Username:  string(r.Author.Login),
 			State:     string(r.State),
 			Timestamp: submittedAt.Unix(),
 		}
 		if r.Commit != nil {
-			approval.CommitSHA = string(r.Commit.Oid)
+			review.CommitSHA = string(r.Commit.Oid)
 		}
-		evidence.Approvers = append(evidence.Approvers, approval)
+		evidence.Reviews = append(evidence.Reviews, review)
 	}
+	evidence.Approvers = types.ApprovalsFrom(evidence.Reviews)
 
 	return evidence, nil
 }
@@ -438,7 +439,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 				Reviews struct {
 					Nodes    []graphqlReviewNode
 					PageInfo pageInfo
-				} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
+				} `graphql:"reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED], after: $reviewCursor)"`
 			} `graphql:"pullRequest(number: $prNumber)"`
 		} `graphql:"repository(owner: $owner, name: $repo)"`
 	}
@@ -531,7 +532,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							Reviews struct {
 								Nodes    []graphqlReviewNode
 								PageInfo pageInfo
-							} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
+							} `graphql:"reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED], after: $reviewCursor)"`
 						}
 						// Intentionally not paginated, so no cursor is selected: a
 						// commit with more than 100 associated PRs is not a realistic

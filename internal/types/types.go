@@ -15,6 +15,9 @@ type PREvidence struct {
 	HeadSHA     string   `json:"head_sha,omitempty"`
 	BaseRef     string   `json:"base_ref,omitempty"`
 	Commits     []Commit `json:"commits"`
+	// Reviews holds every review, not only approvals, so a policy can see a
+	// change request given after an approval.
+	Reviews []PRApprovals `json:"reviews,omitempty"`
 }
 
 // MarshalJSON keeps "commits" in the payload even when a provider returns no
@@ -35,6 +38,36 @@ type PRApprovals struct {
 	State     string `json:"state,omitempty"`
 	Timestamp int64  `json:"timestamp,omitempty"`
 	CommitSHA string `json:"commit_sha,omitempty"`
+}
+
+// Review states, whatever the git provider calls them.
+const (
+	ReviewApproved         = "APPROVED"
+	ReviewChangesRequested = "CHANGES_REQUESTED"
+	ReviewCommented        = "COMMENTED"
+	// ReviewDismissed is a review GitHub withdrew; it no longer says what it decided.
+	ReviewDismissed = "DISMISSED"
+)
+
+// ApprovalsFrom lists the approvals among reviews, one per reviewer per commit
+// with the latest kept: approving the same commit twice adds nothing, while
+// approvals of two commits are two facts a policy may need.
+func ApprovalsFrom(reviews []PRApprovals) []any {
+	approvals := []any{}
+	index := map[[2]string]int{}
+	for _, r := range reviews {
+		if r.State != ReviewApproved {
+			continue
+		}
+		key := [2]string{r.Username, r.CommitSHA}
+		if i, seen := index[key]; seen {
+			approvals[i] = r
+			continue
+		}
+		index[key] = len(approvals)
+		approvals = append(approvals, r)
+	}
+	return approvals
 }
 
 type Commit struct {
