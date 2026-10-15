@@ -3,8 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/kosli"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -107,13 +111,13 @@ func TestGetArtifactCommandTestSuite(t *testing.T) {
 }
 
 func TestPrintArtifactsAsTableToleratesMissingCollections(t *testing.T) {
-	// a server response without created_at, running, exited or history must
-	// render N/A and omit those sections rather than panic
-	raw := `[{"filename":"arti","flow_name":"flow-1","fingerprint":"abc","git_commit":"0fc1ba9",
-	  "commit_url":"https://c","build_url":"https://b","html_url":"https://h","state":"COMPLIANT"}]`
+	// an artifact without created_at, running, exited or history must render
+	// N/A and omit those sections rather than panic
+	artifacts := []kosli.Artifact{{Filename: "arti", FlowName: "flow-1", Fingerprint: "abc", GitCommit: "0fc1ba9",
+		CommitURL: "https://c", BuildURL: "https://b", HTMLURL: "https://h", State: "COMPLIANT"}}
 	var buf bytes.Buffer
 	require.NotPanics(t, func() {
-		require.NoError(t, printArtifactsAsTable(raw, &buf, 0))
+		require.NoError(t, printArtifactsAsTable(artifacts, &buf, 0))
 	})
 	out := buf.String()
 	require.Regexp(t, `Created on:\s+N/A\n`, out)
@@ -122,12 +126,11 @@ func TestPrintArtifactsAsTableToleratesMissingCollections(t *testing.T) {
 	require.NotContains(t, out, "Trail:")
 }
 
-func TestPrintArtifactsAsTableAcceptsStringTimestamps(t *testing.T) {
-	// the artifacts API returns created_at as a numeric string, not a number
-	raw := `[{"filename":"arti","flow_name":"flow-1","fingerprint":"abc","created_at":"1452902400.25",
-	  "history":[{"event":"cli reported","timestamp":"1452902400"}]}]`
+func TestPrintArtifactsAsTablePrintsFractionalTimestamps(t *testing.T) {
+	artifacts := []kosli.Artifact{{Filename: "arti", CreatedAt: "1452902400.25",
+		History: []kosli.ArtifactEvent{{Event: "cli reported", Timestamp: "1452902400"}}}}
 	var buf bytes.Buffer
-	require.NoError(t, printArtifactsAsTable(raw, &buf, 0))
+	require.NoError(t, printArtifactsAsTable(artifacts, &buf, 0))
 	out := buf.String()
 	require.NotRegexp(t, `Created on:\s+N/A`, out)
 	require.Contains(t, out, "History:\n")
@@ -137,11 +140,30 @@ func TestPrintArtifactsAsTableAcceptsStringTimestamps(t *testing.T) {
 func TestPrintArtifactsAsTablePrintsPresentButEmptyTrailRows(t *testing.T) {
 	// a key the server sends prints its row even when empty; only an absent
 	// or null key leaves the row out
-	raw := `[{"filename":"arti","flow_name":"flow-1","fingerprint":"abc",
-	  "trail_name":"","template_reference_name":""}]`
+	empty := ""
+	artifacts := []kosli.Artifact{{Filename: "arti", TrailName: &empty, TemplateReferenceName: &empty}}
 	var buf bytes.Buffer
-	require.NoError(t, printArtifactsAsTable(raw, &buf, 0))
+	require.NoError(t, printArtifactsAsTable(artifacts, &buf, 0))
 	out := buf.String()
 	require.Regexp(t, `(?m)^Trail:\s*$`, out)
 	require.Regexp(t, `(?m)^Name in template:\s*$`, out)
+}
+
+func TestGetArtifactPrintsJSONThatTheTableCannotDecode(t *testing.T) {
+	// -o json prints what the server sent, so a field the typed table cannot
+	// decode must not fail it; only the table reports the decode error
+	body := `{"filename":"arti","created_at":""}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(body))
+		assert.NoError(t, err)
+	}))
+	defer server.Close()
+	flags := fmt.Sprintf("--host %s --org test-org --api-token test-token", server.URL)
+
+	_, _, stdout, _, err := executeCommandC("get artifact flow-1@abc --output json " + flags)
+	require.NoError(t, err)
+	require.JSONEq(t, body, stdout)
+
+	_, _, _, _, err = executeCommandC("get artifact flow-1@abc " + flags)
+	require.ErrorContains(t, err, "failed to decode the Kosli API response")
 }

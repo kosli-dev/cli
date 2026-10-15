@@ -20,6 +20,7 @@ type received struct {
 	hits       int
 	method     string
 	rawPath    string
+	rawQuery   string
 	authHeader string
 }
 
@@ -30,6 +31,7 @@ func newFakeServer(t *testing.T, status int, responseBody string) (*httptest.Ser
 		seen.hits++
 		seen.method = r.Method
 		seen.rawPath = r.URL.EscapedPath()
+		seen.rawQuery = r.URL.RawQuery
 		seen.authHeader = r.Header.Get("Authorization")
 		w.WriteHeader(status)
 		_, err := w.Write([]byte(responseBody))

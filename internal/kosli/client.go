@@ -64,6 +64,14 @@ func (c *Client) endpoint(segments ...string) (string, error) {
 	return url.JoinPath(c.host, append([]string{"api/v2"}, segments...)...)
 }
 
+// withQuery appends query to endpoint, leaving it bare when query is empty.
+func withQuery(endpoint string, query url.Values) string {
+	if len(query) == 0 {
+		return endpoint
+	}
+	return endpoint + "?" + query.Encode()
+}
+
 func (c *Client) send(ctx context.Context, params *requests.RequestParams) (*Result, error) {
 	params.Context = ctx
 	params.Token = c.token

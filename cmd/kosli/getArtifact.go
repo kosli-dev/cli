@@ -1,16 +1,14 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"io"
-	"net/http"
-	neturl "net/url"
 	"sort"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/output"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -62,33 +60,6 @@ type getArtifactOptions struct {
 	trail  string
 }
 
-type artifactResponse struct {
-	Filename              string           `json:"filename"`
-	FlowName              string           `json:"flow_name"`
-	TrailName             *string          `json:"trail_name"`
-	TemplateReferenceName *string          `json:"template_reference_name"`
-	Fingerprint           string           `json:"fingerprint"`
-	CreatedAt             json.Number      `json:"created_at"`
-	GitCommit             string           `json:"git_commit"`
-	CommitURL             string           `json:"commit_url"`
-	BuildURL              string           `json:"build_url"`
-	HTMLURL               string           `json:"html_url"`
-	State                 string           `json:"state"`
-	Running               []environmentRef `json:"running"`
-	Exited                []environmentRef `json:"exited"`
-	History               []artifactEvent  `json:"history"`
-}
-
-type environmentRef struct {
-	EnvironmentName string  `json:"environment_name"`
-	SnapshotIndex   float64 `json:"snapshot_index"`
-}
-
-type artifactEvent struct {
-	Event     string      `json:"event"`
-	Timestamp json.Number `json:"timestamp"`
-}
-
 func newGetArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(getArtifactOptions)
 	cmd := &cobra.Command{
@@ -105,7 +76,7 @@ func newGetArtifactCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out, args)
+			return o.run(cmd.Context(), out, args)
 		},
 	}
 
@@ -115,64 +86,46 @@ func newGetArtifactCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *getArtifactOptions) run(out io.Writer, args []string) error {
+func (o *getArtifactOptions) run(ctx context.Context, out io.Writer, args []string) error {
 	flowName, id, separator, err := handleArtifactExpression(args[0])
 	if err != nil {
 		return err
 	}
-	var idType string
+
+	var raw []byte
+	var artifacts func() ([]kosli.Artifact, error)
 	if separator == "@" {
-		idType = "fingerprint"
+		artifact, err := kosliAPI().GetArtifactByFingerprint(ctx, flowName, id, o.trail)
+		if err != nil {
+			return err
+		}
+		raw = artifact.Raw
+		artifacts = func() ([]kosli.Artifact, error) {
+			value, err := artifact.Value()
+			return []kosli.Artifact{value}, err
+		}
 	} else {
-		idType = "commit_sha"
+		listed, err := kosliAPI().ListArtifactsByCommitSHA(ctx, flowName, id, o.trail)
+		if err != nil {
+			return err
+		}
+		raw, artifacts = listed.Raw, listed.Value
 	}
 
-	url, err := neturl.JoinPath(global.Host, "api/v2/artifacts", global.Org, flowName, idType, id)
-	if err != nil {
-		return err
-	}
-	if o.trail != "" {
-		q := neturl.Values{}
-		q.Set("trail", o.trail)
-		url += "?" + q.Encode()
-	}
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    url,
-		Token:  global.ApiToken,
-	}
-
-	response, err := kosliClient.Do(reqParams)
-	if err != nil {
-		return err
-	}
-
-	return output.FormattedPrint(response.Body, o.output, out, 0,
+	return output.FormattedPrint(string(raw), o.output, out, 0,
 		map[string]output.FormatOutputFunc{
-			"table": printArtifactAsTableWrapper,
-			"json":  output.PrintJson,
+			"table": func(_ string, out io.Writer, pageNumber int) error {
+				value, err := artifacts()
+				if err != nil {
+					return err
+				}
+				return printArtifactsAsTable(value, out, pageNumber)
+			},
+			"json": output.PrintJson,
 		})
 }
 
-func printArtifactAsTableWrapper(artifactRaw string, out io.Writer, pageNumber int) error {
-	// TODO: we have this function for backward compatibility with API.
-	// API returns array when querying with commit and returns single map for sha256.
-	// In the future, the return json should always be an array
-	if artifactRaw[0] != '[' {
-		artifactRaw = "[" + artifactRaw + "]"
-	}
-	return printArtifactsAsTable(artifactRaw, out, pageNumber)
-}
-
-func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) error {
-	var artifacts []artifactResponse
-	if err := json.Unmarshal([]byte(artifactRaw), &artifacts); err != nil {
-		return err
-	}
-	return printArtifactsJsonAsTable(artifacts, out, pageNumber)
-}
-
-func printArtifactsJsonAsTable(artifacts []artifactResponse, out io.Writer, pageNumber int) error {
+func printArtifactsAsTable(artifacts []kosli.Artifact, out io.Writer, pageNumber int) error {
 	separator := ""
 	for _, artifact := range artifacts {
 		rows, err := artifactTableRows(artifact)
@@ -186,7 +139,7 @@ func printArtifactsJsonAsTable(artifacts []artifactResponse, out io.Writer, page
 	return nil
 }
 
-func artifactTableRows(artifact artifactResponse) ([]string, error) {
+func artifactTableRows(artifact kosli.Artifact) ([]string, error) {
 	rows := []string{
 		fmt.Sprintf("Name:\t%s", artifact.Filename),
 		fmt.Sprintf("Flow:\t%s", artifact.FlowName),
@@ -234,7 +187,7 @@ func artifactTableRows(artifact artifactResponse) ([]string, error) {
 }
 
 // environmentRefNames renders each reference as name#snapshot, e.g. "prod#12".
-func environmentRefNames(refs []environmentRef) []string {
+func environmentRefNames(refs []kosli.EnvironmentRef) []string {
 	names := make([]string, 0, len(refs))
 	for _, ref := range refs {
 		names = append(names, fmt.Sprintf("%s#%.0f", ref.EnvironmentName, ref.SnapshotIndex))
