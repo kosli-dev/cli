@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
@@ -489,14 +491,14 @@ func EnableBeta(t *testing.T) {
 func CreateEnv(org, envName, envType string, t *testing.T) {
 	t.Helper()
 	o := &createEnvOptions{
-		payload: CreateEnvironmentPayload{
+		payload: kosli.CreateEnvironmentRequest{
 			Name:        envName,
 			Type:        envType,
 			Description: "test env",
 		},
 	}
 
-	err := o.run([]string{envName})
+	err := o.run(context.Background(), []string{envName})
 	require.NoError(t, err, "env should be created without error")
 }
 

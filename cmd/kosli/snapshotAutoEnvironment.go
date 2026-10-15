@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -156,7 +157,7 @@ func createEnvironmentForSnapshot(envName, envType string) error {
 		description = defaultAutoEnvDescription
 	}
 
-	payload := CreateEnvironmentPayload{
+	payload := kosli.CreateEnvironmentRequest{
 		Name:        envName,
 		Type:        envType,
 		Description: description,
