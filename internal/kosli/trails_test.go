@@ -28,3 +28,14 @@ func TestGetTrailOfAMissingTrailIsNotFound(t *testing.T) {
 
 	require.True(t, IsNotFound(err))
 }
+
+func TestGetTrailInADryRunStillReadsTheTrail(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusOK, `{"name":"trail-1"}`)
+	client := New(DryRun(newHTTPClient(t)), server.URL, "test-org", "test-token")
+
+	result, err := client.GetTrail(context.Background(), "flow-1", "trail-1")
+
+	require.NoError(t, err)
+	require.Equal(t, 1, seen.hits)
+	require.JSONEq(t, `{"name":"trail-1"}`, string(result.Raw))
+}
