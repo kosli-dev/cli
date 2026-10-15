@@ -21,6 +21,7 @@ type received struct {
 	method     string
 	rawPath    string
 	authHeader string
+	body       string
 }
 
 func newFakeServer(t *testing.T, status int, responseBody string) (*httptest.Server, *received) {
@@ -31,8 +32,11 @@ func newFakeServer(t *testing.T, status int, responseBody string) (*httptest.Ser
 		seen.method = r.Method
 		seen.rawPath = r.URL.EscapedPath()
 		seen.authHeader = r.Header.Get("Authorization")
+		body, err := io.ReadAll(r.Body)
+		assert.NoError(t, err)
+		seen.body = string(body)
 		w.WriteHeader(status)
-		_, err := w.Write([]byte(responseBody))
+		_, err = w.Write([]byte(responseBody))
 		// assert, not require: FailNow must not be called off the test goroutine.
 		assert.NoError(t, err)
 	}))
