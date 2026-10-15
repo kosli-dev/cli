@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"io"
 
 	"github.com/kosli-dev/cli/internal/evaluations"
@@ -96,8 +97,7 @@ func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			o.ctx = cmd.Context()
-			return o.run(out, args)
+			return o.run(cmd.Context(), out, args)
 		},
 	}
 
@@ -112,7 +112,7 @@ func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
+func (o *evaluateTrailsOptions) run(ctx context.Context, out io.Writer, args []string) error {
 	if o.serverSide {
 		refs := make([]evaluations.TrailRef, 0, len(args))
 		for _, trailName := range args {
@@ -123,7 +123,7 @@ func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
 
 	var trails []any
 	for _, trailName := range args {
-		trailData, err := fetchAndEnrichTrail(o.ctx, o.flowName, trailName, o.attestations)
+		trailData, err := fetchAndEnrichTrail(ctx, o.flowName, trailName, o.attestations)
 		if err != nil {
 			return err
 		}

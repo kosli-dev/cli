@@ -56,7 +56,6 @@ const serverPolicyMaxBytes = 1 << 20 // 1 MiB
 var serverSideWaitOptions = evaluations.WaitOptions{}
 
 type commonEvaluateOptions struct {
-	ctx          context.Context
 	flowName     string
 	policyRef    string
 	output       string
