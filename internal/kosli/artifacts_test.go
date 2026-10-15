@@ -20,3 +20,16 @@ func TestGetArtifactByFingerprintRequestsTheArtifactAndDecodesIt(t *testing.T) {
 	require.Equal(t, "app", artifact.Value.Filename)
 	require.JSONEq(t, `{"filename":"app","fingerprint":"abc"}`, string(artifact.Raw))
 }
+
+func TestGetArtifactByFingerprintFiltersByTrailOnlyWhenOneIsGiven(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusOK, `{}`)
+	client := newTestClient(t, server.URL)
+
+	_, err := client.GetArtifactByFingerprint(context.Background(), "flow-1", "abc", "trail 1")
+	require.NoError(t, err)
+	require.Equal(t, "trail=trail+1", seen.rawQuery)
+
+	_, err = client.GetArtifactByFingerprint(context.Background(), "flow-1", "abc", "")
+	require.NoError(t, err)
+	require.Empty(t, seen.rawQuery)
+}

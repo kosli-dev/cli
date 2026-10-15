@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 )
@@ -45,9 +46,17 @@ func (c *Client) GetArtifactByFingerprint(ctx context.Context, flow, fingerprint
 	if err != nil {
 		return nil, err
 	}
-	result, err := c.send(ctx, &requests.RequestParams{Method: http.MethodGet, URL: endpoint})
+	result, err := c.send(ctx, &requests.RequestParams{Method: http.MethodGet, URL: withQuery(endpoint, trailQuery(trail))})
 	if err != nil {
 		return nil, err
 	}
 	return decode[Artifact](result)
+}
+
+func trailQuery(trail string) url.Values {
+	query := url.Values{}
+	if trail != "" {
+		query.Set("trail", trail)
+	}
+	return query
 }
