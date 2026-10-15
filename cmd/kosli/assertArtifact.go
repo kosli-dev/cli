@@ -1,14 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/output"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -150,7 +149,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out, args)
+			return o.run(cmd.Context(), out, args)
 		},
 	}
 
@@ -167,7 +166,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
+func (o *assertArtifactOptions) run(ctx context.Context, out io.Writer, args []string) error {
 	var err error
 	if o.fingerprint == "" {
 		o.fingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
@@ -176,42 +175,16 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	baseURL, err := url.JoinPath(global.Host, "api/v2/asserts", global.Org, "fingerprint", o.fingerprint)
-	if err != nil {
-		return err
-	}
-	params := url.Values{}
-
-	if o.flowName != "" {
-		params.Add("flow_name", o.flowName)
-	}
-
-	if o.envName != "" {
-		params.Add("environment_name", o.envName)
-	}
-
-	if len(o.policyNames) > 0 {
-		for _, policy := range o.policyNames {
-			params.Add("policy_name", policy)
-		}
-	}
-
-	fullURL := baseURL
-	if len(params) > 0 {
-		fullURL += "?" + params.Encode()
-	}
-
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    fullURL,
-		Token:  global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
+	assertion, err := kosliAPI().AssertArtifact(ctx, o.fingerprint, kosli.AssertArtifactFilter{
+		Flow:        o.flowName,
+		Environment: o.envName,
+		Policies:    o.policyNames,
+	})
 	if err != nil {
 		return err
 	}
 
-	err = output.FormattedPrint(response.Body, o.output, out, 0,
+	err = output.FormattedPrint(string(assertion.Raw), o.output, out, 0,
 		map[string]output.FormatOutputFunc{
 			"table": printAssertAsTable,
 			"json":  output.PrintJson,
@@ -220,7 +193,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	return assertCompliant(response.Body)
+	return assertCompliant(string(assertion.Raw))
 }
 
 // assertCompliant decodes only the compliant field, so the exit code CI gates
