@@ -53,6 +53,21 @@ func (c *Client) GetArtifactByFingerprint(ctx context.Context, flow, fingerprint
 	return decode[Artifact](result)
 }
 
+// ListArtifactsByCommitSHA calls list_artifacts_by_commit_sha. It returns the
+// Artifacts built from commitSHA in flow, only those in trail when trail is not
+// empty.
+func (c *Client) ListArtifactsByCommitSHA(ctx context.Context, flow, commitSHA, trail string) (*Response[[]Artifact], error) {
+	endpoint, err := c.endpoint("artifacts", c.org, flow, "commit_sha", commitSHA)
+	if err != nil {
+		return nil, err
+	}
+	result, err := c.send(ctx, &requests.RequestParams{Method: http.MethodGet, URL: withQuery(endpoint, trailQuery(trail))})
+	if err != nil {
+		return nil, err
+	}
+	return decode[[]Artifact](result)
+}
+
 func trailQuery(trail string) url.Values {
 	query := url.Values{}
 	if trail != "" {

@@ -33,3 +33,40 @@ func TestGetArtifactByFingerprintFiltersByTrailOnlyWhenOneIsGiven(t *testing.T) 
 	require.NoError(t, err)
 	require.Empty(t, seen.rawQuery)
 }
+
+func TestListArtifactsByCommitSHARequestsTheCommitsArtifactsAndDecodesThem(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusOK, `[{"filename":"a"},{"filename":"b"}]`)
+	client := newTestClient(t, server.URL)
+
+	artifacts, err := client.ListArtifactsByCommitSHA(context.Background(), "flow-1", "0fc1ba9", "trail-1")
+
+	require.NoError(t, err)
+	require.Equal(t, "/api/v2/artifacts/test-org/flow-1/commit_sha/0fc1ba9", seen.rawPath)
+	require.Equal(t, "trail=trail-1", seen.rawQuery)
+	require.Len(t, artifacts.Value, 2)
+	require.Equal(t, "b", artifacts.Value[1].Filename)
+}
+
+func TestArtifactDecodesStringTimestamps(t *testing.T) {
+	// the artifacts API returns created_at as a numeric string, not a number
+	server, _ := newFakeServer(t, http.StatusOK,
+		`{"created_at":"1452902400.25","history":[{"event":"cli reported","timestamp":"1452902400"}]}`)
+	client := newTestClient(t, server.URL)
+
+	artifact, err := client.GetArtifactByFingerprint(context.Background(), "flow-1", "abc", "")
+
+	require.NoError(t, err)
+	require.Equal(t, "1452902400.25", artifact.Value.CreatedAt.String())
+	require.Equal(t, "1452902400", artifact.Value.History[0].Timestamp.String())
+}
+
+func TestArtifactTellsAPresentButEmptyTrailFromAnAbsentOne(t *testing.T) {
+	server, _ := newFakeServer(t, http.StatusOK, `{"trail_name":""}`)
+	client := newTestClient(t, server.URL)
+
+	artifact, err := client.GetArtifactByFingerprint(context.Background(), "flow-1", "abc", "")
+
+	require.NoError(t, err)
+	require.NotNil(t, artifact.Value.TrailName)
+	require.Nil(t, artifact.Value.TemplateReferenceName)
+}
