@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -120,7 +121,7 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -144,9 +145,9 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotLambdaOptions) run(args []string) error {
+func (o *snapshotLambdaOptions) run(ctx context.Context, args []string) error {
 	envName := args[0]
-	return newSnapshotReporter().report(envName, "lambda", func() (any, string, error) {
+	return newSnapshotReporter().report(ctx, envName, "lambda", func() (any, string, error) {
 		lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.filter)
 		if err != nil {
 			return nil, "", err

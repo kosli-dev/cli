@@ -508,7 +508,7 @@ func ReportServerArtifactToEnv(paths []string, envName string, t *testing.T) {
 	o := &snapshotServerOptions{
 		paths: paths,
 	}
-	err := o.run([]string{envName})
+	err := o.run(context.Background(), []string{envName})
 	require.NoError(t, err, "server env should be reported without error")
 }
 

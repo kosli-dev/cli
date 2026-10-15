@@ -109,7 +109,7 @@ func newSnapshotGKECmd(out io.Writer) *cobra.Command {
 			return o.validateRegexFlags()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -157,9 +157,9 @@ func (o *snapshotGKEOptions) parent() string {
 	}
 }
 
-func (o *snapshotGKEOptions) run(args []string) error {
+func (o *snapshotGKEOptions) run(ctx context.Context, args []string) error {
 	envName := args[0]
-	return newSnapshotReporter().report(envName, "K8S", func() (any, string, error) {
+	return newSnapshotReporter().report(ctx, envName, "K8S", func() (any, string, error) {
 		ctx := context.Background()
 		client, err := newGKEClient(ctx)
 		if err != nil {
