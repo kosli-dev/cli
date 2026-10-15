@@ -49,7 +49,7 @@ kosli create environment yourLogicalEnvironmentName
 `
 
 type createEnvOptions struct {
-	payload           kosli.CreateEnvironmentRequest
+	payload           kosli.CreateOrUpdateEnvironmentRequest
 	excludeScaling    bool
 	includeScaling    bool
 	requireProvenance bool
@@ -112,18 +112,18 @@ func (o *createEnvOptions) run(ctx context.Context, args []string) error {
 
 	if o.includeScaling {
 		var myTrue = true
-		o.payload.IncludeScaling = &myTrue
+		o.payload.IncludeScaling = &myTrue //nolint:staticcheck // set only by the deprecated scaling flags
 	}
 	if o.excludeScaling {
 		var myFalse = false
-		o.payload.IncludeScaling = &myFalse
+		o.payload.IncludeScaling = &myFalse //nolint:staticcheck // set only by the deprecated scaling flags
 	}
 	if o.requireProvenance {
 		var myTrue = true
-		o.payload.RequireProvenance = &myTrue
+		o.payload.RequireProvenance = &myTrue //nolint:staticcheck // set only by the deprecated --require-provenance flag
 	}
 
-	_, err := kosliAPI().CreateEnvironment(ctx, o.payload)
+	_, err := kosliAPI().CreateOrUpdateEnvironment(ctx, o.payload)
 	if err == nil && !global.DryRun {
 		logger.Info("environment %s was created", o.payload.Name)
 	}

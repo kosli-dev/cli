@@ -67,7 +67,7 @@ func (suite *OpenAPIContractTestSuite) SetupSuite() {
 func (suite *OpenAPIContractTestSuite) TestPayloadsMatchSchema() {
 	registry := []driftCase{
 		{name: "create control", payload: ControlPayload{}, component: "ControlPostInput"},
-		{name: "create environment", payload: kosli.CreateEnvironmentRequest{}, component: "CreateEnvironmentPutInput"},
+		{name: "create environment", payload: kosli.CreateOrUpdateEnvironmentRequest{}, component: "CreateEnvironmentPutInput"},
 	}
 
 	for _, c := range registry {

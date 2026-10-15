@@ -55,7 +55,7 @@ func (suite *SnapshotAutoEnvironmentTestSuite) SetupSuite() {
 func (suite *SnapshotAutoEnvironmentTestSuite) createLogicalEnv(name string, included []string) {
 	suite.T().Helper()
 	o := &createEnvOptions{
-		payload: kosli.CreateEnvironmentRequest{
+		payload: kosli.CreateOrUpdateEnvironmentRequest{
 			Name:                 name,
 			Type:                 "logical",
 			Description:          "test logical env",

@@ -136,21 +136,21 @@ func createEnvironmentForSnapshot(ctx context.Context, envName, envType string) 
 		description = defaultAutoEnvDescription
 	}
 
-	payload := kosli.CreateEnvironmentRequest{
+	payload := kosli.CreateOrUpdateEnvironmentRequest{
 		Name:        envName,
 		Type:        envType,
 		Description: description,
 	}
 	if snapshotAutoEnv.includeScaling {
 		myTrue := true
-		payload.IncludeScaling = &myTrue
+		payload.IncludeScaling = &myTrue //nolint:staticcheck // set only by the deprecated scaling flags
 	}
 	if snapshotAutoEnv.excludeScaling {
 		myFalse := false
-		payload.IncludeScaling = &myFalse
+		payload.IncludeScaling = &myFalse //nolint:staticcheck // set only by the deprecated scaling flags
 	}
 
-	if _, err := kosliAPI().CreateEnvironment(ctx, payload); err != nil {
+	if _, err := kosliAPI().CreateOrUpdateEnvironment(ctx, payload); err != nil {
 		return fmt.Errorf("failed to auto-create environment %s: %v", envName, err)
 	}
 	logger.Info("environment %s was created", envName)

@@ -31,12 +31,12 @@ func TestGetEnvironmentOfAMissingEnvironmentIsNotFound(t *testing.T) {
 	require.True(t, IsNotFound(err))
 }
 
-func TestCreateEnvironmentPutsTheRequestToTheOrgsEnvironments(t *testing.T) {
+func TestCreateOrUpdateEnvironmentPutsTheRequestToTheOrgsEnvironments(t *testing.T) {
 	server, seen := newFakeServer(t, http.StatusCreated, ``)
 	client := newTestClient(t, server.URL)
 	include := true
 
-	result, err := client.CreateEnvironment(context.Background(), CreateEnvironmentRequest{
+	result, err := client.CreateOrUpdateEnvironment(context.Background(), CreateOrUpdateEnvironmentRequest{
 		Name: "prod", Type: "K8S", Description: "production", IncludeScaling: &include,
 	})
 
@@ -63,7 +63,7 @@ func TestADryRunSendsNeitherEnvironmentWrite(t *testing.T) {
 	server, seen := newFakeServer(t, http.StatusCreated, ``)
 	client := New(DryRun(newHTTPClient(t)), server.URL, "test-org", "test-token")
 
-	_, err := client.CreateEnvironment(context.Background(), CreateEnvironmentRequest{Name: "prod", Type: "K8S"})
+	_, err := client.CreateOrUpdateEnvironment(context.Background(), CreateOrUpdateEnvironmentRequest{Name: "prod", Type: "K8S"})
 	require.NoError(t, err)
 	_, err = client.ReportSnapshot(context.Background(), "prod", "K8S", map[string]any{})
 	require.NoError(t, err)

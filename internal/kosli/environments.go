@@ -26,19 +26,24 @@ func (c *Client) GetEnvironment(ctx context.Context, name string) (*Response[Env
 	return &Response[Environment]{Result: *result}, nil
 }
 
-// CreateEnvironmentRequest describes the Environment CreateEnvironment creates.
-type CreateEnvironmentRequest struct {
-	Name                 string   `json:"name"`
-	Type                 string   `json:"type"`
-	Description          string   `json:"description"`
-	IncludeScaling       *bool    `json:"include_scaling,omitempty"`
+// CreateOrUpdateEnvironmentRequest describes the Environment that
+// CreateOrUpdateEnvironment creates or updates.
+type CreateOrUpdateEnvironmentRequest struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	// Deprecated: the server accepts but ignores it, since scaling events are
+	// no longer recorded. It is sent only for the deprecated scaling flags.
+	IncludeScaling *bool `json:"include_scaling,omitempty"`
+	// Deprecated: the server accepts but ignores it; use policies instead. It is
+	// sent only for the deprecated --require-provenance flag.
 	RequireProvenance    *bool    `json:"require_provenance,omitempty"`
 	IncludedEnvironments []string `json:"included_environments,omitempty"`
 }
 
-// CreateEnvironment calls create_or_update_environment. It creates the
-// Environment, or updates it when one with that name already exists.
-func (c *Client) CreateEnvironment(ctx context.Context, request CreateEnvironmentRequest) (*Result, error) {
+// CreateOrUpdateEnvironment calls create_or_update_environment. It creates the
+// Environment, or overwrites the one that already has that name.
+func (c *Client) CreateOrUpdateEnvironment(ctx context.Context, request CreateOrUpdateEnvironmentRequest) (*Result, error) {
 	endpoint, err := c.endpoint("environments", c.org)
 	if err != nil {
 		return nil, err

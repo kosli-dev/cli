@@ -491,7 +491,7 @@ func EnableBeta(t *testing.T) {
 func CreateEnv(org, envName, envType string, t *testing.T) {
 	t.Helper()
 	o := &createEnvOptions{
-		payload: kosli.CreateEnvironmentRequest{
+		payload: kosli.CreateOrUpdateEnvironmentRequest{
 			Name:        envName,
 			Type:        envType,
 			Description: "test env",
