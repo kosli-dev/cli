@@ -40,21 +40,23 @@ type Result struct {
 	Created bool
 }
 
-// Response is a Result with its body decoded.
+// Response is the Result of a read whose body decodes to T. The body is decoded
+// only when Value is called, so a caller that prints Raw, as --output json
+// does, is not failed by a body that T does not fit.
 type Response[T any] struct {
 	Result
-	Value T
 }
 
-func decode[T any](result *Result) (*Response[T], error) {
-	response := &Response[T]{Result: *result}
-	if len(result.Raw) == 0 {
-		return response, nil
+// Value decodes the body. An empty body, as from a dry run, is T's zero value.
+func (r *Response[T]) Value() (T, error) {
+	var value T
+	if len(r.Raw) == 0 {
+		return value, nil
 	}
-	if err := json.Unmarshal(result.Raw, &response.Value); err != nil {
-		return nil, fmt.Errorf("failed to decode the Kosli API response: %w", err)
+	if err := json.Unmarshal(r.Raw, &value); err != nil {
+		return value, fmt.Errorf("failed to decode the Kosli API response: %w", err)
 	}
-	return response, nil
+	return value, nil
 }
 
 func (c *Client) endpoint(segments ...string) (string, error) {

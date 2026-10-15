@@ -214,27 +214,34 @@ type namedThing struct {
 	Name string `json:"name"`
 }
 
-func TestDecodeFillsTheValueAndKeepsTheResult(t *testing.T) {
-	result := &Result{Raw: []byte(`{"name":"trail-1","unread":true}`), Created: true}
+func TestValueDecodesTheBody(t *testing.T) {
+	response := &Response[namedThing]{Result: Result{Raw: []byte(`{"name":"trail-1","unread":true}`)}}
 
-	response, err := decode[namedThing](result)
-
-	require.NoError(t, err)
-	require.Equal(t, namedThing{Name: "trail-1"}, response.Value)
-	require.Equal(t, *result, response.Result)
-}
-
-func TestDecodeOfADryRunResultLeavesTheValueZero(t *testing.T) {
-	response, err := decode[namedThing](&Result{})
+	value, err := response.Value()
 
 	require.NoError(t, err)
-	require.Equal(t, namedThing{}, response.Value)
+	require.Equal(t, namedThing{Name: "trail-1"}, value)
 }
 
-func TestDecodeOfABodyThatDoesNotMatchIsAnError(t *testing.T) {
-	_, err := decode[namedThing](&Result{Raw: []byte(`["not","an","object"]`)})
+func TestValueOfADryRunResultIsZero(t *testing.T) {
+	response := &Response[namedThing]{}
 
-	require.Error(t, err)
+	value, err := response.Value()
+
+	require.NoError(t, err)
+	require.Equal(t, namedThing{}, value)
+}
+
+func TestValueOfABodyThatDoesNotMatchIsAnErrorButRawIsStillThere(t *testing.T) {
+	// a caller printing Raw, as --output json does, must not be failed by a
+	// body the type does not fit
+	raw := []byte(`["not","an","object"]`)
+	response := &Response[namedThing]{Result: Result{Raw: raw}}
+
+	_, err := response.Value()
+
+	require.ErrorContains(t, err, "failed to decode the Kosli API response")
+	require.Equal(t, raw, response.Raw)
 }
 
 func TestACancelledContextStopsTheRequestBeforeItReachesTheServer(t *testing.T) {
