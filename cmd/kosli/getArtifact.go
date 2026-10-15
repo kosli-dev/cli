@@ -93,13 +93,17 @@ func (o *getArtifactOptions) run(ctx context.Context, out io.Writer, args []stri
 	}
 
 	var raw []byte
-	var artifacts []kosli.Artifact
+	var artifacts func() ([]kosli.Artifact, error)
 	if separator == "@" {
 		artifact, err := kosliAPI().GetArtifactByFingerprint(ctx, flowName, id, o.trail)
 		if err != nil {
 			return err
 		}
-		raw, artifacts = artifact.Raw, []kosli.Artifact{artifact.Value}
+		raw = artifact.Raw
+		artifacts = func() ([]kosli.Artifact, error) {
+			value, err := artifact.Value()
+			return []kosli.Artifact{value}, err
+		}
 	} else {
 		listed, err := kosliAPI().ListArtifactsByCommitSHA(ctx, flowName, id, o.trail)
 		if err != nil {
@@ -111,7 +115,11 @@ func (o *getArtifactOptions) run(ctx context.Context, out io.Writer, args []stri
 	return output.FormattedPrint(string(raw), o.output, out, 0,
 		map[string]output.FormatOutputFunc{
 			"table": func(_ string, out io.Writer, pageNumber int) error {
-				return printArtifactsAsTable(artifacts, out, pageNumber)
+				value, err := artifacts()
+				if err != nil {
+					return err
+				}
+				return printArtifactsAsTable(value, out, pageNumber)
 			},
 			"json": output.PrintJson,
 		})

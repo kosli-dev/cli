@@ -50,7 +50,7 @@ func (c *Client) GetArtifactByFingerprint(ctx context.Context, flow, fingerprint
 	if err != nil {
 		return nil, err
 	}
-	return decode[Artifact](result)
+	return &Response[Artifact]{Result: *result}, nil
 }
 
 // ListArtifactsByCommitSHA calls list_artifacts_by_commit_sha. It returns the
@@ -65,7 +65,7 @@ func (c *Client) ListArtifactsByCommitSHA(ctx context.Context, flow, commitSHA, 
 	if err != nil {
 		return nil, err
 	}
-	return decode[[]Artifact](result)
+	return &Response[[]Artifact]{Result: *result}, nil
 }
 
 func trailQuery(trail string) url.Values {

@@ -3,9 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/kosli"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -144,4 +147,23 @@ func TestPrintArtifactsAsTablePrintsPresentButEmptyTrailRows(t *testing.T) {
 	out := buf.String()
 	require.Regexp(t, `(?m)^Trail:\s*$`, out)
 	require.Regexp(t, `(?m)^Name in template:\s*$`, out)
+}
+
+func TestGetArtifactPrintsJSONThatTheTableCannotDecode(t *testing.T) {
+	// -o json prints what the server sent, so a field the typed table cannot
+	// decode must not fail it; only the table reports the decode error
+	body := `{"filename":"arti","created_at":""}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(body))
+		assert.NoError(t, err)
+	}))
+	defer server.Close()
+	flags := fmt.Sprintf("--host %s --org test-org --api-token test-token", server.URL)
+
+	_, _, stdout, _, err := executeCommandC("get artifact flow-1@abc --output json " + flags)
+	require.NoError(t, err)
+	require.JSONEq(t, body, stdout)
+
+	_, _, _, _, err = executeCommandC("get artifact flow-1@abc " + flags)
+	require.ErrorContains(t, err, "failed to decode the Kosli API response")
 }

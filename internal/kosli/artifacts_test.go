@@ -17,7 +17,9 @@ func TestGetArtifactByFingerprintRequestsTheArtifactAndDecodesIt(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.MethodGet, seen.method)
 	require.Equal(t, "/api/v2/artifacts/test-org/flow-1/fingerprint/abc", seen.rawPath)
-	require.Equal(t, "app", artifact.Value.Filename)
+	value, err := artifact.Value()
+	require.NoError(t, err)
+	require.Equal(t, "app", value.Filename)
 	require.JSONEq(t, `{"filename":"app","fingerprint":"abc"}`, string(artifact.Raw))
 }
 
@@ -43,8 +45,10 @@ func TestListArtifactsByCommitSHARequestsTheCommitsArtifactsAndDecodesThem(t *te
 	require.NoError(t, err)
 	require.Equal(t, "/api/v2/artifacts/test-org/flow-1/commit_sha/0fc1ba9", seen.rawPath)
 	require.Equal(t, "trail=trail-1", seen.rawQuery)
-	require.Len(t, artifacts.Value, 2)
-	require.Equal(t, "b", artifacts.Value[1].Filename)
+	value, err := artifacts.Value()
+	require.NoError(t, err)
+	require.Len(t, value, 2)
+	require.Equal(t, "b", value[1].Filename)
 }
 
 func TestArtifactDecodesStringTimestamps(t *testing.T) {
@@ -56,8 +60,10 @@ func TestArtifactDecodesStringTimestamps(t *testing.T) {
 	artifact, err := client.GetArtifactByFingerprint(context.Background(), "flow-1", "abc", "")
 
 	require.NoError(t, err)
-	require.Equal(t, "1452902400.25", artifact.Value.CreatedAt.String())
-	require.Equal(t, "1452902400", artifact.Value.History[0].Timestamp.String())
+	value, err := artifact.Value()
+	require.NoError(t, err)
+	require.Equal(t, "1452902400.25", value.CreatedAt.String())
+	require.Equal(t, "1452902400", value.History[0].Timestamp.String())
 }
 
 func TestArtifactTellsAPresentButEmptyTrailFromAnAbsentOne(t *testing.T) {
@@ -67,6 +73,8 @@ func TestArtifactTellsAPresentButEmptyTrailFromAnAbsentOne(t *testing.T) {
 	artifact, err := client.GetArtifactByFingerprint(context.Background(), "flow-1", "abc", "")
 
 	require.NoError(t, err)
-	require.NotNil(t, artifact.Value.TrailName)
-	require.Nil(t, artifact.Value.TemplateReferenceName)
+	value, err := artifact.Value()
+	require.NoError(t, err)
+	require.NotNil(t, value.TrailName)
+	require.Nil(t, value.TemplateReferenceName)
 }
