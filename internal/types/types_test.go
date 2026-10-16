@@ -40,3 +40,37 @@ func TestPREvidenceAlwaysSerialisesCommits(t *testing.T) {
 		})
 	}
 }
+
+// A missing reviews field means reviews were not collected; an empty list
+// means they were, and there were none.
+func TestPREvidenceSendsReviewsOnlyWhenCollected(t *testing.T) {
+	payload, err := json.Marshal(PREvidence{})
+	require.NoError(t, err)
+	require.NotContains(t, string(payload), `"reviews"`)
+
+	payload, err = json.Marshal(PREvidence{Reviews: []PRApprovals{}})
+	require.NoError(t, err)
+	require.Contains(t, string(payload), `"reviews":[]`)
+}
+
+func TestApprovalsFromKeepsTheLatestApprovalOfEachCommitPerReviewer(t *testing.T) {
+	reviews := []PRApprovals{
+		{Username: "ada", State: ReviewApproved, Timestamp: 1, CommitSHA: "c1"},
+		{Username: "ada", State: ReviewChangesRequested, Timestamp: 2, CommitSHA: "c1"},
+		{Username: "ada", State: ReviewApproved, Timestamp: 3, CommitSHA: "c1"},
+		{Username: "bob", State: ReviewCommented, Timestamp: 4, CommitSHA: "c1"},
+		{Username: "bob", State: ReviewDismissed, Timestamp: 5, CommitSHA: "c1"},
+		{Username: "bob", State: ReviewApproved, Timestamp: 6, CommitSHA: "c2"},
+		{Username: "ada", State: ReviewApproved, Timestamp: 7, CommitSHA: "c2"},
+	}
+	require.Equal(t, []any{
+		PRApprovals{Username: "ada", State: ReviewApproved, Timestamp: 3, CommitSHA: "c1"},
+		PRApprovals{Username: "bob", State: ReviewApproved, Timestamp: 6, CommitSHA: "c2"},
+		PRApprovals{Username: "ada", State: ReviewApproved, Timestamp: 7, CommitSHA: "c2"},
+	}, ApprovalsFrom(reviews))
+}
+
+func TestApprovalsFromReturnsAnEmptyListWithNoApprovals(t *testing.T) {
+	require.Equal(t, []any{}, ApprovalsFrom(nil))
+	require.Equal(t, []any{}, ApprovalsFrom([]PRApprovals{{Username: "ada", State: ReviewCommented}}))
+}

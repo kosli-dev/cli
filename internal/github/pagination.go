@@ -172,7 +172,7 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, r
 					Reviews struct {
 						Nodes    []graphqlReviewNode
 						PageInfo pageInfo
-					} `graphql:"reviews(first: 100, states: APPROVED, after: $cursor)"`
+					} `graphql:"reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED], after: $cursor)"`
 				} `graphql:"pullRequest(number: $prNumber)"`
 			} `graphql:"repository(owner: $owner, name: $repo)"`
 		}
@@ -183,7 +183,7 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, r
 		return page.Nodes, page.PageInfo, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("draining approvals for %s: %w", ref, err)
+		return nil, fmt.Errorf("draining reviews for %s: %w", ref, err)
 	}
 	return reviews, nil
 }

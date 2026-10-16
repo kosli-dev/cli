@@ -242,6 +242,50 @@ func TestBuildPREvidence_RecordsWhichCommitAnApprovalCovered(t *testing.T) {
 	}, evidence.Approvers, "a review with no commit is kept, without a commit_sha")
 }
 
+// Sequence from kosli-dev/server PR 7200: approve, request changes, approve,
+// all on one commit, plus a comment and a dismissal.
+func TestBuildPREvidence_RecordsEveryReviewAndEachApprovalOnce(t *testing.T) {
+	const c1 = "1111111111111111111111111111111111111111"
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature", "main", c1,
+		nil, []graphqlReviewNode{
+			reviewNode("grace", "APPROVED", "2026-03-01T13:00:00Z", c1),
+			reviewNode("grace", "CHANGES_REQUESTED", "2026-03-01T14:00:00Z", c1),
+			reviewNode("ada", "COMMENTED", "2026-03-01T14:30:00Z", c1),
+			reviewNode("ada", "DISMISSED", "2026-03-01T14:45:00Z", c1),
+			reviewNode("grace", "APPROVED", "2026-03-01T15:00:00Z", c1),
+		},
+	)
+	require.NoError(t, err)
+
+	require.Equal(t, []types.PRApprovals{
+		{Username: "grace", State: "APPROVED", Timestamp: 1772370000, CommitSHA: c1},
+		{Username: "grace", State: "CHANGES_REQUESTED", Timestamp: 1772373600, CommitSHA: c1},
+		{Username: "ada", State: "COMMENTED", Timestamp: 1772375400, CommitSHA: c1},
+		{Username: "ada", State: "DISMISSED", Timestamp: 1772376300, CommitSHA: c1},
+		{Username: "grace", State: "APPROVED", Timestamp: 1772377200, CommitSHA: c1},
+	}, evidence.Reviews)
+	require.Equal(t, []any{
+		types.PRApprovals{Username: "grace", State: "APPROVED", Timestamp: 1772377200, CommitSHA: c1},
+	}, evidence.Approvers)
+}
+
+func TestBuildPREvidence_RecordsThatAPRHasNoReviews(t *testing.T) {
+	evidence, err := buildPREvidence(
+		"https://github.com/kosli-dev/cli/pull/671",
+		"0e723254516c841126e81f76100be57258ff1386",
+		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature", "main", "",
+		nil, nil,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, evidence.Reviews, "no reviews is a fact, not a gap")
+	require.Empty(t, evidence.Reviews)
+}
+
 func TestBuildPREvidence_RecordsWhoSignedACommit(t *testing.T) {
 	node := graphqlCommitNode{}
 	node.Commit.Oid = "0e723254516c841126e81f76100be57258ff1386"

@@ -127,11 +127,12 @@ func (c *GitlabConfig) newPRGitlabEvidenceV2(mr *gitlab.BasicMergeRequest) (*typ
 		Title:       mr.Title,
 	}
 	evidence.HeadRef, evidence.BaseRef = gitlabMRRefs(mr)
-	approvers, err := c.GetMergeRequestApprovers(mr.IID, 2)
+	approvers, reviews, err := c.GetMergeRequestReviews(mr.IID)
 	if err != nil {
 		return evidence, err
 	}
 	evidence.Approvers = approvers
+	evidence.Reviews = reviews
 	commits, err := c.GetMergeRequestCommits(mr)
 	if err != nil {
 		return evidence, err
@@ -166,9 +167,41 @@ func (c *GitlabConfig) GetMergeRequestApprovers(mrIID, version int64) ([]any, er
 	if err != nil {
 		return approvers, err
 	}
+	return gitlabApprovers(approvals.ApprovedBy, version), nil
+}
 
-	for _, approver := range approvals.ApprovedBy {
-		approverName := fmt.Sprintf("%s (@%s)", approver.User.Name, approver.User.Username)
+// GetMergeRequestReviews returns an MR's approvers and its reviews: each
+// reviewer's current decision, since GitLab keeps no history of them.
+func (c *GitlabConfig) GetMergeRequestReviews(mrIID int64) ([]any, []types.PRApprovals, error) {
+	client, err := c.NewGitlabClientFromToken()
+	if err != nil {
+		return nil, nil, err
+	}
+	approvals, _, err := client.MergeRequestApprovals.GetConfiguration(c.ProjectID(), mrIID)
+	if err != nil {
+		return nil, nil, err
+	}
+	approvers := gitlabApprovers(approvals.ApprovedBy, 2)
+	reviewers, resp, err := client.MergeRequests.GetMergeRequestReviewers(c.ProjectID(), mrIID)
+	if err != nil {
+		// Older GitLab has no reviewers endpoint. Reviews without its change
+		// requests would read as none given, so they are not reported at all.
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return approvers, nil, nil
+		}
+		return nil, nil, err
+	}
+	return approvers, gitlabReviews(approvals.ApprovedBy, reviewers), nil
+}
+
+func gitlabUserName(u *gitlab.BasicUser) string {
+	return fmt.Sprintf("%s (@%s)", u.Name, u.Username)
+}
+
+func gitlabApprovers(approvedBy []*gitlab.MergeRequestApproverUser, version int64) []any {
+	var approvers []any
+	for _, approver := range approvedBy {
+		approverName := gitlabUserName(approver.User)
 		if version == 1 {
 			approvers = append(approvers, approverName)
 		} else {
@@ -177,7 +210,35 @@ func (c *GitlabConfig) GetMergeRequestApprovers(mrIID, version int64) ([]any, er
 			})
 		}
 	}
-	return approvers, nil
+	return approvers
+}
+
+// gitlabReviews takes approvals from approved_by only, as people who are not
+// reviewers can approve too. A change request outweighs an approval by the
+// same person, as there are no review times to order them by.
+func gitlabReviews(approvedBy []*gitlab.MergeRequestApproverUser, reviewers []*gitlab.MergeRequestReviewer) []types.PRApprovals {
+	reviewerStates := map[string]string{}
+	for _, r := range reviewers {
+		reviewerStates[r.User.Username] = r.State
+	}
+	reviews := []types.PRApprovals{}
+	approved := map[string]bool{}
+	for _, a := range approvedBy {
+		approved[a.User.Username] = true
+		if reviewerStates[a.User.Username] != "requested_changes" {
+			reviews = append(reviews, types.PRApprovals{Username: gitlabUserName(a.User), State: types.ReviewApproved})
+		}
+	}
+	for _, r := range reviewers {
+		name := gitlabUserName(r.User)
+		switch {
+		case r.State == "requested_changes":
+			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewChangesRequested})
+		case r.State == "reviewed" && !approved[r.User.Username]:
+			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewCommented})
+		}
+	}
+	return reviews
 }
 
 // GetMergeRequestCommits returns a list of commits for a given MR

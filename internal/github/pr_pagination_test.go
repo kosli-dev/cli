@@ -337,7 +337,7 @@ func TestPREvidenceForCommitV2_DrainErrorNamesThePullRequest(t *testing.T) {
 	require.ErrorContains(t, errors.Unwrap(err), "did not advance", "the cause must stay unwrappable")
 }
 
-func TestPREvidenceByPRNumber_ApprovalDrainErrorNamesThePullRequest(t *testing.T) {
+func TestPREvidenceByPRNumber_ReviewDrainErrorNamesThePullRequest(t *testing.T) {
 	ts := newGraphQLTestServer(t,
 		byPRNumberResponse(
 			connectionJSON([]string{commitNodeJSON("sha1")}, ""),
@@ -347,7 +347,7 @@ func TestPREvidenceByPRNumber_ApprovalDrainErrorNamesThePullRequest(t *testing.T
 
 	_, err := newPaginationConfig(ts).PREvidenceByPRNumber(7)
 	require.ErrorContains(t, err, "test-org/test-repo#7")
-	require.ErrorContains(t, err, "approvals")
+	require.ErrorContains(t, err, "reviews")
 }
 
 // withHeadSHA adds the head commit to a PR node, which the shared helpers leave out.
@@ -372,4 +372,33 @@ func TestPREvidenceForCommitV2_RecordsHeadSHA(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, prs, 1)
 	require.Equal(t, "head-sha", prs[0].HeadSHA)
+}
+
+// Every query that selects reviews must ask for the same states: one that
+// still asked for approvals only would hide a later change request.
+func TestReviewQueriesAskForEveryStateButPending(t *testing.T) {
+	byNumber := newGraphQLTestServer(t,
+		byPRNumberResponse(
+			connectionJSON([]string{commitNodeJSON("sha1")}, ""),
+			connectionJSON([]string{reviewNodeJSON("ada")}, "r1"),
+		),
+		reviewsPageResponse([]string{reviewNodeJSON("grace")}, ""),
+	)
+	_, err := newPaginationConfig(byNumber).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+
+	forCommit := newGraphQLTestServer(t,
+		forCommitResponse(v2PRNodeJSON(7,
+			connectionJSON([]string{commitNodeJSON("sha1")}, ""),
+			connectionJSON([]string{reviewNodeJSON("ada")}, "r1"))),
+		reviewsPageResponse([]string{reviewNodeJSON("grace")}, ""),
+	)
+	_, err = newPaginationConfig(forCommit).PREvidenceForCommitV2("merge-sha")
+	require.NoError(t, err)
+
+	bodies := append(byNumber.bodies, forCommit.bodies...)
+	require.Len(t, bodies, 4)
+	for _, body := range bodies {
+		require.Contains(t, body, "states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED]")
+	}
 }
