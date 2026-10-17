@@ -1,12 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
+	"strconv"
+	"strings"
+	"time"
 
+	"github.com/kosli-dev/cli/internal/buildexec"
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -28,6 +36,8 @@ type attestArtifactOptions struct {
 	repoURL              string
 	repoProvider         string
 	repoNameExplicit     bool
+	buildCmd             []string
+	recordBuildCommand   bool
 }
 
 type AttestArtifactPayload struct {
@@ -53,7 +63,14 @@ const attestArtifactLongDesc = attestArtifactShortDesc + `
 This command always requires access to a git repository to associate the artifact to the git commit it originates from.
 ` + commitRepoDesc + ` ^--commit^ defaults to the CI commit in some CIs, otherwise to HEAD.
 The command fails if no repository is found at ^--repo-root^, even when ^--fingerprint^ is given.
-` + commitDetailsDesc
+` + commitDetailsDesc + `
+
+Everything after ^--^ runs as a build command, and the artifact is attested only if the build succeeds.
+Its fingerprint is calculated after the build. The build command and its duration are recorded in the
+^build_command^ and ^build_duration_seconds^ annotations. Masking in ^build_command^ only covers the API token and the
+values of environment variables whose names look secret (e.g. containing TOKEN, SECRET, PASS, KEY or AUTH); a secret
+typed literally in the command is recorded as is, so use ^--record-build-command=false^ to leave out the command.
+If the build fails, nothing is attested and Kosli exits with the build's exit code.`
 
 const attestArtifactExample = `
 # Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
@@ -94,6 +111,16 @@ kosli attest artifact ANOTHER_FILE.txt \
 	--name yourTemplateArtifactName \
 	--api-token yourApiToken \
 	--org yourOrgName
+
+# Build an artifact and attest it in one step (the attestation only happens if the build succeeds)
+kosli attest artifact dist/app \
+	--artifact-type file \
+	--name yourTemplateArtifactName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--api-token yourApiToken \
+	--org yourOrgName \
+	-- go build -o dist/app ./cmd/app
 `
 
 func newAttestArtifactCmd(out io.Writer) *cobra.Command {
@@ -101,13 +128,23 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		//Args:    cobra.MaximumNArgs(1), // See CustomMaximumNArgs() below
-		Use:     "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH}",
+		Use:     "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [-- BUILD-COMMAND...]",
 		Short:   attestArtifactShortDesc,
 		Long:    attestArtifactLongDesc,
 		Example: attestArtifactExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			args, buildCmd, err := splitArtifactAndBuildArgs(cmd.ArgsLenAtDash(), args)
+			if err != nil {
+				return err
+			}
+			o.buildCmd = buildCmd
 
-			err := CustomMaximumNArgs(1, args)
+			err = CustomMaximumNArgs(1, args)
+			if err != nil {
+				return err
+			}
+
+			err = validateBuildCommand(o.buildCmd, o.payload.Fingerprint)
 			if err != nil {
 				return err
 			}
@@ -135,6 +172,12 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
+			args = args[:len(args)-len(o.buildCmd)]
+			if len(o.buildCmd) > 0 {
+				if err := o.runBuild(args[0], cmd.InOrStdin(), out, cmd.ErrOrStderr()); err != nil {
+					return err
+				}
+			}
 			return o.run(args)
 		},
 	}
@@ -153,6 +196,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
+	cmd.Flags().BoolVar(&o.recordBuildCommand, "record-build-command", true, recordBuildCommandFlag)
 	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
 	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), attestationRepoNameFlag)
 	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
@@ -167,6 +211,104 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+// splitArtifactAndBuildArgs splits the positional args at "--" (dash is
+// cobra's ArgsLenAtDash) into the artifact args and the build command.
+func splitArtifactAndBuildArgs(dash int, args []string) (artifactArgs, buildCmd []string, err error) {
+	if dash < 0 {
+		return args, nil, nil
+	}
+	// "-- NAME" predates build commands and lets an artifact name start with "-".
+	if dash == 0 && len(args) == 1 {
+		return args, nil, nil
+	}
+	if dash == len(args) {
+		return nil, nil, fmt.Errorf("no build command given after --")
+	}
+	return args[:dash], args[dash:], nil
+}
+
+func validateBuildCommand(buildCmd []string, fingerprint string) error {
+	if len(buildCmd) == 0 {
+		return nil
+	}
+	if fingerprint != "" {
+		return fmt.Errorf("--fingerprint cannot be combined with a build command")
+	}
+	// Multi-host mode re-runs the command per host and appends host flags after "--".
+	if hasMultipleHosts(strings.Split(global.Host, ","), strings.Split(global.ApiToken, ",")) {
+		return fmt.Errorf("a build command is not supported with multiple hosts yet")
+	}
+	return nil
+}
+
+// runBuild runs the build command, then fingerprints the artifact it built and
+// records the build in the attestation's annotations.
+func (o *attestArtifactOptions) runBuild(artifactName string, stdin io.Reader, stdout, stderr io.Writer) error {
+	var before string
+	// Only files: hashing a large directory twice would slow down every build.
+	if o.fingerprintOptions.artifactType == "file" {
+		before, _ = GetSha256Digest(artifactName, o.fingerprintOptions, logger)
+	}
+
+	result, err := buildexec.Run(context.Background(), o.buildCmd, []string{"KOSLI_SHIM_DISABLED=1"}, stdin, stdout, stderr)
+	if err != nil {
+		return &buildFailedError{code: result.ExitCode, err: err}
+	}
+
+	o.payload.Fingerprint, err = GetSha256Digest(artifactName, o.fingerprintOptions, logger)
+	if err != nil {
+		return fmt.Errorf("build command succeeded but artifact %s was not found: %w", artifactName, err)
+	}
+	// A warning only: reproducible builds legitimately rewrite identical bytes.
+	if before != "" && before == o.payload.Fingerprint {
+		logger.Warn("artifact %s was not modified by the build command", artifactName)
+	}
+
+	cmdline := maskSecrets(strings.Join(o.buildCmd, " "), os.Environ(), os.Getenv("KOSLI_API_TOKEN"), global.ApiToken)
+	o.annotations = addBuildAnnotations(o.annotations, cmdline, result.Duration, o.recordBuildCommand)
+	return nil
+}
+
+var secretEnvNameRegexp = regexp.MustCompile(`(?i)(TOKEN|SECRET|PASS|KEY|CREDENTIAL|AUTH|PRIVATE|CERT|PAT\b)`)
+
+// maskSecrets replaces, in cmdline, the values of environment variables whose
+// names look secret, and every extra value, with "***".
+func maskSecrets(cmdline string, environ []string, extra ...string) string {
+	secrets := slices.Clone(extra)
+	for _, entry := range environ {
+		name, value, _ := strings.Cut(entry, "=")
+		if len(value) >= 6 && secretEnvNameRegexp.MatchString(name) {
+			secrets = append(secrets, value)
+		}
+	}
+	// Longest first, so a secret that contains another is masked whole.
+	slices.SortFunc(secrets, func(a, b string) int { return len(b) - len(a) })
+	for _, secret := range secrets {
+		if secret != "" {
+			cmdline = strings.ReplaceAll(cmdline, secret, "***")
+		}
+	}
+	return cmdline
+}
+
+// addBuildAnnotations adds the build command and duration to annotations,
+// keeping any value the user set for the same key.
+func addBuildAnnotations(annotations map[string]string, cmdline string, duration time.Duration, recordCommand bool) map[string]string {
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+	derived := map[string]string{"build_duration_seconds": strconv.FormatFloat(duration.Seconds(), 'f', 1, 64)}
+	if recordCommand {
+		derived["build_command"] = cmdline
+	}
+	for key, value := range derived {
+		if _, ok := annotations[key]; !ok {
+			annotations[key] = value
+		}
+	}
+	return annotations
 }
 
 func (o *attestArtifactOptions) run(args []string) error {

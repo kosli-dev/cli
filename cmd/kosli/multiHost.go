@@ -31,7 +31,11 @@ import (
 func isMultiHost() bool {
 	// Returns true iff the CLI execution is multi-host, multi-api-token
 	opts := getMultiOpts()
-	return len(opts.hosts) > 1 && len(opts.apiTokens) > 1 && len(opts.hosts) == len(opts.apiTokens)
+	return hasMultipleHosts(opts.hosts, opts.apiTokens)
+}
+
+func hasMultipleHosts(hosts, apiTokens []string) bool {
+	return len(hosts) > 1 && len(apiTokens) > 1 && len(hosts) == len(apiTokens)
 }
 
 func runMultiHost(args []string) (string, error) {
