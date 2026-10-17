@@ -53,6 +53,46 @@ too, adopt patch and every one of them is wrong today.
 description survives, so what the CLI sends does not settle it on its own - the
 server decides. Only running each one shows which is which.
 
+## The server half, with line numbers (2026-08-19)
+
+Read in the server repo, which is what lines 25-27 above could not do. The three
+`create` commands are three different shapes, and only one of them behaves the
+way this document assumed.
+
+**`create flow`.** `description: str` is required (`models/flows.py:17`), and the
+handler passes it straight to `flow.update` with no presence guard
+(`common/flow.py:155`). So a re-run empties the stored description. (`visibility`
+on the same endpoint is `None`-tolerant, handled at `common/flow.py:147-149` and
+`:164`. Recorded as a fact about the code, not as a decision about description.)
+
+**`create environment`.** Required twice: `description: str`
+(`models/environments.py:22`), and a second gate below it raising `BadRequest`
+when the key is absent (`model/environments.py:179`). But the update path drops a
+falsy description before applying it (`_upsert_data`,
+`model/environments.py:266-275`) and writes only `if "description" in data`
+(`_apply_update`, `:282`). That is why the description survives, as line 52 above
+records. Clearing is done through the PATCH endpoint, whose docstring names the
+contrast (`v2/environment.py:87-89`).
+
+**`create policy`.** `description: str = Field("")` (`models/policies.py:25`), so
+an absent description has already become `""` by the time the handler sees it,
+and the update writes the field whenever it differs from the stored value
+(`model/policies/commands.py:180-181`). `comment` is declared the same way
+(`models/policies.py:27`). Adding `omitempty` to the CLI changes nothing here on
+its own: the model default has to become `None` as well.
+
+## Two questions the line numbers separate
+
+They were one question while the server was unread, and answering only the first
+looks like a fix.
+
+1. **Will the server accept an absent field?** Today, no: `create flow` answers
+   422 and `create environment` answers 400. So a clean CLI payload is blocked on
+   the server whatever is decided about meaning.
+2. **What does an absent field mean once accepted?** Under the apply rule in this
+   document, "use the default", so a re-run still empties a flow's description and
+   only the wire payload gets tidier. Under patch, "preserve". Undecided.
+
 ## How much is at stake
 
 Less than "data loss" would suggest. A trail keeps its earlier value in its
