@@ -124,7 +124,7 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -144,9 +144,9 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotCloudRunOptions) run(args []string) error {
+func (o *snapshotCloudRunOptions) run(ctx context.Context, args []string) error {
 	envName := args[0]
-	return newSnapshotReporter().report(envName, "cloud-run", func() (any, string, error) {
+	return newSnapshotReporter().report(ctx, envName, "cloud-run", func() (any, string, error) {
 		// compile the filter patterns once, instead of once per service and job
 		compiledFilter := o.resourceFilter.Compile()
 

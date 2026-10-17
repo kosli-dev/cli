@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -204,9 +205,9 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if o.configFilePath != "" {
-				return o.runMultiEnv()
+				return o.runMultiEnv(cmd.Context())
 			}
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -222,15 +223,15 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotK8SOptions) run(args []string) error {
+func (o *snapshotK8SOptions) run(ctx context.Context, args []string) error {
 	clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 	if err != nil {
 		return err
 	}
-	return o.reportEnvironment(newSnapshotReporter(), clientset, args[0], o.filter)
+	return o.reportEnvironment(ctx, newSnapshotReporter(), clientset, args[0], o.filter)
 }
 
-func (o *snapshotK8SOptions) runMultiEnv() error {
+func (o *snapshotK8SOptions) runMultiEnv(ctx context.Context) error {
 	config, err := parseK8SSnapshotConfig(o.configFilePath)
 	if err != nil {
 		return err
@@ -244,7 +245,7 @@ func (o *snapshotK8SOptions) runMultiEnv() error {
 	reporter := newSnapshotReporter()
 	var errs []string
 	for _, env := range config.Environments {
-		if err := o.reportEnvironment(reporter, clientset, env.Name, env.toFilter()); err != nil {
+		if err := o.reportEnvironment(ctx, reporter, clientset, env.Name, env.toFilter()); err != nil {
 			errs = append(errs, fmt.Sprintf("environment '%s': %v", env.Name, err))
 		}
 	}
@@ -255,8 +256,8 @@ func (o *snapshotK8SOptions) runMultiEnv() error {
 	return nil
 }
 
-func (o *snapshotK8SOptions) reportEnvironment(reporter *snapshotReporter, clientset *kube.K8SConnection, envName string, filter *filters.ResourceFilterOptions) error {
-	return reporter.report(envName, "K8S", func() (any, string, error) {
+func (o *snapshotK8SOptions) reportEnvironment(ctx context.Context, reporter *snapshotReporter, clientset *kube.K8SConnection, envName string, filter *filters.ResourceFilterOptions) error {
+	return reporter.report(ctx, envName, "K8S", func() (any, string, error) {
 		podsData, err := clientset.GetPodsData(filter, logger)
 		if err != nil {
 			return nil, "", err

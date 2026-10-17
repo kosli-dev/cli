@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/assert"
@@ -67,7 +69,7 @@ type ensureCalls struct {
 	err   error
 }
 
-func (e *ensureCalls) ensure(envName, envType string) error {
+func (e *ensureCalls) ensure(_ context.Context, envName, envType string) error {
 	e.calls = append(e.calls, envName+"/"+envType)
 	return e.err
 }
@@ -78,12 +80,13 @@ func newTestSnapshotReporter(t *testing.T, host string, dryRun bool) (*snapshotR
 	l := log.NewLogger(&out, &out, false)
 	client, err := requests.NewKosliClient("", 0, false, l)
 	require.NoError(t, err)
+	var sender kosli.Sender = client
+	if dryRun {
+		sender = kosli.DryRun(sender)
+	}
 	ensured := &ensureCalls{}
 	return &snapshotReporter{
-		client: client,
-		host:   host,
-		org:    "acme",
-		token:  "secret",
+		api:    kosli.New(sender, host, "acme", "secret"),
 		dryRun: dryRun,
 		logger: l,
 		ensure: ensured.ensure,
@@ -99,7 +102,7 @@ func TestSnapshotReporterPutsThePayloadToTheEnvironmentTypeURL(t *testing.T) {
 	server, fake := newFakeSnapshotServer(t)
 	reporter, _, _ := newTestSnapshotReporter(t, server.URL, false)
 
-	err := reporter.report("prod", "docker", twoContainers)
+	err := reporter.report(context.Background(), "prod", "docker", twoContainers)
 
 	require.NoError(t, err)
 	require.Len(t, fake.recorded, 1)
@@ -113,7 +116,7 @@ func TestSnapshotReporterEnsuresTheEnvironmentBeforeCollecting(t *testing.T) {
 	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
 	var ensuredWhenCollecting []string
 
-	err := reporter.report("prod", "docker", func() (any, string, error) {
+	err := reporter.report(context.Background(), "prod", "docker", func() (any, string, error) {
 		ensuredWhenCollecting = append([]string{}, ensured.calls...)
 		return twoContainers()
 	})
@@ -128,7 +131,7 @@ func TestSnapshotReporterStopsWhenTheEnvironmentCannotBeEnsured(t *testing.T) {
 	ensured.err = errors.New("environment prod already exists with type K8S")
 	collected := false
 
-	err := reporter.report("prod", "docker", func() (any, string, error) {
+	err := reporter.report(context.Background(), "prod", "docker", func() (any, string, error) {
 		collected = true
 		return twoContainers()
 	})
@@ -142,7 +145,7 @@ func TestSnapshotReporterSendsNothingWhenCollectingFails(t *testing.T) {
 	server, fake := newFakeSnapshotServer(t)
 	reporter, _, out := newTestSnapshotReporter(t, server.URL, false)
 
-	err := reporter.report("prod", "docker", func() (any, string, error) {
+	err := reporter.report(context.Background(), "prod", "docker", func() (any, string, error) {
 		return nil, "", errors.New("cannot reach docker daemon")
 	})
 
@@ -155,7 +158,7 @@ func TestSnapshotReporterLogsTheReportedLine(t *testing.T) {
 	server, _ := newFakeSnapshotServer(t)
 	reporter, _, out := newTestSnapshotReporter(t, server.URL, false)
 
-	err := reporter.report("prod", "docker", twoContainers)
+	err := reporter.report(context.Background(), "prod", "docker", twoContainers)
 
 	require.NoError(t, err)
 	require.Equal(t, "[2] containers were reported to environment prod\n", out.String())
@@ -165,7 +168,7 @@ func TestSnapshotReporterSendsNothingAndLogsNoSuccessInDryRun(t *testing.T) {
 	server, fake := newFakeSnapshotServer(t)
 	reporter, _, out := newTestSnapshotReporter(t, server.URL, true)
 
-	err := reporter.report("prod", "docker", twoContainers)
+	err := reporter.report(context.Background(), "prod", "docker", twoContainers)
 
 	require.NoError(t, err)
 	require.Empty(t, fake.recorded)
@@ -179,7 +182,7 @@ func TestSnapshotReporterReturnsTheServerErrorAndLogsNoSuccess(t *testing.T) {
 	fake.body = `{"message":"Environment named 'prod' does not exist"}`
 	reporter, _, out := newTestSnapshotReporter(t, server.URL, false)
 
-	err := reporter.report("prod", "docker", twoContainers)
+	err := reporter.report(context.Background(), "prod", "docker", twoContainers)
 
 	require.EqualError(t, err, "Environment named 'prod' does not exist")
 	require.Empty(t, out.String())
@@ -189,9 +192,9 @@ func TestSnapshotReporterEnsuresEachEnvironmentOnce(t *testing.T) {
 	server, fake := newFakeSnapshotServer(t)
 	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
 
-	require.NoError(t, reporter.report("prod", "server", twoContainers))
-	require.NoError(t, reporter.report("prod", "server", twoContainers))
-	require.NoError(t, reporter.report("staging", "server", twoContainers))
+	require.NoError(t, reporter.report(context.Background(), "prod", "server", twoContainers))
+	require.NoError(t, reporter.report(context.Background(), "prod", "server", twoContainers))
+	require.NoError(t, reporter.report(context.Background(), "staging", "server", twoContainers))
 
 	require.Equal(t, []string{"prod/server", "staging/server"}, ensured.calls)
 	require.Len(t, fake.recorded, 3)
@@ -203,16 +206,16 @@ func TestSnapshotReporterIsSafeForConcurrentReports(t *testing.T) {
 	server, _ := newFakeSnapshotServer(t)
 	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
 	var mu sync.Mutex
-	reporter.ensure = func(envName, envType string) error {
+	reporter.ensure = func(ctx context.Context, envName, envType string) error {
 		mu.Lock()
 		defer mu.Unlock()
-		return ensured.ensure(envName, envType)
+		return ensured.ensure(ctx, envName, envType)
 	}
 
 	var wg sync.WaitGroup
 	for range 8 {
 		wg.Go(func() {
-			assert.NoError(t, reporter.report("prod", "server", twoContainers))
+			assert.NoError(t, reporter.report(context.Background(), "prod", "server", twoContainers))
 		})
 	}
 	wg.Wait()
@@ -224,8 +227,8 @@ func TestSnapshotReporterEnsuresAnEnvironmentAgainForAnotherType(t *testing.T) {
 	server, _ := newFakeSnapshotServer(t)
 	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
 
-	require.NoError(t, reporter.report("prod", "server", twoContainers))
-	require.NoError(t, reporter.report("prod", "docker", twoContainers))
+	require.NoError(t, reporter.report(context.Background(), "prod", "server", twoContainers))
+	require.NoError(t, reporter.report(context.Background(), "prod", "docker", twoContainers))
 
 	require.Equal(t, []string{"prod/server", "prod/docker"}, ensured.calls)
 }
@@ -235,9 +238,9 @@ func TestSnapshotReporterRetriesAnEnvironmentItCouldNotEnsure(t *testing.T) {
 	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
 	ensured.err = errors.New("network unreachable")
 
-	require.EqualError(t, reporter.report("prod", "server", twoContainers), "network unreachable")
+	require.EqualError(t, reporter.report(context.Background(), "prod", "server", twoContainers), "network unreachable")
 	ensured.err = nil
-	require.NoError(t, reporter.report("prod", "server", twoContainers))
+	require.NoError(t, reporter.report(context.Background(), "prod", "server", twoContainers))
 
 	require.Equal(t, []string{"prod/server", "prod/server"}, ensured.calls)
 	require.Len(t, fake.recorded, 1)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -72,7 +73,7 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -87,7 +88,7 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotPathsOptions) run(args []string) error {
+func (o *snapshotPathsOptions) run(ctx context.Context, args []string) error {
 	envName := args[0]
 
 	// load path spec from file
@@ -97,7 +98,7 @@ func (o *snapshotPathsOptions) run(args []string) error {
 	}
 
 	reporter := newSnapshotReporter()
-	err = reportArtifacts(reporter, ps, envName)
+	err = reportArtifacts(ctx, reporter, ps, envName)
 	if err != nil {
 		return err
 	}
@@ -108,7 +109,7 @@ func (o *snapshotPathsOptions) run(args []string) error {
 			wg.Add(1)
 			go func(path string) {
 				defer wg.Done()
-				err := watchPath(reporter, ps, path, envName)
+				err := watchPath(ctx, reporter, ps, path, envName)
 				if err != nil {
 					logger.Error("error watching path %s: %v", path, err)
 				}

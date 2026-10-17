@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -66,7 +67,7 @@ func (suite *OpenAPIContractTestSuite) SetupSuite() {
 func (suite *OpenAPIContractTestSuite) TestPayloadsMatchSchema() {
 	registry := []driftCase{
 		{name: "create control", payload: ControlPayload{}, component: "ControlPostInput"},
-		{name: "create environment", payload: CreateEnvironmentPayload{}, component: "CreateEnvironmentPutInput"},
+		{name: "create environment", payload: kosli.CreateOrUpdateEnvironmentRequest{}, component: "CreateEnvironmentPutInput"},
 	}
 
 	for _, c := range registry {
