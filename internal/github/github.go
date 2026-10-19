@@ -294,29 +294,46 @@ const signerBatchSize = 100
 // signed it. GitHub types signer as User, so it answers a commit signed by a
 // GitHub App (e.g. Renovate) with a null signer and a field error. The
 // client still decodes the rest of the response before returning that
-// error, so an error that came with data is a field error and is ignored.
-func signerLogins(ctx context.Context, query graphqlQueryFunc, nodes []graphqlCommitNode) (map[string]string, error) {
+// error, so an error that came with data is accepted. The client's error
+// type drops the path, so any field error is accepted, not only the
+// signer's; debug, when not nil, is told about each one.
+func (c *GithubConfig) signerLogins(ctx context.Context, query graphqlQueryFunc,
+	nodes []graphqlCommitNode, debug io.Writer) (map[string]string, error) {
 	ids := []graphql.ID{}
 	for _, n := range nodes {
 		if n.Commit.Signature != nil {
 			ids = append(ids, string(n.Commit.ID))
 		}
 	}
+	type signerQuery struct {
+		Nodes []struct {
+			Commit struct {
+				Oid       graphql.String
+				Signature *struct {
+					Signer *struct {
+						Login graphql.String
+					}
+				}
+			} `graphql:"... on Commit"`
+		} `graphql:"nodes(ids: $ids)"`
+	}
 	signers := map[string]string{}
 	for batch := range slices.Chunk(ids, signerBatchSize) {
-		var q struct {
-			Nodes []struct {
-				Commit struct {
-					Oid       graphql.String
-					Signature *struct {
-						Signer *struct {
-							Login graphql.String
-						}
-					}
-				} `graphql:"... on Commit"`
-			} `graphql:"nodes(ids: $ids)"`
-		}
-		if err := query(ctx, &q, map[string]any{"ids": batch}); err != nil && len(q.Nodes) == 0 {
+		var q signerQuery
+		// Only a reply with no data is retried: a field error comes back
+		// the same on every attempt.
+		err := c.retry(ctx, func() error {
+			q = signerQuery{}
+			err := query(ctx, &q, map[string]any{"ids": batch})
+			if err != nil && len(q.Nodes) > 0 {
+				if debug != nil {
+					_, _ = fmt.Fprintf(debug, "[debug-github] ignoring error in commit signer lookup: %v\n", err)
+				}
+				return nil
+			}
+			return err
+		})
+		if err != nil {
 			return nil, fmt.Errorf("failed to look up commit signers: %w", err)
 		}
 		for _, n := range q.Nodes {
@@ -326,6 +343,14 @@ func signerLogins(ctx context.Context, query graphqlQueryFunc, nodes []graphqlCo
 		}
 	}
 	return signers, nil
+}
+
+// debugOut is where debug output goes, or nil when --debug is off.
+func (c *GithubConfig) debugOut() io.Writer {
+	if c.Debug {
+		return os.Stderr
+	}
+	return nil
 }
 
 // graphqlReviewNode is the shared GraphQL node type for reviews on a PR.
@@ -515,8 +540,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 	if err != nil {
 		return nil, err
 	}
-	// Not retried: a commit signed by a GitHub App errors on every attempt.
-	signers, err := signerLogins(ctx, client.Query, commits)
+	signers, err := c.signerLogins(ctx, client.Query, commits, c.debugOut())
 	if err != nil {
 		return nil, err
 	}
@@ -625,7 +649,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
-		signers, err := signerLogins(ctx, client.Query, commits)
+		signers, err := c.signerLogins(ctx, client.Query, commits, c.debugOut())
 		if err != nil {
 			return pullRequestsEvidence, err
 		}

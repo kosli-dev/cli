@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/kosli-dev/cli/internal/types"
+	"github.com/shurcooL/graphql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -410,20 +412,23 @@ func signedCommitNodeJSON(sha string) string {
 		fmt.Sprintf(`"id":"node-%s","signature":{"isValid":true,"state":"VALID","wasSignedByGitHub":false}`, sha), 1)
 }
 
-// signersResponse answers the signer lookup. A nil login is a signer GitHub
-// could not resolve to a user, which it reports as a field error.
-func signersResponse(logins map[string]*string) string {
+// signedBy is one node of a signer lookup reply. An empty login is a signer
+// GitHub could not resolve to a user, which it reports as a field error.
+type signedBy struct{ sha, login string }
+
+// signersResponse answers the signer lookup, with nodes in the order given.
+func signersResponse(signers ...signedBy) string {
 	nodes := []string{}
 	errs := []string{}
-	for sha, login := range logins {
+	for i, s := range signers {
 		signer := "null"
-		if login != nil {
-			signer = fmt.Sprintf(`{"login":%q}`, *login)
+		if s.login != "" {
+			signer = fmt.Sprintf(`{"login":%q}`, s.login)
 		} else {
-			errs = append(errs, `{"type":"NOT_FOUND","path":["nodes",0,"signature","signer"],`+
-				`"message":"Could not resolve to a User with the login of 'renovate[bot]'."}`)
+			errs = append(errs, fmt.Sprintf(`{"type":"NOT_FOUND","path":["nodes",%d,"signature","signer"],`+
+				`"message":"Not Found"}`, i))
 		}
-		nodes = append(nodes, fmt.Sprintf(`{"oid":%q,"signature":{"signer":%s}}`, sha, signer))
+		nodes = append(nodes, fmt.Sprintf(`{"oid":%q,"signature":{"signer":%s}}`, s.sha, signer))
 	}
 	if len(errs) == 0 {
 		return fmt.Sprintf(`{"data":{"nodes":[%s]}}`, strings.Join(nodes, ","))
@@ -431,12 +436,10 @@ func signersResponse(logins map[string]*string) string {
 	return fmt.Sprintf(`{"data":{"nodes":[%s]},"errors":[%s]}`, strings.Join(nodes, ","), strings.Join(errs, ","))
 }
 
-func login(s string) *string { return &s }
-
 func TestPREvidenceByPRNumber_RecordsACommitSignedByAnApp(t *testing.T) {
 	ts := newGraphQLTestServer(t,
 		byPRNumberResponse(connectionJSON([]string{signedCommitNodeJSON("sha1")}, ""), connectionJSON(nil, "")),
-		signersResponse(map[string]*string{"sha1": nil}),
+		signersResponse(signedBy{sha: "sha1"}),
 	)
 
 	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
@@ -454,7 +457,7 @@ func TestPREvidenceByPRNumber_RecordsWhoSignedEachCommit(t *testing.T) {
 	ts := newGraphQLTestServer(t,
 		byPRNumberResponse(connectionJSON([]string{signedCommitNodeJSON("sha1"), signedCommitNodeJSON("sha2")}, ""),
 			connectionJSON(nil, "")),
-		signersResponse(map[string]*string{"sha1": login("tooky"), "sha2": nil}),
+		signersResponse(signedBy{"sha1", "tooky"}, signedBy{sha: "sha2"}),
 	)
 
 	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
@@ -470,7 +473,7 @@ func TestPREvidenceByPRNumber_RecordsWhoSignedEachCommit(t *testing.T) {
 func TestPREvidenceForCommitV2_RecordsACommitSignedByAnApp(t *testing.T) {
 	ts := newGraphQLTestServer(t,
 		forCommitResponse(v2PRNodeJSON(7, connectionJSON([]string{signedCommitNodeJSON("sha1")}, ""), connectionJSON(nil, ""))),
-		signersResponse(map[string]*string{"sha1": nil}),
+		signersResponse(signedBy{sha: "sha1"}),
 	)
 
 	prs, err := newPaginationConfig(ts).PREvidenceForCommitV2("merge-sha")
@@ -496,12 +499,77 @@ func TestCommitQueriesDoNotAskForTheSigner(t *testing.T) {
 	}
 }
 
-func TestPREvidenceByPRNumber_FailsWhenTheSignerLookupReturnsNoData(t *testing.T) {
+func TestPREvidenceByPRNumber_FailsWhenTheSignerLookupNeverReturnsData(t *testing.T) {
+	noData := `{"data":null,"errors":[{"message":"Something went wrong"}]}`
 	ts := newGraphQLTestServer(t,
 		byPRNumberResponse(connectionJSON([]string{signedCommitNodeJSON("sha1")}, ""), connectionJSON(nil, "")),
-		`{"data":null,"errors":[{"message":"Something went wrong"}]}`,
+		noData, noData, noData, noData,
 	)
 
 	_, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
 	require.ErrorContains(t, err, "Something went wrong")
+	require.Len(t, ts.bodies, 5)
+}
+
+func TestPREvidenceByPRNumber_RetriesTheSignerLookup(t *testing.T) {
+	ts := newGraphQLTestServer(t,
+		byPRNumberResponse(connectionJSON([]string{signedCommitNodeJSON("sha1")}, ""), connectionJSON(nil, "")),
+		"500",
+		signersResponse(signedBy{"sha1", "tooky"}),
+	)
+
+	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Equal(t, "tooky", evidence.Commits[0].SignerUsername)
+}
+
+// A field error is not transient, so it must not run down the retry ladder.
+func TestPREvidenceByPRNumber_DoesNotRetryASignerFieldError(t *testing.T) {
+	ts := newGraphQLTestServer(t,
+		byPRNumberResponse(connectionJSON([]string{signedCommitNodeJSON("sha1")}, ""), connectionJSON(nil, "")),
+		signersResponse(signedBy{sha: "sha1"}),
+	)
+
+	_, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Len(t, ts.bodies, 2)
+}
+
+func TestPREvidenceByPRNumber_LooksUpSignersInBatchesOf100(t *testing.T) {
+	nodes := []string{}
+	first := []signedBy{}
+	for i := range 101 {
+		sha := fmt.Sprintf("sha%d", i)
+		nodes = append(nodes, signedCommitNodeJSON(sha))
+		if i < 100 {
+			first = append(first, signedBy{sha, "tooky"})
+		}
+	}
+	ts := newGraphQLTestServer(t,
+		byPRNumberResponse(connectionJSON(nodes, ""), connectionJSON(nil, "")),
+		signersResponse(first...),
+		signersResponse(signedBy{"sha100", "grace"}),
+	)
+
+	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Len(t, ts.bodies, 3)
+	require.NotContains(t, ts.bodies[1], `"node-sha100"`)
+	require.Contains(t, ts.bodies[2], `"node-sha100"`)
+	require.Equal(t, "grace", evidence.Commits[100].SignerUsername)
+}
+
+func TestSignerLogins_LogsAnIgnoredErrorWhenDebugging(t *testing.T) {
+	ts := newGraphQLTestServer(t, signersResponse(signedBy{sha: "sha1"}))
+	config := newPaginationConfig(ts)
+	var debug strings.Builder
+	node := graphqlCommitNode{}
+	node.Commit.ID = "node-sha1"
+	node.Commit.Signature = &graphqlSignature{}
+
+	_, err := config.signerLogins(context.Background(), graphql.NewClient(ts.URL+"/api/graphql", nil).Query,
+		[]graphqlCommitNode{node}, &debug)
+	require.NoError(t, err)
+	require.Contains(t, debug.String(), "[debug-github]")
+	require.Contains(t, debug.String(), "Not Found")
 }

@@ -65,22 +65,27 @@ type graphqlQueryFunc func(ctx context.Context, q any, variables map[string]any)
 // commit list (#1082).
 func (c *GithubConfig) queryWithRetry(client *graphql.Client) graphqlQueryFunc {
 	return func(ctx context.Context, q any, variables map[string]any) error {
-		var err error
-		for _, delay := range []time.Duration{0, 10 * time.Second, 20 * time.Second, 30 * time.Second} {
-			if delay > 0 {
-				// A wait only happens after a failed attempt, so err holds the
-				// reason every attempt failed. Join keeps it alongside the
-				// cancellation, so neither side loses its errors.Is.
-				if waitErr := c.wait(ctx, delay); waitErr != nil {
-					return errors.Join(err, waitErr)
-				}
-			}
-			if err = client.Query(ctx, q, variables); err == nil {
-				return nil
+		return c.retry(ctx, func() error { return client.Query(ctx, q, variables) })
+	}
+}
+
+// retry runs attempt until it succeeds or the retry ladder runs out.
+func (c *GithubConfig) retry(ctx context.Context, attempt func() error) error {
+	var err error
+	for _, delay := range []time.Duration{0, 10 * time.Second, 20 * time.Second, 30 * time.Second} {
+		if delay > 0 {
+			// A wait only happens after a failed attempt, so err holds the
+			// reason every attempt failed. Join keeps it alongside the
+			// cancellation, so neither side loses its errors.Is.
+			if waitErr := c.wait(ctx, delay); waitErr != nil {
+				return errors.Join(err, waitErr)
 			}
 		}
-		return err
+		if err = attempt(); err == nil {
+			return nil
+		}
 	}
+	return err
 }
 
 // wait pauses between retries. It honours ctx cancellation so a caller with a
