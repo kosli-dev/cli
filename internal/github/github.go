@@ -283,20 +283,19 @@ type graphqlCommitNode struct {
 type graphqlSignature struct {
 	IsValid graphql.Boolean
 	State   graphql.String
-	// Signer is left out: signerLogins looks it up on its own.
+	// No Signer: a signer GitHub can't resolve fails the whole query, so
+	// signerLogins fetches it separately.
 	WasSignedByGitHub graphql.Boolean
 }
 
 // signerBatchSize is the most IDs GitHub's nodes(ids:) field accepts.
 const signerBatchSize = 100
 
-// signerLogins maps each signed commit's SHA to the login of the user who
-// signed it. GitHub types signer as User, so it answers a commit signed by a
-// GitHub App (e.g. Renovate) with a null signer and a field error. The
-// client still decodes the rest of the response before returning that
-// error, so an error that came with data is accepted. The client's error
-// type drops the path, so any field error is accepted, not only the
-// signer's; debug, when not nil, is told about each one.
+// signerLogins maps each signed commit's SHA to its signer's login. GitHub
+// types signer as User, so a signer that is not one (e.g. a GitHub App)
+// comes back null with a field error. The client decodes data before
+// returning errors but drops their path, so any error that came with data
+// is accepted and written to debug, when not nil.
 func (c *GithubConfig) signerLogins(ctx context.Context, query graphqlQueryFunc,
 	nodes []graphqlCommitNode, debug io.Writer) (map[string]string, error) {
 	ids := []graphql.ID{}

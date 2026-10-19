@@ -69,7 +69,6 @@ func (c *GithubConfig) queryWithRetry(client *graphql.Client) graphqlQueryFunc {
 	}
 }
 
-// retry runs attempt until it succeeds or the retry ladder runs out.
 func (c *GithubConfig) retry(ctx context.Context, attempt func() error) error {
 	var err error
 	for _, delay := range []time.Duration{0, 10 * time.Second, 20 * time.Second, 30 * time.Second} {
