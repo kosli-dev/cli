@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -262,6 +263,7 @@ func (c *GithubConfig) PREvidenceForCommitHybrid(commit string) ([]*types.PREvid
 // used in both PREvidenceByPRNumber and PREvidenceForCommitV2.
 type graphqlCommitNode struct {
 	Commit struct {
+		ID              graphql.String
 		Oid             graphql.String
 		MessageHeadline graphql.String
 		CommittedDate   graphql.String
@@ -281,10 +283,49 @@ type graphqlCommitNode struct {
 type graphqlSignature struct {
 	IsValid graphql.Boolean
 	State   graphql.String
-	Signer  *struct {
-		Login graphql.String
-	}
+	// Signer is left out: signerLogins looks it up on its own.
 	WasSignedByGitHub graphql.Boolean
+}
+
+// signerBatchSize is the most IDs GitHub's nodes(ids:) field accepts.
+const signerBatchSize = 100
+
+// signerLogins maps each signed commit's SHA to the login of the user who
+// signed it. GitHub types signer as User, so it answers a commit signed by a
+// GitHub App (e.g. Renovate) with a null signer and a field error. The
+// client still decodes the rest of the response before returning that
+// error, so an error that came with data is a field error and is ignored.
+func signerLogins(ctx context.Context, query graphqlQueryFunc, nodes []graphqlCommitNode) (map[string]string, error) {
+	ids := []graphql.ID{}
+	for _, n := range nodes {
+		if n.Commit.Signature != nil {
+			ids = append(ids, string(n.Commit.ID))
+		}
+	}
+	signers := map[string]string{}
+	for batch := range slices.Chunk(ids, signerBatchSize) {
+		var q struct {
+			Nodes []struct {
+				Commit struct {
+					Oid       graphql.String
+					Signature *struct {
+						Signer *struct {
+							Login graphql.String
+						}
+					}
+				} `graphql:"... on Commit"`
+			} `graphql:"nodes(ids: $ids)"`
+		}
+		if err := query(ctx, &q, map[string]any{"ids": batch}); err != nil && len(q.Nodes) == 0 {
+			return nil, fmt.Errorf("failed to look up commit signers: %w", err)
+		}
+		for _, n := range q.Nodes {
+			if sig := n.Commit.Signature; sig != nil && sig.Signer != nil {
+				signers[string(n.Commit.Oid)] = string(sig.Signer.Login)
+			}
+		}
+	}
+	return signers, nil
 }
 
 // graphqlReviewNode is the shared GraphQL node type for reviews on a PR.
@@ -308,6 +349,7 @@ func buildPREvidence(
 	url, mergeCommit, state, author, createdAtStr, mergedAtStr, title, headRef, baseRef, headSHA string,
 	commitNodes []graphqlCommitNode,
 	reviewNodes []graphqlReviewNode,
+	signers map[string]string,
 ) (*types.PREvidence, error) {
 	createdAt, err := time.Parse(time.RFC3339, createdAtStr)
 	if err != nil {
@@ -357,7 +399,6 @@ func buildPREvidence(
 		// invalid signature (verified=false) — so leave the fields nil (server#5892).
 		var verified, signedByPlatform *bool
 		var signatureState *string
-		signerUsername := ""
 		if sig := n.Commit.Signature; sig != nil {
 			v := bool(sig.IsValid)
 			s := string(sig.State)
@@ -365,9 +406,6 @@ func buildPREvidence(
 			verified = &v
 			signatureState = &s
 			signedByPlatform = &p
-			if sig.Signer != nil {
-				signerUsername = string(sig.Signer.Login)
-			}
 		}
 		evidence.Commits = append(evidence.Commits, types.Commit{
 			SHA:              string(n.Commit.Oid),
@@ -379,7 +417,7 @@ func buildPREvidence(
 			URL:              string(n.Commit.URL),
 			Verified:         verified,
 			SignatureState:   signatureState,
-			SignerUsername:   signerUsername,
+			SignerUsername:   signers[string(n.Commit.Oid)],
 			SignedByPlatform: signedByPlatform,
 		})
 	}
@@ -477,11 +515,16 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 	if err != nil {
 		return nil, err
 	}
+	// Not retried: a commit signed by a GitHub App errors on every attempt.
+	signers, err := signerLogins(ctx, client.Query, commits)
+	if err != nil {
+		return nil, err
+	}
 
 	return buildPREvidence(
 		string(pr.URL), mergeCommit, string(pr.State), string(pr.Author.Login),
 		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
-		string(pr.HeadRefOid), commits, reviews,
+		string(pr.HeadRefOid), commits, reviews, signers,
 	)
 }
 
@@ -582,12 +625,16 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
+		signers, err := signerLogins(ctx, client.Query, commits)
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
 		// MergeCommit is set to the queried commit SHA — V2 queries by commit SHA
 		// so the commit is by definition the merge commit.
 		evidence, err := buildPREvidence(
 			string(pr.URL), commit, string(pr.State), string(pr.Author.Login),
 			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName), string(pr.BaseRefName),
-			string(pr.HeadRefOid), commits, reviews,
+			string(pr.HeadRefOid), commits, reviews, signers,
 		)
 		if err != nil {
 			return pullRequestsEvidence, err

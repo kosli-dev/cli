@@ -44,7 +44,7 @@ func TestBuildPREvidence_RecordsAuthorNotCommitter(t *testing.T) {
 		"main",
 		"",
 		[]graphqlCommitNode{node},
-		nil,
+		nil, nil,
 	)
 	require.NoError(t, err)
 	require.Len(t, evidence.Commits, 1)
@@ -75,7 +75,7 @@ func TestBuildPREvidence_UsesAuthoredDate(t *testing.T) {
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
 		"Introduce kosli evaluate", "introduce-kosli-evaluate", "main",
 		"",
-		[]graphqlCommitNode{node}, nil,
+		[]graphqlCommitNode{node}, nil, nil,
 	)
 	require.NoError(t, err)
 	require.Len(t, evidence.Commits, 1)
@@ -102,7 +102,7 @@ func TestBuildPREvidence_FallsBackToCommittedDate(t *testing.T) {
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
 		"title", "branch", "main",
 		"",
-		[]graphqlCommitNode{node}, nil,
+		[]graphqlCommitNode{node}, nil, nil,
 	)
 	require.NoError(t, err)
 	require.Len(t, evidence.Commits, 1)
@@ -121,7 +121,7 @@ func TestBuildPREvidence_RecordsBaseRef(t *testing.T) {
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
 		"title", "feature-branch", "main",
 		"",
-		nil, nil,
+		nil, nil, nil,
 	)
 	require.NoError(t, err)
 	require.Equal(t, "main", evidence.BaseRef,
@@ -145,7 +145,7 @@ func TestBuildPREvidence_RecordsCommitSignature(t *testing.T) {
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
 		"title", "feature", "main",
 		"",
-		[]graphqlCommitNode{node}, nil,
+		[]graphqlCommitNode{node}, nil, nil,
 	)
 	require.NoError(t, err)
 	require.Len(t, evidence.Commits, 1)
@@ -172,7 +172,7 @@ func TestBuildPREvidence_EmptyAuthorIsPreserved(t *testing.T) {
 		"fix-branch",
 		"main",
 		"",
-		nil, nil,
+		nil, nil, nil,
 	)
 	require.NoError(t, err)
 	require.Equal(t, "", evidence.Author,
@@ -202,7 +202,7 @@ func TestBuildPREvidence_UnsignedCommitHasNoSignatureFields(t *testing.T) {
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
 		"title", "feature", "main",
 		"",
-		[]graphqlCommitNode{node}, nil,
+		[]graphqlCommitNode{node}, nil, nil,
 	)
 	require.NoError(t, err)
 	require.Len(t, evidence.Commits, 1)
@@ -230,7 +230,7 @@ func TestBuildPREvidence_RecordsWhichCommitAnApprovalCovered(t *testing.T) {
 		nil, []graphqlReviewNode{
 			reviewNode("grace", "APPROVED", "2026-03-01T13:00:00Z", "1111111111111111111111111111111111111111"),
 			reviewNode("ada", "APPROVED", "2026-03-01T13:00:00Z", ""),
-		},
+		}, nil,
 	)
 	require.NoError(t, err)
 
@@ -257,7 +257,7 @@ func TestBuildPREvidence_RecordsEveryReviewAndEachApprovalOnce(t *testing.T) {
 			reviewNode("ada", "COMMENTED", "2026-03-01T14:30:00Z", c1),
 			reviewNode("ada", "DISMISSED", "2026-03-01T14:45:00Z", c1),
 			reviewNode("grace", "APPROVED", "2026-03-01T15:00:00Z", c1),
-		},
+		}, nil,
 	)
 	require.NoError(t, err)
 
@@ -279,7 +279,7 @@ func TestBuildPREvidence_RecordsThatAPRHasNoReviews(t *testing.T) {
 		"0e723254516c841126e81f76100be57258ff1386",
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
 		"title", "feature", "main", "",
-		nil, nil,
+		nil, nil, nil,
 	)
 	require.NoError(t, err)
 	require.NotNil(t, evidence.Reviews, "no reviews is a fact, not a gap")
@@ -291,8 +291,7 @@ func TestBuildPREvidence_RecordsWhoSignedACommit(t *testing.T) {
 	node.Commit.Oid = "0e723254516c841126e81f76100be57258ff1386"
 	node.Commit.CommittedDate = "2026-03-01T12:00:00Z"
 	node.Commit.Author.User = &struct{ Login graphql.String }{Login: "octocat"}
-	node.Commit.Signature = &graphqlSignature{IsValid: true, State: "VALID",
-		Signer: &struct{ Login graphql.String }{Login: "tooky"}}
+	node.Commit.Signature = &graphqlSignature{IsValid: true, State: "VALID"}
 
 	evidence, err := buildPREvidence(
 		"https://github.com/kosli-dev/cli/pull/671",
@@ -300,6 +299,7 @@ func TestBuildPREvidence_RecordsWhoSignedACommit(t *testing.T) {
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
 		"title", "feature", "main", "",
 		[]graphqlCommitNode{node}, nil,
+		map[string]string{"0e723254516c841126e81f76100be57258ff1386": "tooky"},
 	)
 	require.NoError(t, err)
 	require.Len(t, evidence.Commits, 1)
@@ -314,8 +314,7 @@ func TestBuildPREvidence_RecordsACommitGitHubSigned(t *testing.T) {
 	node := graphqlCommitNode{}
 	node.Commit.Oid = "0e723254516c841126e81f76100be57258ff1386"
 	node.Commit.CommittedDate = "2026-03-01T12:00:00Z"
-	node.Commit.Signature = &graphqlSignature{IsValid: true, State: "VALID", WasSignedByGitHub: true,
-		Signer: &struct{ Login graphql.String }{Login: "web-flow"}}
+	node.Commit.Signature = &graphqlSignature{IsValid: true, State: "VALID", WasSignedByGitHub: true}
 
 	evidence, err := buildPREvidence(
 		"https://github.com/kosli-dev/cli/pull/671",
@@ -323,6 +322,7 @@ func TestBuildPREvidence_RecordsACommitGitHubSigned(t *testing.T) {
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
 		"title", "feature", "main", "",
 		[]graphqlCommitNode{node}, nil,
+		map[string]string{"0e723254516c841126e81f76100be57258ff1386": "web-flow"},
 	)
 	require.NoError(t, err)
 	require.Len(t, evidence.Commits, 1)
@@ -342,7 +342,7 @@ func TestBuildPREvidence_RecordsASignatureWithNoSigner(t *testing.T) {
 		"0e723254516c841126e81f76100be57258ff1386",
 		"MERGED", "tooky", "2026-03-01T09:00:00Z", "",
 		"title", "feature", "main", "",
-		[]graphqlCommitNode{node}, nil,
+		[]graphqlCommitNode{node}, nil, nil,
 	)
 	require.NoError(t, err)
 	require.Len(t, evidence.Commits, 1)
