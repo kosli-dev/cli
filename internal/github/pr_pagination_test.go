@@ -470,9 +470,13 @@ func TestPREvidenceByPRNumber_RecordsWhoSignedEachCommit(t *testing.T) {
 	require.Contains(t, ts.bodies[1], `node-sha2`)
 }
 
+// GitHub can sign an App's commit with its own key and still fail to resolve
+// the signer, so the commit must keep signed_by_platform.
 func TestPREvidenceForCommitV2_RecordsACommitSignedByAnApp(t *testing.T) {
+	commit := strings.Replace(signedCommitNodeJSON("sha1"),
+		`"wasSignedByGitHub":false`, `"wasSignedByGitHub":true`, 1)
 	ts := newGraphQLTestServer(t,
-		forCommitResponse(v2PRNodeJSON(7, connectionJSON([]string{signedCommitNodeJSON("sha1")}, ""), connectionJSON(nil, ""))),
+		forCommitResponse(v2PRNodeJSON(7, connectionJSON([]string{commit}, ""), connectionJSON(nil, ""))),
 		signersResponse(signedBy{sha: "sha1"}),
 	)
 
@@ -480,8 +484,11 @@ func TestPREvidenceForCommitV2_RecordsACommitSignedByAnApp(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, prs, 1)
 	require.Len(t, prs[0].Commits, 1)
-	require.Equal(t, "", prs[0].Commits[0].SignerUsername)
-	require.True(t, *prs[0].Commits[0].Verified)
+	c := prs[0].Commits[0]
+	require.Equal(t, "", c.SignerUsername)
+	require.True(t, *c.Verified)
+	require.Equal(t, "VALID", *c.SignatureState)
+	require.True(t, *c.SignedByPlatform)
 }
 
 // The signer is the one field GitHub can fail to resolve, so it must stay out
