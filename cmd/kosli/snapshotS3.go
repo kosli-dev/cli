@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -138,7 +139,7 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 			return o.resolveDownloadLimits(cmd.Flags().Changed("download-concurrency"))
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -161,14 +162,14 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotS3Options) run(args []string) error {
+func (o *snapshotS3Options) run(ctx context.Context, args []string) error {
 	envName := args[0]
 	harvest := o.awsStaticCreds.GetS3Data
 	if o.fingerprintSource == fingerprintSourceMetadata {
 		harvest = o.awsStaticCreds.GetS3DataFromMetadata
 	}
 
-	return newSnapshotReporter().report(envName, "S3", func() (any, string, error) {
+	return newSnapshotReporter().report(ctx, envName, "S3", func() (any, string, error) {
 		s3Data, err := harvest(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, o.downloadLimits, logger)
 		if err != nil {
 			return nil, "", err

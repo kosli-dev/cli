@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -53,14 +55,14 @@ func (suite *SnapshotAutoEnvironmentTestSuite) SetupSuite() {
 func (suite *SnapshotAutoEnvironmentTestSuite) createLogicalEnv(name string, included []string) {
 	suite.T().Helper()
 	o := &createEnvOptions{
-		payload: CreateEnvironmentPayload{
+		payload: kosli.CreateOrUpdateEnvironmentRequest{
 			Name:                 name,
 			Type:                 "logical",
 			Description:          "test logical env",
 			IncludedEnvironments: included,
 		},
 	}
-	require.NoError(suite.T(), o.run([]string{name}), "logical env should be created without error")
+	require.NoError(suite.T(), o.run(context.Background(), []string{name}), "logical env should be created without error")
 }
 
 func (suite *SnapshotAutoEnvironmentTestSuite) TestSnapshotAutoEnvironment() {

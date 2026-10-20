@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -67,7 +68,7 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -91,9 +92,9 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotServerOptions) run(args []string) error {
+func (o *snapshotServerOptions) run(ctx context.Context, args []string) error {
 	envName := args[0]
-	return newSnapshotReporter().report(envName, "server", func() (any, string, error) {
+	return newSnapshotReporter().report(ctx, envName, "server", func() (any, string, error) {
 		artifacts, err := server.CreateServerArtifactsData(o.paths, o.excludePaths, logger)
 		if err != nil {
 			return nil, "", err

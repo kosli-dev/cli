@@ -1,14 +1,11 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
+	"context"
 	"fmt"
-	"net/http"
-	"net/url"
 	"strings"
 
-	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -60,7 +57,7 @@ func addAutoEnvironmentFlags(cmd *cobra.Command) {
 // reported, when --auto-environment is set. It is a no-op when the flag is not
 // set or when the environment already exists with a matching type. envType is
 // inferred from the snapshot subcommand (e.g. "docker", "K8S").
-func ensureEnvironment(envName, envType string) error {
+func ensureEnvironment(ctx context.Context, envName, envType string) error {
 	o := snapshotAutoEnv
 
 	// Enforce the scaling-flag mutual exclusion unconditionally, mirroring
@@ -84,7 +81,7 @@ func ensureEnvironment(envName, envType string) error {
 		return nil
 	}
 
-	exists, existingType, err := getEnvironmentTypeIfExists(envName)
+	exists, existingType, err := getEnvironmentTypeIfExists(ctx, envName)
 	if err != nil {
 		return err
 	}
@@ -101,7 +98,7 @@ func ensureEnvironment(envName, envType string) error {
 		return nil
 	}
 
-	return createEnvironmentForSnapshot(envName, envType)
+	return createEnvironmentForSnapshot(ctx, envName, envType)
 }
 
 // getEnvironmentTypeIfExists fetches the environment's metadata and returns
@@ -109,74 +106,51 @@ func ensureEnvironment(envName, envType string) error {
 // "does not exist" (exists=false, nil error); any other error (auth, network,
 // 5xx after retries) is returned to the caller so it is never mistaken for a
 // missing environment.
-func getEnvironmentTypeIfExists(envName string) (bool, string, error) {
-	reqURL, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName)
-	if err != nil {
-		return false, "", err
-	}
-
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    reqURL,
-		Token:  global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
+func getEnvironmentTypeIfExists(ctx context.Context, envName string) (bool, string, error) {
+	response, err := kosliAPI().GetEnvironment(ctx, envName)
 	if err != nil {
 		// Only a genuine 404 means the environment does not exist yet. Any other
 		// error (auth, network, 5xx after retries) is propagated so we never fall
 		// through to a create-or-update PUT that could overwrite an existing
 		// environment or bypass the type/logical safety checks.
-		var apiErr *requests.APIError
-		if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
+		if kosli.IsNotFound(err) {
 			logger.Debug("environment %s does not exist yet", envName)
 			return false, "", nil
 		}
 		return false, "", err
 	}
 
-	var env map[string]any
-	if err := json.Unmarshal([]byte(response.Body), &env); err != nil {
+	environment, err := response.Value()
+	if err != nil {
 		return false, "", err
 	}
-	envType, _ := env["type"].(string)
-	return true, envType, nil
+	return true, environment.Type, nil
 }
 
 // createEnvironmentForSnapshot creates a physical environment of the inferred
 // type, applying the optional --environment-description and scaling flags. It
 // reuses the same payload and endpoint as `kosli create environment`.
-func createEnvironmentForSnapshot(envName, envType string) error {
-	reqURL, err := url.JoinPath(global.Host, "api/v2/environments", global.Org)
-	if err != nil {
-		return err
-	}
-
+func createEnvironmentForSnapshot(ctx context.Context, envName, envType string) error {
 	description := snapshotAutoEnv.description
 	if description == "" {
 		description = defaultAutoEnvDescription
 	}
 
-	payload := CreateEnvironmentPayload{
+	payload := kosli.CreateOrUpdateEnvironmentRequest{
 		Name:        envName,
 		Type:        envType,
 		Description: description,
 	}
 	if snapshotAutoEnv.includeScaling {
 		myTrue := true
-		payload.IncludeScaling = &myTrue
+		payload.IncludeScaling = &myTrue //nolint:staticcheck // set only by the deprecated scaling flags
 	}
 	if snapshotAutoEnv.excludeScaling {
 		myFalse := false
-		payload.IncludeScaling = &myFalse
+		payload.IncludeScaling = &myFalse //nolint:staticcheck // set only by the deprecated scaling flags
 	}
 
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     reqURL,
-		Payload: payload,
-		Token:   global.ApiToken,
-	}
-	if _, err := kosliClient.Do(reqParams); err != nil {
+	if _, err := kosliAPI().CreateOrUpdateEnvironment(ctx, payload); err != nil {
 		return fmt.Errorf("failed to auto-create environment %s: %v", envName, err)
 	}
 	logger.Info("environment %s was created", envName)

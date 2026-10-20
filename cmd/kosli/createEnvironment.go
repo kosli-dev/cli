@@ -1,11 +1,10 @@
 package main
 
 import (
+	"context"
 	"io"
-	"net/http"
-	"net/url"
 
-	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/spf13/cobra"
 )
 
@@ -50,19 +49,10 @@ kosli create environment yourLogicalEnvironmentName
 `
 
 type createEnvOptions struct {
-	payload           CreateEnvironmentPayload
+	payload           kosli.CreateOrUpdateEnvironmentRequest
 	excludeScaling    bool
 	includeScaling    bool
 	requireProvenance bool
-}
-
-type CreateEnvironmentPayload struct {
-	Name                 string   `json:"name"`
-	Type                 string   `json:"type"`
-	Description          string   `json:"description"`
-	IncludeScaling       *bool    `json:"include_scaling,omitempty"`
-	RequireProvenance    *bool    `json:"require_provenance,omitempty"`
-	IncludedEnvironments []string `json:"included_environments,omitempty"`
 }
 
 func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
@@ -86,7 +76,7 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -117,34 +107,23 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *createEnvOptions) run(args []string) error {
+func (o *createEnvOptions) run(ctx context.Context, args []string) error {
 	o.payload.Name = args[0]
-	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org)
-	if err != nil {
-		return err
-	}
 
 	if o.includeScaling {
 		var myTrue = true
-		o.payload.IncludeScaling = &myTrue
+		o.payload.IncludeScaling = &myTrue //nolint:staticcheck // set only by the deprecated scaling flags
 	}
 	if o.excludeScaling {
 		var myFalse = false
-		o.payload.IncludeScaling = &myFalse
+		o.payload.IncludeScaling = &myFalse //nolint:staticcheck // set only by the deprecated scaling flags
 	}
 	if o.requireProvenance {
 		var myTrue = true
-		o.payload.RequireProvenance = &myTrue
+		o.payload.RequireProvenance = &myTrue //nolint:staticcheck // set only by the deprecated --require-provenance flag
 	}
 
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: o.payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
+	_, err := kosliAPI().CreateOrUpdateEnvironment(ctx, o.payload)
 	if err == nil && !global.DryRun {
 		logger.Info("environment %s was created", o.payload.Name)
 	}

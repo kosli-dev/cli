@@ -55,16 +55,16 @@ func newSnapshotDockerCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 	addDryRunFlag(cmd)
 	return cmd
 }
 
-func (o *snapshotDockerOptions) run(args []string) error {
+func (o *snapshotDockerOptions) run(ctx context.Context, args []string) error {
 	envName := args[0]
-	return newSnapshotReporter().report(envName, "docker", func() (any, string, error) {
+	return newSnapshotReporter().report(ctx, envName, "docker", func() (any, string, error) {
 		artifacts, err := CreateDockerArtifactsData()
 		if err != nil {
 			return nil, "", err

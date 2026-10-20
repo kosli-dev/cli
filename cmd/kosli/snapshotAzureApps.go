@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -99,7 +100,7 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -123,9 +124,9 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotAzureAppsOptions) run(args []string) error {
+func (o *snapshotAzureAppsOptions) run(ctx context.Context, args []string) error {
 	envName := args[0]
-	return newSnapshotReporter().report(envName, "azure-apps", func() (any, string, error) {
+	return newSnapshotReporter().report(ctx, envName, "azure-apps", func() (any, string, error) {
 		webAppsData, err := o.azureStaticCredentials.GetAzureAppsData(logger)
 		if err != nil {
 			return nil, "", err

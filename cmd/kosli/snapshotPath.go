@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -64,7 +65,7 @@ func newSnapshotPathCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -81,7 +82,7 @@ func newSnapshotPathCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotPathOptions) run(args []string) error {
+func (o *snapshotPathOptions) run(ctx context.Context, args []string) error {
 	envName := args[0]
 
 	// load path spec from flags
@@ -96,13 +97,13 @@ func (o *snapshotPathOptions) run(args []string) error {
 	}
 
 	reporter := newSnapshotReporter()
-	err := reportArtifacts(reporter, ps, envName)
+	err := reportArtifacts(ctx, reporter, ps, envName)
 	if err != nil {
 		return err
 	}
 
 	if o.watch {
-		err := watchPath(reporter, ps, o.path, envName)
+		err := watchPath(ctx, reporter, ps, o.path, envName)
 		if err != nil {
 			return err
 		}
@@ -111,8 +112,8 @@ func (o *snapshotPathOptions) run(args []string) error {
 	return nil
 }
 
-func reportArtifacts(reporter *snapshotReporter, ps *server.PathsSpec, envName string) error {
-	return reporter.report(envName, "server", func() (any, string, error) {
+func reportArtifacts(ctx context.Context, reporter *snapshotReporter, ps *server.PathsSpec, envName string) error {
+	return reporter.report(ctx, envName, "server", func() (any, string, error) {
 		artifacts, err := server.CreatePathsArtifactsData(ps, logger)
 		if err != nil {
 			return nil, "", err
@@ -122,7 +123,7 @@ func reportArtifacts(reporter *snapshotReporter, ps *server.PathsSpec, envName s
 	})
 }
 
-func watchPath(reporter *snapshotReporter, ps *server.PathsSpec, path, envName string) error {
+func watchPath(ctx context.Context, reporter *snapshotReporter, ps *server.PathsSpec, path, envName string) error {
 	events := make(chan notify.EventInfo, 1)
 	if err := watchRecursive(path, events); err != nil {
 		return fmt.Errorf("error setting up watcher: %v", err)
@@ -140,7 +141,7 @@ func watchPath(reporter *snapshotReporter, ps *server.PathsSpec, path, envName s
 		case event := <-events:
 			logger.Info("event detected: %s on %s", event.Event().String(), event.Path())
 
-			err := reportArtifacts(reporter, ps, envName)
+			err := reportArtifacts(ctx, reporter, ps, envName)
 			if err != nil {
 				return err
 			}

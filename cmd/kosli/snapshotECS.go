@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -160,7 +161,7 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(cmd.Context(), args)
 		},
 	}
 
@@ -190,9 +191,9 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotECSOptions) run(args []string) error {
+func (o *snapshotECSOptions) run(ctx context.Context, args []string) error {
 	envName := args[0]
-	return newSnapshotReporter().report(envName, "ECS", func() (any, string, error) {
+	return newSnapshotReporter().report(ctx, envName, "ECS", func() (any, string, error) {
 		tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.clustersFilter, o.serviceFilter, logger)
 		if err != nil {
 			return nil, "", err
