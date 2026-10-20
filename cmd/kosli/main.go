@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/version"
@@ -23,6 +24,17 @@ func init() {
 	logger = log.NewStandardLogger()
 	// needed for some tests, actual CLI client is initialized in root.go
 	kosliClient, _ = requests.NewKosliClient("", 3, false, logger)
+}
+
+// kosliAPI returns a Kosli API client for the global flags as they are now.
+// It is built on every call rather than once, so that multi-host runs and
+// tests that set global directly each get a client for their own values.
+func kosliAPI() *kosli.Client {
+	var sender kosli.Sender = kosliClient
+	if global.DryRun {
+		sender = kosli.DryRun(sender)
+	}
+	return kosli.New(sender, global.Host, global.Org, global.ApiToken)
 }
 
 func main() {

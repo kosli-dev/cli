@@ -1,5 +1,6 @@
 // Package kosli is a client for the Kosli API, with one file per tag of the
-// API's OpenAPI spec.
+// API's OpenAPI spec. Each endpoint method's godoc names the operationId it
+// calls, so the hand-written methods can be matched against the spec.
 package kosli
 
 import (
