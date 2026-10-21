@@ -566,16 +566,22 @@ func TestPREvidenceByPRNumber_LooksUpSignersInBatchesOf100(t *testing.T) {
 	require.Equal(t, "grace", evidence.Commits[100].SignerUsername)
 }
 
-func TestSignerLogins_LogsAnIgnoredErrorWhenDebugging(t *testing.T) {
+func TestNullFieldErrorTransport_LogsADroppedErrorWhenDebugging(t *testing.T) {
 	ts := newGraphQLTestServer(t, signersResponse(signedBy{sha: "sha1"}))
-	config := newPaginationConfig(ts)
 	var debug strings.Builder
-	node := graphqlCommitNode{}
-	node.Commit.ID = "node-sha1"
-	node.Commit.Signature = &graphqlSignature{}
+	client := graphql.NewClient(ts.URL+"/api/graphql", &http.Client{
+		Transport: &nullFieldErrorTransport{base: http.DefaultTransport, debug: &debug},
+	})
 
-	_, err := config.signerLogins(context.Background(), graphql.NewClient(ts.URL+"/api/graphql", nil).Query,
-		[]graphqlCommitNode{node}, &debug)
+	var q struct {
+		Nodes []struct {
+			Oid       graphql.String
+			Signature struct {
+				Signer *struct{ Login graphql.String }
+			}
+		} `graphql:"nodes(ids: $ids)"`
+	}
+	err := client.Query(context.Background(), &q, map[string]any{"ids": []graphql.ID{"node-sha1"}})
 	require.NoError(t, err)
 	require.Contains(t, debug.String(), "[debug-github]")
 	require.Contains(t, debug.String(), "Not Found")
