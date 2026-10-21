@@ -212,7 +212,7 @@ func (o *tagOptions) run(args []string) error {
 		} else {
 			msg = fmt.Sprintf("No tags were applied for %s '%s'", o.resourceType, o.resourceID)
 		}
-		logger.Info(msg)
+		logger.Info("%s", msg)
 	}
 	return err
 }

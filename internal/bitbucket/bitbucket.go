@@ -59,7 +59,7 @@ func (c *Config) getPullRequestsFromBitbucketApi(commit string, version int) ([]
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
-	c.Logger.Debug("getting pull requests from " + url)
+	c.Logger.Debug("getting pull requests from %s", url)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
@@ -118,7 +118,7 @@ func (c *Config) parseBitbucketResponse(commit string, response *requests.HTTPRe
 
 // getPullRequestDetailsFromBitbucket gets the details of a pull request from the Bitbucket API
 func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit string, version int) (*types.PREvidence, error) {
-	c.Logger.Debug("getting pull request details for " + prApiUrl)
+	c.Logger.Debug("getting pull request details for %s", prApiUrl)
 	evidence := &types.PREvidence{}
 
 	reqParams := &requests.RequestParams{
@@ -259,7 +259,7 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 	if err != nil {
 		return nil, err
 	}
-	c.Logger.Debug("getting pull request commits from " + url)
+	c.Logger.Debug("getting pull request commits from %s", url)
 
 	allCommits := []types.Commit{}
 	currentURL := url
@@ -316,7 +316,7 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 			break
 		}
 		currentURL = nextURL
-		c.Logger.Debug("fetching next page of commits from " + currentURL)
+		c.Logger.Debug("fetching next page of commits from %s", currentURL)
 	}
 
 	return allCommits, nil

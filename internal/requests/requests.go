@@ -444,7 +444,7 @@ func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, mes
 	contentType := req.Header.Get("Content-Type")
 	if strings.Contains(contentType, "multipart/form-data") {
 		// Log only the JSON fields for multipart/form-data
-		c.Logger.Info(message)
+		c.Logger.Info("%s", message)
 		for key, value := range jsonFields {
 			var prettyJSON bytes.Buffer
 			if err := json.Indent(&prettyJSON, value.([]byte), "", "    "); err == nil {

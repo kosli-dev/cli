@@ -48,8 +48,7 @@ func (l *Logger) SetInfoOut(out io.Writer) {
 
 func (l *Logger) Debug(format string, v ...any) {
 	if l.DebugEnabled {
-		format = fmt.Sprintf("[debug] %s\n", format)
-		l.debugLog.Printf(format, v...)
+		l.debugLog.Printf("[debug] %s\n", fmt.Sprintf(format, v...))
 	}
 }
 
@@ -57,18 +56,15 @@ func (l *Logger) Warn(format string, v ...any) {
 	if l.QuietEnabled {
 		return
 	}
-	format = fmt.Sprintf("[warning] %s\n", format)
-	l.warnLog.Printf(format, v...)
+	l.warnLog.Printf("[warning] %s\n", fmt.Sprintf(format, v...))
 }
 
 func (l *Logger) Error(format string, v ...any) {
-	format = fmt.Sprintf("Error: %s\n", format)
-	l.errLog.Fatalf(format, v...)
+	l.errLog.Fatalf("Error: %s\n", fmt.Sprintf(format, v...))
 }
 
 func (l *Logger) Info(format string, v ...any) {
-	format = fmt.Sprintf("%s\n", format)
-	l.infoLog.Printf(format, v...)
+	l.infoLog.Printf("%s\n", fmt.Sprintf(format, v...))
 }
 
 // Print writes to the info output without appending a trailing newline
