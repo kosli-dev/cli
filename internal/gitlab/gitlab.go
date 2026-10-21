@@ -3,6 +3,7 @@ package gitlab
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/kosli-dev/cli/internal/types"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -121,9 +122,9 @@ func (c *GitlabConfig) newPRGitlabEvidenceV2(mr *gitlab.BasicMergeRequest) (*typ
 		URL:         mr.WebURL,
 		MergeCommit: mr.MergeCommitSHA,
 		State:       mr.State,
-		Author:      fmt.Sprintf("%s (@%s)", mr.Author.Name, mr.Author.Username),
-		CreatedAt:   mr.CreatedAt.Unix(),
-		MergedAt:    mr.MergedAt.Unix(),
+		Author:      gitlabUserName(mr.Author),
+		CreatedAt:   unixOrZero(mr.CreatedAt),
+		MergedAt:    unixOrZero(mr.MergedAt),
 		Title:       mr.Title,
 	}
 	evidence.HeadRef, evidence.BaseRef = gitlabMRRefs(mr)
@@ -153,7 +154,7 @@ func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.BasicMer
 	if err != nil {
 		return mrs, fmt.Errorf("failed to list merge requests for commit %s: %w", commit, err)
 	}
-	return mrs, nil
+	return mrs, noNullItems("merge requests", mrs)
 }
 
 // GetMergeRequestApprovers returns a list of users (name and username) who approved an MR
@@ -163,11 +164,20 @@ func (c *GitlabConfig) GetMergeRequestApprovers(mrIID, version int64) ([]any, er
 	if err != nil {
 		return approvers, err
 	}
-	approvals, _, err := client.MergeRequestApprovals.GetConfiguration(c.ProjectID(), mrIID)
+	approvedBy, err := c.approvedBy(client, mrIID)
 	if err != nil {
 		return approvers, err
 	}
-	return gitlabApprovers(approvals.ApprovedBy, version), nil
+	return gitlabApprovers(approvedBy, version), nil
+}
+
+// approvedBy returns who approved an MR.
+func (c *GitlabConfig) approvedBy(client *gitlab.Client, mrIID int64) ([]*gitlab.MergeRequestApproverUser, error) {
+	approvals, _, err := client.MergeRequestApprovals.GetConfiguration(c.ProjectID(), mrIID)
+	if err != nil || approvals == nil {
+		return nil, err
+	}
+	return approvals.ApprovedBy, noNullItems("approved_by", approvals.ApprovedBy)
 }
 
 // GetMergeRequestReviews returns an MR's approvers and its reviews: each
@@ -177,11 +187,11 @@ func (c *GitlabConfig) GetMergeRequestReviews(mrIID int64) ([]any, []types.PRApp
 	if err != nil {
 		return nil, nil, err
 	}
-	approvals, _, err := client.MergeRequestApprovals.GetConfiguration(c.ProjectID(), mrIID)
+	approvedBy, err := c.approvedBy(client, mrIID)
 	if err != nil {
 		return nil, nil, err
 	}
-	approvers := gitlabApprovers(approvals.ApprovedBy, 2)
+	approvers := gitlabApprovers(approvedBy, 2)
 	reviewers, resp, err := client.MergeRequests.GetMergeRequestReviewers(c.ProjectID(), mrIID)
 	if err != nil {
 		// Older GitLab has no reviewers endpoint. Reviews without its change
@@ -191,11 +201,43 @@ func (c *GitlabConfig) GetMergeRequestReviews(mrIID int64) ([]any, []types.PRApp
 		}
 		return nil, nil, err
 	}
-	return approvers, gitlabReviews(approvals.ApprovedBy, reviewers), nil
+	if err := noNullItems("reviewers", reviewers); err != nil {
+		return nil, nil, err
+	}
+	return approvers, gitlabReviews(approvedBy, reviewers), nil
 }
 
 func gitlabUserName(u *gitlab.BasicUser) string {
+	if u == nil {
+		return ""
+	}
 	return fmt.Sprintf("%s (@%s)", u.Name, u.Username)
+}
+
+func gitlabUsername(u *gitlab.BasicUser) string {
+	if u == nil {
+		return ""
+	}
+	return u.Username
+}
+
+// unixOrZero is t in Unix seconds, or 0 when GitLab sent no time.
+func unixOrZero(t *time.Time) int64 {
+	if t == nil {
+		return 0
+	}
+	return t.Unix()
+}
+
+// noNullItems errors on a null entry in a list GitLab sent: it is missing
+// data, not an empty entry.
+func noNullItems[T any](list string, items []*T) error {
+	for i, item := range items {
+		if item == nil {
+			return fmt.Errorf("GitLab sent %s[%d] as null", list, i)
+		}
+	}
+	return nil
 }
 
 func gitlabApprovers(approvedBy []*gitlab.MergeRequestApproverUser, version int64) []any {
@@ -219,13 +261,13 @@ func gitlabApprovers(approvedBy []*gitlab.MergeRequestApproverUser, version int6
 func gitlabReviews(approvedBy []*gitlab.MergeRequestApproverUser, reviewers []*gitlab.MergeRequestReviewer) []types.PRApprovals {
 	reviewerStates := map[string]string{}
 	for _, r := range reviewers {
-		reviewerStates[r.User.Username] = r.State
+		reviewerStates[gitlabUsername(r.User)] = r.State
 	}
 	reviews := []types.PRApprovals{}
 	approved := map[string]bool{}
 	for _, a := range approvedBy {
-		approved[a.User.Username] = true
-		if reviewerStates[a.User.Username] != "requested_changes" {
+		approved[gitlabUsername(a.User)] = true
+		if reviewerStates[gitlabUsername(a.User)] != "requested_changes" {
 			reviews = append(reviews, types.PRApprovals{Username: gitlabUserName(a.User), State: types.ReviewApproved})
 		}
 	}
@@ -234,7 +276,7 @@ func gitlabReviews(approvedBy []*gitlab.MergeRequestApproverUser, reviewers []*g
 		switch {
 		case r.State == "requested_changes":
 			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewChangesRequested})
-		case r.State == "reviewed" && !approved[r.User.Username]:
+		case r.State == "reviewed" && !approved[gitlabUsername(r.User)]:
 			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewCommented})
 		}
 	}
@@ -250,6 +292,9 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 	}
 	glCommits, err := c.listMergeRequestCommits(client, mr.IID, defaultMaxPages)
 	if err != nil {
+		return commits, err
+	}
+	if err := noNullItems("commits", glCommits); err != nil {
 		return commits, err
 	}
 	// One signature lookup per commit: pagination multiplies this, but GitLab
@@ -273,7 +318,7 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 func commitFromGitlabCommit(commit *gitlab.Commit, branch string) types.Commit {
 	// Use the authored date to match the recorded author identity; fall back to
 	// created_at if the API omits it (server#5479).
-	timestamp := commit.CreatedAt.Unix()
+	timestamp := unixOrZero(commit.CreatedAt)
 	if commit.AuthoredDate != nil {
 		timestamp = commit.AuthoredDate.Unix()
 	}
@@ -310,6 +355,9 @@ func resolveGitlabSignature(sig *gitlab.GPGSignature, resp *gitlab.Response, err
 			return nil, nil, nil
 		}
 		return nil, nil, err
+	}
+	if sig == nil {
+		return nil, nil, nil
 	}
 	verified, signatureState := gitlabCommitVerification(sig.VerificationStatus)
 	return verified, signatureState, nil
