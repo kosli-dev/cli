@@ -586,3 +586,38 @@ func TestNullFieldErrorTransport_LogsADroppedErrorWhenDebugging(t *testing.T) {
 	require.Contains(t, debug.String(), "[debug-github]")
 	require.Contains(t, debug.String(), "Not Found")
 }
+
+// GitHub nulls a node it cannot return by id; that commit only loses its signer.
+func TestPREvidenceByPRNumber_ToleratesANullSignerNode(t *testing.T) {
+	ts := newGraphQLTestServer(t,
+		byPRNumberResponse(connectionJSON([]string{signedCommitNodeJSON("sha1")}, ""), connectionJSON(nil, "")),
+		`{"data":{"nodes":[null]},"errors":[{"type":"NOT_FOUND","path":["nodes",0],"message":"Not Found"}]}`,
+	)
+
+	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Equal(t, "", evidence.Commits[0].SignerUsername)
+	require.Len(t, ts.bodies, 2)
+}
+
+// GitHub reports a SAML-protected repo as a null repository with a FORBIDDEN
+// error; its message tells the user what to fix.
+func TestPREvidence_KeepsGitHubsReasonForAMissingRepository(t *testing.T) {
+	const saml = "Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization."
+	reply := `{"data":{"repository":null},"errors":[{"type":"FORBIDDEN","path":["repository"],"message":"` + saml + `"}]}`
+	for name, run := range map[string]func(*GithubConfig) error{
+		"PREvidenceByPRNumber": func(c *GithubConfig) error {
+			_, err := c.PREvidenceByPRNumber(1)
+			return err
+		},
+		"PREvidenceForCommitV2": func(c *GithubConfig) error {
+			_, err := c.PREvidenceForCommitV2("merge-sha")
+			return err
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			ts := newGraphQLTestServer(t, reply, reply, reply, reply)
+			require.ErrorContains(t, run(newPaginationConfig(ts)), saml)
+		})
+	}
+}

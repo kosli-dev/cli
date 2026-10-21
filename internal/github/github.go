@@ -292,6 +292,9 @@ const signerBatchSize = 100
 // signerLogins maps each signed commit's SHA to its signer's login. GitHub
 // types signer as User, so a signer that is not one (e.g. a GitHub App)
 // comes back null with a field error, which newGraphQLClient drops.
+// Unlike the other queries, any error that comes with data is accepted and
+// written to debug output: a node asked for by id that comes back null, or
+// with a field GitHub could not resolve, only loses its signer.
 func (c *GithubConfig) signerLogins(ctx context.Context, query graphqlQueryFunc,
 	nodes []graphqlCommitNode) (map[string]string, error) {
 	ids := []graphql.ID{}
@@ -317,16 +320,22 @@ func (c *GithubConfig) signerLogins(ctx context.Context, query graphqlQueryFunc,
 		var q signerQuery
 		err := c.retry(ctx, func() error {
 			q = signerQuery{}
-			return query(ctx, &q, map[string]any{"ids": batch})
+			err := query(ctx, &q, map[string]any{"ids": batch})
+			if err != nil && len(q.Nodes) > 0 {
+				if debug := c.debugOut(); debug != nil {
+					_, _ = fmt.Fprintf(debug, "[debug-github] ignoring error in commit signer lookup: %v\n", err)
+				}
+				return nil
+			}
+			return err
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to look up commit signers: %w", err)
 		}
-		found, err := nonNull(q.Nodes, "signer nodes")
-		if err != nil {
-			return nil, err
-		}
-		for _, n := range found {
+		for _, n := range q.Nodes {
+			if n == nil {
+				continue
+			}
 			if sig := n.Commit.Signature; sig != nil && sig.Signer != nil {
 				signers[string(n.Commit.Oid)] = string(sig.Signer.Login)
 			}

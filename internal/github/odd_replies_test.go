@@ -305,7 +305,8 @@ func requireRuleHolds(t *testing.T, reply, path, outcome string) {
 	switch {
 	case strings.HasSuffix(path, "[]"):
 		require.NotEqual(t, "error", outcome, "an emptied list is not an error")
-	case strings.HasSuffix(path, "]"):
+	case strings.HasSuffix(path, "]") && reply != replySigners:
+		// A null signer node only loses its signer, which is optional.
 		require.Equal(t, "error", outcome, "a null list item is missing data, not an optional field")
 	case oddAllowedErrors[key] != "":
 		require.Equal(t, "error", outcome, oddAllowedErrors[key])
@@ -353,16 +354,30 @@ func TestOddReplies_FieldErrorMeansTheSameAsNull(t *testing.T) {
 					plain[reply] = string(v.Body)
 					withError := oddBaselineReplies()
 					withError[reply] = withErrorAt(t, string(v.Body), v.Path)
-					require.Equal(t, runOddReply(t, ep, plain, want), runOddReply(t, ep, withError, want))
+					got := runOddReply(t, ep, withError, want)
+					if reply != replySigners && isRootField(t, v.Path) {
+						require.Equal(t, "error", got, "GitHub's reason for a missing root field must reach the user")
+						return
+					}
+					require.Equal(t, runOddReply(t, ep, plain, want), got)
 				})
 			}
 		}
 	}
 }
 
+// isRootField reports whether path is at most two segments below data, such
+// as repository.pullRequest or nodes[0], whose errors are never dropped.
+func isRootField(t *testing.T, path string) bool {
+	t.Helper()
+	return len(errorPath(t, strings.TrimPrefix(path, "data."))) <= 2
+}
+
 // TestOddReplies_ErrorsThatAreNotANullFieldFail covers errors the client must
 // not drop: one on a field under a null parent (a non-null field's error nulls
-// its nearest nullable parent), one with no path, and one on a list item.
+// its nearest nullable parent), one with no path, and one on a list item. The
+// signer lookup is the exception: any error that comes with data only loses
+// signers.
 func TestOddReplies_ErrorsThatAreNotANullFieldFail(t *testing.T) {
 	for _, ep := range oddEntryPoints {
 		for _, reply := range ep.replies {
@@ -377,22 +392,34 @@ func TestOddReplies_ErrorsThatAreNotANullFieldFail(t *testing.T) {
 					t.Run(ep.name+"/"+reply+"/"+v.Path+"."+child, func(t *testing.T) {
 						replies := oddBaselineReplies()
 						replies[reply] = withErrorAt(t, string(v.Body), v.Path+"."+child)
-						require.Equal(t, "error", runOddReply(t, ep, replies, nil))
+						requireFailsUnlessSigners(t, reply, v.Path, runOddReply(t, ep, replies, nil))
 					})
 				}
 			}
 			t.Run(ep.name+"/"+reply+"/no path", func(t *testing.T) {
 				replies := oddBaselineReplies()
 				replies[reply] = strings.TrimSuffix(baseline, "}") + `,"errors":[{"message":"Something went wrong"}]}`
-				require.Equal(t, "error", runOddReply(t, ep, replies, nil))
+				requireFailsUnlessSigners(t, reply, "", runOddReply(t, ep, replies, nil))
 			})
 		}
 		t.Run(ep.name+"/list item", func(t *testing.T) {
 			replies := oddBaselineReplies()
-			replies[replySigners] = withErrorAt(t, `{"data":{"nodes":[null]}}`, "data.nodes[0]")
+			replies[replyCommitPage] = withErrorAt(t, strings.Replace(oddCommitPageReply, oddUnsignedCommit, "null", 1),
+				"data.repository.pullRequest.commits.nodes[0]")
 			require.Equal(t, "error", runOddReply(t, ep, replies, nil))
 		})
 	}
+}
+
+// requireFailsUnlessSigners expects an error, except from a signer lookup
+// reply that still has data, as it does unless nulledPath is "data".
+func requireFailsUnlessSigners(t *testing.T, reply, nulledPath, outcome string) {
+	t.Helper()
+	if reply == replySigners && nulledPath != "data" {
+		require.True(t, strings.HasPrefix(outcome, "ok"), "the signer lookup tolerates errors with data, got %q", outcome)
+		return
+	}
+	require.Equal(t, "error", outcome)
 }
 
 // keysAt names the fields of the object at path in doc, if it is one.

@@ -87,13 +87,12 @@ func (t *nullFieldErrorTransport) withoutNullFieldErrors(body []byte) []byte {
 
 // isNullField reports whether path names an object field that is null in
 // data while everything above it is not. An error anywhere else (a list item,
-// a field under a null parent, no path) is more than one missing field.
+// a field under a null parent, no path) is more than one missing field. So is
+// one within two segments of the root, such as repository or
+// repository.pullRequest: that is what the query is about, and GitHub's
+// message (e.g. SAML enforcement) is the user's only clue to the cause.
 func isNullField(data any, path []any) bool {
-	if len(path) == 0 {
-		return false
-	}
-	field, ok := path[len(path)-1].(string)
-	if !ok {
+	if len(path) <= 2 {
 		return false
 	}
 	cur := data
@@ -115,10 +114,12 @@ func isNullField(data any, path []any) bool {
 			return false
 		}
 	}
+	// A path ending in a list index ends on a list, not an object.
 	obj, ok := cur.(map[string]any)
 	if !ok {
 		return false
 	}
+	field, _ := path[len(path)-1].(string)
 	value, present := obj[field]
 	return present && value == nil
 }
