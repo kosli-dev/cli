@@ -171,7 +171,6 @@ func (c *GitlabConfig) GetMergeRequestApprovers(mrIID, version int64) ([]any, er
 	return gitlabApprovers(approvedBy, version), nil
 }
 
-// approvedBy returns who approved an MR.
 func (c *GitlabConfig) approvedBy(client *gitlab.Client, mrIID int64) ([]*gitlab.MergeRequestApproverUser, error) {
 	approvals, _, err := client.MergeRequestApprovals.GetConfiguration(c.ProjectID(), mrIID)
 	if err != nil || approvals == nil {
@@ -346,8 +345,8 @@ func gitlabCommitVerification(status string) (*bool, *string) {
 
 // resolveGitlabSignature maps the result of a GetGPGSignature call to the
 // neutral verified/signature_state fields. GitLab returns 404 for unsigned
-// commits, which is treated as unsigned (nil fields) rather than a fatal error
-// (server#5892); other errors propagate so incomplete signature data is never
+// commits; that and a null reply are unsigned (nil fields), not a fatal error
+// (server#5892). Other errors propagate so incomplete signature data is never
 // silently recorded.
 func resolveGitlabSignature(sig *gitlab.GPGSignature, resp *gitlab.Response, err error) (*bool, *string, error) {
 	if err != nil {
