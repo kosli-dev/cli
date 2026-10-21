@@ -247,9 +247,7 @@ func (c *AzureConfig) PullRequestsForCommit(commit string) ([]git.GitPullRequest
 	if len(results) == 0 {
 		return []git.GitPullRequest{}, nil
 	}
-	if results[0] == nil {
-		return nil, fmt.Errorf("pull request query for commit %s has a null result", commit)
-	}
+	// A null result indexes as an empty map, so it reads as no pull requests.
 	prs := results[0][commit]
 	for i, pr := range prs {
 		// A null pull request decodes to an empty one, so no id is the only sign.

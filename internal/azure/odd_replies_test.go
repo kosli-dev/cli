@@ -178,7 +178,8 @@ var oddAllowedErrors = map[string]string{
 // oddAllowedSkips lists the list items whose null may be left out instead of
 // failing, keyed as oddAllowedErrors is.
 var oddAllowedSkips = map[string]string{
-	"reviewers value[i]": "a null reviewer reads as one with no vote, which has never been a review",
+	"reviewers value[i]":          "a null reviewer reads as one with no vote, which has never been a review",
+	"pullRequestQuery results[i]": "a null result reads as no pull requests, as on main; Azure may send it for a commit with none",
 }
 
 // TestPREvidenceOddReplies nulls each value (and empties each list) of each
