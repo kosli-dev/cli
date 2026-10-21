@@ -712,7 +712,7 @@ func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string, logge
 		if err != nil {
 			return nil, err
 		}
-		logger.Debug("Got logs for app service: ", appServiceName)
+		logger.Debug("Got logs for app service: %s", appServiceName)
 		if response.Body != nil {
 			defer func() {
 				if err := response.Body.Close(); err != nil {
@@ -720,14 +720,14 @@ func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string, logge
 				}
 			}()
 		}
-		logger.Debug("Reading logs for app service: ", appServiceName)
+		logger.Debug("Reading logs for app service: %s", appServiceName)
 		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return nil, err
 		}
 		zipFileName := fmt.Sprintf("%s-logs.zip", appServiceName)
 		// TODO: write body to a file
-		logger.Debug("Writing logs for app service: ", appServiceName, " to file: ", zipFileName)
+		logger.Debug("Writing logs for app service: %s to file: %s", appServiceName, zipFileName)
 		err = os.WriteFile("zipFileName", body, 0o644)
 		if err != nil {
 			return nil, err

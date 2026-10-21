@@ -175,7 +175,7 @@ func printReposListAsTable(raw string, out io.Writer, page int) error {
 		if response.Page != 1 {
 			msg = fmt.Sprintf("%s at page number %d", msg, response.Page)
 		}
-		logger.Info(msg + ".")
+		logger.Info("%s.", msg)
 		return nil
 	}
 

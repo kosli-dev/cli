@@ -57,7 +57,7 @@ func (o *statusOptions) run(out io.Writer) error {
 		}
 		logger.Info("Kosli is Down")
 	} else {
-		logger.Info(response.Body)
+		logger.Info("%s", response.Body)
 	}
 	return nil
 }

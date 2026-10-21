@@ -39,7 +39,7 @@ func main() {
 		}
 	}
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("%s", err.Error())
 	}
 }
 

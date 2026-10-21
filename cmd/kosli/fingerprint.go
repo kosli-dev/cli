@@ -123,6 +123,6 @@ func (o *fingerprintOptions) run(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	logger.Info(fingerprint)
+	logger.Info("%s", fingerprint)
 	return nil
 }

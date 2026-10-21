@@ -183,7 +183,7 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 		if page > 1 {
 			msg = fmt.Sprintf("%s at page number %d", msg, page)
 		}
-		logger.Info(msg + ".")
+		logger.Info("%s.", msg)
 		return nil
 	}
 
