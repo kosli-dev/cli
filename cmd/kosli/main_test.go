@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"os"
 	"os/exec"
 	"testing"
@@ -19,14 +18,16 @@ func TestMainErrorKeepsPercentEncoding(t *testing.T) {
 		return
 	}
 
-	cmd := exec.Command(os.Args[0], "-test.run=^TestMainErrorKeepsPercentEncoding$")
+	self, err := os.Executable()
+	require.NoError(t, err)
+	cmd := exec.Command(self, "-test.run=^TestMainErrorKeepsPercentEncoding$")
 	cmd.Env = append(os.Environ(), "KOSLI_TEST_RUN_MAIN=1")
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
-	err := cmd.Run()
+	err = cmd.Run()
 
 	var exitErr *exec.ExitError
-	require.True(t, errors.As(err, &exitErr), "expected main to exit non-zero, got %v", err)
+	require.ErrorAs(t, err, &exitErr, "expected main to exit non-zero")
 	require.Contains(t, stderr.String(), "feature%2Fx")
 	require.NotContains(t, stderr.String(), "%!")
 }
