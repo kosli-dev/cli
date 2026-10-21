@@ -12,7 +12,7 @@ import (
 // https://api.bitbucket.org/swagger.json: state is approved, changes_requested
 // or null; participated_on is the approval time, else the last comment, else null.
 func TestBitbucketReviews(t *testing.T) {
-	var participants []any
+	var participants []map[string]any
 	require.NoError(t, json.Unmarshal([]byte(`[
 		{"user":{"display_name":"Ada"},"role":"REVIEWER","approved":true,"state":"approved","participated_on":"2026-03-01T13:00:00.123456+00:00"},
 		{"user":{"display_name":"Bob"},"role":"REVIEWER","approved":false,"state":"changes_requested","participated_on":"2026-03-01T14:00:00+00:00"},
@@ -35,7 +35,7 @@ func TestBitbucketReviews(t *testing.T) {
 }
 
 func TestBitbucketReviews_RejectsABadTimestamp(t *testing.T) {
-	var participants []any
+	var participants []map[string]any
 	require.NoError(t, json.Unmarshal([]byte(`[
 		{"user":{"display_name":"Ada"},"approved":true,"state":"approved","participated_on":"yesterday"}
 	]`), &participants))
