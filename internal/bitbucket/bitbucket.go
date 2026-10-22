@@ -13,6 +13,10 @@ import (
 	"github.com/kosli-dev/cli/internal/types"
 )
 
+// defaultMaxPages bounds commit paging so next links that cycle end in an
+// error. It is set far above the pages a real pull request needs.
+const defaultMaxPages = 1000
+
 type Config struct {
 	Username    string
 	Password    string
@@ -306,7 +310,10 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 	allCommits := []types.Commit{}
 	currentURL := url
 
-	for currentURL != "" {
+	for pages := 0; currentURL != ""; pages++ {
+		if pages == defaultMaxPages {
+			return nil, fmt.Errorf("aborting after %d pages of commits for pull request %d", defaultMaxPages, prID)
+		}
 		reqParams := &requests.RequestParams{
 			Method:   http.MethodGet,
 			URL:      currentURL,
@@ -347,11 +354,7 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 			})
 		}
 
-		next := str(responseData, "next")
-		if next == currentURL {
-			return nil, fmt.Errorf("next page did not advance past page %s for pull request %d", currentURL, prID)
-		}
-		currentURL = next
+		currentURL = str(responseData, "next")
 		if currentURL == "" {
 			break
 		}

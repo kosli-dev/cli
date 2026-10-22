@@ -329,24 +329,27 @@ func TestOddReplies(t *testing.T) {
 	}
 }
 
-// A commits page whose next link is itself would be fetched forever.
-func TestOddReplies_CommitPageThatDoesNotAdvanceFails(t *testing.T) {
-	replies := oddBaselineReplies()
-	replies["pullrequest_commits_2"] = `{
-	"pagelen": 1,
-	"page": 2,
-	"values": [],
-	"next": "{{base}}/2.0/repositories/acme/widgets/pullrequests/7/commits?page=2"
-}`
-	done := make(chan error, 1)
-	go func() {
-		_, err := runOddReplies(t, 2, replies)
-		done <- err
-	}()
-	select {
-	case err := <-done:
-		require.ErrorContains(t, err, "did not advance")
-	case <-time.After(10 * time.Second):
-		t.Fatal("paging did not stop")
+// Commit pages whose next links cycle would be fetched forever: a page
+// pointing at itself, or two pages pointing at each other.
+func TestOddReplies_CommitPagesThatCycleFail(t *testing.T) {
+	for name, next := range map[string]string{
+		"page 2 to itself": "{{base}}/2.0/repositories/acme/widgets/pullrequests/7/commits?page=2",
+		"page 2 to page 1": "{{base}}/2.0/repositories/acme/widgets/pullrequests/7/commits",
+	} {
+		t.Run(name, func(t *testing.T) {
+			replies := oddBaselineReplies()
+			replies["pullrequest_commits_2"] = `{"pagelen": 1, "page": 2, "values": [], "next": "` + next + `"}`
+			done := make(chan error, 1)
+			go func() {
+				_, err := runOddReplies(t, 2, replies)
+				done <- err
+			}()
+			select {
+			case err := <-done:
+				require.ErrorContains(t, err, fmt.Sprintf("aborting after %d pages", defaultMaxPages))
+			case <-time.After(20 * time.Second):
+				t.Fatal("paging did not stop")
+			}
+		})
 	}
 }
