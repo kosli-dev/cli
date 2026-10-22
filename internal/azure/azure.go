@@ -291,24 +291,22 @@ func (c *AzureConfig) pullRequestReviewers(prNumber int) ([]git.IdentityRefWithV
 	if err != nil {
 		return nil, err
 	}
-	for i, r := range value(reviewers) {
-		// Counting a vote from nobody would record evidence attributed to no one.
-		if value(r.Vote) != 0 && value(r.DisplayName) == "" && value(r.UniqueName) == "" {
-			return nil, fmt.Errorf("reviewer %d of pull request %d has no displayName or uniqueName", i, prNumber)
-		}
-	}
 	return value(reviewers), nil
 }
 
+// azureReviewerName gives "" for a reviewer with no identity, such as a
+// deleted account, so its vote is never counted as an approval.
 func azureReviewerName(r git.IdentityRefWithVote) string {
+	if value(r.DisplayName) == "" && value(r.UniqueName) == "" {
+		return ""
+	}
 	return fmt.Sprintf("%s (%s)", value(r.DisplayName), value(r.UniqueName))
 }
 
 func azureApprovers(reviewers []git.IdentityRefWithVote, version int) []any {
 	var approvers []any
 	for _, r := range reviewers {
-		if value(r.Vote) == 10 {
-			approverName := azureReviewerName(r)
+		if approverName := azureReviewerName(r); value(r.Vote) == 10 && approverName != "" {
 			if version == 1 {
 				approvers = append(approvers, approverName)
 			} else {

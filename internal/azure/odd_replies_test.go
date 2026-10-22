@@ -309,51 +309,77 @@ func requireFullAzureEvidence(t *testing.T, e *types.PREvidence) {
 	}, e.Reviews)
 }
 
-// A counted vote (10 approved through -10 rejected) from a reviewer with no
-// displayName or uniqueName is a review attributed to nobody, so it errors
-// through V1 and V2; a reviewer with no vote stays skipped.
+// A reviewer with no displayName or uniqueName (a deleted account) is left
+// out of approvers, so it never counts as an approval, but is kept in reviews
+// with an empty name. It never fails evidence collection.
 func TestPREvidenceReviewerWithNoIdentity(t *testing.T) {
 	fake := &fakeAzureDevOps{}
 	server := httptest.NewServer(fake)
 	t.Cleanup(server.Close)
 	config := NewAzureConfig("pat", server.URL+"/fabrikam", "Fabrikam-Fiber-Git", "Fabrikam-Fiber-Git")
+	known := "Johnnie McLeod (fabrikamfiber2@hotmail.com)"
 
 	for _, tc := range []struct {
-		name    string
-		vote    int
-		wantErr string
+		name  string
+		vote  int
+		state string // the nameless review's state; "" for none
 	}{
-		{"approved", 10, "reviewer 0 of pull request 22 has no displayName or uniqueName"},
-		{"approved with suggestions", 5, "reviewer 0 of pull request 22 has no displayName or uniqueName"},
-		{"waiting for author", -5, "reviewer 0 of pull request 22 has no displayName or uniqueName"},
-		{"rejected", -10, "reviewer 0 of pull request 22 has no displayName or uniqueName"},
+		{"approved", 10, types.ReviewApproved},
+		{"approved with suggestions", 5, types.ReviewApproved},
+		{"waiting for author", -5, types.ReviewChangesRequested},
+		{"rejected", -10, types.ReviewChangesRequested},
 		{"no vote", 0, ""},
 	} {
-		for _, entry := range []struct {
-			name  string
-			fetch func(string) ([]*types.PREvidence, error)
-		}{
-			{"V1", config.PREvidenceForCommitV1},
-			{"V2", config.PREvidenceForCommitV2},
-		} {
-			t.Run(entry.name+"/"+tc.name, func(t *testing.T) {
-				replies := map[string]string{}
-				for k, body := range oddBaselineReplies {
-					replies[k] = body
-				}
-				replies["reviewers"] = fmt.Sprintf(`{"count": 2, "value": [
+		t.Run(tc.name, func(t *testing.T) {
+			replies := map[string]string{}
+			for k, body := range oddBaselineReplies {
+				replies[k] = body
+			}
+			replies["reviewers"] = fmt.Sprintf(`{"count": 2, "value": [
   {"vote": %d, "id": "d6245f20-2af8-44f4-9451-8107cb2767db"},
   {"vote": 10, "displayName": "Johnnie McLeod", "uniqueName": "fabrikamfiber2@hotmail.com"}
 ]}`, tc.vote)
-				fake.set(replies)
+			fake.set(replies)
 
-				_, err := entry.fetch(oddMergeCommit)
-				if tc.wantErr == "" {
-					require.NoError(t, err)
-				} else {
-					require.EqualError(t, err, tc.wantErr)
-				}
-			})
-		}
+			v1, err := config.PREvidenceForCommitV1(oddMergeCommit)
+			require.NoError(t, err)
+			require.Equal(t, []any{known}, v1[0].Approvers)
+
+			v2, err := config.PREvidenceForCommitV2(oddMergeCommit)
+			require.NoError(t, err)
+			require.Equal(t, []any{types.PRApprovals{Username: known, State: "APPROVED"}}, v2[0].Approvers)
+			wantReviews := []types.PRApprovals{}
+			if tc.state != "" {
+				wantReviews = append(wantReviews, types.PRApprovals{Username: "", State: tc.state})
+			}
+			wantReviews = append(wantReviews, types.PRApprovals{Username: known, State: types.ReviewApproved})
+			require.Equal(t, wantReviews, v2[0].Reviews)
+		})
+	}
+}
+
+// One name is enough for an approval to count.
+func TestPREvidenceReviewerWithOneName(t *testing.T) {
+	fake := &fakeAzureDevOps{}
+	server := httptest.NewServer(fake)
+	t.Cleanup(server.Close)
+	config := NewAzureConfig("pat", server.URL+"/fabrikam", "Fabrikam-Fiber-Git", "Fabrikam-Fiber-Git")
+
+	for field, want := range map[string]string{
+		"displayName": "Normal Paulk ()",
+		"uniqueName":  " (Normal Paulk)",
+	} {
+		t.Run(field, func(t *testing.T) {
+			replies := map[string]string{}
+			for k, body := range oddBaselineReplies {
+				replies[k] = body
+			}
+			replies["reviewers"] = fmt.Sprintf(`{"count": 1, "value": [{"vote": 10, %q: "Normal Paulk"}]}`, field)
+			fake.set(replies)
+
+			v1, err := config.PREvidenceForCommitV1(oddMergeCommit)
+			require.NoError(t, err)
+			require.Equal(t, []any{want}, v1[0].Approvers)
+		})
 	}
 }
