@@ -442,7 +442,10 @@ func buildPREvidence(
 		})
 	}
 
-	for _, r := range reviewNodes {
+	for i, r := range reviewNodes {
+		if err := unattributedApproval(i, string(r.State), string(r.Author.Login)); err != nil {
+			return nil, err
+		}
 		submittedAt, err := unixTime(string(r.SubmittedAt))
 		if err != nil {
 			return nil, err
@@ -460,6 +463,15 @@ func buildPREvidence(
 	evidence.Approvers = types.ApprovalsFrom(evidence.Reviews)
 
 	return evidence, nil
+}
+
+// unattributedApproval fails reviews[i] when it approves with no author:
+// counting it would record an approval by nobody.
+func unattributedApproval(i int, state, login string) error {
+	if state == types.ReviewApproved && login == "" {
+		return fmt.Errorf("reviews[%d] is an approval with no author in the GitHub reply", i)
+	}
+	return nil
 }
 
 // unixTime parses a GitHub timestamp. A null one reads as "" and gives 0.
@@ -779,6 +791,7 @@ func (c *GithubConfig) listApprovers(ctx context.Context, client *gh.Client,
 	// A reviewer can approve more than once. These entries carry no timestamp,
 	// so a repeated login adds nothing and is dropped.
 	seen := map[string]bool{}
+	index := 0
 	for pages := 0; pages < maxPages; pages++ {
 		reviews, resp, err := client.PullRequests.ListReviews(ctx, c.Org, c.Repository, number, opts)
 		if err != nil {
@@ -786,7 +799,11 @@ func (c *GithubConfig) listApprovers(ctx context.Context, client *gh.Client,
 		}
 		for _, r := range reviews {
 			login := r.GetUser().GetLogin()
-			if r.GetState() == "APPROVED" && !seen[login] {
+			if err := unattributedApproval(index, r.GetState(), login); err != nil {
+				return nil, err
+			}
+			index++
+			if r.GetState() == types.ReviewApproved && !seen[login] {
 				seen[login] = true
 				approvers = append(approvers, login)
 			}

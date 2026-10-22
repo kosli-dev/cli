@@ -310,6 +310,8 @@ func requireRuleHolds(t *testing.T, reply, path, outcome string) {
 		require.Equal(t, "error", outcome, "a null list item is missing data, not an optional field")
 	case oddAllowedErrors[key] != "":
 		require.Equal(t, "error", outcome, oddAllowedErrors[key])
+	case isApprovalAuthor(t, reply, path):
+		require.Equal(t, "error", outcome, "an approval with no author would count as approval by nobody")
 	case oddWholePRLost[key]:
 		require.Equal(t, "ok lost:PullRequests(1->0)", outcome)
 	default:
@@ -357,6 +359,10 @@ func TestOddReplies_FieldErrorMeansTheSameAsNull(t *testing.T) {
 					got := runOddReply(t, ep, withError, want)
 					if reply != replySigners && isRootField(t, v.Path) {
 						require.Equal(t, "error", got, "GitHub's reason for a missing root field must reach the user")
+						return
+					}
+					if reply != replySigners && holdsList(t, oddBaselineReplies()[reply], v.Path) {
+						require.Equal(t, "error", got, "a list GitHub could not give would read as empty")
 						return
 					}
 					require.Equal(t, runOddReply(t, ep, plain, want), got)
@@ -422,8 +428,61 @@ func requireFailsUnlessSigners(t *testing.T, reply, nulledPath, outcome string) 
 	require.Equal(t, "error", outcome)
 }
 
-// keysAt names the fields of the object at path in doc, if it is one.
-func keysAt(t *testing.T, doc, path string) []string {
+// TestOddReplies_ApprovalWithNoAuthorNamesTheReview checks the error says
+// which review it could not attribute.
+func TestOddReplies_ApprovalWithNoAuthorNamesTheReview(t *testing.T) {
+	for _, ep := range oddEntryPoints {
+		t.Run(ep.name, func(t *testing.T) {
+			replies := oddBaselineReplies()
+			noAuthor := strings.Replace(oddApproval, `{"login":"grace"}`, "null", 1)
+			for _, name := range []string{replyByNumber, replyForCommit} {
+				replies[name] = strings.Replace(replies[name], oddApproval, noAuthor, 1)
+			}
+			ts := newOddReplyServer(t, replies)
+			_, err := ep.run(&GithubConfig{Token: "fake-token", BaseURL: ts.URL, Org: "test-org",
+				Repository: "test-repo", Sleep: func(time.Duration) {}})
+			require.ErrorContains(t, err, "reviews[0]")
+		})
+	}
+}
+
+// isApprovalAuthor reports whether path is the author of an approving review
+// in the named baseline reply.
+func isApprovalAuthor(t *testing.T, reply, path string) bool {
+	t.Helper()
+	parent, field, _ := cutLast(path)
+	if field != "author" || !strings.Contains(parent, ".reviews.nodes[") {
+		return false
+	}
+	review, _ := valueAt(t, oddBaselineReplies()[reply], parent).(map[string]any)
+	return review["state"] == types.ReviewApproved
+}
+
+// holdsList reports whether path in doc is a list or a connection (an object
+// holding a nodes list).
+func holdsList(t *testing.T, doc, path string) bool {
+	t.Helper()
+	switch v := valueAt(t, doc, path).(type) {
+	case []any:
+		return true
+	case map[string]any:
+		_, ok := v["nodes"]
+		return ok
+	}
+	return false
+}
+
+// cutLast splits "a.b.c" into "a.b" and "c".
+func cutLast(path string) (string, string, bool) {
+	i := strings.LastIndex(path, ".")
+	if i < 0 {
+		return "", path, false
+	}
+	return path[:i], path[i+1:], true
+}
+
+// valueAt returns the value at path in doc.
+func valueAt(t *testing.T, doc, path string) any {
 	t.Helper()
 	var cur any
 	require.NoError(t, json.Unmarshal([]byte(doc), &cur))
@@ -435,7 +494,13 @@ func keysAt(t *testing.T, doc, path string) []string {
 			cur = cur.([]any)[s]
 		}
 	}
-	obj, _ := cur.(map[string]any)
+	return cur
+}
+
+// keysAt names the fields of the object at path in doc, if it is one.
+func keysAt(t *testing.T, doc, path string) []string {
+	t.Helper()
+	obj, _ := valueAt(t, doc, path).(map[string]any)
 	keys := []string{}
 	for k := range obj {
 		keys = append(keys, k)

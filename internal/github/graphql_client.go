@@ -25,9 +25,9 @@ func (c *GithubConfig) newGraphQLClient(ctx context.Context) (*graphql.Client, e
 }
 
 // nullFieldErrorTransport drops each GraphQL error that only explains why one
-// field came back null, so a null field reads the same with or without an
-// error. The client returns any error at all as a failure and drops its path,
-// so this is the only place the path can still be checked.
+// field came back null, so a null field that is not a list reads the same
+// with or without an error. The client returns any error at all as a failure
+// and drops its path, so this is the only place the path can still be checked.
 type nullFieldErrorTransport struct {
 	base  http.RoundTripper
 	debug io.Writer
@@ -43,7 +43,10 @@ func (t *nullFieldErrorTransport) RoundTrip(req *http.Request) (*http.Response, 
 	if err != nil {
 		return nil, err
 	}
-	resp.Body = io.NopCloser(bytes.NewReader(t.withoutNullFieldErrors(body)))
+	body = t.withoutNullFieldErrors(body)
+	resp.Body = io.NopCloser(bytes.NewReader(body))
+	resp.ContentLength = int64(len(body))
+	resp.Header.Del("Content-Length")
 	return resp, nil
 }
 
@@ -85,14 +88,24 @@ func (t *nullFieldErrorTransport) withoutNullFieldErrors(body []byte) []byte {
 	return out
 }
 
+// listFields are the list and connection fields the evidence queries select.
+// A null one decodes as an empty list, so its error is the only sign entries
+// are missing.
+var listFields = map[string]bool{"nodes": true, "commits": true, "reviews": true, "associatedPullRequests": true}
+
 // isNullField reports whether path names an object field that is null in
 // data while everything above it is not. An error anywhere else (a list item,
 // a field under a null parent, no path) is more than one missing field. So is
 // one within two segments of the root, such as repository or
 // repository.pullRequest: that is what the query is about, and GitHub's
 // message (e.g. SAML enforcement) is the user's only clue to the cause.
+// A field in listFields never counts.
 func isNullField(data any, path []any) bool {
 	if len(path) <= 2 {
+		return false
+	}
+	field, _ := path[len(path)-1].(string)
+	if listFields[field] {
 		return false
 	}
 	cur := data
@@ -119,7 +132,6 @@ func isNullField(data any, path []any) bool {
 	if !ok {
 		return false
 	}
-	field, _ := path[len(path)-1].(string)
 	value, present := obj[field]
 	return present && value == nil
 }

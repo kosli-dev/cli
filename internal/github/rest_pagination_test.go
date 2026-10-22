@@ -77,6 +77,16 @@ func TestGetPullRequestApprovers_FindsApproverOnSecondPage(t *testing.T) {
 	require.Contains(t, ts.queries[0], "per_page=100")
 }
 
+func TestGetPullRequestApprovers_ApprovalWithNoUserFails(t *testing.T) {
+	ts := newRestTestServer(t, "/api/v3/repos/test-org/test-repo/pulls/5/reviews",
+		`[{"state":"COMMENTED","user":null}]`,
+		`[{"state":"APPROVED","user":null}]`,
+	)
+
+	_, err := newRestConfig(ts.URL).GetPullRequestApprovers(5)
+	require.ErrorContains(t, err, "reviews[1]")
+}
+
 func TestPullRequestsForCommit_ReturnsErrorFromSecondPage(t *testing.T) {
 	calls := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
