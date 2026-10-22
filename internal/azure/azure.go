@@ -174,6 +174,12 @@ func azurePRRefs(pr git.GitPullRequest) (head, base string) {
 // GetPullRequestCommits returns a list of commits for a given pull request
 func (c *AzureConfig) GetPullRequestCommits(pr git.GitPullRequest) ([]types.Commit, error) {
 	commits := []types.Commit{}
+	// A nil id is the one input the SDK rejects outright, so it can only be
+	// named here, not read from the reply.
+	prID := "with no id"
+	if pr.PullRequestId != nil {
+		prID = strconv.Itoa(*pr.PullRequestId)
+	}
 
 	ctx := context.Background()
 	client, err := newPRCommitsClient(ctx, c.Token, c.OrgURL)
@@ -187,19 +193,13 @@ func (c *AzureConfig) GetPullRequestCommits(pr git.GitPullRequest) ([]types.Comm
 		Project:       &c.Project,
 	}, defaultMaxPages)
 	if err != nil {
-		// A nil id is the one input the SDK rejects outright, so it is also the
-		// only one that reaches here without an id to name.
-		prID := "with no id"
-		if pr.PullRequestId != nil {
-			prID = strconv.Itoa(*pr.PullRequestId)
-		}
 		return commits, fmt.Errorf("draining commits for pull request %s: %w", prID, err)
 	}
 
 	for i, commit := range prCommits {
 		// A null commit decodes to an empty one, so no id is the only sign.
 		if commit.CommitId == nil {
-			return commits, fmt.Errorf("commit %d of pull request %d has no commitId", i, value(pr.PullRequestId))
+			return commits, fmt.Errorf("commit %d of pull request %s has no commitId", i, prID)
 		}
 		commits = append(commits, commitFromAzureCommit(commit, value(pr.SourceRefName)))
 	}
@@ -290,6 +290,12 @@ func (c *AzureConfig) pullRequestReviewers(prNumber int) ([]git.IdentityRefWithV
 	})
 	if err != nil {
 		return nil, err
+	}
+	for i, r := range value(reviewers) {
+		// Counting a vote from nobody would record evidence attributed to no one.
+		if value(r.Vote) != 0 && value(r.DisplayName) == "" && value(r.UniqueName) == "" {
+			return nil, fmt.Errorf("reviewer %d of pull request %d has no displayName or uniqueName", i, prNumber)
+		}
 	}
 	return value(reviewers), nil
 }
