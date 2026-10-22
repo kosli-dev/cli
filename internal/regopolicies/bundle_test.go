@@ -126,3 +126,71 @@ func TestExtractBundleCreatesTheDirectory(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, map[string]string{"policy.rego": "package policy\n"}, filesIn(t, dir))
 }
+
+func TestExtractBundleRefusesAPathItHoldsTwiceAndWritesNothing(t *testing.T) {
+	dir := t.TempDir()
+	archive := tarball(t,
+		member{name: "policy.rego", body: "package one\n"},
+		member{name: "policy.rego", body: "package two\n"},
+	)
+
+	_, err := ExtractBundle(archive, dir)
+
+	require.ErrorContains(t, err, `"policy.rego" twice`)
+	require.Empty(t, filesIn(t, dir))
+}
+
+func TestExtractBundleRefusesAPathThatIsBothAFileAndADirectoryAndWritesNothing(t *testing.T) {
+	for _, members := range [][]member{
+		{{name: "lib", body: "x\n"}, {name: "lib/x.rego", body: "package x\n"}},
+		{{name: "lib/x.rego", body: "package x\n"}, {name: "lib", body: "x\n"}},
+	} {
+		dir := t.TempDir()
+
+		_, err := ExtractBundle(tarball(t, members...), dir)
+
+		require.ErrorContains(t, err, `"lib" both as a file and as a directory`)
+		require.Empty(t, filesIn(t, dir))
+	}
+}
+
+func TestExtractBundleDoesNotFollowASymlinkOutOfTheDirectory(t *testing.T) {
+	outside := t.TempDir()
+	dir := t.TempDir()
+	require.NoError(t, os.Symlink(outside, filepath.Join(dir, "lib")))
+	archive := tarball(t,
+		member{name: "a.rego", body: "package a\n"},
+		member{name: "lib/x.rego", body: "package x\n"},
+	)
+
+	_, err := ExtractBundle(archive, dir)
+
+	require.ErrorContains(t, err, "lib/x.rego")
+	require.Empty(t, filesIn(t, outside))
+	_, statErr := os.Lstat(filepath.Join(dir, "a.rego"))
+	require.ErrorIs(t, statErr, os.ErrNotExist)
+}
+
+func TestExtractBundleAcceptsDirectoryEntries(t *testing.T) {
+	dir := t.TempDir()
+	archive := tarball(t,
+		member{name: "lib/", typeflag: tar.TypeDir},
+		member{name: "lib/x.rego", body: "package x\n"},
+	)
+
+	written, err := ExtractBundle(archive, dir)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"lib/x.rego"}, written)
+	require.Equal(t, map[string]string{"lib/x.rego": "package x\n"}, filesIn(t, dir))
+}
+
+func TestExtractBundleRefusesABundleOverTheSizeLimit(t *testing.T) {
+	dir := t.TempDir()
+	archive := tarball(t, member{name: "big.rego", body: string(make([]byte, maxBundleBytes+1))})
+
+	_, err := ExtractBundle(archive, dir)
+
+	require.ErrorContains(t, err, "over the 8 MiB limit")
+	require.Empty(t, filesIn(t, dir))
+}

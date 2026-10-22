@@ -310,6 +310,18 @@ func (suite *GetRegoPolicyCommandTestSuite) TestItRefusesADownloadWithoutAVersio
 	require.Equal(suite.T(), 0, fake.calls)
 }
 
+// An unset variable in --download "$OUT" must fail, not fall back to printing the version.
+func (suite *GetRegoPolicyCommandTestSuite) TestItRefusesAnEmptyDownloadDirectory() {
+	server, fake := newFakeRegoPolicyRead(suite.T(), regoPolicyValid)
+
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL,
+		`pr-approved --policy-version 1 --download ""`))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, "flag '--download' was given an empty value")
+	require.Equal(suite.T(), 0, fake.calls)
+}
+
 func (suite *GetRegoPolicyCommandTestSuite) TestItWritesNothingWhenTheVersionIsNotFound() {
 	server, fake := newFakeRegoPolicyRead(suite.T(),
 		`{"message":"Rego policy 'pr-approved' has no version 9 in organization 'test-org'"}`)
