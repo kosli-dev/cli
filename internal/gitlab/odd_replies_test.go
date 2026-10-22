@@ -185,18 +185,12 @@ func TestOddReplies_BaselineGivesFullEvidence(t *testing.T) {
 // rule's: an error for a null field, or no error for a null list item. An
 // error for a null field must name the list item it makes unreadable.
 var oddRuleExceptions = map[string]struct{ why, names string }{
-	"mrs_for_commit [0].iid":                 {why: "error: the iid names the MR in every later request; null asks for MR 0, which 404s"},
-	"mrs_for_commit [0].labels[0]":           {why: "ok: labels are not read, and the client reads a null string as empty"},
-	"mr_commits [0].parent_ids[0]":           {why: "ok: parent ids are not read, and the client reads a null string as empty"},
-	"mr_commits [1].parent_ids[0]":           {why: "ok: parent ids are not read, and the client reads a null string as empty"},
-	"approvals approved_by[0].user":          {why: "error: an approval by nobody would count as approval evidence", names: "approved_by[0]"},
-	"approvals approved_by[0].user.username": {why: "error: an approval by nobody would count as approval evidence", names: "approved_by[0]"},
-	"reviewers [0].user":                     {why: "error: a review by nobody can't be matched to its approval", names: "reviewers[0]"},
-	"reviewers [0].user.username":            {why: "error: a review by nobody can't be matched to its approval", names: "reviewers[0]"},
-	"reviewers [1].user":                     {why: "error: a review by nobody can't be matched to its approval", names: "reviewers[1]"},
-	"reviewers [1].user.username":            {why: "error: a review by nobody can't be matched to its approval", names: "reviewers[1]"},
-	"mr_commits [0].id":                      {why: "error: a commit without a SHA can't be looked up or attested", names: "commits[0]"},
-	"mr_commits [1].id":                      {why: "error: a commit without a SHA can't be looked up or attested", names: "commits[1]"},
+	"mrs_for_commit [0].iid":       {why: "error: the iid names the MR in every later request; null asks for MR 0, which 404s"},
+	"mrs_for_commit [0].labels[0]": {why: "ok: labels are not read, and the client reads a null string as empty"},
+	"mr_commits [0].parent_ids[0]": {why: "ok: parent ids are not read, and the client reads a null string as empty"},
+	"mr_commits [1].parent_ids[0]": {why: "ok: parent ids are not read, and the client reads a null string as empty"},
+	"mr_commits [0].id":            {why: "error: a commit without a SHA can't be looked up or attested", names: "commits[0]"},
+	"mr_commits [1].id":            {why: "error: a commit without a SHA can't be looked up or attested", names: "commits[1]"},
 }
 
 var listItemPath = regexp.MustCompile(`([A-Za-z_]*\[\d+\])$`)
@@ -244,5 +238,59 @@ func TestOddReplies(t *testing.T) {
 				})
 			}
 		}
+	}
+}
+
+// A review whose account GitLab no longer names (a deleted user) is kept in
+// Reviews with no name, but never counts as an approver.
+func TestOddReplies_ReviewByNoOne(t *testing.T) {
+	approver := types.PRApprovals{Username: "John Doe1 (@user1)"}
+	approved := types.PRApprovals{Username: "John Doe1 (@user1)", State: types.ReviewApproved}
+	commented := types.PRApprovals{Username: "John Doe2 (@user2)", State: types.ReviewCommented}
+	tests := []struct {
+		name          string
+		nulls         map[string]string
+		wantApprovers []any
+		wantReviews   []types.PRApprovals
+	}{
+		{"approval with no user", map[string]string{"approvals": "approved_by[0].user"},
+			nil, []types.PRApprovals{{State: types.ReviewApproved}, commented}},
+		{"approval with no username", map[string]string{"approvals": "approved_by[0].user.username"},
+			nil, []types.PRApprovals{{State: types.ReviewApproved}, commented}},
+		{"review with no user", map[string]string{"reviewers": "[1].user"},
+			[]any{approver}, []types.PRApprovals{approved, {State: types.ReviewCommented}}},
+		{"review with no username", map[string]string{"reviewers": "[1].user.username"},
+			[]any{approver}, []types.PRApprovals{approved, {State: types.ReviewCommented}}},
+		{"approval and review by no one are not matched", map[string]string{"approvals": "approved_by[0].user", "reviewers": "[1].user"},
+			nil, []types.PRApprovals{{State: types.ReviewApproved}, {State: types.ReviewCommented}}},
+		{"change request by no one does not hide an approval by no one", map[string]string{"approvals": "approved_by[0].user", "reviewers": "[1].user", "requested_changes": ""},
+			nil, []types.PRApprovals{{State: types.ReviewApproved}, {State: types.ReviewChangesRequested}}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			replies := oddBaseline()
+			if _, ok := tc.nulls["requested_changes"]; ok {
+				replies["reviewers"] = strings.Replace(replies["reviewers"], `"state": "reviewed"`, `"state": "requested_changes"`, 1)
+			}
+			for reply, path := range tc.nulls {
+				if reply == "requested_changes" {
+					continue
+				}
+				variants, err := testHelpers.NullVariants([]byte(replies[reply]))
+				require.NoError(t, err)
+				found := false
+				for _, v := range variants {
+					if v.Path == path {
+						replies[reply], found = string(v.Body), true
+					}
+				}
+				require.True(t, found, path)
+			}
+			evidence, err := oddEvidence(t, replies)
+			require.NoError(t, err)
+			require.Len(t, evidence, 1)
+			require.Equal(t, tc.wantApprovers, evidence[0].Approvers)
+			require.Equal(t, tc.wantReviews, evidence[0].Reviews)
+		})
 	}
 }

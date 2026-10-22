@@ -154,7 +154,7 @@ func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.BasicMer
 	if err != nil {
 		return mrs, fmt.Errorf("failed to list merge requests for commit %s: %w", commit, err)
 	}
-	return mrs, noUnreadableItems("merge requests", mrs, nil)
+	return mrs, noNullItems("merge requests", mrs)
 }
 
 // GetMergeRequestApprovers returns a list of users (name and username) who approved an MR
@@ -176,8 +176,7 @@ func (c *GitlabConfig) approvedBy(client *gitlab.Client, mrIID int64) ([]*gitlab
 	if err != nil || approvals == nil {
 		return nil, err
 	}
-	return approvals.ApprovedBy, noUnreadableItems("approved_by", approvals.ApprovedBy,
-		func(a *gitlab.MergeRequestApproverUser) string { return missingUser(a.User) })
+	return approvals.ApprovedBy, noNullItems("approved_by", approvals.ApprovedBy)
 }
 
 // GetMergeRequestReviews returns an MR's approvers and its reviews: each
@@ -201,27 +200,28 @@ func (c *GitlabConfig) GetMergeRequestReviews(mrIID int64) ([]any, []types.PRApp
 		}
 		return nil, nil, err
 	}
-	if err := noUnreadableItems("reviewers", reviewers,
-		func(r *gitlab.MergeRequestReviewer) string { return missingUser(r.User) }); err != nil {
+	if err := noNullItems("reviewers", reviewers); err != nil {
 		return nil, nil, err
 	}
 	return approvers, gitlabReviews(approvedBy, reviewers), nil
 }
 
+// gitlabUserName is empty when GitLab names no account (a deleted user): such
+// a review can't count as an approval or be matched to another review.
 func gitlabUserName(u *gitlab.BasicUser) string {
-	if u == nil {
+	if u == nil || u.Username == "" {
 		return ""
 	}
 	return fmt.Sprintf("%s (@%s)", u.Name, u.Username)
 }
 
-// missingUser says what is missing when an approval or review names no user:
-// without a username it can't be attributed or matched across the two lists.
-func missingUser(u *gitlab.BasicUser) string {
-	if u == nil || u.Username == "" {
-		return "a user"
+// gitlabUsername matches people across approvals and reviews; empty when
+// GitLab names no account.
+func gitlabUsername(u *gitlab.BasicUser) string {
+	if u == nil {
+		return ""
 	}
-	return ""
+	return u.Username
 }
 
 // unixOrZero is t in Unix seconds, or 0 when GitLab sent no time.
@@ -232,19 +232,12 @@ func unixOrZero(t *time.Time) int64 {
 	return t.Unix()
 }
 
-// noUnreadableItems errors on an entry in a list GitLab sent that is null, or
-// that missing (if given) says lacks a field: it is missing data, not an
-// empty entry.
-func noUnreadableItems[T any](list string, items []*T, missing func(*T) string) error {
+// noNullItems errors on a null entry in a list GitLab sent: it is missing
+// data, not an empty entry.
+func noNullItems[T any](list string, items []*T) error {
 	for i, item := range items {
 		if item == nil {
 			return fmt.Errorf("GitLab sent %s[%d] as null", list, i)
-		}
-		if missing == nil {
-			continue
-		}
-		if field := missing(item); field != "" {
-			return fmt.Errorf("GitLab sent %s[%d] without %s", list, i, field)
 		}
 	}
 	return nil
@@ -254,6 +247,9 @@ func gitlabApprovers(approvedBy []*gitlab.MergeRequestApproverUser, version int6
 	var approvers []any
 	for _, approver := range approvedBy {
 		approverName := gitlabUserName(approver.User)
+		if approverName == "" {
+			continue
+		}
 		if version == 1 {
 			approvers = append(approvers, approverName)
 		} else {
@@ -271,13 +267,18 @@ func gitlabApprovers(approvedBy []*gitlab.MergeRequestApproverUser, version int6
 func gitlabReviews(approvedBy []*gitlab.MergeRequestApproverUser, reviewers []*gitlab.MergeRequestReviewer) []types.PRApprovals {
 	reviewerStates := map[string]string{}
 	for _, r := range reviewers {
-		reviewerStates[r.User.Username] = r.State
+		if username := gitlabUsername(r.User); username != "" {
+			reviewerStates[username] = r.State
+		}
 	}
 	reviews := []types.PRApprovals{}
 	approved := map[string]bool{}
 	for _, a := range approvedBy {
-		approved[a.User.Username] = true
-		if reviewerStates[a.User.Username] != "requested_changes" {
+		username := gitlabUsername(a.User)
+		if username != "" {
+			approved[username] = true
+		}
+		if reviewerStates[username] != "requested_changes" {
 			reviews = append(reviews, types.PRApprovals{Username: gitlabUserName(a.User), State: types.ReviewApproved})
 		}
 	}
@@ -286,7 +287,7 @@ func gitlabReviews(approvedBy []*gitlab.MergeRequestApproverUser, reviewers []*g
 		switch {
 		case r.State == "requested_changes":
 			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewChangesRequested})
-		case r.State == "reviewed" && !approved[r.User.Username]:
+		case r.State == "reviewed" && !approved[gitlabUsername(r.User)]:
 			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewCommented})
 		}
 	}
@@ -304,14 +305,13 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 	if err != nil {
 		return commits, err
 	}
-	err = noUnreadableItems("commits", glCommits, func(c *gitlab.Commit) string {
-		if c.ID == "" {
-			return "an id"
-		}
-		return ""
-	})
-	if err != nil {
+	if err := noNullItems("commits", glCommits); err != nil {
 		return commits, err
+	}
+	for i, commit := range glCommits {
+		if commit.ID == "" {
+			return commits, fmt.Errorf("GitLab sent commits[%d] without an id", i)
+		}
 	}
 	// One signature lookup per commit: pagination multiplies this, but GitLab
 	// has no batch signature endpoint.
