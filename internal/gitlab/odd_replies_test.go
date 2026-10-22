@@ -182,12 +182,21 @@ func TestOddReplies_BaselineGivesFullEvidence(t *testing.T) {
 }
 
 // oddRuleExceptions are the replies whose outcome is the opposite of the
-// rule's: an error for a null field, or no error for a null list item.
-var oddRuleExceptions = map[string]string{
-	"mrs_for_commit [0].iid":       "error: the iid names the MR in every later request; null asks for MR 0, which 404s",
-	"mrs_for_commit [0].labels[0]": "ok: labels are not read, and the client reads a null string as empty",
-	"mr_commits [0].parent_ids[0]": "ok: parent ids are not read, and the client reads a null string as empty",
-	"mr_commits [1].parent_ids[0]": "ok: parent ids are not read, and the client reads a null string as empty",
+// rule's: an error for a null field, or no error for a null list item. An
+// error for a null field must name the list item it makes unreadable.
+var oddRuleExceptions = map[string]struct{ why, names string }{
+	"mrs_for_commit [0].iid":                 {why: "error: the iid names the MR in every later request; null asks for MR 0, which 404s"},
+	"mrs_for_commit [0].labels[0]":           {why: "ok: labels are not read, and the client reads a null string as empty"},
+	"mr_commits [0].parent_ids[0]":           {why: "ok: parent ids are not read, and the client reads a null string as empty"},
+	"mr_commits [1].parent_ids[0]":           {why: "ok: parent ids are not read, and the client reads a null string as empty"},
+	"approvals approved_by[0].user":          {why: "error: an approval by nobody would count as approval evidence", names: "approved_by[0]"},
+	"approvals approved_by[0].user.username": {why: "error: an approval by nobody would count as approval evidence", names: "approved_by[0]"},
+	"reviewers [0].user":                     {why: "error: a review by nobody can't be matched to its approval", names: "reviewers[0]"},
+	"reviewers [0].user.username":            {why: "error: a review by nobody can't be matched to its approval", names: "reviewers[0]"},
+	"reviewers [1].user":                     {why: "error: a review by nobody can't be matched to its approval", names: "reviewers[1]"},
+	"reviewers [1].user.username":            {why: "error: a review by nobody can't be matched to its approval", names: "reviewers[1]"},
+	"mr_commits [0].id":                      {why: "error: a commit without a SHA can't be looked up or attested", names: "commits[0]"},
+	"mr_commits [1].id":                      {why: "error: a commit without a SHA can't be looked up or attested", names: "commits[1]"},
 }
 
 var listItemPath = regexp.MustCompile(`([A-Za-z_]*\[\d+\])$`)
@@ -196,6 +205,7 @@ var listItemPath = regexp.MustCompile(`([A-Za-z_]*\[\d+\])$`)
 // value made null, or one list emptied. None may panic. A null field or an
 // emptied list gives no error; a null list item gives an error naming it.
 func TestOddReplies(t *testing.T) {
+	// `kosli assert pullrequest gitlab` calls V2 and `attest` calls Hybrid.
 	entryPoints := map[string]func(*GitlabConfig) func(string) ([]*types.PREvidence, error){
 		"V2":     func(c *GitlabConfig) func(string) ([]*types.PREvidence, error) { return c.PREvidenceForCommitV2 },
 		"Hybrid": func(c *GitlabConfig) func(string) ([]*types.PREvidence, error) { return c.PREvidenceForCommitHybrid },
@@ -222,9 +232,10 @@ func TestOddReplies(t *testing.T) {
 					if item != "" {
 						want = "error"
 					}
-					if reason, ok := oddRuleExceptions[key]; ok {
+					if ex, ok := oddRuleExceptions[key]; ok {
 						want = map[string]string{"ok": "error", "error": "ok"}[want]
-						t.Log(reason)
+						item = ex.names
+						t.Log(ex.why)
 					}
 					require.Equal(t, want, outcome)
 					if item != "" && want == "error" {
