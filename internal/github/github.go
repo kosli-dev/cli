@@ -442,16 +442,15 @@ func buildPREvidence(
 		})
 	}
 
-	for i, r := range reviewNodes {
-		if err := unattributedApproval(i, string(r.State), string(r.Author.Login)); err != nil {
-			return nil, err
-		}
+	counted := []types.PRApprovals{}
+	for _, r := range reviewNodes {
 		submittedAt, err := unixTime(string(r.SubmittedAt))
 		if err != nil {
 			return nil, err
 		}
+		login, known := reviewer(string(r.Author.Login))
 		review := types.PRApprovals{
-			Username:  string(r.Author.Login),
+			Username:  login,
 			State:     string(r.State),
 			Timestamp: submittedAt,
 		}
@@ -459,19 +458,23 @@ func buildPREvidence(
 			review.CommitSHA = string(r.Commit.Oid)
 		}
 		evidence.Reviews = append(evidence.Reviews, review)
+		if known {
+			counted = append(counted, review)
+		}
 	}
-	evidence.Approvers = types.ApprovalsFrom(evidence.Reviews)
+	evidence.Approvers = types.ApprovalsFrom(counted)
 
 	return evidence, nil
 }
 
-// unattributedApproval fails reviews[i] when it approves with no author:
-// counting it would record an approval by nobody.
-func unattributedApproval(i int, state, login string) error {
-	if state == types.ReviewApproved && login == "" {
-		return fmt.Errorf("reviews[%d] is an approval with no author in the GitHub reply", i)
+// reviewer returns a review's login and whether an account stands behind it.
+// GitHub sends a deleted account as a null author or as the "ghost" login;
+// its review is kept, but it must never count as an approval.
+func reviewer(login string) (string, bool) {
+	if login == "ghost" {
+		login = ""
 	}
-	return nil
+	return login, login != ""
 }
 
 // unixTime parses a GitHub timestamp. A null one reads as "" and gives 0.
@@ -791,19 +794,14 @@ func (c *GithubConfig) listApprovers(ctx context.Context, client *gh.Client,
 	// A reviewer can approve more than once. These entries carry no timestamp,
 	// so a repeated login adds nothing and is dropped.
 	seen := map[string]bool{}
-	index := 0
 	for pages := 0; pages < maxPages; pages++ {
 		reviews, resp, err := client.PullRequests.ListReviews(ctx, c.Org, c.Repository, number, opts)
 		if err != nil {
 			return nil, err
 		}
 		for _, r := range reviews {
-			login := r.GetUser().GetLogin()
-			if err := unattributedApproval(index, r.GetState(), login); err != nil {
-				return nil, err
-			}
-			index++
-			if r.GetState() == types.ReviewApproved && !seen[login] {
+			login, known := reviewer(r.GetUser().GetLogin())
+			if r.GetState() == types.ReviewApproved && known && !seen[login] {
 				seen[login] = true
 				approvers = append(approvers, login)
 			}

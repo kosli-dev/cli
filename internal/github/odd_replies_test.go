@@ -311,7 +311,9 @@ func requireRuleHolds(t *testing.T, reply, path, outcome string) {
 	case oddAllowedErrors[key] != "":
 		require.Equal(t, "error", outcome, oddAllowedErrors[key])
 	case isApprovalAuthor(t, reply, path):
-		require.Equal(t, "error", outcome, "an approval with no author would count as approval by nobody")
+		// A deleted account's approval is kept as a review but not counted.
+		require.True(t, strings.HasPrefix(outcome, "ok"), "a review by a deleted account is legal, got %q", outcome)
+		require.Contains(t, outcome, ":approvers", "an approval by nobody must not count")
 	case oddWholePRLost[key]:
 		require.Equal(t, "ok lost:PullRequests(1->0)", outcome)
 	default:
@@ -428,21 +430,27 @@ func requireFailsUnlessSigners(t *testing.T, reply, nulledPath, outcome string) 
 	require.Equal(t, "error", outcome)
 }
 
-// TestOddReplies_ApprovalWithNoAuthorNamesTheReview checks the error says
-// which review it could not attribute.
-func TestOddReplies_ApprovalWithNoAuthorNamesTheReview(t *testing.T) {
-	for _, ep := range oddEntryPoints {
-		t.Run(ep.name, func(t *testing.T) {
-			replies := oddBaselineReplies()
-			noAuthor := strings.Replace(oddApproval, `{"login":"grace"}`, "null", 1)
-			for _, name := range []string{replyByNumber, replyForCommit} {
-				replies[name] = strings.Replace(replies[name], oddApproval, noAuthor, 1)
-			}
-			ts := newOddReplyServer(t, replies)
-			_, err := ep.run(&GithubConfig{Token: "fake-token", BaseURL: ts.URL, Org: "test-org",
-				Repository: "test-repo", Sleep: func(time.Duration) {}})
-			require.ErrorContains(t, err, "reviews[0]")
-		})
+// TestOddReplies_ApprovalWithNoAuthorIsNotCounted covers a deleted account:
+// GraphQL sends a null author, and "ghost" is GitHub's stand-in login for one.
+func TestOddReplies_ApprovalWithNoAuthorIsNotCounted(t *testing.T) {
+	for _, author := range []string{"null", `{"login":"ghost"}`} {
+		for _, ep := range oddEntryPoints {
+			t.Run(ep.name+"/"+author, func(t *testing.T) {
+				replies := oddBaselineReplies()
+				noAuthor := strings.Replace(oddApproval, `{"login":"grace"}`, author, 1)
+				for _, name := range []string{replyByNumber, replyForCommit} {
+					replies[name] = strings.Replace(replies[name], oddApproval, noAuthor, 1)
+				}
+				ts := newOddReplyServer(t, replies)
+				e, err := ep.run(&GithubConfig{Token: "fake-token", BaseURL: ts.URL, Org: "test-org",
+					Repository: "test-repo", Sleep: func(time.Duration) {}})
+				require.NoError(t, err)
+				require.Empty(t, e.Approvers)
+				require.Len(t, e.Reviews, 2)
+				require.Equal(t, "", e.Reviews[0].Username)
+				require.Equal(t, types.ReviewApproved, e.Reviews[0].State)
+			})
+		}
 	}
 }
 
