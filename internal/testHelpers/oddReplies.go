@@ -21,7 +21,8 @@ type NullVariant struct {
 // NullVariants returns one copy of doc per value it holds, with that value
 // made null, plus an emptied copy of each non-empty list. The document itself
 // is Path "."; its fields have no leading dot. Key order is kept; a variant
-// means the same as doc except where its Path says.
+// means the same as doc except where its Path says. Paths assume no key holds
+// "." or "[", or two variants could share one.
 func NullVariants(doc []byte) ([]NullVariant, error) {
 	root, err := parseOrdered(doc)
 	if err != nil {
@@ -92,7 +93,8 @@ func Outcome(fn func() error) (out string) {
 // succeeds it compares each pull request's API payload with baseline's, key by
 // key, so it sees what the server would. "lost:" when a value the baseline had
 // came back missing or null, or content it had came back empty or shorter;
-// "changed:" for any other difference.
+// "changed:" for any other difference. Only top-level keys are compared, so a
+// value lost inside a list (a review's username) shows as "changed:".
 func EvidenceOutcome(baseline []*types.PREvidence, fetch func() ([]*types.PREvidence, error)) string {
 	var got []*types.PREvidence
 	out := Outcome(func() error {
@@ -108,7 +110,9 @@ func EvidenceOutcome(baseline []*types.PREvidence, fetch func() ([]*types.PREvid
 	}
 	for i := range baseline {
 		if got[i] == nil {
-			out += fmt.Sprintf(" lost:PullRequest%d", i)
+			if baseline[i] != nil {
+				out += fmt.Sprintf(" lost:PullRequest%d", i)
+			}
 			continue
 		}
 		want, have := payloadFields(baseline[i]), payloadFields(got[i])

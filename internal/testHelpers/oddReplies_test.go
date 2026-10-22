@@ -118,3 +118,9 @@ func TestEvidenceOutcome_ComparesWhatTheAPIReceives(t *testing.T) {
 	require.Equal(t, "ok changed:approvers", EvidenceOutcome([]*types.PREvidence{{URL: "u"}},
 		func() ([]*types.PREvidence, error) { return []*types.PREvidence{{URL: "u", Approvers: []any{}}}, nil }))
 }
+
+func TestEvidenceOutcome_NilInBothIsNotALoss(t *testing.T) {
+	require.Equal(t, "ok", EvidenceOutcome([]*types.PREvidence{nil}, func() ([]*types.PREvidence, error) {
+		return []*types.PREvidence{nil}, nil
+	}))
+}
