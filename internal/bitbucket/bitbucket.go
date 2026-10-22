@@ -186,9 +186,13 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 		approvers := []any{}
 
 		if len(participants) > 0 {
-			for _, p := range participants {
+			for i, p := range participants {
 				if boolean(p, "approved") {
 					username := str(obj(p, "user"), "display_name")
+					// An approval by nobody would count as approval evidence.
+					if username == "" {
+						return evidence, fmt.Errorf("participants[%d] in the Bitbucket reply is an approval with no user.display_name", i)
+					}
 					if version == 1 {
 						approvers = append(approvers, username)
 					} else {
@@ -343,7 +347,11 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 			})
 		}
 
-		currentURL = str(responseData, "next")
+		next := str(responseData, "next")
+		if next == currentURL {
+			return nil, fmt.Errorf("next page did not advance past page %s for pull request %d", currentURL, prID)
+		}
+		currentURL = next
 		if currentURL == "" {
 			break
 		}

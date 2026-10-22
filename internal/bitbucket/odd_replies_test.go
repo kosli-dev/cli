@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -259,6 +260,14 @@ var oddReadLists = map[string]string{
 	"pullrequest_commits_2": "values",
 }
 
+// oddUnreadableApprovals are approvals with no identity. Counting one would
+// record approval evidence attributed to nobody, so it must fail, naming the
+// entry. Keyed by reply and path.
+var oddUnreadableApprovals = map[string]string{
+	"pullrequest participants[0].user":              "participants[0]",
+	"pullrequest participants[0].user.display_name": "participants[0]",
+}
+
 // oddMayError says whether path in reply holds, or is, a value in
 // oddAllowedErrors for that entry point.
 func oddMayError(entry, reply, path string) bool {
@@ -303,6 +312,9 @@ func TestOddReplies(t *testing.T) {
 						require.True(t, strings.HasPrefix(outcome, "ok"), "an emptied list must not fail: %s", outcome)
 					case regexp.MustCompile(`^` + oddReadLists[name] + `\[\d+\]$`).MatchString(v.Path):
 						require.Equal(t, "error", outcome, "a null list item must fail")
+					case oddUnreadableApprovals[name+" "+v.Path] != "":
+						_, err := runOddReplies(t, version, replies)
+						require.ErrorContains(t, err, oddUnreadableApprovals[name+" "+v.Path])
 					case oddMayError(entry, name, v.Path):
 					default:
 						require.True(t, strings.HasPrefix(outcome, "ok"), "a null field must not fail: %s", outcome)
@@ -310,5 +322,27 @@ func TestOddReplies(t *testing.T) {
 				})
 			}
 		}
+	}
+}
+
+// A commits page whose next link is itself would be fetched forever.
+func TestOddReplies_CommitPageThatDoesNotAdvanceFails(t *testing.T) {
+	replies := oddBaselineReplies()
+	replies["pullrequest_commits_2"] = `{
+	"pagelen": 1,
+	"page": 2,
+	"values": [],
+	"next": "{{base}}/2.0/repositories/acme/widgets/pullrequests/7/commits?page=2"
+}`
+	done := make(chan error, 1)
+	go func() {
+		_, err := runOddReplies(t, 2, replies)
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		require.ErrorContains(t, err, "did not advance")
+	case <-time.After(10 * time.Second):
+		t.Fatal("paging did not stop")
 	}
 }
