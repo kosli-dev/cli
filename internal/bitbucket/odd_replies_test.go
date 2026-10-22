@@ -260,12 +260,12 @@ var oddReadLists = map[string]string{
 	"pullrequest_commits_2": "values",
 }
 
-// oddUnreadableApprovals are approvals with no identity. Counting one would
-// record approval evidence attributed to nobody, so it must fail, naming the
-// entry. Keyed by reply and path.
-var oddUnreadableApprovals = map[string]string{
-	"pullrequest participants[0].user":              "participants[0]",
-	"pullrequest participants[0].user.display_name": "participants[0]",
+// oddNamelessApprovals make the approval in participants[0] one with no
+// identity, as for a deleted account. It must not count as an approval, but
+// stays in the reviews.
+var oddNamelessApprovals = map[string]bool{
+	"pullrequest participants[0].user":              true,
+	"pullrequest participants[0].user.display_name": true,
 }
 
 // oddMayError says whether path in reply holds, or is, a value in
@@ -312,9 +312,13 @@ func TestOddReplies(t *testing.T) {
 						require.True(t, strings.HasPrefix(outcome, "ok"), "an emptied list must not fail: %s", outcome)
 					case regexp.MustCompile(`^` + oddReadLists[name] + `\[\d+\]$`).MatchString(v.Path):
 						require.Equal(t, "error", outcome, "a null list item must fail")
-					case oddUnreadableApprovals[name+" "+v.Path] != "":
-						_, err := runOddReplies(t, version, replies)
-						require.ErrorContains(t, err, oddUnreadableApprovals[name+" "+v.Path])
+					case oddNamelessApprovals[name+" "+v.Path]:
+						evidence, err := runOddReplies(t, version, replies)
+						require.NoError(t, err)
+						require.Empty(t, evidence[0].Approvers)
+						if version == 2 {
+							require.Contains(t, evidence[0].Reviews, types.PRApprovals{State: types.ReviewApproved, Timestamp: 1772370000})
+						}
 					case oddMayError(entry, name, v.Path):
 					default:
 						require.True(t, strings.HasPrefix(outcome, "ok"), "a null field must not fail: %s", outcome)

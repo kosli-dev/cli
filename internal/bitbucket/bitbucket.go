@@ -186,13 +186,8 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 		approvers := []any{}
 
 		if len(participants) > 0 {
-			for i, p := range participants {
-				if boolean(p, "approved") {
-					username := str(obj(p, "user"), "display_name")
-					// An approval by nobody would count as approval evidence.
-					if username == "" {
-						return evidence, fmt.Errorf("participants[%d] in the Bitbucket reply is an approval with no user.display_name", i)
-					}
+			for _, p := range participants {
+				if username := approvedBy(p); username != "" {
 					if version == 1 {
 						approvers = append(approvers, username)
 					} else {
@@ -249,6 +244,16 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 	return evidence, nil
 }
 
+// approvedBy names who approved in participant p, or gives "" when p is no
+// approval. An approval with no identity, as from a deleted account, counts
+// as none: approval evidence must name who gave it.
+func approvedBy(p map[string]any) string {
+	if !boolean(p, "approved") {
+		return ""
+	}
+	return str(obj(p, "user"), "display_name")
+}
+
 // bitbucketReviews gives each participant's current decision. A participant
 // with no state who has commented is a comment; one who has done neither is
 // left out.
@@ -269,11 +274,6 @@ func bitbucketReviews(participants []map[string]any) ([]types.PRApprovals, error
 			}
 			state = types.ReviewCommented
 		default:
-			continue
-		}
-		// A change request is kept without a name: dropping it would read as
-		// none given.
-		if username == "" && state != types.ReviewChangesRequested {
 			continue
 		}
 		timestamp, err := parseRFC3339NanoTimestamp(participatedOn, "participated_on")

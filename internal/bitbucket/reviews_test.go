@@ -20,7 +20,8 @@ func TestBitbucketReviews(t *testing.T) {
 		{"user":{"display_name":"Di"},"role":"PARTICIPANT","approved":false,"state":null,"participated_on":"2026-03-01T15:00:00+00:00"},
 		{"user":{"display_name":"Ed"},"role":"REVIEWER","approved":false,"state":null,"participated_on":null},
 		{"user":null,"role":"REVIEWER","approved":false,"state":"changes_requested","participated_on":null},
-		{"user":null,"role":"PARTICIPANT","approved":false,"state":null,"participated_on":"2026-03-01T16:00:00+00:00"}
+		{"user":null,"role":"PARTICIPANT","approved":false,"state":null,"participated_on":"2026-03-01T16:00:00+00:00"},
+		{"user":{"display_name":null},"role":"REVIEWER","approved":true,"state":"approved","participated_on":"2026-03-01T17:00:00+00:00"}
 	]`), &participants))
 
 	reviews, err := bitbucketReviews(participants)
@@ -31,6 +32,8 @@ func TestBitbucketReviews(t *testing.T) {
 		{Username: "Cy", State: types.ReviewChangesRequested},
 		{Username: "Di", State: types.ReviewCommented, Timestamp: 1772377200},
 		{State: types.ReviewChangesRequested},
+		{State: types.ReviewCommented, Timestamp: 1772380800},
+		{State: types.ReviewApproved, Timestamp: 1772384400},
 	}, reviews)
 }
 
