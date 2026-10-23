@@ -39,10 +39,6 @@ on:
         type: string
         default: ''
     secrets:
-      slack_channel:
-        required: true
-      slack_webhook:
-        required: true
       github_access_token:
         required: true
       gitlab_access_token:
