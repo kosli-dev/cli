@@ -1,6 +1,6 @@
 module github.com/kosli-dev/cli
 
-go 1.26.7
+go 1.26.10
 
 require (
 	cloud.google.com/go/asset v1.29.0
