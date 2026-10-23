@@ -283,11 +283,15 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	if err != nil {
 		return nil, err
 	}
-	// A short-lived branch's gate is its latest, so a push processed since the
-	// revision was matched would have replaced it with the newer commit's.
-	if analysisID == "" && sonarResults.Branch != nil && sonarResults.Branch.Type == "SHORT" {
-		if _, err := shortLivedBranchAnalysis(httpClient, sonarResults, project, sonarResults.Revision); err != nil {
+	// A push processed since the revision was matched would have replaced the
+	// branch's latest gate with the newer commit's.
+	if gateIsBranchLatest(sonarResults, analysisID) {
+		isShort, err := shortLivedBranchAnalysis(httpClient, sonarResults, project, sonarResults.Revision)
+		if err != nil {
 			return nil, err
+		}
+		if !isShort {
+			return nil, fmt.Errorf("could not confirm that the latest analysis of short-lived branch %s of project %s is still of revision %s, so its quality gate may be of another commit. Try again later", sonarResults.Branch.Name, project.Key, sonarResults.Revision)
 		}
 	}
 
@@ -483,6 +487,12 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	return analysisID, nil
 }
 
+// gateIsBranchLatest reports whether the quality gate can only be read as the
+// branch's latest. Only a short-lived branch is found without an analysis ID.
+func gateIsBranchLatest(sonarResults *SonarResults, analysisID string) bool {
+	return analysisID == "" && sonarResults.Branch != nil
+}
+
 // shortLivedBranchAnalysis finds the analysis of revision on a SonarCloud short-lived
 // branch, which api/project_analyses/search refuses. SonarCloud keeps only the latest
 // analysis of such a branch, so that analysis must be of the revision. It reports
@@ -606,8 +616,7 @@ func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, quality
 	params := url.Values{"analysisId": {analysisID}}
 	if pullRequest != "" {
 		params = url.Values{"projectKey": {projectKey}, "pullRequest": {pullRequest}}
-	} else if analysisID == "" && sonarResults.Branch != nil {
-		// A short-lived branch has no analysis ID we can find, only a latest gate.
+	} else if gateIsBranchLatest(sonarResults, analysisID) {
 		params = url.Values{"projectKey": {projectKey}, "branch": {sonarResults.Branch.Name}}
 	}
 	qualityGateURL, err := sonarURL(sonarResults.ServerUrl, "api/qualitygates/project_status", params)

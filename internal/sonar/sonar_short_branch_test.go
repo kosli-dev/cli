@@ -21,6 +21,8 @@ const (
 	shortAnalysisDate = "2026-10-20T07:06:05+0000"
 	longBranch        = "release/uat"
 	unlistedBranch    = "no-such-branch"
+	// badGateway in branchCommits makes that branch listing fail.
+	badGateway = "502"
 )
 
 type fakeSonarCloudBranches struct {
@@ -70,7 +72,14 @@ func (f *fakeSonarCloudBranches) handler() http.HandlerFunc {
 			}
 			_, _ = fmt.Fprintf(w, `{"paging":{"pageIndex":1,"pageSize":500,"total":0},"analyses":[]}`)
 		case "/api/project_branches/list":
-			commit := fmt.Sprintf(`,"commit":{"sha":%q}`, f.nextBranchCommit())
+			next := f.nextBranchCommit()
+			if next == badGateway {
+				w.Header().Set("Content-Type", "text/html")
+				w.WriteHeader(http.StatusBadGateway)
+				_, _ = fmt.Fprint(w, "<html><body>502 Bad Gateway</body></html>")
+				return
+			}
+			commit := fmt.Sprintf(`,"commit":{"sha":%q}`, next)
 			if strings.HasSuffix(commit, `""}`) {
 				commit = ""
 			}
@@ -279,5 +288,22 @@ func TestGetSonarResults_SonarErrorWithoutBranch_Unchanged(t *testing.T) {
 	_, err := sc.GetSonarResults(discardLogger())
 	if err == nil || err.Error() != "SonarQube error: Component key 'x' not found" {
 		t.Errorf("expected the SonarQube error unchanged, got: %v", err)
+	}
+}
+
+// If the second listing cannot confirm the branch's latest commit, the gate just
+// read may be another commit's, so nothing is attested.
+func TestGetSonarResults_ShortLivedBranch_RecheckFails(t *testing.T) {
+	fake := &fakeSonarCloudBranches{branchCommits: []string{shortLatestCommit, badGateway}}
+	srv := httptest.NewServer(fake.handler())
+	defer srv.Close()
+
+	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, shortLatestCommit, "", shortBranch, 5)
+	_, err := sc.GetSonarResults(discardLogger())
+	if err == nil {
+		t.Fatal("expected an error: the branch's latest commit could not be confirmed after reading the gate")
+	}
+	if !strings.Contains(err.Error(), shortBranch) {
+		t.Errorf("expected the branch in the error, got: %v", err)
 	}
 }
