@@ -105,7 +105,7 @@ jobs:
       azure_client_id: ${{ secrets.AZURE_CLIENT_ID }}
       azure_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
       bitbucket_access_token: ${{ secrets.KOSLI_BITBUCKET_ACCESS_TOKEN }}
-      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+      slack_webhook: ${{ secrets.SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ci-failures
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
@@ -124,7 +124,7 @@ jobs:
       kosli_org: kosli-public
       report_to_kosli: release
     secrets:
-      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+      slack_webhook: ${{ secrets.SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ci-failures
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
