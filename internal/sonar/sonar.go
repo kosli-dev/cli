@@ -102,6 +102,13 @@ type ActivityResponse struct {
 	Tasks []Task `json:"tasks"`
 }
 
+// ComponentTasksResponse is the response from the ce/component API
+type ComponentTasksResponse struct {
+	Queue   []Task  `json:"queue"`
+	Current Task    `json:"current"`
+	Errors  []Error `json:"errors,omitempty"`
+}
+
 // These are the structs for the response from the project_analyses/search API
 type ProjectAnalyses struct {
 	Analyses []Analysis `json:"analyses"`
@@ -286,12 +293,9 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	// A push processed since the revision was matched would have replaced the
 	// branch's latest gate with the newer commit's.
 	if gateIsBranchLatest(sonarResults, analysisID) {
-		isShort, err := shortLivedBranchAnalysis(httpClient, sonarResults, project, sonarResults.Revision)
-		if err != nil {
+		notConfirmed := fmt.Errorf("could not confirm that the latest analysis of short-lived branch %s of project %s is still of revision %s, so its quality gate may be of another commit. Try again later", sonarResults.Branch.Name, project.Key, sonarResults.Revision)
+		if err := shortLivedBranchAnalysis(httpClient, sonarResults, project, notConfirmed, isOfRevision(project, sonarResults.Revision)); err != nil {
 			return nil, err
-		}
-		if !isShort {
-			return nil, fmt.Errorf("could not confirm that the latest analysis of short-lived branch %s of project %s is still of revision %s, so its quality gate may be of another commit. Try again later", sonarResults.Branch.Name, project.Key, sonarResults.Revision)
 		}
 	}
 
@@ -456,14 +460,7 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 
 	if projectAnalysesData.Errors != nil {
 		sonarErr := fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
-		if sonarResults.Branch == nil {
-			return "", sonarErr
-		}
-		isShort, err := shortLivedBranchAnalysis(httpClient, sonarResults, project, revision)
-		if !isShort {
-			return "", sonarErr
-		}
-		return "", err
+		return "", shortLivedBranchAnalysis(httpClient, sonarResults, project, sonarErr, isOfRevision(project, revision))
 	}
 
 	for analysis := range projectAnalysesData.Analyses {
@@ -493,25 +490,28 @@ func gateIsBranchLatest(sonarResults *SonarResults, analysisID string) bool {
 	return analysisID == "" && sonarResults.Branch != nil
 }
 
-// shortLivedBranchAnalysis finds the analysis of revision on a SonarCloud short-lived
-// branch, which api/project_analyses/search refuses. SonarCloud keeps only the latest
-// analysis of such a branch, so that analysis must be of the revision. It reports
-// false, so the caller keeps SonarQube's own error, when the branch is not a listed
-// short-lived branch.
-func shortLivedBranchAnalysis(httpClient *http.Client, sonarResults *SonarResults, project *Project, revision string) (bool, error) {
+// shortLivedBranchAnalysis takes the revision and date of the analysis being attested
+// from a SonarCloud short-lived branch, whose analyses api/project_analyses/search
+// refuses. api/project_branches/list gives only the branch's latest analysis, so
+// isAttested decides whether that is the one being attested. It returns fallbackErr
+// when the branch is not a listed short-lived branch.
+func shortLivedBranchAnalysis(httpClient *http.Client, sonarResults *SonarResults, project *Project, fallbackErr error, isAttested func(branch BranchInfo) error) error {
+	if sonarResults.Branch == nil {
+		return fallbackErr
+	}
 	branchesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_branches/list", url.Values{"project": {project.Key}})
 	if err != nil {
-		return false, err
+		return err
 	}
 	branchesResponse, err := httpClient.Get(branchesURL)
 	if err != nil {
-		return false, err
+		return fallbackErr
 	}
 	defer func() { _ = branchesResponse.Body.Close() }()
 
 	branchesData := &BranchesResponse{}
 	if err := json.NewDecoder(branchesResponse.Body).Decode(branchesData); err != nil {
-		return false, nil
+		return fallbackErr
 	}
 
 	for _, branch := range branchesData.Branches {
@@ -519,16 +519,73 @@ func shortLivedBranchAnalysis(httpClient *http.Client, sonarResults *SonarResult
 			continue
 		}
 		if branch.Commit.SHA == "" {
-			return true, fmt.Errorf("analysis for revision %s of project %s not found: branch %s is short-lived on SonarQube Cloud and has no analysis yet.\nThe scan may still be being processed by SonarQube, try again later", revision, project.Key, branch.Name)
+			return fmt.Errorf("branch %s of project %s is short-lived on SonarQube Cloud and has no analysis yet.\nThe scan may still be being processed by SonarQube, try again later", branch.Name, project.Key)
 		}
-		if branch.Commit.SHA != revision {
-			return true, fmt.Errorf("analysis for revision %s of project %s not found: branch %s is short-lived on SonarQube Cloud, which keeps only its latest analysis, and that is of revision %s.\nThe scan for your revision may still be being processed by SonarQube, try again later.\nOtherwise check the revision is correct, or analyse the branch as long-lived: SonarQube Cloud decides this from the branch name when the branch is first analysed", revision, project.Key, branch.Name, branch.Commit.SHA)
+		if err := isAttested(branch); err != nil {
+			return err
 		}
+		sonarResults.Revision = branch.Commit.SHA
 		sonarResults.AnalysedAt = branch.AnalysisDate
 		sonarResults.Branch.Type = branch.Type
-		return true, nil
+		return nil
 	}
-	return false, nil
+	return fallbackErr
+}
+
+// isOfRevision accepts the branch's latest analysis when it is of revision. SonarCloud
+// keeps only that analysis, so any other revision's is gone or not processed yet.
+func isOfRevision(project *Project, revision string) func(BranchInfo) error {
+	return func(branch BranchInfo) error {
+		if branch.Commit.SHA == revision {
+			return nil
+		}
+		return fmt.Errorf("analysis for revision %s of project %s not found: branch %s is short-lived on SonarQube Cloud, which keeps only its latest analysis, and that is of revision %s.\nThe scan for your revision may still be being processed by SonarQube, try again later.\nOtherwise check the revision is correct, or analyse the branch as long-lived: SonarQube Cloud decides this from the branch name when the branch is first analysed", revision, project.Key, branch.Name, branch.Commit.SHA)
+	}
+}
+
+// isOfLatestTask accepts the branch's latest analysis when it is the CE task's, that
+// is when no later task of the project has started. It is checked after the branch
+// listing, so that a task finishing in between is caught.
+func isOfLatestTask(httpClient *http.Client, sonarResults *SonarResults, project *Project) func(BranchInfo) error {
+	return func(branch BranchInfo) error {
+		isLatest, err := isLatestTaskOfProject(httpClient, sonarResults, project)
+		if err != nil || isLatest {
+			return err
+		}
+		return fmt.Errorf("could not find the revision of the scan in task %s: branch %s of project %s is short-lived on SonarQube Cloud, which gives only the revision of its latest analysis, and another task of the project finished after this one, or another scan of the branch is still being processed.\nAttest the scan with --sonar-project-key and --sonar-revision instead, without report-task.txt or --sonar-ce-task-url", sonarResults.TaskID, branch.Name, project.Key)
+	}
+}
+
+// isLatestTaskOfProject reports whether the CE task is the project's last finished
+// task, on any branch or pull request, with none of its branch in progress. SonarQube
+// saves a scan's analysis before it records the task as finished, so a task in
+// progress may already have replaced the branch's latest analysis. Unlike
+// api/ce/activity, api/ce/component needs only Browse permission.
+func isLatestTaskOfProject(httpClient *http.Client, sonarResults *SonarResults, project *Project) (bool, error) {
+	componentURL, err := sonarURL(sonarResults.ServerUrl, "api/ce/component", url.Values{"component": {project.Key}})
+	if err != nil {
+		return false, err
+	}
+	componentResponse, err := httpClient.Get(componentURL)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = componentResponse.Body.Close() }()
+
+	componentData := &ComponentTasksResponse{}
+	if err := json.NewDecoder(componentResponse.Body).Decode(componentData); err != nil {
+		return false, sonarResponseError(componentResponse.StatusCode)
+	}
+	if componentData.Errors != nil {
+		return false, fmt.Errorf("SonarQube error: %s", componentData.Errors[0].Msg)
+	}
+	for _, task := range componentData.Queue {
+		onOtherWork := task.PullRequest != "" || (task.Branch != "" && task.Branch != sonarResults.Branch.Name)
+		if task.Status != "PENDING" && !onOtherWork {
+			return false, nil
+		}
+	}
+	return componentData.Current.TaskID == sonarResults.TaskID, nil
 }
 
 func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID string) error {
@@ -554,7 +611,8 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 	}
 
 	if projectAnalysesData.Errors != nil {
-		return fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
+		sonarErr := fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
+		return shortLivedBranchAnalysis(httpClient, sonarResults, project, sonarErr, isOfLatestTask(httpClient, sonarResults, project))
 	}
 
 	for analysis := range projectAnalysesData.Analyses {
