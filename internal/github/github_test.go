@@ -78,10 +78,6 @@ func TestGithubTestSuite(t *testing.T) {
 	suite.Run(t, new(GithubTestSuite))
 }
 
-// graphqlNullPRResponse is a minimal valid GraphQL response where the PR is null.
-// PREvidenceByPRNumber returns nil, nil in this case.
-const graphqlNullPRResponse = `{"data":{"repository":{"pullRequest":null}}}`
-
 func newRetryTestServer(t *testing.T, failCount int) (*httptest.Server, *int) {
 	t.Helper()
 	attempts := 0
@@ -96,7 +92,7 @@ func newRetryTestServer(t *testing.T, failCount int) (*httptest.Server, *int) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = fmt.Fprint(w, graphqlNullPRResponse)
+		_, _ = fmt.Fprint(w, byPRNumberResponse(connectionJSON(nil, ""), connectionJSON(nil, "")))
 	}))
 	return ts, &attempts
 }
@@ -120,7 +116,7 @@ func TestPREvidenceByPRNumber_RetriesOnGraphQLError(t *testing.T) {
 
 	pr, err := config.PREvidenceByPRNumber(1)
 	require.NoError(t, err)
-	require.Nil(t, pr)
+	require.NotNil(t, pr)
 	require.Equal(t, 3, *attempts, "should have retried twice before succeeding")
 	require.Len(t, sleptDurations, 2, "should have slept between retries")
 }

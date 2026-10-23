@@ -252,9 +252,7 @@ func (c *GithubConfig) PREvidenceForCommitHybrid(commit string) ([]*types.PREvid
 		if err != nil {
 			return nil, err
 		}
-		if evidence != nil {
-			result = append(result, evidence)
-		}
+		result = append(result, evidence)
 	}
 	return result, nil
 }
@@ -293,11 +291,12 @@ const signerBatchSize = 100
 
 // signerLogins maps each signed commit's SHA to its signer's login. GitHub
 // types signer as User, so a signer that is not one (e.g. a GitHub App)
-// comes back null with a field error. The client decodes data before
-// returning errors but drops their path, so any error that came with data
-// is accepted and written to debug, when not nil.
+// comes back null with a field error, which newGraphQLClient drops.
+// Unlike the other queries, any error that comes with data is accepted and
+// written to debug output: a node asked for by id that comes back null, or
+// with a field GitHub could not resolve, only loses its signer.
 func (c *GithubConfig) signerLogins(ctx context.Context, query graphqlQueryFunc,
-	nodes []graphqlCommitNode, debug io.Writer) (map[string]string, error) {
+	nodes []graphqlCommitNode) (map[string]string, error) {
 	ids := []graphql.ID{}
 	for _, n := range nodes {
 		if n.Commit.Signature != nil {
@@ -305,7 +304,7 @@ func (c *GithubConfig) signerLogins(ctx context.Context, query graphqlQueryFunc,
 		}
 	}
 	type signerQuery struct {
-		Nodes []struct {
+		Nodes []*struct {
 			Commit struct {
 				Oid       graphql.String
 				Signature *struct {
@@ -319,13 +318,11 @@ func (c *GithubConfig) signerLogins(ctx context.Context, query graphqlQueryFunc,
 	signers := map[string]string{}
 	for batch := range slices.Chunk(ids, signerBatchSize) {
 		var q signerQuery
-		// Only a reply with no data is retried: a field error comes back
-		// the same on every attempt.
 		err := c.retry(ctx, func() error {
 			q = signerQuery{}
 			err := query(ctx, &q, map[string]any{"ids": batch})
 			if err != nil && len(q.Nodes) > 0 {
-				if debug != nil {
+				if debug := c.debugOut(); debug != nil {
 					_, _ = fmt.Fprintf(debug, "[debug-github] ignoring error in commit signer lookup: %v\n", err)
 				}
 				return nil
@@ -336,6 +333,9 @@ func (c *GithubConfig) signerLogins(ctx context.Context, query graphqlQueryFunc,
 			return nil, fmt.Errorf("failed to look up commit signers: %w", err)
 		}
 		for _, n := range q.Nodes {
+			if n == nil {
+				continue
+			}
 			if sig := n.Commit.Signature; sig != nil && sig.Signer != nil {
 				signers[string(n.Commit.Oid)] = string(sig.Signer.Login)
 			}
@@ -375,17 +375,13 @@ func buildPREvidence(
 	reviewNodes []graphqlReviewNode,
 	signers map[string]string,
 ) (*types.PREvidence, error) {
-	createdAt, err := time.Parse(time.RFC3339, createdAtStr)
+	createdAt, err := unixTime(createdAtStr)
 	if err != nil {
 		return nil, err
 	}
-	mergedAt := int64(0)
-	if mergedAtStr != "" {
-		mergedAtTime, err := time.Parse(time.RFC3339, mergedAtStr)
-		if err != nil {
-			return nil, err
-		}
-		mergedAt = mergedAtTime.Unix()
+	mergedAt, err := unixTime(mergedAtStr)
+	if err != nil {
+		return nil, err
 	}
 
 	evidence := &types.PREvidence{
@@ -393,7 +389,7 @@ func buildPREvidence(
 		MergeCommit: mergeCommit,
 		State:       state,
 		Author:      author,
-		CreatedAt:   createdAt.Unix(),
+		CreatedAt:   createdAt,
 		MergedAt:    mergedAt,
 		Title:       title,
 		HeadRef:     headRef,
@@ -410,7 +406,7 @@ func buildPREvidence(
 		if dateStr == "" {
 			dateStr = string(n.Commit.CommittedDate)
 		}
-		timestamp, err := time.Parse(time.RFC3339, dateStr)
+		timestamp, err := unixTime(dateStr)
 		if err != nil {
 			return nil, err
 		}
@@ -436,7 +432,7 @@ func buildPREvidence(
 			Message:          string(n.Commit.MessageHeadline),
 			Author:           fmt.Sprintf("%s <%s>", string(n.Commit.Author.Name), string(n.Commit.Author.Email)),
 			AuthorUsername:   authorUsername,
-			Timestamp:        timestamp.Unix(),
+			Timestamp:        timestamp,
 			Branch:           headRef,
 			URL:              string(n.Commit.URL),
 			Verified:         verified,
@@ -446,24 +442,64 @@ func buildPREvidence(
 		})
 	}
 
+	counted := []types.PRApprovals{}
 	for _, r := range reviewNodes {
-		submittedAt, err := time.Parse(time.RFC3339, string(r.SubmittedAt))
+		submittedAt, err := unixTime(string(r.SubmittedAt))
 		if err != nil {
 			return nil, err
 		}
+		login, known := reviewer(string(r.Author.Login))
 		review := types.PRApprovals{
-			Username:  string(r.Author.Login),
+			Username:  login,
 			State:     string(r.State),
-			Timestamp: submittedAt.Unix(),
+			Timestamp: submittedAt,
 		}
 		if r.Commit != nil {
 			review.CommitSHA = string(r.Commit.Oid)
 		}
 		evidence.Reviews = append(evidence.Reviews, review)
+		if known {
+			counted = append(counted, review)
+		}
 	}
-	evidence.Approvers = types.ApprovalsFrom(evidence.Reviews)
+	evidence.Approvers = types.ApprovalsFrom(counted)
 
 	return evidence, nil
+}
+
+// reviewer returns a review's login and whether an account stands behind it.
+// GitHub sends a deleted account as a null author or as the "ghost" login;
+// its review is kept, but it must never count as an approval.
+func reviewer(login string) (string, bool) {
+	if login == "ghost" {
+		login = ""
+	}
+	return login, login != ""
+}
+
+// unixTime parses a GitHub timestamp. A null one reads as "" and gives 0.
+func unixTime(s string) (int64, error) {
+	if s == "" {
+		return 0, nil
+	}
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return 0, err
+	}
+	return t.Unix(), nil
+}
+
+// nonNull returns items as values. A null item is an entry the reply could
+// not give, so it fails rather than being skipped.
+func nonNull[T any](items []*T, list string) ([]T, error) {
+	out := make([]T, 0, len(items))
+	for i, item := range items {
+		if item == nil {
+			return nil, fmt.Errorf("%s[%d] is null in the GitHub reply", list, i)
+		}
+		out = append(out, *item)
+	}
+	return out, nil
 }
 
 // PREvidenceByPRNumber fetches full PR evidence for a single PR number via
@@ -471,12 +507,10 @@ func buildPREvidence(
 func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, error) {
 	ctx := context.Background()
 
-	ghClient, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL, c.Debug)
+	client, err := c.newGraphQLClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	httpClient := ghClient.Client()
-	client := graphql.NewClient(graphqlEndpoint(c.BaseURL), httpClient)
 
 	var query struct {
 		Repository struct {
@@ -496,11 +530,11 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 				}
 				HeadRefOid graphql.String
 				Commits    struct {
-					Nodes    []graphqlCommitNode
+					Nodes    []*graphqlCommitNode
 					PageInfo pageInfo
 				} `graphql:"commits(first: 100, after: $commitCursor)"`
 				Reviews struct {
-					Nodes    []graphqlReviewNode
+					Nodes    []*graphqlReviewNode
 					PageInfo pageInfo
 				} `graphql:"reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED], after: $reviewCursor)"`
 			} `graphql:"pullRequest(number: $prNumber)"`
@@ -522,7 +556,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 
 	pr := query.Repository.PullRequest
 	if pr == nil {
-		return nil, nil
+		return nil, fmt.Errorf("could not find pull request %d in %s/%s", prNumber, c.Org, c.Repository)
 	}
 
 	mergeCommit := ""
@@ -539,7 +573,7 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 	if err != nil {
 		return nil, err
 	}
-	signers, err := c.signerLogins(ctx, client.Query, commits, c.debugOut())
+	signers, err := c.signerLogins(ctx, client.Query, commits)
 	if err != nil {
 		return nil, err
 	}
@@ -555,20 +589,17 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 	ctx := context.Background()
 	pullRequestsEvidence := []*types.PREvidence{}
 
-	ghClient, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL, c.Debug)
+	client, err := c.newGraphQLClient(ctx)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
-	httpClient := ghClient.Client()
-
-	client := graphql.NewClient(graphqlEndpoint(c.BaseURL), httpClient)
 
 	var query struct {
-		Repository struct {
+		Repository *struct {
 			Object struct {
 				Commit struct {
 					AssociatedPullRequests struct {
-						Nodes []struct {
+						Nodes []*struct {
 							Number graphql.Int
 							// Follow-up page queries resolve the PR by number, so they
 							// need the repo it actually lives in, not the configured one.
@@ -592,12 +623,12 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							}
 
 							Commits struct {
-								Nodes    []graphqlCommitNode
+								Nodes    []*graphqlCommitNode
 								PageInfo pageInfo
 							} `graphql:"commits(first: 100, after: $commitCursor)"`
 
 							Reviews struct {
-								Nodes    []graphqlReviewNode
+								Nodes    []*graphqlReviewNode
 								PageInfo pageInfo
 							} `graphql:"reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED], after: $reviewCursor)"`
 						}
@@ -622,11 +653,18 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 	if err := client.Query(ctx, &query, variables); err != nil {
 		return pullRequestsEvidence, err
 	}
+	if query.Repository == nil {
+		return pullRequestsEvidence, fmt.Errorf("could not find repository %s/%s", c.Org, c.Repository)
+	}
+	prs, err := nonNull(query.Repository.Object.Commit.AssociatedPullRequests.Nodes, "associatedPullRequests")
+	if err != nil {
+		return pullRequestsEvidence, err
+	}
 
 	// Only the follow-up pages retry; the initial query keeps its fail-fast
 	// behaviour, which callers already depend on.
 	retrying := c.queryWithRetry(client)
-	for _, pr := range query.Repository.Object.Commit.AssociatedPullRequests.Nodes {
+	for _, pr := range prs {
 		ref := prRef{
 			Owner:  string(pr.Repository.Owner.Login),
 			Repo:   string(pr.Repository.Name),
@@ -648,7 +686,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
-		signers, err := c.signerLogins(ctx, client.Query, commits, c.debugOut())
+		signers, err := c.signerLogins(ctx, client.Query, commits)
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
@@ -762,8 +800,8 @@ func (c *GithubConfig) listApprovers(ctx context.Context, client *gh.Client,
 			return nil, err
 		}
 		for _, r := range reviews {
-			login := r.GetUser().GetLogin()
-			if r.GetState() == "APPROVED" && !seen[login] {
+			login, known := reviewer(r.GetUser().GetLogin())
+			if r.GetState() == types.ReviewApproved && known && !seen[login] {
 				seen[login] = true
 				approvers = append(approvers, login)
 			}
