@@ -49,9 +49,10 @@ updates:
   # The Go builder image in Dockerfile, pinned by digest
   - package-ecosystem: "docker"
     directory: "/"
+    # Daily (Dependabot runs it Monday to Friday), unlike the others, so a Go
+    # security patch reaches the image within a working day.
     schedule:
-      interval: "weekly"
-      day: "tuesday"
+      interval: "daily"
       time: "11:00"
     commit-message:
       prefix: 'chore(deps)'
