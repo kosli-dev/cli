@@ -131,6 +131,18 @@ type PRCommit struct {
 	SHA string `json:"sha"`
 }
 
+// These are the structs for the response from the project_branches/list API
+type BranchesResponse struct {
+	Branches []BranchInfo `json:"branches"`
+}
+
+type BranchInfo struct {
+	Name         string   `json:"name"`
+	Type         string   `json:"type"`
+	AnalysisDate string   `json:"analysisDate"`
+	Commit       PRCommit `json:"commit"`
+}
+
 // Struct for error messages from sonar APIs
 type Error struct {
 	Msg string `json:"msg"`
@@ -270,6 +282,13 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	qualityGate, err = GetQualityGate(httpClient, sonarResults, qualityGate, analysisID, project.Key, sonarResults.PullRequest)
 	if err != nil {
 		return nil, err
+	}
+	// A short-lived branch's gate is its latest, so a push processed since the
+	// revision was matched would have replaced it with the newer commit's.
+	if analysisID == "" && sonarResults.Branch != nil && sonarResults.Branch.Type == "SHORT" {
+		if _, err := shortLivedBranchAnalysis(httpClient, sonarResults, project, sonarResults.Revision); err != nil {
+			return nil, err
+		}
 	}
 
 	sonarResults.Project = *project
@@ -432,7 +451,15 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	}
 
 	if projectAnalysesData.Errors != nil {
-		return "", fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
+		sonarErr := fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
+		if sonarResults.Branch == nil {
+			return "", sonarErr
+		}
+		isShort, err := shortLivedBranchAnalysis(httpClient, sonarResults, project, revision)
+		if !isShort {
+			return "", sonarErr
+		}
+		return "", err
 	}
 
 	for analysis := range projectAnalysesData.Analyses {
@@ -454,6 +481,44 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	}
 
 	return analysisID, nil
+}
+
+// shortLivedBranchAnalysis finds the analysis of revision on a SonarCloud short-lived
+// branch, which api/project_analyses/search refuses. SonarCloud keeps only the latest
+// analysis of such a branch, so that analysis must be of the revision. It reports
+// false, so the caller keeps SonarQube's own error, when the branch is not a listed
+// short-lived branch.
+func shortLivedBranchAnalysis(httpClient *http.Client, sonarResults *SonarResults, project *Project, revision string) (bool, error) {
+	branchesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_branches/list", url.Values{"project": {project.Key}})
+	if err != nil {
+		return false, err
+	}
+	branchesResponse, err := httpClient.Get(branchesURL)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = branchesResponse.Body.Close() }()
+
+	branchesData := &BranchesResponse{}
+	if err := json.NewDecoder(branchesResponse.Body).Decode(branchesData); err != nil {
+		return false, nil
+	}
+
+	for _, branch := range branchesData.Branches {
+		if branch.Name != sonarResults.Branch.Name || branch.Type != "SHORT" {
+			continue
+		}
+		if branch.Commit.SHA == "" {
+			return true, fmt.Errorf("analysis for revision %s of project %s not found: branch %s is short-lived on SonarQube Cloud and has no analysis yet.\nThe scan may still be being processed by SonarQube, try again later", revision, project.Key, branch.Name)
+		}
+		if branch.Commit.SHA != revision {
+			return true, fmt.Errorf("analysis for revision %s of project %s not found: branch %s is short-lived on SonarQube Cloud, which keeps only its latest analysis, and that is of revision %s.\nThe scan for your revision may still be being processed by SonarQube, try again later.\nOtherwise check the revision is correct, or analyse the branch as long-lived: SonarQube Cloud decides this from the branch name when the branch is first analysed", revision, project.Key, branch.Name, branch.Commit.SHA)
+		}
+		sonarResults.AnalysedAt = branch.AnalysisDate
+		sonarResults.Branch.Type = branch.Type
+		return true, nil
+	}
+	return false, nil
 }
 
 func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID string) error {
@@ -538,18 +603,16 @@ func GetPRAnalysisData(httpClient *http.Client, sonarResults *SonarResults, proj
 }
 
 func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, qualityGate *QualityGate, analysisID, projectKey, pullRequest string) (*QualityGate, error) {
-	var qualityGateURL string
-	var err error
-	if pullRequest == "" {
-		qualityGateURL, err = sonarURL(sonarResults.ServerUrl, "api/qualitygates/project_status", url.Values{"analysisId": {analysisID}})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		qualityGateURL, err = sonarURL(sonarResults.ServerUrl, "api/qualitygates/project_status", url.Values{"projectKey": {projectKey}, "pullRequest": {pullRequest}})
-		if err != nil {
-			return nil, err
-		}
+	params := url.Values{"analysisId": {analysisID}}
+	if pullRequest != "" {
+		params = url.Values{"projectKey": {projectKey}, "pullRequest": {pullRequest}}
+	} else if analysisID == "" && sonarResults.Branch != nil {
+		// A short-lived branch has no analysis ID we can find, only a latest gate.
+		params = url.Values{"projectKey": {projectKey}, "branch": {sonarResults.Branch.Name}}
+	}
+	qualityGateURL, err := sonarURL(sonarResults.ServerUrl, "api/qualitygates/project_status", params)
+	if err != nil {
+		return nil, err
 	}
 	qualityGateRequest, err := http.NewRequest("GET", qualityGateURL, nil)
 	if err != nil {
