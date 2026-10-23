@@ -108,8 +108,6 @@ jobs:
       azure_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
       bitbucket_access_token: ${{ secrets.KOSLI_BITBUCKET_ACCESS_TOKEN }}
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
-      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ci-failures
       snyk_token: ${{ secrets.SNYK_TOKEN }}
       kosli_reporting_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       kosli_querying_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
@@ -127,8 +125,6 @@ jobs:
       checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
       report_to_kosli: ${{ needs.pre-build.outputs.report_to_kosli }}
     secrets:
-      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ci-failures
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
 
@@ -154,5 +150,5 @@ jobs:
       - name: Slack Notification on Failure
         uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@main
         with:
-          slack_url: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+          slack_url: ${{ secrets.SLACK_CI_FAILURES_WEBHOOK }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
