@@ -34,3 +34,10 @@ func TestListURLNamesTheOrg(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "https://app.kosli.com/api/v2/rego-policies/my%20org", endpoint)
 }
+
+func TestBundleURLNamesTheBundleOfTheVersion(t *testing.T) {
+	endpoint, err := BundleURL("https://app.kosli.com", "my-org", "pr-approved", 3)
+
+	require.NoError(t, err)
+	require.Equal(t, "https://app.kosli.com/api/v2/rego-policies/my-org/pr-approved/versions/3/bundle", endpoint)
+}
