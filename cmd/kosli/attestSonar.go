@@ -48,6 +48,7 @@ For branch scans: if running the Kosli CLI in some CI/CD pipeline, the revision 
 or have overridden the revision in SonarQube via parameters to the Sonar scanner, you can provide the correct revision using the ^--sonar-revision^ flag.
 If the scan ran on a branch other than the project's main branch in SonarQube, also provide the branch name using the ^--sonar-branch^ flag.
 SonarQube only searches the project's main branch unless told otherwise, so without this flag the scan cannot be found.
+On SonarQube Cloud, a short-lived branch keeps only its latest analysis, so the revision must be the latest commit analysed on that branch.
 For pull request scans: provide the pull-request ID using the ^--pull-request^ flag instead of the revision.
 SonarQube keeps only the latest analysis of a pull request, so if the scan for the current push has not finished, that is the previous push's analysis.
 To make sure the attested analysis is of the commit you expect, also pass ^--sonar-revision^: the command then fails if the pull request's analysis is of another commit.
