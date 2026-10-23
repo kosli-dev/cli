@@ -42,6 +42,8 @@ If there are delays in the scan processing (either because the scanned project i
 the scan results are not available by the time the attest sonar command is executed. In this case you can use the ^--max-wait^ flag to retry the command while waiting for the scan to be processed.
 This flag takes the maximum number of seconds to wait for the results to be available. The Kosli CLI will then attempt to retrieve the scan results until the maximum wait time is reached, with
 exponential backoff between retries. Once the results are available they are attested to Kosli as usual.
+On SonarQube Cloud, only the latest scan of a short-lived branch records its commit. So this way, or with ^--sonar-ce-task-url^, fails if another scan of the project
+has finished since, or another scan of the branch is still being processed. Then use ^--sonar-project-key^ and ^--sonar-revision^ instead.
 
 2. Providing the Sonar project key and either the revision or the pull-request ID of the scan (plus the SonarQube server URL if relevant).
 For branch scans: if running the Kosli CLI in some CI/CD pipeline, the revision is defaulted to the commit SHA. If you are running the command locally,
