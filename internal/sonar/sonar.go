@@ -290,12 +290,18 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	if err != nil {
 		return nil, err
 	}
-	// A push processed since the revision was matched would have replaced the
-	// branch's latest gate with the newer commit's.
+	// A short-lived branch's gate is its latest, so a push processed since the
+	// revision was matched would have replaced it with the newer commit's.
 	if gateIsBranchLatest(sonarResults, analysisID) {
-		notConfirmed := fmt.Errorf("could not confirm that the latest analysis of short-lived branch %s of project %s is still of revision %s, so its quality gate may be of another commit. Try again later", sonarResults.Branch.Name, project.Key, sonarResults.Revision)
-		if err := shortLivedBranchAnalysis(httpClient, sonarResults, project, notConfirmed, isOfRevision(project, sonarResults.Revision)); err != nil {
-			return nil, err
+		branch, err := listedShortLivedBranch(httpClient, sonarResults, project)
+		if err == nil && branch == nil {
+			err = fmt.Errorf("the branch is no longer listed")
+		}
+		if err != nil {
+			return nil, fmt.Errorf("could not confirm that the latest analysis of short-lived branch %s of project %s is still of revision %s, so its quality gate may be of another commit: %w", sonarResults.Branch.Name, project.Key, sonarResults.Revision, err)
+		}
+		if branch.Commit.SHA != sonarResults.Revision {
+			return nil, fmt.Errorf("a newer analysis, of revision %s, replaced the analysis of revision %s on short-lived branch %s of project %s while it was being attested.\nSonarQube Cloud keeps only the latest analysis of a short-lived branch, so revision %s can no longer be attested", branch.Commit.SHA, sonarResults.Revision, branch.Name, project.Key, sonarResults.Revision)
 		}
 	}
 
@@ -493,43 +499,52 @@ func gateIsBranchLatest(sonarResults *SonarResults, analysisID string) bool {
 // shortLivedBranchAnalysis takes the revision and date of the analysis being attested
 // from a SonarCloud short-lived branch, whose analyses api/project_analyses/search
 // refuses. api/project_branches/list gives only the branch's latest analysis, so
-// isAttested decides whether that is the one being attested. It returns fallbackErr
-// when the branch is not a listed short-lived branch.
+// isAttested decides whether that is the one being attested. It returns fallbackErr,
+// SonarQube's own error, when the branch cannot be looked up or is not a listed
+// short-lived branch.
 func shortLivedBranchAnalysis(httpClient *http.Client, sonarResults *SonarResults, project *Project, fallbackErr error, isAttested func(branch BranchInfo) error) error {
 	if sonarResults.Branch == nil {
 		return fallbackErr
 	}
+	branch, err := listedShortLivedBranch(httpClient, sonarResults, project)
+	if err != nil || branch == nil {
+		return fallbackErr
+	}
+	if branch.Commit.SHA == "" {
+		return fmt.Errorf("branch %s of project %s is short-lived on SonarQube Cloud and has no analysis yet.\nThe scan may still be being processed by SonarQube, try again later", branch.Name, project.Key)
+	}
+	if err := isAttested(*branch); err != nil {
+		return err
+	}
+	sonarResults.Revision = branch.Commit.SHA
+	sonarResults.AnalysedAt = branch.AnalysisDate
+	sonarResults.Branch.Type = branch.Type
+	return nil
+}
+
+// listedShortLivedBranch returns the branch from api/project_branches/list when
+// SonarCloud lists it as short-lived, and nil when it does not.
+func listedShortLivedBranch(httpClient *http.Client, sonarResults *SonarResults, project *Project) (*BranchInfo, error) {
 	branchesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_branches/list", url.Values{"project": {project.Key}})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	branchesResponse, err := httpClient.Get(branchesURL)
 	if err != nil {
-		return fallbackErr
+		return nil, err
 	}
 	defer func() { _ = branchesResponse.Body.Close() }()
 
 	branchesData := &BranchesResponse{}
-	if err := json.NewDecoder(branchesResponse.Body).Decode(branchesData); err != nil {
-		return fallbackErr
+	if branchesResponse.StatusCode/100 != 2 || json.NewDecoder(branchesResponse.Body).Decode(branchesData) != nil {
+		return nil, sonarResponseError(branchesResponse.StatusCode)
 	}
-
 	for _, branch := range branchesData.Branches {
-		if branch.Name != sonarResults.Branch.Name || branch.Type != "SHORT" {
-			continue
+		if branch.Name == sonarResults.Branch.Name && branch.Type == "SHORT" {
+			return &branch, nil
 		}
-		if branch.Commit.SHA == "" {
-			return fmt.Errorf("branch %s of project %s is short-lived on SonarQube Cloud and has no analysis yet.\nThe scan may still be being processed by SonarQube, try again later", branch.Name, project.Key)
-		}
-		if err := isAttested(branch); err != nil {
-			return err
-		}
-		sonarResults.Revision = branch.Commit.SHA
-		sonarResults.AnalysedAt = branch.AnalysisDate
-		sonarResults.Branch.Type = branch.Type
-		return nil
 	}
-	return fallbackErr
+	return nil, nil
 }
 
 // isOfRevision accepts the branch's latest analysis when it is of revision. SonarCloud

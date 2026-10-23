@@ -21,8 +21,11 @@ const (
 	shortAnalysisDate = "2026-10-20T07:06:05+0000"
 	longBranch        = "release/uat"
 	unlistedBranch    = "no-such-branch"
-	// badGateway in branchCommits makes that branch listing fail.
+	// In branchCommits, badGateway and forbidden make that branch listing fail,
+	// and deleted lists the project without the short-lived branch.
 	badGateway = "502"
+	forbidden  = "403"
+	deleted    = "deleted"
 )
 
 type fakeSonarCloudBranches struct {
@@ -77,6 +80,16 @@ func (f *fakeSonarCloudBranches) handler() http.HandlerFunc {
 				w.Header().Set("Content-Type", "text/html")
 				w.WriteHeader(http.StatusBadGateway)
 				_, _ = fmt.Fprint(w, "<html><body>502 Bad Gateway</body></html>")
+				return
+			}
+			if next == forbidden {
+				// The JSON error body decodes into an empty branch list.
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = fmt.Fprint(w, `{"errors":[{"msg":"Insufficient privileges"}]}`)
+				return
+			}
+			if next == deleted {
+				_, _ = fmt.Fprint(w, `{"branches":[{"name":"main","isMain":true,"type":"LONG","commit":{"sha":"ce9bf5fdfb6e10b5d2de1b324fd03483e8b67173"}}]}`)
 				return
 			}
 			commit := fmt.Sprintf(`,"commit":{"sha":%q}`, next)
@@ -235,10 +248,14 @@ func TestGetSonarResults_ShortLivedBranch_NewerAnalysisDuringLookup(t *testing.T
 	if err == nil {
 		t.Fatal("expected an error: the quality gate read may be of the newer commit")
 	}
-	for _, want := range []string{newerCommit, shortLatestCommit} {
+	for _, want := range []string{newerCommit, shortLatestCommit, "newer analysis"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("expected %q in the error, got: %v", want, err)
 		}
+	}
+	// Retrying cannot bring the older analysis back.
+	if strings.Contains(err.Error(), "try again later") {
+		t.Errorf("expected no advice to retry, got: %v", err)
 	}
 }
 
@@ -292,18 +309,48 @@ func TestGetSonarResults_SonarErrorWithoutBranch_Unchanged(t *testing.T) {
 }
 
 // If the second listing cannot confirm the branch's latest commit, the gate just
-// read may be another commit's, so nothing is attested.
+// read may be another commit's, so nothing is attested, and the cause is kept.
 func TestGetSonarResults_ShortLivedBranch_RecheckFails(t *testing.T) {
-	fake := &fakeSonarCloudBranches{branchCommits: []string{shortLatestCommit, badGateway}}
+	cases := []struct {
+		name    string
+		listing string
+		want    string
+	}{
+		{name: "server error", listing: badGateway, want: "HTTP 502"},
+		{name: "refused with a JSON body", listing: forbidden, want: "HTTP 403"},
+		{name: "branch deleted", listing: deleted, want: "no longer listed"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			fake := &fakeSonarCloudBranches{branchCommits: []string{shortLatestCommit, c.listing}}
+			srv := httptest.NewServer(fake.handler())
+			defer srv.Close()
+
+			sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, shortLatestCommit, "", shortBranch, 5)
+			_, err := sc.GetSonarResults(discardLogger())
+			if err == nil {
+				t.Fatal("expected an error: the branch's latest commit could not be confirmed after reading the gate")
+			}
+			for _, want := range []string{shortBranch, c.want} {
+				if !strings.Contains(err.Error(), want) {
+					t.Errorf("expected %q in the error, got: %v", want, err)
+				}
+			}
+		})
+	}
+}
+
+// If the branch listing fails on the first lookup, the user sees the search's own
+// error, which says what SonarQube refused.
+func TestGetSonarResults_ShortLivedBranch_FirstListingFails(t *testing.T) {
+	fake := &fakeSonarCloudBranches{branchCommits: []string{badGateway}}
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
 	sc := sonar.NewSonarConfig("tok", t.TempDir(), "", revProjectKey, srv.URL, shortLatestCommit, "", shortBranch, 5)
 	_, err := sc.GetSonarResults(discardLogger())
-	if err == nil {
-		t.Fatal("expected an error: the branch's latest commit could not be confirmed after reading the gate")
-	}
-	if !strings.Contains(err.Error(), shortBranch) {
-		t.Errorf("expected the branch in the error, got: %v", err)
+	want := fmt.Sprintf("SonarQube error: Branch '%s' is not of type LONG", shortBranch)
+	if err == nil || err.Error() != want {
+		t.Errorf("expected %q, got: %v", want, err)
 	}
 }
