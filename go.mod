@@ -15,9 +15,9 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.47.3
 	github.com/aws/aws-sdk-go-v2/config v1.33.9
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.9
-	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.4.16
-	github.com/aws/aws-sdk-go-v2/service/ecs v1.100.3
-	github.com/aws/aws-sdk-go-v2/service/lambda v1.113.0
+	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.4.17
+	github.com/aws/aws-sdk-go-v2/service/ecs v1.101.0
+	github.com/aws/aws-sdk-go-v2/service/lambda v1.113.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.3
 	github.com/containerd/errdefs v1.0.0
 	github.com/containers/image/v5 v5.36.2
@@ -35,7 +35,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.2
-	github.com/open-policy-agent/opa v1.21.2
+	github.com/open-policy-agent/opa v1.21.3
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/otiai10/copy v1.14.1
 	github.com/owenrumney/go-sarif/v2 v2.3.3
@@ -54,7 +54,7 @@ require (
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sync v0.24.0
 	golang.org/x/term v0.47.0
-	google.golang.org/api v0.304.0
+	google.golang.org/api v0.305.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8
 	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
