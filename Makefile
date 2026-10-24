@@ -1,4 +1,4 @@
-.PHONY: help build clean clean-cache deps fmt lint vet docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single licenses upgrade-deps helm-lint helm-docs docs release suggest-version-ai
+.PHONY: help build clean clean-cache deps fmt lint vet docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single licenses upgrade-deps helm-lint helm-docs docs release
 .DEFAULT: help
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
@@ -216,32 +216,15 @@ docs: build ## Generate CLI reference docs (use CMD="attest snyk" for one comman
 	@./kosli docs --dir client_reference $(CMD)
 	@echo "Docs written to client_reference/"
 
-# Suggest next semver and changelog using Claude.
-# Writes changelog to dist/release_notes.md, used as the annotated tag's body.
-# Requires: jq, curl, op (1Password CLI). API key from 1Password via op.
-# Usage: make suggest-version-ai [BASE_REF=v1.2.3]
-suggest-version-ai: ## Suggest next version using AI
-	@command -v jq >/dev/null 2>&1 || (echo "Install jq (e.g. brew install jq)" && exit 1)
-	@command -v curl >/dev/null 2>&1 || (echo "Install curl (e.g. brew install curl)" && exit 1)
-	@bin/suggest-version-ai.sh $(BASE_REF) -o dist/release_notes.md
-
-# Release: without tag → suggest version + changelog, then interactive edit & confirm, then tag and push.
-# With tag → escape hatch: create annotated tag (body = dist/release_notes.md if present), push. No AI, no prompt.
+# Creates an annotated tag (body = dist/release_notes.md if present) and pushes it.
 # Release notes are carried in the tag message so GitHub Actions can pass them to GoReleaser.
-release: ## Cut a new release and push next tag
+# --cleanup=verbatim stops git stripping the notes' markdown '#' headings as comments.
+# To draft the version and notes with Claude, use the release skill (/release in Claude Code).
+release: ## Cut a new release and push the tag: make release tag=vX.Y.Z
 	@current=$$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD); \
 	if [ "$$current" != "main" ]; then echo "ERROR: release must be run from main branch (current: $$current)"; exit 1; fi; \
-	if [ -z "$(tag)" ]; then \
-	  command -v jq >/dev/null 2>&1 || (echo "Install jq (e.g. brew install jq)" && exit 1); \
-	  command -v curl >/dev/null 2>&1 || (echo "Install curl (e.g. brew install curl)" && exit 1); \
-	  bin/suggest-version-ai.sh -o dist/release_notes.md; \
-	  if [ ! -f dist/suggested_version ]; then \
-	    echo "Suggestion failed or no previous tag. Use: make release tag=vX.Y.Z"; exit 1; \
-	  fi; \
-	  bin/release-interactive.sh; \
-	else \
-	  git remote update; \
-	  git status -uno | grep --silent "Your branch is up to date" || (echo "ERROR: your branch is NOT up to date with remote" && exit 1); \
-	  ([ -f dist/release_notes.md ] && git tag -a $(tag) --cleanup=verbatim -F dist/release_notes.md) || git tag -a $(tag) -m"$(tag)"; \
-	  git push origin $(tag); \
-	fi
+	if [ -z "$(tag)" ]; then echo "Usage: make release tag=vX.Y.Z (or run /release in Claude Code to draft version and notes)"; exit 1; fi; \
+	git remote update; \
+	git status -uno | grep --silent "Your branch is up to date" || (echo "ERROR: your branch is NOT up to date with remote" && exit 1); \
+	([ -f dist/release_notes.md ] && git tag -a $(tag) --cleanup=verbatim -F dist/release_notes.md) || git tag -a $(tag) -m"$(tag)"; \
+	git push origin $(tag)

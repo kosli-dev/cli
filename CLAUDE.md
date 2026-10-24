@@ -91,14 +91,7 @@ All command tests in `cmd/kosli/` use the **testify suite** pattern:
 
 **NEVER use `gh release create` to cut a release.** It creates a lightweight tag and a premature GitHub Release, both of which break the release pipeline (never-alone-trail fails, GoReleaser conflicts with the pre-existing release).
 
-The release process is documented in [release-guide.md](/release-guide.md). The correct way to release:
-
-```bash
-make release              # Interactive: AI suggests version + changelog, you confirm
-make release tag=v2.x.y   # Fallback: explicit tag, no AI
-```
-
-Both paths create an **annotated tag** and push it. The `release.yml` workflow then runs GoReleaser, which creates the GitHub Release at the correct point in the pipeline. Do not create tags or releases via any other method.
+The release process is documented in [release-guide.md](/release-guide.md). To cut a release, use the `release` skill (`.claude/skills/release/`): it drafts the version and notes with the user, then runs `make release tag=v2.x.y`. That make target is the only path that creates the tag: it makes an **annotated tag** carrying `dist/release_notes.md` and pushes it. The `release.yml` workflow then runs GoReleaser, which creates the GitHub Release at the correct point in the pipeline. Do not create tags or releases via any other method.
 
 ## Working Style: TDD
 

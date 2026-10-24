@@ -24,47 +24,35 @@ Triggers when files under `charts/` change on `main`:
 
 ## Release process
 
-### Default: interactive release (AI version and changelog)
+### Default: release with the Claude Code `release` skill
 
-Run:
+In Claude Code, on an up-to-date `main`, run `/release` (or ask Claude to cut a release). The skill at `.claude/skills/release/SKILL.md`:
 
-```bash
-make release
-```
+1. Reads the commits and diffs since the last tag and picks out the user-facing CLI changes.
+2. Suggests the next semver tag, with the changes that justify the bump.
+3. Drafts `dist/release_notes.md` and revises it with you until you approve it.
+4. After a final confirmation, runs `make release tag=vX.Y.Z`, which creates an annotated tag with the release notes as the tag body and pushes it. The `release.yml` workflow reads the notes from the tag body and passes them to GoReleaser, which puts them at the top of the GitHub Release.
 
-**Prerequisites:** 
-
- You need:
-
-- **jq**, **curl** installed.
-- An Anthropic API key, provided in one of the following ways:
-  - **Via 1Password**: The **1Password CLI** (`op`), access to the shared vault, and the **1Password desktop app** linked to the CLI so `op` can read secrets. In the 1Password app: **Settings → Developer → Integrate with 1Password CLI**. See [Turn on the 1Password desktop app integration](https://developer.1password.com/docs/cli/get-started#step-2-turn-on-the-1password-desktop-app-integration).
-  - **Via environment variable**: Set `ANTHROPIC_API_KEY` directly in your environment (no 1Password required).
-
-**What happens:**
-
-1. A script uses Claude to suggest the next semver and draft release notes from the **git diff** (no commit messages). It reads the API key from 1Password via `op` using a default secret reference (vault/item/field); you can override with `OP_ANTHROPIC_API_KEY_REF` if your item lives elsewhere.
-2. You see the suggested tag and release notes. You can press Enter to open your editor and edit `dist/release_notes.md`, or Enter to skip.
-3. You are prompted: **Create tag vX.Y.Z and push? [y/N]**. On **y**, an annotated tag is created with the release notes as the tag body and pushed. The `release.yml` workflow runs on GitHub; it reads the notes from the tag body and passes them to GoReleaser, which puts them at the top of the GitHub Release. On **n**, nothing is pushed.
+It runs under your own Claude login; no Anthropic API key is involved.
 
 ### Release body layout
 
 The release body has two parts:
 
-1. The notes carried in the tag body — AI-drafted, edited by you, describing user-facing CLI changes.
+1. The notes carried in the tag body — drafted with the `release` skill or written by hand, describing user-facing CLI changes.
 2. GitHub's **What's Changed** list of merged PRs and the **Full Changelog** compare link, from GoReleaser's `github-native` changelog. Dependency bumps are filtered out by `.github/release.yml`.
 
 A tag with no notes gets part 2 only.
 
-### Fallback: release with an explicit tag
+### Without Claude Code: release with an explicit tag
 
-If you don’t want the AI flow (e.g. 1Password/`op` not available or the suggest step failed), run:
+Without Claude Code, run:
 
 ```bash
 make release tag=v2.x.y
 ```
 
-This checks the branch is up to date, creates an annotated tag (using `dist/release_notes.md` as the tag body if that file exists, otherwise the version string), and pushes it. No prompt. The release workflow runs as above; if the tag has no notes, the release body is the auto-generated **What's Changed** list alone.
+This checks the branch is up to date, creates an annotated tag (using `dist/release_notes.md` as the tag body if that file exists, otherwise the version string), and pushes it. No prompt, so check that any `dist/release_notes.md` left over from an earlier release is gone or rewritten first. The release workflow runs as above; if the tag has no notes, the release body is the auto-generated **What's Changed** list alone.
 
 ### 1. Pre-build
 
