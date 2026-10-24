@@ -2,13 +2,12 @@
 # Suggest next semver and changelog by sending the git diff to Claude.
 # Does not rely on commit messages. Changelog will be attached as a header to release Changelog.
 #
-# Auth (first non-empty wins):
-#   - ANTHROPIC_API_KEY: call Claude directly.
-#   - OP_ANTHROPIC_API_KEY_REF: 1Password reference (default below; override if your item path differs).
+# Calls Claude through the Claude Code CLI (`claude -p`), so it runs under the
+# releaser's own Claude login rather than a shared API key.
 #
 # Optional: CLAUDE_MODEL (default: claude-sonnet-5)
 #
-# Requires: curl, jq; for 1Password: op CLI
+# Requires: claude (Claude Code CLI, logged in), jq
 # Usage: bin/suggest-version-ai.sh [base_ref] [-o release_notes.md]
 #   base_ref defaults to the latest git tag.
 #   -o FILE  write changelog markdown to FILE (default: dist/release_notes.md)
@@ -39,15 +38,8 @@ set +o pipefail
 DIFF="$(git diff "$BASE_REF"..HEAD 2>/dev/null | head -c "$MAX_DIFF_CHARS")"
 set -o pipefail
 
-# Get API key from 1Password if not set (default ref; override with OP_ANTHROPIC_API_KEY_REF)
-OP_ANTHROPIC_API_KEY_REF="${OP_ANTHROPIC_API_KEY_REF:-op://Shared/Anthropic API Key/credential}"
-if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-  if command -v op >/dev/null 2>&1; then
-    ANTHROPIC_API_KEY=$(op read "$OP_ANTHROPIC_API_KEY_REF" 2>/dev/null) || true
-  fi
-fi
-if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-  echo "ERROR: Set ANTHROPIC_API_KEY or OP_ANTHROPIC_API_KEY_REF (1Password)." >&2
+if ! command -v claude >/dev/null 2>&1; then
+  echo "ERROR: Claude Code CLI (claude) not found. Install it and log in, or use: make release tag=vX.Y.Z" >&2
   exit 1
 fi
 
@@ -96,26 +88,25 @@ BUMP: major|minor|patch
 <markdown changelog here>"
 
 CLAUDE_MODEL="${CLAUDE_MODEL:-claude-sonnet-5}"
-DIFF_FILE=$(mktemp)
-trap 'rm -f "$DIFF_FILE" "$RELEASE_NOTES_FILE" "$SUGGESTED_VERSION_FILE"' EXIT
-printf '%s' "$DIFF" > "$DIFF_FILE"
-BODY=$(jq -n \
-  --arg model "$CLAUDE_MODEL" \
-  --arg prompt "$PROMPT" \
-  --rawfile diff "$DIFF_FILE" \
-  '{model: $model, max_tokens: 4096, messages: [{role: "user", content: ($prompt + "\n\n--- diff ---\n\n" + $diff)}]}')
+WORK_DIR=$(mktemp -d)
+trap 'rm -rf "$WORK_DIR"; rm -f "$RELEASE_NOTES_FILE" "$SUGGESTED_VERSION_FILE"' EXIT
+printf '%s\n\n--- diff ---\n\n%s' "$PROMPT" "$DIFF" > "$WORK_DIR/input"
 
-RESPONSE=$(curl -s -S -X POST "https://api.anthropic.com/v1/messages" \
-  -H "x-api-key: $ANTHROPIC_API_KEY" \
-  -H "anthropic-version: 2023-06-01" \
-  -H "Content-Type: application/json" \
-  -d "$BODY")
+# Run from an empty directory with no tools so the repo's CLAUDE.md and the
+# working tree don't leak into what should be a pure diff-in, text-out call.
+RESPONSE=$(cd "$WORK_DIR" && claude -p \
+  --model "$CLAUDE_MODEL" \
+  --tools "" \
+  --output-format json \
+  --no-session-persistence \
+  --strict-mcp-config \
+  --disable-slash-commands \
+  < input) || true
 
-# The response may start with a thinking block, so join all text blocks instead of reading content[0].
-CONTENT=$(echo "$RESPONSE" | jq -r '[.content[]? | select(.type == "text") | .text] | join("\n")')
+CONTENT=$(echo "$RESPONSE" | jq -r 'select(.is_error == false) | .result // empty' 2>/dev/null) || true
 if [ -z "$CONTENT" ]; then
-  echo "ERROR: Anthropic API failed or returned no content. Response:" >&2
-  echo "$RESPONSE" | jq . >&2
+  echo "ERROR: claude -p failed or returned no content. Response:" >&2
+  echo "$RESPONSE" >&2
   exit 1
 fi
 

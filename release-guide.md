@@ -36,14 +36,12 @@ make release
 
  You need:
 
-- **jq**, **curl** installed.
-- An Anthropic API key, provided in one of the following ways:
-  - **Via 1Password**: The **1Password CLI** (`op`), access to the shared vault, and the **1Password desktop app** linked to the CLI so `op` can read secrets. In the 1Password app: **Settings → Developer → Integrate with 1Password CLI**. See [Turn on the 1Password desktop app integration](https://developer.1password.com/docs/cli/get-started#step-2-turn-on-the-1password-desktop-app-integration).
-  - **Via environment variable**: Set `ANTHROPIC_API_KEY` directly in your environment (no 1Password required).
+- **jq** installed.
+- The **Claude Code CLI** (`claude`) installed and logged in with your own Claude account. The script calls `claude -p`, so no Anthropic API key is needed.
 
 **What happens:**
 
-1. A script uses Claude to suggest the next semver and draft release notes from the **git diff** (no commit messages). It reads the API key from 1Password via `op` using a default secret reference (vault/item/field); you can override with `OP_ANTHROPIC_API_KEY_REF` if your item lives elsewhere.
+1. A script uses Claude to suggest the next semver and draft release notes from the **git diff** (no commit messages). It runs through `claude -p` under your own Claude login; set `CLAUDE_MODEL` to override the default model.
 2. You see the suggested tag and release notes. You can press Enter to open your editor and edit `dist/release_notes.md`, or Enter to skip.
 3. You are prompted: **Create tag vX.Y.Z and push? [y/N]**. On **y**, an annotated tag is created with the release notes as the tag body and pushed. The `release.yml` workflow runs on GitHub; it reads the notes from the tag body and passes them to GoReleaser, which puts them at the top of the GitHub Release. On **n**, nothing is pushed.
 

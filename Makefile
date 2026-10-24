@@ -218,11 +218,10 @@ docs: build ## Generate CLI reference docs (use CMD="attest snyk" for one comman
 
 # Suggest next semver and changelog using Claude.
 # Writes changelog to dist/release_notes.md, used as the annotated tag's body.
-# Requires: jq, curl, op (1Password CLI). API key from 1Password via op.
+# Requires: jq, claude (Claude Code CLI, logged in).
 # Usage: make suggest-version-ai [BASE_REF=v1.2.3]
 suggest-version-ai: ## Suggest next version using AI
 	@command -v jq >/dev/null 2>&1 || (echo "Install jq (e.g. brew install jq)" && exit 1)
-	@command -v curl >/dev/null 2>&1 || (echo "Install curl (e.g. brew install curl)" && exit 1)
 	@bin/suggest-version-ai.sh $(BASE_REF) -o dist/release_notes.md
 
 # Release: without tag → suggest version + changelog, then interactive edit & confirm, then tag and push.
@@ -233,7 +232,6 @@ release: ## Cut a new release and push next tag
 	if [ "$$current" != "main" ]; then echo "ERROR: release must be run from main branch (current: $$current)"; exit 1; fi; \
 	if [ -z "$(tag)" ]; then \
 	  command -v jq >/dev/null 2>&1 || (echo "Install jq (e.g. brew install jq)" && exit 1); \
-	  command -v curl >/dev/null 2>&1 || (echo "Install curl (e.g. brew install curl)" && exit 1); \
 	  bin/suggest-version-ai.sh -o dist/release_notes.md; \
 	  if [ ! -f dist/suggested_version ]; then \
 	    echo "Suggestion failed or no previous tag. Use: make release tag=vX.Y.Z"; exit 1; \
