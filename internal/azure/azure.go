@@ -295,7 +295,8 @@ func (c *AzureConfig) pullRequestReviewers(prNumber int) ([]git.IdentityRefWithV
 }
 
 // azureReviewerName gives "" for a reviewer with no identity, such as a
-// deleted account, so its vote is never counted as an approval.
+// deleted account. Its vote is never counted as an approval in approvers or
+// reviews.
 func azureReviewerName(r git.IdentityRefWithVote) string {
 	if value(r.DisplayName) == "" && value(r.UniqueName) == "" {
 		return ""
@@ -337,7 +338,13 @@ func azureReviews(reviewers []git.IdentityRefWithVote) []types.PRApprovals {
 		default:
 			continue
 		}
-		reviews = append(reviews, types.PRApprovals{Username: azureReviewerName(r), State: state})
+		name := azureReviewerName(r)
+		// A change request is kept without a name: dropping it would read as
+		// none given.
+		if name == "" && state != types.ReviewChangesRequested {
+			continue
+		}
+		reviews = append(reviews, types.PRApprovals{Username: name, State: state})
 	}
 	return reviews
 }

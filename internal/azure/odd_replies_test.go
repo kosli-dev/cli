@@ -309,9 +309,9 @@ func requireFullAzureEvidence(t *testing.T, e *types.PREvidence) {
 	}, e.Reviews)
 }
 
-// A reviewer with no displayName or uniqueName (a deleted account) is left
-// out of approvers, so it never counts as an approval, but is kept in reviews
-// with an empty name. It never fails evidence collection.
+// A reviewer with no displayName or uniqueName (a deleted account) never
+// counts as an approval in approvers or reviews; only a change request is kept
+// in reviews, with an empty name. It never fails evidence collection.
 func TestPREvidenceReviewerWithNoIdentity(t *testing.T) {
 	fake := &fakeAzureDevOps{}
 	server := httptest.NewServer(fake)
@@ -324,8 +324,8 @@ func TestPREvidenceReviewerWithNoIdentity(t *testing.T) {
 		vote  int
 		state string // the nameless review's state; "" for none
 	}{
-		{"approved", 10, types.ReviewApproved},
-		{"approved with suggestions", 5, types.ReviewApproved},
+		{"approved", 10, ""},
+		{"approved with suggestions", 5, ""},
 		{"waiting for author", -5, types.ReviewChangesRequested},
 		{"rejected", -10, types.ReviewChangesRequested},
 		{"no vote", 0, ""},
