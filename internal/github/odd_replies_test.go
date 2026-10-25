@@ -559,3 +559,73 @@ func errorPath(t *testing.T, path string) []any {
 	}
 	return out
 }
+
+// A null list item's error says what the list belongs to: the commit for its
+// pull requests, or the pull request for its commits and reviews.
+func TestOddReplies_NullItemErrorNamesItsOwner(t *testing.T) {
+	for _, ep := range oddEntryPoints {
+		for _, reply := range ep.replies {
+			if reply == replySigners {
+				continue // A null signer node isn't an error.
+			}
+			variants, err := testHelpers.NullVariants([]byte(oddBaselineReplies()[reply]))
+			require.NoError(t, err)
+			for _, v := range variants {
+				if !strings.HasSuffix(v.Path, "]") || strings.HasSuffix(v.Path, "[]") {
+					continue
+				}
+				t.Run(ep.name+"/"+reply+"/"+v.Path, func(t *testing.T) {
+					replies := oddBaselineReplies()
+					replies[reply] = string(v.Body)
+					ts := newOddReplyServer(t, replies)
+					_, err := ep.run(&GithubConfig{Token: "fake-token", BaseURL: ts.URL, Org: "test-org",
+						Repository: "test-repo", Sleep: func(time.Duration) {}})
+					owner := "for test-org/test-repo#7 "
+					if regexp.MustCompile(`associatedPullRequests\.nodes\[\d+\]$`).MatchString(v.Path) {
+						owner = "for commit merge-sha "
+					}
+					require.ErrorContains(t, err, owner)
+				})
+			}
+		}
+	}
+}
+
+// A commit with no author is recorded with an empty author, not " <>".
+func TestOddReplies_MissingCommitAuthorIsEmpty(t *testing.T) {
+	author := `"author":{"name":"Ada","email":"ada@example.com","user":{"login":"ada"}},`
+	for _, ep := range oddEntryPoints {
+		t.Run(ep.name, func(t *testing.T) {
+			replies := oddBaselineReplies()
+			require.Equal(t, 1, strings.Count(replies[replyCommitPage], author))
+			replies[replyCommitPage] = strings.Replace(replies[replyCommitPage], author, `"author":null,`, 1)
+			ts := newOddReplyServer(t, replies)
+			evidence, err := ep.run(&GithubConfig{Token: "fake-token", BaseURL: ts.URL, Org: "test-org",
+				Repository: "test-repo", Sleep: func(time.Duration) {}})
+			require.NoError(t, err)
+			var authors []string
+			for _, c := range evidence.Commits {
+				authors = append(authors, c.Author)
+			}
+			require.Equal(t, []string{"Ada <ada@example.com>", ""}, authors)
+		})
+		t.Run(ep.name+"/name only", func(t *testing.T) {
+			replies := oddBaselineReplies()
+			replies[replyCommitPage] = strings.Replace(replies[replyCommitPage], author, `"author":{"name":"Ada","email":null,"user":null},`, 1)
+			ts := newOddReplyServer(t, replies)
+			evidence, err := ep.run(&GithubConfig{Token: "fake-token", BaseURL: ts.URL, Org: "test-org",
+				Repository: "test-repo", Sleep: func(time.Duration) {}})
+			require.NoError(t, err)
+			require.Equal(t, "Ada <>", evidence.Commits[1].Author, "one part is enough to keep the format")
+		})
+		t.Run(ep.name+"/email only", func(t *testing.T) {
+			replies := oddBaselineReplies()
+			replies[replyCommitPage] = strings.Replace(replies[replyCommitPage], author, `"author":{"name":null,"email":"ada@example.com","user":null},`, 1)
+			ts := newOddReplyServer(t, replies)
+			evidence, err := ep.run(&GithubConfig{Token: "fake-token", BaseURL: ts.URL, Org: "test-org",
+				Repository: "test-repo", Sleep: func(time.Duration) {}})
+			require.NoError(t, err)
+			require.Equal(t, " <ada@example.com>", evidence.Commits[1].Author, "one part is enough to keep the format")
+		})
+	}
+}

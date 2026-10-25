@@ -169,7 +169,7 @@ func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, r
 		return page.Nodes, page.PageInfo, nil
 	})
 	if err == nil {
-		return nonNull(commits, "commits")
+		return nonNull(commits, "commits", ref.String())
 	}
 	return nil, fmt.Errorf("draining commits for %s: %w", ref, err)
 }
@@ -198,7 +198,7 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, r
 		return page.Nodes, page.PageInfo, nil
 	})
 	if err == nil {
-		return nonNull(reviews, "reviews")
+		return nonNull(reviews, "reviews", ref.String())
 	}
 	return nil, fmt.Errorf("draining reviews for %s: %w", ref, err)
 }

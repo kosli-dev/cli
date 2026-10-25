@@ -427,10 +427,15 @@ func buildPREvidence(
 			signatureState = &s
 			signedByPlatform = &p
 		}
+		// A commit with no author is recorded as "", not " <>".
+		author := ""
+		if n.Commit.Author.Name != "" || n.Commit.Author.Email != "" {
+			author = fmt.Sprintf("%s <%s>", string(n.Commit.Author.Name), string(n.Commit.Author.Email))
+		}
 		evidence.Commits = append(evidence.Commits, types.Commit{
 			SHA:              string(n.Commit.Oid),
 			Message:          string(n.Commit.MessageHeadline),
-			Author:           fmt.Sprintf("%s <%s>", string(n.Commit.Author.Name), string(n.Commit.Author.Email)),
+			Author:           author,
 			AuthorUsername:   authorUsername,
 			Timestamp:        timestamp,
 			Branch:           headRef,
@@ -490,12 +495,13 @@ func unixTime(s string) (int64, error) {
 }
 
 // nonNull returns items as values. A null item is an entry the reply could
-// not give, so it fails rather than being skipped.
-func nonNull[T any](items []*T, list string) ([]T, error) {
+// not give, so it fails rather than being skipped. owner says what the list
+// belongs to.
+func nonNull[T any](items []*T, list, owner string) ([]T, error) {
 	out := make([]T, 0, len(items))
 	for i, item := range items {
 		if item == nil {
-			return nil, fmt.Errorf("%s[%d] is null in the GitHub reply", list, i)
+			return nil, fmt.Errorf("%s[%d] for %s is null in the GitHub reply", list, i, owner)
 		}
 		out = append(out, *item)
 	}
@@ -656,7 +662,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 	if query.Repository == nil {
 		return pullRequestsEvidence, fmt.Errorf("could not find repository %s/%s", c.Org, c.Repository)
 	}
-	prs, err := nonNull(query.Repository.Object.Commit.AssociatedPullRequests.Nodes, "associatedPullRequests")
+	prs, err := nonNull(query.Repository.Object.Commit.AssociatedPullRequests.Nodes, "associatedPullRequests", "commit "+commit)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
