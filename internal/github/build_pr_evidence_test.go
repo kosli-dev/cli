@@ -220,6 +220,20 @@ func reviewNode(login, state, submittedAt, commit string) graphqlReviewNode {
 	return r
 }
 
+func TestBuildPREvidence_UnnamedReviewIsKeptOnlyAsAChangeRequest(t *testing.T) {
+	evidence, err := buildPREvidence("u", "m", "MERGED", "tooky", "2026-03-01T09:00:00Z", "",
+		"title", "feature", "main", "h", nil,
+		[]graphqlReviewNode{
+			reviewNode("", "COMMENTED", "2026-03-01T13:00:00Z", ""),
+			reviewNode("ghost", "DISMISSED", "2026-03-01T13:00:00Z", ""),
+			reviewNode("", "APPROVED", "2026-03-01T13:00:00Z", ""),
+			reviewNode("ghost", "CHANGES_REQUESTED", "2026-03-01T13:00:00Z", ""),
+		}, nil)
+	require.NoError(t, err)
+	require.Equal(t, []types.PRApprovals{{State: "CHANGES_REQUESTED", Timestamp: 1772370000}}, evidence.Reviews)
+	require.Empty(t, evidence.Approvers)
+}
+
 func TestBuildPREvidence_RecordsWhichCommitAnApprovalCovered(t *testing.T) {
 	evidence, err := buildPREvidence(
 		"https://github.com/kosli-dev/cli/pull/671",
