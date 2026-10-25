@@ -442,13 +442,15 @@ func buildPREvidence(
 		})
 	}
 
-	counted := []types.PRApprovals{}
 	for _, r := range reviewNodes {
+		login, keep := reviewer(string(r.Author.Login), string(r.State))
+		if !keep {
+			continue
+		}
 		submittedAt, err := unixTime(string(r.SubmittedAt))
 		if err != nil {
 			return nil, err
 		}
-		login, known := reviewer(string(r.Author.Login))
 		review := types.PRApprovals{
 			Username:  login,
 			State:     string(r.State),
@@ -458,23 +460,21 @@ func buildPREvidence(
 			review.CommitSHA = string(r.Commit.Oid)
 		}
 		evidence.Reviews = append(evidence.Reviews, review)
-		if known {
-			counted = append(counted, review)
-		}
 	}
-	evidence.Approvers = types.ApprovalsFrom(counted)
+	evidence.Approvers = types.ApprovalsFrom(evidence.Reviews)
 
 	return evidence, nil
 }
 
-// reviewer returns a review's login and whether an account stands behind it.
-// GitHub sends a deleted account as a null author or as the "ghost" login;
-// its review is kept, but it must never count as an approval.
-func reviewer(login string) (string, bool) {
+// reviewer returns a review's login and whether to keep the review. GitHub
+// sends a deleted account as a null author or as the "ghost" login. Policies
+// read reviews as well as approvers, so a review with no account is kept only
+// as a change request: dropping that would read as none given.
+func reviewer(login, state string) (string, bool) {
 	if login == "ghost" {
 		login = ""
 	}
-	return login, login != ""
+	return login, login != "" || state == types.ReviewChangesRequested
 }
 
 // unixTime parses a GitHub timestamp. A null one reads as "" and gives 0.
@@ -800,8 +800,8 @@ func (c *GithubConfig) listApprovers(ctx context.Context, client *gh.Client,
 			return nil, err
 		}
 		for _, r := range reviews {
-			login, known := reviewer(r.GetUser().GetLogin())
-			if r.GetState() == types.ReviewApproved && known && !seen[login] {
+			login, keep := reviewer(r.GetUser().GetLogin(), r.GetState())
+			if r.GetState() == types.ReviewApproved && keep && !seen[login] {
 				seen[login] = true
 				approvers = append(approvers, login)
 			}

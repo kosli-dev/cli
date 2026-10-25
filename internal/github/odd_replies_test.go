@@ -311,7 +311,7 @@ func requireRuleHolds(t *testing.T, reply, path, outcome string) {
 	case oddAllowedErrors[key] != "":
 		require.Equal(t, "error", outcome, oddAllowedErrors[key])
 	case isApprovalAuthor(t, reply, path):
-		// A deleted account's approval is kept as a review but not counted.
+		// A deleted account's approval is left out of reviews and approvers.
 		require.True(t, strings.HasPrefix(outcome, "ok"), "a review by a deleted account is legal, got %q", outcome)
 		require.Contains(t, outcome, ":approvers", "an approval by nobody must not count")
 	case oddWholePRLost[key]:
@@ -430,28 +430,43 @@ func requireFailsUnlessSigners(t *testing.T, reply, nulledPath, outcome string) 
 	require.Equal(t, "error", outcome)
 }
 
-// TestOddReplies_ApprovalWithNoAuthorIsNotCounted covers a deleted account:
-// GraphQL sends a null author, and "ghost" is GitHub's stand-in login for one.
-func TestOddReplies_ApprovalWithNoAuthorIsNotCounted(t *testing.T) {
+// TestOddReplies_ReviewWithNoAuthor covers a deleted account: GraphQL sends a
+// null author, and "ghost" is GitHub's stand-in login for one. Policies read
+// Reviews, so only a change request is kept there without a name.
+func TestOddReplies_ReviewWithNoAuthor(t *testing.T) {
 	for _, author := range []string{"null", `{"login":"ghost"}`} {
 		for _, ep := range oddEntryPoints {
-			t.Run(ep.name+"/"+author, func(t *testing.T) {
+			t.Run(ep.name+"/approval/"+author, func(t *testing.T) {
 				replies := oddBaselineReplies()
 				noAuthor := strings.Replace(oddApproval, `{"login":"grace"}`, author, 1)
 				for _, name := range []string{replyByNumber, replyForCommit} {
 					replies[name] = strings.Replace(replies[name], oddApproval, noAuthor, 1)
 				}
-				ts := newOddReplyServer(t, replies)
-				e, err := ep.run(&GithubConfig{Token: "fake-token", BaseURL: ts.URL, Org: "test-org",
-					Repository: "test-repo", Sleep: func(time.Duration) {}})
-				require.NoError(t, err)
+				e := runReviewReplies(t, ep, replies)
 				require.Empty(t, e.Approvers)
+				require.Len(t, e.Reviews, 1)
+				require.Equal(t, types.ReviewChangesRequested, e.Reviews[0].State)
+			})
+			t.Run(ep.name+"/change request/"+author, func(t *testing.T) {
+				replies := oddBaselineReplies()
+				replies[replyReviewPage] = strings.Replace(replies[replyReviewPage], `{"login":"linus"}`, author, 1)
+				e := runReviewReplies(t, ep, replies)
+				require.Len(t, e.Approvers, 1)
 				require.Len(t, e.Reviews, 2)
-				require.Equal(t, "", e.Reviews[0].Username)
-				require.Equal(t, types.ReviewApproved, e.Reviews[0].State)
+				require.Equal(t, "", e.Reviews[1].Username)
+				require.Equal(t, types.ReviewChangesRequested, e.Reviews[1].State)
 			})
 		}
 	}
+}
+
+func runReviewReplies(t *testing.T, ep oddEntryPoint, replies map[string]string) *types.PREvidence {
+	t.Helper()
+	ts := newOddReplyServer(t, replies)
+	e, err := ep.run(&GithubConfig{Token: "fake-token", BaseURL: ts.URL, Org: "test-org",
+		Repository: "test-repo", Sleep: func(time.Duration) {}})
+	require.NoError(t, err)
+	return e
 }
 
 // isApprovalAuthor reports whether path is the author of an approving review
