@@ -291,6 +291,13 @@ func (c *AzureConfig) pullRequestReviewers(prNumber int) ([]git.IdentityRefWithV
 	if err != nil {
 		return nil, err
 	}
+	// The SDK decodes a null reviewer as an empty one, so a missing id is the
+	// only sign of it. Skipping it could hide a change request.
+	for i, r := range value(reviewers) {
+		if value(r.Id) == "" {
+			return nil, fmt.Errorf("reviewer %d of pull request %d has no id", i, prNumber)
+		}
+	}
 	return value(reviewers), nil
 }
 

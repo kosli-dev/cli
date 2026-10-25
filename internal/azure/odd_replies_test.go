@@ -174,12 +174,12 @@ var oddBaselineReplies = map[string]string{
 var oddAllowedErrors = map[string]string{
 	"pullRequestQuery results[i]." + oddMergeCommit + "[i].pullRequestId": "the commits and reviewers requests need it",
 	"commits value[i].commitId": "a commit with no id reads the same as a null one",
+	"reviewers value[i].id":     "a reviewer with no id reads the same as a null one",
 }
 
 // oddAllowedSkips lists the list items whose null may be left out instead of
 // failing, keyed as oddAllowedErrors is.
 var oddAllowedSkips = map[string]string{
-	"reviewers value[i]":          "a null reviewer reads as one with no vote, which has never been a review",
 	"pullRequestQuery results[i]": "a null result reads as no pull requests, as on main; Azure may send it for a commit with none",
 }
 
@@ -337,7 +337,7 @@ func TestPREvidenceReviewerWithNoIdentity(t *testing.T) {
 			}
 			replies["reviewers"] = fmt.Sprintf(`{"count": 2, "value": [
   {"vote": %d, "id": "d6245f20-2af8-44f4-9451-8107cb2767db"},
-  {"vote": 10, "displayName": "Johnnie McLeod", "uniqueName": "fabrikamfiber2@hotmail.com"}
+  {"vote": 10, "displayName": "Johnnie McLeod", "uniqueName": "fabrikamfiber2@hotmail.com", "id": "e3dc4a5c-6b7e-4f8a-9b0c-1d2e3f4a5b6c"}
 ]}`, tc.vote)
 			fake.set(replies)
 
@@ -374,7 +374,7 @@ func TestPREvidenceReviewerWithOneName(t *testing.T) {
 			for k, body := range oddBaselineReplies {
 				replies[k] = body
 			}
-			replies["reviewers"] = fmt.Sprintf(`{"count": 1, "value": [{"vote": 10, %q: "Normal Paulk"}]}`, field)
+			replies["reviewers"] = fmt.Sprintf(`{"count": 1, "value": [{"vote": 10, %q: "Normal Paulk", "id": "d6245f20-2af8-44f4-9451-8107cb2767db"}]}`, field)
 			fake.set(replies)
 
 			v1, err := config.PREvidenceForCommitV1(oddMergeCommit)
@@ -382,4 +382,27 @@ func TestPREvidenceReviewerWithOneName(t *testing.T) {
 			require.Equal(t, []any{want}, v1[0].Approvers)
 		})
 	}
+}
+
+// The SDK decodes a null reviewer as an empty one, so a missing id is the only
+// sign of it. Skipping it could hide a change request, so it fails.
+func TestPREvidenceReviewerWithNoIDFails(t *testing.T) {
+	fake := &fakeAzureDevOps{}
+	server := httptest.NewServer(fake)
+	t.Cleanup(server.Close)
+	config := NewAzureConfig("pat", server.URL+"/fabrikam", "Fabrikam-Fiber-Git", "Fabrikam-Fiber-Git")
+	replies := map[string]string{}
+	for k, body := range oddBaselineReplies {
+		replies[k] = body
+	}
+	replies["reviewers"] = `{"count": 2, "value": [
+  {"vote": -10, "displayName": "Normal Paulk", "uniqueName": "fabrikamfiber16@hotmail.com"},
+  {"vote": 10, "displayName": "Johnnie McLeod", "uniqueName": "fabrikamfiber2@hotmail.com", "id": "e3dc4a5c-6b7e-4f8a-9b0c-1d2e3f4a5b6c"}
+]}`
+	fake.set(replies)
+
+	_, err := config.PREvidenceForCommitV1(oddMergeCommit)
+	require.ErrorContains(t, err, "reviewer 0 of pull request 22 has no id")
+	_, err = config.PREvidenceForCommitV2(oddMergeCommit)
+	require.ErrorContains(t, err, "reviewer 0 of pull request 22 has no id")
 }
