@@ -265,6 +265,8 @@ func gitlabApprovers(approvedBy []*gitlab.MergeRequestApproverUser, version int6
 // reviewers can approve too. A change request outweighs an approval by the
 // same person, as there are no review times to order them by.
 func gitlabReviews(approvedBy []*gitlab.MergeRequestApproverUser, reviewers []*gitlab.MergeRequestReviewer) []types.PRApprovals {
+	// Users with no account all share the key "". That's safe only because
+	// add keeps no nameless entry other than a change request.
 	reviewerStates := map[string]string{}
 	for _, r := range reviewers {
 		reviewerStates[gitlabUsername(r.User)] = r.State
