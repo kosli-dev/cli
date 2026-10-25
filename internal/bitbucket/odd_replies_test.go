@@ -256,9 +256,9 @@ var oddAllowedErrors = map[string]string{
 // oddListOwners is what each read list belongs to, as its error names it.
 var oddListOwners = map[string]string{
 	"commit_pullrequests":   "for commit " + oddCommit + " ",
-	"pullrequest":           "for pull request https://bitbucket.org/acme/widgets/pull-requests/7 ",
-	"pullrequest_commits_1": "for pull request 7 ",
-	"pullrequest_commits_2": "for pull request 7 ",
+	"pullrequest":           "/2.0/repositories/acme/widgets/pullrequests/7 ",
+	"pullrequest_commits_1": "for pull request 7, page 1 ",
+	"pullrequest_commits_2": "for pull request 7, page 2 ",
 }
 
 // oddReadLists are the lists the code reads, per reply. A null item in one of
@@ -410,7 +410,8 @@ func TestOddReplies_CommitPagesThatCycleFail(t *testing.T) {
 // A commit with no hash can't be attested, so it fails rather than being
 // recorded with an empty SHA.
 func TestOddReplies_CommitWithNoHashFails(t *testing.T) {
-	for _, page := range []string{"pullrequest_commits_1", "pullrequest_commits_2"} {
+	// Commits are numbered across pages, so each index names one commit.
+	for page, index := range map[string]string{"pullrequest_commits_1": "0", "pullrequest_commits_2": "1"} {
 		t.Run(page, func(t *testing.T) {
 			replies := oddBaselineReplies()
 			hash := regexp.MustCompile(`"hash": "[0-9a-f]{40}",\n\t\t"date"`)
@@ -418,7 +419,7 @@ func TestOddReplies_CommitWithNoHashFails(t *testing.T) {
 			replies[page] = hash.ReplaceAllString(replies[page], `"hash": null,
 		"date"`)
 			_, err := runOddReplies(t, 2, replies)
-			require.ErrorContains(t, err, "for pull request 7 has no hash")
+			require.ErrorContains(t, err, "commit "+index+" for pull request 7 has no hash")
 		})
 	}
 }

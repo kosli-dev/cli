@@ -184,7 +184,7 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 		evidence.URL = prHtmlLink
 		evidence.MergeCommit = commit
 		evidence.State = str(responseData, "state")
-		participants, err := objects(responseData, "participants", "pull request "+prHtmlLink)
+		participants, err := objects(responseData, "participants", "pull request "+prApiUrl)
 		if err != nil {
 			return evidence, err
 		}
@@ -341,14 +341,14 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 			return nil, err
 		}
 
-		commits, err := objects(responseData, "values", fmt.Sprintf("pull request %d", prID))
+		commits, err := objects(responseData, "values", fmt.Sprintf("pull request %d, page %d", prID, pages+1))
 		if err != nil {
 			return nil, err
 		}
 
-		for i, commit := range commits {
+		for _, commit := range commits {
 			if str(commit, "hash") == "" {
-				return nil, fmt.Errorf("commit %d for pull request %d has no hash", i, prID)
+				return nil, fmt.Errorf("commit %d for pull request %d has no hash", len(allCommits), prID)
 			}
 			timestamp, err := parseRFC3339NanoTimestamp(str(commit, "date"), "date")
 			if err != nil {
