@@ -32,8 +32,6 @@ func TestBitbucketReviews(t *testing.T) {
 		{Username: "Cy", State: types.ReviewChangesRequested},
 		{Username: "Di", State: types.ReviewCommented, Timestamp: 1772377200},
 		{State: types.ReviewChangesRequested},
-		{State: types.ReviewCommented, Timestamp: 1772380800},
-		{State: types.ReviewApproved, Timestamp: 1772384400},
 	}, reviews)
 }
 

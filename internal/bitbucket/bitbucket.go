@@ -280,6 +280,11 @@ func bitbucketReviews(participants []map[string]any) ([]types.PRApprovals, error
 		default:
 			continue
 		}
+		// A change request is kept without a name: dropping it would read as
+		// none given.
+		if username == "" && state != types.ReviewChangesRequested {
+			continue
+		}
 		timestamp, err := parseRFC3339NanoTimestamp(participatedOn, "participated_on")
 		if err != nil {
 			return nil, err
