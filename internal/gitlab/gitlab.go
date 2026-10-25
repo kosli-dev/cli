@@ -207,7 +207,7 @@ func (c *GitlabConfig) GetMergeRequestReviews(mrIID int64) ([]any, []types.PRApp
 }
 
 // gitlabUserName is empty when GitLab names no account (a deleted user): such
-// a review can't count as an approval or be matched to another review.
+// a review is never an approver, and is in Reviews only if it requests changes.
 func gitlabUserName(u *gitlab.BasicUser) string {
 	if u == nil || u.Username == "" {
 		return ""
@@ -267,28 +267,31 @@ func gitlabApprovers(approvedBy []*gitlab.MergeRequestApproverUser, version int6
 func gitlabReviews(approvedBy []*gitlab.MergeRequestApproverUser, reviewers []*gitlab.MergeRequestReviewer) []types.PRApprovals {
 	reviewerStates := map[string]string{}
 	for _, r := range reviewers {
-		if username := gitlabUsername(r.User); username != "" {
-			reviewerStates[username] = r.State
-		}
+		reviewerStates[gitlabUsername(r.User)] = r.State
 	}
 	reviews := []types.PRApprovals{}
+	add := func(u *gitlab.BasicUser, state string) {
+		name := gitlabUserName(u)
+		// A change request is kept without a name: dropping it would read as
+		// none given.
+		if name == "" && state != types.ReviewChangesRequested {
+			return
+		}
+		reviews = append(reviews, types.PRApprovals{Username: name, State: state})
+	}
 	approved := map[string]bool{}
 	for _, a := range approvedBy {
-		username := gitlabUsername(a.User)
-		if username != "" {
-			approved[username] = true
-		}
-		if reviewerStates[username] != "requested_changes" {
-			reviews = append(reviews, types.PRApprovals{Username: gitlabUserName(a.User), State: types.ReviewApproved})
+		approved[gitlabUsername(a.User)] = true
+		if reviewerStates[gitlabUsername(a.User)] != "requested_changes" {
+			add(a.User, types.ReviewApproved)
 		}
 	}
 	for _, r := range reviewers {
-		name := gitlabUserName(r.User)
 		switch {
 		case r.State == "requested_changes":
-			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewChangesRequested})
+			add(r.User, types.ReviewChangesRequested)
 		case r.State == "reviewed" && !approved[gitlabUsername(r.User)]:
-			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewCommented})
+			add(r.User, types.ReviewCommented)
 		}
 	}
 	return reviews

@@ -241,8 +241,8 @@ func TestOddReplies(t *testing.T) {
 	}
 }
 
-// A review whose account GitLab no longer names (a deleted user) is kept in
-// Reviews with no name, but never counts as an approver.
+// A review whose account GitLab no longer names (a deleted user) is never an
+// approver, and is kept in Reviews, without a name, only if it requests changes.
 func TestOddReplies_ReviewByNoOne(t *testing.T) {
 	approver := types.PRApprovals{Username: "John Doe1 (@user1)"}
 	approved := types.PRApprovals{Username: "John Doe1 (@user1)", State: types.ReviewApproved}
@@ -254,17 +254,19 @@ func TestOddReplies_ReviewByNoOne(t *testing.T) {
 		wantReviews   []types.PRApprovals
 	}{
 		{"approval with no user", map[string]string{"approvals": "approved_by[0].user"},
-			nil, []types.PRApprovals{{State: types.ReviewApproved}, commented}},
+			nil, []types.PRApprovals{commented}},
 		{"approval with no username", map[string]string{"approvals": "approved_by[0].user.username"},
-			nil, []types.PRApprovals{{State: types.ReviewApproved}, commented}},
-		{"review with no user", map[string]string{"reviewers": "[1].user"},
-			[]any{approver}, []types.PRApprovals{approved, {State: types.ReviewCommented}}},
-		{"review with no username", map[string]string{"reviewers": "[1].user.username"},
-			[]any{approver}, []types.PRApprovals{approved, {State: types.ReviewCommented}}},
-		{"approval and review by no one are not matched", map[string]string{"approvals": "approved_by[0].user", "reviewers": "[1].user"},
-			nil, []types.PRApprovals{{State: types.ReviewApproved}, {State: types.ReviewCommented}}},
-		{"change request by no one does not hide an approval by no one", map[string]string{"approvals": "approved_by[0].user", "reviewers": "[1].user", "requested_changes": ""},
-			nil, []types.PRApprovals{{State: types.ReviewApproved}, {State: types.ReviewChangesRequested}}},
+			nil, []types.PRApprovals{commented}},
+		{"comment with no user", map[string]string{"reviewers": "[1].user"},
+			[]any{approver}, []types.PRApprovals{approved}},
+		{"comment with no username", map[string]string{"reviewers": "[1].user.username"},
+			[]any{approver}, []types.PRApprovals{approved}},
+		{"approval and comment by no one", map[string]string{"approvals": "approved_by[0].user", "reviewers": "[1].user"},
+			nil, []types.PRApprovals{}},
+		{"change request by no one is kept", map[string]string{"reviewers": "[1].user", "requested_changes": ""},
+			[]any{approver}, []types.PRApprovals{approved, {State: types.ReviewChangesRequested}}},
+		{"change request by no one is kept beside an approval by no one", map[string]string{"approvals": "approved_by[0].user", "reviewers": "[1].user", "requested_changes": ""},
+			nil, []types.PRApprovals{{State: types.ReviewChangesRequested}}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
