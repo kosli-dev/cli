@@ -344,10 +344,15 @@ func commitFromGitlabCommit(commit *gitlab.Commit, branch string) types.Commit {
 	if commit.AuthoredDate != nil {
 		timestamp = commit.AuthoredDate.Unix()
 	}
+	// A commit with no author is recorded as "", not " <>".
+	author := ""
+	if commit.AuthorName != "" || commit.AuthorEmail != "" {
+		author = fmt.Sprintf("%s <%s>", commit.AuthorName, commit.AuthorEmail)
+	}
 	return types.Commit{
 		SHA:       commit.ID,
 		Message:   commit.Message,
-		Author:    fmt.Sprintf("%s <%s>", commit.AuthorName, commit.AuthorEmail),
+		Author:    author,
 		Timestamp: timestamp,
 		Branch:    branch,
 		URL:       commit.WebURL,
