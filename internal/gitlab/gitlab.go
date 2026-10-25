@@ -3,6 +3,7 @@ package gitlab
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/kosli-dev/cli/internal/types"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -121,9 +122,9 @@ func (c *GitlabConfig) newPRGitlabEvidenceV2(mr *gitlab.BasicMergeRequest) (*typ
 		URL:         mr.WebURL,
 		MergeCommit: mr.MergeCommitSHA,
 		State:       mr.State,
-		Author:      fmt.Sprintf("%s (@%s)", mr.Author.Name, mr.Author.Username),
-		CreatedAt:   mr.CreatedAt.Unix(),
-		MergedAt:    mr.MergedAt.Unix(),
+		Author:      gitlabUserName(mr.Author),
+		CreatedAt:   unixOrZero(mr.CreatedAt),
+		MergedAt:    unixOrZero(mr.MergedAt),
 		Title:       mr.Title,
 	}
 	evidence.HeadRef, evidence.BaseRef = gitlabMRRefs(mr)
@@ -153,7 +154,7 @@ func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.BasicMer
 	if err != nil {
 		return mrs, fmt.Errorf("failed to list merge requests for commit %s: %w", commit, err)
 	}
-	return mrs, nil
+	return mrs, noNullItems("merge requests", "commit "+commit, mrs)
 }
 
 // GetMergeRequestApprovers returns a list of users (name and username) who approved an MR
@@ -163,11 +164,19 @@ func (c *GitlabConfig) GetMergeRequestApprovers(mrIID, version int64) ([]any, er
 	if err != nil {
 		return approvers, err
 	}
-	approvals, _, err := client.MergeRequestApprovals.GetConfiguration(c.ProjectID(), mrIID)
+	approvedBy, err := c.approvedBy(client, mrIID)
 	if err != nil {
 		return approvers, err
 	}
-	return gitlabApprovers(approvals.ApprovedBy, version), nil
+	return gitlabApprovers(approvedBy, version), nil
+}
+
+func (c *GitlabConfig) approvedBy(client *gitlab.Client, mrIID int64) ([]*gitlab.MergeRequestApproverUser, error) {
+	approvals, _, err := client.MergeRequestApprovals.GetConfiguration(c.ProjectID(), mrIID)
+	if err != nil || approvals == nil {
+		return nil, err
+	}
+	return approvals.ApprovedBy, noNullItems("approved_by", fmt.Sprintf("merge request !%d", mrIID), approvals.ApprovedBy)
 }
 
 // GetMergeRequestReviews returns an MR's approvers and its reviews: each
@@ -177,11 +186,11 @@ func (c *GitlabConfig) GetMergeRequestReviews(mrIID int64) ([]any, []types.PRApp
 	if err != nil {
 		return nil, nil, err
 	}
-	approvals, _, err := client.MergeRequestApprovals.GetConfiguration(c.ProjectID(), mrIID)
+	approvedBy, err := c.approvedBy(client, mrIID)
 	if err != nil {
 		return nil, nil, err
 	}
-	approvers := gitlabApprovers(approvals.ApprovedBy, 2)
+	approvers := gitlabApprovers(approvedBy, 2)
 	reviewers, resp, err := client.MergeRequests.GetMergeRequestReviewers(c.ProjectID(), mrIID)
 	if err != nil {
 		// Older GitLab has no reviewers endpoint. Reviews without its change
@@ -191,17 +200,56 @@ func (c *GitlabConfig) GetMergeRequestReviews(mrIID int64) ([]any, []types.PRApp
 		}
 		return nil, nil, err
 	}
-	return approvers, gitlabReviews(approvals.ApprovedBy, reviewers), nil
+	if err := noNullItems("reviewers", fmt.Sprintf("merge request !%d", mrIID), reviewers); err != nil {
+		return nil, nil, err
+	}
+	return approvers, gitlabReviews(approvedBy, reviewers), nil
 }
 
+// gitlabUserName is empty when GitLab names no account (a deleted user): such
+// a review is never an approver, and is in Reviews only if it requests changes.
 func gitlabUserName(u *gitlab.BasicUser) string {
+	if u == nil || u.Username == "" {
+		return ""
+	}
 	return fmt.Sprintf("%s (@%s)", u.Name, u.Username)
+}
+
+// gitlabUsername matches people across approvals and reviews; empty when
+// GitLab names no account.
+func gitlabUsername(u *gitlab.BasicUser) string {
+	if u == nil {
+		return ""
+	}
+	return u.Username
+}
+
+// unixOrZero is t in Unix seconds, or 0 when GitLab sent no time.
+func unixOrZero(t *time.Time) int64 {
+	if t == nil {
+		return 0
+	}
+	return t.Unix()
+}
+
+// noNullItems errors on a null entry in a list GitLab sent for owner: it is
+// missing data, not an empty entry.
+func noNullItems[T any](list, owner string, items []*T) error {
+	for i, item := range items {
+		if item == nil {
+			return fmt.Errorf("GitLab sent %s[%d] for %s as null", list, i, owner)
+		}
+	}
+	return nil
 }
 
 func gitlabApprovers(approvedBy []*gitlab.MergeRequestApproverUser, version int64) []any {
 	var approvers []any
 	for _, approver := range approvedBy {
 		approverName := gitlabUserName(approver.User)
+		if approverName == "" {
+			continue
+		}
 		if version == 1 {
 			approvers = append(approvers, approverName)
 		} else {
@@ -217,25 +265,35 @@ func gitlabApprovers(approvedBy []*gitlab.MergeRequestApproverUser, version int6
 // reviewers can approve too. A change request outweighs an approval by the
 // same person, as there are no review times to order them by.
 func gitlabReviews(approvedBy []*gitlab.MergeRequestApproverUser, reviewers []*gitlab.MergeRequestReviewer) []types.PRApprovals {
+	// Users with no account all share the key "". That's safe only because
+	// add keeps no nameless entry other than a change request.
 	reviewerStates := map[string]string{}
 	for _, r := range reviewers {
-		reviewerStates[r.User.Username] = r.State
+		reviewerStates[gitlabUsername(r.User)] = r.State
 	}
 	reviews := []types.PRApprovals{}
+	add := func(u *gitlab.BasicUser, state string) {
+		name := gitlabUserName(u)
+		// A change request is kept without a name: dropping it would read as
+		// none given.
+		if name == "" && state != types.ReviewChangesRequested {
+			return
+		}
+		reviews = append(reviews, types.PRApprovals{Username: name, State: state})
+	}
 	approved := map[string]bool{}
 	for _, a := range approvedBy {
-		approved[a.User.Username] = true
-		if reviewerStates[a.User.Username] != "requested_changes" {
-			reviews = append(reviews, types.PRApprovals{Username: gitlabUserName(a.User), State: types.ReviewApproved})
+		approved[gitlabUsername(a.User)] = true
+		if reviewerStates[gitlabUsername(a.User)] != "requested_changes" {
+			add(a.User, types.ReviewApproved)
 		}
 	}
 	for _, r := range reviewers {
-		name := gitlabUserName(r.User)
 		switch {
 		case r.State == "requested_changes":
-			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewChangesRequested})
-		case r.State == "reviewed" && !approved[r.User.Username]:
-			reviews = append(reviews, types.PRApprovals{Username: name, State: types.ReviewCommented})
+			add(r.User, types.ReviewChangesRequested)
+		case r.State == "reviewed" && !approved[gitlabUsername(r.User)]:
+			add(r.User, types.ReviewCommented)
 		}
 	}
 	return reviews
@@ -251,6 +309,15 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 	glCommits, err := c.listMergeRequestCommits(client, mr.IID, defaultMaxPages)
 	if err != nil {
 		return commits, err
+	}
+	owner := fmt.Sprintf("merge request !%d", mr.IID)
+	if err := noNullItems("commits", owner, glCommits); err != nil {
+		return commits, err
+	}
+	for i, commit := range glCommits {
+		if commit.ID == "" {
+			return commits, fmt.Errorf("GitLab sent commits[%d] for %s without an id", i, owner)
+		}
 	}
 	// One signature lookup per commit: pagination multiplies this, but GitLab
 	// has no batch signature endpoint.
@@ -273,7 +340,7 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 func commitFromGitlabCommit(commit *gitlab.Commit, branch string) types.Commit {
 	// Use the authored date to match the recorded author identity; fall back to
 	// created_at if the API omits it (server#5479).
-	timestamp := commit.CreatedAt.Unix()
+	timestamp := unixOrZero(commit.CreatedAt)
 	if commit.AuthoredDate != nil {
 		timestamp = commit.AuthoredDate.Unix()
 	}
@@ -301,8 +368,8 @@ func gitlabCommitVerification(status string) (*bool, *string) {
 
 // resolveGitlabSignature maps the result of a GetGPGSignature call to the
 // neutral verified/signature_state fields. GitLab returns 404 for unsigned
-// commits, which is treated as unsigned (nil fields) rather than a fatal error
-// (server#5892); other errors propagate so incomplete signature data is never
+// commits; that and a null reply are unsigned (nil fields), not a fatal error
+// (server#5892). Other errors propagate so incomplete signature data is never
 // silently recorded.
 func resolveGitlabSignature(sig *gitlab.GPGSignature, resp *gitlab.Response, err error) (*bool, *string, error) {
 	if err != nil {
@@ -310,6 +377,9 @@ func resolveGitlabSignature(sig *gitlab.GPGSignature, resp *gitlab.Response, err
 			return nil, nil, nil
 		}
 		return nil, nil, err
+	}
+	if sig == nil {
+		return nil, nil, nil
 	}
 	verified, signatureState := gitlabCommitVerification(sig.VerificationStatus)
 	return verified, signatureState, nil
