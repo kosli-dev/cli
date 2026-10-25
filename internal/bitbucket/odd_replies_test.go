@@ -251,6 +251,14 @@ var oddAllowedErrors = map[string]string{
 	"V2 pullrequest id": "the pull request number, used to fetch its commits",
 }
 
+// oddListOwners is what each read list belongs to, as its error names it.
+var oddListOwners = map[string]string{
+	"commit_pullrequests":   "for commit " + oddCommit + " ",
+	"pullrequest":           "for pull request https://bitbucket.org/acme/widgets/pull-requests/7 ",
+	"pullrequest_commits_1": "for pull request 7 ",
+	"pullrequest_commits_2": "for pull request 7 ",
+}
+
 // oddReadLists are the lists the code reads, per reply. A null item in one of
 // them is an entry that can't be read, so it must fail.
 var oddReadLists = map[string]string{
@@ -356,6 +364,8 @@ func TestOddReplies(t *testing.T) {
 						require.True(t, strings.HasPrefix(outcome, "ok"), "an emptied list must not fail: %s", outcome)
 					case regexp.MustCompile(`^` + oddReadLists[name] + `\[\d+\]$`).MatchString(v.Path):
 						require.Equal(t, "error", outcome, "a null list item must fail")
+						_, err := runOddReplies(t, version, replies)
+						require.ErrorContains(t, err, oddListOwners[name], "the error must say what the list belongs to")
 					case nameless:
 						evidence, err := runOddReplies(t, version, replies)
 						require.NoError(t, err)

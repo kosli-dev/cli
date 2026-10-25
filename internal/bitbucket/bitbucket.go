@@ -60,14 +60,15 @@ func boolean(m map[string]any, key string) bool {
 }
 
 // objects reads a list of objects. A missing list is empty, but an item that
-// is not an object is an error: it is an entry we can't read.
-func objects(m map[string]any, key string) ([]map[string]any, error) {
+// is not an object is an error: it is an entry we can't read. owner says what
+// the list belongs to.
+func objects(m map[string]any, key, owner string) ([]map[string]any, error) {
 	items, _ := m[key].([]any)
 	out := make([]map[string]any, len(items))
 	for i, item := range items {
 		o, ok := item.(map[string]any)
 		if !ok {
-			return nil, fmt.Errorf("%s[%d] in the Bitbucket reply is null or not an object", key, i)
+			return nil, fmt.Errorf("%s[%d] for %s in the Bitbucket reply is null or not an object", key, i, owner)
 		}
 		out[i] = o
 	}
@@ -137,7 +138,7 @@ func (c *Config) parseBitbucketResponse(commit string, response *requests.HTTPRe
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
-	pullRequests, err := objects(responseData, "values")
+	pullRequests, err := objects(responseData, "values", "commit "+commit)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
@@ -183,7 +184,7 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 		evidence.URL = prHtmlLink
 		evidence.MergeCommit = commit
 		evidence.State = str(responseData, "state")
-		participants, err := objects(responseData, "participants")
+		participants, err := objects(responseData, "participants", "pull request "+prHtmlLink)
 		if err != nil {
 			return evidence, err
 		}
@@ -340,7 +341,7 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 			return nil, err
 		}
 
-		commits, err := objects(responseData, "values")
+		commits, err := objects(responseData, "values", fmt.Sprintf("pull request %d", prID))
 		if err != nil {
 			return nil, err
 		}
