@@ -12,6 +12,24 @@ import (
 	"github.com/microsoft/azure-devops-go-api/azuredevops/git"
 )
 
+// value gives what an SDK reply pointer holds, or the zero value when the
+// reply left the field out or null.
+func value[T any](p *T) T {
+	if p == nil {
+		var zero T
+		return zero
+	}
+	return *p
+}
+
+// unixTime gives a reply timestamp in Unix seconds, or 0 when it is missing.
+func unixTime(t *azuredevops.Time) int64 {
+	if t == nil {
+		return 0
+	}
+	return t.Time.Unix()
+}
+
 type AzureConfig struct {
 	Token      string
 	OrgURL     string
@@ -98,17 +116,17 @@ func (c *AzureConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence,
 }
 
 func (c *AzureConfig) newPRAzureEvidence(pr git.GitPullRequest) (*types.PREvidence, error) {
-	prID := strconv.Itoa(*pr.PullRequestId)
+	prID := strconv.Itoa(value(pr.PullRequestId))
 	url, err := url.JoinPath(c.OrgURL, c.Project, "_git", c.Repository, "pullrequest", prID)
 	if err != nil {
 		return nil, err
 	}
 	evidence := &types.PREvidence{
 		URL:         url,
-		MergeCommit: *(pr.LastMergeCommit.CommitId),
-		State:       string(*pr.Status),
+		MergeCommit: value(value(pr.LastMergeCommit).CommitId),
+		State:       string(value(pr.Status)),
 	}
-	evidence.Approvers, err = c.GetPullRequestApprovers(*pr.PullRequestId, 1)
+	evidence.Approvers, err = c.GetPullRequestApprovers(value(pr.PullRequestId), 1)
 	if err != nil {
 		return evidence, err
 	}
@@ -117,7 +135,7 @@ func (c *AzureConfig) newPRAzureEvidence(pr git.GitPullRequest) (*types.PREviden
 
 // newPRAzureEvidenceV2 creates a new PREvidence for a given pull request in V2 format
 func (c *AzureConfig) newPRAzureEvidenceV2(pr git.GitPullRequest) (*types.PREvidence, error) {
-	prID := strconv.Itoa(*pr.PullRequestId)
+	prID := strconv.Itoa(value(pr.PullRequestId))
 	prURL, err := url.JoinPath(c.OrgURL, c.Project, "_git", c.Repository, "pullrequest", prID)
 	if err != nil {
 		return nil, err
@@ -125,22 +143,22 @@ func (c *AzureConfig) newPRAzureEvidenceV2(pr git.GitPullRequest) (*types.PREvid
 
 	evidence := &types.PREvidence{
 		URL:         prURL,
-		MergeCommit: *(pr.LastMergeCommit.CommitId),
-		State:       string(*pr.Status),
-		Author:      fmt.Sprintf("%s (%s)", *pr.CreatedBy.DisplayName, *pr.CreatedBy.UniqueName),
-		CreatedAt:   pr.CreationDate.Time.Unix(),
-		Title:       *pr.Title,
+		MergeCommit: value(value(pr.LastMergeCommit).CommitId),
+		State:       string(value(pr.Status)),
+		Author:      azureIdentity("%s (%s)", value(pr.CreatedBy).DisplayName, value(pr.CreatedBy).UniqueName),
+		CreatedAt:   unixTime(pr.CreationDate),
+		Title:       value(pr.Title),
 	}
 	evidence.HeadRef, evidence.BaseRef = azurePRRefs(pr)
-	if pr.Status != nil && pr.ClosedDate != nil && *pr.Status == git.PullRequestStatusValues.Completed {
-		evidence.MergedAt = pr.ClosedDate.Time.Unix()
+	if value(pr.Status) == git.PullRequestStatusValues.Completed {
+		evidence.MergedAt = unixTime(pr.ClosedDate)
 	}
 	commits, err := c.GetPullRequestCommits(pr)
 	if err != nil {
 		return evidence, err
 	}
 	evidence.Commits = commits
-	evidence.Approvers, evidence.Reviews, err = c.GetPullRequestReviews(*pr.PullRequestId)
+	evidence.Approvers, evidence.Reviews, err = c.GetPullRequestReviews(value(pr.PullRequestId))
 	if err != nil {
 		return evidence, err
 	}
@@ -150,12 +168,18 @@ func (c *AzureConfig) newPRAzureEvidenceV2(pr git.GitPullRequest) (*types.PREvid
 // azurePRRefs returns the head (source) and base (target) ref names of an Azure
 // DevOps pull request, kept raw (e.g. "refs/heads/main") to match head_ref.
 func azurePRRefs(pr git.GitPullRequest) (head, base string) {
-	return *pr.SourceRefName, *pr.TargetRefName
+	return value(pr.SourceRefName), value(pr.TargetRefName)
 }
 
 // GetPullRequestCommits returns a list of commits for a given pull request
 func (c *AzureConfig) GetPullRequestCommits(pr git.GitPullRequest) ([]types.Commit, error) {
 	commits := []types.Commit{}
+	// A nil id is the one input the SDK rejects outright, so it can only be
+	// named here, not read from the reply.
+	prID := "with no id"
+	if pr.PullRequestId != nil {
+		prID = strconv.Itoa(*pr.PullRequestId)
+	}
 
 	ctx := context.Background()
 	client, err := newPRCommitsClient(ctx, c.Token, c.OrgURL)
@@ -169,17 +193,15 @@ func (c *AzureConfig) GetPullRequestCommits(pr git.GitPullRequest) ([]types.Comm
 		Project:       &c.Project,
 	}, defaultMaxPages)
 	if err != nil {
-		// A nil id is the one input the SDK rejects outright, so it is also the
-		// only one that reaches here without an id to name.
-		prID := "with no id"
-		if pr.PullRequestId != nil {
-			prID = strconv.Itoa(*pr.PullRequestId)
-		}
 		return commits, fmt.Errorf("draining commits for pull request %s: %w", prID, err)
 	}
 
-	for _, commit := range prCommits {
-		commits = append(commits, commitFromAzureCommit(commit, *pr.SourceRefName))
+	for i, commit := range prCommits {
+		// A null commit decodes to an empty one, so no id is the only sign.
+		if commit.CommitId == nil {
+			return commits, fmt.Errorf("commit %d of pull request %s has no commitId", i, prID)
+		}
+		commits = append(commits, commitFromAzureCommit(commit, value(pr.SourceRefName)))
 	}
 
 	return commits, nil
@@ -187,12 +209,13 @@ func (c *AzureConfig) GetPullRequestCommits(pr git.GitPullRequest) ([]types.Comm
 
 // commitFromAzureCommit maps an Azure DevOps API commit to a types.Commit.
 func commitFromAzureCommit(commit git.GitCommitRef, branch string) types.Commit {
+	author := value(commit.Author)
 	return types.Commit{
-		SHA:       *commit.CommitId,
-		Message:   *commit.Comment,
-		Author:    fmt.Sprintf("%s <%s>", *commit.Author.Name, *commit.Author.Email),
-		Timestamp: commit.Author.Date.Time.Unix(),
-		URL:       *commit.Url,
+		SHA:       value(commit.CommitId),
+		Message:   value(commit.Comment),
+		Author:    azureIdentity("%s <%s>", author.Name, author.Email),
+		Timestamp: unixTime(author.Date),
+		URL:       value(commit.Url),
 		Branch:    branch,
 	}
 }
@@ -220,15 +243,19 @@ func (c *AzureConfig) PullRequestsForCommit(commit string) ([]git.GitPullRequest
 	if err != nil {
 		return nil, err
 	}
-	if prQuery != nil {
-		results := prQuery.Results
-		if len(*results) > 0 {
-			prsForCommit := (*results)[0][commit]
-			return prsForCommit, nil
+	results := value(value(prQuery).Results)
+	if len(results) == 0 {
+		return []git.GitPullRequest{}, nil
+	}
+	// A null result indexes as an empty map, so it reads as no pull requests.
+	prs := results[0][commit]
+	for i, pr := range prs {
+		// A null pull request decodes to an empty one, so no id is the only sign.
+		if pr.PullRequestId == nil {
+			return nil, fmt.Errorf("pull request %d for commit %s has no pullRequestId", i, commit)
 		}
 	}
-
-	return []git.GitPullRequest{}, nil
+	return prs, nil
 }
 
 // GetPullRequestApprovers returns a list of approvers for a given pull request
@@ -264,18 +291,30 @@ func (c *AzureConfig) pullRequestReviewers(prNumber int) ([]git.IdentityRefWithV
 	if err != nil {
 		return nil, err
 	}
-	return *reviewers, nil
+	// The SDK decodes a null reviewer as an empty one, so a missing id is the
+	// only sign of it. Skipping it could hide a change request.
+	for i, r := range value(reviewers) {
+		if value(r.Id) == "" {
+			return nil, fmt.Errorf("reviewer %d of pull request %d has no id", i, prNumber)
+		}
+	}
+	return value(reviewers), nil
 }
 
-func azureReviewerName(r git.IdentityRefWithVote) string {
-	return fmt.Sprintf("%s (%s)", *r.DisplayName, *r.UniqueName)
+// azureIdentity formats a name and its qualifier (a unique name or an email),
+// or gives "" when both are missing, such as for a deleted account. A reviewer
+// with no identity never counts as an approval in approvers or reviews.
+func azureIdentity(format string, name, qualifier *string) string {
+	if value(name) == "" && value(qualifier) == "" {
+		return ""
+	}
+	return fmt.Sprintf(format, value(name), value(qualifier))
 }
 
 func azureApprovers(reviewers []git.IdentityRefWithVote, version int) []any {
 	var approvers []any
 	for _, r := range reviewers {
-		if *r.Vote == 10 {
-			approverName := azureReviewerName(r)
+		if approverName := azureIdentity("%s (%s)", r.DisplayName, r.UniqueName); value(r.Vote) == 10 && approverName != "" {
 			if version == 1 {
 				approvers = append(approvers, approverName)
 			} else {
@@ -294,19 +333,25 @@ func azureApprovers(reviewers []git.IdentityRefWithVote, version int) []any {
 func azureReviews(reviewers []git.IdentityRefWithVote) []types.PRApprovals {
 	reviews := []types.PRApprovals{}
 	for _, r := range reviewers {
-		if (r.IsContainer != nil && *r.IsContainer) || r.Vote == nil {
+		if value(r.IsContainer) {
 			continue
 		}
 		var state string
-		switch {
-		case *r.Vote > 0:
+		switch vote := value(r.Vote); {
+		case vote > 0:
 			state = types.ReviewApproved
-		case *r.Vote < 0:
+		case vote < 0:
 			state = types.ReviewChangesRequested
 		default:
 			continue
 		}
-		reviews = append(reviews, types.PRApprovals{Username: azureReviewerName(r), State: state})
+		name := azureIdentity("%s (%s)", r.DisplayName, r.UniqueName)
+		// A change request is kept without a name: dropping it would read as
+		// none given.
+		if name == "" && state != types.ReviewChangesRequested {
+			continue
+		}
+		reviews = append(reviews, types.PRApprovals{Username: name, State: state})
 	}
 	return reviews
 }

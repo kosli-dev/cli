@@ -154,3 +154,17 @@ func TestGetPullRequestCommits_NilPullRequestIDReturnsErrorNotPanic(t *testing.T
 	require.ErrorContains(t, err, "args.PullRequestId", "the SDK's reason must survive")
 	require.ErrorContains(t, err, "pull request", "the wrap must still say what failed")
 }
+
+func TestGetPullRequestCommits_NilPullRequestIDNamedTheSameInEveryError(t *testing.T) {
+	client := &fakePRCommitsClient{pages: []*git.GetPullRequestCommitsResponseValue{
+		{Value: []git.GitCommitRef{{}}},
+	}}
+	original := newPRCommitsClient
+	newPRCommitsClient = func(context.Context, string, string) (prCommitsClient, error) { return client, nil }
+	t.Cleanup(func() { newPRCommitsClient = original })
+
+	config := &AzureConfig{Token: "t", OrgURL: "https://dev.azure.com/o", Project: "p", Repository: "r"}
+	_, err := config.GetPullRequestCommits(git.GitPullRequest{})
+
+	require.EqualError(t, err, "commit 0 of pull request with no id has no commitId")
+}
