@@ -248,7 +248,9 @@ func TestOddReplies_BaselineGivesFullEvidenceV2(t *testing.T) {
 var oddAllowedErrors = map[string]string{
 	"V1 commit_pullrequests values[0].links.self.href": "the pull request's API URL, fetched next",
 	"V2 commit_pullrequests values[0].links.self.href": "the pull request's API URL, fetched next",
-	"V2 pullrequest id": "the pull request number, used to fetch its commits",
+	"V2 pullrequest id":                       "the pull request number, used to fetch its commits",
+	"V2 pullrequest_commits_1 values[0].hash": "a commit with no SHA can't be attested",
+	"V2 pullrequest_commits_2 values[0].hash": "a commit with no SHA can't be attested",
 }
 
 // oddListOwners is what each read list belongs to, as its error names it.
@@ -401,6 +403,22 @@ func TestOddReplies_CommitPagesThatCycleFail(t *testing.T) {
 			case <-time.After(20 * time.Second):
 				t.Fatal("paging did not stop")
 			}
+		})
+	}
+}
+
+// A commit with no hash can't be attested, so it fails rather than being
+// recorded with an empty SHA.
+func TestOddReplies_CommitWithNoHashFails(t *testing.T) {
+	for _, page := range []string{"pullrequest_commits_1", "pullrequest_commits_2"} {
+		t.Run(page, func(t *testing.T) {
+			replies := oddBaselineReplies()
+			hash := regexp.MustCompile(`"hash": "[0-9a-f]{40}",\n\t\t"date"`)
+			require.Len(t, hash.FindAllString(replies[page], -1), 1)
+			replies[page] = hash.ReplaceAllString(replies[page], `"hash": null,
+		"date"`)
+			_, err := runOddReplies(t, 2, replies)
+			require.ErrorContains(t, err, "for pull request 7 has no hash")
 		})
 	}
 }

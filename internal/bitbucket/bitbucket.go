@@ -346,7 +346,10 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 			return nil, err
 		}
 
-		for _, commit := range commits {
+		for i, commit := range commits {
+			if str(commit, "hash") == "" {
+				return nil, fmt.Errorf("commit %d for pull request %d has no hash", i, prID)
+			}
 			timestamp, err := parseRFC3339NanoTimestamp(str(commit, "date"), "date")
 			if err != nil {
 				return nil, err
