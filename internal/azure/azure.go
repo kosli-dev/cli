@@ -145,7 +145,7 @@ func (c *AzureConfig) newPRAzureEvidenceV2(pr git.GitPullRequest) (*types.PREvid
 		URL:         prURL,
 		MergeCommit: value(value(pr.LastMergeCommit).CommitId),
 		State:       string(value(pr.Status)),
-		Author:      fmt.Sprintf("%s (%s)", value(value(pr.CreatedBy).DisplayName), value(value(pr.CreatedBy).UniqueName)),
+		Author:      azureIdentity("%s (%s)", value(pr.CreatedBy).DisplayName, value(pr.CreatedBy).UniqueName),
 		CreatedAt:   unixTime(pr.CreationDate),
 		Title:       value(pr.Title),
 	}
@@ -213,7 +213,7 @@ func commitFromAzureCommit(commit git.GitCommitRef, branch string) types.Commit 
 	return types.Commit{
 		SHA:       value(commit.CommitId),
 		Message:   value(commit.Comment),
-		Author:    fmt.Sprintf("%s <%s>", value(author.Name), value(author.Email)),
+		Author:    azureIdentity("%s <%s>", author.Name, author.Email),
 		Timestamp: unixTime(author.Date),
 		URL:       value(commit.Url),
 		Branch:    branch,
@@ -301,20 +301,20 @@ func (c *AzureConfig) pullRequestReviewers(prNumber int) ([]git.IdentityRefWithV
 	return value(reviewers), nil
 }
 
-// azureReviewerName gives "" for a reviewer with no identity, such as a
-// deleted account. Its vote is never counted as an approval in approvers or
-// reviews.
-func azureReviewerName(r git.IdentityRefWithVote) string {
-	if value(r.DisplayName) == "" && value(r.UniqueName) == "" {
+// azureIdentity formats a name and its qualifier (a unique name or an email),
+// or gives "" when both are missing, such as for a deleted account. A reviewer
+// with no identity never counts as an approval in approvers or reviews.
+func azureIdentity(format string, name, qualifier *string) string {
+	if value(name) == "" && value(qualifier) == "" {
 		return ""
 	}
-	return fmt.Sprintf("%s (%s)", value(r.DisplayName), value(r.UniqueName))
+	return fmt.Sprintf(format, value(name), value(qualifier))
 }
 
 func azureApprovers(reviewers []git.IdentityRefWithVote, version int) []any {
 	var approvers []any
 	for _, r := range reviewers {
-		if approverName := azureReviewerName(r); value(r.Vote) == 10 && approverName != "" {
+		if approverName := azureIdentity("%s (%s)", r.DisplayName, r.UniqueName); value(r.Vote) == 10 && approverName != "" {
 			if version == 1 {
 				approvers = append(approvers, approverName)
 			} else {
@@ -345,7 +345,7 @@ func azureReviews(reviewers []git.IdentityRefWithVote) []types.PRApprovals {
 		default:
 			continue
 		}
-		name := azureReviewerName(r)
+		name := azureIdentity("%s (%s)", r.DisplayName, r.UniqueName)
 		// A change request is kept without a name: dropping it would read as
 		// none given.
 		if name == "" && state != types.ReviewChangesRequested {

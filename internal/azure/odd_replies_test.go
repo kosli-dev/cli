@@ -406,3 +406,29 @@ func TestPREvidenceReviewerWithNoIDFails(t *testing.T) {
 	_, err = config.PREvidenceForCommitV2(oddMergeCommit)
 	require.ErrorContains(t, err, "reviewer 0 of pull request 22 has no id")
 }
+
+// A missing identity is recorded as "", as for a reviewer, not as the
+// separators alone (" ()" or " <>").
+func TestPREvidenceMissingAuthorIsEmpty(t *testing.T) {
+	fake := &fakeAzureDevOps{}
+	server := httptest.NewServer(fake)
+	t.Cleanup(server.Close)
+	config := NewAzureConfig("pat", server.URL+"/fabrikam", "Fabrikam-Fiber-Git", "Fabrikam-Fiber-Git")
+	replies := map[string]string{}
+	for k, body := range oddBaselineReplies {
+		replies[k] = body
+	}
+	createdBy := regexp.MustCompile(`(?s)"createdBy": \{.*?\}`)
+	require.Len(t, createdBy.FindAllString(replies["pullRequestQuery"], -1), 1)
+	replies["pullRequestQuery"] = createdBy.ReplaceAllString(replies["pullRequestQuery"], `"createdBy": null`)
+	firstAuthor := `"author": {"name": "Normal Paulk", "email": "fabrikamfiber16@hotmail.com", "date": "2026-03-01T09:00:00Z"}`
+	require.Equal(t, 1, strings.Count(replies["commits"], firstAuthor))
+	replies["commits"] = strings.Replace(replies["commits"], firstAuthor, `"author": null`, 1)
+	fake.set(replies)
+
+	evidence, err := config.PREvidenceForCommitV2(oddMergeCommit)
+	require.NoError(t, err)
+	require.Equal(t, "", evidence[0].Author)
+	require.Equal(t, "", evidence[0].Commits[0].Author)
+	require.NotEmpty(t, evidence[0].Commits[1].Author)
+}
