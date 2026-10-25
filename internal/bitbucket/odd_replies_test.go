@@ -261,38 +261,54 @@ var oddReadLists = map[string]string{
 }
 
 // oddNameless make a participant one with no identity, as for a deleted
-// account, and give the nameless reviews V2 must then hold. A nameless
-// approval is in neither list, so no policy counts it; a nameless change
-// request stays, as dropping it would read as none given.
-var oddNameless = map[string][]types.PRApprovals{
-	"pullrequest participants[0].user":              nil,
-	"pullrequest participants[0].user.display_name": nil,
-	"pullrequest participants[1].user":              {{State: types.ReviewChangesRequested, Timestamp: 1772373600}},
-	"pullrequest participants[1].user.display_name": {{State: types.ReviewChangesRequested, Timestamp: 1772373600}},
+// account. Its named entries must leave both lists, and V2's reviews must then
+// hold the nameless entries given. A nameless approval is in neither list, so
+// no policy counts it; a nameless change request stays, as dropping it would
+// read as none given.
+var oddNameless = map[string]struct {
+	who      string
+	nameless []types.PRApprovals
+}{
+	"pullrequest participants[0].user":              {"Grace Hopper", nil},
+	"pullrequest participants[0].user.display_name": {"Grace Hopper", nil},
+	"pullrequest participants[1].user":              {"Alan Turing", []types.PRApprovals{{State: types.ReviewChangesRequested, Timestamp: 1772373600}}},
+	"pullrequest participants[1].user.display_name": {"Alan Turing", []types.PRApprovals{{State: types.ReviewChangesRequested, Timestamp: 1772373600}}},
 }
 
-// requireNoNamelessApprover fails if any approver in e has no name.
-func requireNoNamelessApprover(t *testing.T, e *types.PREvidence) {
+// requireNamelessHandled checks got against want, the evidence for the same
+// replies with who still named: who's entries are gone from both lists, the
+// other named entries are unchanged, and the only nameless reviews are those
+// given (V2 only, as V1 records no reviews).
+func requireNamelessHandled(t *testing.T, version int, want, got *types.PREvidence, who string, nameless []types.PRApprovals) {
 	t.Helper()
-	for _, a := range e.Approvers {
-		switch a := a.(type) {
-		case string:
-			require.NotEmpty(t, a, "nameless approver")
-		case types.PRApprovals:
-			require.NotEmpty(t, a.Username, "nameless approver")
+	var wantApprovers []any
+	for _, a := range want.Approvers {
+		if approverName(a) != who {
+			wantApprovers = append(wantApprovers, a)
 		}
 	}
+	require.ElementsMatch(t, wantApprovers, got.Approvers)
+	if version == 1 {
+		return
+	}
+	var wantReviews []types.PRApprovals
+	for _, r := range want.Reviews {
+		if r.Username != who {
+			wantReviews = append(wantReviews, r)
+		}
+	}
+	wantReviews = append(wantReviews, nameless...)
+	require.ElementsMatch(t, wantReviews, got.Reviews)
 }
 
-// namelessReviews gives the reviews in e with no name.
-func namelessReviews(e *types.PREvidence) []types.PRApprovals {
-	var out []types.PRApprovals
-	for _, r := range e.Reviews {
-		if r.Username == "" {
-			out = append(out, r)
-		}
+func approverName(a any) string {
+	switch a := a.(type) {
+	case string:
+		return a
+	case types.PRApprovals:
+		return a.Username
 	}
-	return out
+	return fmt.Sprint(a)
 }
 
 // oddMayError says whether path in reply holds, or is, a value in
@@ -334,7 +350,7 @@ func TestOddReplies(t *testing.T) {
 						return runOddReplies(t, version, replies)
 					})
 					require.False(t, strings.HasPrefix(outcome, "panic"), outcome)
-					wantNameless, nameless := oddNameless[name+" "+v.Path]
+					namelessCase, nameless := oddNameless[name+" "+v.Path]
 					switch {
 					case strings.HasSuffix(v.Path, "[]"):
 						require.True(t, strings.HasPrefix(outcome, "ok"), "an emptied list must not fail: %s", outcome)
@@ -343,10 +359,7 @@ func TestOddReplies(t *testing.T) {
 					case nameless:
 						evidence, err := runOddReplies(t, version, replies)
 						require.NoError(t, err)
-						requireNoNamelessApprover(t, evidence[0])
-						if version == 2 {
-							require.Equal(t, wantNameless, namelessReviews(evidence[0]))
-						}
+						requireNamelessHandled(t, version, baseline[0], evidence[0], namelessCase.who, namelessCase.nameless)
 					case oddMayError(entry, name, v.Path):
 					default:
 						require.True(t, strings.HasPrefix(outcome, "ok"), "a null field must not fail: %s", outcome)
