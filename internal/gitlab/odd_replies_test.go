@@ -234,6 +234,11 @@ func TestOddReplies(t *testing.T) {
 					require.Equal(t, want, outcome)
 					if item != "" && want == "error" {
 						require.ErrorContains(t, fetchErr, item)
+						owner := "for merge request !101 "
+						if name == "mrs_for_commit" {
+							owner = "for commit " + oddCommit + " "
+						}
+						require.ErrorContains(t, fetchErr, owner, "the error must say what the list belongs to")
 					}
 				})
 			}

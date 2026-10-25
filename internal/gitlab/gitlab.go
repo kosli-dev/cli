@@ -154,7 +154,7 @@ func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.BasicMer
 	if err != nil {
 		return mrs, fmt.Errorf("failed to list merge requests for commit %s: %w", commit, err)
 	}
-	return mrs, noNullItems("merge requests", mrs)
+	return mrs, noNullItems("merge requests", "commit "+commit, mrs)
 }
 
 // GetMergeRequestApprovers returns a list of users (name and username) who approved an MR
@@ -176,7 +176,7 @@ func (c *GitlabConfig) approvedBy(client *gitlab.Client, mrIID int64) ([]*gitlab
 	if err != nil || approvals == nil {
 		return nil, err
 	}
-	return approvals.ApprovedBy, noNullItems("approved_by", approvals.ApprovedBy)
+	return approvals.ApprovedBy, noNullItems("approved_by", fmt.Sprintf("merge request !%d", mrIID), approvals.ApprovedBy)
 }
 
 // GetMergeRequestReviews returns an MR's approvers and its reviews: each
@@ -200,7 +200,7 @@ func (c *GitlabConfig) GetMergeRequestReviews(mrIID int64) ([]any, []types.PRApp
 		}
 		return nil, nil, err
 	}
-	if err := noNullItems("reviewers", reviewers); err != nil {
+	if err := noNullItems("reviewers", fmt.Sprintf("merge request !%d", mrIID), reviewers); err != nil {
 		return nil, nil, err
 	}
 	return approvers, gitlabReviews(approvedBy, reviewers), nil
@@ -232,12 +232,12 @@ func unixOrZero(t *time.Time) int64 {
 	return t.Unix()
 }
 
-// noNullItems errors on a null entry in a list GitLab sent: it is missing
-// data, not an empty entry.
-func noNullItems[T any](list string, items []*T) error {
+// noNullItems errors on a null entry in a list GitLab sent for owner: it is
+// missing data, not an empty entry.
+func noNullItems[T any](list, owner string, items []*T) error {
 	for i, item := range items {
 		if item == nil {
-			return fmt.Errorf("GitLab sent %s[%d] as null", list, i)
+			return fmt.Errorf("GitLab sent %s[%d] for %s as null", list, i, owner)
 		}
 	}
 	return nil
@@ -310,12 +310,13 @@ func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]t
 	if err != nil {
 		return commits, err
 	}
-	if err := noNullItems("commits", glCommits); err != nil {
+	owner := fmt.Sprintf("merge request !%d", mr.IID)
+	if err := noNullItems("commits", owner, glCommits); err != nil {
 		return commits, err
 	}
 	for i, commit := range glCommits {
 		if commit.ID == "" {
-			return commits, fmt.Errorf("GitLab sent commits[%d] without an id", i)
+			return commits, fmt.Errorf("GitLab sent commits[%d] for %s without an id", i, owner)
 		}
 	}
 	// One signature lookup per commit: pagination multiplies this, but GitLab
