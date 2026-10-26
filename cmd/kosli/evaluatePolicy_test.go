@@ -461,7 +461,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTooManyContextsAreRefusedBefore
 func (suite *EvaluatePolicyCommandTestSuite) TestControlRecordsADecisionWhereItIsTold() {
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
-	_, _, _, _, err := executeCommandC(suite.cmd(server.URL,
+	_, _, _, _, err := executeCommandC(suite.identifierCmd(server.URL,
 		"--control SDLC-CTRL-0007 --flow release --trail my-trail "+
 			"--fingerprint b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"))
 
@@ -480,7 +480,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestControlRecordsADecisionWhereItI
 func (suite *EvaluatePolicyCommandTestSuite) TestTheDecisionNameDefaultsToTheControl() {
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
-	_, _, _, _, err := executeCommandC(suite.cmd(server.URL,
+	_, _, _, _, err := executeCommandC(suite.identifierCmd(server.URL,
 		"--control SDLC-CTRL-0007 --flow release --trail my-trail"))
 
 	require.NoError(suite.T(), err)
@@ -493,7 +493,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheDecisionNameDefaultsToTheCon
 func (suite *EvaluatePolicyCommandTestSuite) TestAGivenNameIsSentAsGiven() {
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
-	_, _, _, _, err := executeCommandC(suite.cmd(server.URL,
+	_, _, _, _, err := executeCommandC(suite.identifierCmd(server.URL,
 		"--control SDLC-CTRL-0007 --flow release --trail my-trail --name code-review-decision"))
 
 	require.NoError(suite.T(), err)
@@ -546,7 +546,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestWhatCannotBeAskedForIsRefusedBe
 		suite.Run(test.name, func() {
 			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
-			_, combined, _, _, err := executeCommandC(suite.cmd(server.URL, test.extra))
+			_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL, test.extra))
 
 			require.Error(suite.T(), err)
 			for _, says := range test.says {
@@ -562,13 +562,46 @@ func (suite *EvaluatePolicyCommandTestSuite) TestWhatCannotBeAskedForIsRefusedBe
 	}
 }
 
+func (suite *EvaluatePolicyCommandTestSuite) TestADecisionFromLocalFilesIsRefusedBeforeAnyRequest() {
+	for _, files := range []string{"--path", "--policy"} {
+		suite.Run(files, func() {
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, combined, _, _, err := executeCommandC(fmt.Sprintf(
+				"evaluate policy --context trail=my-flow/my-trail %s testdata/policies/allow-all.rego "+
+					"--control SDLC-CTRL-0007 --flow release --trail my-trail "+
+					"--host %s --org test-org --api-token test-token --max-api-retries 0",
+				files, server.URL))
+
+			require.Error(suite.T(), err)
+			require.Contains(suite.T(), err.Error(), "kosli publish rego-policy")
+			require.Contains(suite.T(), err.Error(), "--identifier")
+			require.Empty(suite.T(), fake.created, "nothing is sent")
+			require.NotContains(suite.T(), combined, "RESULT")
+		})
+	}
+}
+
+// KOSLI_CONTROL binds to --control, so a pipeline that exports it is refused
+// with --path as a typed --control is.
+func (suite *EvaluatePolicyCommandTestSuite) TestAControlFromTheEnvironmentIsRefusedWithAPath() {
+	suite.T().Setenv("KOSLI_CONTROL", "SDLC-CTRL-0007")
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.cmd(server.URL, "--flow release --trail my-trail"))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "kosli publish rego-policy")
+	require.Empty(suite.T(), fake.created, "nothing is sent")
+}
+
 // The environment satisfies the destination as the flags do.
 func (suite *EvaluatePolicyCommandTestSuite) TestTheDestinationCanComeFromTheEnvironment() {
 	suite.T().Setenv("KOSLI_FLOW", "release")
 	suite.T().Setenv("KOSLI_TRAIL", "my-trail")
 	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
 
-	_, _, _, _, err := executeCommandC(suite.cmd(server.URL, "--control SDLC-CTRL-0007"))
+	_, _, _, _, err := executeCommandC(suite.identifierCmd(server.URL, "--control SDLC-CTRL-0007"))
 
 	require.NoError(suite.T(), err)
 	decision := fake.created[0]["decision"].(map[string]any)
@@ -581,7 +614,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheDestinationCanComeFromTheEnv
 func (suite *EvaluatePolicyCommandTestSuite) TestADenialAsksForItsDecisionToo() {
 	server, fake := newFakeEvaluations(suite.T(), verdictDenied)
 
-	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL,
+	_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL,
 		"--control SDLC-CTRL-0007 --flow release --trail my-trail --assert"))
 
 	require.Error(suite.T(), err, "--assert still fails the step")
@@ -593,7 +626,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADenialAsksForItsDecisionToo() 
 func (suite *EvaluatePolicyCommandTestSuite) TestTheRecordedDecisionIsReported() {
 	server, _ := newFakeEvaluations(suite.T(), verdictAllowedWithDecision)
 
-	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL,
+	_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL,
 		"--control SDLC-CTRL-0007 --flow release --trail my-trail"))
 
 	require.NoError(suite.T(), err)
@@ -603,7 +636,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestTheRecordedDecisionIsReported()
 func (suite *EvaluatePolicyCommandTestSuite) TestTheRecordedDecisionIsReportedInJson() {
 	server, _ := newFakeEvaluations(suite.T(), verdictAllowedWithDecision)
 
-	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL,
+	_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL,
 		"--control SDLC-CTRL-0007 --flow release --trail my-trail --output json"))
 
 	require.NoError(suite.T(), err)
@@ -692,7 +725,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestARefusalIsReportedAsTheServerPu
 			server := newRefusingServer(suite.T(), test.status,
 				fmt.Sprintf(`{"message":%q}`, test.message))
 
-			_, combined, _, _, err := executeCommandC(suite.cmd(server.URL,
+			_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL,
 				"--control SDLC-CTRL-0007 --flow release --trail my-trail"))
 
 			require.Error(suite.T(), err)
@@ -710,7 +743,7 @@ func (suite *EvaluatePolicyCommandTestSuite) TestAClassifiedFailureIsNotADenial(
 		`{"id":"01EVAL","status":"failed","requested_at":1.0,"recorded_at":1.0,`+
 			`"error":{"kind":"compile","message":"policy.rego:4: unexpected token"}}`)
 
-	_, combined, _, _, err := executeCommandC(suite.cmd(server.URL,
+	_, combined, _, _, err := executeCommandC(suite.identifierCmd(server.URL,
 		"--control SDLC-CTRL-0007 --flow release --trail my-trail --assert"))
 
 	require.Error(suite.T(), err)

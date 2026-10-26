@@ -60,6 +60,7 @@ An entrypoint annotated outside the policy package, or on a function, is refused
 Pass ` + "`--control`" + ` to record the outcome as a decision against that control, in the
 ` + "`--flow`" + ` and ` + "`--trail`" + ` given. The decision is recorded where the policy runs, so
 the verdict is never asserted from here. Without ` + "`--control`" + ` nothing is recorded.
+Only a published policy can record a decision, so ` + "`--control`" + ` needs ` + "`--identifier`" + `.
 
 Use ` + "`--params`" + ` to pass values the policy reads as ` + "`data.params`" + `. For a
 published policy, they must match the params schema of its current version.
@@ -107,10 +108,10 @@ kosli evaluate policy \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# evaluate a policy and record the outcome as a decision:
+# evaluate a published policy and record the outcome as a decision:
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
-	--path yourPolicyFile.rego \
+	--identifier yourPolicyIdentifier \
 	--control yourControlIdentifier \
 	--flow yourFlowName \
 	--trail yourTrailName \
@@ -206,6 +207,12 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 		if isRemotePolicyRef(ref) {
 			return fmt.Errorf("--path takes a file or a directory on this machine, not a URL")
 		}
+	}
+	// Publishing is admin-only and validated, so files from here would let
+	// whoever records a decision also write the policy behind it.
+	if o.control != "" && len(policyRefs) > 0 {
+		return fmt.Errorf("a decision can only be recorded from a published policy: " +
+			"publish it with 'kosli publish rego-policy', then evaluate it with --identifier")
 	}
 
 	// Refused before the request: a format refused where it is printed would
