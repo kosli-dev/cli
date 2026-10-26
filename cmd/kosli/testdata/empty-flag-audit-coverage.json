@@ -679,6 +679,7 @@
   "output": "string"
  },
  "get rego-policy": {
+  "download": "string",
   "output": "string",
   "policy-version": "int"
  },

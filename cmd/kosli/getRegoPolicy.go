@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
+	"os"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/regopolicies"
@@ -21,7 +24,11 @@ one an evaluation runs, so it can be older than the newest version.
 
 With ^--policy-version^, that version is shown with its status, its digest, who
 published it and when, and the reason when it is rejected or failed. The command
-exits 0 whatever the status of the version.`
+exits 0 whatever the status of the version.
+
+With ^--download^ and ^--policy-version^, the bundle of that version is written to the
+given file as a gzipped tar, unchanged and whatever the status of the version, in place
+of printing it. An existing file is not overwritten.`
 
 const getRegoPolicyExample = `
 # get a rego policy and its current version:
@@ -35,6 +42,13 @@ kosli get rego-policy pr-approved \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
+# download the bundle of version 3 of a rego policy to ./pr-approved-v3.tgz:
+kosli get rego-policy pr-approved \
+	--policy-version 3 \
+	--download ./pr-approved-v3.tgz \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # get version 3 of a rego policy as JSON:
 kosli get rego-policy pr-approved \
 	--policy-version 3 \
@@ -44,8 +58,9 @@ kosli get rego-policy pr-approved \
 `
 
 type getRegoPolicyOptions struct {
-	output  string
-	version int
+	output   string
+	version  int
+	download string
 }
 
 func newGetRegoPolicyCmd(out io.Writer) *cobra.Command {
@@ -67,15 +82,22 @@ func newGetRegoPolicyCmd(out io.Writer) *cobra.Command {
 			if cmd.Flags().Changed("policy-version") && o.version < 1 {
 				return ErrorBeforePrintingUsage(cmd, "--policy-version must be a positive integer")
 			}
+			if o.download != "" && o.version == 0 {
+				return ErrorBeforePrintingUsage(cmd, "--download needs --policy-version")
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if o.download != "" {
+				return o.runDownload(out, args[0])
+			}
 			return o.run(out, args[0])
 		},
 	}
 
 	cmd.Flags().IntVar(&o.version, "policy-version", 0, regoPolicyVersionFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().StringVar(&o.download, "download", "", regoPolicyDownloadFlag)
 
 	return cmd
 }
@@ -109,6 +131,46 @@ func (o *getRegoPolicyOptions) run(out io.Writer, identifier string) error {
 			"table": printTable,
 			"json":  output.PrintJson,
 		})
+}
+
+func (o *getRegoPolicyOptions) runDownload(out io.Writer, identifier string) error {
+	endpoint, err := regopolicies.BundleURL(global.Host, global.Org, identifier, o.version)
+	if err != nil {
+		return err
+	}
+	response, err := kosliClient.Do(&requests.RequestParams{
+		Method: http.MethodGet,
+		URL:    endpoint,
+		Token:  global.ApiToken,
+	})
+	if err != nil {
+		return err
+	}
+	if err := writeNewFile(o.download, []byte(response.Body)); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "Downloaded version %d of rego policy '%s' to %s\n",
+		o.version, identifier, o.download)
+	return err
+}
+
+func writeNewFile(path string, content []byte) error {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	if errors.Is(err, fs.ErrExist) {
+		return fmt.Errorf("%s already exists; remove it or choose another file", path)
+	}
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(content)
+	if closeErr := file.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		// A partial file would make a retry fail as "already exists".
+		_ = os.Remove(path)
+	}
+	return err
 }
 
 func printRegoPolicyAsTable(raw string, out io.Writer, page int) error {

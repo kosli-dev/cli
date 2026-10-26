@@ -1562,10 +1562,12 @@
     "error": "the server the audit runs against does not offer the rego policy endpoints",
     "needs": "server-side evaluation",
     "flags_to_test": [
+      "download",
       "output",
       "policy-version"
     ],
     "flag_values": {
+      "download": "probe-bundle",
       "output": "json",
       "policy-version": "1"
     },

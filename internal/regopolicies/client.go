@@ -157,6 +157,15 @@ func VersionURL(host, org, identifier string, version int) (string, error) {
 	return url.JoinPath(endpoint, "versions", strconv.Itoa(version))
 }
 
+// BundleURL is the endpoint of the gzipped tar of one version's files.
+func BundleURL(host, org, identifier string, version int) (string, error) {
+	endpoint, err := VersionURL(host, org, identifier, version)
+	if err != nil {
+		return "", err
+	}
+	return url.JoinPath(endpoint, "bundle")
+}
+
 // The server refuses unknown fields, so the wire shape is stated here exactly.
 type publishPayload struct {
 	Name        string            `json:"name,omitempty"`

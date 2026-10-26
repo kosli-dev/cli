@@ -1,9 +1,14 @@
 package main
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -234,6 +239,92 @@ func (suite *GetRegoPolicyCommandTestSuite) TestItReturnsANotFoundInTheServersWo
 
 	require.Error(suite.T(), err)
 	require.Contains(suite.T(), combined, "Rego policy 'pr-approved' has no version 9 in organization 'test-org'")
+}
+
+// A gzipped tar, as the server sends it; the command must not look inside it.
+func regoPolicyBundle(t *testing.T) string {
+	t.Helper()
+	var archive bytes.Buffer
+	zipped := gzip.NewWriter(&archive)
+	tw := tar.NewWriter(zipped)
+	body := "package policy\n"
+	require.NoError(t, tw.WriteHeader(&tar.Header{Name: "policy.rego", Mode: 0o644, Size: int64(len(body)), Typeflag: tar.TypeReg}))
+	_, err := tw.Write([]byte(body))
+	require.NoError(t, err)
+	require.NoError(t, tw.Close())
+	require.NoError(t, zipped.Close())
+	return archive.String()
+}
+
+func (suite *GetRegoPolicyCommandTestSuite) TestItDownloadsTheBundleOfAVersionToAFile() {
+	bundle := regoPolicyBundle(suite.T())
+	server, fake := newFakeRegoPolicyRead(suite.T(), bundle)
+	file := filepath.Join(suite.T().TempDir(), "pr-approved-v3.tgz")
+
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL,
+		"pr-approved --policy-version 3 --download "+file))
+
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), "/api/v2/rego-policies/test-org/pr-approved/versions/3/bundle", fake.escapedPath)
+	require.Equal(suite.T(),
+		fmt.Sprintf("Downloaded version 3 of rego policy 'pr-approved' to %s\n", file),
+		combined)
+	written, err := os.ReadFile(file)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), bundle, string(written))
+}
+
+func (suite *GetRegoPolicyCommandTestSuite) TestItRefusesToOverwriteAnExistingFile() {
+	server, _ := newFakeRegoPolicyRead(suite.T(), regoPolicyBundle(suite.T()))
+	file := filepath.Join(suite.T().TempDir(), "pr-approved-v3.tgz")
+	require.NoError(suite.T(), os.WriteFile(file, []byte("mine\n"), 0o644))
+
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL,
+		"pr-approved --policy-version 3 --download "+file))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, file+" already exists; remove it or choose another file")
+	kept, err := os.ReadFile(file)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), "mine\n", string(kept))
+}
+
+func (suite *GetRegoPolicyCommandTestSuite) TestItRefusesADownloadWithoutAVersion() {
+	server, fake := newFakeRegoPolicyRead(suite.T(), regoPolicyWithCurrentVersion)
+
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL,
+		"pr-approved --download "+filepath.Join(suite.T().TempDir(), "pr-approved.tgz")))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, "--download needs --policy-version")
+	require.Equal(suite.T(), 0, fake.calls)
+}
+
+// An unset variable in --download "$OUT" must fail, not fall back to printing the version.
+func (suite *GetRegoPolicyCommandTestSuite) TestItRefusesAnEmptyDownloadFile() {
+	server, fake := newFakeRegoPolicyRead(suite.T(), regoPolicyValid)
+
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL,
+		`pr-approved --policy-version 1 --download ""`))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, "flag '--download' was given an empty value")
+	require.Equal(suite.T(), 0, fake.calls)
+}
+
+func (suite *GetRegoPolicyCommandTestSuite) TestItWritesNothingWhenTheVersionIsNotFound() {
+	server, fake := newFakeRegoPolicyRead(suite.T(),
+		`{"message":"Rego policy 'pr-approved' has no version 9 in organization 'test-org'"}`)
+	fake.status = http.StatusNotFound
+	file := filepath.Join(suite.T().TempDir(), "pr-approved-v9.tgz")
+
+	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL,
+		"pr-approved --policy-version 9 --download "+file))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, "Rego policy 'pr-approved' has no version 9 in organization 'test-org'")
+	require.Equal(suite.T(), 1, fake.calls)
+	require.NoFileExists(suite.T(), file)
 }
 
 func TestGetRegoPolicyCommandTestSuite(t *testing.T) {
