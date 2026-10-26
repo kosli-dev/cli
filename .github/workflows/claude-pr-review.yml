@@ -34,6 +34,48 @@ jobs:
         with:
           fetch-depth: 0
 
+      # A digest bump says nothing by itself. Pull both images and report what
+      # differs inside them, so the review states facts instead of guessing.
+      - name: Describe the builder image change
+        if: startsWith(github.head_ref, 'dependabot/docker/')
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          builder_ref() { sed -n 's/^FROM \(golang:[^ ]*\) AS builder$/\1/p'; }
+          old=$(git show "$BASE_SHA:Dockerfile" | builder_ref)
+          new=$(builder_ref < Dockerfile)
+
+          facts() {
+            docker run --rm "$1" sh -c '
+              echo "Alpine $(cat /etc/alpine-release)"
+              echo "Go $(go version | cut -d" " -f3)"
+              apk list -I 2>/dev/null | cut -d" " -f1 | sort | sed "s/^/pkg /"'
+          }
+          facts "$old" > old.txt
+          facts "$new" > new.txt
+
+          {
+            echo "### Builder image: what changed"
+            echo
+            echo "| | base | PR |"
+            echo "|---|---|---|"
+            for k in Alpine Go; do
+              printf '| %s | %s | %s |\n' "$k" \
+                "$(awk -v k="$k" '$1==k{print $2}' old.txt)" \
+                "$(awk -v k="$k" '$1==k{print $2}' new.txt)"
+            done
+            echo
+            echo "<details><summary>Package changes</summary>"
+            echo
+            echo '```diff'
+            # diff exits 1 on differences, which pipefail would turn into a failure.
+            { diff old.txt new.txt || true; } | sed -n 's/^< pkg /-/p; s/^> pkg /+/p'
+            echo '```'
+            echo "</details>"
+          } > builder-image.md
+          cat builder-image.md >> "$GITHUB_STEP_SUMMARY"
+
       - name: Claude review (dependency updates)
         uses: anthropics/claude-code-action@v1.0.261
 
@@ -48,12 +90,16 @@ jobs:
             --max-turns 40
             --max-budget-usd 5
             --model claude-opus-5-5
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read"
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
             This PR updates dependencies. Please:
+
+            If `builder-image.md` exists, put its contents verbatim at the top of your
+            summary comment. It is the measured difference between the old and new
+            builder images; do not guess at what a digest bump contains.
 
             1. Identify which dependencies changed.
             2. For each changed dependency, consider changelogs, release notes, and semver: look for breaking changes, deprecations, and behavior changes that could affect this codebase.
