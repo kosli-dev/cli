@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -75,7 +76,7 @@ func TestExtractBundleWritesEachFileAtItsPath(t *testing.T) {
 }
 
 func TestExtractBundleRefusesAPathOutsideTheDirectoryAndWritesNothing(t *testing.T) {
-	for _, name := range []string{"../escape.rego", "lib/../../escape.rego", "/etc/escape.rego"} {
+	for _, name := range []string{"../escape.rego", "lib/../../escape.rego", "lib/.. /escape.rego", "lib/.../escape.rego"} {
 		parent := t.TempDir()
 		dir := filepath.Join(parent, "out")
 		archive := tarball(t,
@@ -114,6 +115,7 @@ func TestExtractBundleRefusesToOverwriteAFileAndWritesNothing(t *testing.T) {
 	_, err := ExtractBundle(archive, dir)
 
 	require.ErrorContains(t, err, "policy.rego")
+	require.ErrorContains(t, err, "remove it or choose another directory")
 	require.Equal(t, map[string]string{"policy.rego": "mine\n"}, filesIn(t, dir))
 }
 
@@ -191,6 +193,62 @@ func TestExtractBundleRefusesABundleOverTheSizeLimit(t *testing.T) {
 
 	_, err := ExtractBundle(archive, dir)
 
-	require.ErrorContains(t, err, "over the 8 MiB limit")
+	require.ErrorContains(t, err, "over the 100 MiB limit")
+	require.Empty(t, filesIn(t, dir))
+}
+
+func TestExtractBundleTrimsALeadingSlash(t *testing.T) {
+	dir := t.TempDir()
+	archive := tarball(t, member{name: "/etc/escape.rego", body: "package escape\n"})
+
+	written, err := ExtractBundle(archive, dir)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"etc/escape.rego"}, written)
+	require.Equal(t, map[string]string{"etc/escape.rego": "package escape\n"}, filesIn(t, dir))
+}
+
+func TestExtractBundleSkipsTheCurrentDirectoryEntry(t *testing.T) {
+	dir := t.TempDir()
+	archive := tarball(t,
+		member{name: "./", typeflag: tar.TypeDir},
+		member{name: "./policy.rego", body: "package policy\n"},
+	)
+
+	written, err := ExtractBundle(archive, dir)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"policy.rego"}, written)
+	require.Equal(t, map[string]string{"policy.rego": "package policy\n"}, filesIn(t, dir))
+}
+
+// A file name over the OS limit passes every check on the archive and fails only at the directory.
+var unwritableName = strings.Repeat("x", 300) + ".rego"
+
+func TestExtractBundleRemovesTheDirectoryItCreatedWhenAWriteFails(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "out")
+	archive := tarball(t,
+		member{name: "policy.rego", body: "package policy\n"},
+		member{name: unwritableName, body: "package x\n"},
+	)
+
+	_, err := ExtractBundle(archive, dir)
+
+	require.Error(t, err)
+	_, statErr := os.Lstat(dir)
+	require.ErrorIs(t, statErr, os.ErrNotExist)
+}
+
+func TestExtractBundleKeepsADirectoryThatExistedWhenAWriteFails(t *testing.T) {
+	dir := t.TempDir()
+	archive := tarball(t,
+		member{name: "policy.rego", body: "package policy\n"},
+		member{name: unwritableName, body: "package x\n"},
+	)
+
+	_, err := ExtractBundle(archive, dir)
+
+	require.Error(t, err)
+	require.DirExists(t, dir)
 	require.Empty(t, filesIn(t, dir))
 }
