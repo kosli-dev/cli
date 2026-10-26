@@ -13,6 +13,10 @@ import (
 	"github.com/kosli-dev/cli/internal/types"
 )
 
+// defaultMaxPages bounds commit paging so next links that cycle end in an
+// error. It is set far above the pages a real pull request needs.
+const defaultMaxPages = 1000
+
 type Config struct {
 	Username    string
 	Password    string
@@ -26,12 +30,49 @@ type Config struct {
 
 // parseRFC3339NanoTimestamp parses a timestamp string in RFC3339Nano format and returns its Unix timestamp.
 // The fieldName parameter is used for error messages to identify which field failed to parse.
+// An empty string gives 0: the field was missing.
 func parseRFC3339NanoTimestamp(timestampStr, fieldName string) (int64, error) {
+	if timestampStr == "" {
+		return 0, nil
+	}
 	parsedTime, err := time.Parse(time.RFC3339Nano, timestampStr)
 	if err != nil {
 		return 0, fmt.Errorf("failed to parse %s timestamp: %w", fieldName, err)
 	}
 	return parsedTime.Unix(), nil
+}
+
+// str, obj and boolean read a field from a decoded JSON object, giving the
+// zero value when it is missing, null or of another type.
+func str(m map[string]any, key string) string {
+	v, _ := m[key].(string)
+	return v
+}
+
+func obj(m map[string]any, key string) map[string]any {
+	v, _ := m[key].(map[string]any)
+	return v
+}
+
+func boolean(m map[string]any, key string) bool {
+	v, _ := m[key].(bool)
+	return v
+}
+
+// objects reads a list of objects. A missing list is empty, but an item that
+// is not an object is an error: it is an entry we can't read. owner says what
+// the list belongs to.
+func objects(m map[string]any, key, owner string) ([]map[string]any, error) {
+	items, _ := m[key].([]any)
+	out := make([]map[string]any, len(items))
+	for i, item := range items {
+		o, ok := item.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("%s[%d] for %s in the Bitbucket reply is null or not an object", key, i, owner)
+		}
+		out[i] = o
+	}
+	return out, nil
 }
 
 func (c *Config) ProviderAndLabel() (string, string) {
@@ -97,16 +138,17 @@ func (c *Config) parseBitbucketResponse(commit string, response *requests.HTTPRe
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
-	pullRequests, ok := responseData["values"].([]any)
-	if !ok {
-		return pullRequestsEvidence, nil
+	pullRequests, err := objects(responseData, "values", "commit "+commit)
+	if err != nil {
+		return pullRequestsEvidence, err
 	}
-	for _, prInterface := range pullRequests {
-		pr := prInterface.(map[string]any)
-		linksInterface := pr["links"].(map[string]any)
-		apiLinkMap := linksInterface["self"].(map[string]any)
-		htmlLinkMap := linksInterface["html"].(map[string]any)
-		evidence, err := c.getPullRequestDetailsFromBitbucket(apiLinkMap["href"].(string), htmlLinkMap["href"].(string), commit, version)
+	for _, pr := range pullRequests {
+		links := obj(pr, "links")
+		apiURL := str(obj(links, "self"), "href")
+		if apiURL == "" {
+			return pullRequestsEvidence, fmt.Errorf("a pull request in the Bitbucket reply has no links.self.href")
+		}
+		evidence, err := c.getPullRequestDetailsFromBitbucket(apiURL, str(obj(links, "html"), "href"), commit, version)
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
@@ -141,25 +183,26 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 
 		evidence.URL = prHtmlLink
 		evidence.MergeCommit = commit
-		evidence.State = responseData["state"].(string)
-		participants := responseData["participants"].([]any)
+		evidence.State = str(responseData, "state")
+		participants, err := objects(responseData, "participants", "pull request "+prApiUrl)
+		if err != nil {
+			return evidence, err
+		}
 		approvers := []any{}
 
 		if len(participants) > 0 {
-			for _, participantInterface := range participants {
-				p := participantInterface.(map[string]any)
-				if p["approved"].(bool) {
-					user := p["user"].(map[string]any)
+			for _, p := range participants {
+				if username := approvedBy(p); username != "" {
 					if version == 1 {
-						approvers = append(approvers, user["display_name"].(string))
+						approvers = append(approvers, username)
 					} else {
-						approvalTimestamp, err := parseRFC3339NanoTimestamp(p["participated_on"].(string), "participated_on")
+						approvalTimestamp, err := parseRFC3339NanoTimestamp(str(p, "participated_on"), "participated_on")
 						if err != nil {
 							return evidence, err
 						}
 						approvers = append(approvers, types.PRApprovals{
-							Username:  user["display_name"].(string),
-							State:     p["state"].(string),
+							Username:  username,
+							State:     str(p, "state"),
 							Timestamp: approvalTimestamp,
 						})
 					}
@@ -170,22 +213,26 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 			c.Logger.Debug("no approvers found")
 		}
 		if version == 2 {
-			evidence.Author = responseData["author"].(map[string]any)["display_name"].(string)
-			createdAt, err := parseRFC3339NanoTimestamp(responseData["created_on"].(string), "created_on")
+			evidence.Author = str(obj(responseData, "author"), "display_name")
+			createdAt, err := parseRFC3339NanoTimestamp(str(responseData, "created_on"), "created_on")
 			if err != nil {
 				return evidence, err
 			}
 			evidence.CreatedAt = createdAt
-			mergedAt, err := parseRFC3339NanoTimestamp(responseData["updated_on"].(string), "updated_on")
+			mergedAt, err := parseRFC3339NanoTimestamp(str(responseData, "updated_on"), "updated_on")
 			if err != nil {
 				return evidence, err
 			}
 			evidence.MergedAt = mergedAt
-			evidence.Title = responseData["title"].(string)
+			evidence.Title = str(responseData, "title")
 			evidence.HeadRef = bitbucketBranchName(responseData, "source")
 			evidence.BaseRef = bitbucketBranchName(responseData, "destination")
 
-			prCommits, err := c.getPullRequestCommitsFromBitbucket(int(responseData["id"].(float64)))
+			prID, ok := responseData["id"].(float64)
+			if !ok {
+				return evidence, fmt.Errorf("the pull request at %s has no id", prApiUrl)
+			}
+			prCommits, err := c.getPullRequestCommitsFromBitbucket(int(prID))
 			if err != nil {
 				return evidence, err
 			}
@@ -202,16 +249,24 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 	return evidence, nil
 }
 
+// approvedBy names who approved in participant p, or gives "" when p is no
+// approval. An approval with no identity, as from a deleted account, counts
+// as none: approval evidence must name who gave it.
+func approvedBy(p map[string]any) string {
+	if !boolean(p, "approved") {
+		return ""
+	}
+	return str(obj(p, "user"), "display_name")
+}
+
 // bitbucketReviews gives each participant's current decision. A participant
 // with no state who has commented is a comment; one who has done neither is
 // left out.
-func bitbucketReviews(participants []any) ([]types.PRApprovals, error) {
+func bitbucketReviews(participants []map[string]any) ([]types.PRApprovals, error) {
 	reviews := []types.PRApprovals{}
-	for _, participantInterface := range participants {
-		p := participantInterface.(map[string]any)
-		user, _ := p["user"].(map[string]any)
-		username, _ := user["display_name"].(string)
-		participatedOn, _ := p["participated_on"].(string)
+	for _, p := range participants {
+		username := str(obj(p, "user"), "display_name")
+		participatedOn := str(p, "participated_on")
 		var state string
 		switch p["state"] {
 		case "approved":
@@ -231,18 +286,15 @@ func bitbucketReviews(participants []any) ([]types.PRApprovals, error) {
 		if username == "" && state != types.ReviewChangesRequested {
 			continue
 		}
-		review := types.PRApprovals{
-			Username: username,
-			State:    state,
+		timestamp, err := parseRFC3339NanoTimestamp(participatedOn, "participated_on")
+		if err != nil {
+			return nil, err
 		}
-		if participatedOn != "" {
-			timestamp, err := parseRFC3339NanoTimestamp(participatedOn, "participated_on")
-			if err != nil {
-				return nil, err
-			}
-			review.Timestamp = timestamp
-		}
-		reviews = append(reviews, review)
+		reviews = append(reviews, types.PRApprovals{
+			Username:  username,
+			State:     state,
+			Timestamp: timestamp,
+		})
 	}
 	return reviews, nil
 }
@@ -250,7 +302,7 @@ func bitbucketReviews(participants []any) ([]types.PRApprovals, error) {
 // bitbucketBranchName extracts a branch name from a Bitbucket PR response for
 // the given side: "source" for the head branch, "destination" for the base.
 func bitbucketBranchName(prData map[string]any, side string) string {
-	return prData[side].(map[string]any)["branch"].(map[string]any)["name"].(string)
+	return str(obj(obj(prData, side), "branch"), "name")
 }
 
 // getPullRequestCommitsFromBitbucket gets the commits of a pull request from the Bitbucket API
@@ -264,7 +316,10 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 	allCommits := []types.Commit{}
 	currentURL := url
 
-	for currentURL != "" {
+	for pages := 0; currentURL != ""; pages++ {
+		if pages == defaultMaxPages {
+			return nil, fmt.Errorf("aborting after %d pages of commits for pull request %d", defaultMaxPages, prID)
+		}
 		reqParams := &requests.RequestParams{
 			Method:   http.MethodGet,
 			URL:      currentURL,
@@ -286,36 +341,32 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 			return nil, err
 		}
 
-		commits, ok := responseData["values"].([]any)
-		if !ok {
-			break
+		commits, err := objects(responseData, "values", fmt.Sprintf("pull request %d, page %d", prID, pages+1))
+		if err != nil {
+			return nil, err
 		}
 
-		for _, commitInterface := range commits {
-			commit := commitInterface.(map[string]any)
-			timestamp, err := parseRFC3339NanoTimestamp(commit["date"].(string), "date")
+		for _, commit := range commits {
+			if str(commit, "hash") == "" {
+				return nil, fmt.Errorf("commit %d for pull request %d has no hash", len(allCommits), prID)
+			}
+			timestamp, err := parseRFC3339NanoTimestamp(str(commit, "date"), "date")
 			if err != nil {
 				return nil, err
 			}
 			allCommits = append(allCommits, types.Commit{
-				SHA:       commit["hash"].(string),
-				Message:   commit["message"].(string),
-				Author:    commit["author"].(map[string]any)["raw"].(string),
+				SHA:       str(commit, "hash"),
+				Message:   str(commit, "message"),
+				Author:    str(obj(commit, "author"), "raw"),
 				Timestamp: timestamp,
-				URL:       commit["links"].(map[string]any)["html"].(map[string]any)["href"].(string),
+				URL:       str(obj(obj(commit, "links"), "html"), "href"),
 			})
 		}
 
-		// Check for next page
-		nextInterface, hasNext := responseData["next"]
-		if !hasNext {
+		currentURL = str(responseData, "next")
+		if currentURL == "" {
 			break
 		}
-		nextURL, ok := nextInterface.(string)
-		if !ok || nextURL == "" {
-			break
-		}
-		currentURL = nextURL
 		c.Logger.Debug("fetching next page of commits from %s", currentURL)
 	}
 

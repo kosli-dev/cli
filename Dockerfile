@@ -1,15 +1,13 @@
 # syntax=docker/dockerfile:1
 
-ARG GO_VERSION="1.26"
-ARG ALPINE_VERSION="3.23"
-
 # The version the binary reports; empty builds dev+<sha>. Passed in rather than
 # read from git tags, so the image cannot depend on the checkout's tags (#1133).
 ARG VERSION=""
 
 
 ### Go Builder ###
-FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
+# Pinned by digest so a rebuild gets the same toolchain; Dependabot moves it.
+FROM golang:1.26.10-alpine3.23@sha256:0525c952defebc693cdaf62cdf43afa32be5a7f377e99260642ea19c240c708e AS builder
 
 RUN apk add --update --no-cache git bash make ca-certificates
 

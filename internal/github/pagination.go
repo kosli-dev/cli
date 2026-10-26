@@ -20,6 +20,11 @@ const (
 	restPageSize = 100
 )
 
+// errPullRequestGone is a follow-up page that no longer finds the pull
+// request its first page came from. Ending the drain there would drop the
+// rest of its commits or reviews without saying so.
+var errPullRequestGone = errors.New("the pull request is no longer readable")
+
 // pageInfo is the cursor block shared by every paginated GraphQL connection.
 type pageInfo struct {
 	HasNextPage graphql.Boolean
@@ -142,13 +147,13 @@ func pageVariables(ref prRef, after graphql.String) map[string]any {
 // caller's first query already returned. Follow-up pages select only commits,
 // so draining one connection never re-fetches the other.
 func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, ref prRef,
-	seed []graphqlCommitNode, first pageInfo) ([]graphqlCommitNode, error) {
-	commits, err := paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlCommitNode, pageInfo, error) {
+	seed []*graphqlCommitNode, first pageInfo) ([]graphqlCommitNode, error) {
+	commits, err := paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]*graphqlCommitNode, pageInfo, error) {
 		var q struct {
-			Repository struct {
-				PullRequest struct {
+			Repository *struct {
+				PullRequest *struct {
 					Commits struct {
-						Nodes    []graphqlCommitNode
+						Nodes    []*graphqlCommitNode
 						PageInfo pageInfo
 					} `graphql:"commits(first: 100, after: $cursor)"`
 				} `graphql:"pullRequest(number: $prNumber)"`
@@ -157,24 +162,27 @@ func (c *GithubConfig) allPRCommits(ctx context.Context, run graphqlQueryFunc, r
 		if err := run(ctx, &q, pageVariables(ref, after)); err != nil {
 			return nil, pageInfo{}, err
 		}
+		if q.Repository == nil || q.Repository.PullRequest == nil {
+			return nil, pageInfo{}, errPullRequestGone
+		}
 		page := q.Repository.PullRequest.Commits
 		return page.Nodes, page.PageInfo, nil
 	})
-	if err != nil {
-		return nil, fmt.Errorf("draining commits for %s: %w", ref, err)
+	if err == nil {
+		return nonNull(commits, "commits", ref.String())
 	}
-	return commits, nil
+	return nil, fmt.Errorf("draining commits for %s: %w", ref, err)
 }
 
 // allPRReviews returns every approved review on prNumber, seeded as above.
 func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, ref prRef,
-	seed []graphqlReviewNode, first pageInfo) ([]graphqlReviewNode, error) {
-	reviews, err := paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]graphqlReviewNode, pageInfo, error) {
+	seed []*graphqlReviewNode, first pageInfo) ([]graphqlReviewNode, error) {
+	reviews, err := paginate(seed, first, defaultMaxPages, func(after graphql.String) ([]*graphqlReviewNode, pageInfo, error) {
 		var q struct {
-			Repository struct {
-				PullRequest struct {
+			Repository *struct {
+				PullRequest *struct {
 					Reviews struct {
-						Nodes    []graphqlReviewNode
+						Nodes    []*graphqlReviewNode
 						PageInfo pageInfo
 					} `graphql:"reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED], after: $cursor)"`
 				} `graphql:"pullRequest(number: $prNumber)"`
@@ -183,11 +191,14 @@ func (c *GithubConfig) allPRReviews(ctx context.Context, run graphqlQueryFunc, r
 		if err := run(ctx, &q, pageVariables(ref, after)); err != nil {
 			return nil, pageInfo{}, err
 		}
+		if q.Repository == nil || q.Repository.PullRequest == nil {
+			return nil, pageInfo{}, errPullRequestGone
+		}
 		page := q.Repository.PullRequest.Reviews
 		return page.Nodes, page.PageInfo, nil
 	})
-	if err != nil {
-		return nil, fmt.Errorf("draining reviews for %s: %w", ref, err)
+	if err == nil {
+		return nonNull(reviews, "reviews", ref.String())
 	}
-	return reviews, nil
+	return nil, fmt.Errorf("draining reviews for %s: %w", ref, err)
 }

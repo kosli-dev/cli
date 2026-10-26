@@ -12,7 +12,7 @@ jobs:
       trail_name: ${{ steps.prep.outputs.trail_name }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -47,8 +47,6 @@ jobs:
       azure_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
       bitbucket_access_token: ${{ secrets.KOSLI_BITBUCKET_ACCESS_TOKEN }}
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
-      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ci-failures
       snyk_token: ${{ secrets.SNYK_TOKEN }}
       kosli_reporting_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       kosli_querying_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
@@ -62,7 +60,7 @@ jobs:
       contents: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -100,12 +98,12 @@ jobs:
     if: ${{ always() && contains(join(needs.*.result, ','), 'failure') && github.ref == 'refs/heads/main' }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
       - name: Slack Notification on Failure
         uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@main
         with:
-          slack_url: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+          slack_url: ${{ secrets.SLACK_CI_FAILURES_WEBHOOK }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

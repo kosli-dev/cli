@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -31,7 +31,7 @@ jobs:
       trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -105,8 +105,6 @@ jobs:
       azure_client_id: ${{ secrets.AZURE_CLIENT_ID }}
       azure_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
       bitbucket_access_token: ${{ secrets.KOSLI_BITBUCKET_ACCESS_TOKEN }}
-      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ci-failures
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
       kosli_reporting_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
@@ -124,8 +122,6 @@ jobs:
       kosli_org: kosli-public
       report_to_kosli: release
     secrets:
-      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ci-failures
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
 
@@ -140,7 +136,7 @@ jobs:
       artifacts: ${{ steps.prepare-artifacts-list.outputs.artifacts }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -255,7 +251,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -272,7 +268,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -289,7 +285,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -308,6 +304,39 @@ jobs:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 585008075785
       AWS_REGION: eu-central-1
+
+  slack-notification-on-failure:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+    needs:
+      [
+        notify-start,
+        pre-build,
+        init-kosli,
+        never-alone-trail,
+        test,
+        docker,
+        goreleaser,
+        binary-provenance,
+        docs-repo-dispatch,
+        evidence-reporter-upload-package-and-deploy,
+        environment-reporter-upload-package-and-deploy,
+        environment-reporter-upload-layer
+      ]
+    if: ${{ always() && (contains(join(needs.*.result, ','), 'failure') || contains(join(needs.*.result, ','), 'cancelled')) }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: audit
+
+      - name: Slack Notification on Failure
+        uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@main
+        with:
+          slack_url: ${{ secrets.SLACK_CI_FAILURES_WEBHOOK }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   notify-finish:
     needs:
@@ -332,7 +361,7 @@ jobs:
       contents: read    # ← needed to read release notes via `gh release view`
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 

@@ -566,17 +566,58 @@ func TestPREvidenceByPRNumber_LooksUpSignersInBatchesOf100(t *testing.T) {
 	require.Equal(t, "grace", evidence.Commits[100].SignerUsername)
 }
 
-func TestSignerLogins_LogsAnIgnoredErrorWhenDebugging(t *testing.T) {
+func TestNullFieldErrorTransport_LogsADroppedErrorWhenDebugging(t *testing.T) {
 	ts := newGraphQLTestServer(t, signersResponse(signedBy{sha: "sha1"}))
-	config := newPaginationConfig(ts)
 	var debug strings.Builder
-	node := graphqlCommitNode{}
-	node.Commit.ID = "node-sha1"
-	node.Commit.Signature = &graphqlSignature{}
+	client := graphql.NewClient(ts.URL+"/api/graphql", &http.Client{
+		Transport: &nullFieldErrorTransport{base: http.DefaultTransport, debug: &debug},
+	})
 
-	_, err := config.signerLogins(context.Background(), graphql.NewClient(ts.URL+"/api/graphql", nil).Query,
-		[]graphqlCommitNode{node}, &debug)
+	var q struct {
+		Nodes []struct {
+			Oid       graphql.String
+			Signature struct {
+				Signer *struct{ Login graphql.String }
+			}
+		} `graphql:"nodes(ids: $ids)"`
+	}
+	err := client.Query(context.Background(), &q, map[string]any{"ids": []graphql.ID{"node-sha1"}})
 	require.NoError(t, err)
 	require.Contains(t, debug.String(), "[debug-github]")
 	require.Contains(t, debug.String(), "Not Found")
+}
+
+// GitHub nulls a node it cannot return by id; that commit only loses its signer.
+func TestPREvidenceByPRNumber_ToleratesANullSignerNode(t *testing.T) {
+	ts := newGraphQLTestServer(t,
+		byPRNumberResponse(connectionJSON([]string{signedCommitNodeJSON("sha1")}, ""), connectionJSON(nil, "")),
+		`{"data":{"nodes":[null]},"errors":[{"type":"NOT_FOUND","path":["nodes",0],"message":"Not Found"}]}`,
+	)
+
+	evidence, err := newPaginationConfig(ts).PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Equal(t, "", evidence.Commits[0].SignerUsername)
+	require.Len(t, ts.bodies, 2)
+}
+
+// GitHub reports a SAML-protected repo as a null repository with a FORBIDDEN
+// error; its message tells the user what to fix.
+func TestPREvidence_KeepsGitHubsReasonForAMissingRepository(t *testing.T) {
+	const saml = "Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization."
+	reply := `{"data":{"repository":null},"errors":[{"type":"FORBIDDEN","path":["repository"],"message":"` + saml + `"}]}`
+	for name, run := range map[string]func(*GithubConfig) error{
+		"PREvidenceByPRNumber": func(c *GithubConfig) error {
+			_, err := c.PREvidenceByPRNumber(1)
+			return err
+		},
+		"PREvidenceForCommitV2": func(c *GithubConfig) error {
+			_, err := c.PREvidenceForCommitV2("merge-sha")
+			return err
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			ts := newGraphQLTestServer(t, reply, reply, reply, reply)
+			require.ErrorContains(t, run(newPaginationConfig(ts)), saml)
+		})
+	}
 }

@@ -135,3 +135,14 @@ func TestGitlabMRRefs(t *testing.T) {
 	require.Equal(t, "feature-branch", head)
 	require.Equal(t, "main", base)
 }
+
+// A commit with no author is recorded with an empty author, not " <>". One
+// part is enough to keep the format.
+func TestCommitFromGitlabCommit_MissingAuthorIsEmpty(t *testing.T) {
+	c := commitFromGitlabCommit(&gitlab.Commit{ID: "abc1230000000000000000000000000000000000"}, "my-branch")
+	require.Equal(t, "", c.Author)
+	c = commitFromGitlabCommit(&gitlab.Commit{ID: "abc1230000000000000000000000000000000000", AuthorName: "Steve Tooke"}, "my-branch")
+	require.Equal(t, "Steve Tooke <>", c.Author)
+	c = commitFromGitlabCommit(&gitlab.Commit{ID: "abc1230000000000000000000000000000000000", AuthorEmail: "tooky@kosli.com"}, "my-branch")
+	require.Equal(t, " <tooky@kosli.com>", c.Author)
+}

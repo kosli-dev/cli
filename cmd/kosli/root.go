@@ -153,7 +153,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	policyOutputRuleFlag            = "[optional] [experimental] Name of a policy rule to add to the JSON output, next to allow and violations. Can be repeated, or given as a comma-separated list. Subject to change."
 	policyAssertFlag                = "[optional] Exit with a non-zero status when the policy denies. Without it the verdict is printed and the command exits 0."
 	policyContextFlag               = "What to evaluate, as trail=<flow>/<trail>. Repeat it to evaluate several trails at one instant."
-	policyControlFlag               = "[optional] Record the outcome as a decision against this control. Without it nothing is recorded."
+	policyControlFlag               = "[optional] Record the outcome as a decision against this control. Only a published policy (--identifier) can record one. Without it nothing is recorded."
 	policyDecisionFlowFlag          = "[conditional] The Kosli flow the decision is recorded in. Only required with --control."
 	policyDecisionTrailFlag         = "[conditional] The Kosli trail the decision is recorded in. Only required with --control."
 	policyDecisionNameFlag          = "[defaulted] The attestation name the decision is recorded under. Defaults to <control>-decision."

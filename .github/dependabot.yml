@@ -46,6 +46,25 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+  # The Go builder image in Dockerfile, pinned by digest
+  - package-ecosystem: "docker"
+    directory: "/"
+    # Daily (Dependabot runs it Monday to Friday), unlike the others, so a Go
+    # security patch reaches the image within a working day.
+    schedule:
+      interval: "daily"
+      time: "11:00"
+    commit-message:
+      prefix: 'chore(deps)'
+    allow:
+      - dependency-name: "golang"
+    # Only patch bumps; TestDockerfileBuildsWithTheGoInGoMod fails until go.mod moves too.
+    ignore:
+      - dependency-name: "golang"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    labels:
+      - "dependencies"
+      - "docker"
   # Docker Compose images
   - package-ecosystem: "docker-compose"
     directory: "/"

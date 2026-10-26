@@ -42,12 +42,15 @@ If there are delays in the scan processing (either because the scanned project i
 the scan results are not available by the time the attest sonar command is executed. In this case you can use the ^--max-wait^ flag to retry the command while waiting for the scan to be processed.
 This flag takes the maximum number of seconds to wait for the results to be available. The Kosli CLI will then attempt to retrieve the scan results until the maximum wait time is reached, with
 exponential backoff between retries. Once the results are available they are attested to Kosli as usual.
+On SonarQube Cloud, only the latest scan of a short-lived branch records its commit. So this way, or with ^--sonar-ce-task-url^, fails if another scan of the project
+has finished since, or another scan of the branch is still being processed. Then use ^--sonar-project-key^ and ^--sonar-revision^ instead.
 
 2. Providing the Sonar project key and either the revision or the pull-request ID of the scan (plus the SonarQube server URL if relevant).
 For branch scans: if running the Kosli CLI in some CI/CD pipeline, the revision is defaulted to the commit SHA. If you are running the command locally,
 or have overridden the revision in SonarQube via parameters to the Sonar scanner, you can provide the correct revision using the ^--sonar-revision^ flag.
 If the scan ran on a branch other than the project's main branch in SonarQube, also provide the branch name using the ^--sonar-branch^ flag.
 SonarQube only searches the project's main branch unless told otherwise, so without this flag the scan cannot be found.
+On SonarQube Cloud, a short-lived branch keeps only its latest analysis, so the revision must be the latest commit analysed on that branch.
 For pull request scans: provide the pull-request ID using the ^--pull-request^ flag instead of the revision.
 SonarQube keeps only the latest analysis of a pull request, so if the scan for the current push has not finished, that is the previous push's analysis.
 To make sure the attested analysis is of the commit you expect, also pass ^--sonar-revision^: the command then fails if the pull request's analysis is of another commit.

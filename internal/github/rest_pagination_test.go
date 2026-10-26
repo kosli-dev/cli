@@ -77,6 +77,18 @@ func TestGetPullRequestApprovers_FindsApproverOnSecondPage(t *testing.T) {
 	require.Contains(t, ts.queries[0], "per_page=100")
 }
 
+func TestGetPullRequestApprovers_DeletedAccountIsNotCounted(t *testing.T) {
+	// REST sends a deleted reviewer as user null, and "ghost" elsewhere.
+	ts := newRestTestServer(t, "/api/v3/repos/test-org/test-repo/pulls/5/reviews",
+		`[{"state":"APPROVED","user":null}]`,
+		`[{"state":"APPROVED","user":{"login":"ghost"}},{"state":"APPROVED","user":{"login":"ada"}}]`,
+	)
+
+	approvers, err := newRestConfig(ts.URL).GetPullRequestApprovers(5)
+	require.NoError(t, err)
+	require.Equal(t, []string{"ada"}, approvers)
+}
+
 func TestPullRequestsForCommit_ReturnsErrorFromSecondPage(t *testing.T) {
 	calls := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
