@@ -164,7 +164,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	regoPolicyDescriptionFlag       = "[optional] The description of the rego policy. Without it the current description is kept."
 	regoPolicyCommentFlag           = "[optional] Why this version is published. It is kept with the version."
 	regoPolicyVersionFlag           = "[optional] The version of the rego policy to get. Without it, the policy and its current version are shown."
-	regoPolicyDownloadFlag          = "[optional] The directory to write the files of the version given by --policy-version into. It is created if it does not exist, and no existing file in it is overwritten."
+	regoPolicyDownloadFlag          = "[optional] The file to write the bundle of the version given by --policy-version to, as a gzipped tar. An existing file is not overwritten."
 	regoPolicySearchFlag            = "[optional] Only list rego policies whose name or identifier contains this substring (case-insensitive)."
 	regoPolicySortFlag              = "[optional] The field to sort rego policies by. Valid values are: [updated_at, identifier]. (defaults to updated_at)"
 	regoPolicySortDirectionFlag     = "[optional] The direction to sort rego policies in. Valid values are: [asc, desc]. (defaults to desc)"

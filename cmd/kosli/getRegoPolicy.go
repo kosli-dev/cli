@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
+	"os"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/regopolicies"
@@ -23,9 +26,9 @@ With ^--policy-version^, that version is shown with its status, its digest, who
 published it and when, and the reason when it is rejected or failed. The command
 exits 0 whatever the status of the version.
 
-With ^--download^ and ^--policy-version^, the files of that version are written into the
-given directory at the paths they were published with, whatever the status of the
-version, in place of printing it. A digest computed from these files equals the version's digest.`
+With ^--download^ and ^--policy-version^, the bundle of that version is written to the
+given file as a gzipped tar, unchanged and whatever the status of the version, in place
+of printing it. An existing file is not overwritten.`
 
 const getRegoPolicyExample = `
 # get a rego policy and its current version:
@@ -39,10 +42,10 @@ kosli get rego-policy pr-approved \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# download the files of version 3 of a rego policy into ./pr-approved-v3:
+# download the bundle of version 3 of a rego policy to ./pr-approved-v3.tgz:
 kosli get rego-policy pr-approved \
 	--policy-version 3 \
-	--download ./pr-approved-v3 \
+	--download ./pr-approved-v3.tgz \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -143,17 +146,27 @@ func (o *getRegoPolicyOptions) runDownload(out io.Writer, identifier string) err
 	if err != nil {
 		return err
 	}
-	written, err := regopolicies.ExtractBundle([]byte(response.Body), o.download)
+	if err := writeNewFile(o.download, []byte(response.Body)); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "Downloaded version %d of rego policy '%s' to %s\n",
+		o.version, identifier, o.download)
+	return err
+}
+
+func writeNewFile(path string, content []byte) error {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	if errors.Is(err, fs.ErrExist) {
+		return fmt.Errorf("%s already exists; remove it or choose another file", path)
+	}
 	if err != nil {
 		return err
 	}
-	noun := "files"
-	if len(written) == 1 {
-		noun = "file"
+	if _, err := file.Write(content); err != nil {
+		_ = file.Close()
+		return err
 	}
-	_, err = fmt.Fprintf(out, "Downloaded %d %s of version %d of rego policy '%s' to %s\n",
-		len(written), noun, o.version, identifier, o.download)
-	return err
+	return file.Close()
 }
 
 func printRegoPolicyAsTable(raw string, out io.Writer, page int) error {
