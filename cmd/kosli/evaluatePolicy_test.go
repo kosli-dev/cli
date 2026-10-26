@@ -582,6 +582,19 @@ func (suite *EvaluatePolicyCommandTestSuite) TestADecisionFromLocalFilesIsRefuse
 	}
 }
 
+// KOSLI_CONTROL binds to --control, so a pipeline that exports it is refused
+// with --path as a typed --control is.
+func (suite *EvaluatePolicyCommandTestSuite) TestAControlFromTheEnvironmentIsRefusedWithAPath() {
+	suite.T().Setenv("KOSLI_CONTROL", "SDLC-CTRL-0007")
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(suite.cmd(server.URL, "--flow release --trail my-trail"))
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "kosli publish rego-policy")
+	require.Empty(suite.T(), fake.created, "nothing is sent")
+}
+
 // The environment satisfies the destination as the flags do.
 func (suite *EvaluatePolicyCommandTestSuite) TestTheDestinationCanComeFromTheEnvironment() {
 	suite.T().Setenv("KOSLI_FLOW", "release")
