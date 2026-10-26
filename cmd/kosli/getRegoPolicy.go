@@ -162,11 +162,15 @@ func writeNewFile(path string, content []byte) error {
 	if err != nil {
 		return err
 	}
-	if _, err := file.Write(content); err != nil {
-		_ = file.Close()
-		return err
+	_, err = file.Write(content)
+	if closeErr := file.Close(); err == nil {
+		err = closeErr
 	}
-	return file.Close()
+	if err != nil {
+		// A partial file would make a retry fail as "already exists".
+		_ = os.Remove(path)
+	}
+	return err
 }
 
 func printRegoPolicyAsTable(raw string, out io.Writer, page int) error {
