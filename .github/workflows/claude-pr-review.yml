@@ -77,7 +77,7 @@ jobs:
           cat builder-image.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Claude review (dependency updates)
-        uses: anthropics/claude-code-action@v1.0.261
+        uses: anthropics/claude-code-action@v1.0.262
 
         env:
           GH_TOKEN: ${{ github.token }}
@@ -143,7 +143,7 @@ jobs:
 
       - name: Claude review (general)
         if: github.event.action != 'synchronize'
-        uses: anthropics/claude-code-action@v1.0.261
+        uses: anthropics/claude-code-action@v1.0.262
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -200,7 +200,7 @@ jobs:
       # ── Follow-up on pushes: only the delta and existing findings ────────────
       - name: Follow-up Claude review (new commits only)
         if: github.event.action == 'synchronize'
-        uses: anthropics/claude-code-action@v1.0.261
+        uses: anthropics/claude-code-action@v1.0.262
         env:
           GH_TOKEN: ${{ github.token }}
         with:
