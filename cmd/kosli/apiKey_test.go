@@ -160,10 +160,16 @@ func (suite *ApiKeyCommandTestSuite) TestCreateApiKeyCmd() {
 			goldenRegex: `service-accounts/docs-cmd-test-user/test-sa/api-keys`,
 		},
 		{
-			wantError: true,
-			name:      "create fails when --service-account is missing",
-			cmd:       "create api-key --description 'ci key'" + suite.defaultKosliArguments,
-			golden:    "Error: required flag(s) \"service-account\" not set\n",
+			wantError:   true,
+			name:        "create fails when neither --service-account nor --personal is set",
+			cmd:         "create api-key --description 'ci key'" + suite.defaultKosliArguments,
+			goldenRegex: `Error: at least one of the flags in the group \[service-account personal\] is required`,
+		},
+		{
+			wantError:   false,
+			name:        "create --personal posts to the user's keys without --org (dry-run)",
+			cmd:         fmt.Sprintf("create api-key --personal --description 'ci key' --dry-run --host %s --api-token %s", global.Host, global.ApiToken),
+			goldenRegex: `(?s)/api/v2/user/api-keys.*"description": "ci key"`,
 		},
 		{
 			wantError: true,
@@ -577,6 +583,10 @@ func (suite *ApiKeyCommandTestSuite) TestPersonalApiKeysCmd() {
 		Get("/api/v2/user/api-keys/id-1").
 		Reply(200).
 		BodyString(apiKeyFixture(suite.T(), "api_key.json"))
+	fake.NewHandler().
+		Post("/api/v2/user/api-keys").
+		Reply(201).
+		BodyString(apiKeyFixture(suite.T(), "created_api_key.json"))
 
 	// No --org: personal keys belong to the user, not to an org.
 	args := fmt.Sprintf(" --host %s --api-token %s", fake.Server.URL, global.ApiToken)
@@ -596,6 +606,12 @@ func (suite *ApiKeyCommandTestSuite) TestPersonalApiKeysCmd() {
 			goldenJson: []jsonCheck{
 				{Path: "id", Want: "id-1"},
 			},
+		},
+		{
+			wantError:   false,
+			name:        "create --personal prints the new key value",
+			cmd:         "create api-key --personal -d ci --output json" + args,
+			goldenRegex: `sk_created`,
 		},
 	}
 
