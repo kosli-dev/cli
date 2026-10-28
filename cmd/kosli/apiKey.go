@@ -4,9 +4,44 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/spf13/cobra"
 )
+
+// apiKeyOwner selects whose API keys a command manages: a service account's,
+// or with --personal the caller's own.
+type apiKeyOwner struct {
+	serviceAccount string
+	personal       bool
+}
+
+func (o *apiKeyOwner) addFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
+	cmd.Flags().BoolVar(&o.personal, "personal", false, personalApiKeyFlag)
+	cmd.MarkFlagsMutuallyExclusive("service-account", "personal")
+	cmd.MarkFlagsOneRequired("service-account", "personal")
+}
+
+// requiredGlobalFlags leaves out Org for personal keys, which belong to the
+// user rather than to an org.
+func (o *apiKeyOwner) requiredGlobalFlags() []string {
+	if o.personal {
+		return []string{"ApiToken"}
+	}
+	return []string{"Org", "ApiToken"}
+}
+
+// url builds the owner's API key collection URL, followed by elem.
+func (o *apiKeyOwner) url(elem ...string) (string, error) {
+	base := []string{"api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys"}
+	if o.personal {
+		base = []string{"api/v2/user/api-keys"}
+	}
+	return url.JoinPath(global.Host, append(base, elem...)...)
+}
 
 // apiKeyResponse models the JSON returned by the create and rotate endpoints.
 // The key value is only ever returned once, at creation/rotation time.
