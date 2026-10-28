@@ -21,8 +21,8 @@ overridden with ^--grace-period-hours^. The new key value is only returned once,
 sure to store it securely.
 
 With ^--personal^ and an API key as ^--api-token^, you can rotate only that key and keys
-created with it, and the rotated key expires no later than that key. Rotating any other
-personal key, or extending a key's expiry, needs the Kosli web UI.`
+created with it, and the rotated key expires no later than that key. To get a key that
+outlives it, create one from your profile page in the Kosli app.`
 
 const rotateApiKeyExample = `
 # rotate an API key for a service account:
