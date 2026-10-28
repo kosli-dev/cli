@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
-const deleteApiKeyShortDesc = `Delete one or more API keys for a service account.`
+const deleteApiKeyShortDesc = `Delete one or more API keys for a service account, or your own personal API keys.`
 
 const deleteApiKeyLongDesc = deleteApiKeyShortDesc + `
 
@@ -20,7 +19,10 @@ cannot be undone. You are asked to confirm before the key is deleted; use
 ^--assume-yes^/^--yes^ to skip the confirmation prompt.
 
 When stdin is not interactive (e.g. in CI) the prompt cannot be answered and the
-command fails without deleting anything, so pass ^--assume-yes^ there.`
+command fails without deleting anything, so pass ^--assume-yes^ there.
+
+Deleting a key also deletes every key that was created with it. With ^--personal^ and an
+API key as ^--api-token^, you can delete only that key and keys created with it.`
 
 const deleteApiKeyExample = `
 # delete an API key for a service account (asks for confirmation):
@@ -41,11 +43,16 @@ kosli delete api-key yourApiKeyID \
 	--assume-yes \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# delete one of your own personal API keys:
+kosli delete api-key yourApiKeyID \
+	--personal \
+	--api-token yourAPIToken
 `
 
 type deleteApiKeyOptions struct {
-	serviceAccount string
-	assumeYes      bool
+	owner     apiKeyOwner
+	assumeYes bool
 }
 
 func newDeleteApiKeyCmd(out io.Writer) *cobra.Command {
@@ -58,7 +65,7 @@ func newDeleteApiKeyCmd(out io.Writer) *cobra.Command {
 		Example: deleteApiKeyExample,
 		Args:    cobra.MinimumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := RequireGlobalFlags(global, []string{"Org", "ApiToken"}); err != nil {
+			if err := RequireGlobalFlags(global, o.owner.requiredGlobalFlags()); err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return nil
@@ -68,7 +75,7 @@ func newDeleteApiKeyCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
+	o.owner.addFlags(cmd)
 	cmd.Flags().BoolVarP(&o.assumeYes, "assume-yes", "y", false, apiKeyAssumeYesFlag)
 	// keep --yes as a hidden alias for --assume-yes (bound to the same option)
 	cmd.Flags().BoolVar(&o.assumeYes, "yes", false, apiKeyAssumeYesFlag)
@@ -77,17 +84,12 @@ func newDeleteApiKeyCmd(out io.Writer) *cobra.Command {
 	}
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"service-account"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
-
 	return cmd
 }
 
 func (o *deleteApiKeyOptions) run(in io.Reader, args []string) error {
 	if !o.assumeYes && !global.DryRun {
-		confirmed, err := confirmApiKeyDeletion(args, o.serviceAccount, in)
+		confirmed, err := confirmApiKeyDeletion(args, o.owner, in)
 		if err != nil {
 			return err
 		}
@@ -106,7 +108,7 @@ func (o *deleteApiKeyOptions) run(in io.Reader, args []string) error {
 	}
 
 	for i, keyID := range args {
-		url, err := url.JoinPath(global.Host, "api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys", keyID)
+		url, err := o.owner.url(keyID)
 		if err != nil {
 			reportAlreadyDeleted(i)
 			return err
@@ -123,7 +125,12 @@ func (o *deleteApiKeyOptions) run(in io.Reader, args []string) error {
 			return fmt.Errorf("failed to delete API key: %w", err)
 		}
 		if !global.DryRun {
-			logger.Info("API key %s for service account %s was deleted!", style(logger.Out, keyID, ansiBold, ansiCyan), o.serviceAccount)
+			styledKey := style(logger.Out, keyID, ansiBold, ansiCyan)
+			if o.owner.personal {
+				logger.Info("Personal API key %s was deleted!", styledKey)
+			} else {
+				logger.Info("API key %s for service account %s was deleted!", styledKey, o.owner.serviceAccount)
+			}
 		}
 	}
 	return nil
@@ -142,8 +149,12 @@ func styleApiKeyIDs(keyIDs []string) []string {
 // confirmApiKeyDeletion prompts the user to confirm deletion and returns true
 // only when the answer is an affirmative "y"/"yes" (case-insensitive). It errors
 // when the prompt cannot be answered at all, see confirmDeletion.
-func confirmApiKeyDeletion(keyIDs []string, serviceAccount string, in io.Reader) (bool, error) {
-	prompt := fmt.Sprintf("Are you sure you want to delete API key(s) %s for service account %s? [y/N] ",
-		strings.Join(styleApiKeyIDs(keyIDs), ", "), style(logger.Out, serviceAccount, ansiBold, ansiGreen))
+func confirmApiKeyDeletion(keyIDs []string, owner apiKeyOwner, in io.Reader) (bool, error) {
+	keys := strings.Join(styleApiKeyIDs(keyIDs), ", ")
+	prompt := fmt.Sprintf("Are you sure you want to delete your personal API key(s) %s? [y/N] ", keys)
+	if !owner.personal {
+		prompt = fmt.Sprintf("Are you sure you want to delete API key(s) %s for service account %s? [y/N] ",
+			keys, style(logger.Out, owner.serviceAccount, ansiBold, ansiGreen))
+	}
 	return confirmDeletion(prompt, in)
 }

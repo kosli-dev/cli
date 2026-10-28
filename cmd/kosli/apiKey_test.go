@@ -290,10 +290,23 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyCmd() {
 			golden:    "Error: requires at least 1 arg(s), only received 0\n",
 		},
 		{
-			wantError: true,
-			name:      "delete fails when --service-account is missing",
-			cmd:       "delete api-key key-123" + suite.defaultKosliArguments,
-			golden:    "Error: required flag(s) \"service-account\" not set\n",
+			wantError:   true,
+			name:        "delete fails when neither --service-account nor --personal is set",
+			cmd:         "delete api-key key-123" + suite.defaultKosliArguments,
+			goldenRegex: `Error: at least one of the flags in the group \[service-account personal\] is required`,
+		},
+		{
+			wantError: false,
+			name:      "a refusal to delete personal keys names them as personal",
+			cmd:       fmt.Sprintf("delete api-key key-123 --personal --host %s --api-token %s", global.Host, global.ApiToken),
+			stdin:     "n\n",
+			golden:    "Are you sure you want to delete your personal API key(s) key-123? [y/N] Deletion of API key(s) key-123 was cancelled.\n",
+		},
+		{
+			wantError:   false,
+			name:        "delete --personal targets the user's key without --org (dry-run)",
+			cmd:         fmt.Sprintf("delete api-key key-123 --personal -y --dry-run --host %s --api-token %s", global.Host, global.ApiToken),
+			goldenRegex: `/api/v2/user/api-keys/key-123`,
 		},
 	}
 
@@ -601,6 +614,10 @@ func (suite *ApiKeyCommandTestSuite) TestPersonalApiKeysCmd() {
 		Post("/api/v2/user/api-keys/k2/rotate").
 		Reply(201).
 		BodyString(apiKeyFixture(suite.T(), "rotated_api_key.json"))
+	fake.NewHandler().
+		Delete("/api/v2/user/api-keys/key-123").
+		Reply(200).
+		BodyString(apiKeyFixture(suite.T(), "revoke_success.json"))
 
 	// No --org: personal keys belong to the user, not to an org.
 	args := fmt.Sprintf(" --host %s --api-token %s", fake.Server.URL, global.ApiToken)
@@ -635,6 +652,13 @@ func (suite *ApiKeyCommandTestSuite) TestPersonalApiKeysCmd() {
 				{Path: "", Want: "length:2"},
 				{Path: "[0].key", Want: "sk_one"},
 			},
+		},
+		{
+			wantError:   false,
+			name:        "delete --personal confirms and reports the personal key deleted",
+			cmd:         "delete api-key key-123 --personal" + args,
+			stdin:       "y",
+			goldenRegex: `Personal API key key-123 was deleted!`,
 		},
 	}
 
