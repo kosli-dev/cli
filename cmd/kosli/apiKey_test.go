@@ -163,7 +163,7 @@ func (suite *ApiKeyCommandTestSuite) TestCreateApiKeyCmd() {
 			wantError:   true,
 			name:        "create fails when neither --service-account nor --personal is set",
 			cmd:         "create api-key --description 'ci key'" + suite.defaultKosliArguments,
-			goldenRegex: `Error: at least one of the flags in the group \[service-account personal\] is required`,
+			goldenRegex: `Error: --service-account is required unless --personal is set`,
 		},
 		{
 			wantError:   false,
@@ -230,7 +230,7 @@ func (suite *ApiKeyCommandTestSuite) TestRotateApiKeyCmd() {
 			wantError:   true,
 			name:        "rotate fails when neither --service-account nor --personal is set",
 			cmd:         "rotate api-key key-123" + suite.defaultKosliArguments,
-			goldenRegex: `Error: at least one of the flags in the group \[service-account personal\] is required`,
+			goldenRegex: `Error: --service-account is required unless --personal is set`,
 		},
 		{
 			wantError:   false,
@@ -293,7 +293,7 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyCmd() {
 			wantError:   true,
 			name:        "delete fails when neither --service-account nor --personal is set",
 			cmd:         "delete api-key key-123" + suite.defaultKosliArguments,
-			goldenRegex: `Error: at least one of the flags in the group \[service-account personal\] is required`,
+			goldenRegex: `Error: --service-account is required unless --personal is set`,
 		},
 		{
 			wantError: false,
@@ -319,7 +319,7 @@ func (suite *ApiKeyCommandTestSuite) TestGetApiKeyCmd() {
 			wantError:   true,
 			name:        "get fails when neither --service-account nor --personal is set",
 			cmd:         "get api-key key-123" + suite.defaultKosliArguments,
-			goldenRegex: `Error: at least one of the flags in the group \[service-account personal\] is required`,
+			goldenRegex: `Error: --service-account is required unless --personal is set`,
 		},
 		{
 			wantError: true,
@@ -578,7 +578,7 @@ func (suite *ApiKeyCommandTestSuite) TestListApiKeysCmd() {
 			wantError:   true,
 			name:        "list fails when neither --service-account nor --personal is set",
 			cmd:         "list api-keys" + suite.defaultKosliArguments,
-			goldenRegex: `Error: at least one of the flags in the group \[service-account personal\] is required`,
+			goldenRegex: `Error: --service-account is required unless --personal is set`,
 		},
 		{
 			wantError:   true,
@@ -586,6 +586,29 @@ func (suite *ApiKeyCommandTestSuite) TestListApiKeysCmd() {
 			cmd:         "list api-keys --service-account test-sa --personal" + suite.defaultKosliArguments,
 			goldenRegex: `Error: if any flags in the group \[service-account personal\] are set none of the others can be`,
 		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
+// TestPersonalFalseNeedsServiceAccount covers --personal=false: cobra counts the
+// flag as given, so only the owner check stops a request with no owner at all.
+func (suite *ApiKeyCommandTestSuite) TestPersonalFalseNeedsServiceAccount() {
+	wantErr := `Error: --service-account is required unless --personal is set`
+	tests := []cmdTestCase{}
+	for _, cmd := range []string{
+		"list api-keys",
+		"get api-key key-123",
+		"create api-key --description 'ci key'",
+		"rotate api-key key-123",
+		"delete api-key key-123 --assume-yes",
+	} {
+		tests = append(tests, cmdTestCase{
+			wantError:   true,
+			name:        cmd + " with --personal=false and no --service-account fails",
+			cmd:         cmd + " --personal=false" + suite.defaultKosliArguments,
+			goldenRegex: wantErr,
+		})
 	}
 
 	runTestCmd(suite.T(), tests)

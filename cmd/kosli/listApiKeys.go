@@ -46,7 +46,7 @@ func newListApiKeysCmd(out io.Writer) *cobra.Command {
 		Example: listApiKeysExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := RequireGlobalFlags(global, o.owner.requiredGlobalFlags()); err != nil {
+			if err := o.owner.validate(); err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return nil

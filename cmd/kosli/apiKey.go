@@ -22,16 +22,20 @@ func (o *apiKeyOwner) addFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
 	cmd.Flags().BoolVar(&o.personal, "personal", false, personalApiKeyFlag)
 	cmd.MarkFlagsMutuallyExclusive("service-account", "personal")
-	cmd.MarkFlagsOneRequired("service-account", "personal")
 }
 
-// requiredGlobalFlags leaves out Org for personal keys, which belong to the
-// user rather than to an org.
-func (o *apiKeyOwner) requiredGlobalFlags() []string {
+// validate checks the owner and the global flags it needs. The owner is not a
+// cobra one-required flag group because that counts --personal=false as given.
+// Org is not needed for personal keys, which belong to the user rather than to
+// an org.
+func (o *apiKeyOwner) validate() error {
 	if o.personal {
-		return []string{"ApiToken"}
+		return RequireGlobalFlags(global, []string{"ApiToken"})
 	}
-	return []string{"Org", "ApiToken"}
+	if o.serviceAccount == "" {
+		return fmt.Errorf("--service-account is required unless --personal is set")
+	}
+	return RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 }
 
 // url builds the owner's API key collection URL, followed by elem.
