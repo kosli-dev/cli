@@ -119,3 +119,42 @@ func TestSameHost(t *testing.T) {
 		})
 	}
 }
+
+func TestUsageHeadersAreNotForwardedOnARedirectToAnotherHost(t *testing.T) {
+	other, otherSeen := recordingServer(t)
+	var kosliSeen []http.Header
+	kosli := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		kosliSeen = append(kosliSeen, r.Header.Clone())
+		http.Redirect(w, r, other.URL+"/bucket/evidence.tgz", http.StatusFound)
+	}))
+	t.Cleanup(kosli.Close)
+	client := newTestClient(t)
+	client.SetUsageHeaders(kosli.URL, testUsageHeaders)
+
+	_, err := client.Do(&RequestParams{Method: http.MethodGet, URL: kosli.URL + "/api/v2/evidence/acme/download"})
+	require.NoError(t, err)
+
+	require.Len(t, kosliSeen, 1)
+	for name, want := range testUsageHeaders {
+		require.Equal(t, want, kosliSeen[0].Get(name), name)
+	}
+	require.Len(t, *otherSeen, 1)
+	for name := range testUsageHeaders {
+		require.Empty(t, (*otherSeen)[0].Values(name), name)
+	}
+}
+
+func TestUsageHeadersAreSentThroughTheHTTPProxy(t *testing.T) {
+	proxy, seen := recordingServer(t)
+	client, err := NewKosliClient(proxy.URL, 0, false, logger.NewStandardLogger())
+	require.NoError(t, err)
+	client.SetUsageHeaders("http://kosli.example", testUsageHeaders)
+
+	_, err = client.Do(&RequestParams{Method: http.MethodGet, URL: "http://kosli.example/api/v2/flows/acme"})
+	require.NoError(t, err)
+
+	require.Len(t, *seen, 1)
+	for name, want := range testUsageHeaders {
+		require.Equal(t, want, (*seen)[0].Get(name), name)
+	}
+}

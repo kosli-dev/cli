@@ -77,19 +77,37 @@ type Client struct {
 func (c *Client) SetUsageHeaders(kosliHost string, headers map[string]string) {
 	host, err := url.Parse(kosliHost)
 	if err != nil || host.Hostname() == "" {
+		if c.Logger != nil {
+			c.Logger.Debug("usage headers disabled: [%s] is not a URL with a host", kosliHost)
+		}
 		c.usageHost, c.usageHeaders = nil, nil
 		return
 	}
 	c.usageHost, c.usageHeaders = host, headers
 }
 
-func (c *Client) addUsageHeaders(req *http.Request) {
-	if c.usageHost == nil || !sameHost(req.URL, c.usageHost) {
-		return
+// usageHeaderTransport applies the usage headers on every hop, because
+// http.Client copies a request's headers onto a redirect to another host.
+type usageHeaderTransport struct {
+	next   http.RoundTripper
+	client *Client
+}
+
+func (t *usageHeaderTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	c := t.client
+	if len(c.usageHeaders) == 0 {
+		return t.next.RoundTrip(req)
 	}
+	req = req.Clone(req.Context())
+	toKosli := sameHost(req.URL, c.usageHost)
 	for k, v := range c.usageHeaders {
-		req.Header.Set(k, v)
+		if toKosli {
+			req.Header.Set(k, v)
+		} else {
+			req.Header.Del(k)
+		}
 	}
+	return t.next.RoundTrip(req)
 }
 
 func sameHost(a, b *url.URL) bool {
@@ -150,12 +168,16 @@ func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *
 		client.Transport.(*retryablehttp.RoundTripper).Client.HTTPClient.Transport.(*http.Transport).Proxy = http.ProxyURL(proxyURL)
 	}
 
-	return &Client{
+	c := &Client{
 		MaxAPIRetries: maxAPIRetries,
 		Debug:         debug,
 		Logger:        logger,
 		HttpClient:    client,
-	}, nil
+	}
+	// Wrapped below the retry client, since its inner http.Client is the one
+	// that follows redirects.
+	retryClient.HTTPClient.Transport = &usageHeaderTransport{next: retryClient.HTTPClient.Transport, client: c}
+	return c, nil
 }
 
 type RequestParams struct {
@@ -339,7 +361,6 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 				c.Logger.Warn("failed to log payload: %v \nContinuing with the request...", err)
 			}
 		}
-		c.addUsageHeaders(req)
 		resp, err := c.HttpClient.Do(req)
 		if err != nil {
 			// err from retryable client is detailed enough
