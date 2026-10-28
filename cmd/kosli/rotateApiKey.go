@@ -5,21 +5,24 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
-const rotateApiKeyShortDesc = `Rotate one or more API keys for a service account.`
+const rotateApiKeyShortDesc = `Rotate one or more API keys for a service account, or your own personal API keys.`
 
 const rotateApiKeyLongDesc = rotateApiKeyShortDesc + `
 
 A new API key is generated immediately. The old key remains valid for a grace period to
 allow time to update dependent systems; that grace period has a standard length unless
 overridden with ^--grace-period-hours^. The new key value is only returned once, so make
-sure to store it securely.`
+sure to store it securely.
+
+With ^--personal^ and an API key as ^--api-token^, you can rotate only that key and keys
+created with it, and the rotated key expires no later than that key. Rotating any other
+personal key, or extending a key's expiry, needs the Kosli web UI.`
 
 const rotateApiKeyExample = `
 # rotate an API key for a service account:
@@ -40,10 +43,15 @@ kosli rotate api-key yourApiKeyID \
 	--service-account yourServiceAccountName \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# rotate one of your own personal API keys:
+kosli rotate api-key yourApiKeyID \
+	--personal \
+	--api-token yourAPIToken
 `
 
 type rotateApiKeyOptions struct {
-	serviceAccount      string
+	owner               apiKeyOwner
 	expiresAt           string
 	gracePeriodHours    int
 	gracePeriodHoursSet bool
@@ -66,7 +74,7 @@ func newRotateApiKeyCmd(out io.Writer) *cobra.Command {
 		Example: rotateApiKeyExample,
 		Args:    cobra.MinimumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := RequireGlobalFlags(global, []string{"Org", "ApiToken"}); err != nil {
+			if err := RequireGlobalFlags(global, o.owner.requiredGlobalFlags()); err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return nil
@@ -77,16 +85,11 @@ func newRotateApiKeyCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
+	o.owner.addFlags(cmd)
 	cmd.Flags().StringVarP(&o.expiresAt, "expires-at", "e", "", rotateApiKeyExpiresAtFlag)
 	cmd.Flags().IntVarP(&o.gracePeriodHours, "grace-period-hours", "g", 0, apiKeyGracePeriodHoursFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	addDryRunFlag(cmd)
-
-	err := RequireFlags(cmd, []string{"service-account"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
 
 	return cmd
 }
@@ -111,7 +114,7 @@ func (o *rotateApiKeyOptions) run(out io.Writer, args []string) error {
 	keys := make([]json.RawMessage, 0, len(args))
 	var runErr error
 	for _, keyID := range args {
-		url, err := url.JoinPath(global.Host, "api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys", keyID, "rotate")
+		url, err := o.owner.url(keyID, "rotate")
 		if err != nil {
 			runErr = err
 			break

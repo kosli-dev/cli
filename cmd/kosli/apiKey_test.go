@@ -227,10 +227,16 @@ func (suite *ApiKeyCommandTestSuite) TestRotateApiKeyCmd() {
 			golden:    "Error: requires at least 1 arg(s), only received 0\n",
 		},
 		{
-			wantError: true,
-			name:      "rotate fails when --service-account is missing",
-			cmd:       "rotate api-key key-123" + suite.defaultKosliArguments,
-			golden:    "Error: required flag(s) \"service-account\" not set\n",
+			wantError:   true,
+			name:        "rotate fails when neither --service-account nor --personal is set",
+			cmd:         "rotate api-key key-123" + suite.defaultKosliArguments,
+			goldenRegex: `Error: at least one of the flags in the group \[service-account personal\] is required`,
+		},
+		{
+			wantError:   false,
+			name:        "rotate --personal posts to the user's key without --org (dry-run)",
+			cmd:         fmt.Sprintf("rotate api-key key-123 --personal --dry-run --host %s --api-token %s", global.Host, global.ApiToken),
+			goldenRegex: `/api/v2/user/api-keys/key-123/rotate`,
 		},
 	}
 
@@ -587,6 +593,14 @@ func (suite *ApiKeyCommandTestSuite) TestPersonalApiKeysCmd() {
 		Post("/api/v2/user/api-keys").
 		Reply(201).
 		BodyString(apiKeyFixture(suite.T(), "created_api_key.json"))
+	fake.NewHandler().
+		Post("/api/v2/user/api-keys/k1/rotate").
+		Reply(201).
+		BodyString(apiKeyFixture(suite.T(), "rotated_api_key.json"))
+	fake.NewHandler().
+		Post("/api/v2/user/api-keys/k2/rotate").
+		Reply(201).
+		BodyString(apiKeyFixture(suite.T(), "rotated_api_key.json"))
 
 	// No --org: personal keys belong to the user, not to an org.
 	args := fmt.Sprintf(" --host %s --api-token %s", fake.Server.URL, global.ApiToken)
@@ -612,6 +626,15 @@ func (suite *ApiKeyCommandTestSuite) TestPersonalApiKeysCmd() {
 			name:        "create --personal prints the new key value",
 			cmd:         "create api-key --personal -d ci --output json" + args,
 			goldenRegex: `sk_created`,
+		},
+		{
+			wantError: false,
+			name:      "rotate --personal of multiple keys prints all rotated keys",
+			cmd:       "rotate api-key k1 k2 --personal --output json" + args,
+			goldenJson: []jsonCheck{
+				{Path: "", Want: "length:2"},
+				{Path: "[0].key", Want: "sk_one"},
+			},
 		},
 	}
 
