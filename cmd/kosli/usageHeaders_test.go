@@ -92,6 +92,7 @@ func TestUsageHeadersDescribeTheCommandOnlyToTheKosliHost(t *testing.T) {
 	_, err = uuid.Parse(invocationID)
 	require.NoError(t, err)
 
+	require.NotEmpty(t, jiraHeaders, "attest jira should have called the Jira server")
 	for _, headers := range jiraHeaders {
 		for _, name := range usageHeaderNames {
 			require.Empty(t, headers.Values(name), name)
