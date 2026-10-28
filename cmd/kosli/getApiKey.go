@@ -3,14 +3,13 @@ package main
 import (
 	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
-const getApiKeyShortDesc = `Get an API key's metadata for a service account.`
+const getApiKeyShortDesc = `Get an API key's metadata for a service account, or one of your own personal API keys.`
 
 const getApiKeyLongDesc = getApiKeyShortDesc + `
 
@@ -23,11 +22,16 @@ kosli get api-key yourApiKeyID \
 	--service-account yourServiceAccountName \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# get the metadata of one of your own personal API keys:
+kosli get api-key yourApiKeyID \
+	--personal \
+	--api-token yourAPIToken
 `
 
 type getApiKeyOptions struct {
-	serviceAccount string
-	output         string
+	owner  apiKeyOwner
+	output string
 }
 
 func newGetApiKeyCmd(out io.Writer) *cobra.Command {
@@ -40,7 +44,7 @@ func newGetApiKeyCmd(out io.Writer) *cobra.Command {
 		Example: getApiKeyExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := RequireGlobalFlags(global, []string{"Org", "ApiToken"}); err != nil {
+			if err := RequireGlobalFlags(global, o.owner.requiredGlobalFlags()); err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return nil
@@ -50,19 +54,14 @@ func newGetApiKeyCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
+	o.owner.addFlags(cmd)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-
-	err := RequireFlags(cmd, []string{"service-account"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
 
 	return cmd
 }
 
 func (o *getApiKeyOptions) run(out io.Writer, args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys", args[0])
+	url, err := o.owner.url(args[0])
 	if err != nil {
 		return err
 	}

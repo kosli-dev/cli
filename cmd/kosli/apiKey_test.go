@@ -291,10 +291,10 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyCmd() {
 func (suite *ApiKeyCommandTestSuite) TestGetApiKeyCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError: true,
-			name:      "get fails when --service-account is missing",
-			cmd:       "get api-key key-123" + suite.defaultKosliArguments,
-			golden:    "Error: required flag(s) \"service-account\" not set\n",
+			wantError:   true,
+			name:        "get fails when neither --service-account nor --personal is set",
+			cmd:         "get api-key key-123" + suite.defaultKosliArguments,
+			goldenRegex: `Error: at least one of the flags in the group \[service-account personal\] is required`,
 		},
 		{
 			wantError: true,
@@ -573,6 +573,10 @@ func (suite *ApiKeyCommandTestSuite) TestPersonalApiKeysCmd() {
 		Get("/api/v2/user/api-keys").
 		Reply(200).
 		BodyString(apiKeyFixture(suite.T(), "listed_api_keys.json"))
+	fake.NewHandler().
+		Get("/api/v2/user/api-keys/id-1").
+		Reply(200).
+		BodyString(apiKeyFixture(suite.T(), "api_key.json"))
 
 	// No --org: personal keys belong to the user, not to an org.
 	args := fmt.Sprintf(" --host %s --api-token %s", fake.Server.URL, global.ApiToken)
@@ -583,6 +587,14 @@ func (suite *ApiKeyCommandTestSuite) TestPersonalApiKeysCmd() {
 			cmd:       "list api-keys --personal --output json" + args,
 			goldenJson: []jsonCheck{
 				{Path: "[0].id", Want: "id-1"},
+			},
+		},
+		{
+			wantError: false,
+			name:      "get --personal prints one of the caller's keys without --org",
+			cmd:       "get api-key id-1 --personal --output json" + args,
+			goldenJson: []jsonCheck{
+				{Path: "id", Want: "id-1"},
 			},
 		},
 	}
