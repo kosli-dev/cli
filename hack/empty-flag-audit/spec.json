@@ -1352,6 +1352,7 @@
       "dry-run",
       "expires-at",
       "output",
+      "personal",
       "service-account"
     ],
     "flag_values": {
@@ -1359,6 +1360,7 @@
       "dry-run": "true",
       "expires-at": "4102444800",
       "output": "json",
+      "personal": "true",
       "service-account": "{account}"
     },
     "setup": [
@@ -1372,7 +1374,12 @@
         ]
       }
     ],
-    "verify": []
+    "verify": [],
+    "flags_for_flag": {
+      "personal": {
+        "description": "probe-description"
+      }
+    }
   },
   "create control": {
     "args": [
@@ -1644,12 +1651,14 @@
     "flags_to_test": [
       "assume-yes",
       "dry-run",
+      "personal",
       "service-account",
       "yes"
     ],
     "flag_values": {
       "assume-yes": "true",
       "dry-run": "true",
+      "personal": "true",
       "service-account": "{account}",
       "yes": "true"
     },
@@ -1676,9 +1685,32 @@
           "apikey",
           "ID:\\s+(\\S+)"
         ]
+      },
+      {
+        "argv": [
+          "create",
+          "api-key",
+          "--personal",
+          "--description",
+          "probe"
+        ],
+        "capture": [
+          "personalkey",
+          "ID:\\s+(\\S+)"
+        ]
       }
     ],
-    "verify": []
+    "verify": [],
+    "flags_for_flag": {
+      "personal": {
+        "assume-yes": "true"
+      }
+    },
+    "args_for_flag": {
+      "personal": [
+        "{personalkey}"
+      ]
+    }
   },
   "diff snapshots": {
     "args": [
@@ -1932,10 +1964,12 @@
     "baseline_output": "ID:           {apikey}\nDescription:  probe\nCreated At:   {timestamp} \u2022 {ago}\nExpires At:   N/A\nLast Used:    N/A",
     "flags_to_test": [
       "output",
+      "personal",
       "service-account"
     ],
     "flag_values": {
       "output": "json",
+      "personal": "true",
       "service-account": "{account}"
     },
     "setup": [
@@ -1961,9 +1995,30 @@
           "apikey",
           "ID:\\s+(\\S+)"
         ]
+      },
+      {
+        "argv": [
+          "create",
+          "api-key",
+          "--personal",
+          "--description",
+          "probe"
+        ],
+        "capture": [
+          "personalkey",
+          "ID:\\s+(\\S+)"
+        ]
       }
     ],
-    "verify": []
+    "verify": [],
+    "flags_for_flag": {
+      "personal": {}
+    },
+    "args_for_flag": {
+      "personal": [
+        "{personalkey}"
+      ]
+    }
   },
   "get artifact": {
     "args": [
@@ -2379,10 +2434,12 @@
     "baseline_output": "ID                                DESCRIPTION  CREATED                                             EXPIRES  LAST USED\n{apikey}  probe        {timestamp} \u2022 {ago}  N/A      N/A",
     "flags_to_test": [
       "output",
+      "personal",
       "service-account"
     ],
     "flag_values": {
       "output": "json",
+      "personal": "true",
       "service-account": "{account}"
     },
     "setup": [
@@ -2410,7 +2467,10 @@
         ]
       }
     ],
-    "verify": []
+    "verify": [],
+    "flags_for_flag": {
+      "personal": {}
+    }
   },
   "list artifacts": {
     "args": [],
@@ -2775,6 +2835,7 @@
       "expires-at",
       "grace-period-hours",
       "output",
+      "personal",
       "service-account"
     ],
     "flag_values": {
@@ -2782,6 +2843,7 @@
       "expires-at": "4102444800",
       "grace-period-hours": "24",
       "output": "json",
+      "personal": "true",
       "service-account": "{account}"
     },
     "setup": [
@@ -2807,9 +2869,30 @@
           "apikey",
           "ID:\\s+(\\S+)"
         ]
+      },
+      {
+        "argv": [
+          "create",
+          "api-key",
+          "--personal",
+          "--description",
+          "probe"
+        ],
+        "capture": [
+          "personalkey",
+          "ID:\\s+(\\S+)"
+        ]
       }
     ],
-    "verify": []
+    "verify": [],
+    "flags_for_flag": {
+      "personal": {}
+    },
+    "args_for_flag": {
+      "personal": [
+        "{personalkey}"
+      ]
+    }
   },
   "search": {
     "args": [

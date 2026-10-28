@@ -523,6 +523,7 @@
   "dry-run": "bool",
   "expires-at": "string",
   "output": "string",
+  "personal": "bool",
   "service-account": "string"
  },
  "create attestation-type": {
@@ -569,6 +570,7 @@
  "delete api-key": {
   "assume-yes": "bool",
   "dry-run": "bool",
+  "personal": "bool",
   "service-account": "string",
   "yes": "bool"
  },
@@ -647,6 +649,7 @@
  },
  "get api-key": {
   "output": "string",
+  "personal": "bool",
   "service-account": "string"
  },
  "get artifact": {
@@ -705,6 +708,7 @@
  },
  "list api-keys": {
   "output": "string",
+  "personal": "bool",
   "service-account": "string"
  },
  "list artifacts": {
@@ -831,6 +835,7 @@
   "expires-at": "string",
   "grace-period-hours": "int",
   "output": "string",
+  "personal": "bool",
   "service-account": "string"
  },
  "search": {
