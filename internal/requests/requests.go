@@ -66,6 +66,65 @@ type Client struct {
 	Debug         bool
 	Logger        *logger.Logger
 	HttpClient    *http.Client
+	usageHost     *url.URL
+	usageHeaders  map[string]string
+}
+
+// SetUsageHeaders adds headers to every request this client sends to
+// kosliHost. The same client also calls registries, VCS providers and storage
+// buckets, and those requests never carry them. An unparseable kosliHost
+// disables the headers rather than failing the command.
+func (c *Client) SetUsageHeaders(kosliHost string, headers map[string]string) {
+	host, err := url.Parse(kosliHost)
+	if err != nil || host.Hostname() == "" {
+		if c.Logger != nil {
+			c.Logger.Debug("usage headers disabled: [%s] is not a URL with a host", kosliHost)
+		}
+		c.usageHost, c.usageHeaders = nil, nil
+		return
+	}
+	c.usageHost, c.usageHeaders = host, headers
+}
+
+// usageHeaderTransport applies the usage headers on every hop, because
+// http.Client copies a request's headers onto a redirect to another host.
+type usageHeaderTransport struct {
+	next   http.RoundTripper
+	client *Client
+}
+
+func (t *usageHeaderTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	c := t.client
+	if len(c.usageHeaders) == 0 {
+		return t.next.RoundTrip(req)
+	}
+	req = req.Clone(req.Context())
+	toKosli := sameHost(req.URL, c.usageHost)
+	for k, v := range c.usageHeaders {
+		if toKosli {
+			req.Header.Set(k, v)
+		} else {
+			req.Header.Del(k)
+		}
+	}
+	return t.next.RoundTrip(req)
+}
+
+func sameHost(a, b *url.URL) bool {
+	return strings.EqualFold(a.Hostname(), b.Hostname()) && effectivePort(a) == effectivePort(b)
+}
+
+func effectivePort(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http":
+		return "80"
+	case "https":
+		return "443"
+	}
+	return ""
 }
 
 // CustomLogger wraps log.Logger and implements the Printf method
@@ -109,12 +168,16 @@ func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *
 		client.Transport.(*retryablehttp.RoundTripper).Client.HTTPClient.Transport.(*http.Transport).Proxy = http.ProxyURL(proxyURL)
 	}
 
-	return &Client{
+	c := &Client{
 		MaxAPIRetries: maxAPIRetries,
 		Debug:         debug,
 		Logger:        logger,
 		HttpClient:    client,
-	}, nil
+	}
+	// Wrapped below the retry client, since its inner http.Client is the one
+	// that follows redirects.
+	retryClient.HTTPClient.Transport = &usageHeaderTransport{next: retryClient.HTTPClient.Transport, client: c}
+	return c, nil
 }
 
 type RequestParams struct {
