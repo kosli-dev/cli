@@ -66,6 +66,47 @@ type Client struct {
 	Debug         bool
 	Logger        *logger.Logger
 	HttpClient    *http.Client
+	usageHost     *url.URL
+	usageHeaders  map[string]string
+}
+
+// SetUsageHeaders adds headers to every request this client sends to
+// kosliHost. The same client also calls registries, VCS providers and storage
+// buckets, and those requests never carry them. An unparseable kosliHost
+// disables the headers rather than failing the command.
+func (c *Client) SetUsageHeaders(kosliHost string, headers map[string]string) {
+	host, err := url.Parse(kosliHost)
+	if err != nil || host.Hostname() == "" {
+		c.usageHost, c.usageHeaders = nil, nil
+		return
+	}
+	c.usageHost, c.usageHeaders = host, headers
+}
+
+func (c *Client) addUsageHeaders(req *http.Request) {
+	if c.usageHost == nil || !sameHost(req.URL, c.usageHost) {
+		return
+	}
+	for k, v := range c.usageHeaders {
+		req.Header.Set(k, v)
+	}
+}
+
+func sameHost(a, b *url.URL) bool {
+	return strings.EqualFold(a.Hostname(), b.Hostname()) && effectivePort(a) == effectivePort(b)
+}
+
+func effectivePort(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http":
+		return "80"
+	case "https":
+		return "443"
+	}
+	return ""
 }
 
 // CustomLogger wraps log.Logger and implements the Printf method
@@ -298,6 +339,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 				c.Logger.Warn("failed to log payload: %v \nContinuing with the request...", err)
 			}
 		}
+		c.addUsageHeaders(req)
 		resp, err := c.HttpClient.Do(req)
 		if err != nil {
 			// err from retryable client is detailed enough

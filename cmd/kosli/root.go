@@ -560,6 +560,8 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 				global.DryRun = true
 			}
 
+			kosliClient.SetUsageHeaders(global.Host, usageHeaders(cmd))
+
 			// A value that starts with a dash is the next flag, swallowed as this
 			// flag's value: "--description --sha256 ..." leaves --description
 			// holding "--sha256". Cobra's own error for what follows describes
