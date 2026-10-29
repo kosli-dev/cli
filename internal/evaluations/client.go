@@ -34,9 +34,11 @@ type TrailRef struct {
 type CreateRequest struct {
 	Trails []TrailRef
 	// Exactly one of Files and Identifier is set: Files sends the policy
-	// inline, Identifier names a published one whose current version runs.
+	// inline, Identifier names a published one. Version pins which of its
+	// versions runs; 0 runs its current one.
 	Files      map[string]string
 	Identifier string
+	Version    int64
 	Params     map[string]any
 	Decision   *Decision
 }
@@ -144,7 +146,7 @@ func (c *Client) Create(org string, request CreateRequest) (*Evaluation, error) 
 		DryRun: c.dryRun,
 		Payload: createPayload{
 			Context:  createContext{Trails: request.Trails},
-			Policy:   createPolicy{Files: request.Files, Identifier: request.Identifier},
+			Policy:   createPolicy{Files: request.Files, Identifier: request.Identifier, Version: request.Version},
 			Params:   params,
 			Decision: request.Decision,
 		},
@@ -176,6 +178,7 @@ type createContext struct {
 type createPolicy struct {
 	Files      map[string]string `json:"files,omitempty"`
 	Identifier string            `json:"identifier,omitempty"`
+	Version    int64             `json:"version,omitempty"`
 }
 
 func decodeEvaluation(body string) (*Evaluation, error) {
