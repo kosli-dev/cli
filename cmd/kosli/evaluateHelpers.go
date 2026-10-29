@@ -298,6 +298,7 @@ func evaluateServerSide(out io.Writer, o *commonEvaluateOptions, trails []evalua
 
 type serverEvaluation struct {
 	identifier   string
+	version      int64
 	policyRefs   []string
 	params       string
 	trails       []evaluations.TrailRef
@@ -346,6 +347,7 @@ func awaitServerEvaluation(spec serverEvaluation) (*evaluations.Evaluation, erro
 		Trails:     spec.trails,
 		Files:      files,
 		Identifier: spec.identifier,
+		Version:    spec.version,
 		Params:     params,
 		Decision:   spec.decision,
 	})

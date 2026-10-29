@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/digest"
@@ -24,6 +25,8 @@ trail. Trails named in one command are all evaluated at the same instant.
 Name the policy with one of:
   - ` + "`--identifier`" + `: a rego policy published to Kosli. Its current version, the
     highest-numbered valid one, is evaluated, and the evaluation cites that version.
+    Append ` + "`@v<n>`" + `, as in ` + "`pr-approved@v2`" + `, to evaluate version n instead, which
+    must be valid; publishing a newer version does not change what it runs.
   - ` + "`--path`" + `: the policy's files on this machine, sent with the evaluation.
 
 ` + "`--path`" + ` takes a Rego file or a directory, and can be given more than once,
@@ -63,7 +66,7 @@ the verdict is never asserted from here. Without ` + "`--control`" + ` nothing i
 Only a published policy can record a decision, so ` + "`--control`" + ` needs ` + "`--identifier`" + `.
 
 Use ` + "`--params`" + ` to pass values the policy reads as ` + "`data.params`" + `. For a
-published policy, they must match the params schema of its current version.
+published policy, they must match the params schema of the version evaluated.
 Pass ` + "`--assert`" + ` to exit with a non-zero status when the policy denies.
 The policy that ran is printed with the verdict: a published policy by its
 identifier, version and digest, and an inline one by its digest.
@@ -81,6 +84,13 @@ kosli evaluate policy \
 kosli evaluate policy \
 	--context trail=yourFlowName/yourTrailName \
 	--identifier yourPolicyIdentifier \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate version 2 of a published rego policy, whatever its current version:
+kosli evaluate policy \
+	--context trail=yourFlowName/yourTrailName \
+	--identifier yourPolicyIdentifier@v2 \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -166,7 +176,7 @@ func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringArrayVar(&o.contexts, "context", []string{}, policyContextFlag)
-	cmd.Flags().StringVar(&o.identifier, "identifier", "", "Identifier of a rego policy published to Kosli. Its current version is evaluated.")
+	cmd.Flags().StringVar(&o.identifier, "identifier", "", "Identifier of a rego policy published to Kosli. Its current version is evaluated, or version n given as <identifier>@v<n>.")
 	cmd.Flags().StringArrayVarP(&o.paths, "path", "p", []string{}, "Path of a Rego policy file, or of a directory sent as one bundle. Repeat it to send a policy with libraries kept elsewhere.")
 	// Kept one release because sdlc-policies runs the latest CLI and passes --policy.
 	cmd.Flags().StringArrayVar(&o.oldPolicies, "policy", []string{}, "Deprecated alias of --path.")
@@ -203,6 +213,10 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 	if o.identifier == "" && len(policyRefs) == 0 {
 		return fmt.Errorf("one of --identifier or --path is required")
 	}
+	identifier, version, err := policyReference(o.identifier)
+	if err != nil {
+		return err
+	}
 	for _, ref := range policyRefs {
 		if isRemotePolicyRef(ref) {
 			return fmt.Errorf("--path takes a file or a directory on this machine, not a URL")
@@ -232,7 +246,8 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 	}
 
 	evaluation, err := awaitServerEvaluation(serverEvaluation{
-		identifier: o.identifier,
+		identifier: identifier,
+		version:    version,
 		policyRefs: policyRefs,
 		params:     o.params,
 		trails:     trails,
@@ -242,6 +257,25 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 		return err
 	}
 	return printEvaluation(out, evaluation, o.output, o.assert)
+}
+
+// policyReference splits --identifier into the policy's identifier and the
+// version it pins, 0 for none. An identifier cannot contain '@', so the first
+// one starts the version.
+func policyReference(value string) (string, int64, error) {
+	identifier, suffix, pinned := strings.Cut(value, "@")
+	if !pinned {
+		return value, 0, nil
+	}
+	digits, prefixed := strings.CutPrefix(suffix, "v")
+	version, err := strconv.ParseInt(digits, 10, 64)
+	// Compared back to its digits, so "+2" and "02" are refused too.
+	if identifier == "" || !prefixed || err != nil || version < 1 ||
+		strconv.FormatInt(version, 10) != digits {
+		return "", 0, fmt.Errorf(
+			"invalid policy reference '%s': expected <identifier> or <identifier>@v<n>", value)
+	}
+	return identifier, version, nil
 }
 
 // printEvaluation echoes the evaluation as the server gave it, so the policy's

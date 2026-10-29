@@ -119,6 +119,19 @@ func TestCreateSendsOnlyTheIdentifierOfAPublishedPolicy(t *testing.T) {
 	require.Equal(t, map[string]any{"identifier": "pr-approved"}, seen.body["policy"])
 }
 
+func TestCreateSendsThePinnedVersionOfAPublishedPolicy(t *testing.T) {
+	server, seen := newFakeServer(t, http.StatusCreated, createdBody)
+	request := aCreateRequest()
+	request.Files = nil
+	request.Identifier = "pr-approved"
+	request.Version = 2
+
+	_, err := newTestClient(t, server.URL, false).Create("my-org", request)
+	require.NoError(t, err)
+
+	require.Equal(t, map[string]any{"identifier": "pr-approved", "version": float64(2)}, seen.body["policy"])
+}
+
 func TestCreateSendsEveryTrailInOneEvaluation(t *testing.T) {
 	server, seen := newFakeServer(t, http.StatusCreated, createdBody)
 

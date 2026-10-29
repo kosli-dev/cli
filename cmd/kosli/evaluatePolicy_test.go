@@ -145,12 +145,49 @@ func (suite *EvaluatePolicyCommandTestSuite) TestAnIdentifierSendsOnlyTheIdentif
 	require.Contains(suite.T(), combined, "RESULT")
 }
 
+func (suite *EvaluatePolicyCommandTestSuite) TestAVersionSuffixSendsThePinnedVersion() {
+	server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"evaluate policy --context trail=my-flow/my-trail --identifier pr-approved@v2 "+
+			"--host %s --org test-org --api-token test-token --max-api-retries 0", server.URL))
+
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), fake.created, 1)
+	require.Equal(suite.T(), map[string]any{"identifier": "pr-approved", "version": float64(2)},
+		fake.created[0]["policy"])
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAMalformedVersionSuffixIsRefusedBeforeAnyRequest() {
+	for _, reference := range []string{
+		"pr-approved@", "pr-approved@latest", "pr-approved@v0", "pr-approved@v1.2",
+		"pr-approved@2", "pr-approved@v02", "pr-approved@v+2", "@v2",
+		"pr-approved@v9223372036854775808",
+	} {
+		suite.Run(reference, func() {
+			server, fake := newFakeEvaluations(suite.T(), verdictAllowed)
+
+			_, _, _, _, err := executeCommandC(fmt.Sprintf(
+				"evaluate policy --context trail=my-flow/my-trail --identifier %s "+
+					"--host %s --org test-org --api-token test-token --max-api-retries 0",
+				reference, server.URL))
+
+			require.Error(suite.T(), err)
+			require.Equal(suite.T(), fmt.Sprintf(
+				"invalid policy reference '%s': expected <identifier> or <identifier>@v<n>", reference),
+				err.Error())
+			require.Empty(suite.T(), fake.created, "nothing is sent")
+		})
+	}
+}
+
 func (suite *EvaluatePolicyCommandTestSuite) TestTheHelpOffersTheIdentifier() {
 	_, help, _, _, err := executeCommandC("evaluate policy --help")
 
 	require.NoError(suite.T(), err)
 	require.Contains(suite.T(), help, "--identifier")
 	require.Contains(suite.T(), help, "current version")
+	require.Contains(suite.T(), help, "<identifier>@v<n>")
 }
 
 func (suite *EvaluatePolicyCommandTestSuite) TestAnIdentifierAndFilesAreRefusedTogether() {
