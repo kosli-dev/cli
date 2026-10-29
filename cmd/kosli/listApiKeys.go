@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
-const listApiKeysShortDesc = `List API keys for a service account.`
+const listApiKeysShortDesc = `List API keys for a service account, or your own personal API keys.`
 
 const listApiKeysLongDesc = listApiKeysShortDesc + `
 
@@ -25,11 +24,16 @@ kosli list api-keys \
 	--service-account yourServiceAccountName \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# list your own personal API keys:
+kosli list api-keys \
+	--personal \
+	--api-token yourAPIToken
 `
 
 type listApiKeysOptions struct {
-	serviceAccount string
-	output         string
+	owner  apiKeyOwner
+	output string
 }
 
 func newListApiKeysCmd(out io.Writer) *cobra.Command {
@@ -42,7 +46,7 @@ func newListApiKeysCmd(out io.Writer) *cobra.Command {
 		Example: listApiKeysExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := RequireGlobalFlags(global, []string{"Org", "ApiToken"}); err != nil {
+			if err := o.owner.validate(); err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return nil
@@ -52,19 +56,14 @@ func newListApiKeysCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
+	o.owner.addFlags(cmd)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-
-	err := RequireFlags(cmd, []string{"service-account"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
 
 	return cmd
 }
 
 func (o *listApiKeysOptions) run(out io.Writer, args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys")
+	url, err := o.owner.url()
 	if err != nil {
 		return err
 	}

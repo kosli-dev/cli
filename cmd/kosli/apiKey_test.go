@@ -160,10 +160,16 @@ func (suite *ApiKeyCommandTestSuite) TestCreateApiKeyCmd() {
 			goldenRegex: `service-accounts/docs-cmd-test-user/test-sa/api-keys`,
 		},
 		{
-			wantError: true,
-			name:      "create fails when --service-account is missing",
-			cmd:       "create api-key --description 'ci key'" + suite.defaultKosliArguments,
-			golden:    "Error: required flag(s) \"service-account\" not set\n",
+			wantError:   true,
+			name:        "create fails when neither --service-account nor --personal is set",
+			cmd:         "create api-key --description 'ci key'" + suite.defaultKosliArguments,
+			goldenRegex: `Error: --service-account is required unless --personal is set`,
+		},
+		{
+			wantError:   false,
+			name:        "create --personal posts to the user's keys without --org (dry-run)",
+			cmd:         fmt.Sprintf("create api-key --personal --description 'ci key' --dry-run --host %s --api-token %s", global.Host, global.ApiToken),
+			goldenRegex: `(?s)/api/v2/user/api-keys.*"description": "ci key"`,
 		},
 		{
 			wantError: true,
@@ -221,10 +227,16 @@ func (suite *ApiKeyCommandTestSuite) TestRotateApiKeyCmd() {
 			golden:    "Error: requires at least 1 arg(s), only received 0\n",
 		},
 		{
-			wantError: true,
-			name:      "rotate fails when --service-account is missing",
-			cmd:       "rotate api-key key-123" + suite.defaultKosliArguments,
-			golden:    "Error: required flag(s) \"service-account\" not set\n",
+			wantError:   true,
+			name:        "rotate fails when neither --service-account nor --personal is set",
+			cmd:         "rotate api-key key-123" + suite.defaultKosliArguments,
+			goldenRegex: `Error: --service-account is required unless --personal is set`,
+		},
+		{
+			wantError:   false,
+			name:        "rotate --personal posts to the user's key without --org (dry-run)",
+			cmd:         fmt.Sprintf("rotate api-key key-123 --personal --dry-run --host %s --api-token %s", global.Host, global.ApiToken),
+			goldenRegex: `/api/v2/user/api-keys/key-123/rotate`,
 		},
 	}
 
@@ -278,10 +290,23 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyCmd() {
 			golden:    "Error: requires at least 1 arg(s), only received 0\n",
 		},
 		{
-			wantError: true,
-			name:      "delete fails when --service-account is missing",
-			cmd:       "delete api-key key-123" + suite.defaultKosliArguments,
-			golden:    "Error: required flag(s) \"service-account\" not set\n",
+			wantError:   true,
+			name:        "delete fails when neither --service-account nor --personal is set",
+			cmd:         "delete api-key key-123" + suite.defaultKosliArguments,
+			goldenRegex: `Error: --service-account is required unless --personal is set`,
+		},
+		{
+			wantError: false,
+			name:      "a refusal to delete personal keys names them as personal",
+			cmd:       fmt.Sprintf("delete api-key key-123 --personal --host %s --api-token %s", global.Host, global.ApiToken),
+			stdin:     "n\n",
+			golden:    "Are you sure you want to delete your personal API key(s) key-123? [y/N] Deletion of API key(s) key-123 was cancelled.\n",
+		},
+		{
+			wantError:   false,
+			name:        "delete --personal targets the user's key without --org (dry-run)",
+			cmd:         fmt.Sprintf("delete api-key key-123 --personal -y --dry-run --host %s --api-token %s", global.Host, global.ApiToken),
+			goldenRegex: `/api/v2/user/api-keys/key-123`,
 		},
 	}
 
@@ -291,10 +316,10 @@ func (suite *ApiKeyCommandTestSuite) TestDeleteApiKeyCmd() {
 func (suite *ApiKeyCommandTestSuite) TestGetApiKeyCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError: true,
-			name:      "get fails when --service-account is missing",
-			cmd:       "get api-key key-123" + suite.defaultKosliArguments,
-			golden:    "Error: required flag(s) \"service-account\" not set\n",
+			wantError:   true,
+			name:        "get fails when neither --service-account nor --personal is set",
+			cmd:         "get api-key key-123" + suite.defaultKosliArguments,
+			goldenRegex: `Error: --service-account is required unless --personal is set`,
 		},
 		{
 			wantError: true,
@@ -550,10 +575,113 @@ func (suite *ApiKeyCommandTestSuite) TestApiErrorsAreSurfaced() {
 func (suite *ApiKeyCommandTestSuite) TestListApiKeysCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError: true,
-			name:      "list fails when --service-account is missing",
-			cmd:       "list api-keys" + suite.defaultKosliArguments,
-			golden:    "Error: required flag(s) \"service-account\" not set\n",
+			wantError:   true,
+			name:        "list fails when neither --service-account nor --personal is set",
+			cmd:         "list api-keys" + suite.defaultKosliArguments,
+			goldenRegex: `Error: --service-account is required unless --personal is set`,
+		},
+		{
+			wantError:   true,
+			name:        "list fails when both --service-account and --personal are set",
+			cmd:         "list api-keys --service-account test-sa --personal" + suite.defaultKosliArguments,
+			goldenRegex: `Error: if any flags in the group \[service-account personal\] are set none of the others can be`,
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
+// TestPersonalFalseNeedsServiceAccount covers --personal=false: cobra counts the
+// flag as given, so only the owner check stops a request with no owner at all.
+func (suite *ApiKeyCommandTestSuite) TestPersonalFalseNeedsServiceAccount() {
+	wantErr := `Error: --service-account is required unless --personal is set`
+	tests := []cmdTestCase{}
+	for _, cmd := range []string{
+		"list api-keys",
+		"get api-key key-123",
+		"create api-key --description 'ci key'",
+		"rotate api-key key-123",
+		"delete api-key key-123 --assume-yes",
+	} {
+		tests = append(tests, cmdTestCase{
+			wantError:   true,
+			name:        cmd + " with --personal=false and no --service-account fails",
+			cmd:         cmd + " --personal=false" + suite.defaultKosliArguments,
+			goldenRegex: wantErr,
+		})
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
+func (suite *ApiKeyCommandTestSuite) TestPersonalApiKeysCmd() {
+	fake := httpfake.New()
+	defer fake.Close()
+	fake.NewHandler().
+		Get("/api/v2/user/api-keys").
+		Reply(200).
+		BodyString(apiKeyFixture(suite.T(), "listed_api_keys.json"))
+	fake.NewHandler().
+		Get("/api/v2/user/api-keys/id-1").
+		Reply(200).
+		BodyString(apiKeyFixture(suite.T(), "api_key.json"))
+	fake.NewHandler().
+		Post("/api/v2/user/api-keys").
+		Reply(201).
+		BodyString(apiKeyFixture(suite.T(), "created_api_key.json"))
+	fake.NewHandler().
+		Post("/api/v2/user/api-keys/k1/rotate").
+		Reply(201).
+		BodyString(apiKeyFixture(suite.T(), "rotated_api_key.json"))
+	fake.NewHandler().
+		Post("/api/v2/user/api-keys/k2/rotate").
+		Reply(201).
+		BodyString(apiKeyFixture(suite.T(), "rotated_api_key.json"))
+	fake.NewHandler().
+		Delete("/api/v2/user/api-keys/key-123").
+		Reply(200).
+		BodyString(apiKeyFixture(suite.T(), "revoke_success.json"))
+
+	// No --org: personal keys belong to the user, not to an org.
+	args := fmt.Sprintf(" --host %s --api-token %s", fake.Server.URL, global.ApiToken)
+	tests := []cmdTestCase{
+		{
+			wantError: false,
+			name:      "list --personal prints the caller's keys without --org",
+			cmd:       "list api-keys --personal --output json" + args,
+			goldenJson: []jsonCheck{
+				{Path: "[0].id", Want: "id-1"},
+			},
+		},
+		{
+			wantError: false,
+			name:      "get --personal prints one of the caller's keys without --org",
+			cmd:       "get api-key id-1 --personal --output json" + args,
+			goldenJson: []jsonCheck{
+				{Path: "id", Want: "id-1"},
+			},
+		},
+		{
+			wantError:   false,
+			name:        "create --personal prints the new key value",
+			cmd:         "create api-key --personal -d ci --output json" + args,
+			goldenRegex: `sk_created`,
+		},
+		{
+			wantError: false,
+			name:      "rotate --personal of multiple keys prints all rotated keys",
+			cmd:       "rotate api-key k1 k2 --personal --output json" + args,
+			goldenJson: []jsonCheck{
+				{Path: "", Want: "length:2"},
+				{Path: "[0].key", Want: "sk_one"},
+			},
+		},
+		{
+			wantError:   false,
+			name:        "delete --personal confirms and reports the personal key deleted",
+			cmd:         "delete api-key key-123 --personal" + args,
+			stdin:       "y",
+			goldenRegex: `Personal API key key-123 was deleted!`,
 		},
 	}
 

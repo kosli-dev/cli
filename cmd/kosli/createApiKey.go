@@ -3,21 +3,23 @@ package main
 import (
 	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
-const createApiKeyShortDesc = `Create an API key for a service account.`
+const createApiKeyShortDesc = `Create an API key for a service account, or a personal API key for yourself.`
 
 const createApiKeyLongDesc = createApiKeyShortDesc + `
 
 The key value is only returned once, at creation time, so make sure to store it securely.
 
 Every API key expires. Without ^--expires-at^ the key is given the maximum allowed
-lifetime, and an ^--expires-at^ beyond that maximum is capped to it.`
+lifetime, and an ^--expires-at^ beyond that maximum is capped to it.
+
+With ^--personal^, a key created using another API key is revoked along with that key,
+and expires no later than it.`
 
 const createApiKeyExample = `
 # create an API key for a service account:
@@ -34,13 +36,19 @@ kosli create api-key \
 	--expires-at 2026-12-31 \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# create a personal API key for yourself:
+kosli create api-key \
+	--personal \
+	--description "key for CI" \
+	--api-token yourAPIToken
 `
 
 type createApiKeyOptions struct {
-	serviceAccount string
-	expiresAt      string
-	output         string
-	payload        createApiKeyPayload
+	owner     apiKeyOwner
+	expiresAt string
+	output    string
+	payload   createApiKeyPayload
 }
 
 type createApiKeyPayload struct {
@@ -58,7 +66,7 @@ func newCreateApiKeyCmd(out io.Writer) *cobra.Command {
 		Example: createApiKeyExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := RequireGlobalFlags(global, []string{"Org", "ApiToken"}); err != nil {
+			if err := o.owner.validate(); err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return nil
@@ -68,13 +76,13 @@ func newCreateApiKeyCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.serviceAccount, "service-account", "s", "", serviceAccountNameFlag)
+	o.owner.addFlags(cmd)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", apiKeyDescriptionFlag)
 	cmd.Flags().StringVarP(&o.expiresAt, "expires-at", "e", "", createApiKeyExpiresAtFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"service-account", "description"})
+	err := RequireFlags(cmd, []string{"description"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -83,7 +91,7 @@ func newCreateApiKeyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *createApiKeyOptions) run(out io.Writer, args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys")
+	url, err := o.owner.url()
 	if err != nil {
 		return err
 	}
