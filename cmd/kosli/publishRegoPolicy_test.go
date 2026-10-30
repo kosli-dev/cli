@@ -115,7 +115,7 @@ func (suite *PublishRegoPolicyCommandTestSuite) TestItIsListedInHelp() {
 	_, combined, _, _, err := executeCommandC("--help")
 
 	require.NoError(suite.T(), err)
-	require.Contains(suite.T(), combined, "publish")
+	require.Contains(suite.T(), combined, publishDesc)
 }
 
 func (suite *PublishRegoPolicyCommandTestSuite) TestItIsNoLongerACreateCommand() {
