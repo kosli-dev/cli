@@ -111,13 +111,11 @@ func (suite *PublishRegoPolicyCommandTestSuite) publishCmd(host, args string) st
 		args, host)
 }
 
-// The publish verb has no visible subcommand, so it is hidden as well.
-func (suite *PublishRegoPolicyCommandTestSuite) TestItIsHiddenFromHelp() {
+func (suite *PublishRegoPolicyCommandTestSuite) TestItIsListedInHelp() {
 	_, combined, _, _, err := executeCommandC("--help")
 
 	require.NoError(suite.T(), err)
-	require.NotContains(suite.T(), combined, "publish")
-	require.Contains(suite.T(), combined, "create", "the rest of the help still renders")
+	require.Contains(suite.T(), combined, "publish")
 }
 
 func (suite *PublishRegoPolicyCommandTestSuite) TestItIsNoLongerACreateCommand() {

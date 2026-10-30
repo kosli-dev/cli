@@ -148,7 +148,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	templateArtifactName            = "The name of the artifact in the yml template file."
 	flowNamesFlag                   = "[defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org."
 	outputFlag                      = "[defaulted] The format of the output. Valid formats are: [table, json]."
-	serverSideFlag                  = "[hidden] Evaluate the policy on the Kosli server rather than on this machine. Unsupported and subject to change."
+	serverSideFlag                  = "[optional] Evaluate the policy on the Kosli server rather than on this machine."
 	policyParamsFlag                = "[optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params."
 	policyOutputRuleFlag            = "[optional] [experimental] Name of a policy rule to add to the JSON output, next to allow and violations. Can be repeated, or given as a comma-separated list. Subject to change."
 	policyAssertFlag                = "[optional] Exit with a non-zero status when the policy denies. Without it the verdict is printed and the command exits 0."

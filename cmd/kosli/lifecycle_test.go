@@ -51,12 +51,11 @@ func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
 	}
 }
 
-// Hidden while the server gates the endpoint behind is-server-side-evaluation-enabled.
-func TestLifecyclePublishRegoPolicyIsBetaAndHidden(t *testing.T) {
+func TestLifecyclePublishRegoPolicyIsBetaAndVisible(t *testing.T) {
 	global = &GlobalOpts{}
 	cmd := newPublishRegoPolicyCmd(io.Discard)
-	if !cmd.Hidden {
-		t.Error("expected publish rego-policy to be Hidden")
+	if cmd.Hidden {
+		t.Error("expected publish rego-policy to be visible (not Hidden)")
 	}
 	if !isBeta(cmd) {
 		t.Error("expected publish rego-policy to be beta")
@@ -70,8 +69,8 @@ func TestLifecyclePublishRegoPolicyIsBetaAndHidden(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(pages) > 0 {
-		t.Errorf("expected no docs page for a hidden rego-policy command, got %v", pages)
+	if len(pages) == 0 {
+		t.Error("expected a docs page for the rego-policy commands")
 	}
 }
 
