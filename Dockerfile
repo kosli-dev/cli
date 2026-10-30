@@ -7,7 +7,7 @@ ARG VERSION=""
 
 ### Go Builder ###
 # Pinned by digest so a rebuild gets the same toolchain; Dependabot moves it.
-FROM golang:1.26.10-alpine3.23@sha256:0525c952defebc693cdaf62cdf43afa32be5a7f377e99260642ea19c240c708e AS builder
+FROM golang:1.26.10-alpine3.23@sha256:34414731924cf2263160f0021f5cf6e1807382d85248f7cb419d4187b96d5e43 AS builder
 
 RUN apk add --update --no-cache git bash make ca-certificates
 
