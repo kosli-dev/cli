@@ -40,14 +40,14 @@ func (suite *GetRegoPolicyCommandTestSuite) getCmd(host, args string) string {
 		args, host)
 }
 
-func (suite *GetRegoPolicyCommandTestSuite) TestItIsHiddenAndBeta() {
+func (suite *GetRegoPolicyCommandTestSuite) TestItIsVisibleAndBeta() {
 	root, err := newRootCmd(io.Discard, io.Discard, nil)
 	require.NoError(suite.T(), err)
 	cmd, _, err := root.Find([]string{"get", "rego-policy"})
 	require.NoError(suite.T(), err)
 
 	require.Equal(suite.T(), "rego-policy", cmd.Name())
-	require.True(suite.T(), cmd.Hidden)
+	require.False(suite.T(), cmd.Hidden)
 	require.Contains(suite.T(), cmd.Annotations, betaCLIAnnotation)
 }
 

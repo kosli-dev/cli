@@ -65,13 +65,11 @@ type listRegoPoliciesResponse struct {
 func newListRegoPoliciesCmd(out io.Writer) *cobra.Command {
 	o := new(listRegoPoliciesOptions)
 	cmd := &cobra.Command{
-		Use:     "rego-policies",
-		Short:   listRegoPoliciesShortDesc,
-		Long:    listRegoPoliciesLongDesc,
-		Example: listRegoPoliciesExample,
-		Args:    cobra.NoArgs,
-		// Hidden while the server gates the endpoint behind is-server-side-evaluation-enabled.
-		Hidden:      true,
+		Use:         "rego-policies",
+		Short:       listRegoPoliciesShortDesc,
+		Long:        listRegoPoliciesLongDesc,
+		Example:     listRegoPoliciesExample,
+		Args:        cobra.NoArgs,
 		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})

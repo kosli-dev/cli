@@ -27,20 +27,11 @@ func (suite *EvaluatePolicyCommandTestSuite) cmd(host, extra string) string {
 		host, extra)
 }
 
-// Hidden while the command is proved out against a server that can run it.
-func (suite *EvaluatePolicyCommandTestSuite) TestTheCommandIsHiddenForNow() {
+func (suite *EvaluatePolicyCommandTestSuite) TestTheCommandIsListed() {
 	_, listed, _, _, err := executeCommandC("evaluate --help")
 
 	require.NoError(suite.T(), err)
-	require.NotContains(suite.T(), listed, evaluatePolicyShortDesc)
-	for _, sibling := range []string{"trail", "trails", "input"} {
-		require.Contains(suite.T(), listed, sibling, "the rest of the listing still renders")
-	}
-
-	// Its own help still renders, for anyone told to try it.
-	_, help, _, _, err := executeCommandC("evaluate policy --help")
-	require.NoError(suite.T(), err)
-	require.Contains(suite.T(), help, "--context")
+	require.Contains(suite.T(), listed, evaluatePolicyShortDesc)
 }
 
 // The flags that only make sense on this machine are absent rather than

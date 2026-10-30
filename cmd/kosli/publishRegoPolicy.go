@@ -108,13 +108,11 @@ type publishRegoPolicyOptions struct {
 func newPublishRegoPolicyCmd(out io.Writer) *cobra.Command {
 	o := new(publishRegoPolicyOptions)
 	cmd := &cobra.Command{
-		Use:     "rego-policy IDENTIFIER",
-		Short:   publishRegoPolicyShortDesc,
-		Long:    publishRegoPolicyLongDesc,
-		Example: publishRegoPolicyExample,
-		Args:    cobra.ExactArgs(1),
-		// Hidden while the server gates the endpoint behind is-server-side-evaluation-enabled.
-		Hidden:      true,
+		Use:         "rego-policy IDENTIFIER",
+		Short:       publishRegoPolicyShortDesc,
+		Long:        publishRegoPolicyLongDesc,
+		Example:     publishRegoPolicyExample,
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})

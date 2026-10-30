@@ -126,16 +126,13 @@ func (suite *EvaluateServerSideTestSuite) serverSideCmd(host, extra string) stri
 		host, extra)
 }
 
-// The flag is deliberately undocumented: it exists to run the two evaluation
-// paths against each other while neither is a contract anyone can rely on.
-func (suite *EvaluateServerSideTestSuite) TestTheFlagIsHiddenFromHelp() {
+func (suite *EvaluateServerSideTestSuite) TestTheFlagIsInHelp() {
 	for _, command := range []string{"trail", "trails"} {
 		suite.Run(command, func() {
 			_, combined, _, _, err := executeCommandC("evaluate " + command + " --help")
 
 			require.NoError(suite.T(), err)
-			require.NotContains(suite.T(), combined, "--server-side")
-			require.Contains(suite.T(), combined, "--policy", "the rest of the help still renders")
+			require.Contains(suite.T(), combined, "--server-side")
 		})
 	}
 }

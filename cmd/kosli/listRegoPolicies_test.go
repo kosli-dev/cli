@@ -34,14 +34,14 @@ func (suite *ListRegoPoliciesCommandTestSuite) listCmd(host, args string) string
 		args, host)
 }
 
-func (suite *ListRegoPoliciesCommandTestSuite) TestItIsHiddenAndBeta() {
+func (suite *ListRegoPoliciesCommandTestSuite) TestItIsVisibleAndBeta() {
 	root, err := newRootCmd(io.Discard, io.Discard, nil)
 	require.NoError(suite.T(), err)
 	cmd, _, err := root.Find([]string{"list", "rego-policies"})
 	require.NoError(suite.T(), err)
 
 	require.Equal(suite.T(), "rego-policies", cmd.Name())
-	require.True(suite.T(), cmd.Hidden)
+	require.False(suite.T(), cmd.Hidden)
 	require.Contains(suite.T(), cmd.Annotations, betaCLIAnnotation)
 }
 

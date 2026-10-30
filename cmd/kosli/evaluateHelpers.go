@@ -82,16 +82,10 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 }
 
 // addServerSideFlag offers the evaluation to the Kosli server instead of
-// running it here. It is hidden, and stays hidden: it exists to run the two
-// evaluation paths against each other while neither is a contract anyone can
-// rely on, and the two do not yet agree on what a policy may contain or on
-// what a policy sees. Only the trail commands have it, because an evaluation
-// is created from trail references and `evaluate input` has none to send.
+// running it here. Only the trail commands have it, because an evaluation is
+// created from trail references and `evaluate input` has none to send.
 func (o *commonEvaluateOptions) addServerSideFlag(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&o.serverSide, "server-side", false, serverSideFlag)
-	if err := cmd.Flags().MarkHidden("server-side"); err != nil {
-		logger.Error("failed to hide the server-side flag: %v", err)
-	}
 }
 
 // assertOnDeny resolves the --assert / --no-assert pair into a single bool.
