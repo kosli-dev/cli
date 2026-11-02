@@ -1581,6 +1581,29 @@
     "setup": [],
     "verify": []
   },
+  "get evaluation": {
+    "args": [
+      "01EVALUATIONPROBE"
+    ],
+    "flags": {},
+    "baseline_ok": false,
+    "error": "the server the audit runs against does not run server-side evaluations",
+    "needs": "server-side evaluation",
+    "flags_to_test": [
+      "dir",
+      "fixture",
+      "output",
+      "show-input"
+    ],
+    "flag_values": {
+      "dir": "probe-replay",
+      "fixture": "true",
+      "output": "json",
+      "show-input": "true"
+    },
+    "setup": [],
+    "verify": []
+  },
   "list rego-policies": {
     "args": [],
     "flags": {},

@@ -161,8 +161,8 @@ func (suite *GetEvaluationCommandTestSuite) TestItPrintsTheEvaluationAsJSONAsThe
 
 func (suite *GetEvaluationCommandTestSuite) TestItReturnsANotFoundInTheServersWords() {
 	server, fake := newFakeEvaluationRead(suite.T(), readCompletedPublished)
-	fake.status[evaluationPath] = http.StatusNotFound
-	fake.bodies[evaluationPath] = `{"message":"Evaluation '01EVAL' does not exist in org 'test-org'"}`
+	fake.evaluation.status = http.StatusNotFound
+	fake.evaluation.body = `{"message":"Evaluation '01EVAL' does not exist in org 'test-org'"}`
 
 	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "01EVAL"))
 
@@ -216,8 +216,8 @@ func (suite *GetEvaluationCommandTestSuite) TestShowInputNeedsJSON() {
 
 func (suite *GetEvaluationCommandTestSuite) TestAnInputThatCannotBeBuiltIsReportedInTheServersWords() {
 	server, fake := newFakeEvaluationRead(suite.T(), readCompletedPublished)
-	fake.status[evaluationInputPath] = http.StatusConflict
-	fake.bodies[evaluationInputPath] = `{"message":"No policy input can be built: trail has more than one attestation named 'tests'."}`
+	fake.input.status = http.StatusConflict
+	fake.input.body = `{"message":"No policy input can be built: trail has more than one attestation named 'tests'."}`
 
 	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "01EVAL --show-input -o json"))
 
@@ -242,7 +242,7 @@ func (suite *GetEvaluationCommandTestSuite) TestAFixtureOfAnInlinePolicyWritesIn
 
 func (suite *GetEvaluationCommandTestSuite) TestAFixtureOfAPublishedPolicyUnpacksItsBundle() {
 	server, fake := newFakeEvaluationRead(suite.T(), readCompletedPublished)
-	fake.bodies[publishedBundlePath] = gzippedTar(suite.T(), map[string]string{
+	fake.bundle.body = gzippedTar(suite.T(), map[string]string{
 		"policy.rego":   "package policy\n",
 		"data.yaml":     "threshold: 1\n",
 		"lib/util.rego": "package util\n",
@@ -330,7 +330,7 @@ func (suite *GetEvaluationCommandTestSuite) TestAFixtureRefusesAPolicyFileOutsid
 
 func (suite *GetEvaluationCommandTestSuite) TestAFixtureRefusesABundleEntryOutsideTheDirectory() {
 	server, fake := newFakeEvaluationRead(suite.T(), readCompletedPublished)
-	fake.bodies[publishedBundlePath] = gzippedTar(suite.T(), map[string]string{
+	fake.bundle.body = gzippedTar(suite.T(), map[string]string{
 		"../escaped.rego": "package policy\n",
 	})
 	dir := filepath.Join(suite.T().TempDir(), "replay")
@@ -342,33 +342,44 @@ func (suite *GetEvaluationCommandTestSuite) TestAFixtureRefusesABundleEntryOutsi
 	require.NoFileExists(suite.T(), filepath.Join(dir, "escaped.rego"))
 }
 
-// fakeEvaluationRead answers each path with its body and status, 200 unless
-// set, and records the escaped path of every request.
+// fakeEvaluationRead answers the evaluation, input and bundle routes with
+// their body and status, 200 unless set, and records the escaped path of every
+// request. Anything else is a 404.
 type fakeEvaluationRead struct {
-	bodies map[string]string
-	status map[string]int
-	reads  []string
+	evaluation fakeRoute
+	input      fakeRoute
+	bundle     fakeRoute
+	reads      []string
+}
+
+type fakeRoute struct {
+	body   string
+	status int
 }
 
 func newFakeEvaluationRead(t *testing.T, evaluation string) (*httptest.Server, *fakeEvaluationRead) {
 	t.Helper()
 	fake := &fakeEvaluationRead{
-		bodies: map[string]string{evaluationPath: evaluation, evaluationInputPath: evaluationInput},
-		status: map[string]int{},
+		evaluation: fakeRoute{body: evaluation},
+		input:      fakeRoute{body: evaluationInput},
 	}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.EscapedPath()
-		fake.reads = append(fake.reads, path)
-		body, known := fake.bodies[path]
-		status := fake.status[path]
-		if status == 0 {
-			status = http.StatusOK
+		fake.reads = append(fake.reads, r.URL.EscapedPath())
+		route := fakeRoute{status: http.StatusNotFound}
+		switch r.URL.EscapedPath() {
+		case evaluationPath:
+			route = fake.evaluation
+		case evaluationInputPath:
+			route = fake.input
+		case publishedBundlePath:
+			route = fake.bundle
 		}
-		if !known && status == http.StatusOK {
-			status = http.StatusNotFound
+		if route.status == 0 {
+			route.status = http.StatusOK
 		}
-		w.WriteHeader(status)
-		_, _ = fmt.Fprint(w, body)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(route.status)
+		_, _ = io.WriteString(w, route.body)
 	}))
 	t.Cleanup(server.Close)
 	return server, fake
