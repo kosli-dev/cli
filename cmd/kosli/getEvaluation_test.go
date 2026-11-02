@@ -242,11 +242,11 @@ func (suite *GetEvaluationCommandTestSuite) TestAFixtureOfAnInlinePolicyWritesIn
 
 func (suite *GetEvaluationCommandTestSuite) TestAFixtureOfAPublishedPolicyUnpacksItsBundle() {
 	server, fake := newFakeEvaluationRead(suite.T(), readCompletedPublished)
-	fake.bundle.body = gzippedTar(suite.T(), map[string]string{
+	fake.bundle = fakeRoute{body: gzippedTar(suite.T(), map[string]string{
 		"policy.rego":   "package policy\n",
 		"data.yaml":     "threshold: 1\n",
 		"lib/util.rego": "package util\n",
-	})
+	})}
 	dir := filepath.Join(suite.T().TempDir(), "replay")
 
 	_, _, _, _, err := executeCommandC(suite.getCmd(server.URL, "01EVAL --fixture --dir "+dir))
@@ -330,9 +330,9 @@ func (suite *GetEvaluationCommandTestSuite) TestAFixtureRefusesAPolicyFileOutsid
 
 func (suite *GetEvaluationCommandTestSuite) TestAFixtureRefusesABundleEntryOutsideTheDirectory() {
 	server, fake := newFakeEvaluationRead(suite.T(), readCompletedPublished)
-	fake.bundle.body = gzippedTar(suite.T(), map[string]string{
+	fake.bundle = fakeRoute{body: gzippedTar(suite.T(), map[string]string{
 		"../escaped.rego": "package policy\n",
-	})
+	})}
 	dir := filepath.Join(suite.T().TempDir(), "replay")
 
 	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "01EVAL --fixture --dir "+dir))
@@ -362,6 +362,7 @@ func newFakeEvaluationRead(t *testing.T, evaluation string) (*httptest.Server, *
 	fake := &fakeEvaluationRead{
 		evaluation: fakeRoute{body: evaluation},
 		input:      fakeRoute{body: evaluationInput},
+		bundle:     fakeRoute{status: http.StatusNotFound},
 	}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fake.reads = append(fake.reads, r.URL.EscapedPath())
