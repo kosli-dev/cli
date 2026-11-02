@@ -178,6 +178,18 @@ func (suite *GetEvaluationCommandTestSuite) TestItKeepsTheIdInOneSegment() {
 	require.Equal(suite.T(), []string{"/api/v2/evaluations/test-org/a%2Fb"}, fake.reads)
 }
 
+func (suite *GetEvaluationCommandTestSuite) TestItRefusesAnIdThatIsNotASegment() {
+	for _, id := range []string{".", ".."} {
+		server, fake := newFakeEvaluationRead(suite.T(), readCompletedPublished)
+
+		_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "'"+id+"'"))
+
+		require.Error(suite.T(), err, id)
+		require.Contains(suite.T(), combined, fmt.Sprintf("%q is not a valid evaluation id", id), id)
+		require.Empty(suite.T(), fake.reads, id)
+	}
+}
+
 func (suite *GetEvaluationCommandTestSuite) TestShowInputAddsTheInputUnderItsOwnKey() {
 	server, fake := newFakeEvaluationRead(suite.T(), readCompletedPublished)
 

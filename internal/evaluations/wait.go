@@ -86,8 +86,13 @@ func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options Wa
 }
 
 // evaluationURL escapes the id into one path segment, so an id holding a slash
-// cannot name another route.
+// cannot name another route. It refuses "." and "..", which a URL path
+// resolves however they are escaped.
 func evaluationURL(host, org, id string) (string, error) {
+	switch id {
+	case "", ".", "..":
+		return "", fmt.Errorf("%q is not a valid evaluation id", id)
+	}
 	return url.JoinPath(host, "api/v2/evaluations/"+url.PathEscape(org)+"/"+url.PathEscape(id))
 }
 
