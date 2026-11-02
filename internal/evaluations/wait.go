@@ -31,13 +31,12 @@ type WaitOptions = poll.Options
 // caller can point at the evaluation that is still running.
 type StillPendingError struct {
 	ID     string
-	URL    string
 	Waited time.Duration
 }
 
 func (e *StillPendingError) Error() string {
-	return fmt.Sprintf("evaluation %s is still pending after %s; read it later with GET %s",
-		e.ID, e.Waited, e.URL)
+	return fmt.Sprintf("evaluation %s is still pending after %s; read it later with 'kosli get evaluation %s'",
+		e.ID, e.Waited, e.ID)
 }
 
 // Get reads one evaluation. A pending one is a normal answer, not an error.
@@ -70,10 +69,6 @@ func (c *Client) Get(org, id string) (*Evaluation, error) {
 // the budget expires. It returns an evaluation only when that evaluation is
 // terminal, so a caller never has to ask whether the answer it holds is final.
 func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options WaitOptions) (*Evaluation, error) {
-	endpoint, err := evaluationURL(c.host, org, id)
-	if err != nil {
-		return nil, err
-	}
 	evaluation, err := poll.Until(ctx, options.Or(DefaultWaitOptions),
 		func() (*Evaluation, bool, error) {
 			evaluation, err := c.Get(org, id)
@@ -85,11 +80,33 @@ func (c *Client) WaitForTerminal(ctx context.Context, org, id string, options Wa
 
 	var expired *poll.ExpiredError
 	if errors.As(err, &expired) {
-		return nil, &StillPendingError{ID: id, URL: endpoint, Waited: expired.Waited}
+		return nil, &StillPendingError{ID: id, Waited: expired.Waited}
 	}
 	return evaluation, err
 }
 
+// evaluationURL escapes the id into one path segment, so an id holding a slash
+// cannot name another route.
 func evaluationURL(host, org, id string) (string, error) {
-	return url.JoinPath(host, "api/v2/evaluations", org, id)
+	return url.JoinPath(host, "api/v2/evaluations/"+url.PathEscape(org)+"/"+url.PathEscape(id))
+}
+
+// Input reads the document the evaluation's policy reads as input, as the
+// server sent it. Its 409 says the input cannot be built, which no retry
+// changes.
+func (c *Client) Input(org, id string) (string, error) {
+	endpoint, err := evaluationURL(c.host, org, id)
+	if err != nil {
+		return "", err
+	}
+	response, err := c.http.Do(&requests.RequestParams{
+		Method:               http.MethodGet,
+		URL:                  endpoint + "/input",
+		Token:                c.token,
+		DisableConflictRetry: true,
+	})
+	if err != nil {
+		return "", err
+	}
+	return response.Body, nil
 }
