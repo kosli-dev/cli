@@ -35,10 +35,8 @@ directory, so it can be replayed with stock OPA:
   - ^input.json^: the document the policy read as ^input^.
   - ^data.json^: the params, which the policy reads as ^data.params^.
   - ^policy/^: the files of the policy that ran, at their paths in the bundle.
-The directory must be empty or not exist yet. A pending evaluation of a
-published policy can be written too, as its input does not depend on its
-outcome. One of an inline policy cannot, as its files are only served once it
-has finished.`
+The directory must be empty or not exist yet. An evaluation that is still
+pending can be written too, as its input does not depend on its outcome.`
 
 const getEvaluationExample = `
 # get an evaluation:
@@ -273,10 +271,6 @@ func (o *getEvaluationOptions) runFixture(out io.Writer, id string) error {
 	var evaluation evaluationRead
 	if err := json.Unmarshal([]byte(read.Raw), &evaluation); err != nil {
 		return fmt.Errorf("failed to parse the evaluation: %w", err)
-	}
-	if evaluation.Policy.Identifier == "" && evaluation.Policy.Files == nil {
-		return fmt.Errorf("evaluation %s is %s, and an inline policy's files are only "+
-			"served once it has finished; run this again when it has", id, evaluation.Status)
 	}
 	input, err := client.Input(global.Org, id)
 	if err != nil {

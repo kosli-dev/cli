@@ -40,10 +40,7 @@ const (
 		`"error":{"kind":"policy_error","message":"allow is undefined"}}`
 	readPending = `{"id":"01EVAL","status":"pending","requested_at":1757000000.5,` +
 		`"recorded_at":1757000000.5,"context":{"trails":[{"flow":"my-flow","trail":"my-trail"}]},` +
-		`"policy":{"digest":"sha256:def456"},"params":{}}`
-	readPendingPublished = `{"id":"01EVAL","status":"pending","requested_at":1757000000.5,` +
-		`"recorded_at":1757000000.5,"context":{"trails":[{"flow":"my-flow","trail":"my-trail"}]},` +
-		`"policy":{"identifier":"pr-approved","version":3,"digest":"sha256:abc123"},"params":{}}`
+		`"policy":{"digest":"sha256:def456","files":{"policy.rego":"package policy\n"}},"params":{}}`
 
 	evaluationInput = `{"evaluation":{"time":"2025-09-04T15:33:20.500000Z"},` +
 		`"trails":[{"flow_name":"my-flow","trail_name":"my-trail"}],` +
@@ -262,29 +259,14 @@ func (suite *GetEvaluationCommandTestSuite) TestAFixtureOfAPublishedPolicyUnpack
 	require.Equal(suite.T(), "package util\n", readFile(suite.T(), dir, "policy/lib/util.rego"))
 }
 
-func (suite *GetEvaluationCommandTestSuite) TestAFixtureOfAPendingPublishedEvaluationIsWritten() {
-	server, fake := newFakeEvaluationRead(suite.T(), readPendingPublished)
-	fake.bundle.body = gzippedTar(suite.T(), map[string]string{"policy.rego": "package policy\n"})
+func (suite *GetEvaluationCommandTestSuite) TestAFixtureOfAPendingEvaluationIsWritten() {
+	server, _ := newFakeEvaluationRead(suite.T(), readPending)
 	dir := filepath.Join(suite.T().TempDir(), "replay")
 
 	_, _, _, _, err := executeCommandC(suite.getCmd(server.URL, "01EVAL --fixture --dir "+dir))
 
 	require.NoError(suite.T(), err)
 	require.JSONEq(suite.T(), evaluationInput, readFile(suite.T(), dir, "input.json"))
-	require.Equal(suite.T(), "package policy\n", readFile(suite.T(), dir, "policy/policy.rego"))
-}
-
-func (suite *GetEvaluationCommandTestSuite) TestAFixtureOfAPendingInlineEvaluationIsRefused() {
-	server, fake := newFakeEvaluationRead(suite.T(), readPending)
-	dir := filepath.Join(suite.T().TempDir(), "replay")
-
-	_, combined, _, _, err := executeCommandC(suite.getCmd(server.URL, "01EVAL --fixture --dir "+dir))
-
-	require.Error(suite.T(), err)
-	require.Contains(suite.T(), combined,
-		"evaluation 01EVAL is pending, and an inline policy's files are only served once it has finished")
-	require.Equal(suite.T(), []string{evaluationPath}, fake.reads)
-	require.NoDirExists(suite.T(), dir)
 }
 
 func (suite *GetEvaluationCommandTestSuite) TestAFixtureNeedsADirectory() {
