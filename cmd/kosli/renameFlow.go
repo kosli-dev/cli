@@ -12,7 +12,15 @@ import (
 const renameFlowShortDesc = `Rename a Kosli flow.`
 
 const renameFlowLongDesc = renameFlowShortDesc + `
-The flow will remain accessible under its old name until that name is taken by another flow.
+
+After renaming, the old name still resolves to this flow for both reads and writes:
+^kosli get flow^, ^kosli list trails^ and similar queries return it, and ^kosli begin trail^
+and ^kosli attest^ commands that still use the old name record into it rather than
+auto-creating a new flow.
+The only operation that requires the current name is a further rename.
+
+The old name stops resolving once another flow is created with, or renamed to, that name.
+From then on, commands using the old name act on the new flow.
 `
 
 const renameFlowExample = `

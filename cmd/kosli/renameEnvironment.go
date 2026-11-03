@@ -12,7 +12,14 @@ import (
 const renameEnvironmentShortDesc = `Rename a Kosli environment.`
 
 const renameEnvironmentLongDesc = renameEnvironmentShortDesc + `
-The environment will remain accessible under its old name until that name is taken by another environment.
+
+After renaming, the old name still resolves to this environment for both reads and writes:
+^kosli get environment^, ^kosli list snapshots^ and similar queries return it, and ^kosli snapshot^
+commands that still use the old name report into it. The only operation that requires the
+current name is a further rename.
+
+The old name stops resolving once another environment is created with, or renamed to, that name.
+From then on, commands using the old name act on the new environment.
 `
 
 const renameEnvironmentExample = `
