@@ -675,6 +675,12 @@
  "get environment": {
   "output": "string"
  },
+ "get evaluation": {
+  "dir": "string",
+  "fixture": "bool",
+  "output": "string",
+  "show-input": "bool"
+ },
  "get flow": {
   "output": "string"
  },
