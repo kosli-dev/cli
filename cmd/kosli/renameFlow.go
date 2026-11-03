@@ -14,8 +14,9 @@ const renameFlowShortDesc = `Rename a Kosli flow.`
 const renameFlowLongDesc = renameFlowShortDesc + `
 
 After renaming, the old name still resolves to this flow for both reads and writes:
-^get^, ^list^ and similar queries return it, and ^begin trail^ and ^attest^ commands
-that still use the old name record into it rather than auto-creating a new flow.
+^kosli get flow^, ^kosli list trails^ and similar queries return it, and ^kosli begin trail^
+and ^kosli attest^ commands that still use the old name record into it rather than
+auto-creating a new flow.
 The only operation that requires the current name is a further rename.
 
 The old name stops resolving once another flow is created with, or renamed to, that name.
