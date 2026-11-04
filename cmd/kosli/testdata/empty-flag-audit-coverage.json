@@ -857,6 +857,8 @@
   "dry-run": "bool",
   "exclude": "stringSlice",
   "exclude-regex": "stringSlice",
+  "include": "stringSlice",
+  "include-regex": "stringSlice",
   "zip": "bool"
  },
  "snapshot cloud-run": {

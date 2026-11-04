@@ -146,6 +146,36 @@ func (suite *SnapshotAzureAppsFlagsTestSuite) TestSnapshotAzureAppsFlags() {
 			cmd:       fmt.Sprintf(`snapshot azure env %s --exclude a,b --exclude-regex "^c" --digests-source ghcr`, suite.args),
 			golden:    "Error: invalid value for --digests-source flag. Valid values are 'acr' and 'logs'\n",
 		},
+		{
+			wantError: true,
+			name:      "snapshot azure parses --include and --include-regex",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include a,b --include-regex "^c" --digests-source ghcr`, suite.args),
+			golden:    "Error: invalid value for --digests-source flag. Valid values are 'acr' and 'logs'\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --include and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include a --exclude b`, suite.args),
+			golden:    "Error: only one of --include, --exclude is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --include and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include a --exclude-regex "^b"`, suite.args),
+			golden:    "Error: only one of --include, --exclude-regex is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --include-regex and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include-regex "^a" --exclude b`, suite.args),
+			golden:    "Error: only one of --include-regex, --exclude is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --include-regex and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include-regex "^a" --exclude-regex "^b"`, suite.args),
+			golden:    "Error: only one of --include-regex, --exclude-regex is allowed\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

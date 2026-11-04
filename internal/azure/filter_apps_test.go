@@ -53,6 +53,16 @@ func TestFilterApps(t *testing.T) {
 			want: []string{"web-api", "zip-func"},
 		},
 		{
+			name:   "include by literal name",
+			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"web-ui"}},
+			want:   []string{"web-ui"},
+		},
+		{
+			name:   "include by regex",
+			filter: &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^web-"}},
+			want:   []string{"web-api", "web-ui"},
+		},
+		{
 			name:   "exclude regex is case-sensitive",
 			filter: &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"^ZIP-"}},
 			want:   []string{"web-api", "web-ui", "zip-func", "zip-worker"},

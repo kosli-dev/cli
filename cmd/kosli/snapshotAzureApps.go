@@ -26,9 +26,10 @@ The package is extracted into a temporary directory. An entry whose name would r
 (for example one containing a ^..^ segment) is never written; instead the whole snapshot fails and no app in
 the environment is reported until the offending app is redeployed without that entry, or left out with ^--exclude^.
 
-Skip the filtering flags to report every running app in the resource group. Use ^--exclude^ and/or
-^--exclude-regex^ to leave apps out by name. Filtering happens before any app is fingerprinted, so an
-excluded app is never downloaded and cannot fail the snapshot: exclude a zip-deployed app when the
+Skip the filtering flags to report every running app in the resource group. Use ^--include^ and/or
+^--include-regex^ to report only a subset by name, OR ^--exclude^ and/or ^--exclude-regex^ to leave apps
+out; include and exclude are mutually exclusive. Filtering happens before any app is fingerprinted, so a
+filtered-out app is never downloaded and cannot fail the snapshot: exclude a zip-deployed app when the
 credentials cannot download its package. Filters are case-sensitive.
 
 With ^--digests-source acr^, the registry is taken from each app's own container configuration. Azure
@@ -112,6 +113,17 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			for _, pair := range [][]string{
+				{"include", "exclude"},
+				{"include", "exclude-regex"},
+				{"include-regex", "exclude"},
+				{"include-regex", "exclude-regex"},
+			} {
+				if err := MuXRequiredFlags(cmd, pair, false); err != nil {
+					return err
+				}
+			}
+
 			if o.azureStaticCredentials.DigestsSource != "acr" && o.azureStaticCredentials.DigestsSource != "logs" {
 				return fmt.Errorf("invalid value for --digests-source flag. Valid values are 'acr' and 'logs'")
 			}
@@ -130,6 +142,8 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.azureStaticCredentials.ResourceGroupName, "azure-resource-group-name", "", azureResourceGroupNameFlag)
 	cmd.Flags().BoolVar(&o.azureStaticCredentials.DownloadLogsAsZip, "zip", false, "Download logs from Azure as zip files")
 	cmd.Flags().StringVar(&o.azureStaticCredentials.DigestsSource, "digests-source", "acr", azureDigestsSourceFlag)
+	cmd.Flags().StringSliceVar(&o.appsFilter.IncludeNames, "include", []string{}, azureIncludeFlag)
+	cmd.Flags().StringSliceVar(&o.appsFilter.IncludeNamesRegex, "include-regex", []string{}, azureIncludeRegexFlag)
 	cmd.Flags().StringSliceVar(&o.appsFilter.ExcludeNames, "exclude", []string{}, azureExcludeFlag)
 	cmd.Flags().StringSliceVar(&o.appsFilter.ExcludeNamesRegex, "exclude-regex", []string{}, azureExcludeRegexFlag)
 	addDryRunFlag(cmd)

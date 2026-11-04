@@ -2995,6 +2995,8 @@
       "dry-run",
       "exclude",
       "exclude-regex",
+      "include",
+      "include-regex",
       "zip"
     ],
     "flag_values": {
@@ -3007,6 +3009,8 @@
       "dry-run": "true",
       "exclude": "probe-exclude",
       "exclude-regex": "probe-exclude-regex",
+      "include": "probe-include",
+      "include-regex": "probe-include-regex",
       "zip": "true"
     },
     "setup": [
