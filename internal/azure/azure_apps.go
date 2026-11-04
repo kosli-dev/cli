@@ -25,6 +25,7 @@ import (
 	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 	"github.com/distribution/reference"
 	"github.com/kosli-dev/cli/internal/digest"
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/server"
 	"github.com/kosli-dev/cli/internal/utils"
@@ -74,7 +75,9 @@ func warnAboutDigestsSource(digestsSource string, logger *logger.Logger) {
 	logger.Warn("--digests-source logs reads each app's image digest from its docker log, which the running container can also write to; a compromised container may misreport its image. Prefer --digests-source acr where the registry allows it")
 }
 
-func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logger) (appsData []*AppData, err error) {
+// GetAzureAppsData fingerprints the running apps in the resource group that
+// filter includes. A nil filter includes every app.
+func (staticCreds *AzureStaticCredentials) GetAzureAppsData(filter *filters.CompiledResourceFilter, logger *logger.Logger) (appsData []*AppData, err error) {
 	warnAboutDigestsSource(staticCreds.DigestsSource, logger)
 
 	azureClient, err := staticCreds.NewAzureClient()
@@ -91,6 +94,12 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 	logger.Debug("Found apps:")
 	for _, app := range appsInfo {
 		logger.Debug("  app Name=%s", *app.Name)
+	}
+
+	// Before fingerprinting, so an excluded app cannot fail the run.
+	appsInfo, err = filterApps(appsInfo, filter, logger)
+	if err != nil {
+		return nil, err
 	}
 
 	// run concurrently
@@ -151,6 +160,27 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 		appsData = make([]*AppData, 0)
 	}
 	return appsData, nil
+}
+
+// filterApps keeps the apps whose name filter includes, reading nothing but
+// the name. A nil filter keeps every app.
+func filterApps(apps []*armappservice.Site, filter *filters.CompiledResourceFilter, logger *logger.Logger) ([]*armappservice.Site, error) {
+	if filter == nil {
+		return apps, nil
+	}
+	kept := make([]*armappservice.Site, 0, len(apps))
+	for _, app := range apps {
+		included, err := filter.ShouldInclude(*app.Name)
+		if err != nil {
+			return nil, err
+		}
+		if !included {
+			logger.Debug("app %s is filtered out, skipping from report", *app.Name)
+			continue
+		}
+		kept = append(kept, app)
+	}
+	return kept, nil
 }
 
 func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logger.Logger) (AppData, error) {

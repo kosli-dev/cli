@@ -126,7 +126,7 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 func (o *snapshotAzureAppsOptions) run(args []string) error {
 	envName := args[0]
 	return newSnapshotReporter().report(envName, "azure-apps", func() (any, string, error) {
-		webAppsData, err := o.azureStaticCredentials.GetAzureAppsData(logger)
+		webAppsData, err := o.azureStaticCredentials.GetAzureAppsData(nil, logger)
 		if err != nil {
 			return nil, "", err
 		}
