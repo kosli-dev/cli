@@ -180,6 +180,10 @@ func filterApps(apps []*armappservice.Site, filter *filters.CompiledResourceFilt
 		}
 		kept = append(kept, app)
 	}
+	// An empty snapshot marks every app in the environment as gone.
+	if filter.IsSet() && len(apps) > 0 && len(kept) == 0 {
+		logger.Warn("the include/exclude filters left out all %d apps in the resource group", len(apps))
+	}
 	return kept, nil
 }
 

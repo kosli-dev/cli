@@ -1,6 +1,8 @@
 package azure
 
 import (
+	"bytes"
+	"io"
 	"testing"
 
 	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
@@ -93,5 +95,30 @@ func TestFilterApps(t *testing.T) {
 		got, err := filterApps([]*armappservice.Site{site("zip-func")}, filter.Compile(), logger.NewStandardLogger())
 		require.NoError(t, err)
 		require.Empty(t, got)
+	})
+
+	t.Run("warns when the filters leave out every app", func(t *testing.T) {
+		var warnings bytes.Buffer
+		filter := &filters.ResourceFilterOptions{IncludeNames: []string{"web-apo"}}
+		got, err := filterApps(apps, filter.Compile(), logger.NewLogger(io.Discard, &warnings, false))
+		require.NoError(t, err)
+		require.Empty(t, got)
+		require.Contains(t, warnings.String(), "the include/exclude filters left out all 4 apps in the resource group")
+	})
+
+	t.Run("no warning when the filters keep an app", func(t *testing.T) {
+		var warnings bytes.Buffer
+		filter := &filters.ResourceFilterOptions{IncludeNames: []string{"web-api"}}
+		_, err := filterApps(apps, filter.Compile(), logger.NewLogger(io.Discard, &warnings, false))
+		require.NoError(t, err)
+		require.Empty(t, warnings.String())
+	})
+
+	t.Run("no warning for an empty resource group", func(t *testing.T) {
+		var warnings bytes.Buffer
+		filter := &filters.ResourceFilterOptions{IncludeNames: []string{"web-api"}}
+		_, err := filterApps(nil, filter.Compile(), logger.NewLogger(io.Discard, &warnings, false))
+		require.NoError(t, err)
+		require.Empty(t, warnings.String())
 	})
 }
