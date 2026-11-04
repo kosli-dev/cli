@@ -45,31 +45,29 @@ The rest of the commit message and branch name are not scanned.
 ^--jira-trailer^ and ^--jira-secondary-source^ are mutually exclusive.
 
 Jira issue references have the form:
-'at least 2 characters long, starting with an uppercase letter project key followed by
-dash and one or more digits'.
+'a project key starting with a letter and containing letters, digits or underscores,
+followed by a dash and one or more digits'. By default, project keys must be 2 to 10
+characters long, matching Jira's default maximum project key size; use
+^--jira-project-key^ to select specific project keys.
 
 Matching is case-insensitive: ^proj-42^ and ^PROJ-42^ in a commit message are both
-recognised and returned as ^PROJ-42^. Any token that matches the Jira key format
-(a word boundary, two or more letters/digits starting with a letter, a dash, and one
-or more digits) is treated as a candidate, regardless of whether it is an intentional
-Jira reference. For example, a commit message ^see note-1 for context, fixes PROJ-42^
-will look up both ^NOTE-1^ and ^PROJ-42^ in Jira. If ^NOTE-1^ does not exist, the
-attestation will be non-compliant even though ^PROJ-42^ is valid.
-Use ^--jira-project-key^ to restrict matching to one or more known project keys and
-avoid unintended candidates.
+recognised and returned as ^PROJ-42^. A reference cannot be embedded directly after a
+letter, digit, underscore or period. After the issue number, letters, digits and
+underscores are not allowed; a hyphen or period is allowed unless followed by a digit.
+This keeps branch names such as ^PROJ-42-add-login^, ^feature/PROJ-42-add-login^ and
+^bugfix-PROJ-42^ working while rejecting ^jackson-module-kotlin-3.2.3^ and
+^CVE-2026-41284^. Quoted, bracketed and punctuated references are also recognised.
 
-Any candidate match is automatically excluded if every occurrence in the parsed text is
-immediately followed by a hyphen and a digit — for example, ^CVE-2026-41284^ is excluded
-because ^CVE-2026^ would be followed by ^-4^. This applies across all parsed sources
-(commit message, branch name, and secondary source).
-Note: if your Jira project key collides with this pattern (e.g. a project key of ^CVE^), an
-issue reference that happens to be the prefix of a longer hyphenated number (such as a CVE
-identifier) will be filtered out. Use ^--jira-trailer^ to read issue keys from a dedicated
-git trailer line (e.g. ^Jira: CVE-42^), which confines scanning to the trailer value and
-removes collisions caused by surrounding commit text; write the issue key alone in the
-trailer value, not embedded in a longer hyphenated string (e.g. ^Jira: CVE-2026-41284^
-would still be filtered out). Alternatively, use ^--jira-secondary-source^ with a different
-identifier format.
+A complete token matching this format is treated as a candidate even if it is not an
+intentional Jira reference. For example, a commit message ^see note-1 for context,
+fixes PROJ-42^ will look up both ^NOTE-1^ and ^PROJ-42^ in Jira. If ^NOTE-1^ does
+not exist, the attestation will be non-compliant even though ^PROJ-42^ is valid.
+Use ^--jira-project-key^ to restrict matching to one or more known project keys and
+avoid unintended candidates, such as ^BOOT-3^ in ^spring-boot-3^.
+
+These boundaries apply across all parsed sources, including commit messages, branch
+names and the secondary source. An occurrence embedded in a longer identifier is ignored
+even if the same key appears as a complete reference elsewhere in the text.
 
 If you want to restrict the Jira issue matching to a specific project, use the
 ^--jira-project-key^ flag to specify your own project key. You can specify multiple project keys if needed.
@@ -351,6 +349,7 @@ func (o *attestJiraOptions) run(args []string) error {
 	// commit message, branch name, and secondary source.
 	trailerKey := gitview.NormalizeTrailerKey(o.trailerKey)
 	var issueIDs []string
+	var ambiguousSuffix bool
 	issueSource := "commit message or branch name"
 	if trailerKey != "" {
 		issueSource = fmt.Sprintf("trailer '%s'", trailerKey)
@@ -359,7 +358,7 @@ func (o *attestJiraOptions) run(args []string) error {
 		}
 		trailerValues := gitview.GetTrailerValues(commitInfo.Message, trailerKey)
 		combinedTrailerText := strings.Join(trailerValues, "\n")
-		issueIDs = jira.FindJiraIssueKeys(combinedTrailerText, o.projectKeys)
+		issueIDs, ambiguousSuffix = jira.FindJiraIssueKeys(combinedTrailerText, o.projectKeys)
 		logger.Debug("Checked for Jira issue references in trailer '%s' of Git commit %s: %v", trailerKey, commitInfo.Sha1, trailerValues)
 		if !gitview.TrailerKeyExists(commitInfo.Message, trailerKey) {
 			if gitview.TrailerKeyExistsAnywhere(commitInfo.Message, trailerKey) {
@@ -377,8 +376,12 @@ func (o *attestJiraOptions) run(args []string) error {
 			}
 		}
 	} else {
-		issueIDs = jira.FindJiraIssueKeys(jiraSearchText(commitInfo, o.secondarySource, o.ignoreBranchMatch), o.projectKeys)
+		issueIDs, ambiguousSuffix = jira.FindJiraIssueKeys(jiraSearchText(commitInfo, o.secondarySource, o.ignoreBranchMatch), o.projectKeys)
 		logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
+	}
+	if ambiguousSuffix {
+		// debug only: Jira's own branch names look like this, so a warning would fire on every run
+		logger.Debug("a Jira issue key followed by a hyphenated word may be a branch slug or an unrelated identifier")
 	}
 	logger.Debug("the following Jira references are found: %v", issueIDs)
 
