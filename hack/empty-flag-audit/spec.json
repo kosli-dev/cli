@@ -2993,6 +2993,8 @@
       "azure-tenant-id",
       "digests-source",
       "dry-run",
+      "exclude",
+      "exclude-regex",
       "zip"
     ],
     "flag_values": {
@@ -3003,6 +3005,8 @@
       "azure-tenant-id": "probe-azure-tenant-id",
       "digests-source": "logs",
       "dry-run": "true",
+      "exclude": "probe-exclude",
+      "exclude-regex": "probe-exclude-regex",
       "zip": "true"
     },
     "setup": [

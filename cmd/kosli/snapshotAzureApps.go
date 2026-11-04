@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/kosli-dev/cli/internal/azure"
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +24,12 @@ https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings#w
 For zip-deployed apps, the fingerprint respects a ^.kosli_ignore^ file at the root of the deployed package.
 The package is extracted into a temporary directory. An entry whose name would resolve outside that directory
 (for example one containing a ^..^ segment) is never written; instead the whole snapshot fails and no app in
-the environment is reported until the offending app is redeployed without that entry.
+the environment is reported until the offending app is redeployed without that entry, or left out with ^--exclude^.
+
+Skip the filtering flags to report every running app in the resource group. Use ^--exclude^ and/or
+^--exclude-regex^ to leave apps out by name. Filtering happens before any app is fingerprinted, so an
+excluded app is never downloaded and cannot fail the snapshot: exclude a zip-deployed app when the
+credentials cannot download its package. Filters are case-sensitive.
 
 With ^--digests-source acr^, the registry is taken from each app's own container configuration. Azure
 credentials are only ever sent to an Azure Container Registry login server. An app whose image comes
@@ -62,6 +68,18 @@ kosli snapshot azure yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
+# Report every app except a zip-deployed function app and any app whose name starts with "staging-"
+kosli snapshot azure yourEnvironmentName \
+	--azure-client-id yourAzureClientID \
+	--azure-client-secret yourAzureClientSecret \
+	--azure-tenant-id yourAzureTenantID \
+	--azure-subscription-id yourAzureSubscriptionID \
+	--azure-resource-group-name yourAzureResourceGroupName \
+	--exclude yourZipFunctionApp \
+	--exclude-regex "^staging-" \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # Report digest of an Azure Function app
 kosli snapshot azure yourEnvironmentName \
 	--azure-client-id yourAzureClientID \
@@ -75,11 +93,13 @@ kosli snapshot azure yourEnvironmentName \
 
 type snapshotAzureAppsOptions struct {
 	azureStaticCredentials *azure.AzureStaticCredentials
+	appsFilter             *filters.ResourceFilterOptions
 }
 
 func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotAzureAppsOptions)
 	o.azureStaticCredentials = new(azure.AzureStaticCredentials)
+	o.appsFilter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
 		Use:     "azure ENVIRONMENT-NAME",
 		Short:   snapshotAzureAppsShortDesc,
@@ -110,6 +130,8 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.azureStaticCredentials.ResourceGroupName, "azure-resource-group-name", "", azureResourceGroupNameFlag)
 	cmd.Flags().BoolVar(&o.azureStaticCredentials.DownloadLogsAsZip, "zip", false, "Download logs from Azure as zip files")
 	cmd.Flags().StringVar(&o.azureStaticCredentials.DigestsSource, "digests-source", "acr", azureDigestsSourceFlag)
+	cmd.Flags().StringSliceVar(&o.appsFilter.ExcludeNames, "exclude", []string{}, azureExcludeFlag)
+	cmd.Flags().StringSliceVar(&o.appsFilter.ExcludeNamesRegex, "exclude-regex", []string{}, azureExcludeRegexFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{
@@ -126,7 +148,7 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 func (o *snapshotAzureAppsOptions) run(args []string) error {
 	envName := args[0]
 	return newSnapshotReporter().report(envName, "azure-apps", func() (any, string, error) {
-		webAppsData, err := o.azureStaticCredentials.GetAzureAppsData(nil, logger)
+		webAppsData, err := o.azureStaticCredentials.GetAzureAppsData(o.appsFilter.Compile(), logger)
 		if err != nil {
 			return nil, "", err
 		}

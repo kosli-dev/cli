@@ -855,6 +855,8 @@
   "azure-tenant-id": "string",
   "digests-source": "string",
   "dry-run": "bool",
+  "exclude": "stringSlice",
+  "exclude-regex": "stringSlice",
   "zip": "bool"
  },
  "snapshot cloud-run": {

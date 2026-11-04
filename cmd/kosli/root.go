@@ -243,6 +243,8 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	azureSubscriptionIdFlag         = "Azure subscription ID."
 	azureResourceGroupNameFlag      = "Azure resource group name."
 	azureDigestsSourceFlag          = "[defaulted] Where to get the digests from. Valid values are 'acr' and 'logs'. With 'acr', Azure credentials are only sent to Azure Container Registry login servers; an app whose image comes from any other registry is read without credentials, so a private third-party registry needs 'logs'. 'logs' reads the digest from the app's docker log, which the running container can also write to, and is the weaker source."
+	azureExcludeFlag                = "[optional] The comma-separated list of Azure web app or function app names to exclude."
+	azureExcludeRegexFlag           = "[optional] The comma-separated list of Azure web app or function app name regex patterns to exclude. Allowed regex patterns are described in [RE2 syntax](https://github.com/google/re2/wiki/Syntax)"
 	githubTokenFlag                 = "Github token."
 	githubOrgFlag                   = "Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/integrations/ci_cd )."
 	githubBaseURLFlag               = "[optional] GitHub base URL (only needed for GitHub Enterprise installations)."

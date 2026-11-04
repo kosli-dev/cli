@@ -385,10 +385,9 @@ func unzip(zipFile, destDir string, logger *logger.Logger) error {
 			continue
 		}
 		if err != nil {
-			// One app's error cancels the whole run, snapshot azure has no exclude
-			// flag, and .kosli_ignore is only read after extraction, so the only
-			// remedy is a changed package.
-			return fmt.Errorf("zip entry %w; the package cannot be extracted safely, so no app in the environment is reported until this app is redeployed without that entry", err)
+			// One app's error cancels the whole run and .kosli_ignore is only read
+			// after extraction, so the remedy is a changed package or --exclude.
+			return fmt.Errorf("zip entry %w; the package cannot be extracted safely, so no app in the environment is reported until this app is redeployed without that entry or left out with --exclude", err)
 		}
 
 		if err := extractZipEntry(f, filePath, extracted, logger); err != nil {
