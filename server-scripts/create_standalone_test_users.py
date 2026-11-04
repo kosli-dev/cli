@@ -12,7 +12,10 @@ import hashlib
 from lib import Sku
 try:
     from domain import Organizations, Users
-except ModuleNotFoundError:  # a server image from before model was renamed to domain
+except ModuleNotFoundError as e:
+    if e.name != "domain":
+        raise
+    # a server image from before model was renamed to domain
     from model import Organizations, Users
 
 # key == person-id, value == api-key
