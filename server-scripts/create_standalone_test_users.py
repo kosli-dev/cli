@@ -4,13 +4,19 @@
 #
 # This script is owned by the CLI repo (the test users are CLI test data). It is
 # mounted into the server container at /app/test via docker-compose and executed
-# there, so it relies on the server's `lib` and `model` packages being importable
+# there, so it relies on the server's `lib` and `domain` packages being importable
 # via PYTHONPATH=/app/src.
 
 import hashlib
 
 from lib import Sku
-from model import Organizations, Users
+try:
+    from domain import Organizations, Users
+except ModuleNotFoundError as e:
+    if e.name != "domain":
+        raise
+    # a server image from before model was renamed to domain
+    from model import Organizations, Users
 
 # key == person-id, value == api-key
 CLI_TEST_USERS = {
