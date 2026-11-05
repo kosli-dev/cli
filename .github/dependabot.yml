@@ -11,6 +11,11 @@ updates:
       interval: "weekly"
       day: "tuesday"
       time: "11:00"
+    cooldown:
+      default-days: 3
+      semver-major-days: 3
+      semver-minor-days: 1
+      semver-patch-days: 1
     commit-message:
       prefix: 'chore(deps)'
     # Group minor and patch updates
@@ -76,6 +81,9 @@ updates:
       interval: "weekly"
       day: "tuesday"
       time: "11:00"
+    # docker-compose ignores the semver-*-days keys.
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: 'chore(deps)'
     # The other images are built locally or set from a variable
