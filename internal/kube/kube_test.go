@@ -390,9 +390,6 @@ func TestKubeTestSuite(t *testing.T) {
 	suite.Run(t, new(KubeTestSuite))
 }
 
-// TestProcessPodsWithFailedPodsWithoutImageIDs tests that failed pods without image IDs
-// are skipped and do not result in nil entries in the returned slice
-// This relates to issue https://github.com/kosli-dev/server/issues/4448
 func TestSelectNamespaces(t *testing.T) {
 	const warning = "the include/exclude filters left out all 3 namespaces in the cluster"
 	cluster := []string{"default", "kube-system", "prod"}
@@ -422,6 +419,9 @@ func TestSelectNamespaces(t *testing.T) {
 	})
 }
 
+// TestProcessPodsWithFailedPodsWithoutImageIDs tests that failed pods without image IDs
+// are skipped and do not result in nil entries in the returned slice
+// This relates to issue https://github.com/kosli-dev/server/issues/4448
 func TestProcessPodsWithFailedPodsWithoutImageIDs(t *testing.T) {
 	testLogger := logger.NewStandardLogger()
 

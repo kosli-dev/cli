@@ -229,15 +229,15 @@ func ResetLambdaClientFactory() {
 	NewLambdaClientFunc = defaultNewLambdaClient
 }
 
-// ECSServicesAPI is the subset of AWS ECS operations used when listing and
-// describing services in a cluster. The real *ecs.Client satisfies this
-// implicitly.
 // ECSClustersAPI is the subset of the ECS client used to list clusters.
 type ECSClustersAPI interface {
 	ListClusters(ctx context.Context, params *ecs.ListClustersInput, optFns ...func(*ecs.Options)) (*ecs.ListClustersOutput, error)
 	DescribeClusters(ctx context.Context, params *ecs.DescribeClustersInput, optFns ...func(*ecs.Options)) (*ecs.DescribeClustersOutput, error)
 }
 
+// ECSServicesAPI is the subset of AWS ECS operations used when listing and
+// describing services in a cluster. The real *ecs.Client satisfies this
+// implicitly.
 type ECSServicesAPI interface {
 	ListServices(ctx context.Context, params *ecs.ListServicesInput, optFns ...func(*ecs.Options)) (*ecs.ListServicesOutput, error)
 	DescribeServices(ctx context.Context, params *ecs.DescribeServicesInput, optFns ...func(*ecs.Options)) (*ecs.DescribeServicesOutput, error)
