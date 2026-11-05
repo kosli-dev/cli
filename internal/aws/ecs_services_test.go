@@ -23,7 +23,7 @@ func TestGetFilteredECSServicesInCluster_EmptyCluster(t *testing.T) {
 
 	emptyFilter := (&filters.ResourceFilterOptions{}).Compile()
 
-	allServices, err := getFilteredECSServicesInCluster(
+	allServices, _, err := getFilteredECSServicesInCluster(
 		client,
 		"empty-cluster",
 		&[]ecsTypes.Service{},
@@ -47,7 +47,7 @@ func TestGetFilteredECSServicesInCluster_WithServices(t *testing.T) {
 
 	emptyFilter := (&filters.ResourceFilterOptions{}).Compile()
 
-	allServices, err := getFilteredECSServicesInCluster(
+	allServices, _, err := getFilteredECSServicesInCluster(
 		client,
 		"cluster",
 		&[]ecsTypes.Service{},
@@ -59,4 +59,32 @@ func TestGetFilteredECSServicesInCluster_WithServices(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, *allServices, 1)
 	require.Equal(t, svcName, *(*allServices)[0].ServiceName)
+}
+
+func TestGetFilteredECSServicesInCluster_CountsServicesListedBeforeFiltering(t *testing.T) {
+	alpha, beta := "alpha", "beta"
+	client := &FakeECSClient{
+		ServiceArns: []string{"arn:aws:ecs:eu-central-1:123:service/cluster/alpha", "arn:aws:ecs:eu-central-1:123:service/cluster/beta"},
+		Services:    []ecsTypes.Service{{ServiceName: &alpha}, {ServiceName: &beta}},
+	}
+	filter := (&filters.ResourceFilterOptions{IncludeNames: []string{"alhpa"}}).Compile()
+
+	allServices, listed, err := getFilteredECSServicesInCluster(client, "cluster", &[]ecsTypes.Service{}, filter, nil, logger.NewStandardLogger())
+
+	require.NoError(t, err)
+	require.Empty(t, *allServices)
+	require.Equal(t, 2, listed)
+}
+
+func TestGetFilteredECSClusters_CountsClustersListedBeforeFiltering(t *testing.T) {
+	alpha, beta := "alpha", "beta"
+	client := &FakeECSClient{Clusters: []ecsTypes.Cluster{{ClusterName: &alpha}, {ClusterName: &beta}}}
+	filter := (&filters.ResourceFilterOptions{IncludeNames: []string{"beta"}}).Compile()
+
+	allClusters, listed, err := getFilteredECSClusters(client, &[]ecsTypes.Cluster{}, filter, nil, logger.NewStandardLogger())
+
+	require.NoError(t, err)
+	require.Len(t, *allClusters, 1)
+	require.Equal(t, beta, *(*allClusters)[0].ClusterName)
+	require.Equal(t, 2, listed)
 }

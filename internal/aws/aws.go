@@ -229,6 +229,12 @@ func ResetLambdaClientFactory() {
 	NewLambdaClientFunc = defaultNewLambdaClient
 }
 
+// ECSClustersAPI is the subset of the ECS client used to list clusters.
+type ECSClustersAPI interface {
+	ListClusters(ctx context.Context, params *ecs.ListClustersInput, optFns ...func(*ecs.Options)) (*ecs.ListClustersOutput, error)
+	DescribeClusters(ctx context.Context, params *ecs.DescribeClustersInput, optFns ...func(*ecs.Options)) (*ecs.DescribeClustersOutput, error)
+}
+
 // ECSServicesAPI is the subset of AWS ECS operations used when listing and
 // describing services in a cluster. The real *ecs.Client satisfies this
 // implicitly.
@@ -247,9 +253,10 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 }
 
 // getFilteredLambdaFuncs fetches a filtered set of lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
+// and the number of functions listed before filtering.
 // filter is pre-compiled by the caller, so its regex patterns are not re-compiled per function or per page
 func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *[]types.FunctionConfiguration,
-	filter *filters.CompiledResourceFilter) (*[]types.FunctionConfiguration, error) {
+	filter *filters.CompiledResourceFilter) (*[]types.FunctionConfiguration, int, error) {
 	params := &lambda.ListFunctionsInput{}
 	if nextMarker != nil {
 		params.Marker = nextMarker
@@ -257,8 +264,9 @@ func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *
 
 	listFunctionsOutput, err := client.ListFunctions(context.TODO(), params)
 	if err != nil {
-		return allFunctions, err
+		return allFunctions, 0, err
 	}
+	listed := len(listFunctionsOutput.Functions)
 
 	if !filter.IsSet() {
 		*allFunctions = append(*allFunctions, listFunctionsOutput.Functions...)
@@ -266,7 +274,7 @@ func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *
 		for _, f := range listFunctionsOutput.Functions {
 			included, err := filter.ShouldInclude(*f.FunctionName)
 			if err != nil {
-				return allFunctions, err
+				return allFunctions, listed, err
 			}
 			if included {
 				*allFunctions = append(*allFunctions, f)
@@ -275,34 +283,36 @@ func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *
 	}
 
 	if listFunctionsOutput.NextMarker != nil {
-		_, err := getFilteredLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions, filter)
+		_, listedOnLaterPages, err := getFilteredLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions, filter)
+		listed += listedOnLaterPages
 		if err != nil {
-			return allFunctions, err
+			return allFunctions, listed, err
 		}
 	}
-	return allFunctions, nil
+	return allFunctions, listed, nil
 }
 
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
-func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
+func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.ResourceFilterOptions, logger *logger.Logger) ([]*LambdaData, error) {
 	client, err := NewLambdaClientFunc(staticCreds)
 	if err != nil {
 		return []*LambdaData{}, err
 	}
-	return getLambdaPackageDataFromClient(client, filter)
+	return getLambdaPackageDataFromClient(client, filter, logger)
 }
 
 // getLambdaPackageDataFromClient fetches Lambda function data using the provided LambdaAPI client.
-func getLambdaPackageDataFromClient(client LambdaAPI, filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
+func getLambdaPackageDataFromClient(client LambdaAPI, filter *filters.ResourceFilterOptions, logger *logger.Logger) ([]*LambdaData, error) {
 	lambdaData := []*LambdaData{}
 
 	// compile the filter patterns once, instead of once per function and per page
 	compiledFilter := filter.Compile()
 
-	filteredFunctions, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, compiledFilter)
+	filteredFunctions, listed, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, compiledFilter)
 	if err != nil {
 		return lambdaData, err
 	}
+	compiledFilter.WarnIfLeftOutAll(listed, len(*filteredFunctions), "lambda functions", logger)
 
 	var (
 		wg    sync.WaitGroup
@@ -862,9 +872,10 @@ func downloadAndHashS3Object(ctx context.Context, downloader S3DownloadAPI, temp
 }
 
 // getFilteredECSClusters fetches a filtered set of ECS clusters recursively (50 at a time) and returns a list of ecs Clusters
+// and the number of clusters listed before filtering.
 // clusterFilter is pre-compiled by the caller, so its regex patterns are not re-compiled per cluster or per page
-func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
-	clusterFilter *filters.CompiledResourceFilter, nextToken *string, logger *logger.Logger) (*[]ecsTypes.Cluster, error) {
+func getFilteredECSClusters(client ECSClustersAPI, allClusters *[]ecsTypes.Cluster,
+	clusterFilter *filters.CompiledResourceFilter, nextToken *string, logger *logger.Logger) (*[]ecsTypes.Cluster, int, error) {
 	params := &ecs.ListClustersInput{}
 	if nextToken != nil {
 		params.NextToken = nextToken
@@ -872,13 +883,14 @@ func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
 
 	listClustersOutput, err := client.ListClusters(context.TODO(), params)
 	if err != nil {
-		return allClusters, err
+		return allClusters, 0, err
 	}
 
 	describeClustersOutput, err := client.DescribeClusters(context.TODO(), &ecs.DescribeClustersInput{Clusters: listClustersOutput.ClusterArns})
 	if err != nil {
-		return allClusters, err
+		return allClusters, 0, err
 	}
+	listed := len(describeClustersOutput.Clusters)
 
 	if !clusterFilter.IsSet() {
 		logger.Info("all ECS clusters in the AWS account will be scanned")
@@ -887,7 +899,7 @@ func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
 		for _, c := range describeClustersOutput.Clusters {
 			included, err := clusterFilter.ShouldInclude(*c.ClusterName)
 			if err != nil {
-				return allClusters, err
+				return allClusters, listed, err
 			}
 			if included {
 				*allClusters = append(*allClusters, c)
@@ -896,9 +908,10 @@ func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
 	}
 
 	if listClustersOutput.NextToken != nil {
-		_, err := getFilteredECSClusters(client, allClusters, clusterFilter, listClustersOutput.NextToken, logger)
+		_, listedOnLaterPages, err := getFilteredECSClusters(client, allClusters, clusterFilter, listClustersOutput.NextToken, logger)
+		listed += listedOnLaterPages
 		if err != nil {
-			return allClusters, err
+			return allClusters, listed, err
 		}
 	}
 	if clusterFilter.IsSet() {
@@ -908,7 +921,7 @@ func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
 		}
 		logger.Info("the following ECS clusters will be scanned: %v", clusterNames)
 	}
-	return allClusters, nil
+	return allClusters, listed, nil
 }
 
 // GetEcsTasksData returns a list of tasks data for an ECS cluster or service
@@ -923,14 +936,17 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter 
 	compiledClusterFilter := clusterFilter.Compile()
 	compiledServiceFilter := serviceFilter.Compile()
 
-	filteredClusters, err := getFilteredECSClusters(client, &[]ecsTypes.Cluster{}, compiledClusterFilter, nil, logger)
+	filteredClusters, listedClusters, err := getFilteredECSClusters(client, &[]ecsTypes.Cluster{}, compiledClusterFilter, nil, logger)
 	if err != nil {
 		return allTasksData, fmt.Errorf("failed to filter ECS clusters: %w", err)
 	}
+	compiledClusterFilter.WarnIfLeftOutAll(listedClusters, len(*filteredClusters), "ECS clusters", logger)
 
 	var (
 		wg    sync.WaitGroup
 		mutex sync.Mutex
+		// summed across clusters, so a service filter that matches in one cluster does not warn
+		listedServices, keptServices int
 	)
 	errChan := make(chan error, len(*filteredClusters))
 
@@ -939,11 +955,15 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter 
 		go func(clusterName string) {
 			defer wg.Done()
 
-			filteredServices, err := getFilteredECSServicesInCluster(client, clusterName, &[]ecsTypes.Service{}, compiledServiceFilter, nil, logger)
+			filteredServices, listed, err := getFilteredECSServicesInCluster(client, clusterName, &[]ecsTypes.Service{}, compiledServiceFilter, nil, logger)
 			if err != nil {
 				errChan <- fmt.Errorf("failed to filter ECS services in cluster %s: %w", clusterName, err)
 				return
 			}
+			mutex.Lock()
+			listedServices += listed
+			keptServices += len(*filteredServices)
+			mutex.Unlock()
 
 			tasksData, err := getTasksDataInClusterService(client, clusterName, filteredServices, nil, logger)
 			if err != nil {
@@ -967,14 +987,16 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter 
 			return allTasksData, err
 		}
 	}
+	compiledServiceFilter.WarnIfLeftOutAll(listedServices, keptServices, "ECS services in the scanned clusters", logger)
 
 	return allTasksData, nil
 }
 
 // getFilteredECSServicesInCluster fetches a filtered set of ECS services recursively (10 at a time) and returns a list of ecs Services
+// and the number of services listed before filtering.
 // serviceFilter is pre-compiled by the caller, so its regex patterns are not re-compiled per service, per page or per cluster
 func getFilteredECSServicesInCluster(client ECSServicesAPI, cluster string, allServices *[]ecsTypes.Service, serviceFilter *filters.CompiledResourceFilter,
-	nextToken *string, logger *logger.Logger) (*[]ecsTypes.Service, error) {
+	nextToken *string, logger *logger.Logger) (*[]ecsTypes.Service, int, error) {
 	listInput := &ecs.ListServicesInput{
 		Cluster: aws.String(cluster),
 	}
@@ -983,7 +1005,7 @@ func getFilteredECSServicesInCluster(client ECSServicesAPI, cluster string, allS
 	}
 	listServicesOutput, err := client.ListServices(context.TODO(), listInput)
 	if err != nil {
-		return allServices, err
+		return allServices, 0, err
 	}
 
 	// A cluster with no services yields an empty ServiceArns list. The AWS ECS
@@ -991,13 +1013,14 @@ func getFilteredECSServicesInCluster(client ECSServicesAPI, cluster string, allS
 	// "InvalidParameterException: Services cannot be empty", so skip the call
 	// and let the cluster contribute zero services.
 	if len(listServicesOutput.ServiceArns) == 0 {
-		return allServices, nil
+		return allServices, 0, nil
 	}
 
 	describeServicesOutput, err := client.DescribeServices(context.TODO(), &ecs.DescribeServicesInput{Cluster: aws.String(cluster), Services: listServicesOutput.ServiceArns})
 	if err != nil {
-		return allServices, err
+		return allServices, 0, err
 	}
+	listed := len(describeServicesOutput.Services)
 
 	if !serviceFilter.IsSet() {
 		logger.Info("all ECS services in cluster [%s] will be scanned", cluster)
@@ -1006,7 +1029,7 @@ func getFilteredECSServicesInCluster(client ECSServicesAPI, cluster string, allS
 		for _, s := range describeServicesOutput.Services {
 			included, err := serviceFilter.ShouldInclude(*s.ServiceName)
 			if err != nil {
-				return allServices, err
+				return allServices, listed, err
 			}
 			if included {
 				*allServices = append(*allServices, s)
@@ -1015,9 +1038,10 @@ func getFilteredECSServicesInCluster(client ECSServicesAPI, cluster string, allS
 	}
 
 	if listServicesOutput.NextToken != nil {
-		_, err := getFilteredECSServicesInCluster(client, cluster, allServices, serviceFilter, listServicesOutput.NextToken, logger)
+		_, listedOnLaterPages, err := getFilteredECSServicesInCluster(client, cluster, allServices, serviceFilter, listServicesOutput.NextToken, logger)
+		listed += listedOnLaterPages
 		if err != nil {
-			return allServices, err
+			return allServices, listed, err
 		}
 	}
 	if serviceFilter.IsSet() {
@@ -1027,7 +1051,7 @@ func getFilteredECSServicesInCluster(client ECSServicesAPI, cluster string, allS
 		}
 		logger.Info("the following ECS services in cluster [%s] will be scanned: %v", cluster, serviceNames)
 	}
-	return allServices, nil
+	return allServices, listed, nil
 }
 
 // getTasksDataInClusterService fetches a filtered set of ECS tasks recursively (100 at a time) and returns a list of ecs Tasks

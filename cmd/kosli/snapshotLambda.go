@@ -117,7 +117,7 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return nil
+			return o.filter.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -147,7 +147,7 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 func (o *snapshotLambdaOptions) run(args []string) error {
 	envName := args[0]
 	return newSnapshotReporter().report(envName, "lambda", func() (any, string, error) {
-		lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.filter)
+		lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.filter, logger)
 		if err != nil {
 			return nil, "", err
 		}

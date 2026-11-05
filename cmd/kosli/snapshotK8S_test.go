@@ -58,6 +58,18 @@ func (suite *SnapshotK8STestSuite) TestSnapshotK8SCmd() {
 		},
 		{
 			wantError: true,
+			name:      "snapshot K8S fails if --namespaces-regex is an invalid regex",
+			cmd:       fmt.Sprintf(`snapshot k8s %s --namespaces-regex "[oops" %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: invalid include name regex pattern [oops: error parsing regexp: missing closing ]: `[oops`\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if --exclude-namespaces-regex is an invalid regex, even beside a literal name",
+			cmd:       fmt.Sprintf(`snapshot k8s %s --exclude-namespaces default --exclude-namespaces-regex "[oops" %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: invalid exclude name regex pattern [oops: error parsing regexp: missing closing ]: `[oops`\n",
+		},
+		{
+			wantError: true,
 			name:      "snapshot K8S fails if --config-file is set to empty value",
 			cmd:       fmt.Sprintf(`snapshot k8s --config-file "" %s`, suite.defaultKosliArguments),
 			golden:    "Error: flag '--config-file' was given an empty value\n",
@@ -120,7 +132,7 @@ func (suite *SnapshotK8STestSuite) TestSnapshotK8SCmd() {
 			wantError:   true,
 			name:        "snapshot K8S fails if config file has invalid regex",
 			cmd:         fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/invalid-regex.yaml %s`, suite.defaultKosliArguments),
-			goldenRegex: `Error: invalid config for environment 'bad-regex-env': invalid regex '\[invalid'.*`,
+			goldenRegex: `Error: invalid config for environment 'bad-regex-env': invalid include name regex pattern \[invalid.*`,
 		},
 	}
 
@@ -186,7 +198,7 @@ func TestParseK8SSnapshotConfig(t *testing.T) {
 	t.Run("invalid regex", func(t *testing.T) {
 		_, err := parseK8SSnapshotConfig("testdata/k8s-config/invalid-regex.yaml")
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid regex")
+		assert.Contains(t, err.Error(), "name regex pattern [invalid")
 	})
 }
 

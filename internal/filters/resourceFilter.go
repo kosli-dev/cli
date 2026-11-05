@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+
+	"github.com/kosli-dev/cli/internal/logger"
 )
 
 // ResourceFilterOptions holds the raw, uncompiled filter values as supplied by CLI flags
@@ -18,6 +20,16 @@ type ResourceFilterOptions struct {
 // IsSet checks if the filter options are set
 func (filter *ResourceFilterOptions) IsSet() bool {
 	return len(filter.IncludeNames) > 0 || len(filter.IncludeNamesRegex) > 0 || len(filter.ExcludeNames) > 0 || len(filter.ExcludeNamesRegex) > 0
+}
+
+// Validate compiles every include and exclude regex pattern and returns the first error.
+// Commands call it before any cloud call, so a bad pattern fails the run whatever names
+// the listing holds.
+func (filter *ResourceFilterOptions) Validate() error {
+	if err := compileNamesRegex(filter.IncludeNamesRegex, "include").err; err != nil {
+		return err
+	}
+	return compileNamesRegex(filter.ExcludeNamesRegex, "exclude").err
 }
 
 // namePatterns is a list of resource name regex patterns after compilation, split at the
@@ -59,10 +71,9 @@ type CompiledResourceFilter struct {
 // Compile pre-compiles the include and exclude regex patterns of a filter, so the result
 // can be reused across many resource names without re-compiling per name.
 //
-// Compiling cannot fail: an invalid pattern is kept as the error it produced and is
-// reported by ShouldInclude when matching a name reaches that pattern. Reporting it here
-// instead would reject filters that never reach it, such as a name settled by
-// ExcludeNames, or an invalid pattern behind one that already matched.
+// Call Validate first to reject an invalid pattern up front. Compiling cannot fail: an
+// invalid pattern is kept as the error it produced and is reported by ShouldInclude only
+// when matching a name reaches that pattern.
 //
 // The literal name slices are cloned, so that mutating the options afterwards cannot
 // change what an already-compiled filter matches.
@@ -99,6 +110,14 @@ func compileNamesRegex(patterns []string, kind string) namePatterns {
 // IsSet checks if the filter options are set
 func (filter *CompiledResourceFilter) IsSet() bool {
 	return len(filter.includeNames) > 0 || filter.includePatterns.isSet() || len(filter.excludeNames) > 0 || filter.excludePatterns.isSet()
+}
+
+// WarnIfLeftOutAll warns when a set filter kept none of a non-empty listing of what,
+// because the empty snapshot then marks every resource in the environment as gone.
+func (filter *CompiledResourceFilter) WarnIfLeftOutAll(listed, kept int, what string, logger *logger.Logger) {
+	if filter.IsSet() && listed > 0 && kept == 0 {
+		logger.Warn("the include/exclude filters left out all %d %s", listed, what)
+	}
 }
 
 // ShouldInclude checks if a name should be included or not according to the filter options

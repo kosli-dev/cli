@@ -157,7 +157,10 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return nil
+			if err := o.clustersFilter.Validate(); err != nil {
+				return err
+			}
+			return o.serviceFilter.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)

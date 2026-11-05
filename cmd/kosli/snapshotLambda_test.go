@@ -131,6 +131,18 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			cmd:         fmt.Sprintf(`snapshot lambda %s %s --exclude %s --exclude-regex function1`, suite.envName, suite.defaultKosliArguments, suite.zipFunctionName),
 			goldenRegex: fmt.Sprintf("[0-9]+ lambda functions were reported to environment %s\n", suite.envName),
 		},
+		{
+			wantError: true,
+			name:      "snapshot lambda fails if --exclude-regex is an invalid regex, even when --exclude leaves out every function",
+			cmd:       fmt.Sprintf(`snapshot lambda %s %s --exclude %s,%s --exclude-regex "[oops"`, suite.envName, suite.defaultKosliArguments, suite.zipFunctionName, suite.imageFunctionName),
+			golden:    "Error: invalid exclude name regex pattern [oops: error parsing regexp: missing closing ]: `[oops`\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot lambda fails if --function-names-regex is an invalid regex",
+			cmd:       fmt.Sprintf(`snapshot lambda %s %s --function-names-regex "[oops"`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: invalid include name regex pattern [oops: error parsing regexp: missing closing ]: `[oops`\n",
+		},
 	}
 
 	for _, t := range tests {

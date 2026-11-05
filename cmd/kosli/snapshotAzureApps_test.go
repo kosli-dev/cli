@@ -176,6 +176,18 @@ func (suite *SnapshotAzureAppsFlagsTestSuite) TestSnapshotAzureAppsFlags() {
 			cmd:       fmt.Sprintf(`snapshot azure env %s --include-regex "^a" --exclude-regex "^b"`, suite.args),
 			golden:    "Error: only one of --include-regex, --exclude-regex is allowed\n",
 		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --include-regex is an invalid regex, even beside a literal name",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include a --include-regex "[oops"`, suite.args),
+			golden:    "Error: invalid include name regex pattern [oops: error parsing regexp: missing closing ]: `[oops`\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --exclude-regex is an invalid regex",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --exclude-regex "[oops"`, suite.args),
+			golden:    "Error: invalid exclude name regex pattern [oops: error parsing regexp: missing closing ]: `[oops`\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

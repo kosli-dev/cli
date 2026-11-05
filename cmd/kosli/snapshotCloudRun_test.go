@@ -159,11 +159,9 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd() {
 			golden:    "Error: only one of --include-regex, --exclude-regex is allowed\n",
 		},
 		{
-			wantError: true,
-			name:      "10 snapshot cloud-run fails if --include-regex is an invalid regex",
-			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --include-regex "[invalid" --dry-run %s`, suite.envName, suite.defaultKosliArguments),
-			// no literal names are set, so filtering the first service reaches the
-			// invalid pattern and the snapshot fails
+			wantError:   true,
+			name:        "10 snapshot cloud-run fails if --include-regex is an invalid regex",
+			cmd:         fmt.Sprintf(`snapshot cloud-run %s --project p --region r --include-regex "[invalid" --dry-run %s`, suite.envName, suite.defaultKosliArguments),
 			goldenRegex: `invalid include name regex pattern \[invalid: error parsing regexp: missing closing \]`,
 		},
 		{
@@ -212,14 +210,18 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeRegex(
 	require.Contains(suite.T(), out, `"serviceName": "beta"`)
 }
 
-// TestSnapshotCloudRunFilter_ExcludeLiteralShortCircuitsInvalidRegex covers the reporting
-// semantics of an invalid pattern: it is reported only when filtering a name reaches it.
-// Both stub services are excluded by name, so neither reaches the invalid pattern and the
-// snapshot succeeds with nothing in it.
-func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeLiteralShortCircuitsInvalidRegex() {
-	out := suite.runFilteredCmd(`--exclude alpha,beta --exclude-regex "[invalid"`)
-	require.NotContains(suite.T(), out, `"serviceName": "alpha"`)
-	require.NotContains(suite.T(), out, `"serviceName": "beta"`)
+// The literal names exclude both stub services, so no name would ever reach the invalid
+// pattern; the failing client proves the pattern is rejected before any GCP call.
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_InvalidRegexFailsBeforeListing() {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
+		return nil, fmt.Errorf("the GCP client must not be created")
+	}
+	runTestCmd(suite.T(), []cmdTestCase{{
+		wantError: true,
+		name:      "snapshot cloud-run fails on an invalid --exclude-regex that no name reaches",
+		cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --dry-run --exclude alpha,beta --exclude-regex "[invalid" %s`, suite.envName, suite.defaultKosliArguments),
+		golden:    "Error: invalid exclude name regex pattern [invalid: error parsing regexp: missing closing ]: `[invalid`\n",
+	}})
 }
 
 // TestSnapshotCloudRunCmd_HappyPathReportsToServer exercises the full
@@ -277,6 +279,16 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_AppliesToJobs
 	out := suite.runFilteredCmd("--exclude sandman-job")
 	require.Contains(suite.T(), out, `"serviceName": "alpha"`, "services should be unaffected")
 	require.NotContains(suite.T(), out, `"jobName": "sandman-job"`, "the named job must be filtered out")
+}
+
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_WarnsWhenFiltersLeaveOutEverything() {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
+		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
+	}
+	const warning = "the include/exclude filters left out all 3 Cloud Run services and jobs"
+	require.Contains(suite.T(), suite.runFilteredCmd("--include alhpa"), warning)
+	require.NotContains(suite.T(), suite.runFilteredCmd("--include sandman-job"), warning)
+	require.NotContains(suite.T(), suite.runFilteredCmd(""), warning)
 }
 
 // TestSnapshotCloudRunCmd_ResolveNamesFlag verifies that --resolve-names
