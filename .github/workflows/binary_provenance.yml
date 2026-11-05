@@ -70,7 +70,7 @@ jobs:
             echo "ARTIFACT_TLOG_INDEX=$TRANSPARENCY_LOG_INDEX" >> ${GITHUB_ENV}
 
         - name: Generate SBOM for the binary
-          uses: anchore/sbom-action@v0
+          uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
           with:
             file: ${{matrix.artifact.path}}
             format: 'spdx-json'
@@ -79,7 +79,7 @@ jobs:
             upload-release-assets: false
 
         - name: Generate Cyclone-dx SBOM for the binary
-          uses: anchore/sbom-action@v0
+          uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
           with:
             file: ${{matrix.artifact.path}}
             format: 'cyclonedx-json'
@@ -88,7 +88,7 @@ jobs:
             upload-release-assets: false
 
         - name: Publish SBOM
-          uses: anchore/sbom-action/publish-sbom@v0
+          uses: anchore/sbom-action/publish-sbom@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
           with:
             sbom-artifact-match: ".*\\.spdx.json$"
 

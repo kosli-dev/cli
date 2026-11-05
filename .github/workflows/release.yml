@@ -17,7 +17,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: kosli-dev/reusable-actions/slack-release-notify@main
+      - uses: kosli-dev/reusable-actions/slack-release-notify@2f03451c333eea1b7ae07b48d5c887e737136cdb # main
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           slack-channel-id: ${{ vars.SLACK_CHANNEL_ID }}
@@ -155,7 +155,7 @@ jobs:
           check-latest: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
@@ -184,7 +184,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v7
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
           distribution: goreleaser-pro
           version: '~> v2' # latest
@@ -333,7 +333,7 @@ jobs:
           egress-policy: audit
 
       - name: Slack Notification on Failure
-        uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@main
+        uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@2f03451c333eea1b7ae07b48d5c887e737136cdb # main
         with:
           slack_url: ${{ secrets.SLACK_CI_FAILURES_WEBHOOK }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -374,7 +374,7 @@ jobs:
             echo "value=failure" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: kosli-dev/reusable-actions/slack-release-notify@main
+      - uses: kosli-dev/reusable-actions/slack-release-notify@2f03451c333eea1b7ae07b48d5c887e737136cdb # main
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           slack-channel-id: ${{ vars.SLACK_CHANNEL_ID }}

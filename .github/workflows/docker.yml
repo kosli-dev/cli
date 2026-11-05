@@ -289,7 +289,7 @@ jobs:
           push-to-registry: true
 
       - name: Install syft
-        uses: anchore/sbom-action/download-syft@v0
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
 
       - name: Generate SBOM for the docker image
         env:
@@ -329,7 +329,7 @@ jobs:
           push-to-registry: true
 
       - name: setup Snyk
-        uses: snyk/actions/setup@master
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
 
       - name: Report Docker image to Kosli
         if: ${{ inputs.report_to_kosli != 'none' }}
