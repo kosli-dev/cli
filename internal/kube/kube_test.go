@@ -380,12 +380,17 @@ func (suite *KubeTestSuite) createPod(namespace string, pod *corev1.Pod) {
 	require.NoErrorf(suite.T(), err, "error waiting for pod %s to be running in namespace %s", pod.Name, namespace)
 }
 
-// waitForPodRunning stops early on a terminal phase, since the pod cannot become Running from there.
+// waitForPodRunning retries only transient API errors, and stops early on a terminal phase
+// since the pod cannot become Running from there.
 func (suite *KubeTestSuite) waitForPodRunning(ctx context.Context, name, namespace string) error {
 	return wait.PollUntilContextTimeout(ctx, time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 		pod, err := suite.clientset.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
-			return false, nil
+			if apierrors.IsNotFound(err) || apierrors.IsTimeout(err) ||
+				apierrors.IsTooManyRequests(err) || apierrors.IsServiceUnavailable(err) {
+				return false, nil
+			}
+			return false, err
 		}
 		switch pod.Status.Phase {
 		case corev1.PodRunning:
