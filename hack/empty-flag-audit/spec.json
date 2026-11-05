@@ -2986,10 +2986,12 @@
     "error": "Error: [kosli snapshot azure] ClientSecretCredential authentication failed. ",
     "needs": "azure",
     "flags_to_test": [
+      "azure-authority-host",
       "azure-client-id",
       "azure-client-secret",
       "azure-cloud",
       "azure-resource-group-name",
+      "azure-resource-manager-url",
       "azure-subscription-id",
       "azure-tenant-id",
       "digests-source",
@@ -3001,10 +3003,12 @@
       "zip"
     ],
     "flag_values": {
+      "azure-authority-host": "https://login.example.test/",
       "azure-client-id": "probe-azure-client-id",
       "azure-client-secret": "probe-azure-client-secret",
       "azure-cloud": "china",
       "azure-resource-group-name": "probe-azure-resource-group-name",
+      "azure-resource-manager-url": "https://management.example.test",
       "azure-subscription-id": "probe-azure-subscription-id",
       "azure-tenant-id": "probe-azure-tenant-id",
       "digests-source": "logs",

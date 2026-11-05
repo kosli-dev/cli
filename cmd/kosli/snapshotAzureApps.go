@@ -43,6 +43,11 @@ compromised container could try to misreport its image. Lines the container writ
 registry is the stronger source; a warning is printed whenever this mode is used, and an app whose log holds
 no platform-written digest is reported without a fingerprint and named in a warning.
 
+^--azure-cloud^ selects the Azure public cloud, Azure China or Azure Government. ^--azure-authority-host^ and
+^--azure-resource-manager-url^ replace that cloud's Microsoft Entra ID authority and Resource Manager endpoint, for a
+private cloud or a stand-in; tokens are still requested for the chosen cloud's Resource Manager audience. Both must
+be https URLs. Each zip-deployed app's package is downloaded from the Kudu host its site lists.
+
 ^--dry-run^ suppresses only the request to Kosli. Azure discovery and registry lookups still run.
 ` + kosliIgnoreDescNoExclude + azureAuthDesc
 
@@ -66,6 +71,17 @@ kosli snapshot azure yourEnvironmentName \
 	--azure-subscription-id yourAzureSubscriptionID \
 	--azure-resource-group-name yourAzureResourceGroupName \
 	--digests-source logs \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# Report a snapshot from Azure Government
+kosli snapshot azure yourEnvironmentName \
+	--azure-client-id yourAzureClientID \
+	--azure-client-secret yourAzureClientSecret \
+	--azure-tenant-id yourAzureTenantID \
+	--azure-subscription-id yourAzureSubscriptionID \
+	--azure-resource-group-name yourAzureResourceGroupName \
+	--azure-cloud usgov \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -150,6 +166,8 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().BoolVar(&o.azureStaticCredentials.DownloadLogsAsZip, "zip", false, "Download logs from Azure as zip files")
 	cmd.Flags().StringVar(&o.azureStaticCredentials.DigestsSource, "digests-source", "acr", azureDigestsSourceFlag)
 	cmd.Flags().StringVar(&o.azureStaticCredentials.Cloud, "azure-cloud", "public", azureCloudFlag)
+	cmd.Flags().StringVar(&o.azureStaticCredentials.AuthorityHost, "azure-authority-host", "", azureAuthorityHostFlag)
+	cmd.Flags().StringVar(&o.azureStaticCredentials.ResourceManagerURL, "azure-resource-manager-url", "", azureResourceManagerURLFlag)
 	cmd.Flags().StringSliceVar(&o.appsFilter.IncludeNames, "include", []string{}, azureIncludeFlag)
 	cmd.Flags().StringSliceVar(&o.appsFilter.IncludeNamesRegex, "include-regex", []string{}, azureIncludeRegexFlag)
 	cmd.Flags().StringSliceVar(&o.appsFilter.ExcludeNames, "exclude", []string{}, azureExcludeFlag)

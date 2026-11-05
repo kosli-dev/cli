@@ -79,7 +79,7 @@ func TestKuduHostFailsWithoutARepositoryHostName(t *testing.T) {
 
 func TestFingerprintZipServiceDownloadsFromTheSitesKuduHost(t *testing.T) {
 	standin := newAzureStandin(t)
-	standin.zips["myapp"] = zipOf(t, map[string]string{"index.js": "console.log('hi')"})
+	standin.zips["myapp.scm.chinacloudsites.cn"] = zipOf(t, map[string]string{"index.js": "console.log('hi')"})
 	creds := standinCredentials("china")
 	client, err := creds.newAzureClient(standin.redirectingTransport())
 	require.NoError(t, err)
@@ -99,4 +99,35 @@ func TestFingerprintZipServiceDownloadsFromTheSitesKuduHost(t *testing.T) {
 		}
 	}
 	require.Equal(t, []string{"myapp.scm.chinacloudsites.cn"}, kuduHosts)
+}
+
+// TestGetAzureAppsDataRunsAgainstAStandinNamedByTheOverrides is the path a
+// stand-in takes in another process: nothing is redirected, so every request
+// reaches the stand-in only because the overrides name it.
+func TestGetAzureAppsDataRunsAgainstAStandinNamedByTheOverrides(t *testing.T) {
+	standin := newAzureStandin(t)
+	standin.zips[standin.host()] = zipOf(t, map[string]string{"index.js": "console.log('hi')"})
+	standin.sites = []map[string]any{{
+		"name": "myapp",
+		"kind": "app",
+		"properties": map[string]any{
+			"state":             "Running",
+			"siteConfig":        map[string]any{"linuxFxVersion": ""},
+			"hostNameSslStates": []map[string]any{{"name": standin.host(), "hostType": "Repository"}},
+		},
+	}}
+	creds := standinCredentials("public")
+	creds.AuthorityHost = standin.srv.URL
+	creds.ResourceManagerURL = standin.srv.URL
+
+	appsData, err := creds.getAzureAppsData(nil, standin.srv.Client(), logger.NewStandardLogger())
+
+	require.NoError(t, err)
+	require.Len(t, appsData, 1)
+	require.Equal(t, "myapp", appsData[0].AppName)
+	require.Regexp(t, `^[0-9a-f]{64}$`, appsData[0].Digests["myapp"])
+	for _, r := range standin.received() {
+		require.Equal(t, standin.host(), r.Host)
+	}
+	require.NotEmpty(t, standin.tokenRequests())
 }

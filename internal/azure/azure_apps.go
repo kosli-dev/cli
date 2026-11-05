@@ -43,6 +43,10 @@ type AzureStaticCredentials struct {
 	DigestsSource     string
 	// Cloud is "public", "china" or "usgov"; empty means "public".
 	Cloud string
+	// AuthorityHost and ResourceManagerURL replace the cloud's endpoints when
+	// set, for a stand-in or a private cloud.
+	AuthorityHost      string
+	ResourceManagerURL string
 }
 
 type AzureClient struct {
@@ -87,9 +91,13 @@ func warnAboutDigestsSource(digestsSource string, logger *logger.Logger) {
 // GetAzureAppsData fingerprints the running apps in the resource group that
 // filter includes. A nil filter includes every app.
 func (staticCreds *AzureStaticCredentials) GetAzureAppsData(filter *filters.CompiledResourceFilter, logger *logger.Logger) (appsData []*AppData, err error) {
+	return staticCreds.getAzureAppsData(filter, nil, logger)
+}
+
+func (staticCreds *AzureStaticCredentials) getAzureAppsData(filter *filters.CompiledResourceFilter, transport policy.Transporter, logger *logger.Logger) (appsData []*AppData, err error) {
 	warnAboutDigestsSource(staticCreds.DigestsSource, logger)
 
-	azureClient, err := staticCreds.NewAzureClient()
+	azureClient, err := staticCreds.newAzureClient(transport)
 	if err != nil {
 		return nil, err
 	}

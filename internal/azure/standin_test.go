@@ -35,7 +35,7 @@ type azureStandin struct {
 	srv *httptest.Server
 	// sites is the JSON of each site the resource group lists.
 	sites []map[string]any
-	// zips holds the package Kudu serves for each app name.
+	// zips holds the package Kudu serves at each host.
 	zips map[string][]byte
 
 	mu       sync.Mutex
@@ -121,7 +121,7 @@ func (s *azureStandin) serve(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		pkg, ok := s.zips[strings.SplitN(r.Host, ".", 2)[0]]
+		pkg, ok := s.zips[r.Host]
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
 			return

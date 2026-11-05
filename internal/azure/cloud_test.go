@@ -47,3 +47,48 @@ func TestCloudConfigurationRejectsAnUnknownCloud(t *testing.T) {
 	_, err := creds.CloudConfiguration()
 	require.EqualError(t, err, "invalid value [germany] for --azure-cloud flag. Valid values are 'public', 'china' and 'usgov'")
 }
+
+func TestCloudConfigurationOverridesOnlyTheGivenEndpoints(t *testing.T) {
+	creds := AzureStaticCredentials{
+		Cloud:              "china",
+		AuthorityHost:      "https://login.example.test/",
+		ResourceManagerURL: "https://management.example.test",
+	}
+
+	got, err := creds.CloudConfiguration()
+
+	require.NoError(t, err)
+	require.Equal(t, "https://login.example.test/", got.ActiveDirectoryAuthorityHost)
+	require.Equal(t, cloud.ServiceConfiguration{
+		Endpoint: "https://management.example.test",
+		Audience: cloud.AzureChina.Services[cloud.ResourceManager].Audience,
+	}, got.Services[cloud.ResourceManager])
+	require.Equal(t, cloud.AzureChina.Services[azcontainerregistry.ServiceName], got.Services[azcontainerregistry.ServiceName])
+	require.Equal(t, "https://management.chinacloudapi.cn", cloud.AzureChina.Services[cloud.ResourceManager].Endpoint,
+		"the SDK's own configuration must not be modified")
+	require.Equal(t, "https://login.chinacloudapi.cn/", cloud.AzureChina.ActiveDirectoryAuthorityHost)
+}
+
+func TestCloudConfigurationOverridesEachEndpointAlone(t *testing.T) {
+	authorityOnly := AzureStaticCredentials{AuthorityHost: "https://login.example.test/"}
+	got, err := authorityOnly.CloudConfiguration()
+	require.NoError(t, err)
+	require.Equal(t, cloud.AzurePublic.Services[cloud.ResourceManager], got.Services[cloud.ResourceManager])
+
+	resourceManagerOnly := AzureStaticCredentials{ResourceManagerURL: "https://management.example.test"}
+	got, err = resourceManagerOnly.CloudConfiguration()
+	require.NoError(t, err)
+	require.Equal(t, cloud.AzurePublic.ActiveDirectoryAuthorityHost, got.ActiveDirectoryAuthorityHost)
+}
+
+func TestCloudConfigurationRejectsAnOverrideThatIsNotAnHTTPSURL(t *testing.T) {
+	for _, value := range []string{"http://login.example.test/", "login.example.test", "/oauth2", "https://", "://"} {
+		t.Run(value, func(t *testing.T) {
+			_, err := (&AzureStaticCredentials{AuthorityHost: value}).CloudConfiguration()
+			require.EqualError(t, err, "invalid value ["+value+"] for --azure-authority-host flag. It must be an absolute https URL")
+
+			_, err = (&AzureStaticCredentials{ResourceManagerURL: value}).CloudConfiguration()
+			require.EqualError(t, err, "invalid value ["+value+"] for --azure-resource-manager-url flag. It must be an absolute https URL")
+		})
+	}
+}
