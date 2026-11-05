@@ -1,0 +1,74 @@
+{
+  "name": "Kosli CLI Development",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  // Configure tool-specific properties
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "go.gopath": "/go",
+        "go.toolsManagement.checkForUpdates": "local",
+        "go.useLanguageServer": true,
+        "go.lintTool": "golangci-lint",
+        "go.lintOnSave": "workspace",
+        "editor.formatOnSave": true,
+        "[go]": {
+          "editor.defaultFormatter": "golang.go",
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+          }
+        }
+      },
+      "extensions": [
+        "DavidAnson.vscode-markdownlint",
+        "eamodio.gitlens",
+        "golang.go",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.makefile-tools",
+        "yzhang.markdown-all-in-one"
+      ]
+    }
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally
+  "forwardPorts": [1515, 8001],
+
+  // Use 'postCreateCommand' to run commands after the container is created
+  "postCreateCommand": "go mod download && go install gotest.tools/gotestsum@latest",
+
+  // Features to add to the dev container
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true,
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts",
+      "nodeGypDependencies": true,
+      "installYarnUsingApt": false
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+
+  // Set environment variables
+  "remoteEnv": {
+    "CGO_ENABLED": "0",
+    "GO111MODULE": "on",
+    "GOPATH": "/go"
+  },
+
+  // Run as vscode user (non-root)
+  "remoteUser": "vscode",
+
+  // Mount docker socket and go module cache
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=kosli-cli-gomod,target=/go/pkg/mod,type=volume"
+  ]
+}
