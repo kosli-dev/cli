@@ -19,8 +19,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 	"github.com/distribution/reference"
@@ -39,6 +40,8 @@ type AzureStaticCredentials struct {
 	ResourceGroupName string
 	DownloadLogsAsZip bool
 	DigestsSource     string
+	// Cloud is "public", "china" or "usgov"; empty means "public".
+	Cloud string
 }
 
 type AzureClient struct {
@@ -637,13 +640,21 @@ func (azureClient *AzureClient) GetImageFingerprint(imageName string, logger *lo
 // clientOptions is nil in production; tests pass options carrying a transport
 // pointed at a fake registry, so the arm is exercised without package-level state.
 func (azureClient *AzureClient) acrImageFingerprint(plan fingerprintPlan, clientOptions *azcontainerregistry.ClientOptions, logger *logger.Logger) (string, error) {
-	credentials, err := azidentity.NewClientSecretCredential(azureClient.Credentials.TenantId,
-		azureClient.Credentials.ClientId, azureClient.Credentials.ClientSecret, nil)
+	cfg, err := azureClient.Credentials.CloudConfiguration()
 	if err != nil {
 		return "", err
 	}
 
-	acrClient, err := azcontainerregistry.NewClient("https://"+plan.domain, credentials, clientOptions)
+	var transport policy.Transporter
+	if clientOptions != nil {
+		transport = clientOptions.Transport
+	}
+	credentials, err := azureClient.Credentials.newCredential(cfg, transport)
+	if err != nil {
+		return "", err
+	}
+
+	acrClient, err := azcontainerregistry.NewClient("https://"+plan.domain, credentials, acrOptionsForCloud(cfg, clientOptions))
 	if err != nil {
 		return "", err
 	}
@@ -696,13 +707,25 @@ func (app *AppData) IsEmpty() bool {
 }
 
 func (staticCreds *AzureStaticCredentials) NewAzureClient() (*AzureClient, error) {
-	credentials, err := azidentity.NewClientSecretCredential(staticCreds.TenantId, staticCreds.ClientId, staticCreds.ClientSecret, nil)
+	return staticCreds.newAzureClient(nil)
+}
+
+// newAzureClient sends every Azure request through transport, which is nil in
+// production and lets a test point the client at a stand-in.
+func (staticCreds *AzureStaticCredentials) newAzureClient(transport policy.Transporter) (*AzureClient, error) {
+	cfg, err := staticCreds.CloudConfiguration()
+	if err != nil {
+		return nil, err
+	}
+
+	credentials, err := staticCreds.newCredential(cfg, transport)
 	if err != nil {
 		return nil, err
 	}
 
 	// Docs: https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/resourcemanager/appservice/armappservice/README.md
-	appserviceFactory, err := armappservice.NewClientFactory(staticCreds.SubscriptionId, credentials, nil)
+	appserviceFactory, err := armappservice.NewClientFactory(staticCreds.SubscriptionId, credentials,
+		&arm.ClientOptions{ClientOptions: clientOptions(cfg, transport)})
 	if err != nil {
 		return nil, err
 	}

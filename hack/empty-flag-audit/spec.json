@@ -2988,6 +2988,7 @@
     "flags_to_test": [
       "azure-client-id",
       "azure-client-secret",
+      "azure-cloud",
       "azure-resource-group-name",
       "azure-subscription-id",
       "azure-tenant-id",
@@ -3002,6 +3003,7 @@
     "flag_values": {
       "azure-client-id": "probe-azure-client-id",
       "azure-client-secret": "probe-azure-client-secret",
+      "azure-cloud": "china",
       "azure-resource-group-name": "probe-azure-resource-group-name",
       "azure-subscription-id": "probe-azure-subscription-id",
       "azure-tenant-id": "probe-azure-tenant-id",

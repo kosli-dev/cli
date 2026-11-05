@@ -242,6 +242,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	azureTenantIdFlag               = "Azure tenant ID."
 	azureSubscriptionIdFlag         = "Azure subscription ID."
 	azureResourceGroupNameFlag      = "Azure resource group name."
+	azureCloudFlag                  = "[defaulted] The Azure cloud to authenticate against and read apps from. Valid values are 'public', 'china' and 'usgov'."
 	azureDigestsSourceFlag          = "[defaulted] Where to get the digests from. Valid values are 'acr' and 'logs'. With 'acr', Azure credentials are only sent to Azure Container Registry login servers; an app whose image comes from any other registry is read without credentials, so a private third-party registry needs 'logs'. 'logs' reads the digest from the app's docker log, which the running container can also write to, and is the weaker source."
 	azureIncludeFlag                = "[optional] The comma-separated list of Azure web app or function app names to snapshot. Can't be used together with --exclude or --exclude-regex."
 	azureIncludeRegexFlag           = "[optional] The comma-separated list of Azure web app or function app name regex patterns to snapshot. Can't be used together with --exclude or --exclude-regex. Allowed regex patterns are described in [RE2 syntax](https://github.com/google/re2/wiki/Syntax)"

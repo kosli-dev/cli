@@ -178,6 +178,12 @@ func (suite *SnapshotAzureAppsFlagsTestSuite) TestSnapshotAzureAppsFlags() {
 		},
 		{
 			wantError: true,
+			name:      "snapshot azure fails if --azure-cloud names an unknown cloud",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --azure-cloud germany`, suite.args),
+			golden:    "Error: invalid value [germany] for --azure-cloud flag. Valid values are 'public', 'china' and 'usgov'\n",
+		},
+		{
+			wantError: true,
 			name:      "snapshot azure fails if --include-regex is an invalid regex, even beside a literal name",
 			cmd:       fmt.Sprintf(`snapshot azure env %s --include a --include-regex "[oops"`, suite.args),
 			golden:    "Error: invalid include name regex pattern [oops: error parsing regexp: missing closing ]: `[oops`\n",

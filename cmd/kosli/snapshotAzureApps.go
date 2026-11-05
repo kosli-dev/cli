@@ -131,6 +131,10 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 				return fmt.Errorf("invalid value for --digests-source flag. Valid values are 'acr' and 'logs'")
 			}
 
+			if _, err := o.azureStaticCredentials.CloudConfiguration(); err != nil {
+				return err
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -145,6 +149,7 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.azureStaticCredentials.ResourceGroupName, "azure-resource-group-name", "", azureResourceGroupNameFlag)
 	cmd.Flags().BoolVar(&o.azureStaticCredentials.DownloadLogsAsZip, "zip", false, "Download logs from Azure as zip files")
 	cmd.Flags().StringVar(&o.azureStaticCredentials.DigestsSource, "digests-source", "acr", azureDigestsSourceFlag)
+	cmd.Flags().StringVar(&o.azureStaticCredentials.Cloud, "azure-cloud", "public", azureCloudFlag)
 	cmd.Flags().StringSliceVar(&o.appsFilter.IncludeNames, "include", []string{}, azureIncludeFlag)
 	cmd.Flags().StringSliceVar(&o.appsFilter.IncludeNamesRegex, "include-regex", []string{}, azureIncludeRegexFlag)
 	cmd.Flags().StringSliceVar(&o.appsFilter.ExcludeNames, "exclude", []string{}, azureExcludeFlag)

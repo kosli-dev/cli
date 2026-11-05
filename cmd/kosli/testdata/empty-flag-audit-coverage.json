@@ -850,6 +850,7 @@
  "snapshot azure": {
   "azure-client-id": "string",
   "azure-client-secret": "string",
+  "azure-cloud": "string",
   "azure-resource-group-name": "string",
   "azure-subscription-id": "string",
   "azure-tenant-id": "string",
