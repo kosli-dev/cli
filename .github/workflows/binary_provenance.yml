@@ -39,15 +39,15 @@ jobs:
           with:
             egress-policy: audit
 
-        - uses: actions/checkout@v7
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-        - uses: actions/download-artifact@v8
+        - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
           with:
             name: ${{inputs.dir}}
             path: ${{ github.workspace }}/${{inputs.dir}}
 
         - name: setup-kosli-cli
-          uses: kosli-dev/setup-cli-action@v5
+          uses: kosli-dev/setup-cli-action@9295a94031a6fc5eb1783a9027649a3cf7d1b950 # v5.2.4
           with:
             version:
                 ${{ vars.KOSLI_CLI_VERSION }}
@@ -59,7 +59,7 @@ jobs:
 
         - name: Attest Build Provenance
           id: artifact-gh-attest
-          uses: actions/attest@v4.2.2
+          uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
           with:
             subject-name: ${{matrix.artifact.template_name}}
             subject-digest: sha256:${{ env.FINGERPRINT }}
@@ -70,7 +70,7 @@ jobs:
             echo "ARTIFACT_TLOG_INDEX=$TRANSPARENCY_LOG_INDEX" >> ${GITHUB_ENV}
 
         - name: Generate SBOM for the binary
-          uses: anchore/sbom-action@v0
+          uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
           with:
             file: ${{matrix.artifact.path}}
             format: 'spdx-json'
@@ -79,7 +79,7 @@ jobs:
             upload-release-assets: false
 
         - name: Generate Cyclone-dx SBOM for the binary
-          uses: anchore/sbom-action@v0
+          uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
           with:
             file: ${{matrix.artifact.path}}
             format: 'cyclonedx-json'
@@ -88,13 +88,13 @@ jobs:
             upload-release-assets: false
 
         - name: Publish SBOM
-          uses: anchore/sbom-action/publish-sbom@v0
+          uses: anchore/sbom-action/publish-sbom@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
           with:
             sbom-artifact-match: ".*\\.spdx.json$"
 
         - name: Attest SBOM to Github
           id: sbom-gh-attest
-          uses: actions/attest@v4.2.2
+          uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
           with:
             sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
             subject-name: ${{matrix.artifact.template_name}}

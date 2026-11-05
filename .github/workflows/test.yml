@@ -78,24 +78,24 @@ jobs:
       with:
         egress-policy: audit
 
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ inputs.checkout_ref || github.sha }}
 
-    - uses: actions/setup-go@v7
+    - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
         go-version-file: '.go-version'
         check-latest: true
 
     - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v5
+      uses: kosli-dev/setup-cli-action@9295a94031a6fc5eb1783a9027649a3cf7d1b950 # v5.2.4
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
 
     - name: Run golangci-lint
       id: lint
-      uses: golangci/golangci-lint-action@v9
+      uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
       with:
         version: latest
         args: -v
@@ -127,24 +127,24 @@ jobs:
       with:
         egress-policy: audit
 
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0 # needed for some tests referencing older commits
         ref: ${{ inputs.checkout_ref || github.sha }}
 
-    - uses: actions/setup-go@v7
+    - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
         go-version-file: '.go-version'
         check-latest: true
 
     - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v5
+      uses: kosli-dev/setup-cli-action@9295a94031a6fc5eb1783a9027649a3cf7d1b950 # v5.2.4
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v6
+      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
       with:
         role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/cli
         aws-region: ${{ inputs.AWS_REGION }}
@@ -153,7 +153,7 @@ jobs:
 
     - name: Login to Amazon ECR private
       id: login-ecr-private
-      uses: aws-actions/amazon-ecr-login@v2
+      uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
 
     - name: Run tests
       env:
@@ -187,7 +187,7 @@ jobs:
 
     - name: Upload coverage reports to Codecov
       if: ${{ inputs.report_to_kosli != 'none' }}
-      uses: codecov/codecov-action@v7
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
 
   snyk-code-test:
     if: ${{ inputs.run_snyk }}
@@ -204,15 +204,15 @@ jobs:
       with:
         egress-policy: audit
 
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ inputs.checkout_ref || github.sha }}
 
     - name: setup Snyk
-      uses: snyk/actions/setup@master
+      uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
 
     - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v5
+      uses: kosli-dev/setup-cli-action@9295a94031a6fc5eb1783a9027649a3cf7d1b950 # v5.2.4
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
@@ -257,15 +257,15 @@ jobs:
       with:
         egress-policy: audit
 
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ inputs.checkout_ref || github.sha }}
 
     - name: setup Snyk
-      uses: snyk/actions/setup@master
+      uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
 
     - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v5
+      uses: kosli-dev/setup-cli-action@9295a94031a6fc5eb1783a9027649a3cf7d1b950 # v5.2.4
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
