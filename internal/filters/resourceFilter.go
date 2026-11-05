@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+
+	"github.com/kosli-dev/cli/internal/logger"
 )
 
 // ResourceFilterOptions holds the raw, uncompiled filter values as supplied by CLI flags
@@ -108,6 +110,14 @@ func compileNamesRegex(patterns []string, kind string) namePatterns {
 // IsSet checks if the filter options are set
 func (filter *CompiledResourceFilter) IsSet() bool {
 	return len(filter.includeNames) > 0 || filter.includePatterns.isSet() || len(filter.excludeNames) > 0 || filter.excludePatterns.isSet()
+}
+
+// WarnIfLeftOutAll warns when a set filter kept none of a non-empty listing of what,
+// because the empty snapshot then marks every resource in the environment as gone.
+func (filter *CompiledResourceFilter) WarnIfLeftOutAll(listed, kept int, what string, logger *logger.Logger) {
+	if filter.IsSet() && listed > 0 && kept == 0 {
+		logger.Warn("the include/exclude filters left out all %d %s", listed, what)
+	}
 }
 
 // ShouldInclude checks if a name should be included or not according to the filter options

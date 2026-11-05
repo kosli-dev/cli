@@ -1,10 +1,13 @@
 package filters
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"sync"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -317,6 +320,29 @@ func (suite *FiltersSuite) TestValidate() {
 				return
 			}
 			require.NoError(suite.T(), err)
+		})
+	}
+}
+
+func (suite *FiltersSuite) TestWarnIfLeftOutAll() {
+	const warning = "[warning] the include/exclude filters left out all 3 widgets\n"
+	set := &ResourceFilterOptions{IncludeNames: []string{"foo"}}
+	for _, t := range []struct {
+		name   string
+		filter *ResourceFilterOptions
+		listed int
+		kept   int
+		want   string
+	}{
+		{name: "warns when a set filter keeps none of a non-empty listing", filter: set, listed: 3, kept: 0, want: warning},
+		{name: "no warning when the filter keeps a resource", filter: set, listed: 3, kept: 1},
+		{name: "no warning for an empty listing", filter: set, listed: 0, kept: 0},
+		{name: "no warning when no filter is set", filter: &ResourceFilterOptions{}, listed: 3, kept: 0},
+	} {
+		suite.Run(t.name, func() {
+			var warnings bytes.Buffer
+			t.filter.Compile().WarnIfLeftOutAll(t.listed, t.kept, "widgets", logger.NewLogger(io.Discard, &warnings, false))
+			require.Equal(suite.T(), t.want, warnings.String())
 		})
 	}
 }
