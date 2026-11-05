@@ -39,7 +39,7 @@ jobs:
           with:
             egress-policy: audit
 
-        - uses: actions/checkout@v7
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
         - uses: actions/download-artifact@v8
           with:
@@ -47,7 +47,7 @@ jobs:
             path: ${{ github.workspace }}/${{inputs.dir}}
 
         - name: setup-kosli-cli
-          uses: kosli-dev/setup-cli-action@v5
+          uses: kosli-dev/setup-cli-action@9295a94031a6fc5eb1783a9027649a3cf7d1b950 # v5.2.4
           with:
             version:
                 ${{ vars.KOSLI_CLI_VERSION }}
