@@ -384,24 +384,38 @@ func (suite *KubeTestSuite) createPod(namespace string, pod *corev1.Pod) {
 // waitForPodRunning retries only transient API errors, and stops early on a terminal phase
 // since the pod cannot become Running from there.
 func (suite *KubeTestSuite) waitForPodRunning(ctx context.Context, name, namespace string) error {
-	return wait.PollUntilContextTimeout(ctx, time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	var lastPhase corev1.PodPhase
+	var lastErr error
+	err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
 		pod, err := suite.clientset.Clientset.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) || apierrors.IsTimeout(err) || apierrors.IsServerTimeout(err) ||
 				apierrors.IsTooManyRequests(err) || apierrors.IsServiceUnavailable(err) ||
 				utilnet.IsConnectionReset(err) || utilnet.IsProbableEOF(err) {
+				lastErr = err
 				return false, nil
 			}
 			return false, err
 		}
-		switch pod.Status.Phase {
+		lastErr = nil
+		lastPhase = pod.Status.Phase
+		switch lastPhase {
 		case corev1.PodRunning:
 			return true, nil
 		case corev1.PodSucceeded, corev1.PodFailed:
-			return false, fmt.Errorf("pod %s/%s reached terminal phase %s", namespace, name, pod.Status.Phase)
+			return false, fmt.Errorf("pod %s/%s reached terminal phase %s", namespace, name, lastPhase)
 		}
 		return false, nil
 	})
+	// At the deadline client-go's rate limiter can fail the Get with an error that does not wrap
+	// context.DeadlineExceeded, so compare against the deadline itself.
+	if deadline, _ := ctx.Deadline(); err != nil && !time.Now().Before(deadline) {
+		return fmt.Errorf("pod %s/%s not Running before the deadline (last phase %q, last error: %v): %w",
+			namespace, name, lastPhase, lastErr, err)
+	}
+	return err
 }
 
 // In order for 'go test' to run this suite, we need to create
