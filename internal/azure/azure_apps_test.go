@@ -2,6 +2,7 @@ package azure
 
 import (
 	"archive/zip"
+	"context"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -40,7 +41,7 @@ func (suite *AzureAppsTestSuite) SetupTest() {
 }
 
 func (suite *AzureAppsTestSuite) TestCanDownloadAppZip() {
-	token, err := suite.defaultClient.getBearerToken(logger.NewStandardLogger())
+	token, err := suite.defaultClient.kuduToken(context.Background())
 	require.NoError(suite.T(), err)
 	require.NotEmpty(suite.T(), token)
 

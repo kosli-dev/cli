@@ -4,13 +4,11 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -19,7 +17,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
@@ -52,6 +52,11 @@ type AzureClient struct {
 	acrClientOptions *azcontainerregistry.ClientOptions
 	// dockerLogsForApp is a test seam; nil falls back to GetDockerLogsForApp.
 	dockerLogsForApp func(appServiceName string, logger *logger.Logger) ([]byte, error)
+	credential       azcore.TokenCredential
+	cloud            cloud.Configuration
+	// transport carries the Kudu download as well as the SDK's requests; nil
+	// means http.DefaultClient.
+	transport policy.Transporter
 }
 
 // AppData represents the harvested Azure service app and function app data
@@ -200,49 +205,20 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 	}
 }
 
-// getBearerToken gets a bearer token
-func (azureClient *AzureClient) getBearerToken(logger *logger.Logger) (string, error) {
-	oauthURL, err := url.JoinPath("https://login.microsoftonline.com", azureClient.Credentials.TenantId, "oauth2/token")
+// kuduToken is a Resource Manager token for the chosen cloud, which Kudu
+// accepts. The scope is formed the way the ARM SDK forms its own.
+func (azureClient *AzureClient) kuduToken(ctx context.Context) (string, error) {
+	resourceManager, ok := azureClient.cloud.Services[cloud.ResourceManager]
+	if !ok || resourceManager.Audience == "" {
+		return "", errors.New("the Azure cloud configuration has no Resource Manager audience")
+	}
+	token, err := azureClient.credential.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{resourceManager.Audience + "/.default"},
+	})
 	if err != nil {
 		return "", err
 	}
-
-	data := url.Values{}
-	data.Set("grant_type", "client_credentials")
-	data.Set("client_id", azureClient.Credentials.ClientId)
-	data.Set("client_secret", azureClient.Credentials.ClientSecret)
-	data.Set("resource", "https://management.azure.com/")
-
-	req, err := http.NewRequest("POST", oauthURL, bytes.NewBufferString(data.Encode()))
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			// Log warning for cleanup error
-			logger.Warn("failed to close response body: %v", err)
-		}
-	}()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	var oauthResp map[string]any
-	err = json.Unmarshal(body, &oauthResp)
-	if err != nil {
-		return "", err
-	}
-	accessToken := oauthResp["access_token"].(string)
-	return accessToken, nil
+	return token.Token, nil
 }
 
 // downloadAppPackage downloads the zip package of a non-docker web app
@@ -291,8 +267,7 @@ func downloadAppPackage(appName, bearerToken, destination string) error {
 }
 
 func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, logger *logger.Logger) (AppData, error) {
-	// get bearer token
-	token, err := azureClient.getBearerToken(logger)
+	token, err := azureClient.kuduToken(context.Background())
 	if err != nil {
 		return AppData{}, err
 	}
@@ -733,6 +708,9 @@ func (staticCreds *AzureStaticCredentials) newAzureClient(transport policy.Trans
 	azureClient := &AzureClient{
 		Credentials:       *staticCreds,
 		AppServiceFactory: appserviceFactory,
+		credential:        credentials,
+		cloud:             cfg,
+		transport:         transport,
 	}
 	azureClient.dockerLogsForApp = azureClient.GetDockerLogsForApp
 	return azureClient, nil
