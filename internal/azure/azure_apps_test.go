@@ -40,6 +40,12 @@ func (suite *AzureAppsTestSuite) SetupTest() {
 	require.NoError(suite.T(), err)
 }
 
+func waveAppSite() *armappservice.Site {
+	return siteWithHostNames("kosli-dev-WaveApp", map[string]armappservice.HostType{
+		"kosli-dev-waveapp.scm.azurewebsites.net": armappservice.HostTypeRepository,
+	})
+}
+
 func (suite *AzureAppsTestSuite) TestCanDownloadAppZip() {
 	token, err := suite.defaultClient.kuduToken(context.Background())
 	require.NoError(suite.T(), err)
@@ -54,7 +60,7 @@ func (suite *AzureAppsTestSuite) TestCanDownloadAppZip() {
 		}
 	}()
 	dest := filepath.Join(tmpDir, appName+".zip")
-	err = downloadAppPackage(appName, token, dest)
+	err = suite.defaultClient.downloadAppPackage(waveAppSite(), token, dest)
 	require.NoError(suite.T(), err)
 
 	// check download file exists
@@ -75,7 +81,7 @@ func (suite *AzureAppsTestSuite) TestCanDownloadAppZip() {
 func (suite *AzureAppsTestSuite) TestFingerprintZipService() {
 	appName := "kosli-dev-WaveApp"
 	appKind := "app"
-	appData, err := suite.defaultClient.fingerprintZipService(&armappservice.Site{Name: &appName, Kind: &appKind}, logger.NewStandardLogger())
+	appData, err := suite.defaultClient.fingerprintZipService(waveAppSite(), logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 
 	digest := appData.Digests[appName]

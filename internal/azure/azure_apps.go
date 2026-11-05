@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -221,16 +222,37 @@ func (azureClient *AzureClient) kuduToken(ctx context.Context) (string, error) {
 	return token.Token, nil
 }
 
+// kuduHost is the site's Kudu (SCM) host name, which differs per cloud.
+func kuduHost(app *armappservice.Site) (string, error) {
+	if app.Properties != nil {
+		for _, state := range app.Properties.HostNameSSLStates {
+			if state != nil && state.HostType != nil && *state.HostType == armappservice.HostTypeRepository &&
+				state.Name != nil && *state.Name != "" {
+				return *state.Name, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("app [%s] lists no Repository host name, so its deployed package cannot be downloaded from Kudu", *app.Name)
+}
+
 // downloadAppPackage downloads the zip package of a non-docker web app
-func downloadAppPackage(appName, bearerToken, destination string) error {
-	kuduZipURL := fmt.Sprintf("https://%s.scm.azurewebsites.net/api/zip/site/wwwroot/", appName)
+func (azureClient *AzureClient) downloadAppPackage(app *armappservice.Site, bearerToken, destination string) error {
+	appName := *app.Name
+	host, err := kuduHost(app)
+	if err != nil {
+		return err
+	}
+	kuduZipURL := (&url.URL{Scheme: "https", Host: host, Path: "/api/zip/site/wwwroot/"}).String()
 	req, err := http.NewRequest("GET", kuduZipURL, nil)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+bearerToken)
 
-	client := &http.Client{}
+	var client policy.Transporter = http.DefaultClient
+	if azureClient.transport != nil {
+		client = azureClient.transport
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -283,7 +305,7 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 	}()
 
 	packagePath := filepath.Join(tmpDir, *app.Name+".zip")
-	err = downloadAppPackage(*app.Name, token, packagePath)
+	err = azureClient.downloadAppPackage(app, token, packagePath)
 	if err != nil {
 		if err == ErrAppUnavailable {
 			logger.Debug("app %s is unavailable (503), skipping", *app.Name)

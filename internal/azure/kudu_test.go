@@ -5,6 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,4 +37,66 @@ func TestKuduTokenIsForTheChosenCloudsResourceManager(t *testing.T) {
 			require.Equal(t, "client_credentials", tokenRequests[0].Form.Get("grant_type"))
 		})
 	}
+}
+
+func siteWithHostNames(name string, hostNames map[string]armappservice.HostType) *armappservice.Site {
+	kind := "app"
+	site := &armappservice.Site{Name: &name, Kind: &kind, Properties: &armappservice.SiteProperties{}}
+	for host, hostType := range hostNames {
+		site.Properties.HostNameSSLStates = append(site.Properties.HostNameSSLStates,
+			&armappservice.HostNameSSLState{Name: to.Ptr(host), HostType: to.Ptr(hostType)})
+	}
+	return site
+}
+
+func TestKuduHostIsTheSitesRepositoryHostName(t *testing.T) {
+	site := siteWithHostNames("myapp", map[string]armappservice.HostType{
+		"myapp.chinacloudsites.cn":     armappservice.HostTypeStandard,
+		"myapp.scm.chinacloudsites.cn": armappservice.HostTypeRepository,
+	})
+
+	host, err := kuduHost(site)
+
+	require.NoError(t, err)
+	require.Equal(t, "myapp.scm.chinacloudsites.cn", host)
+}
+
+func TestKuduHostFailsWithoutARepositoryHostName(t *testing.T) {
+	for name, site := range map[string]*armappservice.Site{
+		"only a standard host name": siteWithHostNames("myapp", map[string]armappservice.HostType{
+			"myapp.azurewebsites.net": armappservice.HostTypeStandard,
+		}),
+		"no host names": siteWithHostNames("myapp", nil),
+		"no properties": {Name: to.Ptr("myapp")},
+		"an empty name": siteWithHostNames("myapp", map[string]armappservice.HostType{"": armappservice.HostTypeRepository}),
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := kuduHost(site)
+			require.EqualError(t, err, "app [myapp] lists no Repository host name, so its deployed package cannot be downloaded from Kudu")
+		})
+	}
+}
+
+func TestFingerprintZipServiceDownloadsFromTheSitesKuduHost(t *testing.T) {
+	standin := newAzureStandin(t)
+	standin.zips["myapp"] = zipOf(t, map[string]string{"index.js": "console.log('hi')"})
+	creds := standinCredentials("china")
+	client, err := creds.newAzureClient(standin.redirectingTransport())
+	require.NoError(t, err)
+	site := siteWithHostNames("myapp", map[string]armappservice.HostType{
+		"myapp.scm.chinacloudsites.cn": armappservice.HostTypeRepository,
+	})
+
+	appData, err := client.fingerprintZipService(site, logger.NewStandardLogger())
+
+	require.NoError(t, err)
+	require.Regexp(t, `^[0-9a-f]{64}$`, appData.Digests["myapp"])
+	var kuduHosts []string
+	for _, r := range standin.received() {
+		if r.Path == "/api/zip/site/wwwroot/" {
+			kuduHosts = append(kuduHosts, r.Host)
+			require.Equal(t, "Bearer "+standinToken, r.Authorization)
+		}
+	}
+	require.Equal(t, []string{"myapp.scm.chinacloudsites.cn"}, kuduHosts)
 }
