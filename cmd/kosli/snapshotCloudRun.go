@@ -187,6 +187,7 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 				filteredJobs = append(filteredJobs, job)
 			}
 		}
+		compiledFilter.WarnIfLeftOutAll(len(services)+len(jobs), len(filteredServices)+len(filteredJobs), "Cloud Run services and jobs", logger)
 
 		payload := cloudrun.ToEnvRequest(filteredServices, filteredJobs)
 		reported := fmt.Sprintf("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)

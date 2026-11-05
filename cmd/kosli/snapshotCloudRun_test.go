@@ -281,6 +281,16 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_AppliesToJobs
 	require.NotContains(suite.T(), out, `"jobName": "sandman-job"`, "the named job must be filtered out")
 }
 
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_WarnsWhenFiltersLeaveOutEverything() {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
+		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
+	}
+	const warning = "the include/exclude filters left out all 3 Cloud Run services and jobs"
+	require.Contains(suite.T(), suite.runFilteredCmd("--include alhpa"), warning)
+	require.NotContains(suite.T(), suite.runFilteredCmd("--include sandman-job"), warning)
+	require.NotContains(suite.T(), suite.runFilteredCmd(""), warning)
+}
+
 // TestSnapshotCloudRunCmd_ResolveNamesFlag verifies that --resolve-names
 // reaches the client constructor. Two cases:
 //   - flag present → constructor called with true
