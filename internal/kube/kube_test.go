@@ -19,6 +19,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
@@ -384,10 +385,11 @@ func (suite *KubeTestSuite) createPod(namespace string, pod *corev1.Pod) {
 // since the pod cannot become Running from there.
 func (suite *KubeTestSuite) waitForPodRunning(ctx context.Context, name, namespace string) error {
 	return wait.PollUntilContextTimeout(ctx, time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
-		pod, err := suite.clientset.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
+		pod, err := suite.clientset.Clientset.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
-			if apierrors.IsNotFound(err) || apierrors.IsTimeout(err) ||
-				apierrors.IsTooManyRequests(err) || apierrors.IsServiceUnavailable(err) {
+			if apierrors.IsNotFound(err) || apierrors.IsTimeout(err) || apierrors.IsServerTimeout(err) ||
+				apierrors.IsTooManyRequests(err) || apierrors.IsServiceUnavailable(err) ||
+				utilnet.IsConnectionReset(err) || utilnet.IsProbableEOF(err) {
 				return false, nil
 			}
 			return false, err
