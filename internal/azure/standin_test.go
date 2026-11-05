@@ -96,10 +96,16 @@ func (s *azureStandin) serve(w http.ResponseWriter, r *http.Request) {
 
 	switch r.URL.Path {
 	case "/common/discovery/instance":
+		// Entra answers for the authority being asked about, not for itself.
+		asked, err := url.Parse(r.URL.Query().Get("authorization_endpoint"))
+		if err != nil || asked.Host == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		writeJSON(w, map[string]any{
-			"tenant_discovery_endpoint": authority + "/v2.0/.well-known/openid-configuration",
+			"tenant_discovery_endpoint": "https://" + asked.Host + "/" + standinTenant + "/v2.0/.well-known/openid-configuration",
 			"metadata": []map[string]any{{
-				"preferred_network": r.Host, "preferred_cache": r.Host, "aliases": []string{r.Host},
+				"preferred_network": asked.Host, "preferred_cache": asked.Host, "aliases": []string{asked.Host},
 			}},
 		})
 	case "/" + standinTenant + "/v2.0/.well-known/openid-configuration":

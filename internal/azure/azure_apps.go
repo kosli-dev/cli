@@ -214,15 +214,16 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 	}
 }
 
-// kuduToken is a Resource Manager token for the chosen cloud, which Kudu
-// accepts. The scope is formed the way the ARM SDK forms its own.
+// kuduToken is a token Kudu accepts in the chosen cloud.
 func (azureClient *AzureClient) kuduToken(ctx context.Context) (string, error) {
-	resourceManager, ok := azureClient.cloud.Services[cloud.ResourceManager]
-	if !ok || resourceManager.Audience == "" {
-		return "", errors.New("the Azure cloud configuration has no Resource Manager audience")
+	resource, ok := kuduResources[azureClient.Credentials.cloudName()]
+	if !ok {
+		return "", fmt.Errorf("no Kudu token resource is known for Azure cloud [%s]", azureClient.Credentials.cloudName())
 	}
+	// A resource's trailing slash is kept, so the token's audience is that
+	// resource exactly.
 	token, err := azureClient.credential.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{resourceManager.Audience + "/.default"},
+		Scopes: []string{resource + "/.default"},
 	})
 	if err != nil {
 		return "", err

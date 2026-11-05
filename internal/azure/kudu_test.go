@@ -15,7 +15,7 @@ func TestKuduTokenIsForTheChosenCloudsResourceManager(t *testing.T) {
 	for _, tc := range []struct {
 		cloud, wantAuthority, wantScope string
 	}{
-		{"public", "login.microsoftonline.com", "https://management.core.windows.net//.default"},
+		{"public", "login.microsoftonline.com", "https://management.azure.com//.default"},
 		{"china", "login.chinacloudapi.cn", "https://management.core.chinacloudapi.cn//.default"},
 		{"usgov", "login.microsoftonline.us", "https://management.core.usgovcloudapi.net//.default"},
 	} {
@@ -35,6 +35,40 @@ func TestKuduTokenIsForTheChosenCloudsResourceManager(t *testing.T) {
 			// MSAL appends its own OIDC scopes.
 			require.Contains(t, strings.Fields(tokenRequests[0].Form.Get("scope")), tc.wantScope)
 			require.Equal(t, "client_credentials", tokenRequests[0].Form.Get("grant_type"))
+		})
+	}
+}
+
+// TestDefaultCloudHonoursAzureAuthorityHost keeps the authority azidentity
+// picks when it is given no cloud, which the command did before --azure-cloud.
+func TestDefaultCloudHonoursAzureAuthorityHost(t *testing.T) {
+	t.Setenv("AZURE_AUTHORITY_HOST", "https://login.example.test/")
+
+	for _, tc := range []struct {
+		name          string
+		creds         AzureStaticCredentials
+		wantAuthority string
+	}{
+		{"no cloud given", standinCredentials(""), "login.example.test"},
+		{"the default cloud", standinCredentials("public"), "login.example.test"},
+		{"another cloud", standinCredentials("china"), "login.chinacloudapi.cn"},
+		{"an authority override", func() AzureStaticCredentials {
+			c := standinCredentials("public")
+			c.AuthorityHost = "https://login.override.test/"
+			return c
+		}(), "login.override.test"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			standin := newAzureStandin(t)
+			client, err := tc.creds.newAzureClient(standin.redirectingTransport())
+			require.NoError(t, err)
+
+			_, err = client.kuduToken(context.Background())
+
+			require.NoError(t, err)
+			tokenRequests := standin.tokenRequests()
+			require.Len(t, tokenRequests, 1)
+			require.Equal(t, tc.wantAuthority, tokenRequests[0].Host)
 		})
 	}
 }

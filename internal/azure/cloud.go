@@ -22,10 +22,7 @@ var azureClouds = map[string]cloud.Configuration{
 // the credentials are used against: the named cloud, with AuthorityHost and
 // ResourceManagerURL replacing its endpoints where they are set.
 func (staticCreds *AzureStaticCredentials) CloudConfiguration() (cloud.Configuration, error) {
-	name := staticCreds.Cloud
-	if name == "" {
-		name = "public"
-	}
+	name := staticCreds.cloudName()
 	base, ok := azureClouds[name]
 	if !ok {
 		return cloud.Configuration{}, fmt.Errorf("invalid value [%s] for --azure-cloud flag. Valid values are 'public', 'china' and 'usgov'", name)
@@ -58,6 +55,22 @@ func (staticCreds *AzureStaticCredentials) CloudConfiguration() (cloud.Configura
 	return cfg, nil
 }
 
+func (staticCreds *AzureStaticCredentials) cloudName() string {
+	if staticCreds.Cloud == "" {
+		return "public"
+	}
+	return staticCreds.Cloud
+}
+
+// kuduResources is the token resource Kudu is sent per cloud: the one this
+// command has always used in the public cloud, and the one the Azure CLI uses
+// in the others.
+var kuduResources = map[string]string{
+	"public": "https://management.azure.com/",
+	"china":  "https://management.core.chinacloudapi.cn/",
+	"usgov":  "https://management.core.usgovcloudapi.net/",
+}
+
 // requireHTTPSURL refuses anything but an absolute https URL, which the SDK
 // demands of an authority and of any endpoint it sends a bearer token to.
 func requireHTTPSURL(flag, value string) error {
@@ -80,6 +93,10 @@ func acrOptionsForCloud(cfg cloud.Configuration, base *azcontainerregistry.Clien
 }
 
 func (staticCreds *AzureStaticCredentials) newCredential(cfg cloud.Configuration, transport policy.Transporter) (*azidentity.ClientSecretCredential, error) {
+	if staticCreds.cloudName() == "public" && staticCreds.AuthorityHost == "" {
+		// Given no cloud, azidentity uses AZURE_AUTHORITY_HOST when it is set.
+		cfg = cloud.Configuration{}
+	}
 	return azidentity.NewClientSecretCredential(staticCreds.TenantId, staticCreds.ClientId, staticCreds.ClientSecret,
 		&azidentity.ClientSecretCredentialOptions{
 			ClientOptions: clientOptions(cfg, transport),
