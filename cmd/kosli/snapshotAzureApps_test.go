@@ -76,6 +76,10 @@ func (suite *SnapshotAzureAppsTestSuite) TestSnapshotAzureAppsCmd() {
 			name: "snapshot azure succeeds when digests-source is set to acr if all required flags are set",
 			cmd:  fmt.Sprintf(`snapshot azure %s %s %s --digests-source acr`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
 		},
+		{
+			name: "snapshot azure succeeds with --exclude and --exclude-regex",
+			cmd:  fmt.Sprintf(`snapshot azure %s %s %s --exclude no-such-app --exclude-regex "^no-such-"`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
+		},
 		// {
 		// 	name: "snapshot azure succeeds when digests-source is set to logs if all required flags are set",
 		// 	cmd:  fmt.Sprintf(`snapshot azure %s %s %s --digests-source logs`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
@@ -113,6 +117,72 @@ func (suite *SnapshotAzureAppsTestSuite) TestSnapshotAzureAppsCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+// SnapshotAzureAppsFlagsTestSuite covers flag handling that fails in PreRunE,
+// before any Azure call, so it needs no Azure credentials.
+type SnapshotAzureAppsFlagsTestSuite struct {
+	suite.Suite
+	args string
+}
+
+func (suite *SnapshotAzureAppsFlagsTestSuite) SetupTest() {
+	global = &GlobalOpts{
+		ApiToken: "secret",
+		Org:      "docs-cmd-test-user",
+		Host:     "http://localhost:8001",
+	}
+	suite.args = fmt.Sprintf(
+		" --host %s --org %s --api-token %s --azure-client-secret xxx --azure-client-id xxx --azure-tenant-id xxx --azure-subscription-id xxx --azure-resource-group-name xxx",
+		global.Host, global.Org, global.ApiToken,
+	)
+}
+
+func (suite *SnapshotAzureAppsFlagsTestSuite) TestSnapshotAzureAppsFlags() {
+	tests := []cmdTestCase{
+		{
+			wantError: true,
+			name:      "snapshot azure parses --exclude and --exclude-regex",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --exclude a,b --exclude-regex "^c" --digests-source ghcr`, suite.args),
+			golden:    "Error: invalid value for --digests-source flag. Valid values are 'acr' and 'logs'\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure parses --include and --include-regex",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include a,b --include-regex "^c" --digests-source ghcr`, suite.args),
+			golden:    "Error: invalid value for --digests-source flag. Valid values are 'acr' and 'logs'\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --include and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include a --exclude b`, suite.args),
+			golden:    "Error: only one of --include, --exclude is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --include and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include a --exclude-regex "^b"`, suite.args),
+			golden:    "Error: only one of --include, --exclude-regex is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --include-regex and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include-regex "^a" --exclude b`, suite.args),
+			golden:    "Error: only one of --include-regex, --exclude is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --include-regex and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --include-regex "^a" --exclude-regex "^b"`, suite.args),
+			golden:    "Error: only one of --include-regex, --exclude-regex is allowed\n",
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
+func TestSnapshotAzureAppsFlagsTestSuite(t *testing.T) {
+	suite.Run(t, new(SnapshotAzureAppsFlagsTestSuite))
 }
 
 // In order for 'go test' to run this suite, we need to create
