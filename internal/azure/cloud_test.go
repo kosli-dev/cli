@@ -92,3 +92,15 @@ func TestCloudConfigurationRejectsAnOverrideThatIsNotAnHTTPSURL(t *testing.T) {
 		})
 	}
 }
+
+func TestACRReusesTheClientsCredential(t *testing.T) {
+	standin := newAzureStandin(t)
+	creds := standinCredentials("public")
+	client, err := creds.newAzureClient(standin.redirectingTransport())
+	require.NoError(t, err)
+
+	credential, err := client.acrCredential(cloud.AzurePublic, nil)
+
+	require.NoError(t, err)
+	require.Same(t, client.credential, credential, "a credential per image would skip the token cache")
+}

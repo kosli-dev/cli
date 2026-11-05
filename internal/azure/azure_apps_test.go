@@ -99,9 +99,11 @@ func (suite *AzureAppsTestSuite) TestFingerprintZipService() {
 		},
 	})
 
-	unknownAppName := "unknown"
-	_, err = suite.defaultClient.fingerprintZipService(&armappservice.Site{Name: &unknownAppName}, logger.NewStandardLogger())
-	require.Error(suite.T(), err)
+	// A missing app is not looked up on Kudu: that would send the token to
+	// whoever owns the name.
+	siteWithoutKuduHost := "unknown"
+	_, err = suite.defaultClient.fingerprintZipService(&armappservice.Site{Name: &siteWithoutKuduHost}, logger.NewStandardLogger())
+	require.ErrorContains(suite.T(), err, "lists no Repository host name")
 }
 
 // In order for 'go test' to run this suite, we need to create

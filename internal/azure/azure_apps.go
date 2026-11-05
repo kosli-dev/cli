@@ -671,7 +671,7 @@ func (azureClient *AzureClient) acrImageFingerprint(plan fingerprintPlan, client
 	if clientOptions != nil {
 		transport = clientOptions.Transport
 	}
-	credentials, err := azureClient.Credentials.newCredential(cfg, transport)
+	credentials, err := azureClient.acrCredential(cfg, transport)
 	if err != nil {
 		return "", err
 	}
@@ -705,6 +705,15 @@ func (azureClient *AzureClient) acrImageFingerprint(plan fingerprintPlan, client
 	logger.Debug("For image '%s' got fingerprint '%s' from ACR", plan.reference, fingerprint)
 
 	return fingerprint, nil
+}
+
+// acrCredential is the client's own credential, so every image shares its
+// token cache. A client not made by NewAzureClient has none and gets a new one.
+func (azureClient *AzureClient) acrCredential(cfg cloud.Configuration, transport policy.Transporter) (azcore.TokenCredential, error) {
+	if azureClient.credential != nil {
+		return azureClient.credential, nil
+	}
+	return azureClient.Credentials.newCredential(cfg, transport)
 }
 
 // anonymousFingerprint resolves a fingerprint with no credential presented. It
