@@ -262,6 +262,65 @@ func (suite *FiltersSuite) TestCompile() {
 	}
 }
 
+func (suite *FiltersSuite) TestValidate() {
+	for _, t := range []struct {
+		name    string
+		filter  *ResourceFilterOptions
+		wantErr string
+	}{
+		{
+			name:   "an empty filter is valid",
+			filter: &ResourceFilterOptions{},
+		},
+		{
+			name: "valid include and exclude patterns are valid",
+			filter: &ResourceFilterOptions{
+				IncludeNamesRegex: []string{"^foo.*$"},
+				ExcludeNamesRegex: []string{"^bar.*$"},
+			},
+		},
+		{
+			name: "an invalid include pattern is reported",
+			filter: &ResourceFilterOptions{
+				IncludeNamesRegex: []string{"^foo.*$", "^foo["},
+			},
+			wantErr: "invalid include name regex pattern ^foo[: error parsing regexp: missing closing ]: `[`",
+		},
+		{
+			name: "an invalid exclude pattern is reported",
+			filter: &ResourceFilterOptions{
+				ExcludeNamesRegex: []string{"^bar("},
+			},
+			wantErr: "invalid exclude name regex pattern ^bar(: error parsing regexp: missing closing ): `^bar(`",
+		},
+		{
+			name: "an invalid pattern is reported even when a literal name would settle every match",
+			filter: &ResourceFilterOptions{
+				ExcludeNames:      []string{"foo"},
+				ExcludeNamesRegex: []string{"^foo["},
+			},
+			wantErr: "invalid exclude name regex pattern ^foo[: error parsing regexp: missing closing ]: `[`",
+		},
+		{
+			name: "an invalid include pattern is reported alongside exclude flags",
+			filter: &ResourceFilterOptions{
+				IncludeNamesRegex: []string{"^foo["},
+				ExcludeNames:      []string{"bar"},
+			},
+			wantErr: "invalid include name regex pattern ^foo[: error parsing regexp: missing closing ]: `[`",
+		},
+	} {
+		suite.Run(t.name, func() {
+			err := t.filter.Validate()
+			if t.wantErr != "" {
+				require.EqualError(suite.T(), err, t.wantErr)
+				return
+			}
+			require.NoError(suite.T(), err)
+		})
+	}
+}
+
 // TestCompileClonesLiteralNames pins the immutability CompiledResourceFilter's doc comment
 // claims, and which makes it safe to share one compiled filter across goroutines: mutating
 // the options after Compile must not change what the compiled filter matches.

@@ -20,6 +20,16 @@ func (filter *ResourceFilterOptions) IsSet() bool {
 	return len(filter.IncludeNames) > 0 || len(filter.IncludeNamesRegex) > 0 || len(filter.ExcludeNames) > 0 || len(filter.ExcludeNamesRegex) > 0
 }
 
+// Validate compiles every include and exclude regex pattern and returns the first error.
+// Commands call it before any cloud call, so a bad pattern fails the run whatever names
+// the listing holds.
+func (filter *ResourceFilterOptions) Validate() error {
+	if err := compileNamesRegex(filter.IncludeNamesRegex, "include").err; err != nil {
+		return err
+	}
+	return compileNamesRegex(filter.ExcludeNamesRegex, "exclude").err
+}
+
 // namePatterns is a list of resource name regex patterns after compilation, split at the
 // first pattern that failed to compile: usable holds the patterns before it, which are
 // matched in order, and err is the error it produced, reported only once matching a name
@@ -59,10 +69,9 @@ type CompiledResourceFilter struct {
 // Compile pre-compiles the include and exclude regex patterns of a filter, so the result
 // can be reused across many resource names without re-compiling per name.
 //
-// Compiling cannot fail: an invalid pattern is kept as the error it produced and is
-// reported by ShouldInclude when matching a name reaches that pattern. Reporting it here
-// instead would reject filters that never reach it, such as a name settled by
-// ExcludeNames, or an invalid pattern behind one that already matched.
+// Call Validate first to reject an invalid pattern up front. Compiling cannot fail: an
+// invalid pattern is kept as the error it produced and is reported by ShouldInclude only
+// when matching a name reaches that pattern.
 //
 // The literal name slices are cloned, so that mutating the options afterwards cannot
 // change what an already-compiled filter matches.
