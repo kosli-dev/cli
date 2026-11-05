@@ -117,7 +117,7 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return nil
+			return o.filter.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)

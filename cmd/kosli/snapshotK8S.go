@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/filters"
@@ -125,17 +124,8 @@ func validateK8SSnapshotConfig(config *k8sSnapshotConfig) error {
 				env.Name, includeType, excludeType)
 		}
 
-		for _, pattern := range env.NamespacesRegex {
-			if _, err := regexp.Compile(pattern); err != nil {
-				return fmt.Errorf("invalid config for environment '%s': invalid regex '%s': %v",
-					env.Name, pattern, err)
-			}
-		}
-		for _, pattern := range env.ExcludeNamespacesRegex {
-			if _, err := regexp.Compile(pattern); err != nil {
-				return fmt.Errorf("invalid config for environment '%s': invalid regex '%s': %v",
-					env.Name, pattern, err)
-			}
+		if err := env.toFilter().Validate(); err != nil {
+			return fmt.Errorf("invalid config for environment '%s': %w", env.Name, err)
 		}
 	}
 
@@ -200,7 +190,7 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 			if err := MuXRequiredFlags(cmd, []string{"namespaces-regex", "exclude-namespaces-regex"}, false); err != nil {
 				return err
 			}
-			return nil
+			return o.filter.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if o.configFilePath != "" {

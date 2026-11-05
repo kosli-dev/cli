@@ -98,6 +98,18 @@ func (suite *SnapshotECSTestSuite) TestSnapshotECSCmd() {
 			golden:    "Error: only one of --services-regex, --exclude-services is allowed\n",
 		},
 		{
+			wantError: true,
+			name:      "snapshot ECS fails if --clusters-regex is an invalid regex",
+			cmd:       fmt.Sprintf(`snapshot ecs %s --clusters-regex "[oops" %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: invalid include name regex pattern [oops: error parsing regexp: missing closing ]: `[oops`\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot ECS fails if --exclude-services-regex is an invalid regex",
+			cmd:       fmt.Sprintf(`snapshot ecs %s --exclude-services-regex "[oops" %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: invalid exclude name regex pattern [oops: error parsing regexp: missing closing ]: `[oops`\n",
+		},
+		{
 			name: "snapshot ECS works if no filtering flags are used",
 			cmd:  fmt.Sprintf(`snapshot ecs %s %s`, suite.envName, suite.defaultKosliArguments),
 			additionalConfig: snapshotECSTestConfig{
