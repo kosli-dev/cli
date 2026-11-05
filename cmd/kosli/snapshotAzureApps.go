@@ -46,7 +46,11 @@ no platform-written digest is reported without a fingerprint and named in a warn
 ^--azure-cloud^ selects the Azure public cloud, Azure China or Azure Government. ^--azure-authority-host^ and
 ^--azure-resource-manager-url^ replace that cloud's Microsoft Entra ID authority and Resource Manager endpoint, for a
 private cloud or a stand-in; tokens are still requested for the chosen cloud's Resource Manager audience. Both must
-be https URLs. Each zip-deployed app's package is downloaded from the Kudu host its site lists.
+be https URLs.
+
+Each zip-deployed app's package is downloaded, with an Azure token, from the Kudu host its site lists. That host must
+be the app's own SCM host in the chosen cloud, ^<app>.scm.azurewebsites.net^ or ^<app>-<hash>.scm.<region>.azurewebsites.net^
+in the public cloud, unless ^--azure-resource-manager-url^ is set.
 
 ^--dry-run^ suppresses only the request to Kosli. Azure discovery and registry lookups still run.
 ` + kosliIgnoreDescNoExclude + azureAuthDesc

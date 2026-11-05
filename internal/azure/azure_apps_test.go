@@ -60,7 +60,9 @@ func (suite *AzureAppsTestSuite) TestCanDownloadAppZip() {
 		}
 	}()
 	dest := filepath.Join(tmpDir, appName+".zip")
-	err = suite.defaultClient.downloadAppPackage(waveAppSite(), token, dest)
+	host, err := suite.defaultClient.trustedKuduHost(waveAppSite())
+	require.NoError(suite.T(), err)
+	err = suite.defaultClient.downloadAppPackage(appName, host, token, dest)
 	require.NoError(suite.T(), err)
 
 	// check download file exists

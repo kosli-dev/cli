@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
+	"regexp"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
@@ -69,6 +71,28 @@ var kuduResources = map[string]string{
 	"public": "https://management.azure.com/",
 	"china":  "https://management.core.chinacloudapi.cn/",
 	"usgov":  "https://management.core.usgovcloudapi.net/",
+}
+
+// appServiceDomains is the App Service DNS domain per cloud.
+var appServiceDomains = map[string]string{
+	"public": "azurewebsites.net",
+	"china":  "chinacloudsites.cn",
+	"usgov":  "azurewebsites.us",
+}
+
+// checkKuduHost refuses a host other than the app's own SCM host in the
+// cloud's App Service domain, in its classic form "<app>.scm.<domain>" or its
+// unique default hostname form "<app>-<hash>.scm.<region>.<domain>".
+func checkKuduHost(cloudName, appName, host string) error {
+	domain := regexp.QuoteMeta(appServiceDomains[cloudName])
+	app := regexp.QuoteMeta(strings.ToLower(appName))
+	classic := regexp.MustCompile(`^` + app + `\.scm\.` + domain + `$`)
+	unique := regexp.MustCompile(`^` + app + `-[a-z0-9]+\.scm\.[a-z0-9-]+\.` + domain + `$`)
+	h := strings.ToLower(host)
+	if domain != "" && (classic.MatchString(h) || unique.MatchString(h)) {
+		return nil
+	}
+	return fmt.Errorf("app [%s] lists Kudu host [%s], which is not its own App Service SCM host in the [%s] Azure cloud, so its package is not downloaded and no token is sent there. Set --azure-resource-manager-url to trust the host names your Resource Manager lists", appName, host, cloudName)
 }
 
 // requireHTTPSURL refuses anything but an absolute https URL, which the SDK

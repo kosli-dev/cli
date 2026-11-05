@@ -165,3 +165,56 @@ func TestGetAzureAppsDataRunsAgainstAStandinNamedByTheOverrides(t *testing.T) {
 	}
 	require.NotEmpty(t, standin.tokenRequests())
 }
+
+func TestTrustedKuduHostAcceptsTheAppsOwnSCMHostInTheCloud(t *testing.T) {
+	for _, tc := range []struct{ cloud, host string }{
+		{"public", "myapp.scm.azurewebsites.net"},
+		{"public", "MyApp.SCM.AzureWebsites.net"},
+		{"public", "myapp-a1b2c3d4e5f6g7h8.scm.eastus-01.azurewebsites.net"},
+		{"china", "myapp.scm.chinacloudsites.cn"},
+		{"china", "myapp-a1b2c3d4e5f6g7h8.scm.chinanorth3-01.chinacloudsites.cn"},
+		{"usgov", "myapp.scm.azurewebsites.us"},
+		{"usgov", "myapp-a1b2c3d4e5f6g7h8.scm.usgovvirginia-01.azurewebsites.us"},
+	} {
+		t.Run(tc.cloud+" "+tc.host, func(t *testing.T) {
+			require.NoError(t, checkKuduHost(tc.cloud, "myapp", tc.host))
+		})
+	}
+}
+
+func TestTrustedKuduHostRefusesAnyOtherHost(t *testing.T) {
+	for _, tc := range []struct{ cloud, host string }{
+		{"public", "attacker.example"},
+		{"public", "otherapp.scm.azurewebsites.net"},
+		{"public", "myapp.azurewebsites.net"},
+		{"public", "myapp.scm.azurewebsites.net.attacker.example"},
+		{"public", "myapp.scm.azurewebsites.net:8443"},
+		{"public", "myapp.scm.chinacloudsites.cn"},
+		{"public", "myapp-a1b2.scm.eastus-01.attacker.example"},
+		{"public", "myapp-a1b2.scm.east.us.azurewebsites.net"},
+		{"public", "myappx-a1b2.scm.eastus-01.azurewebsites.net"},
+		{"public", "myapp.scm.myase.p.azurewebsites.net"},
+		{"china", "myapp.scm.azurewebsites.net"},
+		{"usgov", "myapp.scm.azurewebsites.net"},
+	} {
+		t.Run(tc.cloud+" "+tc.host, func(t *testing.T) {
+			err := checkKuduHost(tc.cloud, "myapp", tc.host)
+			require.EqualError(t, err, "app [myapp] lists Kudu host ["+tc.host+"], which is not its own App Service SCM host in the ["+tc.cloud+"] Azure cloud, so its package is not downloaded and no token is sent there. Set --azure-resource-manager-url to trust the host names your Resource Manager lists")
+		})
+	}
+}
+
+func TestFingerprintZipServiceRefusesAnUntrustedKuduHostBeforeAskingForAToken(t *testing.T) {
+	standin := newAzureStandin(t)
+	creds := standinCredentials("public")
+	client, err := creds.newAzureClient(standin.redirectingTransport())
+	require.NoError(t, err)
+	site := siteWithHostNames("myapp", map[string]armappservice.HostType{
+		"attacker.example": armappservice.HostTypeRepository,
+	})
+
+	_, err = client.fingerprintZipService(site, logger.NewStandardLogger())
+
+	require.ErrorContains(t, err, "lists Kudu host [attacker.example]")
+	require.Empty(t, standin.received(), "nothing may be requested for an untrusted host")
+}

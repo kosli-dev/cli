@@ -244,13 +244,25 @@ func kuduHost(app *armappservice.Site) (string, error) {
 	return "", fmt.Errorf("app [%s] lists no Repository host name, so its deployed package cannot be downloaded from Kudu", *app.Name)
 }
 
-// downloadAppPackage downloads the zip package of a non-docker web app
-func (azureClient *AzureClient) downloadAppPackage(app *armappservice.Site, bearerToken, destination string) error {
-	appName := *app.Name
+// trustedKuduHost is the site's Kudu host, which the bearer token is sent to.
+// The site list comes from Azure unless --azure-resource-manager-url replaces
+// it, so the host must then be the app's own SCM host in the cloud.
+func (azureClient *AzureClient) trustedKuduHost(app *armappservice.Site) (string, error) {
 	host, err := kuduHost(app)
 	if err != nil {
-		return err
+		return "", err
 	}
+	if azureClient.Credentials.ResourceManagerURL != "" {
+		return host, nil
+	}
+	if err := checkKuduHost(azureClient.Credentials.cloudName(), *app.Name, host); err != nil {
+		return "", err
+	}
+	return host, nil
+}
+
+// downloadAppPackage downloads the zip package of a non-docker web app
+func (azureClient *AzureClient) downloadAppPackage(appName, host, bearerToken, destination string) error {
 	kuduZipURL := (&url.URL{Scheme: "https", Host: host, Path: "/api/zip/site/wwwroot/"}).String()
 	req, err := http.NewRequest("GET", kuduZipURL, nil)
 	if err != nil {
@@ -298,6 +310,10 @@ func (azureClient *AzureClient) downloadAppPackage(app *armappservice.Site, bear
 }
 
 func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, logger *logger.Logger) (AppData, error) {
+	host, err := azureClient.trustedKuduHost(app)
+	if err != nil {
+		return AppData{}, err
+	}
 	token, err := azureClient.kuduToken(context.Background())
 	if err != nil {
 		return AppData{}, err
@@ -314,7 +330,7 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 	}()
 
 	packagePath := filepath.Join(tmpDir, *app.Name+".zip")
-	err = azureClient.downloadAppPackage(app, token, packagePath)
+	err = azureClient.downloadAppPackage(*app.Name, host, token, packagePath)
 	if err != nil {
 		if err == ErrAppUnavailable {
 			logger.Debug("app %s is unavailable (503), skipping", *app.Name)
