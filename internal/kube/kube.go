@@ -226,7 +226,7 @@ func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOption
 		return ProcessPods(list.Items, logger)
 	} else {
 		list := &corev1.PodList{}
-		filteredNamespaces, err := clientset.filterNamespaces(filter)
+		filteredNamespaces, err := clientset.filterNamespaces(filter, logger)
 		if err != nil {
 			return podsData, fmt.Errorf("could not filter namespaces: %v ", err)
 		}
@@ -335,7 +335,7 @@ func ProcessPods(pods []corev1.Pod, logger *logger.Logger) ([]*PodData, error) {
 }
 
 // filterNamespaces filters a super set of namespaces by including or excluding a subset of namespaces using regex patterns.
-func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterOptions) ([]string, error) {
+func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterOptions, logger *logger.Logger) ([]string, error) {
 	if len(filter.IncludeNamesRegex) == 0 && len(filter.ExcludeNamesRegex) == 0 {
 		if len(filter.IncludeNames) > 0 {
 			// cloned for the same reason Compile clones them: the caller keeps the
@@ -350,26 +350,32 @@ func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterO
 		return result, err
 	}
 
+	for _, ns := range nsList {
+		result = append(result, ns.Name)
+	}
 	if !filter.IsSet() {
-		for _, ns := range nsList {
-			result = append(result, ns.Name)
-		}
 		return result, nil
 	}
+	return selectNamespaces(result, filter, logger)
+}
 
+// selectNamespaces returns the names that filter includes, in the order given.
+func selectNamespaces(names []string, filter *filters.ResourceFilterOptions, logger *logger.Logger) ([]string, error) {
 	// compile the filter patterns once, instead of once per namespace
 	compiledFilter := filter.Compile()
 
-	for _, ns := range nsList {
-		included, err := compiledFilter.ShouldInclude(ns.Name)
+	selected := []string{}
+	for _, name := range names {
+		included, err := compiledFilter.ShouldInclude(name)
 		if err != nil {
-			return result, err
+			return selected, err
 		}
 		if included {
-			result = append(result, ns.Name)
+			selected = append(selected, name)
 		}
 	}
-	return result, nil
+	compiledFilter.WarnIfLeftOutAll(len(names), len(selected), "namespaces in the cluster", logger)
+	return selected, nil
 }
 
 // getPodsInNamespace get pods in a specific namespace in a cluster

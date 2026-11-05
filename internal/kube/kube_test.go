@@ -283,7 +283,7 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 			for _, ns := range t.args.namespaces {
 				suite.createNamespace(ns)
 			}
-			result, err := suite.clientset.filterNamespaces(t.args.filter)
+			result, err := suite.clientset.filterNamespaces(t.args.filter, logger.NewStandardLogger())
 			if t.expectError {
 				require.Error(suite.T(), err, "error was expected but got none.")
 				return
@@ -393,6 +393,35 @@ func TestKubeTestSuite(t *testing.T) {
 // TestProcessPodsWithFailedPodsWithoutImageIDs tests that failed pods without image IDs
 // are skipped and do not result in nil entries in the returned slice
 // This relates to issue https://github.com/kosli-dev/server/issues/4448
+func TestSelectNamespaces(t *testing.T) {
+	const warning = "the include/exclude filters left out all 3 namespaces in the cluster"
+	cluster := []string{"default", "kube-system", "prod"}
+
+	t.Run("keeps the namespaces the filter includes, in cluster order", func(t *testing.T) {
+		filter := &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"^kube-"}}
+		got, err := selectNamespaces(cluster, filter, logger.NewStandardLogger())
+		require.NoError(t, err)
+		require.Equal(t, []string{"default", "prod"}, got)
+	})
+
+	t.Run("warns when the filter leaves out every namespace", func(t *testing.T) {
+		var warnings bytes.Buffer
+		filter := &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^prdo"}}
+		got, err := selectNamespaces(cluster, filter, logger.NewLogger(io.Discard, &warnings, false))
+		require.NoError(t, err)
+		require.Empty(t, got)
+		require.Contains(t, warnings.String(), warning)
+	})
+
+	t.Run("no warning when the filter keeps a namespace", func(t *testing.T) {
+		var warnings bytes.Buffer
+		filter := &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^prod"}}
+		_, err := selectNamespaces(cluster, filter, logger.NewLogger(io.Discard, &warnings, false))
+		require.NoError(t, err)
+		require.Empty(t, warnings.String())
+	})
+}
+
 func TestProcessPodsWithFailedPodsWithoutImageIDs(t *testing.T) {
 	testLogger := logger.NewStandardLogger()
 
