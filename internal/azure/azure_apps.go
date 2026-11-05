@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -19,8 +18,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 	"github.com/distribution/reference"
@@ -39,6 +41,12 @@ type AzureStaticCredentials struct {
 	ResourceGroupName string
 	DownloadLogsAsZip bool
 	DigestsSource     string
+	// Cloud is "public", "china" or "usgov"; empty means "public".
+	Cloud string
+	// AuthorityHost and ResourceManagerURL replace the cloud's endpoints when
+	// set, for a stand-in or a private cloud.
+	AuthorityHost      string
+	ResourceManagerURL string
 }
 
 type AzureClient struct {
@@ -49,6 +57,11 @@ type AzureClient struct {
 	acrClientOptions *azcontainerregistry.ClientOptions
 	// dockerLogsForApp is a test seam; nil falls back to GetDockerLogsForApp.
 	dockerLogsForApp func(appServiceName string, logger *logger.Logger) ([]byte, error)
+	credential       azcore.TokenCredential
+	cloud            cloud.Configuration
+	// transport carries the Kudu download as well as the SDK's requests; nil
+	// means http.DefaultClient.
+	transport policy.Transporter
 }
 
 // AppData represents the harvested Azure service app and function app data
@@ -78,9 +91,13 @@ func warnAboutDigestsSource(digestsSource string, logger *logger.Logger) {
 // GetAzureAppsData fingerprints the running apps in the resource group that
 // filter includes. A nil filter includes every app.
 func (staticCreds *AzureStaticCredentials) GetAzureAppsData(filter *filters.CompiledResourceFilter, logger *logger.Logger) (appsData []*AppData, err error) {
+	return staticCreds.getAzureAppsData(filter, nil, logger)
+}
+
+func (staticCreds *AzureStaticCredentials) getAzureAppsData(filter *filters.CompiledResourceFilter, transport policy.Transporter, logger *logger.Logger) (appsData []*AppData, err error) {
 	warnAboutDigestsSource(staticCreds.DigestsSource, logger)
 
-	azureClient, err := staticCreds.NewAzureClient()
+	azureClient, err := staticCreds.newAzureClient(transport)
 	if err != nil {
 		return nil, err
 	}
@@ -197,61 +214,66 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 	}
 }
 
-// getBearerToken gets a bearer token
-func (azureClient *AzureClient) getBearerToken(logger *logger.Logger) (string, error) {
-	oauthURL, err := url.JoinPath("https://login.microsoftonline.com", azureClient.Credentials.TenantId, "oauth2/token")
+// kuduToken is a token Kudu accepts in the chosen cloud.
+func (azureClient *AzureClient) kuduToken(ctx context.Context) (string, error) {
+	resource, ok := kuduResources[azureClient.Credentials.cloudName()]
+	if !ok {
+		return "", fmt.Errorf("no Kudu token resource is known for Azure cloud [%s]", azureClient.Credentials.cloudName())
+	}
+	// A resource's trailing slash is kept, so the token's audience is that
+	// resource exactly.
+	token, err := azureClient.credential.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{resource + "/.default"},
+	})
 	if err != nil {
 		return "", err
 	}
+	return token.Token, nil
+}
 
-	data := url.Values{}
-	data.Set("grant_type", "client_credentials")
-	data.Set("client_id", azureClient.Credentials.ClientId)
-	data.Set("client_secret", azureClient.Credentials.ClientSecret)
-	data.Set("resource", "https://management.azure.com/")
-
-	req, err := http.NewRequest("POST", oauthURL, bytes.NewBufferString(data.Encode()))
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			// Log warning for cleanup error
-			logger.Warn("failed to close response body: %v", err)
+// kuduHost is the site's Kudu (SCM) host name, which differs per cloud.
+func kuduHost(app *armappservice.Site) (string, error) {
+	if app.Properties != nil {
+		for _, state := range app.Properties.HostNameSSLStates {
+			if state != nil && state.HostType != nil && *state.HostType == armappservice.HostTypeRepository &&
+				state.Name != nil && *state.Name != "" {
+				return *state.Name, nil
+			}
 		}
-	}()
+	}
+	return "", fmt.Errorf("app [%s] lists no Repository host name, so its deployed package cannot be downloaded from Kudu", *app.Name)
+}
 
-	body, err := io.ReadAll(resp.Body)
+// trustedKuduHost is the site's Kudu host, which the bearer token is sent to.
+// The site list comes from Azure unless --azure-resource-manager-url replaces
+// it, so the host must then be the app's own SCM host in the cloud.
+func (azureClient *AzureClient) trustedKuduHost(app *armappservice.Site) (string, error) {
+	host, err := kuduHost(app)
 	if err != nil {
 		return "", err
 	}
-	var oauthResp map[string]any
-	err = json.Unmarshal(body, &oauthResp)
-	if err != nil {
+	if azureClient.Credentials.ResourceManagerURL != "" {
+		return host, nil
+	}
+	if err := checkKuduHost(azureClient.Credentials.cloudName(), *app.Name, host); err != nil {
 		return "", err
 	}
-	accessToken := oauthResp["access_token"].(string)
-	return accessToken, nil
+	return host, nil
 }
 
 // downloadAppPackage downloads the zip package of a non-docker web app
-func downloadAppPackage(appName, bearerToken, destination string) error {
-	kuduZipURL := fmt.Sprintf("https://%s.scm.azurewebsites.net/api/zip/site/wwwroot/", appName)
+func (azureClient *AzureClient) downloadAppPackage(appName, host, bearerToken, destination string) error {
+	kuduZipURL := (&url.URL{Scheme: "https", Host: host, Path: "/api/zip/site/wwwroot/"}).String()
 	req, err := http.NewRequest("GET", kuduZipURL, nil)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+bearerToken)
 
-	client := &http.Client{}
+	var client policy.Transporter = http.DefaultClient
+	if azureClient.transport != nil {
+		client = azureClient.transport
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -288,8 +310,11 @@ func downloadAppPackage(appName, bearerToken, destination string) error {
 }
 
 func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, logger *logger.Logger) (AppData, error) {
-	// get bearer token
-	token, err := azureClient.getBearerToken(logger)
+	host, err := azureClient.trustedKuduHost(app)
+	if err != nil {
+		return AppData{}, err
+	}
+	token, err := azureClient.kuduToken(context.Background())
 	if err != nil {
 		return AppData{}, err
 	}
@@ -305,7 +330,7 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 	}()
 
 	packagePath := filepath.Join(tmpDir, *app.Name+".zip")
-	err = downloadAppPackage(*app.Name, token, packagePath)
+	err = azureClient.downloadAppPackage(*app.Name, host, token, packagePath)
 	if err != nil {
 		if err == ErrAppUnavailable {
 			logger.Debug("app %s is unavailable (503), skipping", *app.Name)
@@ -637,13 +662,21 @@ func (azureClient *AzureClient) GetImageFingerprint(imageName string, logger *lo
 // clientOptions is nil in production; tests pass options carrying a transport
 // pointed at a fake registry, so the arm is exercised without package-level state.
 func (azureClient *AzureClient) acrImageFingerprint(plan fingerprintPlan, clientOptions *azcontainerregistry.ClientOptions, logger *logger.Logger) (string, error) {
-	credentials, err := azidentity.NewClientSecretCredential(azureClient.Credentials.TenantId,
-		azureClient.Credentials.ClientId, azureClient.Credentials.ClientSecret, nil)
+	cfg, err := azureClient.Credentials.CloudConfiguration()
 	if err != nil {
 		return "", err
 	}
 
-	acrClient, err := azcontainerregistry.NewClient("https://"+plan.domain, credentials, clientOptions)
+	var transport policy.Transporter
+	if clientOptions != nil {
+		transport = clientOptions.Transport
+	}
+	credentials, err := azureClient.acrCredential(cfg, transport)
+	if err != nil {
+		return "", err
+	}
+
+	acrClient, err := azcontainerregistry.NewClient("https://"+plan.domain, credentials, acrOptionsForCloud(cfg, clientOptions))
 	if err != nil {
 		return "", err
 	}
@@ -674,6 +707,15 @@ func (azureClient *AzureClient) acrImageFingerprint(plan fingerprintPlan, client
 	return fingerprint, nil
 }
 
+// acrCredential is the client's own credential, so every image shares its
+// token cache. A client not made by NewAzureClient has none and gets a new one.
+func (azureClient *AzureClient) acrCredential(cfg cloud.Configuration, transport policy.Transporter) (azcore.TokenCredential, error) {
+	if azureClient.credential != nil {
+		return azureClient.credential, nil
+	}
+	return azureClient.Credentials.newCredential(cfg, transport)
+}
+
 // anonymousFingerprint resolves a fingerprint with no credential presented. It
 // is a variable so tests can assert the reference the resolver is handed.
 var anonymousFingerprint = digest.OciSha256Anonymous
@@ -696,13 +738,25 @@ func (app *AppData) IsEmpty() bool {
 }
 
 func (staticCreds *AzureStaticCredentials) NewAzureClient() (*AzureClient, error) {
-	credentials, err := azidentity.NewClientSecretCredential(staticCreds.TenantId, staticCreds.ClientId, staticCreds.ClientSecret, nil)
+	return staticCreds.newAzureClient(nil)
+}
+
+// newAzureClient sends every Azure request through transport, which is nil in
+// production and lets a test point the client at a stand-in.
+func (staticCreds *AzureStaticCredentials) newAzureClient(transport policy.Transporter) (*AzureClient, error) {
+	cfg, err := staticCreds.CloudConfiguration()
+	if err != nil {
+		return nil, err
+	}
+
+	credentials, err := staticCreds.newCredential(cfg, transport)
 	if err != nil {
 		return nil, err
 	}
 
 	// Docs: https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/resourcemanager/appservice/armappservice/README.md
-	appserviceFactory, err := armappservice.NewClientFactory(staticCreds.SubscriptionId, credentials, nil)
+	appserviceFactory, err := armappservice.NewClientFactory(staticCreds.SubscriptionId, credentials,
+		&arm.ClientOptions{ClientOptions: clientOptions(cfg, transport)})
 	if err != nil {
 		return nil, err
 	}
@@ -710,6 +764,9 @@ func (staticCreds *AzureStaticCredentials) NewAzureClient() (*AzureClient, error
 	azureClient := &AzureClient{
 		Credentials:       *staticCreds,
 		AppServiceFactory: appserviceFactory,
+		credential:        credentials,
+		cloud:             cfg,
+		transport:         transport,
 	}
 	azureClient.dockerLogsForApp = azureClient.GetDockerLogsForApp
 	return azureClient, nil

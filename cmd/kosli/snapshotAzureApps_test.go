@@ -178,6 +178,24 @@ func (suite *SnapshotAzureAppsFlagsTestSuite) TestSnapshotAzureAppsFlags() {
 		},
 		{
 			wantError: true,
+			name:      "snapshot azure fails if --azure-cloud names an unknown cloud",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --azure-cloud germany`, suite.args),
+			golden:    "Error: invalid value [germany] for --azure-cloud flag. Valid values are 'public', 'china' and 'usgov'\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --azure-authority-host is not an https URL",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --azure-authority-host http://login.example.test/`, suite.args),
+			golden:    "Error: invalid value [http://login.example.test/] for --azure-authority-host flag. It must be an absolute https URL\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot azure fails if --azure-resource-manager-url is not an https URL",
+			cmd:       fmt.Sprintf(`snapshot azure env %s --azure-resource-manager-url management.example.test`, suite.args),
+			golden:    "Error: invalid value [management.example.test] for --azure-resource-manager-url flag. It must be an absolute https URL\n",
+		},
+		{
+			wantError: true,
 			name:      "snapshot azure fails if --include-regex is an invalid regex, even beside a literal name",
 			cmd:       fmt.Sprintf(`snapshot azure env %s --include a --include-regex "[oops"`, suite.args),
 			golden:    "Error: invalid include name regex pattern [oops: error parsing regexp: missing closing ]: `[oops`\n",

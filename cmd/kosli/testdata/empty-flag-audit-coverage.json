@@ -848,9 +848,12 @@
   "output": "string"
  },
  "snapshot azure": {
+  "azure-authority-host": "string",
   "azure-client-id": "string",
   "azure-client-secret": "string",
+  "azure-cloud": "string",
   "azure-resource-group-name": "string",
+  "azure-resource-manager-url": "string",
   "azure-subscription-id": "string",
   "azure-tenant-id": "string",
   "digests-source": "string",

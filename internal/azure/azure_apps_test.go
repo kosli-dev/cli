@@ -2,6 +2,7 @@ package azure
 
 import (
 	"archive/zip"
+	"context"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -39,8 +40,14 @@ func (suite *AzureAppsTestSuite) SetupTest() {
 	require.NoError(suite.T(), err)
 }
 
+func waveAppSite() *armappservice.Site {
+	return siteWithHostNames("kosli-dev-WaveApp", map[string]armappservice.HostType{
+		"kosli-dev-waveapp.scm.azurewebsites.net": armappservice.HostTypeRepository,
+	})
+}
+
 func (suite *AzureAppsTestSuite) TestCanDownloadAppZip() {
-	token, err := suite.defaultClient.getBearerToken(logger.NewStandardLogger())
+	token, err := suite.defaultClient.kuduToken(context.Background())
 	require.NoError(suite.T(), err)
 	require.NotEmpty(suite.T(), token)
 
@@ -53,7 +60,9 @@ func (suite *AzureAppsTestSuite) TestCanDownloadAppZip() {
 		}
 	}()
 	dest := filepath.Join(tmpDir, appName+".zip")
-	err = downloadAppPackage(appName, token, dest)
+	host, err := suite.defaultClient.trustedKuduHost(waveAppSite())
+	require.NoError(suite.T(), err)
+	err = suite.defaultClient.downloadAppPackage(appName, host, token, dest)
 	require.NoError(suite.T(), err)
 
 	// check download file exists
@@ -74,7 +83,7 @@ func (suite *AzureAppsTestSuite) TestCanDownloadAppZip() {
 func (suite *AzureAppsTestSuite) TestFingerprintZipService() {
 	appName := "kosli-dev-WaveApp"
 	appKind := "app"
-	appData, err := suite.defaultClient.fingerprintZipService(&armappservice.Site{Name: &appName, Kind: &appKind}, logger.NewStandardLogger())
+	appData, err := suite.defaultClient.fingerprintZipService(waveAppSite(), logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 
 	digest := appData.Digests[appName]
@@ -90,9 +99,11 @@ func (suite *AzureAppsTestSuite) TestFingerprintZipService() {
 		},
 	})
 
-	unknownAppName := "unknown"
-	_, err = suite.defaultClient.fingerprintZipService(&armappservice.Site{Name: &unknownAppName}, logger.NewStandardLogger())
-	require.Error(suite.T(), err)
+	// A missing app is not looked up on Kudu: that would send the token to
+	// whoever owns the name.
+	siteWithoutKuduHost := "unknown"
+	_, err = suite.defaultClient.fingerprintZipService(&armappservice.Site{Name: &siteWithoutKuduHost}, logger.NewStandardLogger())
+	require.ErrorContains(suite.T(), err, "lists no Repository host name")
 }
 
 // In order for 'go test' to run this suite, we need to create
