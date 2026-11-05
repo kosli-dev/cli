@@ -231,6 +231,4 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
-
 replace github.com/docker/docker => github.com/moby/moby v28.5.2+incompatible
