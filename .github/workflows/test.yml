@@ -95,7 +95,7 @@ jobs:
 
     - name: Run golangci-lint
       id: lint
-      uses: golangci/golangci-lint-action@v9
+      uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
       with:
         version: latest
         args: -v
@@ -144,7 +144,7 @@ jobs:
           ${{ vars.KOSLI_CLI_VERSION }}
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v6
+      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
       with:
         role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/cli
         aws-region: ${{ inputs.AWS_REGION }}
@@ -153,7 +153,7 @@ jobs:
 
     - name: Login to Amazon ECR private
       id: login-ecr-private
-      uses: aws-actions/amazon-ecr-login@v2
+      uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
 
     - name: Run tests
       env:
@@ -187,7 +187,7 @@ jobs:
 
     - name: Upload coverage reports to Codecov
       if: ${{ inputs.report_to_kosli != 'none' }}
-      uses: codecov/codecov-action@v7
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
 
   snyk-code-test:
     if: ${{ inputs.run_snyk }}
