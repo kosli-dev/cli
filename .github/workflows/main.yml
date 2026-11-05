@@ -148,7 +148,7 @@ jobs:
           egress-policy: audit
 
       - name: Slack Notification on Failure
-        uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@2f03451c333eea1b7ae07b48d5c887e737136cdb # main
+        uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@main
         with:
           slack_url: ${{ secrets.SLACK_CI_FAILURES_WEBHOOK }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
