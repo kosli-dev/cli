@@ -19,7 +19,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
 
@@ -376,8 +376,25 @@ func (suite *KubeTestSuite) createPod(namespace string, pod *corev1.Pod) {
 	ctx := context.Background()
 	_, err := suite.clientset.Clientset.CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
 	require.NoErrorf(suite.T(), err, "error creating pod %s", pod.Name)
-	err = e2epod.WaitForPodNameRunningInNamespace(ctx, suite.clientset, pod.Name, namespace)
+	err = suite.waitForPodRunning(ctx, pod.Name, namespace)
 	require.NoErrorf(suite.T(), err, "error waiting for pod %s to be running in namespace %s", pod.Name, namespace)
+}
+
+// waitForPodRunning stops early on a terminal phase, since the pod cannot become Running from there.
+func (suite *KubeTestSuite) waitForPodRunning(ctx context.Context, name, namespace string) error {
+	return wait.PollUntilContextTimeout(ctx, time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+		pod, err := suite.clientset.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+		switch pod.Status.Phase {
+		case corev1.PodRunning:
+			return true, nil
+		case corev1.PodSucceeded, corev1.PodFailed:
+			return false, fmt.Errorf("pod %s/%s reached terminal phase %s", namespace, name, pod.Status.Phase)
+		}
+		return false, nil
+	})
 }
 
 // In order for 'go test' to run this suite, we need to create
