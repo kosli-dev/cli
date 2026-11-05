@@ -247,9 +247,10 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 }
 
 // getFilteredLambdaFuncs fetches a filtered set of lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
+// and the number of functions listed before filtering.
 // filter is pre-compiled by the caller, so its regex patterns are not re-compiled per function or per page
 func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *[]types.FunctionConfiguration,
-	filter *filters.CompiledResourceFilter) (*[]types.FunctionConfiguration, error) {
+	filter *filters.CompiledResourceFilter) (*[]types.FunctionConfiguration, int, error) {
 	params := &lambda.ListFunctionsInput{}
 	if nextMarker != nil {
 		params.Marker = nextMarker
@@ -257,8 +258,9 @@ func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *
 
 	listFunctionsOutput, err := client.ListFunctions(context.TODO(), params)
 	if err != nil {
-		return allFunctions, err
+		return allFunctions, 0, err
 	}
+	listed := len(listFunctionsOutput.Functions)
 
 	if !filter.IsSet() {
 		*allFunctions = append(*allFunctions, listFunctionsOutput.Functions...)
@@ -266,7 +268,7 @@ func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *
 		for _, f := range listFunctionsOutput.Functions {
 			included, err := filter.ShouldInclude(*f.FunctionName)
 			if err != nil {
-				return allFunctions, err
+				return allFunctions, listed, err
 			}
 			if included {
 				*allFunctions = append(*allFunctions, f)
@@ -275,34 +277,36 @@ func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *
 	}
 
 	if listFunctionsOutput.NextMarker != nil {
-		_, err := getFilteredLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions, filter)
+		_, listedOnLaterPages, err := getFilteredLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions, filter)
+		listed += listedOnLaterPages
 		if err != nil {
-			return allFunctions, err
+			return allFunctions, listed, err
 		}
 	}
-	return allFunctions, nil
+	return allFunctions, listed, nil
 }
 
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
-func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
+func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.ResourceFilterOptions, logger *logger.Logger) ([]*LambdaData, error) {
 	client, err := NewLambdaClientFunc(staticCreds)
 	if err != nil {
 		return []*LambdaData{}, err
 	}
-	return getLambdaPackageDataFromClient(client, filter)
+	return getLambdaPackageDataFromClient(client, filter, logger)
 }
 
 // getLambdaPackageDataFromClient fetches Lambda function data using the provided LambdaAPI client.
-func getLambdaPackageDataFromClient(client LambdaAPI, filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
+func getLambdaPackageDataFromClient(client LambdaAPI, filter *filters.ResourceFilterOptions, logger *logger.Logger) ([]*LambdaData, error) {
 	lambdaData := []*LambdaData{}
 
 	// compile the filter patterns once, instead of once per function and per page
 	compiledFilter := filter.Compile()
 
-	filteredFunctions, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, compiledFilter)
+	filteredFunctions, listed, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, compiledFilter)
 	if err != nil {
 		return lambdaData, err
 	}
+	compiledFilter.WarnIfLeftOutAll(listed, len(*filteredFunctions), "lambda functions", logger)
 
 	var (
 		wg    sync.WaitGroup

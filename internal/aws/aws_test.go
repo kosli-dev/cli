@@ -1,8 +1,10 @@
 package aws
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"regexp"
 	"testing"
 	"time"
@@ -355,7 +357,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 	} {
 		suite.Run(t.name, func() {
 			skipIfCredsUnset(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetLambdaPackageData(t.filter)
+			data, err := t.creds.GetLambdaPackageData(t.filter, logger.NewStandardLogger())
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetLambdaPackageData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
@@ -844,7 +846,7 @@ func (suite *AWSTestSuite) TestGetFilteredLambdaFuncs() {
 			}
 			compiledFilter := t.filter.Compile()
 
-			result, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, compiledFilter)
+			result, _, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, compiledFilter)
 			if t.wantErr {
 				require.Error(suite.T(), err)
 				return
@@ -933,7 +935,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageDataFromClient() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			data, err := getLambdaPackageDataFromClient(t.client, t.filter)
+			data, err := getLambdaPackageDataFromClient(t.client, t.filter, logger.NewStandardLogger())
 			if t.wantErr {
 				require.Error(suite.T(), err)
 				return
@@ -947,6 +949,36 @@ func (suite *AWSTestSuite) TestGetLambdaPackageDataFromClient() {
 				}
 			}
 			require.Equal(suite.T(), t.expectedDigests, gotDigests)
+		})
+	}
+}
+
+func (suite *AWSTestSuite) TestGetLambdaPackageDataFromClientWarnsWhenFiltersLeaveOutEveryFunction() {
+	const warning = "the include/exclude filters left out all 3 lambda functions"
+	for _, t := range []struct {
+		name     string
+		filter   *filters.ResourceFilterOptions
+		wantWarn bool
+	}{
+		{name: "warns when no function across the pages matches", filter: &filters.ResourceFilterOptions{IncludeNames: []string{"alhpa"}}, wantWarn: true},
+		{name: "no warning when a function on a later page matches", filter: &filters.ResourceFilterOptions{IncludeNames: []string{"gamma"}}},
+		{name: "no warning without a filter", filter: &filters.ResourceFilterOptions{}},
+	} {
+		suite.Run(t.name, func() {
+			client := fakeLambdaClientWithFunctions("alpha", "beta", "gamma")
+			client.PageSize = 2
+			// the fake's CodeSha256 is not base64, which only an Image package accepts
+			for i := range client.Functions {
+				client.Functions[i].PackageType = types.PackageTypeImage
+			}
+			var warnings bytes.Buffer
+			_, err := getLambdaPackageDataFromClient(client, t.filter, logger.NewLogger(io.Discard, &warnings, false))
+			require.NoError(suite.T(), err)
+			if t.wantWarn {
+				require.Contains(suite.T(), warnings.String(), warning)
+				return
+			}
+			require.NotContains(suite.T(), warnings.String(), warning)
 		})
 	}
 }
