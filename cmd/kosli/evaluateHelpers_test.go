@@ -41,4 +41,7 @@ func TestServerSideRequestErrorNamesTheStatus(t *testing.T) {
 	require.EqualError(t,
 		serverSideRequestError(&requests.APIError{StatusCode: http.StatusNotFound}),
 		"the Kosli server answered HTTP 404 Not Found")
+	require.EqualError(t,
+		serverSideRequestError(&requests.APIError{StatusCode: http.StatusBadRequest, HasServerMessage: true}),
+		"the Kosli server answered HTTP 400 Bad Request")
 }

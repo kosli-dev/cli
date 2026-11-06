@@ -438,12 +438,12 @@ func TestOddReplies_CommitWithNoHashFails(t *testing.T) {
 // reads, so it fails, naming the status.
 func TestOddReplies_ASuccessOtherThanOKIsNamed(t *testing.T) {
 	for name, want := range map[string]string{
-		"pullrequest":           "failed to get PR details, got HTTP 202 Accepted",
-		"pullrequest_commits_1": "failed to get PR commits, got HTTP 202 Accepted",
+		"pullrequest":           "failed to get PR details, got HTTP 202 Accepted instead of HTTP 200 OK",
+		"pullrequest_commits_1": "failed to get PR commits, got HTTP 202 Accepted instead of HTTP 200 OK",
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := runOddRepliesWithStatus(t, 2, oddBaselineReplies(), map[string]int{name: http.StatusAccepted})
-			require.ErrorContains(t, err, want)
+			require.EqualError(t, err, want)
 		})
 	}
 }

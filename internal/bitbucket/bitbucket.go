@@ -244,7 +244,7 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 			}
 		}
 	} else {
-		return evidence, fmt.Errorf("failed to get PR details, got %s. Please review repository permissions", requests.HTTPStatus(response.Resp.StatusCode))
+		return evidence, fmt.Errorf("failed to get PR details, got %s instead of HTTP 200 OK", requests.HTTPStatus(response.Resp.StatusCode))
 	}
 	return evidence, nil
 }
@@ -332,7 +332,7 @@ func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, e
 			return nil, err
 		}
 		if response.Resp.StatusCode != 200 {
-			return nil, fmt.Errorf("failed to get PR commits, got %s", requests.HTTPStatus(response.Resp.StatusCode))
+			return nil, fmt.Errorf("failed to get PR commits, got %s instead of HTTP 200 OK", requests.HTTPStatus(response.Resp.StatusCode))
 		}
 
 		var responseData map[string]any
