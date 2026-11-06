@@ -221,10 +221,10 @@ func TestCreateSurfacesTheServerMessageAndStatus(t *testing.T) {
 }
 
 // A 5xx is retryable, so the shared HTTP client consumes it: it exhausts the
-// retries and reports giving up with the status alone, discarding the server's
-// message. Pinned because the enqueue failure the API documents at 503
-// therefore cannot reach a user as its own sentence, and any caller wanting to
-// name that failure has to say something of its own instead.
+// retries and reports giving up with only the status. Pinned because the
+// enqueue failure the API documents at 503 therefore cannot reach a user as its
+// own sentence, and any caller wanting to name that failure has to say
+// something of its own instead.
 func TestCreateLosesTheServerMessageOnAServerError(t *testing.T) {
 	server, _ := newFakeServer(t, http.StatusServiceUnavailable,
 		`{"message":"Evaluation '01JABCDEF' could not be queued"}`)
