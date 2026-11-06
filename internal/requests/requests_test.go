@@ -80,6 +80,10 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Reply(500).
 		BodyString("server broken")
 	suite.fakeService.NewHandler().
+		Get("/blank/").
+		Reply(401).
+		BodyString("\r\n")
+	suite.fakeService.NewHandler().
 		Get("/proxy-block/").
 		Reply(403).
 		BodyString(`<!DOCTYPE html><html><body><h1>403 Forbidden</h1><p>Blocked by proxy</p></body></html>`)
@@ -323,7 +327,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/no-content/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: "unexpected end of JSON input",
+			expectedErrorMsg: "HTTP 204 No Content",
 		},
 		{
 			name: "206 is not a success: a partial body is not the answer",
@@ -332,7 +336,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/partial/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: "unexpected end of JSON input",
+			expectedErrorMsg: "HTTP 206 Partial Content: the response is not JSON, rerun with --debug to see it",
 		},
 		{
 			name: "GET request to 404 endpoint",
@@ -430,13 +434,22 @@ func (suite *RequestsTestSuite) TestDo() {
 			expectedErrorMsg: "Denied",
 		},
 		{
-			name: "GET request to a PUT endpoint fails because of invalid response",
+			name: "GET to an unrouted path reports the status of the empty 404",
 			params: &RequestParams{
 				Method: http.MethodGet,
 				URL:    suite.fakeService.ResolveURL("/html"),
 			},
 			wantError:        true,
-			expectedErrorMsg: "unexpected end of JSON input",
+			expectedErrorMsg: "HTTP 404 Not Found",
+		},
+		{
+			name: "a whitespace-only body reports the status alone",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/blank/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: "HTTP 401 Unauthorized",
 		},
 		{
 			name: "non-JSON error response body is logged with debug enabled",
@@ -446,7 +459,7 @@ func (suite *RequestsTestSuite) TestDo() {
 			},
 			debug:            true,
 			wantError:        true,
-			expectedErrorMsg: "invalid character '<' looking for beginning of value",
+			expectedErrorMsg: "HTTP 403 Forbidden: the response is not JSON",
 			expectedLog:      `<!DOCTYPE html><html><body><h1>403 Forbidden</h1><p>Blocked by proxy</p></body></html>`,
 		},
 	} {
