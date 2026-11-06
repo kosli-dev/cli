@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"testing"
@@ -347,7 +348,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/locked/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: fmt.Sprintf("Get \"%s\": GET %s giving up after 2 attempt(s)", suite.fakeService.ResolveURL("/locked/"), suite.fakeService.ResolveURL("/locked/")),
+			expectedErrorMsg: fmt.Sprintf("Get \"%s\": giving up after 2 attempt(s): HTTP 409", suite.fakeService.ResolveURL("/locked/")),
 		},
 		{
 			name: "409 is not retried and is surfaced when DisableConflictRetry is set",
@@ -366,7 +367,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/fail/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: fmt.Sprintf("Get \"%s\": GET %s giving up after 2 attempt(s)", suite.fakeService.ResolveURL("/fail/"), suite.fakeService.ResolveURL("/fail/")),
+			expectedErrorMsg: fmt.Sprintf("Get \"%s\": giving up after 2 attempt(s): HTTP 500", suite.fakeService.ResolveURL("/fail/")),
 		},
 		{
 			name: "GET request with invalid URL causes an error",
@@ -674,6 +675,22 @@ func (suite *RequestsTestSuite) TestNonMultipartJSON_IsCompact() {
 // a normal test function and pass our suite to suite.Run
 func TestRequestsTestSuite(t *testing.T) {
 	suite.Run(t, new(RequestsTestSuite))
+}
+
+func TestDoKeepsTheTransportErrorWhenRetriesRunOut(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	url := "http://" + listener.Addr().String() + "/closed/"
+	require.NoError(t, listener.Close())
+
+	client, err := NewKosliClient("", 1, false, logger.NewStandardLogger())
+	require.NoError(t, err)
+	_, err = client.Do(&RequestParams{Method: http.MethodGet, URL: url})
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "giving up after 2 attempt(s): ")
+	require.Contains(t, err.Error(), "connection refused")
+	require.NotContains(t, err.Error(), "HTTP ")
 }
 
 // A misspelled form item type must fail rather than silently drop the part.
