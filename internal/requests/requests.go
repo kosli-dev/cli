@@ -558,12 +558,18 @@ func giveUpErrorHandler(resp *http.Response, err error, numTries int) (*http.Res
 	if resp != nil {
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
 		_ = resp.Body.Close()
-		msg += fmt.Sprintf(": HTTP %d", resp.StatusCode)
+		msg += ": " + httpStatus(resp.StatusCode)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
 	return nil, errors.New(msg)
+}
+
+// httpStatus renders a code as "HTTP 409 Conflict", or "HTTP 599" for a code
+// with no standard text.
+func httpStatus(code int) string {
+	return strings.TrimSpace(fmt.Sprintf("HTTP %d %s", code, http.StatusText(code)))
 }
 
 // jitteredBackoff stretches each wait by a random 0-50%, so clients that failed
