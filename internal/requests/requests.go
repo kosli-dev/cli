@@ -553,11 +553,11 @@ func isSuccess(status int) bool {
 func nonJSONErrorMessage(status int, body []byte, debug bool) string {
 	switch {
 	case len(bytes.TrimSpace(body)) == 0:
-		return httpStatus(status)
+		return HTTPStatus(status)
 	case debug:
-		return httpStatus(status) + ": the response is not JSON"
+		return HTTPStatus(status) + ": the response is not JSON"
 	default:
-		return httpStatus(status) + ": the response is not JSON, rerun with --debug to see it"
+		return HTTPStatus(status) + ": the response is not JSON, rerun with --debug to see it"
 	}
 }
 
@@ -569,7 +569,7 @@ func giveUpErrorHandler(resp *http.Response, err error, numTries int) (*http.Res
 	if resp != nil {
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
 		_ = resp.Body.Close()
-		msg += ": " + httpStatus(resp.StatusCode)
+		msg += ": " + HTTPStatus(resp.StatusCode)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", msg, err)
@@ -577,9 +577,9 @@ func giveUpErrorHandler(resp *http.Response, err error, numTries int) (*http.Res
 	return nil, errors.New(msg)
 }
 
-// httpStatus renders a code as "HTTP 409 Conflict", or "HTTP 599" for a code
+// HTTPStatus renders a code as "HTTP 409 Conflict", or "HTTP 599" for a code
 // with no standard text.
-func httpStatus(code int) string {
+func HTTPStatus(code int) string {
 	return strings.TrimSpace(fmt.Sprintf("HTTP %d %s", code, http.StatusText(code)))
 }
 
