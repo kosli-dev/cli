@@ -12,7 +12,6 @@ import (
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
-	"github.com/xeonx/timeago"
 )
 
 const listSnapshotsShortDesc = `List environment snapshots.`
@@ -151,10 +150,10 @@ func printSnapshotsListAsTable(raw string, out io.Writer, page int) error {
 			}
 		}
 
-		timeago.English.Max = 36 * timeago.Month
-		timeago.English.PastSuffix = ""
+		cfg := timeagoEnglish()
+		cfg.PastSuffix = ""
 		durationNs := time.Duration(int64(snapshot["duration"].(float64)) * 1e9)
-		duration := timeago.English.FormatRelativeDuration(durationNs)
+		duration := cfg.FormatRelativeDuration(durationNs)
 		compliance := snapshot["compliant"].(bool)
 		index := int64(snapshot["index"].(float64))
 		row := fmt.Sprintf("%d\t%s\t%s\t%s\t%t", index, tsFromStr, tsToStr, duration, compliance)
