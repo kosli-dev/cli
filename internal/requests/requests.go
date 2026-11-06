@@ -568,12 +568,14 @@ func giveUpErrorHandler(resp *http.Response, err error, numTries int) (*http.Res
 
 // jitteredBackoff stretches each wait by a random 0-50%, so clients that failed
 // together do not retry in lockstep, without shortening the time before giving up.
+// A wait that differs from the plain exponential one came from Retry-After and
+// is kept as is.
 func jitteredBackoff(minWait, maxWait time.Duration, attempt int, resp *http.Response) time.Duration {
-	wait := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, resp)
-	if resp != nil && resp.Header.Get("Retry-After") != "" {
+	exponential := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, nil)
+	if wait := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, resp); wait != exponential {
 		return wait
 	}
-	return min(wait+rand.N(wait/2+1), maxWait)
+	return min(exponential+rand.N(exponential/2+1), maxWait)
 }
 
 func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
