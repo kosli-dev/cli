@@ -101,9 +101,10 @@ jobs:
         args: -v
 
     # Every other job builds tests only for Linux, and release builds skip _test.go files.
-    - name: Vet for Linux, macOS and Windows
+    # Linux is left out because golangci-lint above and make vet in the Test job already vet it.
+    - name: Vet for macOS and Windows
       id: vet-all
-      run: make vet_all
+      run: make vet_all VET_PLATFORMS="darwin windows"
 
     - name: Test the server image lookup
       run: ./hack/test-get-server-image.sh

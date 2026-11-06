@@ -9,6 +9,7 @@ export GO111MODULE=on
 LDFLAGS    := -w -s
 BIN        := kosli
 GO_VERSION := $(shell awk '/^go /{print $$2}' go.mod)
+VET_PLATFORMS ?= linux darwin windows
 
 GIT_COMMIT = $(shell git rev-parse HEAD)
 GIT_SHA    = $(shell git rev-parse --short HEAD)
@@ -84,8 +85,8 @@ lint: deps vet ensure_golangci-lint ## Run linting
 vet: fmt ## Run Go vet
 	@go vet ./...
 
-vet_all: ## Run Go vet for Linux, macOS and Windows
-	@status=0; for goos in linux darwin windows; do \
+vet_all: ## Run Go vet for each of VET_PLATFORMS (default: linux darwin windows)
+	@status=0; for goos in $(VET_PLATFORMS); do \
 		echo "go vet GOOS=$$goos"; \
 		GOOS=$$goos go vet ./... || status=1; \
 	done; exit $$status
