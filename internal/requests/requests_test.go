@@ -80,6 +80,10 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Reply(500).
 		BodyString("server broken")
 	suite.fakeService.NewHandler().
+		Get("/blank/").
+		Reply(401).
+		BodyString("\r\n")
+	suite.fakeService.NewHandler().
 		Get("/proxy-block/").
 		Reply(403).
 		BodyString(`<!DOCTYPE html><html><body><h1>403 Forbidden</h1><p>Blocked by proxy</p></body></html>`)
@@ -430,13 +434,22 @@ func (suite *RequestsTestSuite) TestDo() {
 			expectedErrorMsg: "Denied",
 		},
 		{
-			name: "GET request to a PUT endpoint fails because of invalid response",
+			name: "GET to an unrouted path reports the status of the empty 404",
 			params: &RequestParams{
 				Method: http.MethodGet,
 				URL:    suite.fakeService.ResolveURL("/html"),
 			},
 			wantError:        true,
 			expectedErrorMsg: "HTTP 404 Not Found",
+		},
+		{
+			name: "a whitespace-only body reports the status alone",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/blank/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: "HTTP 401 Unauthorized",
 		},
 		{
 			name: "non-JSON error response body is logged with debug enabled",

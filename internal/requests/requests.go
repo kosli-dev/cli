@@ -552,7 +552,7 @@ func isSuccess(status int) bool {
 // tells the user nothing.
 func nonJSONErrorMessage(status int, body []byte, debug bool) string {
 	switch {
-	case len(body) == 0:
+	case len(bytes.TrimSpace(body)) == 0:
 		return httpStatus(status)
 	case debug:
 		return httpStatus(status) + ": the response is not JSON"
