@@ -33,7 +33,6 @@ require (
 	github.com/mattn/go-shellwords v1.0.16
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5
-	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.2
 	github.com/open-policy-agent/opa v1.22.0

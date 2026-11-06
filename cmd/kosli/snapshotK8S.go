@@ -9,7 +9,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/kube"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -260,7 +259,7 @@ func defaultKubeConfigPath() string {
 	if _, ok := os.LookupEnv("DOCS"); ok { // used for docs generation
 		return "$HOME/.kube/config"
 	}
-	home, err := homedir.Dir()
+	home, err := homeDir()
 	if err == nil {
 		path := filepath.Join(home, ".kube", "config")
 		_, err := os.Stat(path)
