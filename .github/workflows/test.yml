@@ -100,11 +100,30 @@ jobs:
         version: latest
         args: -v
 
+    # setup-go's cache holds only Linux builds, so the macOS and Windows vet gets its own GOCACHE.
+    - name: Restore the macOS and Windows vet cache
+      id: vet-cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/go-vet-cache
+        key: go-vet-${{ runner.os }}-${{ hashFiles('.go-version', 'go.sum') }}
+        restore-keys: go-vet-${{ runner.os }}-
+
     # Every other job builds tests only for Linux, and release builds skip _test.go files.
     # Linux is left out because golangci-lint above and make vet in the Test job already vet it.
     - name: Vet for macOS and Windows
       id: vet-all
+      env:
+        GOCACHE: ${{ runner.temp }}/go-vet-cache
       run: make vet_all VET_PLATFORMS="darwin windows"
+
+    # Every branch can restore a cache saved on main, so only main writes one.
+    - name: Save the macOS and Windows vet cache
+      if: github.ref == 'refs/heads/main' && steps.vet-all.outcome == 'success' && steps.vet-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/go-vet-cache
+        key: go-vet-${{ runner.os }}-${{ hashFiles('.go-version', 'go.sum') }}
 
     - name: Test the server image lookup
       run: ./hack/test-get-server-image.sh
