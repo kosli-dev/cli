@@ -101,18 +101,9 @@ jobs:
         args: -v
 
     # Every other job builds tests only for Linux, and release builds skip _test.go files.
-    - name: Vet for Windows and macOS
-      id: vet-cross
-      env:
-        CGO_ENABLED: '0'
-      run: |
-        status=0
-        for goos in windows darwin; do
-          echo "::group::go vet GOOS=$goos"
-          GOOS=$goos go vet ./... || status=1
-          echo "::endgroup::"
-        done
-        exit $status
+    - name: Vet for Linux, macOS and Windows
+      id: vet-all
+      run: make vet_all
 
     - name: Test the server image lookup
       run: ./hack/test-get-server-image.sh
@@ -126,7 +117,7 @@ jobs:
            --flow ${{ inputs.FLOW_NAME }}
            --trail ${{ inputs.TRAIL_NAME }}
            --org ${{ inputs.KOSLI_ORG }}
-           --compliant=${{ steps.lint.outcome == 'success' && steps.vet-cross.outcome == 'success' }}
+           --compliant=${{ steps.lint.outcome == 'success' && steps.vet-all.outcome == 'success' }}
 
   test:
     name: Test
