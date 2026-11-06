@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand/v2"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -17,6 +18,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/kosli-dev/cli/internal/logger"
@@ -149,6 +151,8 @@ func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = maxAPIRetries
 	retryClient.CheckRetry = customCheckRetry
+	retryClient.ErrorHandler = giveUpErrorHandler
+	retryClient.Backoff = jitteredBackoff
 	if debug {
 		retryClient.Logger = &CustomLogger{
 			Logger: log.New(os.Stderr, "[debug]", log.Lmsgprefix),
@@ -384,10 +388,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			err := json.Unmarshal([]byte(body), &respBody)
 			if err != nil {
 				c.Logger.Debug("response body from %s (status %d):\n%s", req.URL, resp.StatusCode, string(body))
-				// Still carry the status code so callers can distinguish e.g. a 404
-				// with an empty or non-JSON body (a proxy/CDN page). Keep the
-				// (JSON parse) error text as the message.
-				return nil, &APIError{StatusCode: resp.StatusCode, Message: err.Error()}
+				return nil, &APIError{StatusCode: resp.StatusCode, Message: nonJSONErrorMessage(resp.StatusCode, body, c.Debug)}
 			}
 			cleanedErrorMessage := ""
 			hasServerMessage := false
@@ -497,9 +498,9 @@ func s3ErrorMessage(status int, body []byte) string {
 		Message string `xml:"Message"`
 	}
 	if err := xml.Unmarshal(body, &s3Error); err != nil || s3Error.Code == "" {
-		return fmt.Sprintf("upload refused with HTTP %d", status)
+		return "upload refused with " + HTTPStatus(status)
 	}
-	return fmt.Sprintf("upload refused with HTTP %d: %s: %s", status, s3Error.Code, s3Error.Message)
+	return fmt.Sprintf("upload refused with %s: %s: %s", HTTPStatus(status), s3Error.Code, s3Error.Message)
 }
 
 func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, message string) error {
@@ -544,6 +545,54 @@ func isSuccess(status int) bool {
 		return true
 	}
 	return false
+}
+
+// nonJSONErrorMessage reports an error response whose body is not JSON, such as
+// a proxy's HTML page, by its status: the decoder's complaint about the body
+// tells the user nothing.
+func nonJSONErrorMessage(status int, body []byte, debug bool) string {
+	switch {
+	case len(bytes.TrimSpace(body)) == 0:
+		return HTTPStatus(status)
+	case debug:
+		return HTTPStatus(status) + ": the response is not JSON"
+	default:
+		return HTTPStatus(status) + ": the response is not JSON, rerun with --debug to see it"
+	}
+}
+
+// giveUpErrorHandler keeps the last response's status, which retryablehttp's
+// default handler drops. The *url.Error that http.Client wraps it in names the
+// method and URL.
+func giveUpErrorHandler(resp *http.Response, err error, numTries int) (*http.Response, error) {
+	msg := fmt.Sprintf("giving up after %d attempt(s)", numTries)
+	if resp != nil {
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
+		_ = resp.Body.Close()
+		msg += ": " + HTTPStatus(resp.StatusCode)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", msg, err)
+	}
+	return nil, errors.New(msg)
+}
+
+// HTTPStatus renders a code as "HTTP 409 Conflict", or "HTTP 599" for a code
+// with no standard text.
+func HTTPStatus(code int) string {
+	return strings.TrimSpace(fmt.Sprintf("HTTP %d %s", code, http.StatusText(code)))
+}
+
+// jitteredBackoff stretches each wait by a random 0-50%, so clients that failed
+// together do not retry in lockstep, without shortening the time before giving up.
+// A wait that differs from the plain exponential one came from Retry-After and
+// is kept as is.
+func jitteredBackoff(minWait, maxWait time.Duration, attempt int, resp *http.Response) time.Duration {
+	exponential := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, nil)
+	if wait := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, resp); wait != exponential {
+		return wait
+	}
+	return min(exponential+rand.N(exponential/2+1), maxWait)
 }
 
 func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {

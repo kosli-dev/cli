@@ -161,10 +161,20 @@ func (rt redirectTransport) RoundTrip(req *http.Request) (*http.Response, error)
 // the given entry point: 1 for PREvidenceForCommitV1, 2 for V2.
 func runOddReplies(t *testing.T, version int, replies map[string]string) ([]*types.PREvidence, error) {
 	t.Helper()
+	return runOddRepliesWithStatus(t, version, replies, nil)
+}
+
+// runOddRepliesWithStatus is runOddReplies with the status of each named reply
+// set by statuses; any other reply is a 200.
+func runOddRepliesWithStatus(t *testing.T, version int, replies map[string]string, statuses map[string]int) ([]*types.PREvidence, error) {
+	t.Helper()
 	var base string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for name, route := range oddRoutes {
 			if r.URL.RequestURI() == route {
+				if status, ok := statuses[name]; ok {
+					w.WriteHeader(status)
+				}
 				_, _ = w.Write([]byte(strings.ReplaceAll(replies[name], "{{base}}", base)))
 				return
 			}
@@ -420,6 +430,20 @@ func TestOddReplies_CommitWithNoHashFails(t *testing.T) {
 		"date"`)
 			_, err := runOddReplies(t, 2, replies)
 			require.ErrorContains(t, err, "commit "+index+" for pull request 7 has no hash")
+		})
+	}
+}
+
+// A 201 or 202 passes the client as a success but is not the reply the code
+// reads, so it fails, naming the status.
+func TestOddReplies_ASuccessOtherThanOKIsNamed(t *testing.T) {
+	for name, want := range map[string]string{
+		"pullrequest":           "failed to get PR details, got HTTP 202 Accepted instead of HTTP 200 OK",
+		"pullrequest_commits_1": "failed to get PR commits, got HTTP 202 Accepted instead of HTTP 200 OK",
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := runOddRepliesWithStatus(t, 2, oddBaselineReplies(), map[string]int{name: http.StatusAccepted})
+			require.EqualError(t, err, want)
 		})
 	}
 }
