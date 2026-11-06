@@ -135,6 +135,9 @@ func printSnapshotsListAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
+	durationFormat := timeagoEnglish()
+	durationFormat.PastSuffix = ""
+
 	header := []string{"SNAPSHOT", "FROM", "TO", "DURATION", "COMPLIANT"}
 	rows := []string{}
 	for _, snapshot := range snapshots {
@@ -150,10 +153,8 @@ func printSnapshotsListAsTable(raw string, out io.Writer, page int) error {
 			}
 		}
 
-		cfg := timeagoEnglish()
-		cfg.PastSuffix = ""
 		durationNs := time.Duration(int64(snapshot["duration"].(float64)) * 1e9)
-		duration := cfg.FormatRelativeDuration(durationNs)
+		duration := durationFormat.FormatRelativeDuration(durationNs)
 		compliance := snapshot["compliant"].(bool)
 		index := int64(snapshot["index"].(float64))
 		row := fmt.Sprintf("%d\t%s\t%s\t%s\t%t", index, tsFromStr, tsToStr, duration, compliance)

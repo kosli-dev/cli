@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 	"time"
 
@@ -19,6 +20,20 @@ func TestTimeagoFormattingLeavesSharedEnglishConfigAlone(t *testing.T) {
 
 		require.Contains(t, out.String(), "2 days")
 		require.NotContains(t, out.String(), "2 days ago")
+		require.Equal(t, suffix, timeago.English.PastSuffix)
+		require.Equal(t, limit, timeago.English.Max)
+	})
+
+	t.Run("get snapshot prints how long an artifact has been running", func(t *testing.T) {
+		suffix, limit := timeago.English.PastSuffix, timeago.English.Max
+		started := time.Now().Add(-3 * time.Hour).Unix()
+		raw := fmt.Sprintf(`{"index": 1, "type": "K8S", "artifacts": [{"name": "nginx", "fingerprint": "abc",
+			"compliant": true, "annotation": {"now": 1}, "creationTimestamp": [%d]}]}`, started)
+
+		var out bytes.Buffer
+		require.NoError(t, printSnapshotAsTable(raw, &out, 1))
+
+		require.Contains(t, out.String(), "3 hours ago")
 		require.Equal(t, suffix, timeago.English.PastSuffix)
 		require.Equal(t, limit, timeago.English.Max)
 	})
