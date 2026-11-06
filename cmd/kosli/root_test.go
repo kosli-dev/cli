@@ -463,3 +463,17 @@ func TestEnrichError(t *testing.T) {
 		require.ErrorIs(t, got, sentinel)
 	})
 }
+
+// TestHelpBeforeSubcommandShowsHelp pins that --help ahead of a subcommand
+// prints help rather than running it. With TraverseChildren, a parent that
+// declares --help itself would consume it and hand the run to the child.
+func TestHelpBeforeSubcommandShowsHelp(t *testing.T) {
+	for _, args := range []string{"--help version", "--debug --help version", "archive --help flow"} {
+		t.Run(args, func(t *testing.T) {
+			_, output, _, _, err := executeCommandC(args)
+			require.NoError(t, err)
+			require.Contains(t, output, "Usage:")
+			require.NotContains(t, output, "version.BuildInfo")
+		})
+	}
+}
