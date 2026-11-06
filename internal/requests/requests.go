@@ -388,10 +388,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			err := json.Unmarshal([]byte(body), &respBody)
 			if err != nil {
 				c.Logger.Debug("response body from %s (status %d):\n%s", req.URL, resp.StatusCode, string(body))
-				// Still carry the status code so callers can distinguish e.g. a 404
-				// with an empty or non-JSON body (a proxy/CDN page). Keep the
-				// (JSON parse) error text as the message.
-				return nil, &APIError{StatusCode: resp.StatusCode, Message: err.Error()}
+				return nil, &APIError{StatusCode: resp.StatusCode, Message: nonJSONErrorMessage(resp.StatusCode, body, c.Debug)}
 			}
 			cleanedErrorMessage := ""
 			hasServerMessage := false
@@ -548,6 +545,20 @@ func isSuccess(status int) bool {
 		return true
 	}
 	return false
+}
+
+// nonJSONErrorMessage reports an error response whose body is not JSON, such as
+// a proxy's HTML page, by its status: the decoder's complaint about the body
+// tells the user nothing.
+func nonJSONErrorMessage(status int, body []byte, debug bool) string {
+	switch {
+	case len(body) == 0:
+		return httpStatus(status)
+	case debug:
+		return httpStatus(status) + ": the response is not JSON"
+	default:
+		return httpStatus(status) + ": the response is not JSON, rerun with --debug to see it"
+	}
 }
 
 // giveUpErrorHandler keeps the last response's status, which retryablehttp's
