@@ -574,6 +574,14 @@ func tabFormattedPrint(out io.Writer, header []string, rows []string) {
 	}
 }
 
+// timeagoEnglish returns a copy of timeago.English, which is package state, so
+// each caller can adjust its own copy without changing the output of the others.
+func timeagoEnglish() timeago.Config {
+	cfg := timeago.English
+	cfg.Max = 36 * timeago.Month
+	return cfg
+}
+
 // formattedTimestamp formats a float timestamp into something like "Mon, 22 Aug 2022 11:34:59 CEST • 10 days ago"
 // time is formatted using RFC1123
 func formattedTimestamp(timestamp any, short bool) (string, error) {
@@ -623,8 +631,7 @@ func formattedTimestamp(timestamp any, short bool) (string, error) {
 	if short {
 		return shortFormat, nil
 	} else {
-		timeago.English.Max = 36 * timeago.Month
-		timeAgoFormat := timeago.English.Format(unixTime)
+		timeAgoFormat := timeagoEnglish().Format(unixTime)
 		return fmt.Sprintf("%s \u2022 %s", shortFormat, timeAgoFormat), nil
 	}
 }

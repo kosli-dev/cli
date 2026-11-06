@@ -11,7 +11,6 @@ import (
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
-	"github.com/xeonx/timeago"
 )
 
 type Annotation struct {
@@ -190,8 +189,7 @@ func printSnapshotAsTable(raw string, out io.Writer, page int) error {
 			continue
 		}
 		timestamp := time.Unix(artifact.CreationTimestamp[0], 0)
-		timeago.English.Max = 36 * timeago.Month
-		since := timeago.English.Format(timestamp)
+		since := timeagoEnglish().Format(timestamp)
 
 		gitCommit := "N/A"
 		if artifact.GitCommit != "" {
