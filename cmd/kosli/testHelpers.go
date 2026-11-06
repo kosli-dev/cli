@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,7 +19,6 @@ import (
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/requests"
 	shellwords "github.com/mattn/go-shellwords"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
@@ -232,12 +233,12 @@ func parseJsonData(data any, path string, t *testing.T) any {
 func compareTwoFiles(actualFilename, expectedFilename string) error {
 	actual, err := os.ReadFile(actualFilename)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read golden file %s", actualFilename)
+		return fmt.Errorf("unable to read golden file %s: %w", actualFilename, err)
 	}
 
 	expected, err := os.ReadFile(expectedFilename)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read golden file %s", expectedFilename)
+		return fmt.Errorf("unable to read golden file %s: %w", expectedFilename, err)
 	}
 	return compareFileBytes(actual, expected)
 }
@@ -247,7 +248,7 @@ func compareAgainstFile(actual []byte, filename string) error {
 	// Read the expected file with regex patterns
 	expectedFile, err := os.Open(filename)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read golden file %s", filename)
+		return fmt.Errorf("unable to read golden file %s: %w", filename, err)
 	}
 	defer func() {
 		if err := expectedFile.Close(); err != nil {
@@ -263,7 +264,7 @@ func compareAgainstFile(actual []byte, filename string) error {
 	lineNum := 1
 	for expectedScanner.Scan() {
 		if !actualScanner.Scan() {
-			return errors.Errorf("line %d: expected more lines in actual content", lineNum)
+			return fmt.Errorf("line %d: expected more lines in actual content", lineNum)
 		}
 
 		expectedLine := expectedScanner.Text()
@@ -274,12 +275,12 @@ func compareAgainstFile(actual []byte, filename string) error {
 		// Compile the regex pattern from the expected file
 		re, err := regexp.Compile(expectedLine + "$")
 		if err != nil {
-			return errors.Wrapf(err, "invalid regex on line %d in golden file %s", lineNum, filename)
+			return fmt.Errorf("invalid regex on line %d in golden file %s: %w", lineNum, filename, err)
 		}
 
 		// Check if the actual line matches the regex pattern
 		if !re.MatchString(actualLine) {
-			return errors.Errorf("line %d does not match: expected pattern '%s', got '%s'", lineNum, expectedLine, actualLine)
+			return fmt.Errorf("line %d does not match: expected pattern '%s', got '%s'", lineNum, expectedLine, actualLine)
 		}
 
 		lineNum++
@@ -287,38 +288,26 @@ func compareAgainstFile(actual []byte, filename string) error {
 
 	// Check if there are extra lines in the actual content
 	if actualScanner.Scan() {
-		return errors.Errorf("unexpected additional content after line %d in actual content", lineNum)
+		return fmt.Errorf("unexpected additional content after line %d in actual content", lineNum)
 	}
 
 	if err := expectedScanner.Err(); err != nil {
-		return errors.Wrapf(err, "error reading golden file %s", filename)
+		return fmt.Errorf("error reading golden file %s: %w", filename, err)
 	}
 
 	if err := actualScanner.Err(); err != nil {
-		return errors.Wrap(err, "error reading actual content")
+		return fmt.Errorf("error reading actual content: %w", err)
 	}
 
 	return nil
 }
-
-// func compareAgainstFile(actual []byte, filename string) error {
-// 	expected, err := os.ReadFile(filename)
-// 	if err != nil {
-// 		return errors.Wrapf(err, "unable to read golden file %s", filename)
-// 	}
-// 	if err := compareFileBytes(actual, expected); err != nil {
-// 		return errors.Errorf("does not match golden file %s\n\nWANT:\n'%s'\n\nGOT:\n'%s'", filename, expected, actual)
-// 	}
-
-// 	return nil
-// }
 
 func compareFileBytes(actual, expected []byte) error {
 	actual = normalize(actual)
 	expected = normalize(expected)
 
 	if !bytes.Equal(actual, expected) {
-		return errors.Errorf("actual does not match expected")
+		return errors.New("actual does not match expected")
 	}
 	return nil
 }

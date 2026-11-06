@@ -12,7 +12,6 @@ import (
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/security"
 	"github.com/kosli-dev/cli/internal/version"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -423,7 +422,7 @@ func (r *RealConfigGetter) defaultConfigFilePath() string {
 		return fmt.Sprintf("$HOME/%s", defaultConfigFilename)
 	}
 
-	home, err := homedir.Dir()
+	home, err := homeDir()
 	if err == nil {
 		return filepath.Join(home, defaultConfigFilename)
 
@@ -432,6 +431,15 @@ func (r *RealConfigGetter) defaultConfigFilePath() string {
 	// name here would make viper search the current working directory, which is
 	// the whole problem getConfigFileFlagDefault exists to avoid.
 	return ""
+}
+
+// homeDir prefers HOME because os.UserHomeDir reads only USERPROFILE on Windows,
+// and Cygwin and MSYS2 shells keep the user's config under HOME.
+func homeDir() (string, error) {
+	if home := os.Getenv("HOME"); home != "" {
+		return home, nil
+	}
+	return os.UserHomeDir()
 }
 
 // defaultConfigFilePathFunc is a variable holding the implementation of defaultConfigFilePath

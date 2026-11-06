@@ -105,9 +105,7 @@ func (suite *WorkingDirConfigTestSuite) TestConfigFileEnvVarStillLoadsWorkingDir
 
 // TestEmptyDefaultConfigPathLoadsNothing covers the case where no home
 // directory can be resolved, so defaultConfigFilePath returns no path at all.
-// The working directory must not become the fallback search location. The empty
-// path is injected because homedir.Dir cannot be made to fail portably: on
-// macOS it falls back to dscl even with HOME unset.
+// The working directory must not become the fallback search location.
 func (suite *WorkingDirConfigTestSuite) TestEmptyDefaultConfigPathLoadsNothing() {
 	mockConfigGetter := new(MockConfigGetter)
 	mockConfigGetter.Mock.On("defaultConfigFilePath").Return("")

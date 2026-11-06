@@ -1,4 +1,4 @@
-.PHONY: help build clean clean-cache deps fmt lint vet docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single licenses upgrade-deps helm-lint helm-docs docs release suggest-version-ai
+.PHONY: help build clean clean-cache deps fmt lint vet vet_all docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single licenses upgrade-deps helm-lint helm-docs docs release suggest-version-ai
 .DEFAULT: help
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
@@ -9,6 +9,7 @@ export GO111MODULE=on
 LDFLAGS    := -w -s
 BIN        := kosli
 GO_VERSION := $(shell awk '/^go /{print $$2}' go.mod)
+VET_PLATFORMS ?= linux darwin windows
 
 GIT_COMMIT = $(shell git rev-parse HEAD)
 GIT_SHA    = $(shell git rev-parse --short HEAD)
@@ -83,6 +84,12 @@ lint: deps vet ensure_golangci-lint ## Run linting
 
 vet: fmt ## Run Go vet
 	@go vet ./...
+
+vet_all: ## Run Go vet for each of VET_PLATFORMS (default: linux darwin windows)
+	@status=0; for goos in $(VET_PLATFORMS); do \
+		echo "go vet GOOS=$$goos"; \
+		GOOS=$$goos go vet ./... || status=1; \
+	done; exit $$status
 
 deps: ## Install depdendencies. Runs `go get` internally.
 	@GOFLAGS="" go mod download
