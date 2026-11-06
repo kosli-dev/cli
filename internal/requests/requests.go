@@ -498,9 +498,9 @@ func s3ErrorMessage(status int, body []byte) string {
 		Message string `xml:"Message"`
 	}
 	if err := xml.Unmarshal(body, &s3Error); err != nil || s3Error.Code == "" {
-		return fmt.Sprintf("upload refused with HTTP %d", status)
+		return "upload refused with " + HTTPStatus(status)
 	}
-	return fmt.Sprintf("upload refused with HTTP %d: %s: %s", status, s3Error.Code, s3Error.Message)
+	return fmt.Sprintf("upload refused with %s: %s: %s", HTTPStatus(status), s3Error.Code, s3Error.Message)
 }
 
 func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, message string) error {
