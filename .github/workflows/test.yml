@@ -26,6 +26,10 @@ on:
         required: false
         type: boolean
         default: true
+      run_test:
+        required: false
+        type: boolean
+        default: true
       upload_sarif:
         required: false
         type: boolean
@@ -140,6 +144,7 @@ jobs:
            --compliant=${{ steps.lint.outcome == 'success' && steps.vet-all.outcome == 'success' }}
 
   test:
+    if: ${{ inputs.run_test }}
     name: Test
     runs-on: ubuntu-latest
     permissions:
