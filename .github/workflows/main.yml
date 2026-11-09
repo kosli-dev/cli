@@ -20,12 +20,15 @@ jobs:
       (github.event.pull_request.user.login == 'dependabot[bot]' &&
       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       tag: ${{ steps.prep.outputs.tag }}
       trail_name: ${{ steps.prep.outputs.trail_name }}
       trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
       checkout_ref: ${{ steps.prep.outputs.checkout_ref }}
       report_to_kosli: ${{ steps.prep.outputs.report_to_kosli }}
+      run_tests: ${{ steps.changes.outputs.run_tests }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -70,6 +73,28 @@ jobs:
             echo "report_to_kosli=none" >> $GITHUB_OUTPUT
           fi
 
+      - name: Decide whether the change needs the tests
+        id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # Every push to main runs everything, so each of its trails gets every attestation.
+          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            echo "run_tests=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Compared from where the branch left main, so an earlier untested code change
+          # still counts. The API lists at most 300 files, so a longer list runs everything.
+          if compare=$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${HEAD_SHA}") &&
+            [ "$(jq '.files | length' <<<"${compare}")" -lt 300 ]; then
+            run_tests=$(jq -r '.files[] | .filename, (.previous_filename // empty)' <<<"${compare}" |
+              ./hack/needs-testing.sh)
+          else
+            run_tests=true
+          fi
+          echo "run_tests=${run_tests}" >> "$GITHUB_OUTPUT"
+
   init-kosli:
     needs: [pre-build]
     uses: ./.github/workflows/init_kosli.yml
@@ -95,6 +120,11 @@ jobs:
       KOSLI_ORG: kosli-public
       checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
       report_to_kosli: ${{ needs.pre-build.outputs.report_to_kosli }}
+      # Skipped jobs inside test.yml still report the required "test / Lint" and
+      # "test / Test" checks, as passing; skipping this job would leave them pending.
+      run_lint: ${{ needs.pre-build.outputs.run_tests == 'true' }}
+      run_snyk: ${{ needs.pre-build.outputs.run_tests == 'true' }}
+      run_test: ${{ needs.pre-build.outputs.run_tests == 'true' }}
       # Push events only. This workflow also runs on pull_request_target, where
       # github.ref is the base branch while checkout_ref is the PR head, so an
       # upload there would attribute PR findings to main. Tags never reach this
@@ -115,6 +145,7 @@ jobs:
 
   docker:
     needs: [pre-build, test, init-kosli]
+    if: ${{ needs.pre-build.outputs.run_tests == 'true' }}
     uses: ./.github/workflows/docker.yml
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
