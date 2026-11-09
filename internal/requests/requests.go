@@ -590,7 +590,8 @@ func HTTPStatus(code int) string {
 // is kept as is.
 func jitteredBackoff(minWait, maxWait time.Duration, attempt int, resp *http.Response) time.Duration {
 	if wait, ok := conflictRetryAfter(resp); ok {
-		return min(wait+rand.N(wait/2+1), maxWait)
+		wait = min(wait, maxConflictRetryAfter)
+		return wait + rand.N(wait/2+1)
 	}
 	exponential := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, nil)
 	if wait := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, resp); wait != exponential {
@@ -598,6 +599,11 @@ func jitteredBackoff(minWait, maxWait time.Duration, attempt int, resp *http.Res
 	}
 	return min(exponential+rand.N(exponential/2+1), maxWait)
 }
+
+// maxConflictRetryAfter bounds the Retry-After of a 409, so a huge value from a
+// proxy cannot stall a job, while any wait a server could reasonably ask for is
+// honoured.
+const maxConflictRetryAfter = time.Minute
 
 // conflictRetryAfter reads the Retry-After the Kosli server sends, in whole
 // seconds, with a 409 for a trail it could not lock. retryablehttp reads the

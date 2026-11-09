@@ -768,12 +768,28 @@ func TestJitteredBackoff(t *testing.T) {
 		require.Greater(t, len(seen), 1)
 	})
 
-	t.Run("never waits longer than the maximum for a 409", func(t *testing.T) {
+	t.Run("honours a 409's Retry-After above the backoff's maximum", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusConflict,
+			Header:     http.Header{"Retry-After": []string{"45"}},
+		}
+		for range 100 {
+			got := jitteredBackoff(minWait, maxWait, 0, resp)
+			require.GreaterOrEqual(t, got, 45*time.Second)
+			require.LessOrEqual(t, got, 45*time.Second+45*time.Second/2)
+		}
+	})
+
+	t.Run("caps a 409's Retry-After at a minute before adding jitter", func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusConflict,
 			Header:     http.Header{"Retry-After": []string{"86400"}},
 		}
-		require.Equal(t, maxWait, jitteredBackoff(minWait, maxWait, 0, resp))
+		for range 100 {
+			got := jitteredBackoff(minWait, maxWait, 0, resp)
+			require.GreaterOrEqual(t, got, time.Minute)
+			require.LessOrEqual(t, got, time.Minute+time.Minute/2)
+		}
 	})
 }
 
