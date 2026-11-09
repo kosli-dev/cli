@@ -726,8 +726,9 @@ func TestJitteredBackoff(t *testing.T) {
 	})
 
 	for _, resp := range []*http.Response{
-		{StatusCode: http.StatusConflict, Header: http.Header{"Retry-After": []string{"7"}}},
+		{StatusCode: http.StatusConflict, Header: http.Header{"Retry-After": []string{"soon"}}},
 		{StatusCode: http.StatusTooManyRequests, Header: http.Header{"Retry-After": []string{"soon"}}},
+		{StatusCode: http.StatusInternalServerError, Header: http.Header{"Retry-After": []string{"7"}}},
 	} {
 		t.Run(fmt.Sprintf("jitters a %d with a Retry-After the backoff ignores", resp.StatusCode), func(t *testing.T) {
 			wait := retryablehttp.DefaultBackoff(minWait, maxWait, 1, nil)
@@ -742,13 +743,15 @@ func TestJitteredBackoff(t *testing.T) {
 		})
 	}
 
-	t.Run("keeps the wait the server asked for", func(t *testing.T) {
-		resp := &http.Response{
-			StatusCode: http.StatusTooManyRequests,
-			Header:     http.Header{"Retry-After": []string{"7"}},
-		}
-		require.Equal(t, 7*time.Second, jitteredBackoff(minWait, maxWait, 0, resp))
-	})
+	for _, status := range []int{http.StatusTooManyRequests, http.StatusConflict} {
+		t.Run(fmt.Sprintf("keeps the wait a %d asked for", status), func(t *testing.T) {
+			resp := &http.Response{
+				StatusCode: status,
+				Header:     http.Header{"Retry-After": []string{"7"}},
+			}
+			require.Equal(t, 7*time.Second, jitteredBackoff(minWait, maxWait, 0, resp))
+		})
+	}
 }
 
 func TestDoKeepsTheTransportErrorWhenRetriesRunOut(t *testing.T) {

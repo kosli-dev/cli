@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -588,11 +589,28 @@ func HTTPStatus(code int) string {
 // A wait that differs from the plain exponential one came from Retry-After and
 // is kept as is.
 func jitteredBackoff(minWait, maxWait time.Duration, attempt int, resp *http.Response) time.Duration {
+	if wait, ok := conflictRetryAfter(resp); ok {
+		return wait
+	}
 	exponential := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, nil)
 	if wait := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, resp); wait != exponential {
 		return wait
 	}
 	return min(exponential+rand.N(exponential/2+1), maxWait)
+}
+
+// conflictRetryAfter reads the Retry-After the Kosli server sends, in whole
+// seconds, with a 409 for a trail it could not lock. retryablehttp reads the
+// header only on a 429 or 503.
+func conflictRetryAfter(resp *http.Response) (time.Duration, bool) {
+	if resp == nil || resp.StatusCode != http.StatusConflict {
+		return 0, false
+	}
+	seconds, err := strconv.Atoi(resp.Header.Get("Retry-After"))
+	if err != nil || seconds < 0 {
+		return 0, false
+	}
+	return time.Duration(seconds) * time.Second, true
 }
 
 func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
