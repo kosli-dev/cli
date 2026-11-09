@@ -693,8 +693,8 @@ func TestRequestsTestSuite(t *testing.T) {
 }
 
 func TestHTTPStatus(t *testing.T) {
-	require.Equal(t, "HTTP 429 Too Many Requests", httpStatus(http.StatusTooManyRequests))
-	require.Equal(t, "HTTP 599", httpStatus(599))
+	require.Equal(t, "HTTP 429 Too Many Requests", HTTPStatus(http.StatusTooManyRequests))
+	require.Equal(t, "HTTP 599", HTTPStatus(599))
 }
 
 func TestJitteredBackoff(t *testing.T) {

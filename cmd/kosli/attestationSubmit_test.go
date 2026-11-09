@@ -321,7 +321,7 @@ func TestAttestationSubmitterAttestsNothingWhenTheBucketRefusesTheFile(t *testin
 	err := submitter.submit(submission)
 
 	require.EqualError(t, err, "failed to upload attachment testdata/file1: "+
-		"upload refused with HTTP 403: BadDigest: The SHA256 you specified did not match what we received")
+		"upload refused with HTTP 403 Forbidden: BadDigest: The SHA256 you specified did not match what we received")
 	require.Empty(t, fake.recorded)
 }
 
