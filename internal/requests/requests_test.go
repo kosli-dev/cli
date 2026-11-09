@@ -336,7 +336,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/partial/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: "HTTP 206 Partial Content: the response is not JSON, rerun with --debug to see it",
+			expectedErrorMsg: "HTTP 206 Partial Content: the response is not JSON, rerun with --debug to log its body",
 		},
 		{
 			name: "GET request to 404 endpoint",
@@ -459,7 +459,7 @@ func (suite *RequestsTestSuite) TestDo() {
 			},
 			debug:            true,
 			wantError:        true,
-			expectedErrorMsg: "HTTP 403 Forbidden: the response is not JSON",
+			expectedErrorMsg: "HTTP 403 Forbidden: the response is not JSON, its body is logged above",
 			expectedLog:      `<!DOCTYPE html><html><body><h1>403 Forbidden</h1><p>Blocked by proxy</p></body></html>`,
 		},
 	} {

@@ -555,9 +555,9 @@ func nonJSONErrorMessage(status int, body []byte, debug bool) string {
 	case len(bytes.TrimSpace(body)) == 0:
 		return HTTPStatus(status)
 	case debug:
-		return HTTPStatus(status) + ": the response is not JSON"
+		return HTTPStatus(status) + ": the response is not JSON, its body is logged above"
 	default:
-		return HTTPStatus(status) + ": the response is not JSON, rerun with --debug to see it"
+		return HTTPStatus(status) + ": the response is not JSON, rerun with --debug to log its body"
 	}
 }
 
