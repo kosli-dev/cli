@@ -132,9 +132,6 @@ jobs:
     - name: Test the server image lookup
       run: ./hack/test-get-server-image.sh
 
-    - name: Test the change classifier
-      run: ./hack/test-needs-testing.sh
-
     - name: Report lint to Kosli
       if:  ${{ (success() || failure()) && inputs.report_to_kosli != 'none' }}
       env:

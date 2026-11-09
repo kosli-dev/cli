@@ -78,20 +78,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          # Paths that never reach a build or a test. Any other changed path runs everything.
+          SKIPPABLE: >-
+            ^(README\.md|CONTRIBUTING\.md|CODE_OF_CONDUCT\.md|SECURITY\.md|CLAUDE\.md|AUTHORS|LICENSE|TODO\.md|dev-guide\.md|release-guide\.md
+            |(docs|design-docs|\.claude|charts|hack/empty-flag-audit/docs|\.github/ISSUE_TEMPLATE)/.*
+            |\.github/(dependabot\.yml|labeler\.yaml|pull_request_template\.md|release\.yml)
+            |\.github/workflows/(binary_provenance|claude-pr-review|daily-cli-tests|helm-chart|install-script-tests|never_alone_trail|pr-checks|release|upload-cli-layer)\.yml)$
         run: |
-          # Every push to main runs everything, so each of its trails gets every attestation.
-          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-            echo "run_tests=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # Compared from where the branch left main, so an earlier untested code change
-          # still counts. The API lists at most 300 files, so a longer list runs everything.
-          if compare=$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${HEAD_SHA}") &&
-            [ "$(jq '.files | length' <<<"${compare}")" -lt 300 ]; then
-            run_tests=$(jq -r '.files[] | .filename, (.previous_filename // empty)' <<<"${compare}" |
-              ./hack/needs-testing.sh)
-          else
-            run_tests=true
+          # main always runs everything, so each of its Kosli trails gets every attestation.
+          # Elsewhere the files count from where the branch left main, so an earlier code
+          # change still counts; past the API's 300-file limit everything runs.
+          run_tests=true
+          if [ "${GITHUB_REF}" != "refs/heads/main" ] &&
+            files=$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${HEAD_SHA}" --jq \
+              'if (.files | length) < 300 then .files[] | .filename, (.previous_filename // empty) else "too-many-files" end') &&
+            [ -n "${files}" ] && ! grep -qvE "${SKIPPABLE// /}" <<<"${files}"; then
+            run_tests=false
           fi
           echo "run_tests=${run_tests}" >> "$GITHUB_OUTPUT"
 
