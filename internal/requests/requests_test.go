@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/version"
 	"github.com/maxcnunes/httpfake"
@@ -76,6 +79,10 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Get("/fail/").
 		Reply(500).
 		BodyString("server broken")
+	suite.fakeService.NewHandler().
+		Get("/blank/").
+		Reply(401).
+		BodyString("\r\n")
 	suite.fakeService.NewHandler().
 		Get("/proxy-block/").
 		Reply(403).
@@ -320,7 +327,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/no-content/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: "unexpected end of JSON input",
+			expectedErrorMsg: "HTTP 204 No Content",
 		},
 		{
 			name: "206 is not a success: a partial body is not the answer",
@@ -329,7 +336,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/partial/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: "unexpected end of JSON input",
+			expectedErrorMsg: "HTTP 206 Partial Content: the response is not JSON, rerun with --debug to log its body",
 		},
 		{
 			name: "GET request to 404 endpoint",
@@ -347,7 +354,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/locked/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: fmt.Sprintf("Get \"%s\": GET %s giving up after 2 attempt(s)", suite.fakeService.ResolveURL("/locked/"), suite.fakeService.ResolveURL("/locked/")),
+			expectedErrorMsg: fmt.Sprintf("Get \"%s\": giving up after 2 attempt(s): HTTP 409 Conflict", suite.fakeService.ResolveURL("/locked/")),
 		},
 		{
 			name: "409 is not retried and is surfaced when DisableConflictRetry is set",
@@ -366,7 +373,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/fail/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: fmt.Sprintf("Get \"%s\": GET %s giving up after 2 attempt(s)", suite.fakeService.ResolveURL("/fail/"), suite.fakeService.ResolveURL("/fail/")),
+			expectedErrorMsg: fmt.Sprintf("Get \"%s\": giving up after 2 attempt(s): HTTP 500 Internal Server Error", suite.fakeService.ResolveURL("/fail/")),
 		},
 		{
 			name: "GET request with invalid URL causes an error",
@@ -427,13 +434,22 @@ func (suite *RequestsTestSuite) TestDo() {
 			expectedErrorMsg: "Denied",
 		},
 		{
-			name: "GET request to a PUT endpoint fails because of invalid response",
+			name: "GET to an unrouted path reports the status of the empty 404",
 			params: &RequestParams{
 				Method: http.MethodGet,
 				URL:    suite.fakeService.ResolveURL("/html"),
 			},
 			wantError:        true,
-			expectedErrorMsg: "unexpected end of JSON input",
+			expectedErrorMsg: "HTTP 404 Not Found",
+		},
+		{
+			name: "a whitespace-only body reports the status alone",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/blank/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: "HTTP 401 Unauthorized",
 		},
 		{
 			name: "non-JSON error response body is logged with debug enabled",
@@ -443,7 +459,7 @@ func (suite *RequestsTestSuite) TestDo() {
 			},
 			debug:            true,
 			wantError:        true,
-			expectedErrorMsg: "invalid character '<' looking for beginning of value",
+			expectedErrorMsg: "HTTP 403 Forbidden: the response is not JSON, its body is logged above",
 			expectedLog:      `<!DOCTYPE html><html><body><h1>403 Forbidden</h1><p>Blocked by proxy</p></body></html>`,
 		},
 	} {
@@ -674,6 +690,81 @@ func (suite *RequestsTestSuite) TestNonMultipartJSON_IsCompact() {
 // a normal test function and pass our suite to suite.Run
 func TestRequestsTestSuite(t *testing.T) {
 	suite.Run(t, new(RequestsTestSuite))
+}
+
+func TestHTTPStatus(t *testing.T) {
+	require.Equal(t, "HTTP 429 Too Many Requests", HTTPStatus(http.StatusTooManyRequests))
+	require.Equal(t, "HTTP 599", HTTPStatus(599))
+}
+
+func TestJitteredBackoff(t *testing.T) {
+	const minWait, maxWait = time.Second, 30 * time.Second
+
+	t.Run("never waits less than the default backoff", func(t *testing.T) {
+		for attempt := range 4 {
+			wait := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, nil)
+			for range 1000 {
+				got := jitteredBackoff(minWait, maxWait, attempt, nil)
+				require.GreaterOrEqual(t, got, wait)
+				require.LessOrEqual(t, got, wait+wait/2)
+			}
+		}
+	})
+
+	t.Run("spreads the waits of clients that failed together", func(t *testing.T) {
+		seen := map[time.Duration]bool{}
+		for range 100 {
+			seen[jitteredBackoff(minWait, maxWait, 2, nil)] = true
+		}
+		require.Greater(t, len(seen), 1)
+	})
+
+	t.Run("never waits longer than the maximum", func(t *testing.T) {
+		for range 1000 {
+			require.Equal(t, maxWait, jitteredBackoff(minWait, maxWait, 10, nil))
+		}
+	})
+
+	for _, resp := range []*http.Response{
+		{StatusCode: http.StatusConflict, Header: http.Header{"Retry-After": []string{"7"}}},
+		{StatusCode: http.StatusTooManyRequests, Header: http.Header{"Retry-After": []string{"soon"}}},
+	} {
+		t.Run(fmt.Sprintf("jitters a %d with a Retry-After the backoff ignores", resp.StatusCode), func(t *testing.T) {
+			wait := retryablehttp.DefaultBackoff(minWait, maxWait, 1, nil)
+			seen := map[time.Duration]bool{}
+			for range 100 {
+				got := jitteredBackoff(minWait, maxWait, 1, resp)
+				require.GreaterOrEqual(t, got, wait)
+				require.LessOrEqual(t, got, wait+wait/2)
+				seen[got] = true
+			}
+			require.Greater(t, len(seen), 1)
+		})
+	}
+
+	t.Run("keeps the wait the server asked for", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusTooManyRequests,
+			Header:     http.Header{"Retry-After": []string{"7"}},
+		}
+		require.Equal(t, 7*time.Second, jitteredBackoff(minWait, maxWait, 0, resp))
+	})
+}
+
+func TestDoKeepsTheTransportErrorWhenRetriesRunOut(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	url := "http://" + listener.Addr().String() + "/closed/"
+	require.NoError(t, listener.Close())
+
+	client, err := NewKosliClient("", 1, false, logger.NewStandardLogger())
+	require.NoError(t, err)
+	_, err = client.Do(&RequestParams{Method: http.MethodGet, URL: url})
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "giving up after 2 attempt(s): ")
+	require.Contains(t, err.Error(), "connection refused")
+	require.NotContains(t, err.Error(), "HTTP ")
 }
 
 // A misspelled form item type must fail rather than silently drop the part.

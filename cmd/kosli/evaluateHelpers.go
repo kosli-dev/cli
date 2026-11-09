@@ -202,7 +202,7 @@ func fetchRemotePolicy(remoteURL string) ([]byte, error) {
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("failed to fetch policy from %s: HTTP %d", remoteURL, resp.StatusCode)
+		return nil, fmt.Errorf("failed to fetch policy from %s: %s", remoteURL, requests.HTTPStatus(resp.StatusCode))
 	}
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, policyMaxBytes+1))
@@ -421,9 +421,9 @@ func serverSideRequestError(err error) error {
 	// Quoting what arrived instead would dress a proxy's page, or the decoder's
 	// complaint about one, as the server's own reason.
 	if !apiError.HasServerMessage || apiError.Message == "" {
-		return fmt.Errorf("the Kosli server answered %d", apiError.StatusCode)
+		return fmt.Errorf("the Kosli server answered %s", requests.HTTPStatus(apiError.StatusCode))
 	}
-	return fmt.Errorf("the Kosli server answered %d: %s", apiError.StatusCode, apiError.Message)
+	return fmt.Errorf("the Kosli server answered %s: %s", requests.HTTPStatus(apiError.StatusCode), apiError.Message)
 }
 
 // serverSideReadError reports a failure to read a verdict back. By this point
