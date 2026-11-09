@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/version"
 	"github.com/maxcnunes/httpfake"
@@ -675,6 +677,43 @@ func (suite *RequestsTestSuite) TestNonMultipartJSON_IsCompact() {
 // a normal test function and pass our suite to suite.Run
 func TestRequestsTestSuite(t *testing.T) {
 	suite.Run(t, new(RequestsTestSuite))
+}
+
+func TestJitteredBackoff(t *testing.T) {
+	const minWait, maxWait = time.Second, 30 * time.Second
+
+	t.Run("never waits less than the default backoff", func(t *testing.T) {
+		for attempt := range 4 {
+			wait := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, nil)
+			for range 1000 {
+				got := jitteredBackoff(minWait, maxWait, attempt, nil)
+				require.GreaterOrEqual(t, got, wait)
+				require.LessOrEqual(t, got, wait+wait/2)
+			}
+		}
+	})
+
+	t.Run("spreads the waits of clients that failed together", func(t *testing.T) {
+		seen := map[time.Duration]bool{}
+		for range 100 {
+			seen[jitteredBackoff(minWait, maxWait, 2, nil)] = true
+		}
+		require.Greater(t, len(seen), 1)
+	})
+
+	t.Run("never waits longer than the maximum", func(t *testing.T) {
+		for range 1000 {
+			require.Equal(t, maxWait, jitteredBackoff(minWait, maxWait, 10, nil))
+		}
+	})
+
+	t.Run("keeps the wait the server asked for", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusTooManyRequests,
+			Header:     http.Header{"Retry-After": []string{"7"}},
+		}
+		require.Equal(t, 7*time.Second, jitteredBackoff(minWait, maxWait, 0, resp))
+	})
 }
 
 func TestDoKeepsTheTransportErrorWhenRetriesRunOut(t *testing.T) {

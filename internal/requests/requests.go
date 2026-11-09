@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand/v2"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -17,6 +18,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/kosli-dev/cli/internal/logger"
@@ -150,6 +152,7 @@ func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *
 	retryClient.RetryMax = maxAPIRetries
 	retryClient.CheckRetry = customCheckRetry
 	retryClient.ErrorHandler = giveUpErrorHandler
+	retryClient.Backoff = jitteredBackoff
 	if debug {
 		retryClient.Logger = &CustomLogger{
 			Logger: log.New(os.Stderr, "[debug]", log.Lmsgprefix),
@@ -561,6 +564,18 @@ func giveUpErrorHandler(resp *http.Response, err error, numTries int) (*http.Res
 		return nil, fmt.Errorf("giving up after %d attempt(s): HTTP %d: %w", numTries, resp.StatusCode, err)
 	}
 	return nil, fmt.Errorf("giving up after %d attempt(s): HTTP %d", numTries, resp.StatusCode)
+}
+
+// jitteredBackoff stretches the default exponential wait by a random 0-50%, so
+// clients that failed together, such as parallel CI jobs writing to one trail,
+// do not retry in lockstep. Stretching rather than shrinking keeps the total
+// time before giving up at least what it was. A Retry-After wait is kept as is.
+func jitteredBackoff(minWait, maxWait time.Duration, attempt int, resp *http.Response) time.Duration {
+	wait := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, resp)
+	if resp != nil && resp.Header.Get("Retry-After") != "" {
+		return wait
+	}
+	return min(wait+rand.N(wait/2+1), maxWait)
 }
 
 func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
