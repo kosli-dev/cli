@@ -550,26 +550,24 @@ func isSuccess(status int) bool {
 	return false
 }
 
-// giveUpErrorHandler reports retries running out. It names the status of the
-// last response, which the retry client's default handler drops, and leaves
-// the method and URL to the *url.Error that http.Client wraps it in.
+// giveUpErrorHandler keeps the last response's status, which retryablehttp's
+// default handler drops. The *url.Error that http.Client wraps it in names the
+// method and URL.
 func giveUpErrorHandler(resp *http.Response, err error, numTries int) (*http.Response, error) {
-	if resp == nil {
-		return nil, fmt.Errorf("giving up after %d attempt(s): %w", numTries, err)
+	msg := fmt.Sprintf("giving up after %d attempt(s)", numTries)
+	if resp != nil {
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
+		_ = resp.Body.Close()
+		msg += fmt.Sprintf(": HTTP %d", resp.StatusCode)
 	}
-	// Drained before closing so the connection can be reused.
-	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
-	_ = resp.Body.Close()
 	if err != nil {
-		return nil, fmt.Errorf("giving up after %d attempt(s): HTTP %d: %w", numTries, resp.StatusCode, err)
+		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
-	return nil, fmt.Errorf("giving up after %d attempt(s): HTTP %d", numTries, resp.StatusCode)
+	return nil, errors.New(msg)
 }
 
-// jitteredBackoff stretches the default exponential wait by a random 0-50%, so
-// clients that failed together, such as parallel CI jobs writing to one trail,
-// do not retry in lockstep. Stretching rather than shrinking keeps the total
-// time before giving up at least what it was. A Retry-After wait is kept as is.
+// jitteredBackoff stretches each wait by a random 0-50%, so clients that failed
+// together do not retry in lockstep, without shortening the time before giving up.
 func jitteredBackoff(minWait, maxWait time.Duration, attempt int, resp *http.Response) time.Duration {
 	wait := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, resp)
 	if resp != nil && resp.Header.Get("Retry-After") != "" {
