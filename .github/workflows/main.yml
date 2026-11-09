@@ -81,9 +81,7 @@ jobs:
           # Paths that never reach a build or a test. Any other changed path runs everything.
           SKIPPABLE: >-
             ^(README\.md|CONTRIBUTING\.md|CODE_OF_CONDUCT\.md|SECURITY\.md|CLAUDE\.md|AUTHORS|LICENSE|TODO\.md|dev-guide\.md|release-guide\.md
-            |(docs|design-docs|\.claude|charts|hack/empty-flag-audit/docs|\.github/ISSUE_TEMPLATE)/.*
-            |\.github/(dependabot\.yml|labeler\.yaml|pull_request_template\.md|release\.yml)
-            |\.github/workflows/(binary_provenance|claude-pr-review|daily-cli-tests|helm-chart|install-script-tests|never_alone_trail|pr-checks|release|upload-cli-layer)\.yml)$
+            |(docs|design-docs|\.claude|\.github|charts|hack/empty-flag-audit/docs)/.*)$
         run: |
           # main always runs everything, so each of its Kosli trails gets every attestation.
           # Elsewhere the files count from where the branch left main, so an earlier code
