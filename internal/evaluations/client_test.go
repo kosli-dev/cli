@@ -221,8 +221,8 @@ func TestCreateSurfacesTheServerMessageAndStatus(t *testing.T) {
 }
 
 // A 5xx is retryable, so the shared HTTP client consumes it: it exhausts the
-// retries and reports giving up, discarding the response and the server's
-// message with it. Pinned because the enqueue failure the API documents at 503
+// retries and reports giving up with the status alone, discarding the server's
+// message. Pinned because the enqueue failure the API documents at 503
 // therefore cannot reach a user as its own sentence, and any caller wanting to
 // name that failure has to say something of its own instead.
 func TestCreateLosesTheServerMessageOnAServerError(t *testing.T) {
@@ -238,6 +238,7 @@ func TestCreateLosesTheServerMessageOnAServerError(t *testing.T) {
 	require.False(t, errors.As(err, &apiError), "a 5xx does not arrive as an API error")
 	require.NotContains(t, err.Error(), "could not be queued")
 	require.Contains(t, err.Error(), "giving up after")
+	require.Contains(t, err.Error(), "HTTP 503")
 }
 
 func TestCreateSendsNothingOnADryRun(t *testing.T) {

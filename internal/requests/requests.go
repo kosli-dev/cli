@@ -149,6 +149,7 @@ func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = maxAPIRetries
 	retryClient.CheckRetry = customCheckRetry
+	retryClient.ErrorHandler = giveUpErrorHandler
 	if debug {
 		retryClient.Logger = &CustomLogger{
 			Logger: log.New(os.Stderr, "[debug]", log.Lmsgprefix),
@@ -544,6 +545,22 @@ func isSuccess(status int) bool {
 		return true
 	}
 	return false
+}
+
+// giveUpErrorHandler reports retries running out. It names the status of the
+// last response, which the retry client's default handler drops, and leaves
+// the method and URL to the *url.Error that http.Client wraps it in.
+func giveUpErrorHandler(resp *http.Response, err error, numTries int) (*http.Response, error) {
+	if resp == nil {
+		return nil, fmt.Errorf("giving up after %d attempt(s): %w", numTries, err)
+	}
+	// Drained before closing so the connection can be reused.
+	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
+	_ = resp.Body.Close()
+	if err != nil {
+		return nil, fmt.Errorf("giving up after %d attempt(s): HTTP %d: %w", numTries, resp.StatusCode, err)
+	}
+	return nil, fmt.Errorf("giving up after %d attempt(s): HTTP %d", numTries, resp.StatusCode)
 }
 
 func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
