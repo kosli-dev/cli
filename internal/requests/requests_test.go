@@ -350,7 +350,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/locked/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: fmt.Sprintf("Get \"%s\": giving up after 2 attempt(s): HTTP 409", suite.fakeService.ResolveURL("/locked/")),
+			expectedErrorMsg: fmt.Sprintf("Get \"%s\": giving up after 2 attempt(s): HTTP 409 Conflict", suite.fakeService.ResolveURL("/locked/")),
 		},
 		{
 			name: "409 is not retried and is surfaced when DisableConflictRetry is set",
@@ -369,7 +369,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				URL:    suite.fakeService.ResolveURL("/fail/"),
 			},
 			wantError:        true,
-			expectedErrorMsg: fmt.Sprintf("Get \"%s\": giving up after 2 attempt(s): HTTP 500", suite.fakeService.ResolveURL("/fail/")),
+			expectedErrorMsg: fmt.Sprintf("Get \"%s\": giving up after 2 attempt(s): HTTP 500 Internal Server Error", suite.fakeService.ResolveURL("/fail/")),
 		},
 		{
 			name: "GET request with invalid URL causes an error",
@@ -677,6 +677,11 @@ func (suite *RequestsTestSuite) TestNonMultipartJSON_IsCompact() {
 // a normal test function and pass our suite to suite.Run
 func TestRequestsTestSuite(t *testing.T) {
 	suite.Run(t, new(RequestsTestSuite))
+}
+
+func TestHTTPStatus(t *testing.T) {
+	require.Equal(t, "HTTP 429 Too Many Requests", httpStatus(http.StatusTooManyRequests))
+	require.Equal(t, "HTTP 599", httpStatus(599))
 }
 
 func TestJitteredBackoff(t *testing.T) {
