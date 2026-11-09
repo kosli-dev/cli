@@ -30,9 +30,17 @@ jobs:
             contents: write
             pull-requests: read
             attestations: write
+        # Every job writes three times to one trail, and the server holds a lock on the
+        # trail for each write, answering 409 once it has waited about 2s for it.
         strategy:
+            max-parallel: 8
+            # One job running out of retries would otherwise cancel the rest.
+            fail-fast: false
             matrix:
                 artifact: ${{fromJson(inputs.artifacts)}}
+        env:
+            # Stretches the retry window from about 7s to 1-1.5 minutes, jitter included.
+            KOSLI_MAX_API_RETRIES: 6
         steps:
         - name: Harden Runner
           uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
