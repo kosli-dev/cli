@@ -82,6 +82,8 @@ jobs:
           SKIPPABLE: >-
             ^(README\.md|CONTRIBUTING\.md|CODE_OF_CONDUCT\.md|SECURITY\.md|CLAUDE\.md|AUTHORS|LICENSE|TODO\.md|dev-guide\.md|release-guide\.md
             |(docs|design-docs|\.claude|\.github|charts|hack/empty-flag-audit/docs)/.*)$
+          # The workflows that run the tests, so a change to one is tested by running it.
+          ALWAYS_TEST: ^\.github/workflows/(main|test|docker)\.yml$
         run: |
           # main always runs everything, so each of its Kosli trails gets every attestation.
           # Elsewhere the files count from where the branch left main, so an earlier code
@@ -90,7 +92,8 @@ jobs:
           if [ "${GITHUB_REF}" != "refs/heads/main" ] &&
             files=$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${HEAD_SHA}" --jq \
               'if (.files | length) < 300 then .files[] | .filename, (.previous_filename // empty) else "too-many-files" end') &&
-            [ -n "${files}" ] && ! grep -qvE "${SKIPPABLE// /}" <<<"${files}"; then
+            [ -n "${files}" ] && ! grep -qvE "${SKIPPABLE// /}" <<<"${files}" &&
+            ! grep -qE "${ALWAYS_TEST}" <<<"${files}"; then
             run_tests=false
           fi
           echo "run_tests=${run_tests}" >> "$GITHUB_OUTPUT"
