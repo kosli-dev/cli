@@ -707,6 +707,23 @@ func TestJitteredBackoff(t *testing.T) {
 		}
 	})
 
+	for _, resp := range []*http.Response{
+		{StatusCode: http.StatusConflict, Header: http.Header{"Retry-After": []string{"7"}}},
+		{StatusCode: http.StatusTooManyRequests, Header: http.Header{"Retry-After": []string{"soon"}}},
+	} {
+		t.Run(fmt.Sprintf("jitters a %d with a Retry-After the backoff ignores", resp.StatusCode), func(t *testing.T) {
+			wait := retryablehttp.DefaultBackoff(minWait, maxWait, 1, nil)
+			seen := map[time.Duration]bool{}
+			for range 100 {
+				got := jitteredBackoff(minWait, maxWait, 1, resp)
+				require.GreaterOrEqual(t, got, wait)
+				require.LessOrEqual(t, got, wait+wait/2)
+				seen[got] = true
+			}
+			require.Greater(t, len(seen), 1)
+		})
+	}
+
 	t.Run("keeps the wait the server asked for", func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusTooManyRequests,
