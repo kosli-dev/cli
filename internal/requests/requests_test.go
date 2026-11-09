@@ -727,10 +727,12 @@ func TestJitteredBackoff(t *testing.T) {
 
 	for _, resp := range []*http.Response{
 		{StatusCode: http.StatusConflict, Header: http.Header{"Retry-After": []string{"soon"}}},
+		{StatusCode: http.StatusConflict, Header: http.Header{"Retry-After": []string{"0"}}},
+		{StatusCode: http.StatusConflict, Header: http.Header{"Retry-After": []string{"-1"}}},
 		{StatusCode: http.StatusTooManyRequests, Header: http.Header{"Retry-After": []string{"soon"}}},
 		{StatusCode: http.StatusInternalServerError, Header: http.Header{"Retry-After": []string{"7"}}},
 	} {
-		t.Run(fmt.Sprintf("jitters a %d with a Retry-After the backoff ignores", resp.StatusCode), func(t *testing.T) {
+		t.Run(fmt.Sprintf("jitters a %d with Retry-After %s", resp.StatusCode, resp.Header.Get("Retry-After")), func(t *testing.T) {
 			wait := retryablehttp.DefaultBackoff(minWait, maxWait, 1, nil)
 			seen := map[time.Duration]bool{}
 			for range 100 {
@@ -743,15 +745,36 @@ func TestJitteredBackoff(t *testing.T) {
 		})
 	}
 
-	for _, status := range []int{http.StatusTooManyRequests, http.StatusConflict} {
-		t.Run(fmt.Sprintf("keeps the wait a %d asked for", status), func(t *testing.T) {
-			resp := &http.Response{
-				StatusCode: status,
-				Header:     http.Header{"Retry-After": []string{"7"}},
-			}
-			require.Equal(t, 7*time.Second, jitteredBackoff(minWait, maxWait, 0, resp))
-		})
-	}
+	t.Run("keeps the wait a 429 asked for", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusTooManyRequests,
+			Header:     http.Header{"Retry-After": []string{"7"}},
+		}
+		require.Equal(t, 7*time.Second, jitteredBackoff(minWait, maxWait, 0, resp))
+	})
+
+	t.Run("waits at least what a 409 asked for, spread by jitter", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusConflict,
+			Header:     http.Header{"Retry-After": []string{"7"}},
+		}
+		seen := map[time.Duration]bool{}
+		for range 100 {
+			got := jitteredBackoff(minWait, maxWait, 0, resp)
+			require.GreaterOrEqual(t, got, 7*time.Second)
+			require.LessOrEqual(t, got, 7*time.Second+7*time.Second/2)
+			seen[got] = true
+		}
+		require.Greater(t, len(seen), 1)
+	})
+
+	t.Run("never waits longer than the maximum for a 409", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusConflict,
+			Header:     http.Header{"Retry-After": []string{"86400"}},
+		}
+		require.Equal(t, maxWait, jitteredBackoff(minWait, maxWait, 0, resp))
+	})
 }
 
 func TestDoKeepsTheTransportErrorWhenRetriesRunOut(t *testing.T) {

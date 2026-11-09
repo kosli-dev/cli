@@ -590,7 +590,7 @@ func HTTPStatus(code int) string {
 // is kept as is.
 func jitteredBackoff(minWait, maxWait time.Duration, attempt int, resp *http.Response) time.Duration {
 	if wait, ok := conflictRetryAfter(resp); ok {
-		return wait
+		return min(wait+rand.N(wait/2+1), maxWait)
 	}
 	exponential := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, nil)
 	if wait := retryablehttp.DefaultBackoff(minWait, maxWait, attempt, resp); wait != exponential {
@@ -601,13 +601,14 @@ func jitteredBackoff(minWait, maxWait time.Duration, attempt int, resp *http.Res
 
 // conflictRetryAfter reads the Retry-After the Kosli server sends, in whole
 // seconds, with a 409 for a trail it could not lock. retryablehttp reads the
-// header only on a 429 or 503.
+// header only on a 429 or 503. Zero is refused too, since retrying at once is
+// what a contended lock can least use.
 func conflictRetryAfter(resp *http.Response) (time.Duration, bool) {
 	if resp == nil || resp.StatusCode != http.StatusConflict {
 		return 0, false
 	}
 	seconds, err := strconv.Atoi(resp.Header.Get("Retry-After"))
-	if err != nil || seconds < 0 {
+	if err != nil || seconds <= 0 {
 		return 0, false
 	}
 	return time.Duration(seconds) * time.Second, true
