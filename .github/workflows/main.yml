@@ -78,16 +78,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          # Paths that never reach a build or a test. Any other changed path runs everything.
+          # Paths that never reach a build or a test.
           SKIPPABLE: >-
             ^(README\.md|CONTRIBUTING\.md|CODE_OF_CONDUCT\.md|SECURITY\.md|CLAUDE\.md|AUTHORS|LICENSE|TODO\.md|dev-guide\.md|release-guide\.md
             |(docs|design-docs|\.claude|\.github|charts|hack/empty-flag-audit/docs)/.*)$
-          # The workflows that run the tests, so a change to one is tested by running it.
+          # A change to a workflow that runs the tests must run them.
           ALWAYS_TEST: ^\.github/workflows/(main|test|docker)\.yml$
         run: |
-          # main always runs everything, so each of its Kosli trails gets every attestation.
-          # Elsewhere the files count from where the branch left main, so an earlier code
-          # change still counts; past the API's 300-file limit everything runs.
+          # main runs everything, so its Kosli trails get every attestation.
+          # Diffing from the merge base counts earlier code commits; the API lists at most 300 files.
           run_tests=true
           if [ "${GITHUB_REF}" != "refs/heads/main" ] &&
             files=$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${HEAD_SHA}" --jq \
@@ -123,8 +122,7 @@ jobs:
       KOSLI_ORG: kosli-public
       checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
       report_to_kosli: ${{ needs.pre-build.outputs.report_to_kosli }}
-      # Skipped jobs inside test.yml still report the required "test / Lint" and
-      # "test / Test" checks, as passing; skipping this job would leave them pending.
+      # Skipping inside test.yml keeps the required checks reporting, as passing.
       run_lint: ${{ needs.pre-build.outputs.run_tests == 'true' }}
       run_snyk: ${{ needs.pre-build.outputs.run_tests == 'true' }}
       run_test: ${{ needs.pre-build.outputs.run_tests == 'true' }}
