@@ -28,7 +28,7 @@ kosli attest pullrequest gitlab yourDockerImageName \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
+	--repository yourGitlabGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -41,7 +41,7 @@ kosli attest pullrequest gitlab \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
+	--repository yourGitlabGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -53,7 +53,7 @@ kosli attest pullrequest gitlab \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
+	--repository yourGitlabGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -65,7 +65,7 @@ kosli attest pullrequest gitlab \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
+	--repository yourGitlabGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -77,7 +77,7 @@ kosli attest pullrequest gitlab \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
+	--repository yourGitlabGitRepository \
 	--attachments=yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -90,7 +90,7 @@ kosli attest pullrequest gitlab \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
+	--repository yourGitlabGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--assert
