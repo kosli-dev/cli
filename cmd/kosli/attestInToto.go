@@ -166,10 +166,11 @@ func newAttestInTotoCmd(out io.Writer) *cobra.Command {
 	o := &attestInTotoOptions{fingerprintOptions: &fingerprintOptions{}}
 	cmd := &cobra.Command{
 		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
-		Use:     "in-toto [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   attestInTotoShortDesc,
-		Long:    attestInTotoLongDesc,
-		Example: attestInTotoExample,
+		Use:         "in-toto [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:       attestInTotoShortDesc,
+		Long:        attestInTotoLongDesc,
+		Example:     attestInTotoExample,
+		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := CustomMaximumNArgs(1, args)
 			if err != nil {
