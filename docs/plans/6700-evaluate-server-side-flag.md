@@ -233,7 +233,7 @@ Files: `internal/evaluations/client.go`, `internal/evaluations/client_test.go`.
 Tests:
 - [x] `Get` decodes `completed` with `result.allow` / `result.violations`
 - [x] `Get` decodes `failed` with `error.kind` / `error.message`
-- [x] ~~`Get` decodes `completed` with no `violations` key → empty slice~~ — **deliberately not normalised.** Both shapes are pinned instead, absent staying absent and empty staying empty, because the local path prints an absent list as `null`. Reconciling them is slice 3's job, see below.
+- [x] ~~`Get` decodes `completed` with no `violations` key → empty slice~~ — **deliberately not normalised.** Both shapes are pinned instead, absent staying absent and empty staying empty, (at the time the local path printed an absent list as `null`; both now print `[]`). Reconciling them is slice 3's job, see below.
 - [x] `WaitForTerminal` returns on the first `completed` after N `pending` responses (fake server with a response sequence)
 - [x] `WaitForTerminal` returns on `failed`
 - [x] `WaitForTerminal` treats an unknown status (`running`) as non-terminal and keeps polling
@@ -262,7 +262,7 @@ Tests:
 - [x] without `--server-side` no evaluation is created, and the trail is read locally exactly as before
 - [x] dry run → exit 0, nothing created, nothing polled. Reached through the `DRY_RUN` API token, since these commands carry no `--dry-run` flag; see §4.2
 - [x] a policy the local path rejects (`testdata/policies/no-package-policy.rego`) is uploaded, not refused, under the flag
-- [x] an allow with no violations prints the same JSON as the local path does, `"violations": null`, whether the server sent an empty list or none at all (see §4.6)
+- [x] an allow with no violations prints the same JSON as the local path does, `"violations": []`, whether the server sent an empty list or none at all (see §4.6)
 
 Files: `cmd/kosli/evaluateHelpers.go` (`evaluateServerSide`, `serverVerdict`, `policyBundleKey`, `addServerSideFlag`), `cmd/kosli/evaluateTrail.go`, `cmd/kosli/root.go` (flag help constant `serverSideFlag`), `cmd/kosli/evaluateServerSide_test.go`.
 

@@ -454,7 +454,8 @@ func serverSideFailure(evaluation *evaluations.Evaluation) error {
 }
 
 // serverVerdict maps a server verdict onto the shared one, carrying every
-// output the policy returned. Any other output named like a key the
+// output the policy returned. An empty or null violations output is left out so
+// it cannot replace the verdict's own list. Any other output named like a key the
 // page already gives a meaning is left out, as --output-rule refuses it on the
 // local path, so an output cannot change the verdict the exit code is read from.
 func serverVerdict(result *evaluations.Result) *evaluate.Result {
@@ -464,7 +465,7 @@ func serverVerdict(result *evaluations.Result) *evaluate.Result {
 			continue
 		}
 		if rule == "violations" {
-			if list, ok := value.([]any); ok && len(list) == 0 {
+			if list, ok := value.([]any); value == nil || (ok && len(list) == 0) {
 				continue
 			}
 		}
