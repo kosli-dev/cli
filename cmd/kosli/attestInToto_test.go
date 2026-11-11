@@ -234,10 +234,14 @@ func (suite *AttestInTotoCommandTestSuite) TestProvenanceWhenTheStatementLacksDe
 		{
 			name:        "reads the commit's details from a local checkout that holds it",
 			cmd:         suite.command("--predicate-type provenance --name app --dry-run --allow-unsigned --repo-root ../.. --bundle " + statementVariant(suite.T(), intotoCommit, localHeadCommit(suite.T()))),
-			goldenRegex: `(?s)"git_commit_info": \{\s+"sha1": "` + localHeadCommit(suite.T()) + `",\s+"message": "[^"]+",\s+"author": "[^"]+",\s+"timestamp": \d+,\s+"branch": "main"`,
+			goldenRegex: `(?s)"git_commit_info": \{\s+"sha1": "` + localHeadCommit(suite.T()) + `",\s+"message": ` + jsonString + `,\s+"author": ` + jsonString + `,\s+"timestamp": \d+,\s+"branch": "main"`,
 		},
 	})
 }
+
+// jsonString matches any JSON-encoded string, including escaped quotes, because
+// the local checkout's commit message and author are not under the test's control.
+const jsonString = `"(?:[^"\\]|\\.)+"`
 
 func (suite *AttestInTotoCommandTestSuite) TestSBOMIsRecordedLikeAttestSbom() {
 	bundleSHA256 := fixtureSHA256(suite.T(), "spdx-sbom.sigstore.json")
