@@ -368,9 +368,9 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 	rows = append(rows, fmt.Sprintf("Last modified at:\t%s", lastModifiedAt))
 	if commitInfo, ok := trail["git_commit_info"].(map[string]any); ok {
 		rows = append(rows, "Git commit:\t")
-		rows = append(rows, fmt.Sprintf("  Sha1:\t%s", commitInfo["sha1"].(string)))
-		rows = append(rows, fmt.Sprintf("  Author:\t%s", commitInfo["author"].(string)))
-		commitTimestamp, err := formattedTimestamp(commitInfo["timestamp"].(float64), false)
+		rows = append(rows, fmt.Sprintf("  Sha1:\t%s", stringOrNA(commitInfo["sha1"])))
+		rows = append(rows, fmt.Sprintf("  Author:\t%s", stringOrNA(commitInfo["author"])))
+		commitTimestamp, err := formattedTimestamp(commitInfo["timestamp"], false)
 		if err != nil {
 			return err
 		}
@@ -378,7 +378,7 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 		if url, ok := commitInfo["url"]; ok {
 			rows = append(rows, fmt.Sprintf("  url:\t%s", url))
 		}
-		rows = append(rows, fmt.Sprintf("  message:\t%s", prefixEachLine(commitInfo["message"].(string), "\t")))
+		rows = append(rows, fmt.Sprintf("  message:\t%s", prefixEachLine(stringOrNA(commitInfo["message"]), "\t")))
 	}
 	rows = append(rows, "Events:\n")
 
@@ -507,4 +507,12 @@ func eventFields(event any) (trailEventFields, error) {
 		attestationID:   eventAttestationID,
 		attestationRef:  eventAttestationRef,
 	}, nil
+}
+
+// stringOrNA renders an optional string field, since commit info may carry only a sha1.
+func stringOrNA(v any) string {
+	if s, ok := v.(string); ok && s != "" {
+		return s
+	}
+	return "N/A"
 }
