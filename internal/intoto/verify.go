@@ -92,12 +92,12 @@ func (e *Evidence) Time() time.Time {
 	return e.SignedTime
 }
 
-// Verifier checks attestations against a policy.
 // ErrFailedVerification marks an attestation whose signature was checked and
 // did not verify against the policy, such as one by another signer or one
 // changed after signing, as distinct from one that is unsigned.
 var ErrFailedVerification = errors.New("failed verification")
 
+// Verifier checks attestations against a policy.
 type Verifier struct {
 	policy Policy
 	trust  *TrustRoots
