@@ -97,6 +97,15 @@ type Commit struct {
 	SignedByPlatform *bool `json:"signed_by_platform,omitempty"`
 }
 
+// CommitFinder looks up a commit by its SHA in a hosted git repository, so a
+// commit named without its details, as a provenance statement names one, can
+// be recorded with them. Each provider implements it.
+type CommitFinder interface {
+	// CommitBySHA returns the commit with sha in the repository named by its
+	// path on the host, such as acme/widget.
+	CommitBySHA(repository, sha string) (*Commit, error)
+}
+
 type PRRetriever interface {
 	PREvidenceForCommitV2(string) ([]*PREvidence, error)
 	PREvidenceForCommitV1(string) ([]*PREvidence, error)
