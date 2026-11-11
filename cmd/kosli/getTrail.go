@@ -116,7 +116,7 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 		if err != nil {
 			return err
 		}
-		sha := mdCell(commitInfo["sha1"])
+		sha := mdCell(stringOrNA(commitInfo["sha1"]))
 		if commitURL, ok := commitInfo["url"].(string); ok && commitURL != "" {
 			sha = fmt.Sprintf("[%s](%s)", sha, commitURL)
 		}

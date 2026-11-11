@@ -425,4 +425,10 @@ func TestPrintTrailAsMarkdownPartialCommitInfo(t *testing.T) {
 	require.NoError(t, o.printTrailAsMarkdown(raw, &buf, 0))
 	require.Contains(t, buf.String(), "| Author | N/A |")
 	require.Contains(t, buf.String(), "| Message | N/A |")
+
+	missingSha := `{"name": "t1", "compliance_state": "INCOMPLETE", "last_modified_at": 1452902400,
+		"git_commit_info": {"author": "Jane <jane@example.com>"}, "events": []}`
+	buf.Reset()
+	require.NoError(t, o.printTrailAsMarkdown(missingSha, &buf, 0))
+	require.Contains(t, buf.String(), "| Sha1 | N/A |")
 }
