@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/evaluate"
+	"github.com/kosli-dev/cli/internal/evaluations"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/require"
 )
@@ -44,4 +45,21 @@ func TestServerSideRequestErrorNamesTheStatus(t *testing.T) {
 	require.EqualError(t,
 		serverSideRequestError(&requests.APIError{StatusCode: http.StatusBadRequest, HasServerMessage: true}),
 		"the Kosli server answered HTTP 400 Bad Request")
+}
+
+func TestPrintEvaluateResultPrintsNoViolationsAsAnEmptyList(t *testing.T) {
+	for _, allow := range []bool{true, false} {
+		var out bytes.Buffer
+		err := printEvaluateResult(&out, &evaluate.Result{Allow: allow}, nil, "json", false, nil, false, "")
+		require.NoError(t, err)
+		require.Contains(t, out.String(), `"violations": []`)
+	}
+}
+
+func TestServerVerdictPrintsANullViolationsOutputAsAnEmptyList(t *testing.T) {
+	verdict := serverVerdict(&evaluations.Result{Allow: true, Outputs: map[string]any{"violations": nil}})
+
+	var out bytes.Buffer
+	require.NoError(t, printEvaluateResult(&out, verdict, nil, "json", false, nil, false, ""))
+	require.Contains(t, out.String(), `"violations": []`)
 }

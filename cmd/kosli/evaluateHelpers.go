@@ -454,9 +454,8 @@ func serverSideFailure(evaluation *evaluations.Evaluation) error {
 }
 
 // serverVerdict maps a server verdict onto the shared one, carrying every
-// output the policy returned. An empty list of violations becomes no list at
-// all, because the local evaluator returns nothing rather than an empty slice
-// and the two paths have to print alike. Any other output named like a key the
+// output the policy returned. An empty or null violations output is left out so
+// it cannot replace the verdict's own list. Any other output named like a key the
 // page already gives a meaning is left out, as --output-rule refuses it on the
 // local path, so an output cannot change the verdict the exit code is read from.
 func serverVerdict(result *evaluations.Result) *evaluate.Result {
@@ -466,7 +465,7 @@ func serverVerdict(result *evaluations.Result) *evaluate.Result {
 			continue
 		}
 		if rule == "violations" {
-			if list, ok := value.([]any); ok && len(list) == 0 {
+			if list, ok := value.([]any); value == nil || (ok && len(list) == 0) {
 				continue
 			}
 		}
@@ -475,10 +474,16 @@ func serverVerdict(result *evaluations.Result) *evaluate.Result {
 		}
 		verdict.Outputs[rule] = value
 	}
-	if len(verdict.Violations) == 0 {
-		verdict.Violations = nil
-	}
 	return verdict
+}
+
+// violationsOrEmpty keeps an absent list of violations printing as [] rather
+// than null, so a caller can read the field as a list unconditionally.
+func violationsOrEmpty(violations []string) []string {
+	if violations == nil {
+		return []string{}
+	}
+	return violations
 }
 
 // policyBundle reads every --path given to evaluate policy, or the one --policy
@@ -677,7 +682,7 @@ func validateOutputRules(rules []string) error {
 func printEvaluateResult(out io.Writer, result *evaluate.Result, input map[string]any, outputFormat string, showInput bool, params map[string]any, assertOnDeny bool, decisionID string) error {
 	auditResult := map[string]any{
 		"allow":      result.Allow,
-		"violations": result.Violations,
+		"violations": violationsOrEmpty(result.Violations),
 	}
 	for rule, value := range result.Outputs {
 		auditResult[rule] = value
