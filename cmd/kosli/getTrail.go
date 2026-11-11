@@ -116,7 +116,7 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 		if err != nil {
 			return err
 		}
-		sha := mdCell(commitInfo["sha1"])
+		sha := mdCell(stringOrNA(commitInfo["sha1"]))
 		if commitURL, ok := commitInfo["url"].(string); ok && commitURL != "" {
 			sha = fmt.Sprintf("[%s](%s)", sha, commitURL)
 		}
@@ -124,9 +124,9 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 		b.WriteString("|  |  |\n")
 		b.WriteString("| --- | --- |\n")
 		fmt.Fprintf(&b, "| Sha1 | %s |\n", sha)
-		fmt.Fprintf(&b, "| Author | %s |\n", mdCell(commitInfo["author"]))
+		fmt.Fprintf(&b, "| Author | %s |\n", mdCell(stringOrNA(commitInfo["author"])))
 		fmt.Fprintf(&b, "| Timestamp | %s |\n", mdCell(commitTimestamp))
-		fmt.Fprintf(&b, "| Message | %s |\n", mdCell(firstLine(commitInfo["message"])))
+		fmt.Fprintf(&b, "| Message | %s |\n", mdCell(stringOrNA(firstLine(commitInfo["message"]))))
 	}
 
 	writeAttestationStatuses(&b, trail["compliance_status"], trailURL)
@@ -368,17 +368,17 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 	rows = append(rows, fmt.Sprintf("Last modified at:\t%s", lastModifiedAt))
 	if commitInfo, ok := trail["git_commit_info"].(map[string]any); ok {
 		rows = append(rows, "Git commit:\t")
-		rows = append(rows, fmt.Sprintf("  Sha1:\t%s", commitInfo["sha1"].(string)))
-		rows = append(rows, fmt.Sprintf("  Author:\t%s", commitInfo["author"].(string)))
-		commitTimestamp, err := formattedTimestamp(commitInfo["timestamp"].(float64), false)
+		rows = append(rows, fmt.Sprintf("  Sha1:\t%s", stringOrNA(commitInfo["sha1"])))
+		rows = append(rows, fmt.Sprintf("  Author:\t%s", stringOrNA(commitInfo["author"])))
+		commitTimestamp, err := formattedTimestamp(commitInfo["timestamp"], false)
 		if err != nil {
 			return err
 		}
 		rows = append(rows, fmt.Sprintf("  Timestamp:\t%s", commitTimestamp))
-		if url, ok := commitInfo["url"]; ok {
+		if url, ok := commitInfo["url"].(string); ok && url != "" {
 			rows = append(rows, fmt.Sprintf("  url:\t%s", url))
 		}
-		rows = append(rows, fmt.Sprintf("  message:\t%s", prefixEachLine(commitInfo["message"].(string), "\t")))
+		rows = append(rows, fmt.Sprintf("  message:\t%s", prefixEachLine(stringOrNA(commitInfo["message"]), "\t")))
 	}
 	rows = append(rows, "Events:\n")
 
@@ -507,4 +507,12 @@ func eventFields(event any) (trailEventFields, error) {
 		attestationID:   eventAttestationID,
 		attestationRef:  eventAttestationRef,
 	}, nil
+}
+
+// stringOrNA renders an optional string field, since commit info may carry only a sha1.
+func stringOrNA(v any) string {
+	if s, ok := v.(string); ok && s != "" {
+		return s
+	}
+	return "N/A"
 }
