@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	gh "github.com/google/go-github/v42/github"
+	gh "github.com/google/go-github/v93/github"
 	"github.com/kosli-dev/cli/internal/types"
 	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/shurcooL/graphql"
@@ -81,14 +81,11 @@ func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL strin
 		}
 		t.Base = &debugTransport{base: base, out: os.Stderr}
 	}
+	opts := []gh.ClientOptionsFunc{gh.WithHTTPClient(tc)}
 	if baseURL != "" {
-		client, err := gh.NewEnterpriseClient(baseURL, baseURL, tc)
-		if err != nil {
-			return nil, err
-		}
-		return client, nil
+		opts = append(opts, gh.WithEnterpriseURLs(baseURL, baseURL))
 	}
-	return gh.NewClient(tc), nil
+	return gh.NewClient(opts...)
 }
 
 // debugTransport is an http.RoundTripper that logs each request and
@@ -753,7 +750,7 @@ func (c *GithubConfig) listPullRequestsForCommit(ctx context.Context, client *gh
 	commit string, maxPages int) ([]*gh.PullRequest, error) {
 	// Page starts at 1, not the zero value: at 0 the non-advancing guard below
 	// cannot fire on the first response. page=1 is the server default anyway.
-	opts := &gh.PullRequestListOptions{ListOptions: gh.ListOptions{PerPage: restPageSize, Page: 1}}
+	opts := &gh.ListOptions{PerPage: restPageSize, Page: 1}
 	all := []*gh.PullRequest{}
 	for pages := 0; pages < maxPages; pages++ {
 		pullrequests, resp, err := client.PullRequests.ListPullRequestsWithCommit(ctx, c.Org, c.Repository,
