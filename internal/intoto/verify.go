@@ -107,8 +107,10 @@ func NewVerifier(policy Policy, trust *TrustRoots) *Verifier {
 // the policy pins. An empty digest checks the signature alone, for an
 // attestation recorded on a trail rather than an artifact.
 func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
-	if digest != "" && !a.HasSubject(digest) {
-		return nil, fmt.Errorf("%s does not list the artifact (sha256:%s) as its subject", a.Describe(), normaliseDigest(digest))
+	if digest != "" {
+		if err := a.RequireSubject(digest); err != nil {
+			return nil, err
+		}
 	}
 	rawSum := sha256.Sum256(a.Raw)
 	evidence := &Evidence{RawSHA256: hex.EncodeToString(rawSum[:])}

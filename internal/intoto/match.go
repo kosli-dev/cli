@@ -120,6 +120,15 @@ func (a *Attestation) HasSubject(digest string) bool {
 	return false
 }
 
+// RequireSubject is HasSubject as an error that names the artifact, for a
+// statement that need not be signed to say which artifact it is about.
+func (a *Attestation) RequireSubject(digest string) error {
+	if !a.HasSubject(digest) {
+		return fmt.Errorf("%s does not list the artifact (sha256:%s) as its subject", a.Describe(), normaliseDigest(digest))
+	}
+	return nil
+}
+
 func describeSubject(name, sha256 string) string {
 	if sha256 == "" {
 		return fmt.Sprintf("%s (no sha256 digest)", name)

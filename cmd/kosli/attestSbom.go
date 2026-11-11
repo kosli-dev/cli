@@ -56,13 +56,15 @@ checked against the artifact; it is recorded as reported.
 
 The SBOM may also arrive inside an in-toto attestation, as a Sigstore bundle or
 a DSSE envelope. The SPDX or CycloneDX document is then read from it, and the
-bundle or envelope is what is uploaded and checksummed. To verify its signature
-first, pass ^--certificate-identity^ (or ^--certificate-identity-regexp^) with
-^--certificate-oidc-issuer^, or ^--key^; an attestation about an artifact must
-then list that artifact as its subject. The record is annotated with ^verified^
-and the verification details, as ^kosli attest in-toto^ annotates it. To pick
-the SBOM from a file holding several attestations, or to record provenance,
-use ^kosli attest in-toto^.
+bundle or envelope is what is uploaded and checksummed. When the SBOM is about
+an artifact, the attestation must list that artifact as its subject, signed or
+not. To verify its signature, pass ^--certificate-identity^ (or
+^--certificate-identity-regexp^) with ^--certificate-oidc-issuer^, or ^--key^.
+Without them the signature is not checked, and even a signed bundle is recorded
+with ^verified^ set to false. The record is annotated with ^verified^ and the
+verification details, as ^kosli attest in-toto^ annotates it. To pick the SBOM
+from a file holding several attestations, or to record provenance, use
+^kosli attest in-toto^.
 
 The SBOM file is the only attachment: this command does not accept additional
 attachments, because two or more would be compressed together.
@@ -265,8 +267,9 @@ func (o *attestSbomOptions) loadSbom() ([]byte, error) {
 
 // unwrap returns the SBOM document content holds. A Sigstore bundle or DSSE
 // envelope holds it as an in-toto attestation, which must be an SPDX or
-// CycloneDX one and is verified when a signer is pinned; evidence then says
-// what was established, and is nil for a plain SBOM file.
+// CycloneDX one about the artifact, when there is one, and is verified when a
+// signer is pinned; evidence then says what was established, and is nil for a
+// plain SBOM file.
 func (o *attestSbomOptions) unwrap(content []byte) (document []byte, evidence *intoto.Evidence, err error) {
 	attestation, wrapped, err := intoto.ReadEnvelope(content)
 	if err != nil {
@@ -282,6 +285,11 @@ func (o *attestSbomOptions) unwrap(content []byte) (document []byte, evidence *i
 	document, err = intoto.SBOMDocument(attestation)
 	if err != nil {
 		return nil, nil, fmt.Errorf("SBOM file [%s]: %s", o.sbomFilePath, err)
+	}
+	if o.payload.ArtifactFingerprint != "" {
+		if err := attestation.RequireSubject(o.payload.ArtifactFingerprint); err != nil {
+			return nil, nil, fmt.Errorf("SBOM file [%s]: %s", o.sbomFilePath, err)
+		}
 	}
 	if !o.policy.PinsSigner() {
 		return document, &intoto.Evidence{}, nil

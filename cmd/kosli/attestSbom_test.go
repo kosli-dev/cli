@@ -119,6 +119,17 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomUnwrapsAnAttestation() {
 			goldenRegex: `(?s)"verified": "false".*"format": "spdx-2\.3"`,
 		},
 		{
+			name:        "accepts an unsigned SBOM about the artifact",
+			cmd:         command("--dry-run --sbom-file " + envelope + " --fingerprint " + intotoDigest),
+			goldenRegex: `"verified": "false"`,
+		},
+		{
+			wantError: true,
+			name:      "refuses an unsigned SBOM about another artifact, though no signer is pinned",
+			cmd:       command("--sbom-file " + envelope + " --fingerprint 11de96226896b0fcf4ea66a11a63a5fd9f4e211fe94b62b7eebf4485c817b2d8"),
+			golden:    "Error: SBOM file [" + envelope + "]: the attestation does not list the artifact (sha256:11de96226896b0fcf4ea66a11a63a5fd9f4e211fe94b62b7eebf4485c817b2d8) as its subject\n",
+		},
+		{
 			wantError: true,
 			name:      "refuses to verify an unsigned DSSE envelope",
 			cmd:       command("--sbom-file " + envelope + " " + intotoSigner),
