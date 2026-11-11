@@ -290,7 +290,7 @@ func printEvaluation(out io.Writer, evaluation *evaluations.Evaluation, format s
 	}
 
 	verdict := serverVerdict(evaluation.Result)
-	summary := map[string]any{"allow": verdict.Allow, "violations": verdict.Violations}
+	summary := map[string]any{"allow": verdict.Allow, "violations": violationsOrEmpty(verdict.Violations)}
 	if violations, ok := verdict.Outputs["violations"]; ok {
 		summary["violations"] = violations
 	}

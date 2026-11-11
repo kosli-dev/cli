@@ -69,7 +69,7 @@ const (
 	// What the local path prints for a verdict with nothing to report. The
 	// server path has to match it byte for byte, or the two disagree on the
 	// page while agreeing on the verdict.
-	localAllowedJSON = "{\n  \"allow\": true,\n  \"violations\": null\n}"
+	localAllowedJSON = "{\n  \"allow\": true,\n  \"violations\": []\n}"
 )
 
 func newFakeEvaluations(t *testing.T, verdict string) (*httptest.Server, *fakeEvaluations) {
