@@ -22,10 +22,10 @@ if no merge requests were found for the commit.
 
 const assertPRGitlabExample = `
 kosli assert mergerequest gitlab \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
 	--commit yourGitCommit \
-	--repository yourGithubGitRepository
+	--repository yourGitlabGitRepository
 `
 
 func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {

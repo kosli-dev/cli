@@ -252,7 +252,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	githubTokenFlag                 = "Github token."
 	githubOrgFlag                   = "Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/integrations/ci_cd )."
 	githubBaseURLFlag               = "[optional] GitHub base URL (only needed for GitHub Enterprise installations)."
-	gitlabTokenFlag                 = "Gitlab token."
+	gitlabTokenFlag                 = "Gitlab token. Needs the read_api scope."
 	gitlabOrgFlag                   = "Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/integrations/ci_cd )."
 	gitlabBaseURLFlag               = "[optional] Gitlab base URL (only needed for on-prem Gitlab installations)."
 	registryProviderFlag            = "[deprecated] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry."
