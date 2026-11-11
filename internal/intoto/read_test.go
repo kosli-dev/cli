@@ -127,3 +127,42 @@ func TestRead(t *testing.T) {
 		require.EqualError(t, err, "the attestation: not a valid in-toto statement: at least one subject required")
 	})
 }
+
+func TestReadEnvelope(t *testing.T) {
+	t.Run("reads a Sigstore bundle", func(t *testing.T) {
+		content, err := os.ReadFile(filepath.Join("testdata", "spdx-sbom.sigstore.json"))
+		require.NoError(t, err)
+
+		attestation, wrapped, err := ReadEnvelope(content)
+		require.NoError(t, err)
+		require.True(t, wrapped)
+		require.True(t, attestation.Signed())
+		require.Equal(t, content, attestation.Raw)
+	})
+
+	t.Run("reads a DSSE envelope", func(t *testing.T) {
+		attestation, wrapped, err := ReadEnvelope(envelope(t, inTotoPayloadType, statementFixture(t, "spdx-sbom.json")))
+		require.NoError(t, err)
+		require.True(t, wrapped)
+		require.False(t, attestation.Signed())
+	})
+
+	t.Run("leaves anything else, such as the SBOM itself, unwrapped", func(t *testing.T) {
+		for _, content := range []string{
+			`{"bomFormat": "CycloneDX", "specVersion": "1.6"}`,
+			`<?xml version="1.0"?><bom xmlns="http://cyclonedx.org/schema/bom/1.6"/>`,
+			"SPDXVersion: SPDX-2.3\n",
+			string(statementFixture(t, "spdx-sbom.json")),
+		} {
+			_, wrapped, err := ReadEnvelope([]byte(content))
+			require.NoError(t, err)
+			require.False(t, wrapped, content)
+		}
+	})
+
+	t.Run("reports a malformed envelope rather than treating it as an SBOM", func(t *testing.T) {
+		_, wrapped, err := ReadEnvelope([]byte(`{"payloadType": "application/vnd.in-toto+json", "payload": "not base64!", "signatures": []}`))
+		require.True(t, wrapped)
+		require.ErrorContains(t, err, "the DSSE envelope's payload is not valid base64")
+	})
+}

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/intoto"
+	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -63,6 +65,87 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomBuildsTheRightRequest() {
 			name:        "reads SPDX as well, and reports the version the file declares",
 			cmd:         fmt.Sprintf("attest sbom --name my-sbom --sbom-file testdata/sbom/spdx.json --dry-run %s", suite.defaultKosliArguments),
 			goldenRegex: `(?s)"type_name": "sbom".*"format": "spdx-2\.3"`,
+		},
+	})
+}
+
+// An SBOM signed into an attestation is recorded with the attestation as the
+// attachment, and verified when a signer is pinned.
+func (suite *AttestSbomCommandTestSuite) TestAttestSbomUnwrapsAnAttestation() {
+	trustedRoot, err := root.NewTrustedRootFromPath(filepath.Join(intotoFixtures, "trusted_root.json"))
+	require.NoError(suite.T(), err)
+	saved := intotoTrustRoots
+	intotoTrustRoots = func() *intoto.TrustRoots { return intoto.FixedTrustRoots(trustedRoot) }
+	defer func() { intotoTrustRoots = saved }()
+
+	bundle := filepath.Join(intotoFixtures, "spdx-sbom.sigstore.json")
+	bundleSHA256 := fixtureSHA256(suite.T(), "spdx-sbom.sigstore.json")
+	envelope := filepath.Join(intotoFixtures, "unsigned-spdx-sbom.dsse.json")
+	command := func(flags string) string {
+		return "attest sbom --name my-sbom " + flags + suite.defaultKosliArguments
+	}
+
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "reads the SBOM from a Sigstore bundle and fingerprints the bundle it attaches",
+			cmd:         command("--dry-run --sbom-file " + bundle),
+			goldenRegex: `(?s)"filename": "spdx-sbom.sigstore.json".*"sbom_sha256": "` + bundleSHA256 + `",\s+"verified": "false".*"format": "spdx-2\.3",\s+"original_fingerprint": "` + bundleSHA256 + `"`,
+		},
+		{
+			name:        "verifies the bundle against the pinned signer and records the evidence",
+			cmd:         command("--dry-run --sbom-file " + bundle + " " + intotoSigner),
+			goldenRegex: `(?s)"external_urls": \{\s+"attestation": \{\s+"href": "` + regexpQuote(intotoLogEntryURL) + `",\s+"fingerprint": "` + bundleSHA256 + `".*"signer_identity": "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main".*"verified": "true"`,
+		},
+		{
+			name:        "checks the subject when the SBOM is about an artifact",
+			cmd:         command("--dry-run --sbom-file " + bundle + " " + intotoSigner + " --fingerprint " + intotoDigest),
+			goldenRegex: `"verified": "true"`,
+		},
+		{
+			wantError: true,
+			name:      "refuses a verified SBOM about another artifact",
+			cmd:       command("--sbom-file " + bundle + " " + intotoSigner + " --fingerprint 11de96226896b0fcf4ea66a11a63a5fd9f4e211fe94b62b7eebf4485c817b2d8"),
+			golden:    "Error: SBOM file [" + bundle + "]: the attestation does not list the artifact (sha256:11de96226896b0fcf4ea66a11a63a5fd9f4e211fe94b62b7eebf4485c817b2d8) as its subject\n",
+		},
+		{
+			wantError:   true,
+			name:        "refuses a bundle signed by someone other than the pinned signer",
+			cmd:         command("--sbom-file " + bundle + " --certificate-identity https://github.com/mallory/widget/.github/workflows/build.yml@refs/heads/main --certificate-oidc-issuer https://token.actions.githubusercontent.com"),
+			goldenRegex: `^Error: SBOM file \[.*spdx-sbom.sigstore.json\]: the attestation failed verification: `,
+		},
+		{
+			name:        "reads the SBOM from an unsigned DSSE envelope, marked unverified",
+			cmd:         command("--dry-run --sbom-file " + envelope),
+			goldenRegex: `(?s)"verified": "false".*"format": "spdx-2\.3"`,
+		},
+		{
+			wantError: true,
+			name:      "refuses to verify an unsigned DSSE envelope",
+			cmd:       command("--sbom-file " + envelope + " " + intotoSigner),
+			golden:    "Error: SBOM file [" + envelope + "] is not signed, so it cannot be verified against --certificate-identity, --certificate-identity-regexp or --key\n",
+		},
+		{
+			wantError: true,
+			name:      "refuses an attestation that is not an SBOM",
+			cmd:       command("--sbom-file " + filepath.Join(intotoFixtures, "github-provenance.sigstore.json")),
+			golden:    "Error: SBOM file [" + filepath.Join(intotoFixtures, "github-provenance.sigstore.json") + "]: the attestation is https://slsa.dev/provenance/v1, not an SPDX or CycloneDX SBOM\n",
+		},
+		{
+			wantError: true,
+			name:      "refuses to verify a plain SBOM file, which has no signature",
+			cmd:       command("--sbom-file testdata/sbom/cyclonedx.json " + intotoSigner),
+			golden:    "Error: SBOM file [testdata/sbom/cyclonedx.json] is not a Sigstore bundle or DSSE envelope, so it has no signature to verify against --certificate-identity, --certificate-identity-regexp or --key\n",
+		},
+		{
+			name:        "still lets a plain SBOM file be annotated with a key the verification would set",
+			cmd:         command("--dry-run --sbom-file testdata/sbom/cyclonedx.json --annotate verified=by-hand"),
+			goldenRegex: `"verified": "by-hand"`,
+		},
+		{
+			wantError: true,
+			name:      "reserves the verification annotations for an SBOM in an attestation",
+			cmd:       command("--sbom-file " + bundle + " --annotate verified=by-hand"),
+			golden:    "Error: annotation key 'verified' is set by this command from the attestation and cannot be provided with --annotate\n",
 		},
 	})
 }

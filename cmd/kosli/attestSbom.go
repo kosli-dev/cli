@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/kosli-dev/cli/internal/intoto"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/sbom"
 	"github.com/spf13/cobra"
@@ -34,6 +35,7 @@ type SbomAttestationPayload struct {
 type attestSbomOptions struct {
 	*CommonAttestationOptions
 	sbomFilePath string
+	policy       intoto.Policy
 	payload      SbomAttestationPayload
 }
 
@@ -49,8 +51,18 @@ not compressed, and a gzipped file is rejected, because the format and the
 summary below are read from it.
 
 Kosli reads the format, the creation time, the tools that produced it, the
-subject it describes and how many packages it lists. Nothing is checked against
-the artifact; the SBOM is recorded as reported.
+subject it describes and how many packages it lists. A plain SBOM file is not
+checked against the artifact; it is recorded as reported.
+
+The SBOM may also arrive inside an in-toto attestation, as a Sigstore bundle or
+a DSSE envelope. The SPDX or CycloneDX document is then read from it, and the
+bundle or envelope is what is uploaded and checksummed. To verify its signature
+first, pass ^--certificate-identity^ (or ^--certificate-identity-regexp^) with
+^--certificate-oidc-issuer^, or ^--key^; an attestation about an artifact must
+then list that artifact as its subject. The record is annotated with ^verified^
+and the verification details, as ^kosli attest in-toto^ annotates it. To pick
+the SBOM from a file holding several attestations, or to record provenance,
+use ^kosli attest in-toto^.
 
 The SBOM file is the only attachment: this command does not accept additional
 attachments, because two or more would be compressed together.
@@ -69,6 +81,18 @@ kosli attest sbom yourDockerImageName \
 	--artifact-type docker \
 	--name yourAttestationName \
 	--sbom-file yourSbomPath \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report an SBOM signed into a Sigstore bundle, verifying who signed it:
+kosli attest sbom yourDockerImageName \
+	--artifact-type docker \
+	--name yourAttestationName \
+	--sbom-file yourSbom.sigstore.json \
+	--certificate-identity https://github.com/yourOrg/yourRepo/.github/workflows/build.yml@refs/heads/main \
+	--certificate-oidc-issuer https://token.actions.githubusercontent.com \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--api-token yourAPIToken \
@@ -136,6 +160,11 @@ func newAttestSbomCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			err = o.policy.Validate()
+			if err != nil {
+				return err
+			}
+
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
 
@@ -149,6 +178,7 @@ func newAttestSbomCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
 	cmd.Flags().StringVar(&o.sbomFilePath, "sbom-file", "", attestationSbomFileFlag)
+	addSignerPolicyFlags(cmd, &o.policy)
 	// Required --sbom-file and mutually exclusive --attachments can never both be
 	// satisfied, so the flag is hidden from help. Passing it still gets the error.
 	_ = cmd.Flags().MarkHidden("attachments")
@@ -214,14 +244,82 @@ func (o *attestSbomOptions) loadSbom() ([]byte, error) {
 		return nil, fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
 	}
 
-	o.payload.AttestationData, err = sbomAttestationData(content, content)
+	document, evidence, err := o.unwrap(content)
+	if err != nil {
+		return nil, err
+	}
+	o.payload.AttestationData, err = sbomAttestationData(content, document)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse SBOM file [%s]: %s", o.sbomFilePath, err)
 	}
 	// After CommonAttestationOptions.run, which assigns payload.Annotations
 	// wholesale from --annotate; called before it, both keys are discarded.
 	o.payload.Annotations = withAnnotations(o.payload.Annotations, sbomAnnotations(o.payload.AttestationData))
+	if evidence != nil {
+		if err := o.recordVerification(evidence); err != nil {
+			return nil, err
+		}
+	}
 	return content, nil
+}
+
+// unwrap returns the SBOM document content holds. A Sigstore bundle or DSSE
+// envelope holds it as an in-toto attestation, which must be an SPDX or
+// CycloneDX one and is verified when a signer is pinned; evidence then says
+// what was established, and is nil for a plain SBOM file.
+func (o *attestSbomOptions) unwrap(content []byte) (document []byte, evidence *intoto.Evidence, err error) {
+	attestation, wrapped, err := intoto.ReadEnvelope(content)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
+	}
+	if !wrapped {
+		if o.policy.PinsSigner() {
+			return nil, nil, fmt.Errorf("SBOM file [%s] is not a Sigstore bundle or DSSE envelope, so it has no signature to verify against --certificate-identity, --certificate-identity-regexp or --key", o.sbomFilePath)
+		}
+		return content, nil, nil
+	}
+
+	document, err = intoto.SBOMDocument(attestation)
+	if err != nil {
+		return nil, nil, fmt.Errorf("SBOM file [%s]: %s", o.sbomFilePath, err)
+	}
+	if !o.policy.PinsSigner() {
+		return document, &intoto.Evidence{}, nil
+	}
+	if !attestation.Signed() {
+		return nil, nil, fmt.Errorf("SBOM file [%s] is not signed, so it cannot be verified against --certificate-identity, --certificate-identity-regexp or --key", o.sbomFilePath)
+	}
+	evidence, err = intoto.NewVerifier(o.policy, intotoTrustRoots()).Verify(attestation, o.payload.ArtifactFingerprint)
+	if err != nil {
+		return nil, nil, fmt.Errorf("SBOM file [%s]: %s", o.sbomFilePath, err)
+	}
+	return document, evidence, nil
+}
+
+// recordVerification annotates the record with what verifying the
+// attestation established, and links its transparency log entry. These keys
+// are reserved only for an SBOM that arrives in an attestation, so a plain
+// SBOM file can still be annotated with them.
+func (o *attestSbomOptions) recordVerification(evidence *intoto.Evidence) error {
+	for _, reserved := range []string{verifiedAnnotation, signerIdentityAnnotation, signerIssuerAnnotation,
+		logIndexAnnotation, integratedTimeAnnotation, signedTimestampAnnotation} {
+		if _, taken := o.annotations[reserved]; taken {
+			return fmt.Errorf("annotation key '%s' is set by this command from the attestation and cannot be provided with --annotate", reserved)
+		}
+	}
+	o.payload.Annotations = withAnnotations(o.payload.Annotations, verificationAnnotations(evidence))
+
+	if evidence.LogEntryURL == "" {
+		return nil
+	}
+	if _, taken := o.externalURLs[attestationExternalURL]; taken {
+		return fmt.Errorf("external URL label '%s' is set by this command from the attestation and cannot be provided with --external-url", attestationExternalURL)
+	}
+	if o.payload.ExternalURLs == nil {
+		o.payload.ExternalURLs = map[string]*URLInfo{}
+	}
+	o.payload.ExternalURLs[attestationExternalURL] = &URLInfo{Href: evidence.LogEntryURL, Fingerprint: evidence.RawSHA256}
+	return nil
 }
 
 // sbomAttestationData summarises document, the SBOM itself, and fingerprints

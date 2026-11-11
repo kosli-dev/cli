@@ -87,6 +87,28 @@ func Read(content []byte) ([]*Attestation, error) {
 	return attestations, nil
 }
 
+// ReadEnvelope reads content as a single Sigstore bundle or DSSE envelope.
+// wrapped is false, with no error, for anything else, so a caller can treat
+// that content as the document itself; a malformed bundle or envelope is
+// still an error.
+func ReadEnvelope(content []byte) (attestation *Attestation, wrapped bool, err error) {
+	var probe struct {
+		MediaType   string `json:"mediaType"`
+		PayloadType string `json:"payloadType"`
+	}
+	if json.Unmarshal(content, &probe) != nil {
+		return nil, false, nil
+	}
+	if !strings.HasPrefix(probe.MediaType, bundleMediaTypePrefix) && probe.PayloadType == "" {
+		return nil, false, nil
+	}
+	attestations, err := Read(content)
+	if err != nil {
+		return nil, true, err
+	}
+	return attestations[0], true, nil
+}
+
 func splitDocuments(content []byte) ([]json.RawMessage, error) {
 	decoder := json.NewDecoder(bytes.NewReader(content))
 	var documents []json.RawMessage

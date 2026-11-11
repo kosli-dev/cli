@@ -107,9 +107,10 @@ func NewVerifier(policy Policy, trust *TrustRoots) *Verifier {
 
 // Verify checks that a names the artifact with SHA-256 digest as its subject
 // and, when a is signed, that the signature is valid and made by the signer
-// the policy pins.
+// the policy pins. An empty digest checks the signature alone, for an
+// attestation recorded on a trail rather than an artifact.
 func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
-	if !a.HasSubject(digest) {
+	if digest != "" && !a.HasSubject(digest) {
 		return nil, fmt.Errorf("%s does not list the artifact (sha256:%s) as its subject", a.Describe(), normaliseDigest(digest))
 	}
 	rawSum := sha256.Sum256(a.Raw)
@@ -150,11 +151,14 @@ func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
 }
 
 func (v *Verifier) verifySignature(a *Attestation, digest string) (*verify.VerificationResult, *bundle.Bundle, error) {
-	digestBytes, err := hex.DecodeString(normaliseDigest(digest))
-	if err != nil {
-		return nil, nil, fmt.Errorf("the artifact digest is not hexadecimal: %w", err)
+	artifactPolicy := verify.WithoutArtifactUnsafe()
+	if digest != "" {
+		digestBytes, err := hex.DecodeString(normaliseDigest(digest))
+		if err != nil {
+			return nil, nil, fmt.Errorf("the artifact digest is not hexadecimal: %w", err)
+		}
+		artifactPolicy = verify.WithArtifactDigest("sha256", digestBytes)
 	}
-	artifactPolicy := verify.WithArtifactDigest("sha256", digestBytes)
 
 	if v.policy.KeyPath != "" {
 		return v.verifyWithKey(a, artifactPolicy)

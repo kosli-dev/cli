@@ -232,3 +232,18 @@ func TestSigstoreTrustRoots(t *testing.T) {
 		require.EqualError(t, err, `the signing certificate was issued by "Example, Inc.", which is neither Sigstore's public-good instance nor GitHub's`)
 	})
 }
+
+func TestVerifyWithoutAnArtifact(t *testing.T) {
+	verifier := func(t *testing.T) *Verifier { return NewVerifier(pinnedSigner, fixtureTrust(t)) }
+
+	t.Run("checks the signature alone when there is no artifact to check the subject against", func(t *testing.T) {
+		evidence, err := verifier(t).Verify(readOne(t, filepath.Join("testdata", "wrong-subject-provenance.sigstore.json")), "")
+		require.NoError(t, err)
+		require.True(t, evidence.Verified)
+	})
+
+	t.Run("still refuses a bad signature", func(t *testing.T) {
+		_, err := verifier(t).Verify(readOne(t, filepath.Join("testdata", "tampered-provenance.sigstore.json")), "")
+		require.ErrorContains(t, err, "the attestation failed verification")
+	})
+}
