@@ -6,10 +6,17 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"math/big"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
@@ -75,6 +82,8 @@ func TestVerifySignedBundle(t *testing.T) {
 
 	t.Run("refuses a bundle signed by another identity", func(t *testing.T) {
 		_, err := verifyFixture(t, pinnedSigner, "wrong-signer-provenance.sigstore.json")
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.NotErrorIs(t, err, ErrCannotVerify)
 		require.ErrorContains(t, err, "the attestation failed verification")
 		require.ErrorContains(t, err, fixtureOtherIdentity)
 	})
@@ -87,6 +96,8 @@ func TestVerifySignedBundle(t *testing.T) {
 
 	t.Run("refuses a bundle whose statement was changed after signing", func(t *testing.T) {
 		_, err := verifyFixture(t, pinnedSigner, "tampered-provenance.sigstore.json")
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.NotErrorIs(t, err, ErrCannotVerify)
 		require.ErrorContains(t, err, "the attestation failed verification")
 	})
 
@@ -100,9 +111,11 @@ func TestVerifySignedBundle(t *testing.T) {
 		require.EqualError(t, err, "the attestation is signed, so its signer must be pinned to verify it. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key")
 	})
 
-	t.Run("refuses a certificate signature checked with --key", func(t *testing.T) {
+	t.Run("cannot check a certificate signature with --key, and says so rather than calling it a bad signature", func(t *testing.T) {
 		_, err := verifyFixture(t, Policy{KeyPath: filepath.Join("testdata", "key.pub")}, "github-provenance.sigstore.json")
-		require.ErrorContains(t, err, "expected key signature, not certificate")
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.NotErrorIs(t, err, ErrFailedVerification)
+		require.EqualError(t, err, "the attestation could not be verified: it is signed with a certificate, not a key. Verify it with --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer")
 	})
 }
 
@@ -124,17 +137,82 @@ func TestVerifyKeySignedEnvelope(t *testing.T) {
 		require.NoError(t, os.WriteFile(keyPath, pem, 0o600))
 
 		_, err = verifyFixture(t, Policy{KeyPath: keyPath}, "key-signed-provenance.dsse.json")
+		require.ErrorIs(t, err, ErrFailedVerification)
 		require.ErrorContains(t, err, "the attestation failed verification")
 	})
 
 	t.Run("explains that a DSSE envelope has no certificate to check an identity against", func(t *testing.T) {
 		_, err := verifyFixture(t, pinnedSigner, "key-signed-provenance.dsse.json")
-		require.EqualError(t, err, "the attestation failed verification: a DSSE envelope carries no certificate to check --certificate-identity against. Supply the Sigstore bundle instead, or verify the envelope with --key")
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.NotErrorIs(t, err, ErrFailedVerification)
+		require.EqualError(t, err, "the attestation could not be verified: a DSSE envelope carries no certificate to check --certificate-identity against. Supply the Sigstore bundle instead, or verify the envelope with --key")
+	})
+
+	t.Run("explains that a key-signed bundle has no certificate to check an identity against", func(t *testing.T) {
+		envelope := readOne(t, filepath.Join("testdata", "key-signed-provenance.dsse.json"))
+		keySigned, err := envelopeAsBundle(envelope)
+		require.NoError(t, err)
+		content, err := keySigned.MarshalJSON()
+		require.NoError(t, err)
+		attestations, err := Read(content)
+		require.NoError(t, err)
+
+		_, err = NewVerifier(pinnedSigner, fixtureTrust(t)).Verify(attestations[0], artifactDigest)
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.EqualError(t, err, "the attestation could not be verified: it is signed with a key, not a certificate. Verify it with --key")
 	})
 
 	t.Run("names a key file that is not a public key", func(t *testing.T) {
 		_, err := verifyFixture(t, Policy{KeyPath: filepath.Join("testdata", "artifact.bin")}, "key-signed-provenance.dsse.json")
+		require.ErrorIs(t, err, ErrCannotVerify)
 		require.ErrorContains(t, err, "--key testdata/artifact.bin is not a PEM public key")
+	})
+}
+
+// issuedBy returns the named bundle fixture with its signing certificate
+// replaced by a throwaway one issued by org, so a test can steer which trust
+// root the signature needs. The signature no longer matches the certificate,
+// so the bundle can only be used where verification stops before checking it.
+func issuedBy(t *testing.T, name, org string) *Attestation {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject:      pkix.Name{Organization: []string{org}},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+	}
+	der, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	require.NoError(t, err)
+
+	content, err := os.ReadFile(filepath.Join("testdata", name))
+	require.NoError(t, err)
+	var b map[string]any
+	require.NoError(t, json.Unmarshal(content, &b))
+	b["verificationMaterial"].(map[string]any)["certificate"] = map[string]any{"rawBytes": base64.StdEncoding.EncodeToString(der)}
+	content, err = json.Marshal(b)
+	require.NoError(t, err)
+	attestations, err := Read(content)
+	require.NoError(t, err)
+	return attestations[0]
+}
+
+func TestVerifyWhenTheSignatureCannotBeChecked(t *testing.T) {
+	failingFetch := func() (*root.TrustedRoot, error) { return nil, errors.New("connection refused") }
+
+	t.Run("reports a trust root that cannot be fetched, not a bad signature", func(t *testing.T) {
+		trust := &TrustRoots{publicGood: cachedRoot{fetch: failingFetch}, github: cachedRoot{fetch: failingFetch}}
+		_, err := NewVerifier(pinnedSigner, trust).Verify(issuedBy(t, "github-provenance.sigstore.json", publicGoodIssuerOrg), artifactDigest)
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.NotErrorIs(t, err, ErrFailedVerification)
+		require.EqualError(t, err, "the attestation could not be verified: failed to fetch Sigstore's public-good trust root: connection refused")
+	})
+
+	t.Run("reports a certificate authority it has no trust root for, not a bad signature", func(t *testing.T) {
+		_, err := NewVerifier(pinnedSigner, SigstoreTrustRoots()).Verify(issuedBy(t, "github-provenance.sigstore.json", "Example, Inc."), artifactDigest)
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.EqualError(t, err, `the attestation could not be verified: the signing certificate was issued by "Example, Inc.", which is neither Sigstore's public-good instance nor GitHub's`)
 	})
 }
 
@@ -247,8 +325,17 @@ func TestFind(t *testing.T) {
 
 		_, err := Find(BundleFile{Path: path}, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
 		require.ErrorIs(t, err, ErrFailedVerification)
-		require.ErrorContains(t, err, ": 2 provenance attestations failed verification: attestation 1 failed verification: ")
+		require.ErrorContains(t, err, ": 2 provenance attestations could not be accepted: attestation 1 failed verification: ")
 		require.ErrorContains(t, err, "; attestation 2 failed verification: ")
+	})
+
+	t.Run("records nothing when a candidate cannot be verified, and says why rather than calling it a bad signature", func(t *testing.T) {
+		path := jsonlFile(t, "key-signed-provenance.dsse.json", "github-provenance.sigstore.json")
+
+		_, err := Find(BundleFile{Path: path}, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.NotErrorIs(t, err, ErrFailedVerification)
+		require.ErrorContains(t, err, ": attestation 1 could not be verified: a DSSE envelope carries no certificate")
 	})
 
 	t.Run("reports a merely unsigned alternative without failing", func(t *testing.T) {

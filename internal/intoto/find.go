@@ -52,10 +52,11 @@ type Found struct {
 // Find returns the one attestation of kind about the artifact with SHA-256
 // digest that source holds, verified by verifier. When several qualify, a
 // verified one is preferred to an unsigned one, then the newest by its
-// trusted time, then the one read last. If any fails verification, Find
-// returns that and chooses none: a bad signature is a stronger signal than a
-// missing one, so an unsigned or verified alternative is not recorded in its
-// place.
+// trusted time, then the one read last. If any signed one fails
+// verification, or its signature cannot be checked, Find returns that and
+// chooses none: a signature that is bad, or that nobody could check, is a
+// stronger signal than a missing one, so an unsigned or verified alternative
+// is not recorded in its place.
 func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) (*Found, error) {
 	attestations, err := source.Attestations(digest)
 	if err != nil {
@@ -67,29 +68,29 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 	}
 
 	var accepted []*Found
-	var rejected, failed []error
+	var rejected, unverifiable []error
 	for _, candidate := range candidates {
 		evidence, err := verifier.Verify(candidate, digest)
 		switch {
-		case errors.Is(err, ErrFailedVerification):
-			failed = append(failed, err)
+		case errors.Is(err, ErrFailedVerification), errors.Is(err, ErrCannotVerify):
+			unverifiable = append(unverifiable, err)
 		case err != nil:
 			rejected = append(rejected, err)
 		default:
 			accepted = append(accepted, &Found{Attestation: candidate, Evidence: evidence})
 		}
 	}
-	if len(failed) == 1 {
-		return nil, fmt.Errorf("%s: %w", source, failed[0])
+	if len(unverifiable) == 1 {
+		return nil, fmt.Errorf("%s: %w", source, unverifiable[0])
 	}
-	if len(failed) > 1 {
-		return nil, fmt.Errorf("%s: %d %s attestations %w: %w", source, len(failed), kind, ErrFailedVerification, joinErrors(failed))
+	if len(unverifiable) > 1 {
+		return nil, fmt.Errorf("%s: %d %s attestations could not be accepted: %w", source, len(unverifiable), kind, joinedErrors(unverifiable))
 	}
 	if len(accepted) == 0 {
 		if len(rejected) == 1 {
 			return nil, fmt.Errorf("%s: %w", source, rejected[0])
 		}
-		return nil, fmt.Errorf("%s: none of the %d %s attestations could be accepted: %w", source, len(rejected), kind, joinErrors(rejected))
+		return nil, fmt.Errorf("%s: none of the %d %s attestations could be accepted: %w", source, len(rejected), kind, joinedErrors(rejected))
 	}
 
 	sort.SliceStable(accepted, func(i, j int) bool {
@@ -104,10 +105,18 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 	return chosen, nil
 }
 
-func joinErrors(errs []error) error {
-	messages := make([]string, len(errs))
-	for i, err := range errs {
+// joinedErrors reports several errors on one line, which reads best on a
+// terminal, while errors.Is still finds each of them.
+type joinedErrors []error
+
+func (e joinedErrors) Error() string {
+	messages := make([]string, len(e))
+	for i, err := range e {
 		messages[i] = err.Error()
 	}
-	return errors.New(strings.Join(messages, "; "))
+	return strings.Join(messages, "; ")
+}
+
+func (e joinedErrors) Unwrap() []error {
+	return e
 }

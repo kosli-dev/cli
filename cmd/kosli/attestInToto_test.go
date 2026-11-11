@@ -338,6 +338,12 @@ func (suite *AttestInTotoCommandTestSuite) TestRefusesWhatItCannotTrust() {
 			goldenRegex: `^Error: bundle file .*/wrong-signer-and-unsigned.intoto.jsonl: attestation 1 failed verification: .*https://github.com/mallory/widget`,
 		},
 		{
+			wantError: true,
+			name:      "a key-signed envelope checked against an identity, which cannot be verified rather than failing",
+			cmd:       suite.command("--predicate-type provenance --name app " + intotoSigner + suite.bundle("key-signed-provenance.dsse.json")),
+			golden:    "Error: bundle file " + intotoFixtures + "/key-signed-provenance.dsse.json: the attestation could not be verified: a DSSE envelope carries no certificate to check --certificate-identity against. Supply the Sigstore bundle instead, or verify the envelope with --key\n",
+		},
+		{
 			wantError:   true,
 			name:        "a statement changed after signing",
 			cmd:         suite.command("--predicate-type provenance --name app " + intotoSigner + suite.bundle("tampered-provenance.sigstore.json")),

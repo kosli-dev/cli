@@ -3,6 +3,7 @@ package intoto
 import (
 	"crypto"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -92,10 +93,18 @@ func (e *Evidence) Time() time.Time {
 	return e.SignedTime
 }
 
-// ErrFailedVerification marks an attestation whose signature was checked and
-// did not verify against the policy, such as one by another signer or one
-// changed after signing, as distinct from one that is unsigned.
+// ErrFailedVerification marks a signed attestation whose signature was
+// checked and did not verify against the policy: made by another signer,
+// changed after signing, or without the log or timestamp evidence its trust
+// root requires.
 var ErrFailedVerification = errors.New("failed verification")
+
+// ErrCannotVerify marks a signed attestation whose signature could not be
+// checked at all: a trust root could not be fetched or does not cover the
+// certificate's issuer, the policy's method does not fit how it was signed, or
+// the key could not be read. It says nothing about whether the signature is
+// good.
+var ErrCannotVerify = errors.New("could not be verified")
 
 // Verifier checks attestations against a policy.
 type Verifier struct {
@@ -111,7 +120,9 @@ func NewVerifier(policy Policy, trust *TrustRoots) *Verifier {
 // Verify checks that a names the artifact with SHA-256 digest as its subject
 // and, when a is signed, that the signature is valid and made by the signer
 // the policy pins. An empty digest checks the signature alone, for an
-// attestation recorded on a trail rather than an artifact.
+// attestation recorded on a trail rather than an artifact. A signature that
+// does not verify is an ErrFailedVerification; one that cannot be checked is
+// an ErrCannotVerify.
 func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
 	if digest != "" {
 		if err := a.RequireSubject(digest); err != nil {
@@ -131,7 +142,11 @@ func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
 		return nil, fmt.Errorf("%s is signed, so its signer must be pinned to verify it. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", a.Describe())
 	}
 
-	result, entity, err := v.verifySignature(a, digest)
+	verifier, entity, policy, err := v.signatureCheck(a, digest)
+	if err != nil {
+		return nil, fmt.Errorf("%s %w: %w", a.Describe(), ErrCannotVerify, err)
+	}
+	result, err := verifier.Verify(entity, policy)
 	if err != nil {
 		return nil, fmt.Errorf("%s %w: %w", a.Describe(), ErrFailedVerification, err)
 	}
@@ -153,30 +168,33 @@ func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
 	return evidence, nil
 }
 
-func (v *Verifier) verifySignature(a *Attestation, digest string) (*verify.VerificationResult, *bundle.Bundle, error) {
+// signatureCheck prepares checking a's signature: the verifier, with the
+// trust material and evidence the signer's instance requires, the signed
+// entity, and the policy to check it against. An error here means the
+// signature cannot be checked, not that it is bad.
+func (v *Verifier) signatureCheck(a *Attestation, digest string) (*verify.Verifier, *bundle.Bundle, verify.PolicyBuilder, error) {
 	artifactPolicy := verify.WithoutArtifactUnsafe()
 	if digest != "" {
 		digestBytes, err := hex.DecodeString(normaliseDigest(digest))
 		if err != nil {
-			return nil, nil, fmt.Errorf("the artifact digest is not hexadecimal: %w", err)
+			return nil, nil, verify.PolicyBuilder{}, fmt.Errorf("the artifact digest is not hexadecimal: %w", err)
 		}
 		artifactPolicy = verify.WithArtifactDigest("sha256", digestBytes)
 	}
 
 	if v.policy.KeyPath != "" {
-		return v.verifyWithKey(a, artifactPolicy)
+		return v.keyCheck(a, artifactPolicy)
 	}
 
 	if a.bundle == nil {
-		return nil, nil, fmt.Errorf("a DSSE envelope carries no certificate to check --certificate-identity against. Supply the Sigstore bundle instead, or verify the envelope with --key")
+		return nil, nil, verify.PolicyBuilder{}, fmt.Errorf("a DSSE envelope carries no certificate to check --certificate-identity against. Supply the Sigstore bundle instead, or verify the envelope with --key")
 	}
-	verificationContent, err := a.bundle.VerificationContent()
+	leaf, err := signingCertificate(a.bundle)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, verify.PolicyBuilder{}, err
 	}
-	leaf := verificationContent.Certificate()
 	if leaf == nil {
-		return nil, nil, fmt.Errorf("it is signed with a key, not a certificate. Verify it with --key")
+		return nil, nil, verify.PolicyBuilder{}, fmt.Errorf("it is signed with a key, not a certificate. Verify it with --key")
 	}
 	issuerOrg := ""
 	if len(leaf.Issuer.Organization) > 0 {
@@ -184,24 +202,23 @@ func (v *Verifier) verifySignature(a *Attestation, digest string) (*verify.Verif
 	}
 	trustedMaterial, opts, err := v.trust.forCertificate(issuerOrg)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, verify.PolicyBuilder{}, err
 	}
 	identity, err := verify.NewShortCertificateIdentity(v.policy.CertificateOIDCIssuer, "", v.policy.CertificateIdentity, v.policy.CertificateIdentityRegexp)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, verify.PolicyBuilder{}, err
 	}
 	verifier, err := verify.NewVerifier(trustedMaterial, opts...)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, verify.PolicyBuilder{}, err
 	}
-	result, err := verifier.Verify(a.bundle, verify.NewPolicy(artifactPolicy, verify.WithCertificateIdentity(identity)))
-	return result, a.bundle, err
+	return verifier, a.bundle, verify.NewPolicy(artifactPolicy, verify.WithCertificateIdentity(identity)), nil
 }
 
-func (v *Verifier) verifyWithKey(a *Attestation, artifactPolicy verify.ArtifactPolicyOption) (*verify.VerificationResult, *bundle.Bundle, error) {
+func (v *Verifier) keyCheck(a *Attestation, artifactPolicy verify.ArtifactPolicyOption) (*verify.Verifier, *bundle.Bundle, verify.PolicyBuilder, error) {
 	key, err := loadKey(v.policy.KeyPath)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, verify.PolicyBuilder{}, err
 	}
 	keyMaterial := root.NewTrustedPublicKeyMaterial(func(string) (root.TimeConstrainedVerifier, error) {
 		return key, nil
@@ -211,7 +228,15 @@ func (v *Verifier) verifyWithKey(a *Attestation, artifactPolicy verify.ArtifactP
 	if entity == nil {
 		entity, err = envelopeAsBundle(a)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, verify.PolicyBuilder{}, err
+		}
+	} else {
+		leaf, err := signingCertificate(entity)
+		if err != nil {
+			return nil, nil, verify.PolicyBuilder{}, err
+		}
+		if leaf != nil {
+			return nil, nil, verify.PolicyBuilder{}, fmt.Errorf("it is signed with a certificate, not a key. Verify it with --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer")
 		}
 	}
 
@@ -219,11 +244,11 @@ func (v *Verifier) verifyWithKey(a *Attestation, artifactPolicy verify.ArtifactP
 	var opts []verify.VerifierOption
 	tlogEntries, err := entity.TlogEntries()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, verify.PolicyBuilder{}, err
 	}
 	timestamps, err := entity.Timestamps()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, verify.PolicyBuilder{}, err
 	}
 	switch {
 	case len(tlogEntries) > 0:
@@ -236,17 +261,26 @@ func (v *Verifier) verifyWithKey(a *Attestation, artifactPolicy verify.ArtifactP
 	if len(tlogEntries) > 0 || len(timestamps) > 0 {
 		trustRoot, err := v.trust.forKey()
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, verify.PolicyBuilder{}, err
 		}
 		trustedMaterial = root.TrustedMaterialCollection{trustRoot, keyMaterial}
 	}
 
 	verifier, err := verify.NewVerifier(trustedMaterial, opts...)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, verify.PolicyBuilder{}, err
 	}
-	result, err := verifier.Verify(entity, verify.NewPolicy(artifactPolicy, verify.WithKey()))
-	return result, entity, err
+	return verifier, entity, verify.NewPolicy(artifactPolicy, verify.WithKey()), nil
+}
+
+// signingCertificate returns the certificate b was signed with, or nil when b
+// was signed with a key.
+func signingCertificate(b *bundle.Bundle) (*x509.Certificate, error) {
+	content, err := b.VerificationContent()
+	if err != nil {
+		return nil, err
+	}
+	return content.Certificate(), nil
 }
 
 // envelopeAsBundle puts a bare DSSE envelope in a bundle whose verification
