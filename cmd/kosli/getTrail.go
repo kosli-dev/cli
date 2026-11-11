@@ -375,7 +375,7 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 			return err
 		}
 		rows = append(rows, fmt.Sprintf("  Timestamp:\t%s", commitTimestamp))
-		if url, ok := commitInfo["url"]; ok {
+		if url, ok := commitInfo["url"].(string); ok && url != "" {
 			rows = append(rows, fmt.Sprintf("  url:\t%s", url))
 		}
 		rows = append(rows, fmt.Sprintf("  message:\t%s", prefixEachLine(stringOrNA(commitInfo["message"]), "\t")))

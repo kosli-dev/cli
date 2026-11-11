@@ -16,6 +16,7 @@ func TestPrintTrailAsTableCommitInfo(t *testing.T) {
 		name       string
 		commitInfo string
 		want       []string
+		notWant    []string
 	}{
 		{
 			name:       "only sha1",
@@ -26,6 +27,13 @@ func TestPrintTrailAsTableCommitInfo(t *testing.T) {
 			name:       "sha1 and branch",
 			commitInfo: `{"sha1": "abc1234def", "branch": "main"}`,
 			want:       []string{"abc1234def", "Author:          N/A", "Timestamp:       N/A", "message:         N/A"},
+		},
+		{
+			// the server returns absent commit fields as explicit nulls
+			name:       "only sha1 with null fields",
+			commitInfo: `{"sha1": "abc1234def", "message": null, "author": null, "branch": null, "timestamp": null, "url": null}`,
+			want:       []string{"Sha1:            abc1234def", "Author:          N/A", "Timestamp:       N/A", "message:         N/A"},
+			notWant:    []string{"%!", "url:"},
 		},
 		{
 			name:       "full commit info",
@@ -41,6 +49,9 @@ func TestPrintTrailAsTableCommitInfo(t *testing.T) {
 			require.NoError(t, printTrailAsTable(raw, &buf, 0))
 			for _, w := range tc.want {
 				require.Contains(t, buf.String(), w)
+			}
+			for _, nw := range tc.notWant {
+				require.NotContains(t, buf.String(), nw)
 			}
 		})
 	}
