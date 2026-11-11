@@ -213,20 +213,58 @@ func (o *attestSbomOptions) loadSbom() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
 	}
-	fingerprint := fmt.Sprintf("%x", sha256.Sum256(content))
 
-	data, err := sbom.ProcessSBOM(content)
+	o.payload.AttestationData, err = sbomAttestationData(content, content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse SBOM file [%s]: %s", o.sbomFilePath, err)
 	}
-
-	o.payload.AttestationData = SbomAttestationData{
-		Format:              data.Format,
-		OriginalFingerprint: fingerprint,
-		Document:            data.Document,
-	}
-	o.annotate(data.Format, fingerprint)
+	// After CommonAttestationOptions.run, which assigns payload.Annotations
+	// wholesale from --annotate; called before it, both keys are discarded.
+	o.payload.Annotations = withAnnotations(o.payload.Annotations, sbomAnnotations(o.payload.AttestationData))
 	return content, nil
+}
+
+// sbomAttestationData summarises document, the SBOM itself, and fingerprints
+// attached, the bytes uploaded with the attestation, so the recorded checksum
+// is one a reader can check against the attachment. The two are the same
+// bytes unless the SBOM arrives inside an attestation bundle, which is then
+// what is attached.
+func sbomAttestationData(attached, document []byte) (SbomAttestationData, error) {
+	data, err := sbom.ProcessSBOM(document)
+	if err != nil {
+		return SbomAttestationData{}, err
+	}
+	return SbomAttestationData{
+		Format:              data.Format,
+		OriginalFingerprint: fmt.Sprintf("%x", sha256.Sum256(attached)),
+		Document:            data.Document,
+	}, nil
+}
+
+// sbomAnnotations records what the SBOM said about itself where a reader sees
+// it on the trail page. The same two values are carried inside
+// attestation_data.
+func sbomAnnotations(data SbomAttestationData) map[string]string {
+	return map[string]string{
+		sbomFormatAnnotation: data.Format,
+		sbomSha256Annotation: data.OriginalFingerprint,
+	}
+}
+
+// withAnnotations returns base with extra added, in a new map. base is often
+// the --annotate flag's own map -- processAnnotations returns its argument --
+// so writing into it would put derived keys into the map a reserved-key check
+// reads, and a second run of the same options would be refused for a key
+// nobody supplied.
+func withAnnotations(base, extra map[string]string) map[string]string {
+	merged := make(map[string]string, len(base)+len(extra))
+	for key, value := range base {
+		merged[key] = value
+	}
+	for key, value := range extra {
+		merged[key] = value
+	}
+	return merged
 }
 
 // rejectAttachments refuses --attachments however it was set. Two or more
@@ -274,25 +312,4 @@ func (o *attestSbomOptions) rejectReservedAnnotations() error {
 		}
 	}
 	return nil
-}
-
-// annotate records what the file said about itself where a reader sees it on
-// the trail page. The same two values are carried inside attestation_data.
-//
-// It must run after CommonAttestationOptions.run, which assigns
-// payload.Annotations wholesale from the --annotate flag. Called before that,
-// both keys are discarded.
-//
-// It builds a new map rather than writing into that one. The two are the same
-// map -- processAnnotations returns its argument -- so writing would put these
-// keys into the --annotate map that rejectReservedAnnotations reads, and a
-// second run of the same options would be refused for a key nobody supplied.
-func (o *attestSbomOptions) annotate(format, fingerprint string) {
-	merged := make(map[string]string, len(o.payload.Annotations)+2)
-	for key, value := range o.payload.Annotations {
-		merged[key] = value
-	}
-	merged[sbomFormatAnnotation] = format
-	merged[sbomSha256Annotation] = fingerprint
-	o.payload.Annotations = merged
 }
