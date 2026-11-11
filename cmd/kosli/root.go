@@ -349,9 +349,10 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	allowUnsignedFlag               = "[optional] Record an unsigned attestation, marked as unverified. Without it, an unsigned attestation is refused."
 	intotoBuildURLFlag              = "[optional] The build URL to record when the provenance does not say. Provenance only."
 	intotoCommitURLFlag             = "[optional] The commit URL to record when the provenance does not say. Provenance only."
-	intotoRepoProviderFlag          = "[optional] The provider of the repository the provenance names, when its host is not github.com, gitlab.com or bitbucket.org. One of: " + repoProviderList
+	intotoRepoProviderFlag          = "[optional] The provider of the repository the provenance names, when its host is not github.com, gitlab.com or bitbucket.org. One of: " + repoProviderList + ". For a GitHub Enterprise host, also give --github-base-url to look the commit up there."
 	intotoRepoRootFlag              = "[defaulted] The git checkout to read the commit's details from when they cannot be looked up. Provenance only."
 	intotoGithubTokenFlag           = "[optional] A GitHub token, to look up the commit's message, author and time when the provenance names a GitHub repository."
+	intotoGithubBaseURLFlag         = "[optional] The GitHub Enterprise Server to look the commit up on, such as https://github.example.com, when the provenance names a repository there. Without it the commit is looked up on github.com, never at a host taken from the provenance."
 	excludeScalingFlag              = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag              = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."
 	includedEnvironments            = "[optional] Comma separated list of environments to include in logical environment"

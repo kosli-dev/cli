@@ -110,8 +110,10 @@ pinned by the SHA-256 of the attestation's bytes.
 For provenance, the commit's message, author and time are looked up on GitHub with
 ^--github-token^ when the statement names a GitHub repository, or else read from the git
 checkout at ^--repo-root^ if it holds the commit. Failing both, only the commit's SHA is
-recorded, without its details or branch. A build URL or commit URL the statement does not
-carry can be given with ^--build-url^ and ^--commit-url^.
+recorded, without its details or branch. A repository on GitHub Enterprise Server needs
+^--repo-provider github^ and ^--github-base-url^ to be looked up there: the token is only
+sent to the server you name, never to a host taken from the statement. A build URL or
+commit URL the statement does not carry can be given with ^--build-url^ and ^--commit-url^.
 ` + fingerprintDesc + kosliIgnoreDesc
 
 const attestInTotoExample = `
@@ -216,7 +218,7 @@ func newAttestInTotoCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.repoProvider, "repo-provider", "", intotoRepoProviderFlag)
 	cmd.Flags().StringVar(&o.repoRoot, "repo-root", ".", intotoRepoRootFlag)
 	cmd.Flags().StringVar(&o.githubToken, "github-token", "", intotoGithubTokenFlag)
-	cmd.Flags().StringVar(&o.githubBaseURL, "github-base-url", "", githubBaseURLFlag)
+	cmd.Flags().StringVar(&o.githubBaseURL, "github-base-url", "", intotoGithubBaseURLFlag)
 	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
