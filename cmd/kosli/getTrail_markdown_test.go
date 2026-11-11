@@ -413,3 +413,16 @@ func TestPrintTrailAsMarkdownEnvironmentLinks(t *testing.T) {
 		"artifact 'artifact' stopped running in ['prod-aws'](https://app.kosli.com/my-org/environments/prod-aws/)",
 		"without a snapshot index the link falls back to the environment page")
 }
+
+func TestPrintTrailAsMarkdownPartialCommitInfo(t *testing.T) {
+	t.Setenv("KOSLI_TESTS", "true")
+	global = &GlobalOpts{Host: "http://localhost:8001", Org: "docs-cmd-test-user-shared"}
+	o := &getTrailOptions{flowName: "get-trail"}
+	raw := `{"name": "t1", "compliance_state": "INCOMPLETE", "last_modified_at": 1452902400,
+		"git_commit_info": {"sha1": "abc1234def"}, "events": []}`
+
+	var buf bytes.Buffer
+	require.NoError(t, o.printTrailAsMarkdown(raw, &buf, 0))
+	require.Contains(t, buf.String(), "| Author | N/A |")
+	require.Contains(t, buf.String(), "| Message | N/A |")
+}

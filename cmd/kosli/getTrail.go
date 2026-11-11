@@ -124,9 +124,9 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 		b.WriteString("|  |  |\n")
 		b.WriteString("| --- | --- |\n")
 		fmt.Fprintf(&b, "| Sha1 | %s |\n", sha)
-		fmt.Fprintf(&b, "| Author | %s |\n", mdCell(commitInfo["author"]))
+		fmt.Fprintf(&b, "| Author | %s |\n", mdCell(stringOrNA(commitInfo["author"])))
 		fmt.Fprintf(&b, "| Timestamp | %s |\n", mdCell(commitTimestamp))
-		fmt.Fprintf(&b, "| Message | %s |\n", mdCell(firstLine(commitInfo["message"])))
+		fmt.Fprintf(&b, "| Message | %s |\n", mdCell(stringOrNA(firstLine(commitInfo["message"]))))
 	}
 
 	writeAttestationStatuses(&b, trail["compliance_status"], trailURL)
