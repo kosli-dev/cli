@@ -160,6 +160,14 @@ func TestReadEnvelope(t *testing.T) {
 		}
 	})
 
+	t.Run("refuses several attestations, which no single bundle or envelope can be", func(t *testing.T) {
+		content, err := os.ReadFile(filepath.Join("testdata", "attestations.intoto.jsonl"))
+		require.NoError(t, err)
+
+		_, _, err = ReadEnvelope(content)
+		require.ErrorIs(t, err, ErrSeveralDocuments)
+	})
+
 	t.Run("reports a malformed envelope rather than treating it as an SBOM", func(t *testing.T) {
 		_, wrapped, err := ReadEnvelope([]byte(`{"payloadType": "application/vnd.in-toto+json", "payload": "not base64!", "signatures": []}`))
 		require.True(t, wrapped)

@@ -87,16 +87,24 @@ func Read(content []byte) ([]*Attestation, error) {
 	return attestations, nil
 }
 
+// ErrSeveralDocuments is ReadEnvelope's error for content holding more than
+// one JSON document, such as an .intoto.jsonl file, which is neither a single
+// bundle or envelope nor a document of its own.
+var ErrSeveralDocuments = errors.New("holds several JSON documents, not a single bundle or envelope")
+
 // ReadEnvelope reads content as a single Sigstore bundle or DSSE envelope.
 // wrapped is false, with no error, for anything else, so a caller can treat
 // that content as the document itself; a malformed bundle or envelope is
-// still an error.
+// still an error, and so is ErrSeveralDocuments.
 func ReadEnvelope(content []byte) (attestation *Attestation, wrapped bool, err error) {
 	var probe struct {
 		MediaType   string `json:"mediaType"`
 		PayloadType string `json:"payloadType"`
 	}
 	if json.Unmarshal(content, &probe) != nil {
+		if documents, err := splitDocuments(content); err == nil && len(documents) > 1 {
+			return nil, false, ErrSeveralDocuments
+		}
 		return nil, false, nil
 	}
 	if !strings.HasPrefix(probe.MediaType, bundleMediaTypePrefix) && probe.PayloadType == "" {

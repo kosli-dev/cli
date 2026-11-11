@@ -137,6 +137,12 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomUnwrapsAnAttestation() {
 		},
 		{
 			wantError: true,
+			name:      "points a file holding several attestations to attest in-toto",
+			cmd:       command("--sbom-file " + filepath.Join(intotoFixtures, "attestations.intoto.jsonl")),
+			golden:    "Error: SBOM file [" + filepath.Join(intotoFixtures, "attestations.intoto.jsonl") + "] holds several JSON documents, not a single bundle or envelope. To record the SBOM from a file holding several attestations, such as an .intoto.jsonl file, use kosli attest in-toto --predicate-type sbom\n",
+		},
+		{
+			wantError: true,
 			name:      "refuses an attestation that is not an SBOM",
 			cmd:       command("--sbom-file " + filepath.Join(intotoFixtures, "github-provenance.sigstore.json")),
 			golden:    "Error: SBOM file [" + filepath.Join(intotoFixtures, "github-provenance.sigstore.json") + "]: the attestation is https://slsa.dev/provenance/v1, not an SPDX or CycloneDX SBOM\n",

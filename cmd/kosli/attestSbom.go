@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -272,6 +273,9 @@ func (o *attestSbomOptions) loadSbom() ([]byte, error) {
 // plain SBOM file.
 func (o *attestSbomOptions) unwrap(content []byte) (document []byte, evidence *intoto.Evidence, err error) {
 	attestation, wrapped, err := intoto.ReadEnvelope(content)
+	if errors.Is(err, intoto.ErrSeveralDocuments) {
+		return nil, nil, fmt.Errorf("SBOM file [%s] %s. To record the SBOM from a file holding several attestations, such as an .intoto.jsonl file, use kosli attest in-toto --predicate-type sbom", o.sbomFilePath, err)
+	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read SBOM file [%s]: %s", o.sbomFilePath, err)
 	}
