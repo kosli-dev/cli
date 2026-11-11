@@ -335,23 +335,32 @@ func (o *attestInTotoOptions) recordProvenance(args []string, found *intoto.Foun
 	if err != nil {
 		return err
 	}
-	if provenance.Commit == "" {
-		return fmt.Errorf("the provenance names no git commit, and Kosli records an artifact by the commit it was built from")
-	}
-	buildURL := firstNonEmpty(provenance.BuildURL, o.buildURL)
-	commitURL := firstNonEmpty(provenance.CommitURL, o.commitURL)
+	buildURL, commitURL := provenance.BuildURL, provenance.CommitURL
 	var missingFields, missingFlags []string
-	if buildURL == "" {
-		missingFields, missingFlags = append(missingFields, "build URL"), append(missingFlags, "--build-url")
-	}
-	if commitURL == "" {
-		missingFields, missingFlags = append(missingFields, "commit URL"), append(missingFlags, "--commit-url")
+	noRepository := false
+	for _, field := range provenance.Missing {
+		switch field {
+		case intoto.MissingCommit:
+			return fmt.Errorf("the provenance names no git commit, and Kosli records an artifact by the commit it was built from")
+		case intoto.MissingBuildURL:
+			buildURL = o.buildURL
+			if buildURL == "" {
+				missingFields, missingFlags = append(missingFields, field), append(missingFlags, "--build-url")
+			}
+		case intoto.MissingCommitURL:
+			commitURL = o.commitURL
+			if commitURL == "" {
+				missingFields, missingFlags = append(missingFields, field), append(missingFlags, "--commit-url")
+			}
+		case intoto.MissingRepository:
+			noRepository = true
+		}
 	}
 	if len(missingFlags) > 0 {
 		return fmt.Errorf("the provenance does not say the %s, which Kosli records an artifact with. Pass %s",
 			strings.Join(missingFields, " or the "), strings.Join(missingFlags, " and "))
 	}
-	if provenance.Repository.URL == "" {
+	if noRepository {
 		logger.Warn("the provenance does not name the repository it was built from, so no repository is recorded")
 	}
 

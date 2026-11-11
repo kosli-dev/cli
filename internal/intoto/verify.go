@@ -71,9 +71,6 @@ type Evidence struct {
 	// alternative name and OIDC issuer; empty for a key signature.
 	SignerIdentity string
 	SignerIssuer   string
-	// RunInvocationURI is the CI run that signed, when the certificate says.
-	RunInvocationURI string
-	SignedWithKey    bool
 	// LogIndex, IntegratedTime and LogEntryURL describe the verified
 	// transparency log entry, when there is one.
 	LogIndex       *int64
@@ -132,11 +129,9 @@ func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
 	}
 
 	evidence.Verified = true
-	evidence.SignedWithKey = v.policy.KeyPath != ""
 	if summary := result.Signature.Certificate; summary != nil {
 		evidence.SignerIdentity = summary.SubjectAlternativeName
 		evidence.SignerIssuer = summary.Issuer
-		evidence.RunInvocationURI = summary.RunInvocationURI
 	}
 	for _, ts := range result.VerifiedTimestamps {
 		switch ts.Type {

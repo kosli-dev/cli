@@ -49,10 +49,8 @@ func TestVerifySignedBundle(t *testing.T) {
 		sum := sha256.Sum256(content)
 
 		require.True(t, evidence.Verified)
-		require.False(t, evidence.SignedWithKey)
 		require.Equal(t, fixtureIdentity, evidence.SignerIdentity)
 		require.Equal(t, fixtureIssuer, evidence.SignerIssuer)
-		require.Equal(t, fixtureRunURI, evidence.RunInvocationURI)
 		require.NotNil(t, evidence.LogIndex)
 		require.Equal(t, int64(0), *evidence.LogIndex)
 		require.False(t, evidence.IntegratedTime.IsZero())
@@ -112,7 +110,6 @@ func TestVerifyKeySignedEnvelope(t *testing.T) {
 		evidence, err := verifyFixture(t, Policy{KeyPath: filepath.Join("testdata", "key.pub")}, "key-signed-provenance.dsse.json")
 		require.NoError(t, err)
 		require.True(t, evidence.Verified)
-		require.True(t, evidence.SignedWithKey)
 		require.Empty(t, evidence.SignerIdentity)
 		require.Nil(t, evidence.LogIndex)
 	})

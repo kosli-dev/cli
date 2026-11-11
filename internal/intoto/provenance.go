@@ -35,9 +35,18 @@ type Provenance struct {
 	// Workflow is the CI workflow file that ran the build, when the build
 	// type names one.
 	Workflow string
-	// Missing names what a caller would want but the statement did not say.
+	// Missing names what a caller would want but the statement did not say,
+	// as Missing* values.
 	Missing []string
 }
+
+// The values of Provenance.Missing.
+const (
+	MissingBuildURL   = "build URL"
+	MissingCommit     = "commit"
+	MissingCommitURL  = "commit URL"
+	MissingRepository = "repository"
+)
 
 // Repository is the source repository a provenance statement says was built.
 type Repository struct {
@@ -178,10 +187,10 @@ func (p *Provenance) finish(repoProvider string) {
 	}
 
 	for _, field := range []struct{ name, value string }{
-		{"build URL", p.BuildURL},
-		{"commit", p.Commit},
-		{"commit URL", p.CommitURL},
-		{"repository", p.Repository.URL},
+		{MissingBuildURL, p.BuildURL},
+		{MissingCommit, p.Commit},
+		{MissingCommitURL, p.CommitURL},
+		{MissingRepository, p.Repository.URL},
 	} {
 		if field.value == "" {
 			p.Missing = append(p.Missing, field.name)
