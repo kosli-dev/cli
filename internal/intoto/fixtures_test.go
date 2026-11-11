@@ -278,6 +278,10 @@ func TestRegenerateFixtures(t *testing.T) {
 		s.bundle(statement("vuln-scan.json"), fixtureIdentity, time.Minute),
 		statement("vuln-scan.json"),
 	))
+	writeFixture(t, "wrong-signer-and-unsigned.intoto.jsonl", jsonl(
+		s.bundle(statement("github-provenance.json"), fixtureOtherIdentity, time.Minute),
+		statement("github-provenance.json"),
+	))
 
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(t, err)

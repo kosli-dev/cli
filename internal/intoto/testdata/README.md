@@ -36,5 +36,6 @@ Sigstore signature is checked against the time Rekor logged it.
 | `attestations.intoto.jsonl` | Three signed bundles, one per line: a vulnerability scan, provenance and a CycloneDX SBOM. |
 | `newest-first.intoto.jsonl` | Two signed provenance bundles; the first was logged later. |
 | `vuln-only.intoto.jsonl` | Only vulnerability scans, one signed and one not. |
+| `wrong-signer-and-unsigned.intoto.jsonl` | Provenance signed by `https://github.com/mallory/...`, then the same provenance unsigned. |
 | `key-signed-provenance.dsse.json`, `key.pub` | A DSSE envelope signed with a key rather than a certificate, and that key. |
 | `unsigned-spdx-sbom.dsse.json` | A DSSE envelope with no signatures. |

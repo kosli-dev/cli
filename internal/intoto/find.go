@@ -44,14 +44,18 @@ type Found struct {
 	*Attestation
 	Evidence *Evidence
 	// Rejected holds why other attestations of the same kind about the same
-	// artifact were not chosen, so a caller can report them.
+	// artifact were not chosen, such as being unsigned, so a caller can report
+	// them.
 	Rejected []error
 }
 
 // Find returns the one attestation of kind about the artifact with SHA-256
 // digest that source holds, verified by verifier. When several qualify, a
 // verified one is preferred to an unsigned one, then the newest by its
-// trusted time, then the one read last.
+// trusted time, then the one read last. If any fails verification, Find
+// returns that and chooses none: a bad signature is a stronger signal than a
+// missing one, so an unsigned or verified alternative is not recorded in its
+// place.
 func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) (*Found, error) {
 	attestations, err := source.Attestations(digest)
 	if err != nil {
@@ -63,14 +67,23 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 	}
 
 	var accepted []*Found
-	var rejected []error
+	var rejected, failed []error
 	for _, candidate := range candidates {
 		evidence, err := verifier.Verify(candidate, digest)
-		if err != nil {
+		switch {
+		case errors.Is(err, ErrFailedVerification):
+			failed = append(failed, err)
+		case err != nil:
 			rejected = append(rejected, err)
-			continue
+		default:
+			accepted = append(accepted, &Found{Attestation: candidate, Evidence: evidence})
 		}
-		accepted = append(accepted, &Found{Attestation: candidate, Evidence: evidence})
+	}
+	if len(failed) == 1 {
+		return nil, fmt.Errorf("%s: %w", source, failed[0])
+	}
+	if len(failed) > 1 {
+		return nil, fmt.Errorf("%s: %d %s attestations %w: %w", source, len(failed), kind, ErrFailedVerification, joinErrors(failed))
 	}
 	if len(accepted) == 0 {
 		if len(rejected) == 1 {

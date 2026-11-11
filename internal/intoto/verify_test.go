@@ -1,6 +1,7 @@
 package intoto
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -183,6 +184,21 @@ func TestPolicyValidate(t *testing.T) {
 	})
 }
 
+// jsonlFile writes the named fixtures, one per line, as an .intoto.jsonl file
+// and returns its path. A name under statements/ is an unsigned statement.
+func jsonlFile(t *testing.T, names ...string) string {
+	t.Helper()
+	lines := make([][]byte, len(names))
+	for i, name := range names {
+		content, err := os.ReadFile(filepath.Join("testdata", name))
+		require.NoError(t, err)
+		lines[i] = compact(t, content)
+	}
+	path := filepath.Join(t.TempDir(), "attestations.intoto.jsonl")
+	require.NoError(t, os.WriteFile(path, append(bytes.Join(lines, []byte("\n")), '\n'), 0o600))
+	return path
+}
+
 func TestFind(t *testing.T) {
 	find := func(t *testing.T, policy Policy, kind PredicateKind, name string) (*Found, error) {
 		return Find(BundleFile{Path: filepath.Join("testdata", name)}, kind, artifactDigest, NewVerifier(policy, fixtureTrust(t)))
@@ -210,6 +226,38 @@ func TestFind(t *testing.T) {
 	t.Run("names the predicate types found when none is the kind asked for", func(t *testing.T) {
 		_, err := find(t, pinnedSigner, KindProvenance, "vuln-only.intoto.jsonl")
 		require.EqualError(t, err, "bundle file testdata/vuln-only.intoto.jsonl: found no provenance attestation (SLSA provenance v1 or v0.2); the predicate types found were: https://cosign.sigstore.dev/attestation/vuln/v1")
+	})
+
+	t.Run("refuses the file when a candidate fails verification, though an unsigned one is allowed", func(t *testing.T) {
+		_, err := find(t, Policy{CertificateIdentity: fixtureIdentity, CertificateOIDCIssuer: fixtureIssuer, AllowUnsigned: true}, KindProvenance, "wrong-signer-and-unsigned.intoto.jsonl")
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.ErrorContains(t, err, "bundle file testdata/wrong-signer-and-unsigned.intoto.jsonl: attestation 1 failed verification: ")
+	})
+
+	t.Run("refuses the file when a candidate fails verification, though another verifies", func(t *testing.T) {
+		path := jsonlFile(t, "github-provenance.sigstore.json", "tampered-provenance.sigstore.json")
+
+		_, err := Find(BundleFile{Path: path}, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.ErrorContains(t, err, "attestation 2 failed verification: ")
+	})
+
+	t.Run("names every candidate that failed verification", func(t *testing.T) {
+		path := jsonlFile(t, "wrong-signer-provenance.sigstore.json", "tampered-provenance.sigstore.json")
+
+		_, err := Find(BundleFile{Path: path}, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.ErrorContains(t, err, ": 2 provenance attestations failed verification: attestation 1 failed verification: ")
+		require.ErrorContains(t, err, "; attestation 2 failed verification: ")
+	})
+
+	t.Run("reports a merely unsigned alternative without failing", func(t *testing.T) {
+		path := jsonlFile(t, "github-provenance.sigstore.json", filepath.Join("statements", "github-provenance.json"))
+
+		found, err := Find(BundleFile{Path: path}, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
+		require.NoError(t, err)
+		require.Equal(t, 1, found.Position)
+		require.Len(t, found.Rejected, 1)
 	})
 
 	t.Run("reports why the only candidate was refused", func(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -92,6 +93,11 @@ func (e *Evidence) Time() time.Time {
 }
 
 // Verifier checks attestations against a policy.
+// ErrFailedVerification marks an attestation whose signature was checked and
+// did not verify against the policy, such as one by another signer or one
+// changed after signing, as distinct from one that is unsigned.
+var ErrFailedVerification = errors.New("failed verification")
+
 type Verifier struct {
 	policy Policy
 	trust  *TrustRoots
@@ -127,7 +133,7 @@ func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
 
 	result, entity, err := v.verifySignature(a, digest)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed verification: %w", a.Describe(), err)
+		return nil, fmt.Errorf("%s %w: %w", a.Describe(), ErrFailedVerification, err)
 	}
 
 	evidence.Verified = true

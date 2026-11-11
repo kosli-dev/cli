@@ -99,7 +99,9 @@ with Sigstore against a signer you pin: ^--certificate-identity^ (or
 way to accept any valid certificate. The trust roots of Sigstore's public-good instance and
 of GitHub's own instance, which signs attestations for private repositories, are fetched
 over TUF. An unsigned attestation is refused unless ^--allow-unsigned^ is given, and is then
-recorded as unverified.
+recorded as unverified. An attestation that fails verification, because another signer made
+it or it was changed after signing, fails the command and nothing is recorded, even when
+another attestation in the file would qualify.
 
 The record is annotated with ^verified^ and, for a signed attestation, ^signer_identity^,
 ^signer_issuer^, ^log_index^, ^integrated_time^ and ^signed_timestamp^ where they apply.

@@ -333,6 +333,12 @@ func (suite *AttestInTotoCommandTestSuite) TestRefusesWhatItCannotTrust() {
 		},
 		{
 			wantError:   true,
+			name:        "a file where one attestation has the wrong signer, though another is unsigned and allowed",
+			cmd:         suite.command("--predicate-type provenance --name app --allow-unsigned " + intotoSigner + suite.bundle("wrong-signer-and-unsigned.intoto.jsonl")),
+			goldenRegex: `^Error: bundle file .*/wrong-signer-and-unsigned.intoto.jsonl: attestation 1 failed verification: .*https://github.com/mallory/widget`,
+		},
+		{
+			wantError:   true,
 			name:        "a statement changed after signing",
 			cmd:         suite.command("--predicate-type provenance --name app " + intotoSigner + suite.bundle("tampered-provenance.sigstore.json")),
 			goldenRegex: `^Error: bundle file .*/tampered-provenance.sigstore.json: the attestation failed verification: `,
