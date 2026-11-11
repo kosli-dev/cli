@@ -192,6 +192,8 @@ func (suite *AttestInTotoCommandTestSuite) TestProvenanceBuildsTheArtifactFromTh
 }
 
 func (suite *AttestInTotoCommandTestSuite) TestProvenanceWhenTheStatementLacksDetails() {
+	// CI sets a real token, which would send the cases that expect no lookup to api.github.com.
+	suite.T().Setenv("KOSLI_GITHUB_TOKEN", "")
 	noURLs := statementVariant(suite.T(),
 		`"invocationId": "`+intotoBuildURL+`"`, `"invocationId": "local-17"`,
 		"https://github.com/acme/widget", "https://git.example.com/acme/widget")
