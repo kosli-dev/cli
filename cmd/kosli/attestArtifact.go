@@ -65,6 +65,7 @@ This command always requires access to a git repository to associate the artifac
 The command fails if no repository is found at ^--repo-root^, even when ^--fingerprint^ is given.
 ` + commitDetailsDesc + `
 
+Running a build command is experimental (beta) and may change between releases without warning.
 Everything after ^--^ runs as a build command, and the artifact is attested only if the build succeeds.
 Its fingerprint is calculated after the build. The build command and its duration are recorded in the
 ^build_command^ and ^build_duration_seconds^ annotations. Masking in ^build_command^ only covers the API token and the
@@ -112,7 +113,7 @@ kosli attest artifact ANOTHER_FILE.txt \
 	--api-token yourApiToken \
 	--org yourOrgName
 
-# Build an artifact and attest it in one step (the attestation only happens if the build succeeds)
+# [experimental] Build an artifact and attest it in one step (the attestation only happens if the build succeeds)
 kosli attest artifact dist/app \
 	--artifact-type file \
 	--name yourTemplateArtifactName \
