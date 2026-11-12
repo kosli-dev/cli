@@ -1,0 +1,115 @@
+# Sample workflow: record in Kosli the SLSA provenance and the SBOM that
+# actions/attest makes for a container image.
+#
+# actions/attest signs each attestation as this workflow and stores it with
+# GitHub. `kosli attest in-toto` then reads it back from GitHub by the image's
+# digest, verifies the signature, and records it, rather than regenerating the
+# same evidence with `kosli attest artifact` and `kosli attest sbom`.
+#
+# In GitHub Actions the command needs few flags:
+#   --source          defaults to github
+#   --github-org      defaults to this repository's owner
+#   --repository      defaults to this repository
+#   the signer        defaults to a workflow in this repository
+#
+# A reusable workflow in another repository signs as that repository, so pin it:
+#   --certificate-identity-regexp '^https://github.com/yourOrg/shared-workflows/' \
+#   --certificate-oidc-issuer https://token.actions.githubusercontent.com
+#
+# The flow's template is expected to declare an artifact named `app` with an
+# attestation named `sbom`:
+#
+#   version: 1
+#   trail:
+#     artifacts:
+#       - name: app
+#         attestations:
+#           - name: sbom
+#             type: sbom
+
+name: Build, attest and record in Kosli
+
+on:
+  push:
+    branches: [main]
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+  KOSLI_ORG: yourOrgName
+  KOSLI_FLOW: yourFlowName
+  KOSLI_TRAIL: ${{ github.sha }}
+  KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write      # actions/attest signs as this workflow
+      attestations: write  # actions/attest stores the attestations; kosli reads them back
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push the image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Attest the image's provenance
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+
+      - name: Generate an SBOM for the image
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: false
+
+      - name: Attest the image's SBOM
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          sbom-path: sbom.spdx.json
+
+      - uses: kosli-dev/setup-cli-action@v5
+
+      - name: Begin the Kosli trail
+        run: kosli begin trail "${KOSLI_TRAIL}"
+
+      # The commit, branch, repository and build URL recorded are the ones the
+      # provenance states, so this step could equally run in a later job or in
+      # another workflow, such as a deployment.
+      - name: Record the provenance in Kosli, as the artifact named app
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          KOSLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          kosli attest in-toto \
+            --fingerprint "${DIGEST#sha256:}" \
+            --predicate-type provenance \
+            --name app
+
+      - name: Record the SBOM in Kosli, as app.sbom
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          KOSLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          kosli attest in-toto \
+            --fingerprint "${DIGEST#sha256:}" \
+            --predicate-type sbom \
+            --name app.sbom
