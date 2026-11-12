@@ -167,6 +167,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	evaluationShowInputFlag         = "[optional] Add the document the policy read as input under .input. Needs --output json."
 	evaluationFixtureFlag           = "[optional] Write the evaluation's input, params and policy files to --dir, to replay it with OPA."
 	evaluationFixtureDirFlag        = "[conditional] The directory --fixture writes to. It must be empty or not exist yet. Only needed with --fixture."
+	dismissAllProductUpdatesFlag    = "[optional] Dismiss every unread product update, instead of giving their ids."
 	regoPolicySearchFlag            = "[optional] Only list rego policies whose name or identifier contains this substring (case-insensitive)."
 	regoPolicySortFlag              = "[optional] The field to sort rego policies by. Valid values are: [updated_at, identifier]. (defaults to updated_at)"
 	regoPolicySortDirectionFlag     = "[optional] The direction to sort rego policies in. Valid values are: [asc, desc]. (defaults to desc)"
@@ -658,6 +659,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		newDisableCmd(out),
 		newEnableCmd(out),
 		newTagCmd(out),
+		newDismissCmd(out),
 		newConfigCmd(out),
 		newAttachPolicyCmd(out),
 		newDetachPolicyCmd(out),

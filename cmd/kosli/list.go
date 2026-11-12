@@ -47,6 +47,7 @@ func newListCmd(out io.Writer) *cobra.Command {
 		newListApiKeysCmd(out),
 		newListServiceAccountsCmd(out),
 		newListRegoPoliciesCmd(out),
+		newListProductUpdatesCmd(out),
 	)
 
 	return cmd

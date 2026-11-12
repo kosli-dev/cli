@@ -1,4 +1,5 @@
 {
+ "all": "switch",
  "annotate": "metadata",
  "archived": "filter",
  "artifact-type": "identity",

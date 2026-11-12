@@ -622,6 +622,10 @@
   "show-unchanged": "bool"
  },
  "disable beta": {},
+ "dismiss product-updates": {
+  "all": "bool",
+  "dry-run": "bool"
+ },
  "enable beta": {},
  "evaluate input": {
   "assert": "bool",
@@ -800,6 +804,9 @@
   "page-limit": "int"
  },
  "list policies": {
+  "output": "string"
+ },
+ "list product-updates": {
   "output": "string"
  },
  "list rego-policies": {

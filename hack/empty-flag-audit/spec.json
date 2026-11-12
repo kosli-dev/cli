@@ -5206,5 +5206,39 @@
       "source": "bundle",
       "trail": "{trail}"
     }
+  },
+  "list product-updates": {
+    "args": [],
+    "flags": {},
+    "baseline_ok": false,
+    "error": "the server the audit runs against does not offer the product updates endpoints",
+    "needs": "a server that implements it",
+    "flags_to_test": [
+      "output"
+    ],
+    "flag_values": {
+      "output": "json"
+    },
+    "setup": [],
+    "verify": []
+  },
+  "dismiss product-updates": {
+    "args": [
+      "probe-product-update"
+    ],
+    "flags": {},
+    "baseline_ok": false,
+    "error": "the server the audit runs against does not offer the product updates endpoints",
+    "needs": "a server that implements it",
+    "flags_to_test": [
+      "all",
+      "dry-run"
+    ],
+    "flag_values": {
+      "all": "true",
+      "dry-run": "true"
+    },
+    "setup": [],
+    "verify": []
   }
 }
