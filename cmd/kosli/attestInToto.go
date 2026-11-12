@@ -139,7 +139,10 @@ Recording provenance and an SBOM takes two commands.
 - ^github^ reads the attestations GitHub holds for the artifact, where ^actions/attest^
   stores them, in the repository given with ^--github-org^ and ^--repository^. It needs
   ^--github-token^, with the ^attestations: read^ permission. It is the default when
-  running in GitHub Actions.
+  running in GitHub Actions. GitHub holds them by the digest that was attested, so name
+  an image by the digest the build pushed, as ^yourImageName@sha256:...^ with
+  ^--artifact-type oci^, or give that digest with ^--fingerprint^: a tag may since have
+  moved to another image.
 - ^bundle^ reads the file given with ^--bundle^: a Sigstore bundle (^.sigstore.json^), a
   DSSE envelope, an in-toto statement, or an ^.intoto.jsonl^ file with one of these per
   line. It is the default elsewhere, and whenever ^--bundle^ is given.
@@ -190,8 +193,9 @@ carry can be given with ^--build-url^ and ^--commit-url^.
 ` + fingerprintDesc + kosliIgnoreDesc
 
 const attestInTotoExample = `
-# in GitHub Actions, record the SLSA provenance actions/attest stored for an image, as the artifact named app:
-kosli attest in-toto yourImageName \
+# in GitHub Actions, record the SLSA provenance actions/attest stored for an image, as the artifact named app.
+# The image is named by the digest the build pushed, such as ghcr.io/yourOrg/yourImage@sha256:0123...:
+kosli attest in-toto yourImageName@yourImageDigest \
 	--artifact-type oci \
 	--predicate-type provenance \
 	--name app \
@@ -202,7 +206,7 @@ kosli attest in-toto yourImageName \
 	--org yourOrgName
 
 # record the SBOM attestation stored for the same image, as app.sbom:
-kosli attest in-toto yourImageName \
+kosli attest in-toto yourImageName@yourImageDigest \
 	--artifact-type oci \
 	--predicate-type sbom \
 	--name app.sbom \
@@ -212,7 +216,8 @@ kosli attest in-toto yourImageName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# outside GitHub Actions, read a repository's attestations and pin the workflow that signed them:
+# outside GitHub Actions, read a repository's attestations and pin the workflow that signed them.
+# Giving the digest as the fingerprint skips reading it from the registry:
 kosli attest in-toto \
 	--fingerprint yourArtifactFingerprint \
 	--source github \

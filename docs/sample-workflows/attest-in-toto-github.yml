@@ -6,6 +6,12 @@
 # digest, verifies the signature, and records it, rather than regenerating the
 # same evidence with `kosli attest artifact` and `kosli attest sbom`.
 #
+# The image is named by the digest the build pushed, which is the one
+# actions/attest signed; a tag could have moved since. `--artifact-type oci`
+# confirms that digest with the registry, using the job's registry login.
+# `--fingerprint "${DIGEST#sha256:}"` in place of the image name and
+# `--artifact-type` records the same thing without reading the registry.
+#
 # In GitHub Actions the command needs few flags:
 #   --source          defaults to github
 #   --github-org      defaults to this repository's owner
@@ -99,8 +105,8 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
           KOSLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          kosli attest in-toto \
-            --fingerprint "${DIGEST#sha256:}" \
+          kosli attest in-toto "${IMAGE}@${DIGEST}" \
+            --artifact-type oci \
             --predicate-type provenance \
             --name app
 
@@ -109,7 +115,7 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
           KOSLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          kosli attest in-toto \
-            --fingerprint "${DIGEST#sha256:}" \
+          kosli attest in-toto "${IMAGE}@${DIGEST}" \
+            --artifact-type oci \
             --predicate-type sbom \
             --name app.sbom
