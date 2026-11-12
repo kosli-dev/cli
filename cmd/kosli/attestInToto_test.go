@@ -311,7 +311,7 @@ func (suite *AttestInTotoCommandTestSuite) TestNameFromTheEnvironment() {
 	runTestCmd(suite.T(), []cmdTestCase{
 		{
 			name:        "takes --name from KOSLI_NAME, as attest artifact and attest sbom do",
-			cmd:         suite.command("--predicate-type provenance --dry-run " + intotoSigner + suite.bundle("github-provenance.sigstore.json")),
+			cmd:         suite.command("--predicate-type provenance --dry-run " + intotoSigner + suite.bundle("github-provenance.sigstore.json") + suite.githubArguments),
 			goldenRegex: `"template_reference_name": "app"`,
 		},
 	})
