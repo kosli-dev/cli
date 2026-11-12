@@ -95,6 +95,16 @@ func (suite *ListAuditLogsCommandTestSuite) TestListAuditLogsCmd() {
 			goldenRegex: `Alice Example`,
 		},
 		{
+			name:        "the al alias works",
+			cmd:         "list al" + suite.defaultKosliArguments,
+			goldenRegex: `Alice Example`,
+		},
+		{
+			name:        "the als alias works",
+			cmd:         "list als" + suite.defaultKosliArguments,
+			goldenRegex: `Alice Example`,
+		},
+		{
 			wantError: true,
 			name:      "providing an argument causes an error",
 			cmd:       "list audit-logs xxx" + suite.defaultKosliArguments,
