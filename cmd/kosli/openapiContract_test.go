@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -67,6 +68,7 @@ func (suite *OpenAPIContractTestSuite) TestPayloadsMatchSchema() {
 	registry := []driftCase{
 		{name: "create control", payload: ControlPayload{}, component: "ControlPostInput"},
 		{name: "create environment", payload: CreateEnvironmentPayload{}, component: "CreateEnvironmentPutInput"},
+		{name: "git commit info", payload: gitview.BasicCommitInfo{}, component: "GitCommit"},
 	}
 
 	for _, c := range registry {

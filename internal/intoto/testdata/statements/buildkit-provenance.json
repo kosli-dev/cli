@@ -1,0 +1,37 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {"name": "pkg:docker/acme/widget@1.2.3?platform=linux%2Famd64", "digest": {"sha256": "e88951291bca0807a41f3c0144009bfff5c6c77dc1310d52e8c6d62feee960a8"}}
+  ],
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://github.com/moby/buildkit/blob/master/docs/attestations/slsa-definitions.md",
+      "externalParameters": {
+        "configSource": {
+          "uri": "https://github.com/acme/widget.git#refs/heads/main",
+          "digest": {"sha1": "4f9d2a7c1e6b8a3d5f0e2c9b7a1d4e6f8c3b5a70"},
+          "path": "Dockerfile"
+        },
+        "request": {"frontend": "dockerfile.v0", "args": {}}
+      },
+      "internalParameters": {"builderPlatform": "linux/amd64"},
+      "resolvedDependencies": [
+        {"uri": "pkg:docker/alpine@3.20?platform=linux%2Famd64", "digest": {"sha256": "0f2d5c38dd7a4f4f733e688e3a6733cb5ab1ac6e3cb4603a5dd564e5bfb80eed"}},
+        {"uri": "https://github.com/acme/widget.git#refs/heads/main", "digest": {"sha1": "4f9d2a7c1e6b8a3d5f0e2c9b7a1d4e6f8c3b5a70"}}
+      ]
+    },
+    "runDetails": {
+      "builder": {"id": "https://github.com/acme/widget/actions/runs/1234567890/attempts/1"},
+      "metadata": {
+        "invocationID": "rpv7a389uzil5lqmrgwhijwjz",
+        "buildkit_metadata": {
+          "vcs": {
+            "source": "https://github.com/acme/widget",
+            "revision": "4f9d2a7c1e6b8a3d5f0e2c9b7a1d4e6f8c3b5a70"
+          }
+        }
+      }
+    }
+  }
+}

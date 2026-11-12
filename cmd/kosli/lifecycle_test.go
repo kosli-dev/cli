@@ -34,6 +34,17 @@ func TestLifecycleAttestSbomIsNotBeta(t *testing.T) {
 	}
 }
 
+func TestLifecycleAttestInTotoIsBetaAndVisible(t *testing.T) {
+	global = &GlobalOpts{}
+	cmd := newAttestInTotoCmd(io.Discard)
+	if cmd.Hidden {
+		t.Error("expected attest in-toto to be visible (not Hidden)")
+	}
+	if !isBeta(cmd) {
+		t.Error("expected attest in-toto to be beta")
+	}
+}
+
 func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
 	global = &GlobalOpts{}
 	cmd := newAttestDecisionCmd(io.Discard)

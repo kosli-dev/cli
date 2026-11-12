@@ -1,0 +1,29 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {"name": "artifact.bin", "digest": {"sha256": "e88951291bca0807a41f3c0144009bfff5c6c77dc1310d52e8c6d62feee960a8"}}
+  ],
+  "predicateType": "https://spdx.dev/Document/v2.3",
+  "predicate": {
+    "spdxVersion": "SPDX-2.3",
+    "dataLicense": "CC0-1.0",
+    "SPDXID": "SPDXRef-DOCUMENT",
+    "name": "artifact.bin",
+    "documentNamespace": "https://example.com/spdx/artifact.bin-1",
+    "creationInfo": {
+      "created": "2026-11-01T09:00:00Z",
+      "creators": ["Tool: example-sbom-tool-1.0"]
+    },
+    "packages": [
+      {
+        "name": "artifact.bin",
+        "SPDXID": "SPDXRef-Package-artifact",
+        "versionInfo": "1.2.3",
+        "downloadLocation": "NOASSERTION"
+      }
+    ],
+    "relationships": [
+      {"spdxElementId": "SPDXRef-DOCUMENT", "relationshipType": "DESCRIBES", "relatedSpdxElement": "SPDXRef-Package-artifact"}
+    ]
+  }
+}

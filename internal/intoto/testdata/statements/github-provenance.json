@@ -1,0 +1,34 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {"name": "artifact.bin", "digest": {"sha256": "e88951291bca0807a41f3c0144009bfff5c6c77dc1310d52e8c6d62feee960a8"}}
+  ],
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://actions.github.io/buildtypes/workflow/v1",
+      "externalParameters": {
+        "workflow": {
+          "ref": "refs/heads/main",
+          "repository": "https://github.com/acme/widget",
+          "path": ".github/workflows/build.yml"
+        }
+      },
+      "internalParameters": {
+        "github": {
+          "event_name": "push",
+          "repository_id": "123456789",
+          "repository_owner_id": "987654321",
+          "runner_environment": "github-hosted"
+        }
+      },
+      "resolvedDependencies": [
+        {"uri": "git+https://github.com/acme/widget@refs/heads/main", "digest": {"gitCommit": "4f9d2a7c1e6b8a3d5f0e2c9b7a1d4e6f8c3b5a70"}}
+      ]
+    },
+    "runDetails": {
+      "builder": {"id": "https://github.com/actions/runner/github-hosted"},
+      "metadata": {"invocationId": "https://github.com/acme/widget/actions/runs/1234567890/attempts/1"}
+    }
+  }
+}

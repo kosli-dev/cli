@@ -1,0 +1,12 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {"name": "artifact.bin", "digest": {"sha256": "e88951291bca0807a41f3c0144009bfff5c6c77dc1310d52e8c6d62feee960a8"}}
+  ],
+  "predicateType": "https://cosign.sigstore.dev/attestation/vuln/v1",
+  "predicate": {
+    "invocation": {"uri": "https://github.com/acme/widget/actions/runs/1234567890"},
+    "scanner": {"uri": "pkg:github/aquasecurity/trivy@0.50.0", "version": "0.50.0", "result": {}},
+    "metadata": {"scanStartedOn": "2026-11-01T09:00:00Z", "scanFinishedOn": "2026-11-01T09:01:00Z"}
+  }
+}
