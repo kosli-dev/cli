@@ -2575,6 +2575,34 @@
     ],
     "verify": []
   },
+  "list audit-logs": {
+    "args": [],
+    "flags": {},
+    "flags_to_test": [
+      "event-type",
+      "output",
+      "page",
+      "page-limit",
+      "role",
+      "search",
+      "sort-by",
+      "sort-direction",
+      "source"
+    ],
+    "flag_values": {
+      "event-type": "added",
+      "output": "json",
+      "page": "1",
+      "page-limit": "5",
+      "role": "admin",
+      "search": "probe-search",
+      "sort-by": "user",
+      "sort-direction": "asc",
+      "source": "app"
+    },
+    "setup": [],
+    "verify": []
+  },
   "list environments": {
     "args": [],
     "flags": {
