@@ -232,6 +232,24 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		require.EqualError(t, attestations[0].Unreadable, "the attestation: its bundle could not be downloaded from "+fake.server.URL+"/blobs/github-provenance.sigstore.json: it is not snappy-compressed")
 	})
 
+	t.Run("cannot read a downloaded bundle larger than the limit, naming the limit", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
+		fake.blobBody = func([]byte) []byte { return make([]byte, 32<<20+1) }
+
+		attestations, err := fake.repository().Attestations(artifactDigest)
+		require.NoError(t, err)
+		require.ErrorContains(t, attestations[0].Unreadable, "/blobs/github-provenance.sigstore.json: it is larger than the 32 MiB a bundle may be")
+	})
+
+	t.Run("cannot read a downloaded bundle that would decompress to more than the limit", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
+		fake.blobBody = func([]byte) []byte { return snappy.Encode(nil, make([]byte, 32<<20+1)) }
+
+		attestations, err := fake.repository().Attestations(artifactDigest)
+		require.NoError(t, err)
+		require.ErrorContains(t, attestations[0].Unreadable, "/blobs/github-provenance.sigstore.json: it would decompress to more than the 32 MiB a bundle may be")
+	})
+
 	t.Run("retries a download the blob store fails", func(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
 		fake.blobFailures = 2

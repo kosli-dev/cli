@@ -29,6 +29,10 @@ var bundleRetryWait = 200 * time.Millisecond
 const (
 	bundleRetries         = 3
 	bundleDownloadTimeout = time.Minute
+	// maxBundleMiB bounds a downloaded bundle, both as it arrives and once
+	// decompressed. Bundles run to kilobytes; the limit only stops a response
+	// that is not one from exhausting memory.
+	maxBundleMiB = 32
 )
 
 // GitHubRepository is the attestations GitHub holds about the artifacts of
@@ -202,11 +206,23 @@ func downloadBundle(ctx context.Context, bundleURL string) ([]byte, error) {
 	if response.StatusCode != http.StatusOK {
 		return fail("%s", response.Status)
 	}
-	body, err := io.ReadAll(response.Body)
+	const maxBytes = maxBundleMiB << 20
+	body, err := io.ReadAll(io.LimitReader(response.Body, maxBytes+1))
 	if err != nil {
 		return fail("%s", err)
 	}
+	if len(body) > maxBytes {
+		return fail("it is larger than the %d MiB a bundle may be", maxBundleMiB)
+	}
 
+	// snappy.Decode allocates whatever length the body declares.
+	size, err := snappy.DecodedLen(body)
+	if err != nil {
+		return fail("it is not snappy-compressed")
+	}
+	if size > maxBytes {
+		return fail("it would decompress to more than the %d MiB a bundle may be", maxBundleMiB)
+	}
 	bundle, err := snappy.Decode(nil, body)
 	if err != nil {
 		return fail("it is not snappy-compressed")
