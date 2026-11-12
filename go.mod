@@ -31,6 +31,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/in-toto/attestation v1.2.0
 	github.com/joshdk/go-junit v1.0.0
+	github.com/klauspost/compress v1.20.3
 	github.com/mattn/go-shellwords v1.0.16
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5
