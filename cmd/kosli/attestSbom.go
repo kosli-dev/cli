@@ -57,15 +57,18 @@ checked against the artifact; it is recorded as reported.
 
 The SBOM may also arrive inside an in-toto attestation, as a Sigstore bundle or
 a DSSE envelope. The SPDX or CycloneDX document is then read from it, and the
-bundle or envelope is what is uploaded and checksummed. When the SBOM is about
-an artifact, the attestation must list that artifact as its subject, signed or
-not. To verify its signature, pass ^--certificate-identity^ (or
-^--certificate-identity-regexp^) with ^--certificate-oidc-issuer^, or ^--key^.
-Without them the signature is not checked, and even a signed bundle is recorded
-with ^verified^ set to false. The record is annotated with ^verified^ and the
-verification details, as ^kosli attest in-toto^ annotates it. To pick the SBOM
-from a file holding several attestations, or to record provenance, use
-^kosli attest in-toto^.
+bundle or envelope is what is uploaded and checksummed. When the artifact's
+fingerprint is known, because it is calculated from the artifact or given with
+^--fingerprint^, the attestation must list that artifact as its subject, signed
+or not. When the attestation is bound by the artifact's template name and commit
+instead, or to the trail alone, there is no fingerprint to check the subject
+against, so it is not checked. To verify its signature, pass
+^--certificate-identity^ (or ^--certificate-identity-regexp^) with
+^--certificate-oidc-issuer^, or ^--key^. Without them the signature is not
+checked, and even a signed bundle is recorded with ^verified^ set to false. The
+record is annotated with ^verified^ and the verification details, as
+^kosli attest in-toto^ annotates it. To pick the SBOM from a file holding
+several attestations, or to record provenance, use ^kosli attest in-toto^.
 
 The SBOM file is the only attachment: this command does not accept additional
 attachments, because two or more would be compressed together.
