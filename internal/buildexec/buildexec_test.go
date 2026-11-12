@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 	"testing"
@@ -82,4 +83,30 @@ func TestRunForwardsSignalsToGrandchild(t *testing.T) {
 			require.Eventually(t, func() bool { _, err := os.Stat(marker); return err == nil }, 5*time.Second, 20*time.Millisecond)
 		})
 	}
+}
+
+func TestRelaySignalsDoesNotKillACommandItDidNotSignal(t *testing.T) {
+	saved := killDelay
+	killDelay = 50 * time.Millisecond
+	defer func() { killDelay = saved }()
+
+	cmd := exec.Command("sleep", "5")
+	require.NoError(t, cmd.Start())
+	exited := make(chan struct{})
+	go func() { _ = cmd.Wait(); close(exited) }()
+
+	signals := make(chan os.Signal, 1)
+	done := make(chan struct{})
+	go relaySignals(signals, done, cmd.Process.Pid, false)
+	// In a shared terminal kosli does not relay SIGINT, so it must not kill either.
+	signals <- syscall.SIGINT
+
+	select {
+	case <-exited:
+		t.Fatal("command was killed although it never received a signal from kosli")
+	case <-time.After(300 * time.Millisecond):
+	}
+	close(done)
+	_ = cmd.Process.Kill()
+	<-exited
 }

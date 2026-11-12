@@ -39,9 +39,10 @@ func relaySignals(signals <-chan os.Signal, done <-chan struct{}, pid int, newGr
 		case sig := <-signals:
 			// Without its own group the command shares kosli's terminal, which
 			// has already sent it any SIGINT, SIGQUIT or SIGHUP.
-			if newGroup || sig == syscall.SIGTERM {
-				_ = syscall.Kill(target, sig.(syscall.Signal))
+			if !newGroup && sig != syscall.SIGTERM {
+				continue
 			}
+			_ = syscall.Kill(target, sig.(syscall.Signal))
 			if hardKill == nil {
 				hardKill = time.AfterFunc(killDelay, func() { _ = syscall.Kill(target, syscall.SIGKILL) })
 			}

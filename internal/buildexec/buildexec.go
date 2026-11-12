@@ -21,7 +21,7 @@ const (
 
 // killDelay is how long a command gets to exit after a forwarded signal
 // before it is killed.
-const killDelay = 10 * time.Second
+var killDelay = 10 * time.Second
 
 // Result describes a finished build command.
 type Result struct {
