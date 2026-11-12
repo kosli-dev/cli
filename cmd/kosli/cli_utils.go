@@ -527,6 +527,12 @@ func ValidateRegistryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
 	if o.artifactType != "docker" && o.artifactType != "oci" && (o.registryPassword != "" || o.registryUsername != "") {
 		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password are only applicable when --artifact-type is 'docker' or 'oci'")
 	}
+	return validateRegistryCredentials(cmd, o)
+}
+
+// validateRegistryCredentials validates that a registry username and password
+// are given together or not at all.
+func validateRegistryCredentials(cmd *cobra.Command, o *fingerprintOptions) error {
 	if (o.registryPassword == "" && o.registryUsername != "") || (o.registryPassword != "" && o.registryUsername == "") {
 		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password must both be set")
 	}

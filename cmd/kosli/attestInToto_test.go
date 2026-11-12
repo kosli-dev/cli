@@ -10,8 +10,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/containers/image/v5/types"
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/intoto"
+	"github.com/kosli-dev/cli/internal/registrytest"
 	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -28,6 +31,7 @@ const (
 	intotoLogEntryURL    = "https://rekor.localhost/api/v1/log/entries?logIndex=0"
 	intotoSBOMTemplate   = "version: 1\ntrail:\n  artifacts:\n  - name: app\n    attestations:\n    - name: sbom\n      type: sbom\n"
 	intotoDefaultCommand = "attest in-toto " + intotoArtifact + " --artifact-type file"
+	intotoRepo           = "acme/widget"
 )
 
 type AttestInTotoCommandTestSuite struct {
@@ -376,6 +380,114 @@ func (suite *AttestInTotoCommandTestSuite) TestRefusesWhatItCannotTrust() {
 	})
 }
 
+// registry starts an OCI registry holding the repository acme/widget, and
+// returns it with the name of the image acme/widget:1.2 in it and the flags
+// that present the credentials it demands, so none are looked for on the host.
+func (suite *AttestInTotoCommandTestSuite) registry() (*registrytest.Registry, string, string) {
+	suite.T().Cleanup(digest.SetOciSystemContextOverride(func(sysCtx *types.SystemContext) {
+		sysCtx.DockerInsecureSkipTLSVerify = types.OptionalBoolTrue
+	}))
+	registry := registrytest.New(suite.T(), registrytest.RequiringCredentials("a-user", "a-password"))
+	return registry, registry.Host + "/" + intotoRepo + ":1.2", " --registry-username a-user --registry-password a-password"
+}
+
+func fixture(t *testing.T, name string) []byte {
+	t.Helper()
+	content, err := os.ReadFile(filepath.Join(intotoFixtures, name))
+	require.NoError(t, err)
+	return content
+}
+
+func (suite *AttestInTotoCommandTestSuite) TestReadsAttestationsFromTheImagesRegistry() {
+	const subject = "sha256:" + intotoDigest
+	fromRegistry := func(image, flags string) string {
+		return "attest in-toto " + image + " --source oci " + flags + suite.defaultKosliArguments
+	}
+
+	registry, image, credentials := suite.registry()
+	registry.AttachBundle(intotoRepo, subject, fixture(suite.T(), "github-provenance.sigstore.json"))
+	sbom, _ := registrytest.CosignLayer(suite.T(), fixture(suite.T(), "spdx-sbom.sigstore.json"))
+	registry.AttachCosignAttestations(intotoRepo, subject, fixture(suite.T(), "spdx-sbom.sigstore.json"))
+	sbomSHA256 := fmt.Sprintf("%x", sha256.Sum256(sbom))
+
+	buildx, buildxImage, _ := suite.registry()
+	buildx.PushBuildxIndex(intotoRepo, "1.2", buildx.PushImage(intotoRepo), registrytest.BuildxAttestations{
+		Statements: [][]byte{fixture(suite.T(), "statements/buildkit-provenance.json")},
+	})
+	buildxSHA256 := fixtureSHA256(suite.T(), "statements/buildkit-provenance.json")
+
+	empty, emptyImage, _ := suite.registry()
+	empty.PushImage(intotoRepo)
+
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name: "records the provenance attached as a referrer of the image, verified",
+			cmd: fromRegistry(image, "--fingerprint "+intotoDigest+" --predicate-type provenance --name app --dry-run "+
+				intotoSigner+credentials+suite.githubArguments),
+			goldenRegex: `(?s)"fingerprint": "` + intotoDigest + `",\s+"filename": "artifact.bin",\s+"git_commit": "` + intotoCommit + `".*` +
+				`"attestation": \{\s+"href": "` + regexpQuote(intotoLogEntryURL) + `",\s+"fingerprint": "` + fixtureSHA256(suite.T(), "github-provenance.sigstore.json") + `".*"verified": "true"`,
+		},
+		{
+			name: "records the SBOM under cosign's tag, attaching the layer named by its digest",
+			cmd: fromRegistry(image, "--fingerprint "+intotoDigest+" --predicate-type sbom --name app.sbom --dry-run "+
+				intotoSigner+credentials),
+			goldenRegex: `(?s)"filename": "sha256-` + sbomSHA256 + `.json".*"verified": "true".*"original_fingerprint": "` + sbomSHA256 + `"`,
+		},
+		{
+			name: "records the unsigned provenance buildx put in the image index as unverified, when allowed",
+			cmd: fromRegistry(buildxImage, "--fingerprint "+intotoDigest+" --predicate-type provenance --name app --dry-run --allow-unsigned"+
+				credentials+suite.githubArguments),
+			goldenRegex: `(?s)"build_type": "https://github.com/moby/buildkit/blob/master/docs/attestations/slsa-definitions.md".*"verified": "false"`,
+		},
+		{
+			wantError: true,
+			name:      "refuses the unsigned provenance buildx put in the image index otherwise, naming it",
+			cmd:       fromRegistry(buildxImage, "--fingerprint "+intotoDigest+" --predicate-type provenance --name app"+credentials),
+			golden: "Error: image " + buildxImage + ": attestation sha256:" + buildxSHA256 +
+				" (in the image index) is not signed. Pass --allow-unsigned to record it as unverified\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when no attestation of the kind is attached, naming the kinds that are",
+			cmd:       fromRegistry(buildxImage, "--fingerprint "+intotoDigest+" --predicate-type sbom --name app.sbom --allow-unsigned"+credentials),
+			golden:    "Error: image " + buildxImage + ": found no sbom attestation (SPDX or CycloneDX SBOM); the predicate types found were: https://slsa.dev/provenance/v1\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when nothing is attached to the image, saying where it looked",
+			cmd:       fromRegistry(emptyImage, "--fingerprint "+intotoDigest+" --predicate-type provenance --name app "+intotoSigner+credentials),
+			golden: "Error: image " + emptyImage + ": no attestation is attached to sha256:" + intotoDigest +
+				": looked among its referrers, under cosign's tag sha256-" + intotoDigest + ".att, and for buildx attestation manifests in the image index\n",
+		},
+		{
+			wantError:   true,
+			name:        "fails when the registry refuses the credentials",
+			cmd:         fromRegistry(image, "--fingerprint "+intotoDigest+" --predicate-type provenance --name app "+intotoSigner+" --registry-username a-user --registry-password wrong"),
+			goldenRegex: `^Error: image ` + image + `: failed to read `,
+		},
+	})
+}
+
+// The fingerprint and the attestations both come from the registry here, read
+// with the same credentials. Statements have to name the image's real digest,
+// so they are written for it rather than taken from the fixtures.
+func (suite *AttestInTotoCommandTestSuite) TestFingerprintsTheImageItReadsAttestationsFor() {
+	registry, _, credentials := suite.registry()
+	pushed := registry.PushImage(intotoRepo)
+	statement := strings.ReplaceAll(string(fixture(suite.T(), "statements/buildkit-provenance.json")), intotoDigest, pushed.Digest.Encoded())
+	registry.PushBuildxIndex(intotoRepo, "1.2", pushed, registrytest.BuildxAttestations{Statements: [][]byte{[]byte(statement)}, OCIArtifact: true})
+	image := registry.Host + "/" + intotoRepo + "@" + pushed.Digest.String()
+
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name: "records the provenance about the image its registry reports the digest of",
+			cmd: "attest in-toto " + image + " --artifact-type oci --source oci --predicate-type provenance --name app --dry-run --allow-unsigned" +
+				credentials + suite.githubArguments + suite.defaultKosliArguments,
+			goldenRegex: `(?s)"fingerprint": "` + pushed.Digest.Encoded() + `".*"verified": "false"`,
+		},
+	})
+}
+
 func (suite *AttestInTotoCommandTestSuite) TestRejectsBadFlags() {
 	runTestCmd(suite.T(), []cmdTestCase{
 		{
@@ -392,9 +504,39 @@ func (suite *AttestInTotoCommandTestSuite) TestRejectsBadFlags() {
 		},
 		{
 			wantError: true,
-			name:      "a source other than bundle",
+			name:      "a source it does not read",
 			cmd:       suite.command("--source github --predicate-type provenance --name app"),
-			golden:    "Error: --source \"github\" is not supported. Must be: bundle\n",
+			golden:    "Error: --source \"github\" is not supported. Must be one of: bundle, oci\n",
+		},
+		{
+			wantError: true,
+			name:      "--source oci without the image's name",
+			cmd:       "attest in-toto --fingerprint " + intotoDigest + " --source oci --predicate-type provenance --name app" + suite.defaultKosliArguments,
+			golden:    "Error: --source oci needs the image's name as the argument, to know which repository to read its attestations from\n",
+		},
+		{
+			wantError: true,
+			name:      "--source oci for an artifact that is not an image",
+			cmd:       suite.command("--source oci --predicate-type provenance --name app"),
+			golden:    "Error: --source oci reads the attestations attached to an image, so --artifact-type must be oci or docker, not file\n",
+		},
+		{
+			wantError: true,
+			name:      "--bundle with --source oci",
+			cmd:       "attest in-toto registry.example.com/acme/widget:1.2 --fingerprint " + intotoDigest + " --source oci --predicate-type provenance --name app" + suite.bundle("github-provenance.sigstore.json") + suite.defaultKosliArguments,
+			golden:    "Error: --bundle is only read with --source bundle\n",
+		},
+		{
+			wantError: true,
+			name:      "a registry username without a password, with --source oci and a fingerprint",
+			cmd:       "attest in-toto registry.example.com/acme/widget:1.2 --fingerprint " + intotoDigest + " --source oci --predicate-type provenance --name app --registry-username a-user" + suite.defaultKosliArguments,
+			golden:    "Error: --registry-username and registry-password must both be set\nUsage: kosli attest in-toto [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+		},
+		{
+			wantError: true,
+			name:      "registry credentials with a fingerprint and no registry to read",
+			cmd:       "attest in-toto --fingerprint " + intotoDigest + " --predicate-type provenance --name app --registry-username a-user --registry-password a-password" + suite.bundle("github-provenance.sigstore.json") + suite.defaultKosliArguments,
+			golden:    "Error: --registry-username and registry-password are only applicable when --artifact-type is 'docker' or 'oci'\nUsage: kosli attest in-toto [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,

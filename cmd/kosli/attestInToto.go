@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/digest"
 	ghUtils "github.com/kosli-dev/cli/internal/github"
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/intoto"
@@ -62,7 +63,12 @@ var templateArtifactNamePattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 // against. Tests replace it so that no test fetches one over the network.
 var intotoTrustRoots = intoto.SigstoreTrustRoots
 
-const intotoSourceBundle = "bundle"
+const (
+	intotoSourceBundle = "bundle"
+	intotoSourceOCI    = "oci"
+)
+
+var intotoSources = []string{intotoSourceBundle, intotoSourceOCI}
 
 type attestInTotoOptions struct {
 	fingerprintOptions   *fingerprintOptions
@@ -110,16 +116,31 @@ The attestation is read from the file given with ^--bundle^: a Sigstore bundle
 one of these per line. Attestations of other kinds are ignored. When several qualify, a
 verified one is preferred, then the newest.
 
+With ^--source oci^ the attestation is read instead from the registry holding the image
+named by the argument, wherever the tools that build and sign an image attach one to it:
+
+- among the image's OCI referrers, where ^cosign attest^ puts a Sigstore bundle, as does
+  ^actions/attest^ with ^push-to-registry^;
+- under the tag ^sha256-<digest>.att^, where cosign put attestations before its bundle format;
+- in the attestation manifests that ^docker buildx build --provenance --sbom^ adds to the
+  image index.
+
+The registry is read with the credentials that fingerprint an image: ^--registry-username^
+and ^--registry-password^, or else those Docker or Podman hold on the host. The attestations
+buildx makes are unsigned, so recording one needs ^--allow-unsigned^. Each is about one
+platform's image, not the image index a tag names, so record it against that image, giving
+its digest with ^--fingerprint^.
+
 The statement must list the artifact as its subject. A signed attestation is verified with
 Sigstore against a signer you pin: ^--certificate-identity^ (or
 ^--certificate-identity-regexp^) with ^--certificate-oidc-issuer^, or ^--key^. There is no
 way to accept any valid certificate. An unsigned attestation is refused unless
 ^--allow-unsigned^ is given, and is then recorded as unverified. An attestation that fails
 verification, because another signer made it or it was changed after signing, fails the
-command and nothing is recorded, even when another attestation in the file would qualify. So
-does a signed attestation whose signature cannot be checked, such as when no signer is
-pinned, a trust root cannot be fetched or the signer flags do not fit how it was signed; the
-error then says it could not be verified, not that it failed.
+command and nothing is recorded, even when another attestation would qualify. So does a
+signed attestation whose signature cannot be checked, such as when no signer is pinned, a
+trust root cannot be fetched or the signer flags do not fit how it was signed; the error
+then says it could not be verified, not that it failed.
 
 ` + sigstoreTrustRootDesc + `
 The record is annotated with ^verified^ and, for a signed attestation, ^signer_identity^,
@@ -177,6 +198,37 @@ kosli attest in-toto yourImageName \
 	--trail yourTrailName \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# record the SLSA provenance cosign attached to an image in its registry, with
+# cosign attest --type slsaprovenance1 --predicate provenance.json yourRegistry/yourImage:1.2
+kosli attest in-toto yourRegistry/yourImage:1.2 \
+	--artifact-type oci \
+	--source oci \
+	--predicate-type provenance \
+	--name app \
+	--certificate-identity https://github.com/yourOrg/yourRepo/.github/workflows/build.yml@refs/heads/main \
+	--certificate-oidc-issuer https://token.actions.githubusercontent.com \
+	--github-token yourGithubToken \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# record the unsigned SBOM docker buildx attached to an image it pushed, with
+# docker buildx build --provenance=true --sbom=true --push -t yourRegistry/yourImage:1.2 .
+# It is about the platform's image, so give that image's digest, not the tag's:
+kosli attest in-toto yourRegistry/yourImage:1.2 \
+	--fingerprint yourPlatformImageDigest \
+	--source oci \
+	--predicate-type sbom \
+	--name app.sbom \
+	--allow-unsigned \
+	--registry-username yourRegistryUsername \
+	--registry-password yourRegistryPassword \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 func newAttestInTotoCmd(out io.Writer) *cobra.Command {
@@ -215,10 +267,15 @@ func newAttestInTotoCmd(out io.Writer) *cobra.Command {
 			if err := cmd.ValidateRequiredFlags(); err != nil {
 				return err
 			}
-			if err := o.validate(); err != nil {
+			if err := o.validate(args); err != nil {
 				return err
 			}
 
+			if o.source == intotoSourceOCI {
+				// The credentials read the image's attestations, whatever
+				// supplied its fingerprint.
+				return validateRegistryCredentials(cmd, o.fingerprintOptions)
+			}
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -267,12 +324,18 @@ func addSignerPolicyFlags(cmd *cobra.Command, policy *intoto.Policy) {
 
 // validate checks everything that needs nothing from the attestation, so a
 // mistake costs neither a fingerprint calculation nor a file read.
-func (o *attestInTotoOptions) validate() error {
-	if o.source != intotoSourceBundle {
-		return fmt.Errorf("--source %q is not supported. Must be: %s", o.source, intotoSourceBundle)
-	}
-	if o.bundlePath == "" {
-		return fmt.Errorf("--bundle is required with --source %s", intotoSourceBundle)
+func (o *attestInTotoOptions) validate(args []string) error {
+	switch o.source {
+	case intotoSourceBundle:
+		if o.bundlePath == "" {
+			return fmt.Errorf("--bundle is required with --source %s", intotoSourceBundle)
+		}
+	case intotoSourceOCI:
+		if err := o.validateOCISource(args); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("--source %q is not supported. Must be one of: %s", o.source, strings.Join(intotoSources, ", "))
 	}
 
 	kind, err := intoto.ParsePredicateKind(o.predicateType)
@@ -308,6 +371,31 @@ func (o *attestInTotoOptions) validate() error {
 	return nil
 }
 
+func (o *attestInTotoOptions) validateOCISource(args []string) error {
+	if o.bundlePath != "" {
+		return fmt.Errorf("--bundle is only read with --source %s", intotoSourceBundle)
+	}
+	if argOrEmpty(args) == "" {
+		return fmt.Errorf("--source %s needs the image's name as the argument, to know which repository to read its attestations from", intotoSourceOCI)
+	}
+	if artifactType := o.fingerprintOptions.artifactType; artifactType != "" && artifactType != "oci" && artifactType != "docker" {
+		return fmt.Errorf("--source %s reads the attestations attached to an image, so --artifact-type must be oci or docker, not %s", intotoSourceOCI, artifactType)
+	}
+	return nil
+}
+
+// attestationSource is where --source says to read the attestation from.
+func (o *attestInTotoOptions) attestationSource(args []string) (intoto.Source, error) {
+	if o.source == intotoSourceOCI {
+		repository, err := digest.OpenRepository(args[0], o.fingerprintOptions.registryUsername, o.fingerprintOptions.registryPassword)
+		if err != nil {
+			return nil, err
+		}
+		return intoto.OCIImage{Name: args[0], Repository: repository}, nil
+	}
+	return intoto.BundleFile{Path: o.bundlePath}, nil
+}
+
 func (o *attestInTotoOptions) reservedAnnotations() []string {
 	reserved := append([]string{}, verificationAnnotationKeys...)
 	if o.kind == intoto.KindSBOM {
@@ -325,8 +413,11 @@ func (o *attestInTotoOptions) run(args []string) error {
 		}
 	}
 
-	found, err := intoto.Find(intoto.BundleFile{Path: o.bundlePath}, o.kind, o.fingerprint,
-		intoto.NewVerifier(o.policy, intotoTrustRoots()))
+	source, err := o.attestationSource(args)
+	if err != nil {
+		return err
+	}
+	found, err := intoto.Find(source, o.kind, o.fingerprint, intoto.NewVerifier(o.policy, intotoTrustRoots()))
 	if err != nil {
 		return err
 	}
@@ -348,7 +439,7 @@ func (o *attestInTotoOptions) run(args []string) error {
 	annotations = withAnnotations(annotations, verificationAnnotations(found.Evidence))
 
 	if o.kind == intoto.KindSBOM {
-		return o.recordSBOM(found, externalURLs, annotations)
+		return o.recordSBOM(source, found, externalURLs, annotations)
 	}
 	return o.recordProvenance(args, found, externalURLs, annotations)
 }
@@ -470,14 +561,14 @@ func (o *attestInTotoOptions) commitFinder(repo intoto.Repository) types.CommitF
 	return nil
 }
 
-func (o *attestInTotoOptions) recordSBOM(found *intoto.Found, externalURLs map[string]*URLInfo, annotations map[string]string) error {
+func (o *attestInTotoOptions) recordSBOM(source intoto.Source, found *intoto.Found, externalURLs map[string]*URLInfo, annotations map[string]string) error {
 	document, err := intoto.SBOMDocument(found.Attestation)
 	if err != nil {
 		return err
 	}
 	data, err := sbomAttestationData(found.Raw, document)
 	if err != nil {
-		return fmt.Errorf("failed to parse the SBOM in %s: %s", intoto.BundleFile{Path: o.bundlePath}, err)
+		return fmt.Errorf("failed to parse the SBOM in %s: %s", source, err)
 	}
 
 	common := &CommonAttestationPayload{
@@ -508,18 +599,22 @@ func (o *attestInTotoOptions) recordSBOM(found *intoto.Found, externalURLs map[s
 			TypeName:                 "sbom",
 			AttestationData:          data,
 		},
-		evidence: &requests.FileBytes{Name: o.attachmentName(found.Attestation), Data: found.Raw},
+		evidence: &requests.FileBytes{Name: o.attachmentName(found), Data: found.Raw},
 	})
 }
 
 // attachmentName names the attached bytes after the file they came from, and
-// after their line when the file holds several attestations.
-func (o *attestInTotoOptions) attachmentName(a *intoto.Attestation) string {
+// after their line when the file holds several attestations. Bytes read from
+// a registry are named by their digest, which is the registry's name for them.
+func (o *attestInTotoOptions) attachmentName(found *intoto.Found) string {
+	if o.source == intotoSourceOCI {
+		return fmt.Sprintf("sha256-%s.json", found.Evidence.RawSHA256)
+	}
 	name := filepath.Base(o.bundlePath)
-	if a.Position == 0 {
+	if found.Position == 0 {
 		return name
 	}
-	return fmt.Sprintf("%s.%d.json", strings.TrimSuffix(name, filepath.Ext(name)), a.Position)
+	return fmt.Sprintf("%s.%d.json", strings.TrimSuffix(name, filepath.Ext(name)), found.Position)
 }
 
 // verificationAnnotations records what verifying the attestation established

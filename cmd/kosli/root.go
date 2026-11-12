@@ -338,7 +338,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	originalAttestationTypeFlag     = "The original attestation type being overridden (e.g. generic, snyk, junit, sonar, jira, pull_request, custom)."
 	attestationDecisionControlFlag  = "The control identifier being evaluated (e.g. RCTL-043)."
 	attestationSbomFileFlag         = "The path to the SBOM file. CycloneDX (JSON, XML) and SPDX (JSON, tag-value) are supported, also inside an in-toto attestation in a Sigstore bundle or DSSE envelope."
-	intotoSourceFlag                = "[defaulted] Where to read the attestation from. Only 'bundle' is supported for now: the file given with --bundle."
+	intotoSourceFlag                = "[defaulted] Where to read the attestation from: 'bundle', the file given with --bundle, or 'oci', the registry holding the image named by the argument."
 	intotoBundleFlag                = "[conditional] The file holding the attestation, with --source bundle: a Sigstore bundle (.sigstore.json), a DSSE envelope, an in-toto statement, or an .intoto.jsonl file with one of these per line."
 	intotoPredicateTypeFlag         = "The kind of attestation to record: provenance (SLSA provenance v1 or v0.2) or sbom (SPDX or CycloneDX)."
 	intotoNameFlag                  = "The name of the record as declared in the flow or trail yaml template: the artifact's name for provenance, the attestation's name for sbom."
