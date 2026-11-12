@@ -33,7 +33,10 @@ type Attestation struct {
 	Raw []byte
 	// Position is the attestation's 1-based place in a file holding several,
 	// and 0 in a file holding one.
-	Position  int
+	Position int
+	// Origin names an attestation that was not read from a file, by its digest
+	// and how it is attached to an image.
+	Origin    string
 	Statement *ita1.Statement
 	// Predicate is the predicate exactly as the payload carried it. The
 	// Statement's copy has been through protobuf's Struct, which turns every
@@ -52,9 +55,12 @@ func (a *Attestation) Signed() bool {
 	return a.envelope != nil && len(a.envelope.Signatures) > 0
 }
 
-// Describe names the attestation in a message: by its place in the file when
-// the file holds several.
+// Describe names the attestation in a message: by its origin when it has one,
+// or by its place in the file when the file holds several.
 func (a *Attestation) Describe() string {
+	if a.Origin != "" {
+		return "attestation " + a.Origin
+	}
 	if a.Position == 0 {
 		return "the attestation"
 	}
