@@ -33,6 +33,9 @@ const (
 	intotoLogEntryURL    = "https://rekor.localhost/api/v1/log/entries?logIndex=0"
 	intotoSBOMTemplate   = "version: 1\ntrail:\n  artifacts:\n  - name: app\n    attestations:\n    - name: sbom\n      type: sbom\n"
 	intotoDefaultCommand = "attest in-toto " + intotoArtifact + " --artifact-type file"
+	// intotoGoneBundle, among the fixtures GitHub holds, is an attestation
+	// listed at a download URL that no longer answers.
+	intotoGoneBundle = "gone"
 )
 
 type AttestInTotoCommandTestSuite struct {
@@ -86,10 +89,15 @@ func (suite *AttestInTotoCommandTestSuite) listAttestations(w http.ResponseWrite
 	defer suite.attestationsMu.Unlock()
 
 	type listed struct {
-		Bundle json.RawMessage `json:"bundle"`
+		Bundle    json.RawMessage `json:"bundle,omitempty"`
+		BundleURL string          `json:"bundle_url,omitempty"`
 	}
 	attestations := []listed{}
 	for _, name := range suite.attestations {
+		if name == intotoGoneBundle {
+			attestations = append(attestations, listed{BundleURL: suite.github.URL + "/blobs/gone?sig=a-secret"})
+			continue
+		}
 		content, err := os.ReadFile(filepath.Join(intotoFixtures, name))
 		require.NoError(suite.T(), err)
 		var bundle bytes.Buffer
@@ -557,6 +565,25 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceChoosesAmongSeveral()
 			name:        "records the attestation that verifies, warning about one it cannot read",
 			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
 			goldenRegex: `(?s)^\[warning\] another attestation was not recorded: attestation 1: not a Sigstore bundle, a DSSE envelope or an in-toto statement.*"signer_identity": "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main"`,
+		},
+	})
+
+	suite.githubHolds(intotoGoneBundle, "github-provenance.sigstore.json")
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "records the attestation that verifies, warning about one whose bundle it cannot download",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
+			goldenRegex: `(?s)^\[warning\] another attestation was not recorded: attestation 1: its bundle could not be downloaded from http://[^ ]+/blobs/gone: 404 Not Found\n.*"signer_identity": "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main"`,
+		},
+	})
+
+	suite.githubHolds(intotoGoneBundle)
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			wantError:   true,
+			name:        "records nothing when the only attestation's bundle cannot be downloaded",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app"),
+			goldenRegex: `^Error: GitHub repository acme/widget: the attestation: its bundle could not be downloaded from http://[^ ]+/blobs/gone: 404 Not Found\n$`,
 		},
 	})
 

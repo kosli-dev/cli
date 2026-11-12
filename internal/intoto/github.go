@@ -82,8 +82,8 @@ type githubAttestation struct {
 }
 
 // Attestations returns every attestation GitHub holds in the repository for
-// the artifact with SHA-256 digest. One whose bundle does not parse is
-// returned Unreadable.
+// the artifact with SHA-256 digest. One whose bundle cannot be downloaded or
+// does not parse is returned Unreadable.
 func (g GitHubRepository) Attestations(digest string) ([]*Attestation, error) {
 	digest = normaliseDigest(digest)
 	ctx := context.Background()
@@ -102,23 +102,25 @@ func (g GitHubRepository) Attestations(digest string) ([]*Attestation, error) {
 	}
 
 	bundles := make([]json.RawMessage, len(listed))
+	missing := make([]error, len(listed))
 	for i, entry := range listed {
 		switch {
 		case len(entry.Bundle) > 0 && string(entry.Bundle) != "null":
 			bundles[i] = entry.Bundle
 		case entry.BundleURL != "":
-			bundles[i], err = downloadBundle(ctx, entry.BundleURL)
-			if err != nil {
-				return nil, err
-			}
+			bundles[i], missing[i] = downloadBundle(ctx, entry.BundleURL)
 		default:
-			return nil, fmt.Errorf("GitHub listed an attestation with neither a bundle nor a URL to download one from")
+			missing[i] = errors.New("GitHub lists neither a bundle nor a URL to download one from")
 		}
 	}
 
 	attestations := parseEach(bundles)
 	location := client.BaseURL() + path
-	for _, attestation := range attestations {
+	for i, attestation := range attestations {
+		if missing[i] != nil {
+			// More use than parseEach's own reason, that there is nothing to parse.
+			attestation.Unreadable = fmt.Errorf("%s: %w", attestation.Describe(), missing[i])
+		}
 		attestation.URL = location
 	}
 	return attestations, nil
@@ -173,7 +175,7 @@ func downloadBundle(ctx context.Context, bundleURL string) ([]byte, error) {
 		shown = parsed.String()
 	}
 	fail := func(format string, args ...any) ([]byte, error) {
-		return nil, fmt.Errorf("failed to download the bundle of the attestation from %s: %s", shown, fmt.Sprintf(format, args...))
+		return nil, fmt.Errorf("its bundle could not be downloaded from %s: %s", shown, fmt.Sprintf(format, args...))
 	}
 
 	client := retryablehttp.NewClient()

@@ -21,15 +21,18 @@ var _ Selector = GitHubRepository{}
 const githubListPath = "/api/v3/repos/acme/widget/attestations/sha256:" + artifactDigest
 
 // stored is one attestation as GitHub's API lists it: the bundle inline, at a
-// download URL, or both.
+// download URL, both, or neither.
 type stored struct {
 	fixture string
 	inline  bool
 	blob    bool
+	// gone lists a download URL the blob store no longer answers.
+	gone bool
 }
 
 func inline(fixture string) stored { return stored{fixture: fixture, inline: true} }
 func blob(fixture string) stored   { return stored{fixture: fixture, blob: true} }
+func gone(fixture string) stored   { return stored{fixture: fixture, blob: true, gone: true} }
 
 // fakeGitHub serves the attestations API for acme/widget, one page of the
 // listing per element of pages, and the blob store bundles are downloaded from.
@@ -133,7 +136,7 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 func (f *fakeGitHub) blobFixture(name string) (string, bool) {
 	for _, page := range f.pages {
 		for _, s := range page {
-			if s.blob && s.fixture == name {
+			if s.blob && !s.gone && s.fixture == name {
 				return s.fixture, true
 			}
 		}
@@ -219,12 +222,14 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		require.Empty(t, fake.blobAuth)
 	})
 
-	t.Run("refuses a downloaded bundle that is not snappy-compressed, as the GitHub CLI does", func(t *testing.T) {
+	t.Run("cannot read a downloaded bundle that is not snappy-compressed, as the GitHub CLI cannot", func(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
 		fake.blobBody = func(bundle []byte) []byte { return bundle }
 
-		_, err := fake.repository().Attestations(artifactDigest)
-		require.ErrorContains(t, err, "/blobs/github-provenance.sigstore.json: it is not snappy-compressed")
+		attestations, err := fake.repository().Attestations(artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 1)
+		require.EqualError(t, attestations[0].Unreadable, "the attestation: its bundle could not be downloaded from "+fake.server.URL+"/blobs/github-provenance.sigstore.json: it is not snappy-compressed")
 	})
 
 	t.Run("retries a download the blob store fails", func(t *testing.T) {
@@ -241,10 +246,33 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
 		fake.blobFailures = 10
 
-		_, err := fake.repository().Attestations(artifactDigest)
-		require.ErrorContains(t, err, "failed to download the bundle of the attestation from "+fake.server.URL+"/blobs/github-provenance.sigstore.json: ")
-		require.NotContains(t, err.Error(), "a-secret")
+		attestations, err := fake.repository().Attestations(artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 1)
+		require.ErrorContains(t, attestations[0].Unreadable, "its bundle could not be downloaded from "+fake.server.URL+"/blobs/github-provenance.sigstore.json: ")
+		require.NotContains(t, attestations[0].Unreadable.Error(), "a-secret")
 		require.Len(t, fake.blobAuth, 4)
+	})
+
+	t.Run("keeps an attestation whose bundle it cannot download, saying why, beside the ones it can", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{gone("spdx-sbom.sigstore.json"), blob("github-provenance.sigstore.json")})
+
+		attestations, err := fake.repository().Attestations(artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 2)
+		require.EqualError(t, attestations[0].Unreadable, "attestation 1: its bundle could not be downloaded from "+fake.server.URL+"/blobs/spdx-sbom.sigstore.json: 404 Not Found")
+		require.NoError(t, attestations[1].Unreadable)
+		require.Equal(t, fake.bundle("github-provenance.sigstore.json"), attestations[1].Raw)
+	})
+
+	t.Run("keeps an attestation GitHub lists with neither a bundle nor a URL, beside the ones it can read", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json"), {fixture: "spdx-sbom.sigstore.json"}})
+
+		attestations, err := fake.repository().Attestations(artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 2)
+		require.NoError(t, attestations[0].Unreadable)
+		require.EqualError(t, attestations[1].Unreadable, "attestation 2: GitHub lists neither a bundle nor a URL to download one from")
 	})
 
 	t.Run("says when GitHub holds no attestation for the artifact", func(t *testing.T) {
@@ -322,6 +350,25 @@ func TestFindInGitHubRepository(t *testing.T) {
 		require.True(t, found.Evidence.Verified)
 		require.Len(t, found.Rejected, 1)
 		require.ErrorContains(t, found.Rejected[0], "attestation 1: not a Sigstore bundle, a DSSE envelope or an in-toto statement")
+	})
+
+	t.Run("passes over an attestation whose bundle it cannot download when another verifies, and reports it", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{gone("wrong-signer-provenance.sigstore.json"), blob("github-provenance.sigstore.json")})
+
+		found, err := find(t, fake.repository(), KindProvenance)
+		require.NoError(t, err)
+		require.Equal(t, 2, found.Position)
+		require.True(t, found.Evidence.Verified)
+		require.Len(t, found.Rejected, 1)
+		require.ErrorContains(t, found.Rejected[0], "attestation 1: its bundle could not be downloaded from ")
+	})
+
+	t.Run("names the attestation whose bundle it cannot download when none verifies", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{gone("github-provenance.sigstore.json"), inline("wrong-signer-provenance.sigstore.json")})
+
+		_, err := find(t, fake.repository(), KindProvenance)
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.ErrorContains(t, err, "GitHub repository acme/widget: 2 attestations could not be accepted: attestation 1: its bundle could not be downloaded from "+fake.server.URL+"/blobs/github-provenance.sigstore.json: 404 Not Found; attestation 2 failed verification: ")
 	})
 
 	t.Run("names every attestation it cannot read or verify when none verifies", func(t *testing.T) {

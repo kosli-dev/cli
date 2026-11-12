@@ -161,8 +161,9 @@ be checked, such as when no signer is pinned, a trust root cannot be fetched or 
 flags do not fit how it was signed; the error then says it could not be verified, not that
 it failed. So does an entry of the file that cannot be read as an attestation. GitHub
 holds the attestations of every workflow that attested the artifact, so there such an
-attestation, or one that cannot be read, is passed over with a warning as long as another
-one verifies. When none does, the command fails, naming each one, and nothing is recorded.
+attestation, or one that cannot be downloaded or read, is passed over with a warning as
+long as another one verifies. When none does, the command fails, naming each one, and
+nothing is recorded.
 
 ` + sigstoreTrustRootDesc + `
 The record is annotated with ^verified^ and, for a signed attestation, ^signer_identity^,
