@@ -51,8 +51,8 @@ transparency log entry or a signed timestamp, which are checked against Sigstore
 public-good trust root. An unsigned attestation needs neither.
 `
 
-// attestationExternalURL labels the link to the attestation's transparency
-// log entry.
+// attestationExternalURL labels the link to the attestation: see
+// attestationLink.
 const attestationExternalURL = "attestation"
 
 // templateArtifactNamePattern is what the API accepts as an artifact's name
@@ -684,7 +684,8 @@ func (o *attestInTotoOptions) recordSBOM(source intoto.Source, found *intoto.Fou
 }
 
 // attachmentName names the attached bytes after the file they came from, and
-// after their line when the file holds several attestations.
+// after their line when the file holds several attestations. Bytes read from
+// GitHub get a fixed name.
 func (o *attestInTotoOptions) attachmentName(a *intoto.Attestation) string {
 	if o.source == intotoSourceGitHub {
 		return githubAttachmentName
