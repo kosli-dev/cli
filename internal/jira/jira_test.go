@@ -28,11 +28,12 @@ func TestMakeJiraIssueKey(t *testing.T) {
 		{
 			name:        "Empty project keys",
 			projectKeys: []string{},
-			want:        `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`,
+			want:        `\b[A-Z][A-Z0-9_]{1,9}-[0-9]+`,
 			matches: []string{
 				"ABC-123",
 				"A1-456",
 				"XY-789",
+				"MY_PROJ-123",
 			},
 			nonMatches: []string{
 				"abc-123", // pattern is uppercase-only; FindJiraIssueKeys uppercases the text before applying it
@@ -169,6 +170,72 @@ func TestFindJiraIssueKeys(t *testing.T) {
 			want:        nil,
 		},
 		{
+			name:        "dependency version is not matched as a Jira issue key",
+			text:        "jackson-module-kotlin-3.2.3",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "standalone Jira key in a slash-prefixed branch name",
+			text:        "feature/PROJ-42",
+			projectKeys: []string{},
+			want:        []string{"PROJ-42"},
+		},
+		{
+			name:        "branch slug suffix preserves the Jira key",
+			text:        "feature/PROJ-42-description",
+			projectKeys: []string{},
+			want:        []string{"PROJ-42"},
+		},
+		{
+			name:        "dependency version in a branch name is not a Jira reference",
+			text:        "chore/jackson-module-kotlin-3.2.3",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "Jira key after a commit-message colon",
+			text:        "fix: PROJ-42 update dependency",
+			projectKeys: []string{},
+			want:        []string{"PROJ-42"},
+		},
+		{
+			name:        "bracketed Jira key in a commit message",
+			text:        "Fixes [PROJ-42]: update dependency",
+			projectKeys: []string{},
+			want:        []string{"PROJ-42"},
+		},
+		{
+			name:        "dependency version in a commit message is not a Jira reference",
+			text:        "Bump jackson-module-kotlin-3.2.3",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "Jira-shaped substring followed by letters is not a complete reference",
+			text:        "Fix PROJ-42abc",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "Jira-shaped substring followed by a dotted version is not a complete reference",
+			text:        "Fix PROJ-42.3",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "complete reference is kept alongside an embedded occurrence",
+			text:        "jackson-module-kotlin-3.2.3 KOTLIN-3",
+			projectKeys: []string{},
+			want:        []string{"KOTLIN-3"},
+		},
+		{
+			name:        "underscore in project key",
+			text:        "fix my_proj-123",
+			projectKeys: []string{},
+			want:        []string{"MY_PROJ-123"},
+		},
+		{
 			// The empty key must not widen the pattern to any -[0-9]+, which would
 			// report -41284 out of the CVE as a key of project EX.
 			name:        "an empty project key alongside a real one finds only the real project's keys",
@@ -283,12 +350,114 @@ func TestFindJiraIssueKeys(t *testing.T) {
 			projectKeys: []string{},
 			want:        []string{"NOTE-1", "PROJ-42"},
 		},
+		{
+			name: "underscore joins a prefix into the default project key",
+			text: "x_PROJ-42",
+			want: []string{"X_PROJ-42"},
+		},
+		{
+			name:        "underscore prefix is not part of a configured project key",
+			text:        "x_PROJ-42",
+			projectKeys: []string{"PROJ"},
+		},
+		{
+			// the cost of allowing a hyphen before a key, removed by setting project keys
+			name: "hyphenated dependency name without version segments is a default candidate",
+			text: "migrate to spring-boot-3",
+			want: []string{"BOOT-3"},
+		},
+		{
+			name:        "hyphenated dependency name without version segments is filtered by project keys",
+			text:        "migrate to spring-boot-3",
+			projectKeys: []string{"PROJ"},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := FindJiraIssueKeys(tt.text, tt.projectKeys)
+			got, _ := FindJiraIssueKeys(tt.text, tt.projectKeys)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestFindJiraIssueKeysBoundaries(t *testing.T) {
+	tests := []struct {
+		name string
+		text string
+		want []string
+	}{
+		{name: "branch slash prefix", text: "feature/PROJ-42", want: []string{"PROJ-42"}},
+		{name: "colon separator", text: "fix: PROJ-42 update", want: []string{"PROJ-42"}},
+		{name: "hash separator", text: "fix #PROJ-42", want: []string{"PROJ-42"}},
+		{name: "bracketed key with punctuation", text: "Fixes [PROJ-42]: update", want: []string{"PROJ-42"}},
+		{name: "round brackets", text: "(PROJ-42)", want: []string{"PROJ-42"}},
+		{name: "curly brackets", text: "{PROJ-42}", want: []string{"PROJ-42"}},
+		{name: "single quoted key", text: "'PROJ-42'", want: []string{"PROJ-42"}},
+		{name: "double quoted key", text: `"PROJ-42"`, want: []string{"PROJ-42"}},
+		{name: "backtick quoted key", text: "`PROJ-42`", want: []string{"PROJ-42"}},
+		{name: "markdown emphasized key", text: "**PROJ-42**", want: []string{"PROJ-42"}},
+		{name: "terminal punctuation", text: "PROJ-42., next", want: []string{"PROJ-42"}},
+		{name: "unicode whitespace", text: "\u00a0PROJ-42\u2003", want: []string{"PROJ-42"}},
+		{name: "adjacent references", text: "PROJ-1 PROJ-2\nPROJ-3", want: []string{"PROJ-1", "PROJ-2", "PROJ-3"}},
+		{name: "Jira branch slug", text: "PROJ-42-add-login", want: []string{"PROJ-42"}},
+		{name: "feature Jira branch slug", text: "feature/PROJ-42-add-login", want: []string{"PROJ-42"}},
+		{name: "merge pull request branch", text: "Merge pull request #12 from org/PROJ-42-fix", want: []string{"PROJ-42"}},
+		{name: "colon without following whitespace", text: "PROJ-42:Fix login", want: []string{"PROJ-42"}},
+		{name: "dependency version", text: "jackson-module-kotlin-3.2.3"},
+		{name: "dependency in branch name", text: "chore/jackson-module-kotlin-3.2.3"},
+		{name: "branch slug followed by numeric segment", text: "feature/PROJ-42-3"},
+		{name: "hyphenated branch type prefix", text: "bugfix-PROJ-42", want: []string{"PROJ-42"}},
+		{name: "hyphenated branch type prefix with slug", text: "hotfix-PROJ-42-login", want: []string{"PROJ-42"}},
+		{name: "dotted prefix", text: "prefix.PROJ-42"},
+		{name: "letters after issue number", text: "PROJ-42abc"},
+		{name: "underscore after issue number", text: "PROJ-42_branch"},
+		{name: "dotted version after issue number", text: "PROJ-42.3"},
+		{name: "hyphenated numeric suffix", text: "PROJ-42-3"},
+		{
+			name: "valid key remains when same key occurs embedded",
+			text: "prefix.PROJ-42 PROJ-42-3 PROJ-42-add-login PROJ-42",
+			want: []string{"PROJ-42"},
+		},
+	}
+	projectKeyModes := []struct {
+		name        string
+		projectKeys []string
+	}{
+		{name: "default project matching"},
+		{name: "configured project matching", projectKeys: []string{"PROJ"}},
+	}
+
+	for _, tt := range tests {
+		for _, mode := range projectKeyModes {
+			t.Run(tt.name+"/"+mode.name, func(t *testing.T) {
+				got, _ := FindJiraIssueKeys(tt.text, mode.projectKeys)
+				assert.Equal(t, tt.want, got)
+			})
+		}
+	}
+}
+
+func TestFindJiraIssueKeysAmbiguousSuffix(t *testing.T) {
+	tests := []struct {
+		name        string
+		text        string
+		wantDefault bool
+		wantProject bool
+	}{
+		{name: "branch slug suffix", text: "feature/PROJ-42-add-login", wantDefault: true, wantProject: true},
+		{name: "plain issue key", text: "PROJ-42"},
+		{name: "dependency version suffix", text: "jackson-module-kotlin-3.2.3"},
+		{name: "hyphenated numeric suffix", text: "PROJ-42-3"},
+		{name: "unmatched project key", text: "feature/OTHER-42-add-login", wantDefault: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, gotDefault := FindJiraIssueKeys(tt.text, nil)
+			assert.Equal(t, tt.wantDefault, gotDefault)
+			_, gotProject := FindJiraIssueKeys(tt.text, []string{"PROJ"})
+			assert.Equal(t, tt.wantProject, gotProject)
 		})
 	}
 }
