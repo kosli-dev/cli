@@ -122,7 +122,7 @@ func newListAuditLogsCmd(out io.Writer) *cobra.Command {
 	o := new(listAuditLogsOptions)
 	cmd := &cobra.Command{
 		Use:     "audit-logs",
-		Aliases: []string{"audit-log"},
+		Aliases: []string{"al", "als", "audit-log"},
 		Short:   listAuditLogsShortDesc,
 		Long:    listAuditLogsLongDesc,
 		Example: listAuditLogsExample,
