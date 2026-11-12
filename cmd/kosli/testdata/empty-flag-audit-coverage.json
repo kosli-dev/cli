@@ -761,6 +761,17 @@
  "list attestation-types": {
   "output": "string"
  },
+ "list audit-logs": {
+  "event-type": "string",
+  "output": "string",
+  "page": "int",
+  "page-limit": "int",
+  "role": "stringArray",
+  "search": "string",
+  "sort-by": "string",
+  "sort-direction": "string",
+  "source": "stringArray"
+ },
  "list controls": {
   "archived": "bool",
   "output": "string",
