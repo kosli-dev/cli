@@ -260,7 +260,11 @@ func (o *attestArtifactOptions) runBuild(artifactName string, stdin io.Reader, s
 
 	o.payload.Fingerprint, err = GetSha256Digest(artifactName, o.fingerprintOptions, logger)
 	if err != nil {
-		return fmt.Errorf("build command succeeded but artifact %s was not found: %w", artifactName, err)
+		return &buildFailedError{
+			code: 1,
+			msg:  fmt.Sprintf("build command succeeded but artifact %s was not found: %v", artifactName, err),
+			err:  err,
+		}
 	}
 	// A warning only: reproducible builds legitimately rewrite identical bytes.
 	if before != "" && before == o.payload.Fingerprint {

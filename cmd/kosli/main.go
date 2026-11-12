@@ -49,14 +49,19 @@ func main() {
 	}
 }
 
-// buildFailedError reports a build command that did not succeed. kosli exits
-// with the build's exit code instead of 1.
+// buildFailedError reports a build command that failed or did not produce its
+// artifact. kosli exits with code, even under --dry-run. msg, when set,
+// replaces the default message.
 type buildFailedError struct {
 	code int
+	msg  string
 	err  error
 }
 
 func (e *buildFailedError) Error() string {
+	if e.msg != "" {
+		return e.msg
+	}
 	msg := fmt.Sprintf("build command failed with exit code %d", e.code)
 	var exitErr *exec.ExitError
 	if e.err != nil && !errors.As(e.err, &exitErr) {

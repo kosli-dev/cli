@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -278,6 +280,25 @@ func TestAttestArtifactBuildCommandDryRun(t *testing.T) {
 		},
 	}
 	runTestCmd(t, tests)
+}
+
+// TestAttestArtifactMissingArtifactFailsUnderDryRun drives innerMain, which the
+// golden harness bypasses and which turns other errors into exit 0 under --dry-run.
+func TestAttestArtifactMissingArtifactFailsUnderDryRun(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "missing.bin")
+	args := []string{
+		"attest", "artifact", missing, "--artifact-type", "file", "--name", "cli",
+		"--commit", "HEAD", "--build-url", "http://www.example.com", "--commit-url", "http://www.example.com",
+		"--flow", "attest-artifact", "--trail", "test-123", "--repo-root", "../..",
+		"--host", "http://localhost:8001", "--org", "docs-cmd-test-user", "--api-token", "secret-token",
+		"--dry-run", "--", "true",
+	}
+	cmd, err := newRootCmd(io.Discard, io.Discard, args)
+	require.NoError(t, err)
+
+	code, ok := buildExitCode(innerMain(cmd, append([]string{"kosli"}, args...)))
+	require.True(t, ok)
+	require.Equal(t, 1, code)
 }
 
 func TestMaskSecrets(t *testing.T) {
