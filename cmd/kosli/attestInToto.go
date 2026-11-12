@@ -76,7 +76,7 @@ const githubAttachmentName = "attestation.sigstore.json"
 
 // currentGitHubRun returns the run-invocation URI of the GitHub Actions run
 // this command is part of, as Sigstore writes it in the certificate of
-// anything that run signs, and whether there is such a run. Tests replace it,
+// anything this attempt of the run signs, and whether there is such a run. Tests replace it,
 // so that they behave the same inside GitHub Actions as outside.
 var currentGitHubRun = func() (runURI string, inActions bool) {
 	if WhichCI() != github {
@@ -140,8 +140,8 @@ Recording provenance and an SBOM takes two commands.
   line. It is the default elsewhere, and whenever ^--bundle^ is given.
 
 Attestations of other kinds are ignored. When several qualify, a verified one is
-preferred, then one made by the GitHub Actions run this command is part of, then the
-newest.
+preferred, then one made by the same attempt of the GitHub Actions run this command is
+part of, then one made by any attempt of that run, then the newest.
 
 The statement must list the artifact as its subject. A signed attestation is verified with
 Sigstore against a signer you pin: ^--certificate-identity^ (or
@@ -159,9 +159,10 @@ was changed after signing, fails the command and nothing is recorded, even when 
 attestation in the file would qualify. So does a signed attestation whose signature cannot
 be checked, such as when no signer is pinned, a trust root cannot be fetched or the signer
 flags do not fit how it was signed; the error then says it could not be verified, not that
-it failed. GitHub holds the attestations of every workflow that attested the artifact, so
-there such an attestation is passed over with a warning as long as another one verifies.
-When none does, the command fails and nothing is recorded.
+it failed. So does an entry of the file that cannot be read as an attestation. GitHub
+holds the attestations of every workflow that attested the artifact, so there such an
+attestation, or one that cannot be read, is passed over with a warning as long as another
+one verifies. When none does, the command fails, naming each one, and nothing is recorded.
 
 ` + sigstoreTrustRootDesc + `
 The record is annotated with ^verified^ and, for a signed attestation, ^signer_identity^,
@@ -490,7 +491,7 @@ func (o *attestInTotoOptions) run(args []string) error {
 		return err
 	}
 	for _, rejected := range found.Rejected {
-		logger.Warn("another %s attestation was not recorded: %s", o.kind, rejected)
+		logger.Warn("another attestation was not recorded: %s", rejected)
 	}
 
 	externalURLs, err := processExternalURLs(o.externalURLs, o.externalFingerprints)

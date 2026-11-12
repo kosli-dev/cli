@@ -547,7 +547,16 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceChoosesAmongSeveral()
 		{
 			name:        "records the pinned workflow's attestation, warning about one by another signer",
 			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
-			goldenRegex: `(?s)^\[warning\] another provenance attestation was not recorded: attestation 1 failed verification: .*https://github.com/mallory/widget.*"signer_identity": "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main"`,
+			goldenRegex: `(?s)^\[warning\] another attestation was not recorded: attestation 1 failed verification: .*https://github.com/mallory/widget.*"signer_identity": "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main"`,
+		},
+	})
+
+	suite.githubHolds("trusted_root.json", "github-provenance.sigstore.json")
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "records the attestation that verifies, warning about one it cannot read",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
+			goldenRegex: `(?s)^\[warning\] another attestation was not recorded: attestation 1: not a Sigstore bundle, a DSSE envelope or an in-toto statement.*"signer_identity": "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main"`,
 		},
 	})
 
@@ -557,7 +566,7 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceChoosesAmongSeveral()
 			wantError:   true,
 			name:        "records nothing when none verifies, naming each failure",
 			cmd:         suite.fromGitHub("--predicate-type provenance --name app"),
-			goldenRegex: `^Error: GitHub repository acme/widget: 2 provenance attestations could not be accepted: attestation 1 failed verification: .*; attestation 2 failed verification: `,
+			goldenRegex: `^Error: GitHub repository acme/widget: 2 attestations could not be accepted: attestation 1 failed verification: .*; attestation 2 failed verification: `,
 		},
 	})
 }
@@ -576,9 +585,9 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceWhenItCannotRecord() 
 		},
 		{
 			wantError:   true,
-			name:        "the token cannot read the repository's attestations, saying what it needs",
+			name:        "GitHub answers the listing with not found, naming both causes",
 			cmd:         suite.command("--source github --github-org acme --repository gadget --predicate-type provenance --name app " + intotoSigner + suite.githubArguments),
-			goldenRegex: `^Error: GitHub repository acme/gadget: failed to list its attestations: .*404 Not Found.*the attestations: read permission`,
+			goldenRegex: `^Error: GitHub repository acme/gadget: failed to list its attestations: .*404 Not Found.*Either GitHub holds no attestation for the artifact, or the token cannot read the repository and its attestations \(the attestations: read permission\)`,
 		},
 		{
 			wantError: true,

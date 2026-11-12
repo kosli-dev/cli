@@ -33,8 +33,8 @@ const (
 
 // GitHubRepository is the attestations GitHub holds about the artifacts of
 // one repository, read through its attestations API. Any workflow in the
-// repository can add to them, so one attestation failing verification does not
-// rule out another.
+// repository can add to them, so one attestation failing verification, or
+// being unreadable, does not rule out another.
 type GitHubRepository struct {
 	Owner string
 	Name  string
@@ -45,7 +45,8 @@ type GitHubRepository struct {
 	BaseURL string
 	Debug   bool
 	// RunURI is the run-invocation URI of the GitHub Actions run the caller is
-	// part of, or empty outside one. An attestation that run made is preferred.
+	// part of, or empty outside one. An attestation that run made is
+	// preferred: one from the same attempt first, then one from any attempt.
 	RunURI string
 }
 
@@ -54,7 +55,8 @@ func (g GitHubRepository) String() string {
 }
 
 // Selection passes over attestations made by signers other than the pinned
-// one, and prefers the attestation made by the caller's own run.
+// one, and ones that cannot be read, and prefers the attestation made by the
+// caller's own run.
 func (g GitHubRepository) Selection() Selection {
 	return Selection{SkipFailed: true, PreferredRun: g.RunURI}
 }
@@ -80,7 +82,8 @@ type githubAttestation struct {
 }
 
 // Attestations returns every attestation GitHub holds in the repository for
-// the artifact with SHA-256 digest.
+// the artifact with SHA-256 digest. One whose bundle does not parse is
+// returned Unreadable.
 func (g GitHubRepository) Attestations(digest string) ([]*Attestation, error) {
 	digest = normaliseDigest(digest)
 	ctx := context.Background()
@@ -113,10 +116,7 @@ func (g GitHubRepository) Attestations(digest string) ([]*Attestation, error) {
 		}
 	}
 
-	attestations, err := parseAll(bundles)
-	if err != nil {
-		return nil, err
-	}
+	attestations := parseEach(bundles)
 	location := client.BaseURL() + path
 	for _, attestation := range attestations {
 		attestation.URL = location
@@ -153,7 +153,9 @@ func describeListError(err error) error {
 	var refused *gh.ErrorResponse
 	if errors.As(err, &refused) && refused.Response != nil {
 		switch refused.Response.StatusCode {
-		case http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound:
+		case http.StatusNotFound:
+			return fmt.Errorf("failed to list its attestations: %w. Either GitHub holds no attestation for the artifact, or the token cannot read the repository and its attestations (the attestations: read permission)", err)
+		case http.StatusUnauthorized, http.StatusForbidden:
 			return fmt.Errorf("failed to list its attestations: %w. The token must be able to read the repository and its attestations (the attestations: read permission)", err)
 		}
 	}
@@ -203,11 +205,9 @@ func downloadBundle(ctx context.Context, bundleURL string) ([]byte, error) {
 		return fail("%s", err)
 	}
 
-	if bundle, err := snappy.Decode(nil, body); err == nil {
-		return bundle, nil
+	bundle, err := snappy.Decode(nil, body)
+	if err != nil {
+		return fail("it is not snappy-compressed")
 	}
-	if json.Valid(body) {
-		return body, nil
-	}
-	return fail("it is neither snappy-compressed nor JSON")
+	return bundle, nil
 }

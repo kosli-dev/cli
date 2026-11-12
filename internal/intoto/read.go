@@ -36,8 +36,12 @@ type Attestation struct {
 	Position int
 	// URL is where the source holds the attestation, when the source is not a
 	// file.
-	URL       string
-	Statement *ita1.Statement
+	URL string
+	// Unreadable is why the source could not parse this attestation, when it
+	// lists the ones it cannot read rather than failing on them. Statement is
+	// then nil.
+	Unreadable error
+	Statement  *ita1.Statement
 	// Predicate is the predicate exactly as the payload carried it. The
 	// Statement's copy has been through protobuf's Struct, which turns every
 	// number into a float64.
@@ -85,8 +89,20 @@ func Read(content []byte) ([]*Attestation, error) {
 }
 
 // parseAll parses the documents one source holds, numbering them when there
-// are several.
+// are several. One that does not parse fails them all.
 func parseAll(documents []json.RawMessage) ([]*Attestation, error) {
+	attestations := parseEach(documents)
+	for _, attestation := range attestations {
+		if attestation.Unreadable != nil {
+			return nil, attestation.Unreadable
+		}
+	}
+	return attestations, nil
+}
+
+// parseEach is parseAll for a source that others write to: a document that
+// does not parse is kept, marked Unreadable, so it need not rule out the rest.
+func parseEach(documents []json.RawMessage) []*Attestation {
 	attestations := make([]*Attestation, 0, len(documents))
 	for i, document := range documents {
 		attestation := &Attestation{Raw: document}
@@ -94,11 +110,11 @@ func parseAll(documents []json.RawMessage) ([]*Attestation, error) {
 			attestation.Position = i + 1
 		}
 		if err := attestation.parse(document); err != nil {
-			return nil, fmt.Errorf("%s: %w", attestation.Describe(), err)
+			attestation.Unreadable = fmt.Errorf("%s: %w", attestation.Describe(), err)
 		}
 		attestations = append(attestations, attestation)
 	}
-	return attestations, nil
+	return attestations
 }
 
 // ErrSeveralDocuments is ReadEnvelope's error for content holding more than

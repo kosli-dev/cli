@@ -201,13 +201,12 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		require.Empty(t, fake.blobAuth)
 	})
 
-	t.Run("reads a downloaded bundle that is not compressed", func(t *testing.T) {
+	t.Run("refuses a downloaded bundle that is not snappy-compressed, as the GitHub CLI does", func(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
 		fake.blobBody = func(bundle []byte) []byte { return bundle }
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
-		require.NoError(t, err)
-		require.Equal(t, fake.bundle("github-provenance.sigstore.json"), attestations[0].Raw)
+		_, err := fake.repository().Attestations(artifactDigest)
+		require.ErrorContains(t, err, "/blobs/github-provenance.sigstore.json: it is not snappy-compressed")
 	})
 
 	t.Run("retries a download the blob store fails", func(t *testing.T) {
@@ -230,14 +229,6 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		require.Len(t, fake.blobAuth, 4)
 	})
 
-	t.Run("refuses a download that is neither compressed nor JSON", func(t *testing.T) {
-		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
-		fake.blobBody = func([]byte) []byte { return []byte("<html>expired</html>") }
-
-		_, err := fake.repository().Attestations(artifactDigest)
-		require.ErrorContains(t, err, "/blobs/github-provenance.sigstore.json: it is neither snappy-compressed nor JSON")
-	})
-
 	t.Run("says when GitHub holds no attestation for the artifact", func(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{})
 
@@ -245,7 +236,7 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		require.EqualError(t, err, "it holds no attestation for the artifact (sha256:"+artifactDigest+")")
 	})
 
-	t.Run("says what the token needs when GitHub refuses the listing", func(t *testing.T) {
+	t.Run("names both causes when GitHub answers the listing with not found", func(t *testing.T) {
 		fake := newFakeGitHub(t)
 		repository := fake.repository()
 		repository.Name = "gadget"
@@ -253,14 +244,17 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		_, err := repository.Attestations(artifactDigest)
 		require.ErrorContains(t, err, "failed to list its attestations: ")
 		require.ErrorContains(t, err, "404 Not Found")
-		require.ErrorContains(t, err, "The token must be able to read the repository and its attestations (the attestations: read permission)")
+		require.ErrorContains(t, err, "Either GitHub holds no attestation for the artifact, or the token cannot read the repository and its attestations (the attestations: read permission)")
 	})
 
-	t.Run("names the attestation whose bundle it cannot read", func(t *testing.T) {
+	t.Run("keeps an attestation whose bundle it cannot read, saying why, beside the ones it can", func(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json"), inline("trusted_root.json")})
 
-		_, err := fake.repository().Attestations(artifactDigest)
-		require.ErrorContains(t, err, "attestation 2: not a Sigstore bundle, a DSSE envelope or an in-toto statement")
+		attestations, err := fake.repository().Attestations(artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 2)
+		require.NoError(t, attestations[0].Unreadable)
+		require.EqualError(t, attestations[1].Unreadable, "attestation 2: not a Sigstore bundle, a DSSE envelope or an in-toto statement")
 	})
 
 	t.Run("names itself by the repository", func(t *testing.T) {
@@ -299,6 +293,39 @@ func TestFindInGitHubRepository(t *testing.T) {
 		found, err := find(t, repository, KindProvenance)
 		require.NoError(t, err)
 		require.Equal(t, fixtureRunURI, found.Evidence.RunInvocationURI)
+	})
+
+	t.Run("passes over an attestation it cannot read when another verifies, and reports it", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{inline("trusted_root.json"), inline("github-provenance.sigstore.json")})
+
+		found, err := find(t, fake.repository(), KindProvenance)
+		require.NoError(t, err)
+		require.Equal(t, 2, found.Position)
+		require.True(t, found.Evidence.Verified)
+		require.Len(t, found.Rejected, 1)
+		require.ErrorContains(t, found.Rejected[0], "attestation 1: not a Sigstore bundle, a DSSE envelope or an in-toto statement")
+	})
+
+	t.Run("names every attestation it cannot read or verify when none verifies", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{inline("trusted_root.json"), inline("wrong-signer-provenance.sigstore.json")})
+
+		_, err := find(t, fake.repository(), KindProvenance)
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.ErrorContains(t, err, "GitHub repository acme/widget: 2 attestations could not be accepted: attestation 1: not a Sigstore bundle, a DSSE envelope or an in-toto statement; attestation 2 failed verification: ")
+	})
+
+	t.Run("names the attestation it cannot read beside the kinds it holds when none is the kind asked for", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{inline("spdx-sbom.sigstore.json"), inline("trusted_root.json")})
+
+		_, err := find(t, fake.repository(), KindProvenance)
+		require.EqualError(t, err, "GitHub repository acme/widget: found no provenance attestation (SLSA provenance v1 or v0.2); the predicate types found were: https://spdx.dev/Document/v2.3; attestation 2: not a Sigstore bundle, a DSSE envelope or an in-toto statement")
+	})
+
+	t.Run("says why when it can read nothing GitHub holds", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{inline("trusted_root.json")})
+
+		_, err := find(t, fake.repository(), KindProvenance)
+		require.EqualError(t, err, "GitHub repository acme/widget: the attestation: not a Sigstore bundle, a DSSE envelope or an in-toto statement")
 	})
 
 	t.Run("names the repository and the predicate types it holds when none is the kind asked for", func(t *testing.T) {

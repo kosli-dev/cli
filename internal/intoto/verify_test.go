@@ -334,7 +334,7 @@ func TestFind(t *testing.T) {
 
 		_, err := Find(BundleFile{Path: path}, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
 		require.ErrorIs(t, err, ErrFailedVerification)
-		require.ErrorContains(t, err, ": 2 provenance attestations could not be accepted: attestation 1 failed verification: ")
+		require.ErrorContains(t, err, ": 2 attestations could not be accepted: attestation 1 failed verification: ")
 		require.ErrorContains(t, err, "; attestation 2 failed verification: ")
 	})
 
@@ -404,7 +404,7 @@ func TestFindBySourceSelection(t *testing.T) {
 	t.Run("names every attestation that failed when none verifies", func(t *testing.T) {
 		_, err := find(t, pinnedSigner, "", "wrong-signer-provenance.sigstore.json", "tampered-provenance.sigstore.json")
 		require.ErrorIs(t, err, ErrFailedVerification)
-		require.ErrorContains(t, err, ": 2 provenance attestations could not be accepted: attestation 1 failed verification: ")
+		require.ErrorContains(t, err, ": 2 attestations could not be accepted: attestation 1 failed verification: ")
 		require.ErrorContains(t, err, "; attestation 2 failed verification: ")
 	})
 
@@ -417,6 +417,26 @@ func TestFindBySourceSelection(t *testing.T) {
 
 	t.Run("prefers the attestation from the run it is part of to a newer one", func(t *testing.T) {
 		found, err := find(t, pinnedSigner, fixtureRunURI, "github-provenance.sigstore.json", "rerun-provenance.sigstore.json")
+		require.NoError(t, err)
+		require.Equal(t, 1, found.Position)
+		require.Equal(t, fixtureRunURI, found.Evidence.RunInvocationURI)
+	})
+
+	t.Run("prefers an attestation from an earlier attempt of the run it is part of to a newer one from another run", func(t *testing.T) {
+		s := newFixtureSigstore(t)
+		trustedRoot, err := root.NewTrustedRootFromJSON(s.trustedRoot())
+		require.NoError(t, err)
+		statement := compact(t, statementFixture(t, "github-provenance.json"))
+		otherRunURI := "https://github.com/acme/widget/actions/runs/42/attempts/1"
+		lines := [][]byte{
+			compact(t, s.bundleFromRun(statement, fixtureIdentity, fixtureRunURI, time.Minute)),
+			compact(t, s.bundleFromRun(statement, fixtureIdentity, otherRunURI, 2*time.Minute)),
+		}
+		path := filepath.Join(t.TempDir(), "attestations.intoto.jsonl")
+		require.NoError(t, os.WriteFile(path, append(bytes.Join(lines, []byte("\n")), '\n'), 0o600))
+
+		source := sharedStore{BundleFile: BundleFile{Path: path}, preferredRun: fixtureRerunURI}
+		found, err := Find(source, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, FixedTrustRoots(trustedRoot)))
 		require.NoError(t, err)
 		require.Equal(t, 1, found.Position)
 		require.Equal(t, fixtureRunURI, found.Evidence.RunInvocationURI)
