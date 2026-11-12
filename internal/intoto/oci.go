@@ -7,7 +7,15 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/distribution/reference"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+)
+
+// How buildx marks an attestation manifest in an image index.
+const (
+	buildxReferenceTypeAnnotation = "vnd.docker.reference.type"
+	buildxAttestationManifest     = "attestation-manifest"
+	dockerManifestListMediaType   = "application/vnd.docker.distribution.manifest.list.v2+json"
 )
 
 // ImageRepository reads the registry repository that holds an image.
@@ -42,7 +50,10 @@ func (i OCIImage) String() string {
 //   - among its referrers, as `cosign attest` and actions/attest with
 //     push-to-registry attach them;
 //   - under the tag sha256-<digest>.att, as cosign attached them before its
-//     bundle format.
+//     bundle format;
+//   - in the attestation manifests of an image index, as `docker buildx build
+//     --provenance --sbom` stores them. The index is the manifest with digest
+//     itself, or the one the image's name refers to.
 //
 // Whatever else is attached is passed over, but an attestation that cannot be
 // read is an error.
@@ -50,7 +61,7 @@ func (i OCIImage) Attestations(digest string) ([]*Attestation, error) {
 	subject := "sha256:" + normaliseDigest(digest)
 	search := &imageSearch{image: i, subject: subject, seen: map[string]bool{}}
 
-	for _, look := range []func() error{search.cosignTag, search.referrers} {
+	for _, look := range []func() error{search.index, search.cosignTag, search.referrers} {
 		if err := look(); err != nil {
 			return nil, err
 		}
@@ -70,6 +81,68 @@ type imageSearch struct {
 	// seen holds the digests of the layers already read, since one
 	// attestation can be reached by more than one route.
 	seen map[string]bool
+}
+
+// index reads the attestation manifests buildx puts in an image index beside
+// the platform images they are about. The statements name a platform image,
+// not the index, so the index the image's name refers to is read as well as
+// the manifest searched for.
+func (s *imageSearch) index() error {
+	named, err := s.image.reference()
+	if err != nil {
+		return err
+	}
+	references := []string{s.subject}
+	if named != s.subject {
+		references = append(references, named)
+	}
+	for _, reference := range references {
+		content, mediaType, err := s.image.Repository.Manifest(reference)
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if mediaType != ocispec.MediaTypeImageIndex && mediaType != dockerManifestListMediaType {
+			continue
+		}
+		var index ocispec.Index
+		if err := json.Unmarshal(content, &index); err != nil {
+			return fmt.Errorf("image index %s is not valid JSON: %w", reference, err)
+		}
+		for _, descriptor := range index.Manifests {
+			if descriptor.Annotations[buildxReferenceTypeAnnotation] != buildxAttestationManifest {
+				continue
+			}
+			manifest, err := s.manifest(descriptor.Digest.String())
+			if err != nil {
+				return err
+			}
+			if manifest == nil {
+				continue
+			}
+			if err := s.layers(manifest, "in the image index"); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// reference is the tag or digest the image's name refers to.
+func (i OCIImage) reference() (string, error) {
+	named, err := reference.ParseNormalizedNamed(i.Name)
+	if err != nil {
+		return "", fmt.Errorf("%q is not an image reference: %w", i.Name, err)
+	}
+	if digested, ok := named.(reference.Digested); ok {
+		return digested.Digest().String(), nil
+	}
+	if tagged, ok := reference.TagNameOnly(named).(reference.Tagged); ok {
+		return tagged.Tag(), nil
+	}
+	return "", fmt.Errorf("%q names neither a tag nor a digest", i.Name)
 }
 
 func (s *imageSearch) cosignTag() error {
@@ -158,10 +231,10 @@ func (s *imageSearch) layers(manifest *ocispec.Manifest, attached string) error 
 }
 
 // holdsAttestations reports whether a layer of this media type is one a tool
-// stores an attestation in: a Sigstore bundle, or the DSSE envelope of
-// cosign's earlier layout.
+// stores an attestation in: a Sigstore bundle, the DSSE envelope of cosign's
+// earlier layout, or the bare statement buildx writes.
 func holdsAttestations(mediaType string) bool {
-	return strings.HasPrefix(mediaType, bundleMediaTypePrefix) || mediaType == cosignEnvelopeMediaType
+	return strings.HasPrefix(mediaType, bundleMediaTypePrefix) || mediaType == cosignEnvelopeMediaType || mediaType == inTotoPayloadType
 }
 
 // holdsInTotoStatement reports whether a layer's content is an in-toto

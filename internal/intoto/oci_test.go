@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -149,19 +150,24 @@ func TestOCIImageReferrers(t *testing.T) {
 	})
 }
 
-// unreadableManifests is a repository where nothing refers to the image and
-// no manifest can be read.
-type unreadableManifests struct{ err error }
+// unreadableCosignTag is a repository holding nothing about the image but a
+// cosign tag that cannot be read.
+type unreadableCosignTag struct{ err error }
 
-func (r unreadableManifests) Manifest(string) ([]byte, string, error) { return nil, "", r.err }
-func (r unreadableManifests) Blob(string) ([]byte, error)             { return nil, r.err }
-func (r unreadableManifests) Referrers(string) ([]ocispec.Descriptor, error) {
+func (r unreadableCosignTag) Manifest(reference string) ([]byte, string, error) {
+	if strings.HasSuffix(reference, ".att") {
+		return nil, "", r.err
+	}
+	return nil, "", fs.ErrNotExist
+}
+func (r unreadableCosignTag) Blob(string) ([]byte, error) { return nil, fs.ErrNotExist }
+func (r unreadableCosignTag) Referrers(string) ([]ocispec.Descriptor, error) {
 	return nil, nil
 }
 
 func TestOCIImageCosignTag(t *testing.T) {
 	t.Run("fails when the tag cannot be read, rather than finding nothing attached", func(t *testing.T) {
-		image := OCIImage{Name: "registry.example.com/acme/widget:1.2", Repository: unreadableManifests{err: errors.New("registry unavailable")}}
+		image := OCIImage{Name: "registry.example.com/acme/widget:1.2", Repository: unreadableCosignTag{err: errors.New("registry unavailable")}}
 
 		_, err := image.Attestations(artifactDigest)
 		require.ErrorContains(t, err, "registry unavailable")
@@ -283,5 +289,82 @@ func TestCosignVerificationMaterial(t *testing.T) {
 		err = verify(t, pinnedSigner, attestations[0])
 		require.ErrorIs(t, err, ErrCannotVerify)
 		require.ErrorContains(t, err, "--key")
+	})
+}
+
+func TestOCIImageBuildxAttestations(t *testing.T) {
+	allowUnsigned := Policy{AllowUnsigned: true}
+	statements := func(t *testing.T) registrytest.BuildxAttestations {
+		return registrytest.BuildxAttestations{Statements: [][]byte{
+			statementFixture(t, "buildkit-provenance.json"), statementFixture(t, "spdx-sbom.json"),
+		}}
+	}
+
+	t.Run("finds an unsigned statement in the image index the tag names", func(t *testing.T) {
+		registry, image := testImage(t)
+		registry.PushBuildxIndex(ociRepo, "1.2", registry.PushImage(ociRepo), statements(t))
+
+		found, err := Find(image, KindProvenance, artifactDigest, NewVerifier(allowUnsigned, fixtureTrust(t)))
+		require.NoError(t, err)
+		require.False(t, found.Evidence.Verified)
+		require.Equal(t, statementFixture(t, "buildkit-provenance.json"), found.Raw)
+		require.Equal(t, "attestation sha256:"+sha256Hex(found.Raw)+" (in the image index)", found.Describe())
+	})
+
+	t.Run("finds it in the image index a digest names", func(t *testing.T) {
+		registry, image := testImage(t)
+		index := registry.PushBuildxIndex(ociRepo, "1.2", registry.PushImage(ociRepo), statements(t))
+		image.Name = registry.Host + "/" + ociRepo + "@" + index.Digest.String()
+
+		found, err := Find(image, KindSBOM, artifactDigest, NewVerifier(allowUnsigned, fixtureTrust(t)))
+		require.NoError(t, err)
+		require.Equal(t, "https://spdx.dev/Document/v2.3", found.Statement.GetPredicateType())
+	})
+
+	t.Run("refuses an unsigned statement unless they are allowed", func(t *testing.T) {
+		registry, image := testImage(t)
+		registry.PushBuildxIndex(ociRepo, "1.2", registry.PushImage(ociRepo), statements(t))
+
+		_, err := Find(image, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
+		require.ErrorContains(t, err, "is not signed. Pass --allow-unsigned")
+	})
+
+	t.Run("names the platform images the statements are about when the artifact is not one of them", func(t *testing.T) {
+		registry, image := testImage(t)
+		index := registry.PushBuildxIndex(ociRepo, "1.2", registry.PushImage(ociRepo), statements(t))
+
+		_, err := Find(image, KindProvenance, index.Digest.Encoded(), NewVerifier(allowUnsigned, fixtureTrust(t)))
+		require.ErrorContains(t, err, "no provenance attestation lists the artifact (sha256:"+index.Digest.Encoded()+") as its subject")
+		require.ErrorContains(t, err, "pkg:docker/acme/widget@1.2.3?platform=linux%2Famd64 (sha256:"+artifactDigest+")")
+	})
+
+	t.Run("returns once a statement that is both in the index and a referrer of the platform image", func(t *testing.T) {
+		registry, image := testImage(t)
+		platform := registry.PushImage(ociRepo)
+		statement := []byte(strings.ReplaceAll(string(statementFixture(t, "buildkit-provenance.json")), artifactDigest, platform.Digest.Encoded()))
+		registry.PushBuildxIndex(ociRepo, "1.2", platform, registrytest.BuildxAttestations{Statements: [][]byte{statement}, OCIArtifact: true})
+
+		attestations, err := image.Attestations(platform.Digest.Encoded())
+		require.NoError(t, err)
+		require.Len(t, attestations, 1)
+	})
+
+	t.Run("finds nothing in a tag that names a single image", func(t *testing.T) {
+		registry, image := testImage(t)
+		pushed := registry.PushImage(ociRepo)
+		content, _, err := image.Repository.Manifest(pushed.Digest.String())
+		require.NoError(t, err)
+		registry.PushManifest(ociRepo, "1.2", ocispec.MediaTypeImageManifest, content)
+
+		_, err = image.Attestations(pushed.Digest.Encoded())
+		require.ErrorContains(t, err, "no attestation is attached")
+	})
+
+	t.Run("refuses a name that is not an image reference", func(t *testing.T) {
+		_, image := testImage(t)
+		image.Name = "Not A Reference"
+
+		_, err := image.Attestations(artifactDigest)
+		require.ErrorContains(t, err, "is not an image reference")
 	})
 }
