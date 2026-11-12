@@ -38,6 +38,18 @@ const (
 var verificationAnnotationKeys = []string{verifiedAnnotation, signerIdentityAnnotation, signerIssuerAnnotation,
 	logIndexAnnotation, integratedTimeAnnotation, signedTimestampAnnotation}
 
+// sigstoreTrustRootDesc says what verifying a signature needs from the runner,
+// for the help of each command that verifies one.
+const sigstoreTrustRootDesc = `Verifying a certificate-signed attestation needs the trust root of the Sigstore instance
+that signed it: Sigstore's public-good instance, or GitHub's own, which signs attestations
+for private repositories. It is fetched over TUF on every run that verifies one, from
+^https://tuf-repo-cdn.sigstore.dev^ or ^https://tuf-repo.github.com^ respectively, and
+cached under ^~/.sigstore^, so the runner needs outbound HTTPS to that host and a writable
+^~/.sigstore^ directory. A key-signed attestation needs neither, unless it carries a
+transparency log entry or a signed timestamp, which are checked against Sigstore's
+public-good trust root. An unsigned attestation needs neither.
+`
+
 // attestationExternalURL labels the link to the attestation's transparency
 // log entry.
 const attestationExternalURL = "attestation"
@@ -98,19 +110,18 @@ The attestation is read from the file given with ^--bundle^: a Sigstore bundle
 one of these per line. Attestations of other kinds are ignored. When several qualify, a
 verified one is preferred, then the newest.
 
-The statement must list the artifact as its subject. A signed attestation is verified
-with Sigstore against a signer you pin: ^--certificate-identity^ (or
+The statement must list the artifact as its subject. A signed attestation is verified with
+Sigstore against a signer you pin: ^--certificate-identity^ (or
 ^--certificate-identity-regexp^) with ^--certificate-oidc-issuer^, or ^--key^. There is no
-way to accept any valid certificate. The trust roots of Sigstore's public-good instance and
-of GitHub's own instance, which signs attestations for private repositories, are fetched
-over TUF. An unsigned attestation is refused unless ^--allow-unsigned^ is given, and is then
-recorded as unverified. An attestation that fails verification, because another signer made
-it or it was changed after signing, fails the command and nothing is recorded, even when
-another attestation in the file would qualify. So does a signed attestation whose signature
-cannot be checked, such as when no signer is pinned, a trust root cannot be fetched or the
-signer flags do not fit how it was signed; the error then says it could not be verified, not
-that it failed.
+way to accept any valid certificate. An unsigned attestation is refused unless
+^--allow-unsigned^ is given, and is then recorded as unverified. An attestation that fails
+verification, because another signer made it or it was changed after signing, fails the
+command and nothing is recorded, even when another attestation in the file would qualify. So
+does a signed attestation whose signature cannot be checked, such as when no signer is
+pinned, a trust root cannot be fetched or the signer flags do not fit how it was signed; the
+error then says it could not be verified, not that it failed.
 
+` + sigstoreTrustRootDesc + `
 The record is annotated with ^verified^ and, for a signed attestation, ^signer_identity^,
 ^signer_issuer^, ^log_index^, ^integrated_time^ and ^signed_timestamp^ where they apply.
 Provenance adds ^builder_id^, ^build_type^ and ^workflow^, and an SBOM adds ^sbom_format^

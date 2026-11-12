@@ -70,6 +70,7 @@ record is annotated with ^verified^ and the verification details, as
 ^kosli attest in-toto^ annotates it. To pick the SBOM from a file holding
 several attestations, or to record provenance, use ^kosli attest in-toto^.
 
+` + sigstoreTrustRootDesc + `
 The SBOM file is the only attachment: this command does not accept additional
 attachments, because two or more would be compressed together.
 
