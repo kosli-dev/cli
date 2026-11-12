@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/gitview"
@@ -24,6 +27,8 @@ const (
 	intotoCommit         = "4f9d2a7c1e6b8a3d5f0e2c9b7a1d4e6f8c3b5a70"
 	intotoSigner         = "--certificate-identity https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main --certificate-oidc-issuer https://token.actions.githubusercontent.com"
 	intotoBuildURL       = "https://github.com/acme/widget/actions/runs/1234567890/attempts/1"
+	intotoRerunURL       = "https://github.com/acme/widget/actions/runs/1234567890/attempts/2"
+	intotoListingPath    = "/api/v3/repos/acme/widget/attestations/sha256:" + intotoDigest
 	intotoCommitURL      = "https://github.com/acme/widget/commit/" + intotoCommit
 	intotoLogEntryURL    = "https://rekor.localhost/api/v1/log/entries?logIndex=0"
 	intotoSBOMTemplate   = "version: 1\ntrail:\n  artifacts:\n  - name: app\n    attestations:\n    - name: sbom\n      type: sbom\n"
@@ -38,11 +43,22 @@ type AttestInTotoCommandTestSuite struct {
 	github                *httptest.Server
 	githubArguments       string
 	savedTrustRoots       func() *intoto.TrustRoots
+	savedGitHubRun        func() (string, bool)
+
+	// attestations names the fixtures GitHub's API lists for the artifact, in
+	// order. The handler reads it on the server's goroutine.
+	attestationsMu sync.Mutex
+	attestations   []string
 }
 
 func (suite *AttestInTotoCommandTestSuite) SetupSuite() {
-	// GitHub's commits API, serving the one commit the provenance fixtures name.
+	// GitHub's API for acme/widget: the attestations a test stores for the
+	// artifact, and the one commit the provenance fixtures name.
 	suite.github = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == intotoListingPath {
+			suite.listAttestations(w)
+			return
+		}
 		if r.URL.Path != "/api/v3/repos/acme/widget/commits/"+intotoCommit {
 			w.WriteHeader(http.StatusNotFound)
 			_, _ = fmt.Fprint(w, `{"message": "Not Found"}`)
@@ -65,6 +81,43 @@ func (suite *AttestInTotoCommandTestSuite) TearDownSuite() {
 	suite.github.Close()
 }
 
+func (suite *AttestInTotoCommandTestSuite) listAttestations(w http.ResponseWriter) {
+	suite.attestationsMu.Lock()
+	defer suite.attestationsMu.Unlock()
+
+	type listed struct {
+		Bundle json.RawMessage `json:"bundle"`
+	}
+	attestations := []listed{}
+	for _, name := range suite.attestations {
+		content, err := os.ReadFile(filepath.Join(intotoFixtures, name))
+		require.NoError(suite.T(), err)
+		var bundle bytes.Buffer
+		require.NoError(suite.T(), json.Compact(&bundle, content))
+		attestations = append(attestations, listed{Bundle: bundle.Bytes()})
+	}
+	require.NoError(suite.T(), json.NewEncoder(w).Encode(map[string]any{"attestations": attestations}))
+}
+
+// githubHolds sets the attestations GitHub lists for the artifact.
+func (suite *AttestInTotoCommandTestSuite) githubHolds(fixtures ...string) {
+	suite.attestationsMu.Lock()
+	defer suite.attestationsMu.Unlock()
+	suite.attestations = fixtures
+}
+
+// inGitHubActions has the command believe it runs in the GitHub Actions run
+// at runURI.
+func (suite *AttestInTotoCommandTestSuite) inGitHubActions(runURI string) {
+	currentGitHubRun = func() (string, bool) { return runURI, true }
+}
+
+// fromGitHub is a command reading acme/widget's attestations from the fake
+// GitHub.
+func (suite *AttestInTotoCommandTestSuite) fromGitHub(flags string) string {
+	return suite.command("--github-org acme --repository widget " + flags + suite.githubArguments)
+}
+
 func (suite *AttestInTotoCommandTestSuite) SetupTest() {
 	suite.flowName = "attest-in-toto"
 	suite.trailName = "test-123"
@@ -80,6 +133,10 @@ func (suite *AttestInTotoCommandTestSuite) SetupTest() {
 	require.NoError(suite.T(), err)
 	suite.savedTrustRoots = intotoTrustRoots
 	intotoTrustRoots = func() *intoto.TrustRoots { return intoto.FixedTrustRoots(trustedRoot) }
+	// The tests run in GitHub Actions too, and must not take its defaults.
+	suite.savedGitHubRun = currentGitHubRun
+	currentGitHubRun = func() (string, bool) { return "", false }
+	suite.githubHolds()
 
 	template := filepath.Join(suite.T().TempDir(), "template.yml")
 	require.NoError(suite.T(), os.WriteFile(template, []byte(intotoSBOMTemplate), 0o600))
@@ -89,6 +146,7 @@ func (suite *AttestInTotoCommandTestSuite) SetupTest() {
 
 func (suite *AttestInTotoCommandTestSuite) TearDownTest() {
 	intotoTrustRoots = suite.savedTrustRoots
+	currentGitHubRun = suite.savedGitHubRun
 }
 
 func (suite *AttestInTotoCommandTestSuite) command(flags string) string {
@@ -104,6 +162,17 @@ func fixtureSHA256(t *testing.T, name string) string {
 	content, err := os.ReadFile(filepath.Join(intotoFixtures, name))
 	require.NoError(t, err)
 	return fmt.Sprintf("%x", sha256.Sum256(content))
+}
+
+// compactFixtureSHA256 is the SHA-256 of a fixture as GitHub's API returns
+// it: on one line, inside the listing.
+func compactFixtureSHA256(t *testing.T, name string) string {
+	t.Helper()
+	content, err := os.ReadFile(filepath.Join(intotoFixtures, name))
+	require.NoError(t, err)
+	var compacted bytes.Buffer
+	require.NoError(t, json.Compact(&compacted, content))
+	return fmt.Sprintf("%x", sha256.Sum256(compacted.Bytes()))
 }
 
 // statementVariant writes a provenance statement fixture with each old string
@@ -376,6 +445,178 @@ func (suite *AttestInTotoCommandTestSuite) TestRefusesWhatItCannotTrust() {
 	})
 }
 
+func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceRecordsWhatGitHubHolds() {
+	suite.githubHolds("cyclonedx-sbom.sigstore.json", "github-provenance.sigstore.json")
+	bundleSHA256 := compactFixtureSHA256(suite.T(), "github-provenance.sigstore.json")
+	sbomSHA256 := compactFixtureSHA256(suite.T(), "cyclonedx-sbom.sigstore.json")
+
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "records the provenance GitHub holds for the artifact, verified against the pinned signer",
+			cmd:         suite.fromGitHub("--source github --predicate-type provenance --name app --dry-run " + intotoSigner),
+			goldenRegex: `(?s)"fingerprint": "` + intotoDigest + `",\s+"filename": "artifact.bin",\s+"git_commit": "` + intotoCommit + `".*"build_url": "` + intotoBuildURL + `".*"signer_identity": "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main",.*"verified": "true"`,
+		},
+		{
+			name:        "links the transparency log entry, pinned by the SHA-256 of the bundle GitHub returned",
+			cmd:         suite.fromGitHub("--source github --predicate-type provenance --name app --dry-run " + intotoSigner),
+			goldenRegex: `(?s)"external_urls": \{\s+"attestation": \{\s+"href": "` + regexpQuote(intotoLogEntryURL) + `",\s+"fingerprint": "` + bundleSHA256 + `"`,
+		},
+		{
+			name:        "records the SBOM GitHub holds, attaching its bundle",
+			cmd:         suite.fromGitHub("--source github --predicate-type sbom --name app.sbom --dry-run " + intotoSigner),
+			goldenRegex: `(?s)"filename": "attestation.sigstore.json".*"sha256": "` + sbomSHA256 + `".*"attestation_name": "sbom".*"verified": "true".*"format": "cyclonedx-1\.6",\s+"original_fingerprint": "` + sbomSHA256 + `"`,
+		},
+		{
+			name:        "takes the repository in the owner/name form GitHub Actions gives it in",
+			cmd:         suite.command("--source github --github-org acme --repository acme/widget --predicate-type provenance --name app --dry-run " + intotoSigner + suite.githubArguments),
+			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"verified": "true"`,
+		},
+		{
+			name:   "has the server accept the artifact",
+			cmd:    suite.fromGitHub("--source github --predicate-type provenance --name app " + intotoSigner),
+			golden: fmt.Sprintf("artifact artifact.bin was attested with fingerprint: %s\n", intotoDigest),
+		},
+	})
+}
+
+func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceInGitHubActions() {
+	suite.githubHolds("github-provenance.sigstore.json")
+	suite.inGitHubActions("https://github.com/acme/deploy/actions/runs/77/attempts/1")
+
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "is the default source",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run " + intotoSigner),
+			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"verified": "true"`,
+		},
+		{
+			name:        "pins the signer to a workflow in the repository when none is given",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
+			goldenRegex: `(?s)"signer_identity": "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main",\s+"signer_issuer": "https://token.actions.githubusercontent.com",\s+"verified": "true"`,
+		},
+		{
+			name:        "records the build's commit and run, not this job's, when run from another workflow",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
+			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"build_url": "` + intotoBuildURL + `",\s+"commit_url": "` + intotoCommitURL + `"`,
+		},
+		{
+			name:        "still reads a file when --bundle is given",
+			cmd:         suite.command("--predicate-type provenance --name app --dry-run " + intotoSigner + suite.bundle("rerun-provenance.sigstore.json") + suite.githubArguments),
+			goldenRegex: `"build_url": "` + intotoRerunURL + `"`,
+		},
+	})
+
+	suite.githubHolds("wrong-signer-provenance.sigstore.json")
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			wantError:   true,
+			name:        "refuses an attestation signed by a workflow in another repository under the default signer",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app"),
+			goldenRegex: `^Error: GitHub repository acme/widget: the attestation failed verification: .*https://github.com/mallory/widget`,
+		},
+		{
+			name:        "accepts it when that workflow is pinned explicitly",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run --certificate-identity-regexp ^https://github.com/mallory/ --certificate-oidc-issuer https://token.actions.githubusercontent.com"),
+			goldenRegex: `"signer_identity": "https://github.com/mallory/widget/.github/workflows/build.yml@refs/heads/main"`,
+		},
+	})
+}
+
+func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceChoosesAmongSeveral() {
+	suite.githubHolds("github-provenance.sigstore.json", "rerun-provenance.sigstore.json")
+	suite.inGitHubActions(intotoBuildURL)
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "prefers the attestation made by the run it is part of to a newer one",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
+			goldenRegex: `"build_url": "` + intotoBuildURL + `"`,
+		},
+	})
+
+	suite.inGitHubActions("https://github.com/acme/deploy/actions/runs/77/attempts/1")
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "takes the newest when none was made by the run it is part of",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
+			goldenRegex: `"build_url": "` + intotoRerunURL + `"`,
+		},
+	})
+
+	suite.githubHolds("wrong-signer-provenance.sigstore.json", "github-provenance.sigstore.json")
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "records the pinned workflow's attestation, warning about one by another signer",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
+			goldenRegex: `(?s)^\[warning\] another provenance attestation was not recorded: attestation 1 failed verification: .*https://github.com/mallory/widget.*"signer_identity": "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main"`,
+		},
+	})
+
+	suite.githubHolds("wrong-signer-provenance.sigstore.json", "tampered-provenance.sigstore.json")
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			wantError:   true,
+			name:        "records nothing when none verifies, naming each failure",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app"),
+			goldenRegex: `^Error: GitHub repository acme/widget: 2 provenance attestations could not be accepted: attestation 1 failed verification: .*; attestation 2 failed verification: `,
+		},
+	})
+}
+
+func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceWhenItCannotRecord() {
+	// CI sets a real token, which would satisfy the case that expects none.
+	suite.T().Setenv("KOSLI_GITHUB_TOKEN", "")
+	suite.githubHolds("spdx-sbom.sigstore.json")
+
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			wantError: true,
+			name:      "GitHub holds only other kinds of attestation for the artifact, naming them",
+			cmd:       suite.fromGitHub("--source github --predicate-type provenance --name app " + intotoSigner),
+			golden:    "Error: GitHub repository acme/widget: found no provenance attestation (SLSA provenance v1 or v0.2); the predicate types found were: https://spdx.dev/Document/v2.3\n",
+		},
+		{
+			wantError:   true,
+			name:        "the token cannot read the repository's attestations, saying what it needs",
+			cmd:         suite.command("--source github --github-org acme --repository gadget --predicate-type provenance --name app " + intotoSigner + suite.githubArguments),
+			goldenRegex: `^Error: GitHub repository acme/gadget: failed to list its attestations: .*404 Not Found.*the attestations: read permission`,
+		},
+		{
+			wantError: true,
+			name:      "no signer is pinned outside GitHub Actions, naming the flags that pin one",
+			cmd:       suite.fromGitHub("--source github --predicate-type provenance --name app"),
+			golden:    "Error: --source github needs a signer to verify attestations against. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key. In GitHub Actions the signer defaults to a workflow in the repository itself\n",
+		},
+		{
+			wantError: true,
+			name:      "no --github-token",
+			cmd:       suite.command("--source github --github-org acme --repository widget --predicate-type provenance --name app " + intotoSigner),
+			golden:    "Error: --github-token is required with --source github\n",
+		},
+		{
+			wantError: true,
+			name:      "no --github-org or --repository, naming both",
+			cmd:       suite.command("--source github --predicate-type provenance --name app " + intotoSigner + suite.githubArguments),
+			golden:    "Error: --github-org and --repository are required with --source github\n",
+		},
+		{
+			wantError: true,
+			name:      "a --bundle as well",
+			cmd:       suite.fromGitHub("--source github --predicate-type provenance --name app " + intotoSigner + suite.bundle("github-provenance.sigstore.json")),
+			golden:    "Error: --bundle cannot be used with --source github\n",
+		},
+	})
+
+	suite.githubHolds()
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			wantError: true,
+			name:      "GitHub holds no attestation for the artifact",
+			cmd:       suite.fromGitHub("--source github --predicate-type provenance --name app " + intotoSigner),
+			golden:    "Error: GitHub repository acme/widget: it holds no attestation for the artifact (sha256:" + intotoDigest + ")\n",
+		},
+	})
+}
+
 func (suite *AttestInTotoCommandTestSuite) TestRejectsBadFlags() {
 	runTestCmd(suite.T(), []cmdTestCase{
 		{
@@ -392,9 +633,9 @@ func (suite *AttestInTotoCommandTestSuite) TestRejectsBadFlags() {
 		},
 		{
 			wantError: true,
-			name:      "a source other than bundle",
-			cmd:       suite.command("--source github --predicate-type provenance --name app"),
-			golden:    "Error: --source \"github\" is not supported. Must be: bundle\n",
+			name:      "a source it does not read",
+			cmd:       suite.command("--source oci --predicate-type provenance --name app"),
+			golden:    "Error: --source \"oci\" is not supported. Must be one of: bundle, github\n",
 		},
 		{
 			wantError: true,
@@ -426,6 +667,52 @@ func (suite *AttestInTotoCommandTestSuite) TestRejectsBadFlags() {
 			cmd:       "attest in-toto --predicate-type provenance --name app" + suite.bundle("github-provenance.sigstore.json") + suite.defaultKosliArguments,
 			golden:    "Error: at least one of --fingerprint, --artifact-type is required\n",
 		},
+	})
+}
+
+func TestAttestationLink(t *testing.T) {
+	found := func(logEntryURL, heldAt string) *intoto.Found {
+		return &intoto.Found{
+			Attestation: &intoto.Attestation{URL: heldAt},
+			Evidence:    &intoto.Evidence{LogEntryURL: logEntryURL, RawSHA256: "abc123"},
+		}
+	}
+	const listing = "https://api.github.com/repos/acme/widget/attestations/sha256:" + intotoDigest
+
+	t.Run("links the transparency log entry, which anyone can read, when there is one", func(t *testing.T) {
+		require.Equal(t, &URLInfo{Href: intotoLogEntryURL, Fingerprint: "abc123"}, attestationLink(found(intotoLogEntryURL, listing)))
+	})
+
+	t.Run("links where the source holds the attestation when it has no log entry", func(t *testing.T) {
+		require.Equal(t, &URLInfo{Href: listing, Fingerprint: "abc123"}, attestationLink(found("", listing)))
+	})
+
+	t.Run("links nothing for an attestation read from a file with no log entry", func(t *testing.T) {
+		require.Nil(t, attestationLink(found("", "")))
+	})
+}
+
+func TestCurrentGitHubRun(t *testing.T) {
+	t.Run("is the run's invocation URI, as its certificates name it, in GitHub Actions", func(t *testing.T) {
+		t.Setenv("GITHUB_RUN_NUMBER", "7")
+		t.Setenv("GITHUB_SERVER_URL", "https://github.com")
+		t.Setenv("GITHUB_REPOSITORY", "acme/widget")
+		t.Setenv("GITHUB_RUN_ID", "1234567890")
+		t.Setenv("GITHUB_RUN_ATTEMPT", "1")
+
+		runURI, inActions := currentGitHubRun()
+		require.True(t, inActions)
+		require.Equal(t, intotoBuildURL, runURI)
+	})
+
+	t.Run("is nothing outside GitHub Actions", func(t *testing.T) {
+		// Setenv first, so that the variable is restored after it is unset.
+		t.Setenv("GITHUB_RUN_NUMBER", "")
+		require.NoError(t, os.Unsetenv("GITHUB_RUN_NUMBER"))
+
+		runURI, inActions := currentGitHubRun()
+		require.False(t, inActions)
+		require.Empty(t, runURI)
 	})
 }
 

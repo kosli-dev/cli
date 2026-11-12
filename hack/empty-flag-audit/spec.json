@@ -5165,6 +5165,7 @@
       "fingerprint",
       "flow",
       "github-base-url",
+      "github-org",
       "github-token",
       "key",
       "name",
@@ -5174,6 +5175,7 @@
       "registry-username",
       "repo-provider",
       "repo-root",
+      "repository",
       "source",
       "trail"
     ],
@@ -5194,6 +5196,7 @@
       "fingerprint": "e88951291bca0807a41f3c0144009bfff5c6c77dc1310d52e8c6d62feee960a8",
       "flow": "{flow}",
       "github-base-url": "http://example.com/",
+      "github-org": "probe-github-org",
       "github-token": "probe-github-token",
       "key": "internal/intoto/testdata/key.pub",
       "name": "{name}",
@@ -5203,6 +5206,7 @@
       "registry-username": "probe-registry-username",
       "repo-provider": "github",
       "repo-root": ".",
+      "repository": "probe-repository",
       "source": "bundle",
       "trail": "{trail}"
     }

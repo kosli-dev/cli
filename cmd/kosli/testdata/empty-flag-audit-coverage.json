@@ -210,6 +210,7 @@
   "fingerprint": "string",
   "flow": "string",
   "github-base-url": "string",
+  "github-org": "string",
   "github-token": "string",
   "key": "string",
   "name": "string",
@@ -219,6 +220,7 @@
   "registry-username": "string",
   "repo-provider": "string",
   "repo-root": "string",
+  "repository": "string",
   "source": "string",
   "trail": "string"
  },
