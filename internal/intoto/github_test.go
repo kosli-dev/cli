@@ -69,11 +69,16 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	if fixture, ok := strings.CutPrefix(r.URL.Path, "/blobs/"); ok {
+	if name, ok := strings.CutPrefix(r.URL.Path, "/blobs/"); ok {
 		f.blobAuth = append(f.blobAuth, r.Header.Get("Authorization"))
 		if f.blobFailures > 0 {
 			f.blobFailures--
 			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		fixture, held := f.blobFixture(name)
+		if !held {
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		bundle := f.bundle(fixture)
@@ -121,6 +126,19 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	require.NoError(f.t, json.NewEncoder(w).Encode(map[string]any{"attestations": attestations}))
+}
+
+// blobFixture is the fixture the blob store holds under name, so a download
+// reads only what a test stored rather than whatever path the request names.
+func (f *fakeGitHub) blobFixture(name string) (string, bool) {
+	for _, page := range f.pages {
+		for _, s := range page {
+			if s.blob && s.fixture == name {
+				return s.fixture, true
+			}
+		}
+	}
+	return "", false
 }
 
 func (f *fakeGitHub) bundle(fixture string) []byte {
