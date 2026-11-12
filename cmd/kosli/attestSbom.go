@@ -171,6 +171,15 @@ func newAttestSbomCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			// A pinned signer means the file must be an attestation to verify,
+			// so its keys are refused before anything is read or fetched.
+			if o.policy.PinsSigner() {
+				err = o.rejectVerificationAnnotations()
+				if err != nil {
+					return err
+				}
+			}
+
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
 
@@ -316,11 +325,8 @@ func (o *attestSbomOptions) unwrap(content []byte) (document []byte, evidence *i
 // are reserved only for an SBOM that arrives in an attestation, so a plain
 // SBOM file can still be annotated with them.
 func (o *attestSbomOptions) recordVerification(evidence *intoto.Evidence) error {
-	for _, reserved := range []string{verifiedAnnotation, signerIdentityAnnotation, signerIssuerAnnotation,
-		logIndexAnnotation, integratedTimeAnnotation, signedTimestampAnnotation} {
-		if _, taken := o.annotations[reserved]; taken {
-			return fmt.Errorf("annotation key '%s' is set by this command from the attestation and cannot be provided with --annotate", reserved)
-		}
+	if err := o.rejectVerificationAnnotations(); err != nil {
+		return err
 	}
 	o.payload.Annotations = withAnnotations(o.payload.Annotations, verificationAnnotations(evidence))
 
@@ -411,6 +417,17 @@ func (o *attestSbomOptions) evidence(content []byte) *requests.FileBytes {
 		Name: filepath.Base(o.sbomFilePath),
 		Data: content,
 	}
+}
+
+// rejectVerificationAnnotations refuses the --annotate keys that recording an
+// attestation's verification sets.
+func (o *attestSbomOptions) rejectVerificationAnnotations() error {
+	for _, reserved := range verificationAnnotationKeys {
+		if _, taken := o.annotations[reserved]; taken {
+			return fmt.Errorf("annotation key '%s' is set by this command from the attestation and cannot be provided with --annotate", reserved)
+		}
+	}
+	return nil
 }
 
 // rejectReservedAnnotations runs in PreRunE: it needs nothing from the file, so

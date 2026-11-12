@@ -164,6 +164,12 @@ func (suite *AttestSbomCommandTestSuite) TestAttestSbomUnwrapsAnAttestation() {
 			cmd:       command("--sbom-file " + bundle + " --annotate verified=by-hand"),
 			golden:    "Error: annotation key 'verified' is set by this command from the attestation and cannot be provided with --annotate\n",
 		},
+		{
+			wantError: true,
+			name:      "refuses a verification annotation when a signer is pinned before reading the file, so before any verification",
+			cmd:       command("--sbom-file testdata/sbom/does-not-exist.sigstore.json " + intotoSigner + " --annotate signer_identity=by-hand"),
+			golden:    "Error: annotation key 'signer_identity' is set by this command from the attestation and cannot be provided with --annotate\n",
+		},
 	})
 }
 

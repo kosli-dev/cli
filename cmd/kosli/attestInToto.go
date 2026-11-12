@@ -33,6 +33,11 @@ const (
 	signedTimestampAnnotation = "signed_timestamp"
 )
 
+// verificationAnnotationKeys are the annotations recording what verifying an
+// attestation established, which --annotate cannot set.
+var verificationAnnotationKeys = []string{verifiedAnnotation, signerIdentityAnnotation, signerIssuerAnnotation,
+	logIndexAnnotation, integratedTimeAnnotation, signedTimestampAnnotation}
+
 // attestationExternalURL labels the link to the attestation's transparency
 // log entry.
 const attestationExternalURL = "attestation"
@@ -293,8 +298,7 @@ func (o *attestInTotoOptions) validate() error {
 }
 
 func (o *attestInTotoOptions) reservedAnnotations() []string {
-	reserved := []string{verifiedAnnotation, signerIdentityAnnotation, signerIssuerAnnotation,
-		logIndexAnnotation, integratedTimeAnnotation, signedTimestampAnnotation}
+	reserved := append([]string{}, verificationAnnotationKeys...)
 	if o.kind == intoto.KindSBOM {
 		return append(reserved, sbomFormatAnnotation, sbomSha256Annotation)
 	}
