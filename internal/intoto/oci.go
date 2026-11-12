@@ -2,7 +2,9 @@ package intoto
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"strings"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -35,15 +37,23 @@ func (i OCIImage) String() string {
 }
 
 // Attestations returns the attestations attached to the image manifest with
-// SHA-256 digest: Sigstore bundles among its referrers, as `cosign attest` and
-// actions/attest with push-to-registry attach them. Whatever else is attached
-// is passed over, but an attestation that cannot be read is an error.
+// SHA-256 digest:
+//
+//   - among its referrers, as `cosign attest` and actions/attest with
+//     push-to-registry attach them;
+//   - under the tag sha256-<digest>.att, as cosign attached them before its
+//     bundle format.
+//
+// Whatever else is attached is passed over, but an attestation that cannot be
+// read is an error.
 func (i OCIImage) Attestations(digest string) ([]*Attestation, error) {
 	subject := "sha256:" + normaliseDigest(digest)
 	search := &imageSearch{image: i, subject: subject, seen: map[string]bool{}}
 
-	if err := search.referrers(); err != nil {
-		return nil, err
+	for _, look := range []func() error{search.cosignTag, search.referrers} {
+		if err := look(); err != nil {
+			return nil, err
+		}
 	}
 	if len(search.found) == 0 {
 		return nil, fmt.Errorf("no attestation is attached to %s: looked among its referrers, under cosign's tag %s, and for buildx attestation manifests in the image index",
@@ -60,6 +70,18 @@ type imageSearch struct {
 	// seen holds the digests of the layers already read, since one
 	// attestation can be reached by more than one route.
 	seen map[string]bool
+}
+
+func (s *imageSearch) cosignTag() error {
+	tag := cosignAttestationTag(s.subject)
+	manifest, err := s.manifest(tag)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil || manifest == nil {
+		return err
+	}
+	return s.layers(manifest, "under cosign's tag "+tag)
 }
 
 func (s *imageSearch) referrers() error {
@@ -107,7 +129,7 @@ func (s *imageSearch) manifest(reference string) (*ocispec.Manifest, error) {
 // message.
 func (s *imageSearch) layers(manifest *ocispec.Manifest, attached string) error {
 	for _, layer := range manifest.Layers {
-		if !strings.HasPrefix(layer.MediaType, bundleMediaTypePrefix) || s.seen[layer.Digest.String()] {
+		if !holdsAttestations(layer.MediaType) || s.seen[layer.Digest.String()] {
 			continue
 		}
 		s.seen[layer.Digest.String()] = true
@@ -126,10 +148,20 @@ func (s *imageSearch) layers(manifest *ocispec.Manifest, attached string) error 
 		}
 		for _, attestation := range attestations {
 			attestation.Origin = origin
+			if layer.MediaType == cosignEnvelopeMediaType {
+				attestation.addCosignMaterial(layer.Annotations)
+			}
 		}
 		s.found = append(s.found, attestations...)
 	}
 	return nil
+}
+
+// holdsAttestations reports whether a layer of this media type is one a tool
+// stores an attestation in: a Sigstore bundle, or the DSSE envelope of
+// cosign's earlier layout.
+func holdsAttestations(mediaType string) bool {
+	return strings.HasPrefix(mediaType, bundleMediaTypePrefix) || mediaType == cosignEnvelopeMediaType
 }
 
 // holdsInTotoStatement reports whether a layer's content is an in-toto

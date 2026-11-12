@@ -45,6 +45,9 @@ type Attestation struct {
 
 	bundle   *bundle.Bundle
 	envelope *dsse.Envelope
+	// materialErr is why an envelope's source could not supply the
+	// certificate and log entry that verify its signature, when it tried.
+	materialErr error
 }
 
 // Signed reports whether the attestation carries a signature to verify.

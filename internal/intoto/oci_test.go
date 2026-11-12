@@ -3,6 +3,7 @@ package intoto
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -129,11 +130,158 @@ func TestOCIImageReferrers(t *testing.T) {
 		require.ErrorContains(t, err, "image "+image.Name+": attestation sha256:"+sha256Hex(wrongSigner)+" (a referrer of the image) failed verification")
 	})
 
+	t.Run("fails when the registry cannot be read, rather than finding nothing attached", func(t *testing.T) {
+		_, image := testImage(t)
+		refused, err := digest.OpenRepository(image.Name, "a-user", "not-the-password")
+		require.NoError(t, err)
+		image.Repository = refused
+
+		_, err = image.Attestations(artifactDigest)
+		require.ErrorContains(t, err, "failed to read")
+	})
+
 	t.Run("says what it looked for when nothing is attached", func(t *testing.T) {
 		_, image := testImage(t)
 
 		_, err := Find(image, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
 		require.EqualError(t, err, "image "+image.Name+": no attestation is attached to sha256:"+artifactDigest+
 			": looked among its referrers, under cosign's tag sha256-"+artifactDigest+".att, and for buildx attestation manifests in the image index")
+	})
+}
+
+// unreadableManifests is a repository where nothing refers to the image and
+// no manifest can be read.
+type unreadableManifests struct{ err error }
+
+func (r unreadableManifests) Manifest(string) ([]byte, string, error) { return nil, "", r.err }
+func (r unreadableManifests) Blob(string) ([]byte, error)             { return nil, r.err }
+func (r unreadableManifests) Referrers(string) ([]ocispec.Descriptor, error) {
+	return nil, nil
+}
+
+func TestOCIImageCosignTag(t *testing.T) {
+	t.Run("fails when the tag cannot be read, rather than finding nothing attached", func(t *testing.T) {
+		image := OCIImage{Name: "registry.example.com/acme/widget:1.2", Repository: unreadableManifests{err: errors.New("registry unavailable")}}
+
+		_, err := image.Attestations(artifactDigest)
+		require.ErrorContains(t, err, "registry unavailable")
+	})
+
+	t.Run("verifies an attestation under cosign's tag against the pinned identity", func(t *testing.T) {
+		registry, image := testImage(t)
+		registry.AttachCosignAttestations(ociRepo, ociSubject, fixture(t, "github-provenance.sigstore.json"))
+
+		found, err := Find(image, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
+		require.NoError(t, err)
+		require.True(t, found.Evidence.Verified)
+		require.Equal(t, fixtureIdentity, found.Evidence.SignerIdentity)
+		require.Equal(t, fixtureIssuer, found.Evidence.SignerIssuer)
+		require.NotNil(t, found.Evidence.LogIndex)
+		require.False(t, found.Evidence.IntegratedTime.IsZero())
+		require.False(t, found.Evidence.SignedTime.IsZero())
+
+		envelope, _ := registrytest.CosignLayer(t, fixture(t, "github-provenance.sigstore.json"))
+		require.Equal(t, envelope, found.Raw, "Raw should be the layer, so its checksum is the layer's digest")
+		require.Equal(t, "attestation sha256:"+sha256Hex(envelope)+" (under cosign's tag sha256-"+artifactDigest+".att)", found.Describe())
+	})
+
+	t.Run("chooses among the attestations the tag holds", func(t *testing.T) {
+		registry, image := testImage(t)
+		registry.AttachCosignAttestations(ociRepo, ociSubject,
+			fixture(t, "github-provenance.sigstore.json"), fixture(t, "cyclonedx-sbom.sigstore.json"))
+
+		found, err := Find(image, KindSBOM, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
+		require.NoError(t, err)
+		require.Equal(t, "https://cyclonedx.org/bom", found.Statement.GetPredicateType())
+	})
+
+	t.Run("verifies an attestation signed with a key", func(t *testing.T) {
+		registry, image := testImage(t)
+		registry.AttachCosignAttestations(ociRepo, ociSubject, fixture(t, "key-signed-provenance.dsse.json"))
+
+		found, err := Find(image, KindProvenance, artifactDigest,
+			NewVerifier(Policy{KeyPath: filepath.Join("testdata", "key.pub")}, fixtureTrust(t)))
+		require.NoError(t, err)
+		require.True(t, found.Evidence.Verified)
+	})
+
+	t.Run("fails verification for one signed by another identity", func(t *testing.T) {
+		registry, image := testImage(t)
+		registry.AttachCosignAttestations(ociRepo, ociSubject, fixture(t, "wrong-signer-provenance.sigstore.json"))
+
+		_, err := Find(image, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.ErrorContains(t, err, fixtureOtherIdentity)
+	})
+
+	t.Run("fails verification for one changed after signing", func(t *testing.T) {
+		registry, image := testImage(t)
+		registry.AttachCosignAttestations(ociRepo, ociSubject, fixture(t, "tampered-provenance.sigstore.json"))
+
+		_, err := Find(image, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
+		require.ErrorIs(t, err, ErrFailedVerification)
+	})
+
+	t.Run("reads cosign's layers attached as a referrer rather than under the tag", func(t *testing.T) {
+		registry, image := testImage(t)
+		registry.AttachCosignReferrer(ociRepo, ociSubject, fixture(t, "github-provenance.sigstore.json"))
+
+		found, err := Find(image, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
+		require.NoError(t, err)
+		require.True(t, found.Evidence.Verified)
+	})
+}
+
+func TestCosignVerificationMaterial(t *testing.T) {
+	cosignAttestation := func(t *testing.T, change func(annotations map[string]string)) *Attestation {
+		envelope, annotations := registrytest.CosignLayer(t, fixture(t, "github-provenance.sigstore.json"))
+		change(annotations)
+		attestations, err := Read(envelope)
+		require.NoError(t, err)
+		attestations[0].addCosignMaterial(annotations)
+		return attestations[0]
+	}
+	verify := func(t *testing.T, policy Policy, a *Attestation) error {
+		_, err := NewVerifier(policy, fixtureTrust(t)).Verify(a, artifactDigest)
+		return err
+	}
+
+	t.Run("cannot verify a certificate's signature logged as an entry it cannot read, saying which", func(t *testing.T) {
+		a := cosignAttestation(t, func(annotations map[string]string) {
+			annotations[cosignBundleAnnotation] = `{"SignedEntryTimestamp": "c2V0", "Payload": {"body": "eyJhcGlWZXJzaW9uIjoiMC4wLjEiLCJraW5kIjoiaW50b3RvIiwic3BlYyI6e319", "integratedTime": 1, "logIndex": 1, "logID": "00"}}`
+		})
+
+		err := verify(t, pinnedSigner, a)
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.ErrorContains(t, err, "the transparency log entry cosign stored with it cannot be read")
+	})
+
+	t.Run("cannot verify against a certificate annotation that holds none", func(t *testing.T) {
+		a := cosignAttestation(t, func(annotations map[string]string) {
+			annotations[cosignCertificateAnnotation] = "not a certificate"
+		})
+
+		err := verify(t, pinnedSigner, a)
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.ErrorContains(t, err, "the certificate cosign stored with it is not a PEM certificate")
+	})
+
+	t.Run("fails verification without the log entry and timestamp a certificate's signature needs", func(t *testing.T) {
+		a := cosignAttestation(t, func(annotations map[string]string) {
+			delete(annotations, cosignBundleAnnotation)
+			delete(annotations, cosignTimestampAnnotation)
+		})
+
+		require.ErrorIs(t, verify(t, pinnedSigner, a), ErrFailedVerification)
+	})
+
+	t.Run("says a key-signed envelope needs --key when an identity is pinned", func(t *testing.T) {
+		attestations, err := Read(fixture(t, "key-signed-provenance.dsse.json"))
+		require.NoError(t, err)
+		attestations[0].addCosignMaterial(map[string]string{"dev.cosignproject.cosign/signature": ""})
+
+		err = verify(t, pinnedSigner, attestations[0])
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.ErrorContains(t, err, "--key")
 	})
 }

@@ -187,6 +187,9 @@ func (v *Verifier) signatureCheck(a *Attestation, digest string) (*verify.Verifi
 	}
 
 	if a.bundle == nil {
+		if a.materialErr != nil {
+			return nil, nil, verify.PolicyBuilder{}, a.materialErr
+		}
 		return nil, nil, verify.PolicyBuilder{}, fmt.Errorf("a DSSE envelope carries no certificate to check --certificate-identity against. Supply the Sigstore bundle instead, or verify the envelope with --key")
 	}
 	leaf, err := signingCertificate(a.bundle)
