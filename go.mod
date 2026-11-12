@@ -44,7 +44,7 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.11.1
 	github.com/shurcooL/graphql v0.0.0-20240915155400-7ee5256398cf
 	github.com/sigstore/protobuf-specs v0.5.2
-	github.com/sigstore/sigstore v1.11.1
+	github.com/sigstore/sigstore v1.11.3
 	github.com/sigstore/sigstore-go v1.4.0
 	github.com/spdx/tools-golang v0.5.7
 	github.com/spf13/cobra v1.10.2
