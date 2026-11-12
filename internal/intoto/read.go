@@ -37,7 +37,7 @@ type Attestation struct {
 	// URL is where the source holds the attestation, when the source is not a
 	// file.
 	URL string
-	// Unreadable is why the source could not parse this attestation, when it
+	// Unreadable is why the source could not fetch or parse this attestation, when it
 	// lists the ones it cannot read rather than failing on them. Statement is
 	// then nil.
 	Unreadable error
