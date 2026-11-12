@@ -49,6 +49,7 @@ const (
 	fixtureIdentity      = "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main"
 	fixtureOtherIdentity = "https://github.com/mallory/widget/.github/workflows/build.yml@refs/heads/main"
 	fixtureRunURI        = "https://github.com/acme/widget/actions/runs/1234567890/attempts/1"
+	fixtureRerunURI      = "https://github.com/acme/widget/actions/runs/1234567890/attempts/2"
 )
 
 var (
@@ -117,7 +118,7 @@ func rawLogIDs(t *testing.T, logs map[string]*root.TransparencyLog) map[string]*
 	return logs
 }
 
-func (s *fixtureSigstore) leafCertificate(identity string) (*x509.Certificate, *ecdsa.PrivateKey) {
+func (s *fixtureSigstore) leafCertificate(identity, runURI string) (*x509.Certificate, *ecdsa.PrivateKey) {
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(s.t, err)
 	san, err := url.Parse(identity)
@@ -136,7 +137,7 @@ func (s *fixtureSigstore) leafCertificate(identity string) (*x509.Certificate, *
 			{Id: oidIssuerV1, Value: []byte(fixtureIssuer)},
 			{Id: oidIssuerV2, Value: utf8String(s.t, fixtureIssuer)},
 			{Id: oidSourceRepositoryURI, Value: utf8String(s.t, "https://github.com/acme/widget")},
-			{Id: oidRunInvocationURI, Value: utf8String(s.t, fixtureRunURI)},
+			{Id: oidRunInvocationURI, Value: utf8String(s.t, runURI)},
 		},
 	}
 	der, err := x509.CreateCertificate(rand.Reader, template, s.fulcio.Intermediates[0], &key.PublicKey, s.fulcioKey)
@@ -146,10 +147,15 @@ func (s *fixtureSigstore) leafCertificate(identity string) (*x509.Certificate, *
 	return cert, key
 }
 
-// bundle signs statement as identity and returns the Sigstore bundle, logged
-// at loggedAfter past the signing time.
+// bundle signs statement as identity, in the run the fixtures share, and
+// returns the Sigstore bundle, logged at loggedAfter past the signing time.
 func (s *fixtureSigstore) bundle(statement []byte, identity string, loggedAfter time.Duration) []byte {
-	leaf, key := s.leafCertificate(identity)
+	return s.bundleFromRun(statement, identity, fixtureRunURI, loggedAfter)
+}
+
+// bundleFromRun is bundle with a certificate issued to the run at runURI.
+func (s *fixtureSigstore) bundleFromRun(statement []byte, identity, runURI string, loggedAfter time.Duration) []byte {
+	leaf, key := s.leafCertificate(identity, runURI)
 	envelope := signEnvelope(s.t, key, statement)
 	sig, err := base64.StdEncoding.DecodeString(envelope.Signatures[0].Sig)
 	require.NoError(s.t, err)
@@ -261,6 +267,8 @@ func TestRegenerateFixtures(t *testing.T) {
 	}
 	writeFixture(t, "wrong-signer-provenance.sigstore.json",
 		indent(t, s.bundle(statement("github-provenance.json"), fixtureOtherIdentity, time.Minute)))
+	writeFixture(t, "rerun-provenance.sigstore.json",
+		indent(t, s.bundleFromRun(statement("rerun-provenance.json"), fixtureIdentity, fixtureRerunURI, 2*time.Minute)))
 	writeFixture(t, "tampered-provenance.sigstore.json",
 		indent(t, tamper(t, s.bundle(statement("github-provenance.json"), fixtureIdentity, time.Minute),
 			"4f9d2a7c1e6b8a3d5f0e2c9b7a1d4e6f8c3b5a70", "0000000000000000000000000000000000000000")))
