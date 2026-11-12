@@ -43,11 +43,10 @@ func (f CommitFinder) CommitBySHA(repository, sha string) (*types.Commit, error)
 		timestamp = date.Unix()
 	}
 	return &types.Commit{
-		SHA:            found.GetSHA(),
-		Message:        strings.TrimSpace(found.GetCommit().GetMessage()),
-		Author:         author,
-		AuthorUsername: found.GetAuthor().GetLogin(),
-		Timestamp:      timestamp,
-		URL:            found.GetHTMLURL(),
+		SHA:       found.GetSHA(),
+		Message:   strings.TrimSpace(found.GetCommit().GetMessage()),
+		Author:    author,
+		Timestamp: timestamp,
+		URL:       found.GetHTMLURL(),
 	}, nil
 }
