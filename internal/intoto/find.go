@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-// Source supplies the attestations held about an artifact. Further sources,
-// such as GitHub's attestations API or an OCI registry, implement it too.
+// Source supplies the attestations held about an artifact. A source with its
+// own rules for choosing among them is also a Selector.
 type Source interface {
 	// Attestations returns every attestation the source holds that may be
 	// about the artifact with SHA-256 digest. Find checks each one.
@@ -38,26 +38,56 @@ func (f BundleFile) String() string {
 	return fmt.Sprintf("bundle file %s", f.Path)
 }
 
+// Selection is a source's own rules for choosing among the attestations it
+// holds. The zero value suits a source the caller handed over whole, such as a
+// file, where every attestation is expected to verify.
+type Selection struct {
+	// SkipFailed passes over an attestation that fails verification, or whose
+	// signature cannot be checked, when another one verifies. It suits a store
+	// that several signers write to, where an attestation by another workflow
+	// says nothing against the one the policy pins.
+	SkipFailed bool
+	// PreferredRun is the run-invocation URI of the CI run the caller is part
+	// of. An attestation whose certificate names it is chosen ahead of a newer
+	// one from another run.
+	PreferredRun string
+}
+
+// Selector is a Source with selection rules of its own. Find applies the zero
+// Selection to any other Source.
+type Selector interface {
+	Source
+	Selection() Selection
+}
+
 // Found is the attestation chosen to record, with what verifying it
 // established.
 type Found struct {
 	*Attestation
 	Evidence *Evidence
 	// Rejected holds why other attestations of the same kind about the same
-	// artifact were not chosen, such as being unsigned, so a caller can report
-	// them.
+	// artifact were not chosen, such as being unsigned or, from a source that
+	// skips them, failing verification, so a caller can report them.
 	Rejected []error
 }
 
 // Find returns the one attestation of kind about the artifact with SHA-256
 // digest that source holds, verified by verifier. When several qualify, a
-// verified one is preferred to an unsigned one, then the newest by its
-// trusted time, then the one read last. If any signed one fails
-// verification, or its signature cannot be checked, Find returns that and
-// chooses none: a signature that is bad, or that nobody could check, is a
-// stronger signal than a missing one, so an unsigned or verified alternative
-// is not recorded in its place.
+// verified one is preferred to an unsigned one, then one from the source's
+// preferred run, then the newest by its trusted time, then the one read last.
+//
+// If any signed one fails verification, or its signature cannot be checked,
+// Find returns that and chooses none: a signature that is bad, or that nobody
+// could check, is a stronger signal than a missing one, so an unsigned or
+// verified alternative is not recorded in its place. A source whose Selection
+// skips failures relaxes this only when another attestation verifies; an
+// unsigned one still does not stand in for one that failed.
 func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) (*Found, error) {
+	var selection Selection
+	if selector, ok := source.(Selector); ok {
+		selection = selector.Selection()
+	}
+
 	attestations, err := source.Attestations(digest)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", source, err)
@@ -69,6 +99,7 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 
 	var accepted []*Found
 	var rejected, unverifiable []error
+	anyVerified := false
 	for _, candidate := range candidates {
 		evidence, err := verifier.Verify(candidate, digest)
 		switch {
@@ -78,7 +109,12 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 			rejected = append(rejected, err)
 		default:
 			accepted = append(accepted, &Found{Attestation: candidate, Evidence: evidence})
+			anyVerified = anyVerified || evidence.Verified
 		}
+	}
+	if selection.SkipFailed && anyVerified {
+		rejected = append(rejected, unverifiable...)
+		unverifiable = nil
 	}
 	if len(unverifiable) == 1 {
 		return nil, fmt.Errorf("%s: %w", source, unverifiable[0])
@@ -93,10 +129,16 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 		return nil, fmt.Errorf("%s: none of the %d %s attestations could be accepted: %w", source, len(rejected), kind, joinedErrors(rejected))
 	}
 
+	fromPreferredRun := func(e *Evidence) bool {
+		return selection.PreferredRun != "" && e.RunInvocationURI == selection.PreferredRun
+	}
 	sort.SliceStable(accepted, func(i, j int) bool {
 		a, b := accepted[i].Evidence, accepted[j].Evidence
 		if a.Verified != b.Verified {
 			return !a.Verified
+		}
+		if fromPreferredRun(a) != fromPreferredRun(b) {
+			return !fromPreferredRun(a)
 		}
 		return a.Time().Before(b.Time())
 	})
