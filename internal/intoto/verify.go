@@ -100,10 +100,10 @@ func (e *Evidence) Time() time.Time {
 var ErrFailedVerification = errors.New("failed verification")
 
 // ErrCannotVerify marks a signed attestation whose signature could not be
-// checked at all: a trust root could not be fetched or does not cover the
-// certificate's issuer, the policy's method does not fit how it was signed, or
-// the key could not be read. It says nothing about whether the signature is
-// good.
+// checked at all: no signer is pinned to check it against, a trust root could
+// not be fetched or does not cover the certificate's issuer, the policy's
+// method does not fit how it was signed, or the key could not be read. It says
+// nothing about whether the signature is good.
 var ErrCannotVerify = errors.New("could not be verified")
 
 // Verifier checks attestations against a policy.
@@ -139,7 +139,7 @@ func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
 		return evidence, nil
 	}
 	if !v.policy.PinsSigner() {
-		return nil, fmt.Errorf("%s is signed, so its signer must be pinned to verify it. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", a.Describe())
+		return nil, fmt.Errorf("%s %w: it is signed, so its signer must be pinned to verify it. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", a.Describe(), ErrCannotVerify)
 	}
 
 	verifier, entity, policy, err := v.signatureCheck(a, digest)

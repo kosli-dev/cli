@@ -102,8 +102,9 @@ over TUF. An unsigned attestation is refused unless ^--allow-unsigned^ is given,
 recorded as unverified. An attestation that fails verification, because another signer made
 it or it was changed after signing, fails the command and nothing is recorded, even when
 another attestation in the file would qualify. So does a signed attestation whose signature
-cannot be checked, such as when a trust root cannot be fetched or the signer flags do not fit
-how it was signed; the error then says it could not be verified, not that it failed.
+cannot be checked, such as when no signer is pinned, a trust root cannot be fetched or the
+signer flags do not fit how it was signed; the error then says it could not be verified, not
+that it failed.
 
 The record is annotated with ^verified^ and, for a signed attestation, ^signer_identity^,
 ^signer_issuer^, ^log_index^, ^integrated_time^ and ^signed_timestamp^ where they apply.

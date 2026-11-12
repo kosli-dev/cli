@@ -353,7 +353,13 @@ func (suite *AttestInTotoCommandTestSuite) TestRefusesWhatItCannotTrust() {
 			wantError: true,
 			name:      "a signed bundle with no signer pinned, naming the flags that pin one",
 			cmd:       suite.command("--predicate-type provenance --name app" + suite.bundle("github-provenance.sigstore.json")),
-			golden:    "Error: bundle file " + intotoFixtures + "/github-provenance.sigstore.json: the attestation is signed, so its signer must be pinned to verify it. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key\n",
+			golden:    "Error: bundle file " + intotoFixtures + "/github-provenance.sigstore.json: the attestation could not be verified: it is signed, so its signer must be pinned to verify it. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key\n",
+		},
+		{
+			wantError: true,
+			name:      "a file where one attestation is signed and no signer is pinned, though another is unsigned and allowed",
+			cmd:       suite.command("--predicate-type provenance --name app --allow-unsigned" + suite.bundle("wrong-signer-and-unsigned.intoto.jsonl")),
+			golden:    "Error: bundle file " + intotoFixtures + "/wrong-signer-and-unsigned.intoto.jsonl: attestation 1 could not be verified: it is signed, so its signer must be pinned to verify it. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key\n",
 		},
 		{
 			wantError: true,

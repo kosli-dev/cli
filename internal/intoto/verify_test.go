@@ -106,9 +106,11 @@ func TestVerifySignedBundle(t *testing.T) {
 		require.EqualError(t, err, "the attestation does not list the artifact (sha256:"+artifactDigest+") as its subject")
 	})
 
-	t.Run("refuses a signed bundle when no signer is pinned, naming the flags that pin one", func(t *testing.T) {
+	t.Run("cannot check a signed bundle when no signer is pinned, naming the flags that pin one", func(t *testing.T) {
 		_, err := verifyFixture(t, Policy{}, "github-provenance.sigstore.json")
-		require.EqualError(t, err, "the attestation is signed, so its signer must be pinned to verify it. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key")
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.NotErrorIs(t, err, ErrFailedVerification)
+		require.EqualError(t, err, "the attestation could not be verified: it is signed, so its signer must be pinned to verify it. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key")
 	})
 
 	t.Run("cannot check a certificate signature with --key, and says so rather than calling it a bad signature", func(t *testing.T) {
@@ -310,6 +312,12 @@ func TestFind(t *testing.T) {
 		_, err := find(t, Policy{CertificateIdentity: fixtureIdentity, CertificateOIDCIssuer: fixtureIssuer, AllowUnsigned: true}, KindProvenance, "wrong-signer-and-unsigned.intoto.jsonl")
 		require.ErrorIs(t, err, ErrFailedVerification)
 		require.ErrorContains(t, err, "bundle file testdata/wrong-signer-and-unsigned.intoto.jsonl: attestation 1 failed verification: ")
+	})
+
+	t.Run("refuses the file when a candidate is signed but no signer is pinned, though an unsigned one is allowed", func(t *testing.T) {
+		_, err := find(t, Policy{AllowUnsigned: true}, KindProvenance, "wrong-signer-and-unsigned.intoto.jsonl")
+		require.ErrorIs(t, err, ErrCannotVerify)
+		require.EqualError(t, err, "bundle file testdata/wrong-signer-and-unsigned.intoto.jsonl: attestation 1 could not be verified: it is signed, so its signer must be pinned to verify it. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key")
 	})
 
 	t.Run("refuses the file when a candidate fails verification, though another verifies", func(t *testing.T) {
