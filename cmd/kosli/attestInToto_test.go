@@ -47,6 +47,7 @@ type AttestInTotoCommandTestSuite struct {
 	githubArguments       string
 	savedTrustRoots       func() *intoto.TrustRoots
 	savedGitHubRun        func() (string, bool)
+	savedGitHubAPI        string
 
 	// attestations names the fixtures GitHub's API lists for the artifact, in
 	// order. The handler reads it on the server's goroutine.
@@ -120,9 +121,15 @@ func (suite *AttestInTotoCommandTestSuite) inGitHubActions(runURI string) {
 	currentGitHubRun = func() (string, bool) { return runURI, true }
 }
 
-// fromGitHub is a command reading acme/widget's attestations from the fake
-// GitHub.
+// fromGitHub is a command reading acme/widget's attestations from github.com,
+// which the fake GitHub stands in for.
 func (suite *AttestInTotoCommandTestSuite) fromGitHub(flags string) string {
+	return suite.command("--github-org acme --repository widget " + flags + " --github-token a-token")
+}
+
+// fromGitHubEnterprise is the same command reading them from the fake GitHub
+// as a server named with --github-base-url.
+func (suite *AttestInTotoCommandTestSuite) fromGitHubEnterprise(flags string) string {
 	return suite.command("--github-org acme --repository widget " + flags + suite.githubArguments)
 }
 
@@ -144,6 +151,8 @@ func (suite *AttestInTotoCommandTestSuite) SetupTest() {
 	// The tests run in GitHub Actions too, and must not take its defaults.
 	suite.savedGitHubRun = currentGitHubRun
 	currentGitHubRun = func() (string, bool) { return "", false }
+	suite.savedGitHubAPI = intotoGitHubAPI
+	intotoGitHubAPI = suite.github.URL + "/"
 	suite.githubHolds()
 
 	template := filepath.Join(suite.T().TempDir(), "template.yml")
@@ -155,6 +164,7 @@ func (suite *AttestInTotoCommandTestSuite) SetupTest() {
 func (suite *AttestInTotoCommandTestSuite) TearDownTest() {
 	intotoTrustRoots = suite.savedTrustRoots
 	currentGitHubRun = suite.savedGitHubRun
+	intotoGitHubAPI = suite.savedGitHubAPI
 }
 
 func (suite *AttestInTotoCommandTestSuite) command(flags string) string {
@@ -526,6 +536,35 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceInGitHubActions() {
 			name:        "accepts it when that workflow is pinned explicitly",
 			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run --certificate-identity-regexp ^https://github.com/mallory/ --certificate-oidc-issuer https://token.actions.githubusercontent.com"),
 			goldenRegex: `"signer_identity": "https://github.com/mallory/widget/.github/workflows/build.yml@refs/heads/main"`,
+		},
+	})
+}
+
+func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceOnGitHubEnterprise() {
+	suite.githubHolds("github-provenance.sigstore.json")
+	// Nothing answers here, so a command that records read the server it was given.
+	intotoGitHubAPI = "http://127.0.0.1:1/"
+
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "reads the attestations and the commit from the server --github-base-url names",
+			cmd:         suite.fromGitHubEnterprise("--source github --predicate-type provenance --name app --dry-run " + intotoSigner),
+			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"commit_url": "` + intotoCommitURL + `".*"verified": "true"`,
+		},
+	})
+
+	suite.inGitHubActions("https://github.com/acme/deploy/actions/runs/77/attempts/1")
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			wantError: true,
+			name:      "has no default signer there, naming the flags that pin one",
+			cmd:       suite.fromGitHubEnterprise("--predicate-type provenance --name app"),
+			golden:    "Error: --source github has no default signer when --github-base-url is given: the default is a workflow on github.com. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key\n",
+		},
+		{
+			name:        "records in GitHub Actions when the signer is pinned",
+			cmd:         suite.fromGitHubEnterprise("--predicate-type provenance --name app --dry-run " + intotoSigner),
+			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"verified": "true"`,
 		},
 	})
 }

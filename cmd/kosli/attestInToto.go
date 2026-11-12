@@ -86,6 +86,11 @@ var currentGitHubRun = func() (runURI string, inActions bool) {
 		os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"), os.Getenv("GITHUB_RUN_ATTEMPT")), true
 }
 
+// intotoGitHubAPI is the base URL github.com's API is reached at when
+// --github-base-url is not given; empty leaves it to the GitHub client. Tests
+// replace it so that none reaches github.com.
+var intotoGitHubAPI = ""
+
 type attestInTotoOptions struct {
 	fingerprintOptions   *fingerprintOptions
 	fingerprint          string
@@ -150,9 +155,10 @@ way to accept any valid certificate. With ^--source github^ in GitHub Actions, a
 do not pin defaults to a workflow in the repository itself: the issuer
 ^https://token.actions.githubusercontent.com^ and an identity starting
 ^https://github.com/<github-org>/<repository>/.github/workflows/^. Pin the signer yourself
-when a reusable workflow in another repository did the signing, on GitHub Enterprise, and
-outside GitHub Actions. An unsigned attestation is refused unless ^--allow-unsigned^ is
-given, and is then recorded as unverified.
+when a reusable workflow in another repository did the signing. There is no default
+outside GitHub Actions or when ^--github-base-url^ is given, and the command stops before
+reading anything unless a signer is pinned. An unsigned attestation is refused unless
+^--allow-unsigned^ is given, and is then recorded as unverified.
 
 In a file, an attestation that fails verification, because another signer made it or it
 was changed after signing, fails the command and nothing is recorded, even when another
@@ -438,6 +444,11 @@ func (o *attestInTotoOptions) pinDefaultSigner() error {
 	if _, inActions := currentGitHubRun(); !inActions {
 		return fmt.Errorf("--source %s needs a signer to verify attestations against. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key. In GitHub Actions the signer defaults to a workflow in the repository itself", intotoSourceGitHub)
 	}
+	// The default names github.com, which another server's workflows do not
+	// sign as, so every attestation would fail on a mismatched identity.
+	if o.githubBaseURL != "" {
+		return fmt.Errorf("--source %s has no default signer when --github-base-url is given: the default is a workflow on github.com. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", intotoSourceGitHub)
+	}
 	signer := o.githubRepository().WorkflowSigner()
 	o.policy.CertificateOIDCIssuer = signer.CertificateOIDCIssuer
 	o.policy.CertificateIdentityRegexp = signer.CertificateIdentityRegexp
@@ -457,7 +468,7 @@ func (o *attestInTotoOptions) attestationSource() intoto.Source {
 func (o *attestInTotoOptions) githubRepository() intoto.GitHubRepository {
 	// NewGithubConfig strips the owner from --repository, which GitHub Actions
 	// defaults to owner/name.
-	config := ghUtils.NewGithubConfig(o.githubToken, o.githubBaseURL, o.githubOrg, o.repository, global.Debug)
+	config := ghUtils.NewGithubConfig(o.githubToken, o.githubAPI(), o.githubOrg, o.repository, global.Debug)
 	runURI, _ := currentGitHubRun()
 	return intoto.GitHubRepository{
 		Owner:   config.Org,
@@ -467,6 +478,11 @@ func (o *attestInTotoOptions) githubRepository() intoto.GitHubRepository {
 		Debug:   config.Debug,
 		RunURI:  runURI,
 	}
+}
+
+// githubAPI is the base URL of the GitHub server the token is sent to.
+func (o *attestInTotoOptions) githubAPI() string {
+	return firstNonEmpty(o.githubBaseURL, intotoGitHubAPI)
 }
 
 func (o *attestInTotoOptions) reservedAnnotations() []string {
@@ -637,7 +653,7 @@ func (o *attestInTotoOptions) commitInfo(provenance *intoto.Provenance) *gitview
 // GitHub is the only provider implemented; a lookup also needs a token.
 func (o *attestInTotoOptions) commitFinder(repo intoto.Repository) types.CommitFinder {
 	if repo.Provider == "github" && o.githubToken != "" {
-		return ghUtils.CommitFinder{Token: o.githubToken, BaseURL: o.githubBaseURL, Debug: global.Debug}
+		return ghUtils.CommitFinder{Token: o.githubToken, BaseURL: o.githubAPI(), Debug: global.Debug}
 	}
 	return nil
 }
