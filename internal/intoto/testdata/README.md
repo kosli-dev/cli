@@ -19,6 +19,17 @@ so commit the regenerated bundles and `trusted_root.json` together.
 The bundles stay valid after the throwaway certificates expire, because a
 Sigstore signature is checked against the time Rekor logged it.
 
+## Registry tests
+
+There are no registry fixtures on disk. The tests that read attestations from a
+registry (`oci_test.go`, and the command's `--source oci` tests) start the
+in-memory registry in `internal/registrytest` and attach these same fixtures to
+an image in it, in each layout a tool uses: as a referrer holding a Sigstore
+bundle, under cosign's `sha256-<digest>.att` tag, and in a buildx attestation
+manifest. The signed fixtures name `artifact.bin`'s digest as their subject, so
+those tests give that digest as the image's rather than a digest the registry
+computed.
+
 ## What each fixture is for
 
 | Fixture | What it is |
