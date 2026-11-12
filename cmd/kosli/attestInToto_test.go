@@ -567,6 +567,17 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceOnGitHubEnterprise() 
 			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"verified": "true"`,
 		},
 	})
+
+	suite.inGitHubActions("https://github.example.com/acme/deploy/actions/runs/77/attempts/1")
+	intotoGitHubAPI = suite.github.URL + "/"
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			wantError: true,
+			name:      "has no default signer in a run on that server when --github-base-url is not given",
+			cmd:       suite.fromGitHub("--predicate-type provenance --name app"),
+			golden:    "Error: --source github has no default signer in a GitHub Actions run on a server other than github.com: the default is a workflow on github.com. Name the server with --github-base-url, and pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key\n",
+		},
+	})
 }
 
 func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceChoosesAmongSeveral() {

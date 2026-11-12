@@ -159,8 +159,9 @@ do not pin defaults to a workflow in the repository itself: the issuer
 ^https://token.actions.githubusercontent.com^ and an identity starting
 ^https://github.com/<github-org>/<repository>/.github/workflows/^. Pin the signer yourself
 when a reusable workflow in another repository did the signing. There is no default
-outside GitHub Actions or when ^--github-base-url^ is given, and the command stops before
-reading anything unless a signer is pinned. An unsigned attestation is refused unless
+outside GitHub Actions, when ^--github-base-url^ is given, or when the run is on a server
+other than github.com, and the command stops before reading anything unless a signer is
+pinned. An unsigned attestation is refused unless
 ^--allow-unsigned^ is given, and is then recorded as unverified.
 
 In a file, an attestation that fails verification, because another signer made it or it
@@ -446,13 +447,17 @@ func (o *attestInTotoOptions) pinDefaultSigner() error {
 	if o.source != intotoSourceGitHub || o.policy.PinsSigner() {
 		return nil
 	}
-	if _, inActions := currentGitHubRun(); !inActions {
+	runURI, inActions := currentGitHubRun()
+	if !inActions {
 		return fmt.Errorf("--source %s needs a signer to verify attestations against. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key. In GitHub Actions the signer defaults to a workflow in the repository itself", intotoSourceGitHub)
 	}
 	// The default names github.com, which another server's workflows do not
 	// sign as, so every attestation would fail on a mismatched identity.
 	if o.githubBaseURL != "" {
 		return fmt.Errorf("--source %s has no default signer when --github-base-url is given: the default is a workflow on github.com. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", intotoSourceGitHub)
+	}
+	if !strings.HasPrefix(runURI, "https://github.com/") {
+		return fmt.Errorf("--source %s has no default signer in a GitHub Actions run on a server other than github.com: the default is a workflow on github.com. Name the server with --github-base-url, and pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", intotoSourceGitHub)
 	}
 	signer := o.githubRepository().WorkflowSigner()
 	o.policy.CertificateOIDCIssuer = signer.CertificateOIDCIssuer
