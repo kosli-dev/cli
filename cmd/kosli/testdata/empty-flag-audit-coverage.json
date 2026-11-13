@@ -809,6 +809,9 @@
   "output": "string"
  },
  "list product-updates": {
+  "all": "bool",
+  "dismiss": "bool",
+  "limit": "int",
   "output": "string"
  },
  "list rego-policies": {

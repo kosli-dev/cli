@@ -103,7 +103,18 @@ func (o *dismissProductUpdatesOptions) run(ids []string) error {
 	}
 
 	ids = uniqueNonEmpty(ids)
+	if err := markProductUpdatesSeen(ids); err != nil {
+		return err
+	}
+	if !global.DryRun {
+		logger.Info("%d product update(s) dismissed", len(ids))
+	}
+	return nil
+}
 
+// markProductUpdatesSeen sends ids in requests of at most
+// maxProductUpdateIDsPerRequest.
+func markProductUpdatesSeen(ids []string) error {
 	reqURL, err := url.JoinPath(global.Host, "api/v2/product-updates", global.Org, "seen")
 	if err != nil {
 		return err
@@ -124,10 +135,6 @@ func (o *dismissProductUpdatesOptions) run(ids []string) error {
 			}
 			return err
 		}
-	}
-
-	if !global.DryRun {
-		logger.Info("%d product update(s) dismissed", len(ids))
 	}
 	return nil
 }
