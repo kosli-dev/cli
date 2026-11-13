@@ -73,6 +73,9 @@ type Evidence struct {
 	// alternative name and OIDC issuer; empty for a key signature.
 	SignerIdentity string
 	SignerIssuer   string
+	// RunInvocationURI is the CI run the certificate was issued to, when it
+	// names one, as GitHub Actions certificates do.
+	RunInvocationURI string
 	// LogIndex, IntegratedTime and LogEntryURL describe the verified
 	// transparency log entry, when there is one.
 	LogIndex       *int64
@@ -155,6 +158,7 @@ func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
 	if summary := result.Signature.Certificate; summary != nil {
 		evidence.SignerIdentity = summary.SubjectAlternativeName
 		evidence.SignerIssuer = summary.Issuer
+		evidence.RunInvocationURI = summary.RunInvocationURI
 	}
 	for _, ts := range result.VerifiedTimestamps {
 		switch ts.Type {

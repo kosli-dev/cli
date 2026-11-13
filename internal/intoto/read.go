@@ -31,10 +31,17 @@ type Attestation struct {
 	// Raw is the bytes the attestation was read from: the whole file, or one
 	// line of a file holding several.
 	Raw []byte
-	// Position is the attestation's 1-based place in a file holding several,
-	// and 0 in a file holding one.
-	Position  int
-	Statement *ita1.Statement
+	// Position is the attestation's 1-based place among the several its
+	// source holds, such as its line in a file, and 0 when it is the only one.
+	Position int
+	// URL is where the source holds the attestation, when the source is not a
+	// file.
+	URL string
+	// Unreadable is why the source could not fetch or parse this attestation, when it
+	// lists the ones it cannot read rather than failing on them. Statement is
+	// then nil.
+	Unreadable error
+	Statement  *ita1.Statement
 	// Predicate is the predicate exactly as the payload carried it. The
 	// Statement's copy has been through protobuf's Struct, which turns every
 	// number into a float64.
@@ -52,8 +59,8 @@ func (a *Attestation) Signed() bool {
 	return a.envelope != nil && len(a.envelope.Signatures) > 0
 }
 
-// Describe names the attestation in a message: by its place in the file when
-// the file holds several.
+// Describe names the attestation in a message: by its place among the
+// several its source holds.
 func (a *Attestation) Describe() string {
 	if a.Position == 0 {
 		return "the attestation"
@@ -70,21 +77,44 @@ func Read(content []byte) ([]*Attestation, error) {
 		return nil, err
 	}
 
+	attestations, err := parseAll(documents)
+	if err != nil {
+		return nil, err
+	}
+	if len(attestations) == 1 {
+		// The whole file, so a checksum of Raw is a checksum of the file.
+		attestations[0].Raw = content
+	}
+	return attestations, nil
+}
+
+// parseAll parses the documents one source holds, numbering them when there
+// are several. One that does not parse fails them all.
+func parseAll(documents []json.RawMessage) ([]*Attestation, error) {
+	attestations := parseEach(documents)
+	for _, attestation := range attestations {
+		if attestation.Unreadable != nil {
+			return nil, attestation.Unreadable
+		}
+	}
+	return attestations, nil
+}
+
+// parseEach is parseAll for a source that others write to: a document that
+// does not parse is kept, marked Unreadable, so it need not rule out the rest.
+func parseEach(documents []json.RawMessage) []*Attestation {
 	attestations := make([]*Attestation, 0, len(documents))
 	for i, document := range documents {
 		attestation := &Attestation{Raw: document}
-		if len(documents) == 1 {
-			// The whole file, so a checksum of Raw is a checksum of the file.
-			attestation.Raw = content
-		} else {
+		if len(documents) > 1 {
 			attestation.Position = i + 1
 		}
 		if err := attestation.parse(document); err != nil {
-			return nil, fmt.Errorf("%s: %w", attestation.Describe(), err)
+			attestation.Unreadable = fmt.Errorf("%s: %w", attestation.Describe(), err)
 		}
 		attestations = append(attestations, attestation)
 	}
-	return attestations, nil
+	return attestations
 }
 
 // ErrSeveralDocuments is ReadEnvelope's error for content holding more than

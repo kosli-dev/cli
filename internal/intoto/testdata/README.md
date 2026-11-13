@@ -27,6 +27,7 @@ Sigstore signature is checked against the time Rekor logged it.
 | `statements/*.json` | Unsigned statements, as buildx writes by default. The signed fixtures are made from these. |
 | `trusted_root.json` | The trust root the signed fixtures verify against. |
 | `github-provenance.sigstore.json` | SLSA v1 provenance from GitHub Actions (`actions/attest-build-provenance`), signed by `https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main`. |
+| `rerun-provenance.sigstore.json` | The same build's provenance from attempt 2 of the run, logged a minute after attempt 1's. Its certificate names attempt 2 as the run. |
 | `buildkit-provenance.sigstore.json` | SLSA v1 provenance from BuildKit, signed by the same workflow. |
 | `slsa-v0.2-provenance.sigstore.json` | SLSA v0.2 provenance from the SLSA GitHub generator. |
 | `spdx-sbom.sigstore.json`, `cyclonedx-sbom.sigstore.json` | SBOM attestations (`actions/attest-sbom`). |

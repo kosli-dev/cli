@@ -58,6 +58,7 @@ func TestVerifySignedBundle(t *testing.T) {
 
 		require.True(t, evidence.Verified)
 		require.Equal(t, fixtureIdentity, evidence.SignerIdentity)
+		require.Equal(t, fixtureRunURI, evidence.RunInvocationURI)
 		require.Equal(t, fixtureIssuer, evidence.SignerIssuer)
 		require.NotNil(t, evidence.LogIndex)
 		require.Equal(t, int64(0), *evidence.LogIndex)
@@ -333,7 +334,7 @@ func TestFind(t *testing.T) {
 
 		_, err := Find(BundleFile{Path: path}, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, fixtureTrust(t)))
 		require.ErrorIs(t, err, ErrFailedVerification)
-		require.ErrorContains(t, err, ": 2 provenance attestations could not be accepted: attestation 1 failed verification: ")
+		require.ErrorContains(t, err, ": 2 attestations could not be accepted: attestation 1 failed verification: ")
 		require.ErrorContains(t, err, "; attestation 2 failed verification: ")
 	})
 
@@ -363,6 +364,95 @@ func TestFind(t *testing.T) {
 	t.Run("names a file that cannot be read", func(t *testing.T) {
 		_, err := find(t, pinnedSigner, KindProvenance, "missing.sigstore.json")
 		require.EqualError(t, err, "bundle file testdata/missing.sigstore.json: open testdata/missing.sigstore.json: no such file or directory")
+	})
+}
+
+// sharedStore is a source like GitHub's attestation store: several signers
+// write to it, and it may know which run this command is part of.
+type sharedStore struct {
+	BundleFile
+	preferredRun string
+}
+
+func (s sharedStore) Selection() Selection {
+	return Selection{SkipFailed: true, PreferredRun: s.preferredRun}
+}
+
+func TestFindBySourceSelection(t *testing.T) {
+	find := func(t *testing.T, policy Policy, preferredRun string, names ...string) (*Found, error) {
+		source := sharedStore{BundleFile: BundleFile{Path: jsonlFile(t, names...)}, preferredRun: preferredRun}
+		return Find(source, KindProvenance, artifactDigest, NewVerifier(policy, fixtureTrust(t)))
+	}
+
+	t.Run("passes over an attestation by another signer when one verifies, and reports it", func(t *testing.T) {
+		found, err := find(t, pinnedSigner, "", "wrong-signer-provenance.sigstore.json", "github-provenance.sigstore.json")
+		require.NoError(t, err)
+		require.Equal(t, 2, found.Position)
+		require.Len(t, found.Rejected, 1)
+		require.ErrorIs(t, found.Rejected[0], ErrFailedVerification)
+		require.ErrorContains(t, found.Rejected[0], "attestation 1 failed verification: ")
+	})
+
+	t.Run("passes over an attestation it cannot verify when one verifies", func(t *testing.T) {
+		found, err := find(t, pinnedSigner, "", "key-signed-provenance.dsse.json", "github-provenance.sigstore.json")
+		require.NoError(t, err)
+		require.Equal(t, 2, found.Position)
+		require.Len(t, found.Rejected, 1)
+		require.ErrorIs(t, found.Rejected[0], ErrCannotVerify)
+	})
+
+	t.Run("names every attestation that failed when none verifies", func(t *testing.T) {
+		_, err := find(t, pinnedSigner, "", "wrong-signer-provenance.sigstore.json", "tampered-provenance.sigstore.json")
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.ErrorContains(t, err, ": 2 attestations could not be accepted: attestation 1 failed verification: ")
+		require.ErrorContains(t, err, "; attestation 2 failed verification: ")
+	})
+
+	t.Run("does not record an unsigned attestation in place of one that failed", func(t *testing.T) {
+		policy := Policy{CertificateIdentity: fixtureIdentity, CertificateOIDCIssuer: fixtureIssuer, AllowUnsigned: true}
+		_, err := find(t, policy, "", "wrong-signer-provenance.sigstore.json", filepath.Join("statements", "github-provenance.json"))
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.ErrorContains(t, err, "attestation 1 failed verification: ")
+	})
+
+	t.Run("prefers the attestation from the run it is part of to a newer one", func(t *testing.T) {
+		found, err := find(t, pinnedSigner, fixtureRunURI, "github-provenance.sigstore.json", "rerun-provenance.sigstore.json")
+		require.NoError(t, err)
+		require.Equal(t, 1, found.Position)
+		require.Equal(t, fixtureRunURI, found.Evidence.RunInvocationURI)
+	})
+
+	t.Run("prefers an attestation from an earlier attempt of the run it is part of to a newer one from another run", func(t *testing.T) {
+		s := newFixtureSigstore(t)
+		trustedRoot, err := root.NewTrustedRootFromJSON(s.trustedRoot())
+		require.NoError(t, err)
+		statement := compact(t, statementFixture(t, "github-provenance.json"))
+		otherRunURI := "https://github.com/acme/widget/actions/runs/42/attempts/1"
+		lines := [][]byte{
+			compact(t, s.bundleFromRun(statement, fixtureIdentity, fixtureRunURI, time.Minute)),
+			compact(t, s.bundleFromRun(statement, fixtureIdentity, otherRunURI, 2*time.Minute)),
+		}
+		path := filepath.Join(t.TempDir(), "attestations.intoto.jsonl")
+		require.NoError(t, os.WriteFile(path, append(bytes.Join(lines, []byte("\n")), '\n'), 0o600))
+
+		source := sharedStore{BundleFile: BundleFile{Path: path}, preferredRun: fixtureRerunURI}
+		found, err := Find(source, KindProvenance, artifactDigest, NewVerifier(pinnedSigner, FixedTrustRoots(trustedRoot)))
+		require.NoError(t, err)
+		require.Equal(t, 1, found.Position)
+		require.Equal(t, fixtureRunURI, found.Evidence.RunInvocationURI)
+	})
+
+	t.Run("chooses the newest when none is from the run it is part of", func(t *testing.T) {
+		found, err := find(t, pinnedSigner, "https://github.com/acme/widget/actions/runs/42/attempts/1", "github-provenance.sigstore.json", "rerun-provenance.sigstore.json")
+		require.NoError(t, err)
+		require.Equal(t, 2, found.Position)
+		require.Equal(t, fixtureRerunURI, found.Evidence.RunInvocationURI)
+	})
+
+	t.Run("chooses the newest when it is part of no run", func(t *testing.T) {
+		found, err := find(t, pinnedSigner, "", "rerun-provenance.sigstore.json", "github-provenance.sigstore.json")
+		require.NoError(t, err)
+		require.Equal(t, 1, found.Position)
 	})
 }
 

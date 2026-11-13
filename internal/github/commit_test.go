@@ -35,12 +35,11 @@ func TestCommitBySHA(t *testing.T) {
 		commit, err := CommitFinder{Token: "a-token", BaseURL: server.URL + "/"}.CommitBySHA("acme/widget", lookedUpSHA)
 		require.NoError(t, err)
 		require.Equal(t, &types.Commit{
-			SHA:            lookedUpSHA,
-			Message:        "Add the widget\n\nIt does widget things.",
-			Author:         "Jane Doe <jane@example.com>",
-			AuthorUsername: "jdoe",
-			Timestamp:      1793523600,
-			URL:            "https://github.com/acme/widget/commit/" + lookedUpSHA,
+			SHA:       lookedUpSHA,
+			Message:   "Add the widget\n\nIt does widget things.",
+			Author:    "Jane Doe <jane@example.com>",
+			Timestamp: 1793523600,
+			URL:       "https://github.com/acme/widget/commit/" + lookedUpSHA,
 		}, commit)
 		require.Equal(t, "Bearer a-token", gotAuth)
 	})

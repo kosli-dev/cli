@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -50,8 +51,8 @@ transparency log entry or a signed timestamp, which are checked against Sigstore
 public-good trust root. An unsigned attestation needs neither.
 `
 
-// attestationExternalURL labels the link to the attestation's transparency
-// log entry.
+// attestationExternalURL labels the link to the attestation: see
+// attestationLink.
 const attestationExternalURL = "attestation"
 
 // templateArtifactNamePattern is what the API accepts as an artifact's name
@@ -62,7 +63,33 @@ var templateArtifactNamePattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 // against. Tests replace it so that no test fetches one over the network.
 var intotoTrustRoots = intoto.SigstoreTrustRoots
 
-const intotoSourceBundle = "bundle"
+const (
+	intotoSourceBundle = "bundle"
+	intotoSourceGitHub = "github"
+)
+
+var intotoSources = []string{intotoSourceBundle, intotoSourceGitHub}
+
+// githubAttachmentName names the bundle GitHub returned for an attestation,
+// which has no file name of its own.
+const githubAttachmentName = "attestation.sigstore.json"
+
+// currentGitHubRun returns the run-invocation URI of the GitHub Actions run
+// this command is part of, as Sigstore writes it in the certificate of
+// anything this attempt of the run signs, and whether there is such a run. Tests replace it,
+// so that they behave the same inside GitHub Actions as outside.
+var currentGitHubRun = func() (runURI string, inActions bool) {
+	if WhichCI() != github {
+		return "", false
+	}
+	return fmt.Sprintf("%s/%s/actions/runs/%s/attempts/%s", os.Getenv("GITHUB_SERVER_URL"),
+		os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"), os.Getenv("GITHUB_RUN_ATTEMPT")), true
+}
+
+// intotoGitHubAPI is the base URL github.com's API is reached at when
+// --github-base-url is not given; empty leaves it to the GitHub client. Tests
+// replace it so that none reaches github.com.
+var intotoGitHubAPI = ""
 
 type attestInTotoOptions struct {
 	fingerprintOptions   *fingerprintOptions
@@ -81,6 +108,8 @@ type attestInTotoOptions struct {
 	repoRoot             string
 	githubToken          string
 	githubBaseURL        string
+	githubOrg            string
+	repository           string
 	annotations          map[string]string
 	externalURLs         map[string]string
 	externalFingerprints map[string]string
@@ -105,39 +134,106 @@ verifying its signature first, rather than regenerating the same evidence with o
 
 Recording provenance and an SBOM takes two commands.
 
-The attestation is read from the file given with ^--bundle^: a Sigstore bundle
-(^.sigstore.json^), a DSSE envelope, an in-toto statement, or an ^.intoto.jsonl^ file with
-one of these per line. Attestations of other kinds are ignored. When several qualify, a
-verified one is preferred, then the newest.
+^--source^ chooses where the attestation is read from:
+
+- ^github^ reads the attestations GitHub holds for the artifact, where ^actions/attest^
+  stores them, in the repository given with ^--github-org^ and ^--repository^. It needs
+  ^--github-token^, with the ^attestations: read^ permission. It is the default when
+  running in GitHub Actions. GitHub holds them by the digest that was attested, so name
+  an image by the digest the build pushed, as ^yourImageName@sha256:...^ with
+  ^--artifact-type oci^, or give that digest with ^--fingerprint^: a tag may since have
+  moved to another image.
+- ^bundle^ reads the file given with ^--bundle^: a Sigstore bundle (^.sigstore.json^), a
+  DSSE envelope, an in-toto statement, or an ^.intoto.jsonl^ file with one of these per
+  line. It is the default elsewhere, and whenever ^--bundle^ is given.
+
+Attestations of other kinds are ignored. When several qualify, a verified one is
+preferred, then one made by the same attempt of the GitHub Actions run this command is
+part of, then one made by any attempt of that run, then the newest.
 
 The statement must list the artifact as its subject. A signed attestation is verified with
 Sigstore against a signer you pin: ^--certificate-identity^ (or
 ^--certificate-identity-regexp^) with ^--certificate-oidc-issuer^, or ^--key^. There is no
-way to accept any valid certificate. An unsigned attestation is refused unless
-^--allow-unsigned^ is given, and is then recorded as unverified. An attestation that fails
-verification, because another signer made it or it was changed after signing, fails the
-command and nothing is recorded, even when another attestation in the file would qualify. So
-does a signed attestation whose signature cannot be checked, such as when no signer is
-pinned, a trust root cannot be fetched or the signer flags do not fit how it was signed; the
-error then says it could not be verified, not that it failed.
+way to accept any valid certificate. With ^--source github^ in GitHub Actions, a signer you
+do not pin defaults to a workflow in the repository itself: the issuer
+^https://token.actions.githubusercontent.com^ and an identity starting
+^https://github.com/<github-org>/<repository>/.github/workflows/^. Pin the signer yourself
+when a reusable workflow in another repository did the signing. There is no default
+outside GitHub Actions, when ^--github-base-url^ is given, or when the run is on a server
+other than github.com, and the command stops before reading anything unless a signer is
+pinned. An unsigned attestation is refused unless
+^--allow-unsigned^ is given, and is then recorded as unverified.
+
+In a file, an attestation that fails verification, because another signer made it or it
+was changed after signing, fails the command and nothing is recorded, even when another
+attestation in the file would qualify. So does a signed attestation whose signature cannot
+be checked, such as when no signer is pinned, a trust root cannot be fetched or the signer
+flags do not fit how it was signed; the error then says it could not be verified, not that
+it failed. So does an entry of the file that cannot be read as an attestation. GitHub
+holds the attestations of every workflow that attested the artifact, so there such an
+attestation, or one that cannot be downloaded or read, is passed over with a warning as
+long as another one verifies. When none does, the command fails, naming each one, and
+nothing is recorded.
 
 ` + sigstoreTrustRootDesc + `
 The record is annotated with ^verified^ and, for a signed attestation, ^signer_identity^,
 ^signer_issuer^, ^log_index^, ^integrated_time^ and ^signed_timestamp^ where they apply.
 Provenance adds ^builder_id^, ^build_type^ and ^workflow^, and an SBOM adds ^sbom_format^
-and ^sbom_sha256^. A transparency log entry is linked as the ^attestation^ external URL,
-pinned by the SHA-256 of the attestation's bytes.
+and ^sbom_sha256^. The ^attestation^ external URL links the attestation's transparency
+log entry or, for one read from GitHub that has none, GitHub's listing of the artifact's
+attestations. It is pinned by the SHA-256 of the attestation's bytes.
 
 For provenance, the commit's message, author and time are looked up on GitHub with
 ^--github-token^ when the statement names a GitHub repository, or else read from the git
 checkout at ^--repo-root^ if it holds the commit. Failing both, only the commit's SHA is
 recorded, without its details or branch. A repository on GitHub Enterprise Server needs
 ^--repo-provider github^ and ^--github-base-url^ to be looked up there: the token is only
-sent to the server you name, never to a host taken from the statement. A build URL or
-commit URL the statement does not carry can be given with ^--build-url^ and ^--commit-url^.
+sent to github.com or the server you name, never to a host taken from the statement or to
+the storage GitHub serves a bundle from. A build URL or commit URL the statement does not
+carry can be given with ^--build-url^ and ^--commit-url^.
 ` + fingerprintDesc + kosliIgnoreDesc
 
 const attestInTotoExample = `
+# in GitHub Actions, record the SLSA provenance actions/attest stored for an image, as the artifact named app.
+# The image is named by the digest the build pushed, such as ghcr.io/yourOrg/yourImage@sha256:0123...:
+kosli attest in-toto yourImageName@yourImageDigest \
+	--artifact-type oci \
+	--predicate-type provenance \
+	--name app \
+	--github-token yourGithubToken \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# record the SBOM attestation stored for the same image, as app.sbom:
+kosli attest in-toto yourImageName@yourImageDigest \
+	--artifact-type oci \
+	--predicate-type sbom \
+	--name app.sbom \
+	--github-token yourGithubToken \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# outside GitHub Actions, read a repository's attestations and pin the workflow that signed them.
+# Giving the digest as the fingerprint skips reading it from the registry:
+kosli attest in-toto \
+	--fingerprint yourArtifactFingerprint \
+	--source github \
+	--github-org yourGithubOrg \
+	--repository yourGithubRepo \
+	--github-token yourGithubToken \
+	--predicate-type provenance \
+	--name app \
+	--certificate-identity-regexp '^https://github.com/yourGithubOrg/yourGithubRepo/.github/workflows/' \
+	--certificate-oidc-issuer https://token.actions.githubusercontent.com \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # record verified SLSA provenance from a Sigstore bundle, as the artifact named app:
 kosli attest in-toto app.tar.gz \
 	--artifact-type file \
@@ -230,7 +326,7 @@ func newAttestInTotoCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.trailName, "trail", "T", "", trailNameFlag)
 	cmd.Flags().StringVarP(&o.name, "name", "n", "", intotoNameFlag)
-	cmd.Flags().StringVar(&o.source, "source", intotoSourceBundle, intotoSourceFlag)
+	cmd.Flags().StringVar(&o.source, "source", "", intotoSourceFlag)
 	cmd.Flags().StringVar(&o.bundlePath, "bundle", "", intotoBundleFlag)
 	cmd.Flags().StringVar(&o.predicateType, "predicate-type", "", intotoPredicateTypeFlag)
 	addSignerPolicyFlags(cmd, &o.policy)
@@ -241,6 +337,9 @@ func newAttestInTotoCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.repoRoot, "repo-root", ".", intotoRepoRootFlag)
 	cmd.Flags().StringVar(&o.githubToken, "github-token", "", intotoGithubTokenFlag)
 	cmd.Flags().StringVar(&o.githubBaseURL, "github-base-url", "", intotoGithubBaseURLFlag)
+	ci := WhichCI()
+	cmd.Flags().StringVar(&o.githubOrg, "github-org", DefaultValue(ci, "org"), intotoGithubOrgFlag)
+	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), intotoRepositoryFlag)
 	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
@@ -268,11 +367,8 @@ func addSignerPolicyFlags(cmd *cobra.Command, policy *intoto.Policy) {
 // validate checks everything that needs nothing from the attestation, so a
 // mistake costs neither a fingerprint calculation nor a file read.
 func (o *attestInTotoOptions) validate() error {
-	if o.source != intotoSourceBundle {
-		return fmt.Errorf("--source %q is not supported. Must be: %s", o.source, intotoSourceBundle)
-	}
-	if o.bundlePath == "" {
-		return fmt.Errorf("--bundle is required with --source %s", intotoSourceBundle)
+	if err := o.validateSource(); err != nil {
+		return err
 	}
 
 	kind, err := intoto.ParsePredicateKind(o.predicateType)
@@ -282,6 +378,9 @@ func (o *attestInTotoOptions) validate() error {
 	o.kind = kind
 
 	if err := o.policy.Validate(); err != nil {
+		return err
+	}
+	if err := o.pinDefaultSigner(); err != nil {
 		return err
 	}
 
@@ -308,6 +407,94 @@ func (o *attestInTotoOptions) validate() error {
 	return nil
 }
 
+// validateSource settles which source the attestation is read from and
+// checks the flags that source needs. With no --source, a --bundle means the
+// file; otherwise GitHub Actions means GitHub's attestations.
+func (o *attestInTotoOptions) validateSource() error {
+	if o.source == "" {
+		o.source = intotoSourceBundle
+		if _, inActions := currentGitHubRun(); inActions && o.bundlePath == "" {
+			o.source = intotoSourceGitHub
+		}
+	}
+
+	switch o.source {
+	case intotoSourceBundle:
+		if o.bundlePath == "" {
+			return fmt.Errorf("--bundle is required with --source %s", intotoSourceBundle)
+		}
+	case intotoSourceGitHub:
+		if o.bundlePath != "" {
+			return fmt.Errorf("--bundle cannot be used with --source %s", intotoSourceGitHub)
+		}
+		if o.githubOrg == "" || o.repository == "" {
+			return fmt.Errorf("--github-org and --repository are required with --source %s", intotoSourceGitHub)
+		}
+		if o.githubToken == "" {
+			return fmt.Errorf("--github-token is required with --source %s", intotoSourceGitHub)
+		}
+	default:
+		return fmt.Errorf("--source %q is not supported. Must be one of: %s", o.source, strings.Join(intotoSources, ", "))
+	}
+	return nil
+}
+
+// pinDefaultSigner gives --source github a signer when the caller pinned
+// none: in GitHub Actions, a workflow in the repository itself. Everything
+// GitHub holds is signed, so with no signer at all nothing could be recorded,
+// and saying so here saves fetching attestations to find that out.
+func (o *attestInTotoOptions) pinDefaultSigner() error {
+	if o.source != intotoSourceGitHub || o.policy.PinsSigner() {
+		return nil
+	}
+	runURI, inActions := currentGitHubRun()
+	if !inActions {
+		return fmt.Errorf("--source %s needs a signer to verify attestations against. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key. In GitHub Actions the signer defaults to a workflow in the repository itself", intotoSourceGitHub)
+	}
+	// The default names github.com, which another server's workflows do not
+	// sign as, so every attestation would fail on a mismatched identity.
+	if o.githubBaseURL != "" {
+		return fmt.Errorf("--source %s has no default signer when --github-base-url is given: the default is a workflow on github.com. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", intotoSourceGitHub)
+	}
+	if !strings.HasPrefix(runURI, "https://github.com/") {
+		return fmt.Errorf("--source %s has no default signer in a GitHub Actions run on a server other than github.com: the default is a workflow on github.com. Name the server with --github-base-url, and pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", intotoSourceGitHub)
+	}
+	signer := o.githubRepository().WorkflowSigner()
+	o.policy.CertificateOIDCIssuer = signer.CertificateOIDCIssuer
+	o.policy.CertificateIdentityRegexp = signer.CertificateIdentityRegexp
+	logger.Debug("no signer is pinned, so attestations must be signed by a workflow in the repository: issuer %s, identity matching %s",
+		signer.CertificateOIDCIssuer, signer.CertificateIdentityRegexp)
+	return nil
+}
+
+// attestationSource is where --source says to read the attestation from.
+func (o *attestInTotoOptions) attestationSource() intoto.Source {
+	if o.source == intotoSourceGitHub {
+		return o.githubRepository()
+	}
+	return intoto.BundleFile{Path: o.bundlePath}
+}
+
+func (o *attestInTotoOptions) githubRepository() intoto.GitHubRepository {
+	// NewGithubConfig strips the owner from --repository, which GitHub Actions
+	// defaults to owner/name.
+	config := ghUtils.NewGithubConfig(o.githubToken, o.githubAPI(), o.githubOrg, o.repository, global.Debug)
+	runURI, _ := currentGitHubRun()
+	return intoto.GitHubRepository{
+		Owner:   config.Org,
+		Name:    config.Repository,
+		Token:   config.Token,
+		BaseURL: config.BaseURL,
+		Debug:   config.Debug,
+		RunURI:  runURI,
+	}
+}
+
+// githubAPI is the base URL of the GitHub server the token is sent to.
+func (o *attestInTotoOptions) githubAPI() string {
+	return firstNonEmpty(o.githubBaseURL, intotoGitHubAPI)
+}
+
 func (o *attestInTotoOptions) reservedAnnotations() []string {
 	reserved := append([]string{}, verificationAnnotationKeys...)
 	if o.kind == intoto.KindSBOM {
@@ -325,21 +512,21 @@ func (o *attestInTotoOptions) run(args []string) error {
 		}
 	}
 
-	found, err := intoto.Find(intoto.BundleFile{Path: o.bundlePath}, o.kind, o.fingerprint,
-		intoto.NewVerifier(o.policy, intotoTrustRoots()))
+	source := o.attestationSource()
+	found, err := intoto.Find(source, o.kind, o.fingerprint, intoto.NewVerifier(o.policy, intotoTrustRoots()))
 	if err != nil {
 		return err
 	}
 	for _, rejected := range found.Rejected {
-		logger.Warn("another %s attestation was not recorded: %s", o.kind, rejected)
+		logger.Warn("another attestation was not recorded: %s", rejected)
 	}
 
 	externalURLs, err := processExternalURLs(o.externalURLs, o.externalFingerprints)
 	if err != nil {
 		return err
 	}
-	if found.Evidence.LogEntryURL != "" {
-		externalURLs[attestationExternalURL] = &URLInfo{Href: found.Evidence.LogEntryURL, Fingerprint: found.Evidence.RawSHA256}
+	if link := attestationLink(found); link != nil {
+		externalURLs[attestationExternalURL] = link
 	}
 	annotations, err := processAnnotations(o.annotations)
 	if err != nil {
@@ -348,9 +535,20 @@ func (o *attestInTotoOptions) run(args []string) error {
 	annotations = withAnnotations(annotations, verificationAnnotations(found.Evidence))
 
 	if o.kind == intoto.KindSBOM {
-		return o.recordSBOM(found, externalURLs, annotations)
+		return o.recordSBOM(source, found, externalURLs, annotations)
 	}
 	return o.recordProvenance(args, found, externalURLs, annotations)
+}
+
+// attestationLink points a reader at the attestation: its transparency log
+// entry, which anyone can read, or failing that where its source holds it.
+// The link is pinned by the SHA-256 of the attestation's bytes.
+func attestationLink(found *intoto.Found) *URLInfo {
+	href := firstNonEmpty(found.Evidence.LogEntryURL, found.URL)
+	if href == "" {
+		return nil
+	}
+	return &URLInfo{Href: href, Fingerprint: found.Evidence.RawSHA256}
 }
 
 func (o *attestInTotoOptions) recordProvenance(args []string, found *intoto.Found, externalURLs map[string]*URLInfo, annotations map[string]string) error {
@@ -465,19 +663,19 @@ func (o *attestInTotoOptions) commitInfo(provenance *intoto.Provenance) *gitview
 // GitHub is the only provider implemented; a lookup also needs a token.
 func (o *attestInTotoOptions) commitFinder(repo intoto.Repository) types.CommitFinder {
 	if repo.Provider == "github" && o.githubToken != "" {
-		return ghUtils.CommitFinder{Token: o.githubToken, BaseURL: o.githubBaseURL, Debug: global.Debug}
+		return ghUtils.CommitFinder{Token: o.githubToken, BaseURL: o.githubAPI(), Debug: global.Debug}
 	}
 	return nil
 }
 
-func (o *attestInTotoOptions) recordSBOM(found *intoto.Found, externalURLs map[string]*URLInfo, annotations map[string]string) error {
+func (o *attestInTotoOptions) recordSBOM(source intoto.Source, found *intoto.Found, externalURLs map[string]*URLInfo, annotations map[string]string) error {
 	document, err := intoto.SBOMDocument(found.Attestation)
 	if err != nil {
 		return err
 	}
 	data, err := sbomAttestationData(found.Raw, document)
 	if err != nil {
-		return fmt.Errorf("failed to parse the SBOM in %s: %s", intoto.BundleFile{Path: o.bundlePath}, err)
+		return fmt.Errorf("failed to parse the SBOM in %s: %s", source, err)
 	}
 
 	common := &CommonAttestationPayload{
@@ -513,8 +711,12 @@ func (o *attestInTotoOptions) recordSBOM(found *intoto.Found, externalURLs map[s
 }
 
 // attachmentName names the attached bytes after the file they came from, and
-// after their line when the file holds several attestations.
+// after their line when the file holds several attestations. Bytes read from
+// GitHub get a fixed name.
 func (o *attestInTotoOptions) attachmentName(a *intoto.Attestation) string {
+	if o.source == intotoSourceGitHub {
+		return githubAttachmentName
+	}
 	name := filepath.Base(o.bundlePath)
 	if a.Position == 0 {
 		return name
