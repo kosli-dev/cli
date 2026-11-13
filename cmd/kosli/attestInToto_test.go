@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -905,6 +906,46 @@ func TestGitHubOwnerAndName(t *testing.T) {
 		t.Run("refuses --repository "+repository, func(t *testing.T) {
 			_, _, err := githubOwnerAndName("acme", true, repository)
 			require.EqualError(t, err, "--repository '"+repository+"' is not a GitHub repository's name, or its owner and name as owner/name")
+		})
+	}
+}
+
+func TestAttestInTotoGitHubRepositoryDefaults(t *testing.T) {
+	defaults := func(t *testing.T, env map[string]string) (githubOrg, repository string) {
+		t.Helper()
+		clearCIEnv(t)
+		// DefaultValue gives no default at all under either of these.
+		for _, name := range []string{"KOSLI_TESTS", "DOCS"} {
+			t.Setenv(name, "")
+			require.NoError(t, os.Unsetenv(name))
+		}
+		for name, value := range env {
+			t.Setenv(name, value)
+		}
+		saved := global
+		global = &GlobalOpts{}
+		t.Cleanup(func() { global = saved })
+		flags := newAttestInTotoCmd(io.Discard).Flags()
+		return flags.Lookup("github-org").DefValue, flags.Lookup("repository").DefValue
+	}
+
+	t.Run("are the run's repository and its owner in GitHub Actions", func(t *testing.T) {
+		githubOrg, repository := defaults(t, map[string]string{
+			"GITHUB_RUN_NUMBER": "7", "GITHUB_REPOSITORY_OWNER": "acme", "GITHUB_REPOSITORY": "acme/widget"})
+		require.Equal(t, "acme", githubOrg)
+		require.Equal(t, "acme/widget", repository)
+	})
+
+	for ci, env := range map[string]map[string]string{
+		"GitLab CI":           {"GITLAB_CI": "true", "CI_PROJECT_NAME": "widget", "CI_PROJECT_NAMESPACE": "acme"},
+		"Bitbucket Pipelines": {"BITBUCKET_BUILD_NUMBER": "7", "BITBUCKET_REPO_SLUG": "widget", "BITBUCKET_WORKSPACE": "acme"},
+		"Azure DevOps":        {"TF_BUILD": "True", "BUILD_REPOSITORY_NAME": "widget"},
+		"CircleCI":            {"CIRCLECI": "true", "CIRCLE_PROJECT_REPONAME": "widget"},
+	} {
+		t.Run("are nothing in "+ci+", whose project is not a GitHub repository", func(t *testing.T) {
+			githubOrg, repository := defaults(t, env)
+			require.Empty(t, githubOrg)
+			require.Empty(t, repository)
 		})
 	}
 }

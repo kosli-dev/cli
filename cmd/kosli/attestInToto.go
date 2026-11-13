@@ -354,9 +354,8 @@ func newAttestInTotoCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.repoRoot, "repo-root", ".", intotoRepoRootFlag)
 	cmd.Flags().StringVar(&o.githubToken, "github-token", "", intotoGithubTokenFlag)
 	cmd.Flags().StringVar(&o.githubBaseURL, "github-base-url", "", intotoGithubBaseURLFlag)
-	ci := WhichCI()
-	cmd.Flags().StringVar(&o.githubOrg, "github-org", DefaultValue(ci, "org"), intotoGithubOrgFlag)
-	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), intotoRepositoryFlag)
+	cmd.Flags().StringVar(&o.githubOrg, "github-org", githubActionsDefault("org"), intotoGithubOrgFlag)
+	cmd.Flags().StringVar(&o.repository, "repository", githubActionsDefault("repository"), intotoRepositoryFlag)
 	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
@@ -369,6 +368,16 @@ func newAttestInTotoCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+// githubActionsDefault is a flag's default in GitHub Actions and nothing in any
+// other CI, whose project is not a GitHub repository to read attestations
+// from.
+func githubActionsDefault(flag string) string {
+	if ci := WhichCI(); ci == github {
+		return DefaultValue(ci, flag)
+	}
+	return ""
 }
 
 // addSignerPolicyFlags adds the flags that pin who must have signed an
