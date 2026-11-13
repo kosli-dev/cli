@@ -193,19 +193,46 @@ func TestSplitDigestPinnedAR_TagPinnedRejected(t *testing.T) {
 	require.Contains(t, err.Error(), "not digest-pinned")
 }
 
+func TestSplitDigestPinnedAR_GCRHosts(t *testing.T) {
+	cases := []struct {
+		host     string
+		location string
+	}{
+		{"gcr.io", "us"},
+		{"us.gcr.io", "us"},
+		{"eu.gcr.io", "europe"},
+		{"asia.gcr.io", "asia"},
+	}
+	for _, c := range cases {
+		t.Run(c.host, func(t *testing.T) {
+			parts, err := splitDigestPinnedAR(c.host + "/proj/team/img@sha256:abc")
+			require.NoError(t, err)
+			require.Equal(t, digestPinnedRefParts{
+				project: "proj", location: c.location, repo: c.host, image: "team/img", digest: "sha256:abc",
+			}, parts)
+		})
+	}
+}
+
 func TestSplitDigestPinnedAR_NonARHostRejected(t *testing.T) {
-	// 4 path segments so the parser passes the segment-count check and
-	// reaches the host check. Refs from GCR or other registries do not
-	// share AR's region-prefixed pkg.dev host pattern.
-	_, err := splitDigestPinnedAR("eu.gcr.io/proj/repo/img@sha256:abc")
+	_, err := splitDigestPinnedAR("docker.io/proj/repo/img@sha256:abc")
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "not Artifact Registry")
+	require.Contains(t, err.Error(), "not served by the Artifact Registry API")
 }
 
 func TestSplitDigestPinnedAR_TooFewSegmentsRejected(t *testing.T) {
-	_, err := splitDigestPinnedAR("europe-west1-docker.pkg.dev/proj@sha256:abc")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "too few path segments")
+	for _, image := range []string{
+		"europe-west1-docker.pkg.dev/proj@sha256:abc",
+		"europe-west1-docker.pkg.dev/proj/repo@sha256:abc",
+		"gcr.io/proj@sha256:abc",
+		"gcr.io@sha256:abc",
+	} {
+		t.Run(image, func(t *testing.T) {
+			_, err := splitDigestPinnedAR(image)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "too few segments")
+		})
+	}
 }
 
 // --- pickLatestTag ---
@@ -318,4 +345,60 @@ func TestResolveTagPinnedDigests_MixedMap(t *testing.T) {
 		already:   "already",
 		tagPinned: "newhex",
 	}, digests, "both keys must be preserved; only the tag-pinned value is filled in")
+}
+
+// --- artifactRegistryRepoFor ---
+
+func TestArtifactRegistryRepoFor(t *testing.T) {
+	cases := []struct {
+		name string
+		host string
+		path string
+		want arImage
+	}{
+		{"pkg.dev", "europe-west1-docker.pkg.dev", "proj/repo/img",
+			arImage{project: "proj", location: "europe-west1", repo: "repo", image: "img"}},
+		{"pkg.dev multi-region", "us-docker.pkg.dev", "proj/repo/img",
+			arImage{project: "proj", location: "us", repo: "repo", image: "img"}},
+		{"pkg.dev nested image", "europe-west1-docker.pkg.dev", "proj/repo/parent/child/img",
+			arImage{project: "proj", location: "europe-west1", repo: "repo", image: "parent/child/img"}},
+		{"gcr.io", "gcr.io", "proj/img",
+			arImage{project: "proj", location: "us", repo: "gcr.io", image: "img"}},
+		{"us.gcr.io", "us.gcr.io", "proj/img",
+			arImage{project: "proj", location: "us", repo: "us.gcr.io", image: "img"}},
+		{"eu.gcr.io", "eu.gcr.io", "proj/img",
+			arImage{project: "proj", location: "europe", repo: "eu.gcr.io", image: "img"}},
+		{"asia.gcr.io", "asia.gcr.io", "proj/img",
+			arImage{project: "proj", location: "asia", repo: "asia.gcr.io", image: "img"}},
+		{"gcr.io nested image", "gcr.io", "proj/team/img",
+			arImage{project: "proj", location: "us", repo: "gcr.io", image: "team/img"}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := artifactRegistryRepoFor(c.host, c.path)
+			require.NoError(t, err)
+			require.Equal(t, c.want, got)
+		})
+	}
+}
+
+func TestArtifactRegistryRepoFor_Rejected(t *testing.T) {
+	cases := []struct {
+		name string
+		host string
+		path string
+	}{
+		{"unknown host", "docker.io", "library/nginx"},
+		{"unknown gcr.io mirror", "mirror.gcr.io", "library/nginx"},
+		{"pkg.dev without location", "docker.pkg.dev", "proj/repo/img"},
+		{"pkg.dev without image", "europe-west1-docker.pkg.dev", "proj/repo"},
+		{"gcr.io without image", "gcr.io", "proj"},
+		{"empty segment", "gcr.io", "proj/"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := artifactRegistryRepoFor(c.host, c.path)
+			require.Error(t, err)
+		})
+	}
 }

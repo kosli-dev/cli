@@ -34,14 +34,18 @@ Idle Jobs (no currently-running Execution) are included.
 
 GCP authentication uses Application Default Credentials. On a developer
 machine, run ^gcloud auth application-default login^; in GCE/GKE/Cloud Run
-the metadata server / Workload Identity is used automatically. The caller
-needs ^roles/run.viewer^ on the target project, plus
-^roles/artifactregistry.reader^ on the Artifact Registry repository (or the
-project) for digest and tag resolution on tag-pinned images. Missing the AR
-role is non-fatal — tag-pinned artifacts then surface with empty digests.
+the metadata server / Workload Identity is used automatically.
 
-Digest and tag resolution is scoped to Artifact Registry (^*-docker.pkg.dev^)
-and the legacy Container Registry (^*.gcr.io^). Images from other registries
+The caller needs ^roles/run.viewer^ on the target project. To resolve the
+digest of a tag-pinned image it also needs ^artifactregistry.tags.get^ on the
+Artifact Registry repository (or the project), and ^--resolve-names^ needs
+^artifactregistry.dockerimages.get^. Both are metadata reads: neither grants
+permission to pull an image. ^roles/artifactregistry.reader^ also works.
+Missing these permissions is non-fatal: tag-pinned artifacts then surface
+with empty digests.
+
+Digest resolution covers Artifact Registry (^*-docker.pkg.dev^) and ^gcr.io^
+hosts, which Artifact Registry now serves. Images from other registries
 (Docker Hub, Quay, ECR, etc.) are reported as-is.
 
 Skip all filtering flags to report every service and every job in the given
@@ -52,7 +56,8 @@ job names and are case-sensitive.
 
 Pass ^--resolve-names^ to rewrite digest-pinned Service artifact names back
 to their deploy-time tags (commit SHA / version) via an Artifact Registry
-reverse-lookup. Only supported for Artifact Registry hosts.`
+reverse-lookup. Supported for Artifact Registry (^*-docker.pkg.dev^) and
+^gcr.io^ hosts.`
 
 const snapshotCloudRunExample = `
 # report every Cloud Run service and job in a project + region:
