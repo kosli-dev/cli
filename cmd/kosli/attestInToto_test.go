@@ -1016,8 +1016,8 @@ func TestAttestationLink(t *testing.T) {
 		require.Equal(t, &URLInfo{Href: intotoLogEntryURL, Fingerprint: "abc123"}, attestationLink(found(intotoLogEntryURL, listing)))
 	})
 
-	t.Run("links where the source holds the attestation when it has no log entry", func(t *testing.T) {
-		require.Equal(t, &URLInfo{Href: listing, Fingerprint: "abc123"}, attestationLink(found("", listing)))
+	t.Run("links where the source holds the attestation when it has no log entry, without a fingerprint that what is held there would not match", func(t *testing.T) {
+		require.Equal(t, &URLInfo{Href: listing}, attestationLink(found("", listing)))
 	})
 
 	t.Run("links nothing for an attestation read from a file with no log entry", func(t *testing.T) {

@@ -194,8 +194,10 @@ The record is annotated with ^verified^ and, for a signed attestation, ^signer_i
 ^signer_issuer^, ^log_index^, ^integrated_time^ and ^signed_timestamp^ where they apply.
 Provenance adds ^builder_id^, ^build_type^ and ^workflow^, and an SBOM adds ^sbom_format^
 and ^sbom_sha256^. The ^attestation^ external URL links the attestation's transparency
-log entry or, for one read from GitHub that has none, GitHub's listing of the artifact's
-attestations. It is pinned by the SHA-256 of the attestation's bytes.
+log entry, pinned by the SHA-256 of the attestation's bytes. An attestation read from
+GitHub that has no entry in a public log, as in a private repository, links GitHub's API
+listing of the artifact's attestations instead. Reading that listing needs a token, and it
+holds every attestation of the artifact, so it is recorded without a fingerprint.
 
 For provenance, the commit's message, author and time are looked up on GitHub with
 ^--github-token^ when the statement names a GitHub repository, or else read from the git
@@ -595,14 +597,18 @@ func (o *attestInTotoOptions) run(args []string) error {
 }
 
 // attestationLink points a reader at the attestation: its transparency log
-// entry, which anyone can read, or failing that where its source holds it.
-// The link is pinned by the SHA-256 of the attestation's bytes.
+// entry, which anyone can read, pinned by the SHA-256 of the attestation's
+// bytes, or failing that where its source holds it. What a source holds there
+// is not the attestation alone, as GitHub's listing covers every attestation
+// of the artifact, so that link carries no fingerprint.
 func attestationLink(found *intoto.Found) *URLInfo {
-	href := firstNonEmpty(found.Evidence.LogEntryURL, found.URL)
-	if href == "" {
+	if found.Evidence.LogEntryURL != "" {
+		return &URLInfo{Href: found.Evidence.LogEntryURL, Fingerprint: found.Evidence.RawSHA256}
+	}
+	if found.URL == "" {
 		return nil
 	}
-	return &URLInfo{Href: href, Fingerprint: found.Evidence.RawSHA256}
+	return &URLInfo{Href: found.URL}
 }
 
 func (o *attestInTotoOptions) recordProvenance(args []string, found *intoto.Found, externalURLs map[string]*URLInfo, annotations map[string]string) error {
