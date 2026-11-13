@@ -112,6 +112,7 @@ type attestInTotoOptions struct {
 	githubOrg            string
 	githubOrgGiven       bool
 	repository           string
+	repositoryGiven      bool
 	annotations          map[string]string
 	externalURLs         map[string]string
 	externalFingerprints map[string]string
@@ -330,6 +331,7 @@ func newAttestInTotoCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 			o.githubOrgGiven = cmd.Flags().Changed("github-org")
+			o.repositoryGiven = cmd.Flags().Changed("repository")
 			if err := o.validate(); err != nil {
 				return err
 			}
@@ -459,7 +461,7 @@ func (o *attestInTotoOptions) validateSource(runURI string, inActions bool) erro
 		if o.bundlePath != "" {
 			return fmt.Errorf("--bundle cannot be used with --source %s", intotoSourceGitHub)
 		}
-		owner, name, err := githubOwnerAndName(o.githubOrg, o.githubOrgGiven, o.repository)
+		owner, name, err := githubOwnerAndName(o.githubOrg, o.githubOrgGiven, o.repository, o.repositoryGiven)
 		if err != nil {
 			return err
 		}
@@ -526,8 +528,10 @@ func (o *attestInTotoOptions) attestationSource() intoto.Source {
 // name. --repository may carry its owner, as the default GitHub Actions gives
 // it does, and that owner is the one read. A --github-org the caller gave,
 // rather than one GitHub Actions defaulted, must then name the same owner:
-// reading either one's repository would silently ignore the other flag.
-func githubOwnerAndName(org string, orgGiven bool, repository string) (owner, name string, err error) {
+// reading either one's repository would silently ignore the other flag. That
+// holds for a --repository GitHub Actions defaulted too, where the refusal
+// says so.
+func githubOwnerAndName(org string, orgGiven bool, repository string, repositoryGiven bool) (owner, name string, err error) {
 	owner, name, hasOwner := strings.Cut(repository, "/")
 	if !hasOwner {
 		return org, repository, nil
@@ -537,6 +541,10 @@ func githubOwnerAndName(org string, orgGiven bool, repository string) (owner, na
 	}
 	// GitHub treats owner names as case-insensitive.
 	if orgGiven && !strings.EqualFold(org, owner) {
+		if !repositoryGiven {
+			// The caller never passed the --repository this is about.
+			return "", "", fmt.Errorf("--github-org '%s' is not the owner of '%s', which --repository defaulted to from GITHUB_REPOSITORY in this GitHub Actions run. Pass --repository as well to read another repository", org, repository)
+		}
 		return "", "", fmt.Errorf("--github-org '%s' is not the owner in --repository '%s'. Name the owner in one of them, or the same owner in both", org, repository)
 	}
 	return owner, name, nil

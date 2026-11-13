@@ -943,7 +943,7 @@ func TestGitHubOwnerAndName(t *testing.T) {
 		"takes a --github-org that differs from the owner in --repository only in its letters' case": {"Acme", true, "acme/widget", "acme", "widget"},
 	} {
 		t.Run(name, func(t *testing.T) {
-			owner, repo, err := githubOwnerAndName(tc.org, tc.orgGiven, tc.repository)
+			owner, repo, err := githubOwnerAndName(tc.org, tc.orgGiven, tc.repository, true)
 			require.NoError(t, err)
 			require.Equal(t, tc.owner, owner)
 			require.Equal(t, tc.repo, repo)
@@ -951,16 +951,54 @@ func TestGitHubOwnerAndName(t *testing.T) {
 	}
 
 	t.Run("refuses a --github-org the caller gave that is not the owner in --repository", func(t *testing.T) {
-		_, _, err := githubOwnerAndName("acme", true, "platform/app")
+		_, _, err := githubOwnerAndName("acme", true, "platform/app", true)
 		require.EqualError(t, err, "--github-org 'acme' is not the owner in --repository 'platform/app'. Name the owner in one of them, or the same owner in both")
+	})
+
+	t.Run("refuses a --github-org the caller gave that is not the owner of the repository GitHub Actions defaulted, saying where the repository came from", func(t *testing.T) {
+		_, _, err := githubOwnerAndName("platform", true, "acme/widget", false)
+		require.EqualError(t, err, intotoNotTheRunsOwner)
 	})
 
 	for _, repository := range []string{"acme/widget/extra", "/widget", "acme/", "https://github.com/acme/widget"} {
 		t.Run("refuses --repository "+repository, func(t *testing.T) {
-			_, _, err := githubOwnerAndName("acme", true, repository)
+			_, _, err := githubOwnerAndName("acme", true, repository, true)
 			require.EqualError(t, err, "--repository '"+repository+"' is not a GitHub repository's name, or its owner and name as owner/name")
 		})
 	}
+}
+
+// intotoNotTheRunsOwner refuses --github-org platform in a run of acme/widget
+// that gave no --repository.
+const intotoNotTheRunsOwner = "--github-org 'platform' is not the owner of 'acme/widget', which --repository defaulted to from GITHUB_REPOSITORY in this GitHub Actions run. Pass --repository as well to read another repository"
+
+func TestAttestInTotoGitHubOrgInARunOfAnotherOwnersRepository(t *testing.T) {
+	clearCIEnv(t)
+	// DefaultValue gives no default at all under either of these.
+	for _, name := range []string{"KOSLI_TESTS", "DOCS"} {
+		t.Setenv(name, "")
+		require.NoError(t, os.Unsetenv(name))
+	}
+	for name, value := range map[string]string{
+		"GITHUB_RUN_NUMBER": "7", "GITHUB_SERVER_URL": "https://github.com", "GITHUB_REPOSITORY_OWNER": "acme",
+		"GITHUB_REPOSITORY": "acme/widget", "GITHUB_RUN_ID": "1234567890", "GITHUB_RUN_ATTEMPT": "1",
+	} {
+		t.Setenv(name, value)
+	}
+	command := "attest in-toto --fingerprint " + intotoDigest + " --predicate-type provenance --name app --github-token a-token" +
+		" --flow attest-in-toto --trail test-123 --host http://localhost:8001 --org docs-cmd-test-user --api-token a-token "
+
+	t.Run("refuses a --github-org given without --repository, saying the repository was defaulted and how to name another", func(t *testing.T) {
+		_, output, _, _, err := executeCommandC(command + "--github-org platform")
+		require.Error(t, err)
+		require.Equal(t, "Error: "+intotoNotTheRunsOwner+"\n", output)
+	})
+
+	t.Run("names both flags when the caller gave --repository too", func(t *testing.T) {
+		_, output, _, _, err := executeCommandC(command + "--github-org platform --repository acme/widget")
+		require.Error(t, err)
+		require.Equal(t, "Error: --github-org 'platform' is not the owner in --repository 'acme/widget'. Name the owner in one of them, or the same owner in both\n", output)
+	})
 }
 
 func TestAttestInTotoGitHubRepositoryDefaults(t *testing.T) {
