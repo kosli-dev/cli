@@ -91,6 +91,24 @@ type githubAttestation struct {
 	BundleURL string          `json:"bundle_url"`
 }
 
+// identity tells one listed attestation from another: where its bundle is
+// downloaded from, or failing that the bundle itself. It is empty for an entry
+// with neither. A download URL is signed afresh for each listing, so its
+// query is no part of it.
+func (a githubAttestation) identity() string {
+	if a.BundleURL == "" {
+		if string(a.Bundle) == "null" {
+			return ""
+		}
+		return string(a.Bundle)
+	}
+	if parsed, err := url.Parse(a.BundleURL); err == nil {
+		parsed.RawQuery = ""
+		return parsed.String()
+	}
+	return a.BundleURL
+}
+
 // Attestations returns the attestations of kind that GitHub holds in the
 // repository for the artifact with SHA-256 digest, without fetching the ones
 // of other kinds. When it holds none of kind it returns them all, so that a
@@ -105,13 +123,24 @@ func (g GitHubRepository) Attestations(kind PredicateKind, digest string) ([]*At
 	}
 
 	path := fmt.Sprintf("repos/%s/%s/attestations/sha256:%s", url.PathEscape(g.Owner), url.PathEscape(g.Name), digest)
+	// A server that ignores the filter, as an older GitHub Enterprise Server
+	// may, answers each of these listings with everything it holds.
 	var listed []githubAttestation
+	seen := map[string]bool{}
 	for _, predicateType := range kind.predicateTypes() {
 		ofType, err := listGitHubAttestations(ctx, client, path, predicateType)
 		if err != nil {
 			return nil, describeListError(err)
 		}
-		listed = append(listed, ofType...)
+		for _, entry := range ofType {
+			if identity := entry.identity(); identity != "" {
+				if seen[identity] {
+					continue
+				}
+				seen[identity] = true
+			}
+			listed = append(listed, entry)
+		}
 	}
 	if len(listed) == 0 {
 		// GitHub answers 404 both when nothing matches the filter and when the

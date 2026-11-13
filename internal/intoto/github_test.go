@@ -67,6 +67,9 @@ type fakeGitHub struct {
 	blobBody func(bundle []byte) []byte
 	// blobFailures is how many downloads fail with a 503 before one succeeds.
 	blobFailures int
+	// ignoresFilter answers every listing with everything held, as a server
+	// that does not know the predicate_type parameter would.
+	ignoresFilter bool
 
 	mu        sync.Mutex
 	listAuth  []string
@@ -124,7 +127,7 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 	f.listQuery = append(f.listQuery, r.URL.RawQuery)
 
 	pages := f.pages
-	if filter := r.URL.Query().Get("predicate_type"); filter != "" {
+	if filter := r.URL.Query().Get("predicate_type"); filter != "" && !f.ignoresFilter {
 		pages = f.matching(filter)
 		if len(pages) == 0 {
 			w.WriteHeader(http.StatusNotFound)
@@ -155,7 +158,8 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 				entry.Bundle = f.bundle(s.fixture)
 			}
 			if s.blob {
-				entry.BundleURL = f.server.URL + "/blobs/" + s.fixture + "?sig=a-secret"
+				// Each listing signs its download URLs afresh.
+				entry.BundleURL = fmt.Sprintf("%s/blobs/%s?sig=a-secret-%d", f.server.URL, s.fixture, len(f.listQuery))
 			}
 			attestations = append(attestations, entry)
 		}
@@ -262,6 +266,18 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		require.Len(t, attestations, 1)
 		require.Equal(t, "https://spdx.dev/Document/v2.3", attestations[0].Statement.GetPredicateType())
 		require.Equal(t, []string{listsProvenanceV1, listsProvenanceV02, listsEverything}, fake.listQuery)
+	})
+
+	t.Run("reads each attestation once from a server that ignores the filter and lists everything for each predicate type", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json"), inline("spdx-sbom.sigstore.json"), blob("rerun-provenance.sigstore.json")})
+		fake.ignoresFilter = true
+
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 3)
+		require.Equal(t, 3, attestations[2].Position)
+		require.Equal(t, []string{listsProvenanceV1, listsProvenanceV02}, fake.listQuery)
+		require.Len(t, fake.blobAuth, 2)
 	})
 
 	t.Run("keeps each bundle's bytes, numbers them, and says where GitHub holds them", func(t *testing.T) {
@@ -447,6 +463,17 @@ func TestFindInGitHubRepository(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, fixtureIdentity, found.Evidence.SignerIdentity)
 		require.Len(t, found.Rejected, 1)
+	})
+
+	t.Run("reports another signer's attestation once from a server that ignores the filter", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{inline("wrong-signer-provenance.sigstore.json"), blob("github-provenance.sigstore.json")})
+		fake.ignoresFilter = true
+
+		found, err := find(t, fake.repository(), KindProvenance)
+		require.NoError(t, err)
+		require.Equal(t, 2, found.Position)
+		require.Len(t, found.Rejected, 1)
+		require.ErrorContains(t, found.Rejected[0], "attestation 1 failed verification: ")
 	})
 
 	t.Run("prefers the attestation made by the run it is part of", func(t *testing.T) {
