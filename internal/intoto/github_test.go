@@ -70,6 +70,9 @@ type fakeGitHub struct {
 	// ignoresFilter answers every listing with everything held, as a server
 	// that does not know the predicate_type parameter would.
 	ignoresFilter bool
+	// blobsByQuery names each bundle in the query of its download URL, so
+	// that the URLs of two bundles differ in nothing else.
+	blobsByQuery bool
 
 	mu        sync.Mutex
 	listAuth  []string
@@ -98,6 +101,9 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 	defer f.mu.Unlock()
 
 	if name, ok := strings.CutPrefix(r.URL.Path, "/blobs/"); ok {
+		if f.blobsByQuery {
+			name = r.URL.Query().Get("bundle")
+		}
 		f.blobAuth = append(f.blobAuth, r.Header.Get("Authorization"))
 		if f.blobFailures > 0 {
 			f.blobFailures--
@@ -160,6 +166,9 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 			if s.blob {
 				// Each listing signs its download URLs afresh.
 				entry.BundleURL = fmt.Sprintf("%s/blobs/%s?sig=a-secret-%d", f.server.URL, s.fixture, len(f.listQuery))
+				if f.blobsByQuery {
+					entry.BundleURL = fmt.Sprintf("%s/blobs/?bundle=%s&sig=a-secret-%d", f.server.URL, s.fixture, len(f.listQuery))
+				}
 			}
 			attestations = append(attestations, entry)
 		}
@@ -277,6 +286,28 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		require.Len(t, attestations, 3)
 		require.Equal(t, 3, attestations[2].Position)
 		require.Equal(t, []string{listsProvenanceV1, listsProvenanceV02}, fake.listQuery)
+		require.Len(t, fake.blobAuth, 2)
+	})
+
+	t.Run("reads both of two attestations in one listing whose download URLs differ only in the query", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json"), blob("rerun-provenance.sigstore.json")})
+		fake.blobsByQuery = true
+
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 2)
+		require.Equal(t, fake.bundle("github-provenance.sigstore.json"), attestations[0].Raw)
+		require.Equal(t, fake.bundle("rerun-provenance.sigstore.json"), attestations[1].Raw)
+	})
+
+	t.Run("still reads each of them once from a server that ignores the filter", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json"), blob("rerun-provenance.sigstore.json")})
+		fake.blobsByQuery = true
+		fake.ignoresFilter = true
+
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 2)
 		require.Len(t, fake.blobAuth, 2)
 	})
 

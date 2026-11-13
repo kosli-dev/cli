@@ -91,10 +91,11 @@ type githubAttestation struct {
 	BundleURL string          `json:"bundle_url"`
 }
 
-// identity tells one listed attestation from another: where its bundle is
-// downloaded from, or failing that the bundle itself. It is empty for an entry
-// with neither. A download URL is signed afresh for each listing, so its
-// query is no part of it.
+// identity recognises an attestation that another listing gave too: by where
+// its bundle is downloaded from, or failing that by the bundle itself. It is
+// empty for an entry with neither. A download URL is signed afresh for each
+// listing, so its query is no part of it, which leaves two attestations in
+// one listing free to share an identity.
 func (a githubAttestation) identity() string {
 	if a.BundleURL == "" {
 		if string(a.Bundle) == "null" {
@@ -124,22 +125,25 @@ func (g GitHubRepository) Attestations(kind PredicateKind, digest string) ([]*At
 
 	path := fmt.Sprintf("repos/%s/%s/attestations/sha256:%s", url.PathEscape(g.Owner), url.PathEscape(g.Name), digest)
 	// A server that ignores the filter, as an older GitHub Enterprise Server
-	// may, answers each of these listings with everything it holds.
+	// may, answers each of these listings with everything it holds. An entry
+	// is skipped only when an earlier listing gave it: the entries of one
+	// listing are different attestations, however alike they look.
 	var listed []githubAttestation
-	seen := map[string]bool{}
+	inEarlierListing := map[string]bool{}
 	for _, predicateType := range kind.predicateTypes() {
 		ofType, err := listGitHubAttestations(ctx, client, path, predicateType)
 		if err != nil {
 			return nil, describeListError(err)
 		}
 		for _, entry := range ofType {
-			if identity := entry.identity(); identity != "" {
-				if seen[identity] {
-					continue
-				}
-				seen[identity] = true
+			if identity := entry.identity(); identity == "" || !inEarlierListing[identity] {
+				listed = append(listed, entry)
 			}
-			listed = append(listed, entry)
+		}
+		for _, entry := range ofType {
+			if identity := entry.identity(); identity != "" {
+				inEarlierListing[identity] = true
+			}
 		}
 	}
 	if len(listed) == 0 {
