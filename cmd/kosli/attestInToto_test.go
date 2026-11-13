@@ -499,6 +499,16 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceRecordsWhatGitHubHold
 			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"verified": "true"`,
 		},
 		{
+			name:        "takes the owner from --repository when it names one and --github-org is not given",
+			cmd:         suite.command("--source github --repository acme/widget --predicate-type provenance --name app --dry-run " + intotoSigner + suite.githubArguments),
+			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"verified": "true"`,
+		},
+		{
+			name:        "takes a --github-org that names the owner in --repository in another case",
+			cmd:         suite.command("--source github --github-org ACME --repository acme/widget --predicate-type provenance --name app --dry-run " + intotoSigner + suite.githubArguments),
+			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"verified": "true"`,
+		},
+		{
 			name:   "has the server accept the artifact",
 			cmd:    suite.fromGitHub("--source github --predicate-type provenance --name app " + intotoSigner),
 			golden: fmt.Sprintf("artifact artifact.bin was attested with fingerprint: %s\n", intotoDigest),
@@ -557,6 +567,14 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceDefaultSigner() {
 			name:        "is a workflow in the repository, for what the run this command is part of attested",
 			cmd:         defaultSigner + " --dry-run",
 			goldenRegex: `(?s)^[^\[].*"build_url": "` + intotoBuildURL + `".*"signer_identity": "` + intotoMainSigner + `",\s+"signer_issuer": "https://token.actions.githubusercontent.com",\s+"verified": "true"`,
+		},
+	})
+
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "is a workflow in the repository --repository names with its owner",
+			cmd:         suite.command("--repository acme/widget --predicate-type provenance --name app --dry-run --github-token a-token"),
+			goldenRegex: `(?s)"signer_identity": "` + intotoMainSigner + `",.*"verified": "true"`,
 		},
 	})
 
@@ -768,6 +786,24 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceWhenItCannotRecord() 
 		},
 		{
 			wantError: true,
+			name:      "a --github-org that is not the owner in --repository, rather than reading either's repository",
+			cmd:       suite.command("--source github --github-org acme --repository platform/widget --predicate-type provenance --name app " + intotoSigner + suite.githubArguments),
+			golden:    "Error: --github-org 'acme' is not the owner in --repository 'platform/widget'. Name the owner in one of them, or the same owner in both\n",
+		},
+		{
+			wantError: true,
+			name:      "a --repository that is neither a name nor an owner and a name",
+			cmd:       suite.command("--source github --repository https://github.com/acme/widget --predicate-type provenance --name app " + intotoSigner + suite.githubArguments),
+			golden:    "Error: --repository 'https://github.com/acme/widget' is not a GitHub repository's name, or its owner and name as owner/name\n",
+		},
+		{
+			wantError: true,
+			name:      "a --repository without its owner and no --github-org, naming both",
+			cmd:       suite.command("--source github --repository widget --predicate-type provenance --name app " + intotoSigner + suite.githubArguments),
+			golden:    "Error: --github-org and --repository are required with --source github\n",
+		},
+		{
+			wantError: true,
 			name:      "a --bundle as well",
 			cmd:       suite.fromGitHub("--source github --predicate-type provenance --name app " + intotoSigner + suite.bundle("github-provenance.sigstore.json")),
 			golden:    "Error: --bundle cannot be used with --source github\n",
@@ -836,6 +872,41 @@ func (suite *AttestInTotoCommandTestSuite) TestRejectsBadFlags() {
 			golden:    "Error: at least one of --fingerprint, --artifact-type is required\n",
 		},
 	})
+}
+
+func TestGitHubOwnerAndName(t *testing.T) {
+	for name, tc := range map[string]struct {
+		org        string
+		orgGiven   bool
+		repository string
+		owner      string
+		repo       string
+	}{
+		"takes the owner from --github-org and the name from --repository":                           {"acme", true, "widget", "acme", "widget"},
+		"takes the owner from --repository when --github-org is not given":                           {"", false, "acme/widget", "acme", "widget"},
+		"takes the owner from --repository over a --github-org that GitHub Actions only defaulted":   {"acme", false, "platform/app", "platform", "app"},
+		"takes a --github-org that agrees with the owner in --repository, as GitHub Actions gives":   {"acme", true, "acme/widget", "acme", "widget"},
+		"takes a --github-org that differs from the owner in --repository only in its letters' case": {"Acme", true, "acme/widget", "acme", "widget"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			owner, repo, err := githubOwnerAndName(tc.org, tc.orgGiven, tc.repository)
+			require.NoError(t, err)
+			require.Equal(t, tc.owner, owner)
+			require.Equal(t, tc.repo, repo)
+		})
+	}
+
+	t.Run("refuses a --github-org the caller gave that is not the owner in --repository", func(t *testing.T) {
+		_, _, err := githubOwnerAndName("acme", true, "platform/app")
+		require.EqualError(t, err, "--github-org 'acme' is not the owner in --repository 'platform/app'. Name the owner in one of them, or the same owner in both")
+	})
+
+	for _, repository := range []string{"acme/widget/extra", "/widget", "acme/", "https://github.com/acme/widget"} {
+		t.Run("refuses --repository "+repository, func(t *testing.T) {
+			_, _, err := githubOwnerAndName("acme", true, repository)
+			require.EqualError(t, err, "--repository '"+repository+"' is not a GitHub repository's name, or its owner and name as owner/name")
+		})
+	}
 }
 
 func TestAttestationLink(t *testing.T) {

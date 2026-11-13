@@ -110,6 +110,7 @@ type attestInTotoOptions struct {
 	githubToken          string
 	githubBaseURL        string
 	githubOrg            string
+	githubOrgGiven       bool
 	repository           string
 	annotations          map[string]string
 	externalURLs         map[string]string
@@ -143,12 +144,12 @@ Recording provenance and an SBOM takes two commands.
 ^--source^ chooses where the attestation is read from:
 
 - ^github^ reads the attestations GitHub holds for the artifact, where ^actions/attest^
-  stores them, in the repository given with ^--github-org^ and ^--repository^. It needs
-  ^--github-token^, with the ^attestations: read^ permission. It is the default when
-  running in GitHub Actions. GitHub holds them by the digest that was attested, so name
-  an image by the digest the build pushed, as ^yourImageName@sha256:...^ with
-  ^--artifact-type oci^, or give that digest with ^--fingerprint^: a tag may since have
-  moved to another image.
+  stores them, in the repository given with ^--github-org^ and ^--repository^, or with
+  ^--repository^ alone as ^owner/name^. It needs ^--github-token^, with the
+  ^attestations: read^ permission. It is the default when running in GitHub Actions.
+  GitHub holds them by the digest that was attested, so name an image by the digest the
+  build pushed, as ^yourImageName@sha256:...^ with ^--artifact-type oci^, or give that
+  digest with ^--fingerprint^: a tag may since have moved to another image.
 - ^bundle^ reads the file given with ^--bundle^: a Sigstore bundle (^.sigstore.json^), a
   DSSE envelope, an in-toto statement, or an ^.intoto.jsonl^ file with one of these per
   line. It is the default elsewhere, and whenever ^--bundle^ is given.
@@ -166,7 +167,7 @@ way to accept any valid certificate. An unsigned attestation is refused unless
 With ^--source github^ in GitHub Actions, a signer you do not pin defaults to a workflow in
 the repository itself, for an attestation made by the run this command is part of: the
 issuer ^https://token.actions.githubusercontent.com^, an identity starting
-^https://github.com/<github-org>/<repository>/.github/workflows/^, and a certificate issued
+^https://github.com/<owner>/<repository>/.github/workflows/^, and a certificate issued
 to that run, in any of its attempts. The identity alone is not enough to trust. It matches
 the workflow file on any branch or pull request, so anyone who can push a branch could
 attest the artifact with a predicate of their own. When the run made no attestation of
@@ -326,6 +327,7 @@ func newAttestInTotoCmd(out io.Writer) *cobra.Command {
 			if err := cmd.ValidateRequiredFlags(); err != nil {
 				return err
 			}
+			o.githubOrgGiven = cmd.Flags().Changed("github-org")
 			if err := o.validate(); err != nil {
 				return err
 			}
@@ -446,13 +448,24 @@ func (o *attestInTotoOptions) validateSource(runURI string, inActions bool) erro
 		if o.bundlePath != "" {
 			return fmt.Errorf("--bundle cannot be used with --source %s", intotoSourceGitHub)
 		}
-		if o.githubOrg == "" || o.repository == "" {
+		owner, name, err := githubOwnerAndName(o.githubOrg, o.githubOrgGiven, o.repository)
+		if err != nil {
+			return err
+		}
+		if owner == "" || name == "" {
 			return fmt.Errorf("--github-org and --repository are required with --source %s", intotoSourceGitHub)
 		}
 		if o.githubToken == "" {
 			return fmt.Errorf("--github-token is required with --source %s", intotoSourceGitHub)
 		}
-		o.github = o.githubRepository(runURI)
+		o.github = intoto.GitHubRepository{
+			Owner:   owner,
+			Name:    name,
+			Token:   o.githubToken,
+			BaseURL: o.githubAPI(),
+			Debug:   global.Debug,
+			RunURI:  runURI,
+		}
 	default:
 		return fmt.Errorf("--source %q is not supported. Must be one of: %s", o.source, strings.Join(intotoSources, ", "))
 	}
@@ -498,20 +511,24 @@ func (o *attestInTotoOptions) attestationSource() intoto.Source {
 	return intoto.BundleFile{Path: o.bundlePath}
 }
 
-// githubRepository is the repository the flags name, read as part of the
-// GitHub Actions run at runURI, which is empty outside one.
-func (o *attestInTotoOptions) githubRepository(runURI string) intoto.GitHubRepository {
-	// NewGithubConfig strips the owner from --repository, which GitHub Actions
-	// defaults to owner/name.
-	config := ghUtils.NewGithubConfig(o.githubToken, o.githubAPI(), o.githubOrg, o.repository, global.Debug)
-	return intoto.GitHubRepository{
-		Owner:   config.Org,
-		Name:    config.Repository,
-		Token:   config.Token,
-		BaseURL: config.BaseURL,
-		Debug:   config.Debug,
-		RunURI:  runURI,
+// githubOwnerAndName settles which repository --github-org and --repository
+// name. --repository may carry its owner, as the default GitHub Actions gives
+// it does, and that owner is the one read. A --github-org the caller gave,
+// rather than one GitHub Actions defaulted, must then name the same owner:
+// reading either one's repository would silently ignore the other flag.
+func githubOwnerAndName(org string, orgGiven bool, repository string) (owner, name string, err error) {
+	owner, name, hasOwner := strings.Cut(repository, "/")
+	if !hasOwner {
+		return org, repository, nil
 	}
+	if owner == "" || name == "" || strings.Contains(name, "/") {
+		return "", "", fmt.Errorf("--repository '%s' is not a GitHub repository's name, or its owner and name as owner/name", repository)
+	}
+	// GitHub treats owner names as case-insensitive.
+	if orgGiven && !strings.EqualFold(org, owner) {
+		return "", "", fmt.Errorf("--github-org '%s' is not the owner in --repository '%s'. Name the owner in one of them, or the same owner in both", org, repository)
+	}
+	return owner, name, nil
 }
 
 // githubAPI is the base URL of the GitHub server the token is sent to.
