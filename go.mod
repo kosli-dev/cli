@@ -31,13 +31,13 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/in-toto/attestation v1.2.0
 	github.com/joshdk/go-junit v1.0.0
-	github.com/klauspost/compress v1.20.3
+	github.com/klauspost/compress v1.20.4
 	github.com/mattn/go-shellwords v1.0.16
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5
 	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.2
-	github.com/open-policy-agent/opa v1.22.3
+	github.com/open-policy-agent/opa v1.22.4
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/otiai10/copy v1.14.1
 	github.com/owenrumney/go-sarif/v2 v2.3.3
@@ -59,7 +59,7 @@ require (
 	golang.org/x/oauth2 v0.38.0
 	golang.org/x/sync v0.25.0
 	golang.org/x/term v0.48.0
-	google.golang.org/api v0.312.0
+	google.golang.org/api v0.313.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261110000943-09e21b237f2c
 	google.golang.org/grpc v1.85.0
 	google.golang.org/protobuf v1.36.12
