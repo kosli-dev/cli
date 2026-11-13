@@ -70,7 +70,7 @@ func (suite *AttestInTotoCommandTestSuite) SetupSuite() {
 	// artifact, and the one commit the provenance fixtures name.
 	suite.github = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == intotoListingPath {
-			suite.listAttestations(w)
+			suite.listAttestations(w, r.URL.Query().Get("predicate_type"))
 			return
 		}
 		if r.URL.Path != "/api/v3/repos/acme/widget/commits/"+intotoCommit {
@@ -95,7 +95,10 @@ func (suite *AttestInTotoCommandTestSuite) TearDownSuite() {
 	suite.github.Close()
 }
 
-func (suite *AttestInTotoCommandTestSuite) listAttestations(w http.ResponseWriter) {
+// listAttestations answers the listing as github.com was seen to in November
+// 2026: a predicate type narrows it to the attestations whose predicate type
+// starts with it, and one that matches nothing is answered with 404.
+func (suite *AttestInTotoCommandTestSuite) listAttestations(w http.ResponseWriter, predicateType string) {
 	suite.attestationsMu.Lock()
 	defer suite.attestationsMu.Unlock()
 
@@ -105,6 +108,9 @@ func (suite *AttestInTotoCommandTestSuite) listAttestations(w http.ResponseWrite
 	}
 	attestations := []listed{}
 	for _, name := range suite.attestations {
+		if !strings.HasPrefix(suite.listedAs(name), predicateType) {
+			continue
+		}
 		if name == intotoGoneBundle {
 			attestations = append(attestations, listed{BundleURL: suite.github.URL + "/blobs/gone?sig=a-secret"})
 			continue
@@ -115,7 +121,36 @@ func (suite *AttestInTotoCommandTestSuite) listAttestations(w http.ResponseWrite
 		require.NoError(suite.T(), json.Compact(&bundle, content))
 		attestations = append(attestations, listed{Bundle: bundle.Bytes()})
 	}
+	if predicateType != "" && len(attestations) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = fmt.Fprint(w, `{"message": "Not Found"}`)
+		return
+	}
 	require.NoError(suite.T(), json.NewEncoder(w).Encode(map[string]any{"attestations": attestations}))
+}
+
+// listedAs is the predicate type GitHub filters a stored attestation by: the
+// one its statement states. What cannot be downloaded, or is not an
+// attestation at all, is listed among the provenance.
+func (suite *AttestInTotoCommandTestSuite) listedAs(name string) string {
+	const provenance = "https://slsa.dev/provenance/v1"
+	if name == intotoGoneBundle {
+		return provenance
+	}
+	content, err := os.ReadFile(filepath.Join(intotoFixtures, name))
+	require.NoError(suite.T(), err)
+	var bundle struct {
+		DSSEEnvelope struct {
+			Payload []byte `json:"payload"`
+		} `json:"dsseEnvelope"`
+	}
+	var statement struct {
+		PredicateType string `json:"predicateType"`
+	}
+	if json.Unmarshal(content, &bundle) != nil || json.Unmarshal(bundle.DSSEEnvelope.Payload, &statement) != nil {
+		return provenance
+	}
+	return statement.PredicateType
 }
 
 // githubHolds sets the attestations GitHub lists for the artifact.
@@ -513,6 +548,24 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceRecordsWhatGitHubHold
 			name:   "has the server accept the artifact",
 			cmd:    suite.fromGitHub("--source github --predicate-type provenance --name app " + intotoSigner),
 			golden: fmt.Sprintf("artifact artifact.bin was attested with fingerprint: %s\n", intotoDigest),
+		},
+	})
+}
+
+func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceReadsOnlyThePredicateTypeAskedFor() {
+	suite.githubHolds(intotoGoneBundle, "cyclonedx-sbom.sigstore.json", "spdx-sbom.sigstore.json")
+
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "records an SBOM without downloading the provenance GitHub holds too",
+			cmd:         suite.fromGitHub("--source github --predicate-type sbom --name app.sbom --dry-run " + intotoSigner),
+			goldenRegex: `(?s)^[^\[].*"attestation_name": "sbom".*"verified": "true"`,
+		},
+		{
+			wantError:   true,
+			name:        "still names the provenance it cannot download when provenance is asked for",
+			cmd:         suite.fromGitHub("--source github --predicate-type provenance --name app " + intotoSigner),
+			goldenRegex: `^Error: GitHub repository acme/widget: the attestation: its bundle could not be downloaded from `,
 		},
 	})
 }

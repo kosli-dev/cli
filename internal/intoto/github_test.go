@@ -28,14 +28,36 @@ type stored struct {
 	blob    bool
 	// gone lists a download URL the blob store no longer answers.
 	gone bool
+	// listedAs is the predicate type GitHub filters the attestation by, for a
+	// fixture that is not an attestation and so states none.
+	listedAs string
 }
 
 func inline(fixture string) stored { return stored{fixture: fixture, inline: true} }
 func blob(fixture string) stored   { return stored{fixture: fixture, blob: true} }
 func gone(fixture string) stored   { return stored{fixture: fixture, blob: true, gone: true} }
 
+// notABundle is listed among the provenance attestations, though what GitHub
+// returns for it is not an attestation.
+func notABundle() stored {
+	return stored{fixture: "trusted_root.json", inline: true, listedAs: slsaProvenanceV1}
+}
+
+const (
+	listsProvenanceV1  = "per_page=100&predicate_type=https%3A%2F%2Fslsa.dev%2Fprovenance%2Fv1"
+	listsProvenanceV02 = "per_page=100&predicate_type=https%3A%2F%2Fslsa.dev%2Fprovenance%2Fv0.2"
+	listsSPDX          = "per_page=100&predicate_type=https%3A%2F%2Fspdx.dev%2FDocument"
+	listsCycloneDX     = "per_page=100&predicate_type=https%3A%2F%2Fcyclonedx.org%2Fbom"
+	listsEverything    = "per_page=100"
+)
+
 // fakeGitHub serves the attestations API for acme/widget, one page of the
 // listing per element of pages, and the blob store bundles are downloaded from.
+//
+// It filters by predicate_type as github.com was seen to in November 2026,
+// which GitHub's documentation does not describe: the filter matches an
+// attestation whose predicate type starts with it, and a filter matching
+// nothing is answered with 404 rather than an empty listing.
 type fakeGitHub struct {
 	t      *testing.T
 	server *httptest.Server
@@ -101,12 +123,22 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 	f.listAuth = append(f.listAuth, r.Header.Get("Authorization"))
 	f.listQuery = append(f.listQuery, r.URL.RawQuery)
 
+	pages := f.pages
+	if filter := r.URL.Query().Get("predicate_type"); filter != "" {
+		pages = f.matching(filter)
+		if len(pages) == 0 {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = fmt.Fprint(w, `{"message": "Not Found"}`)
+			return
+		}
+	}
+
 	page := 0
 	if after := r.URL.Query().Get("after"); after != "" {
 		_, err := fmt.Sscanf(after, "cursor-%d", &page)
 		require.NoError(f.t, err)
 	}
-	if page+1 < len(f.pages) {
+	if page+1 < len(pages) {
 		w.Header().Set("Link", fmt.Sprintf(`<%s%s?per_page=100&after=cursor-%d>; rel="next"`, f.server.URL, githubListPath, page+1))
 	}
 
@@ -116,8 +148,8 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		RepositoryID int64           `json:"repository_id"`
 	}
 	attestations := []listed{}
-	if page < len(f.pages) {
-		for _, s := range f.pages[page] {
+	if page < len(pages) {
+		for _, s := range pages[page] {
 			entry := listed{RepositoryID: 123456789}
 			if s.inline {
 				entry.Bundle = f.bundle(s.fixture)
@@ -129,6 +161,44 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	require.NoError(f.t, json.NewEncoder(w).Encode(map[string]any{"attestations": attestations}))
+}
+
+// matching is the pages of the listing left when it is filtered by a predicate
+// type.
+func (f *fakeGitHub) matching(filter string) [][]stored {
+	var pages [][]stored
+	for _, page := range f.pages {
+		var matched []stored
+		for _, s := range page {
+			if strings.HasPrefix(f.predicateType(s), filter) {
+				matched = append(matched, s)
+			}
+		}
+		if len(matched) > 0 {
+			pages = append(pages, matched)
+		}
+	}
+	return pages
+}
+
+// predicateType is the type GitHub filters an attestation by: the one its
+// statement states.
+func (f *fakeGitHub) predicateType(s stored) string {
+	if s.listedAs != "" {
+		return s.listedAs
+	}
+	var bundle struct {
+		DSSEEnvelope struct {
+			Payload []byte `json:"payload"`
+		} `json:"dsseEnvelope"`
+	}
+	var statement struct {
+		PredicateType string `json:"predicateType"`
+	}
+	if json.Unmarshal(f.bundle(s.fixture), &bundle) != nil || json.Unmarshal(bundle.DSSEEnvelope.Payload, &statement) != nil {
+		return ""
+	}
+	return statement.PredicateType
 }
 
 // blobFixture is the fixture the blob store holds under name, so a download
@@ -151,23 +221,53 @@ func (f *fakeGitHub) bundle(fixture string) []byte {
 }
 
 func TestGitHubRepositoryAttestations(t *testing.T) {
-	t.Run("lists the artifact's attestations with the token and reads the bundles inline", func(t *testing.T) {
-		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json"), inline("spdx-sbom.sigstore.json")})
+	t.Run("lists the artifact's attestations of the kind wanted with the token and reads the bundles inline", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{inline("spdx-sbom.sigstore.json"), inline("github-provenance.sigstore.json"), inline("slsa-v0.2-provenance.sigstore.json")})
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Len(t, attestations, 2)
 		require.Equal(t, "https://slsa.dev/provenance/v1", attestations[0].Statement.GetPredicateType())
-		require.Equal(t, "https://spdx.dev/Document/v2.3", attestations[1].Statement.GetPredicateType())
+		require.Equal(t, "https://slsa.dev/provenance/v0.2", attestations[1].Statement.GetPredicateType())
 		require.True(t, attestations[0].Signed())
-		require.Equal(t, []string{"Bearer a-token"}, fake.listAuth)
-		require.Equal(t, []string{"per_page=100"}, fake.listQuery)
+		require.Equal(t, []string{"Bearer a-token", "Bearer a-token"}, fake.listAuth)
+		require.Equal(t, []string{listsProvenanceV1, listsProvenanceV02}, fake.listQuery)
+	})
+
+	t.Run("lists SBOMs by the predicate type each format starts with, whatever version follows", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{inline("cyclonedx-sbom.sigstore.json"), inline("github-provenance.sigstore.json"), inline("spdx-sbom.sigstore.json")})
+
+		attestations, err := fake.repository().Attestations(KindSBOM, artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 2)
+		require.Equal(t, "https://spdx.dev/Document/v2.3", attestations[0].Statement.GetPredicateType())
+		require.Equal(t, "https://cyclonedx.org/bom", attestations[1].Statement.GetPredicateType())
+		require.Equal(t, []string{listsSPDX, listsCycloneDX}, fake.listQuery)
+	})
+
+	t.Run("downloads no bundle of another kind", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json"), blob("rerun-provenance.sigstore.json"), blob("spdx-sbom.sigstore.json")})
+
+		attestations, err := fake.repository().Attestations(KindSBOM, artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 1)
+		require.Len(t, fake.blobAuth, 1)
+	})
+
+	t.Run("lists everything GitHub holds when it holds none of the kind, so that a caller can say what it holds instead", func(t *testing.T) {
+		fake := newFakeGitHub(t, []stored{inline("spdx-sbom.sigstore.json")})
+
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
+		require.NoError(t, err)
+		require.Len(t, attestations, 1)
+		require.Equal(t, "https://spdx.dev/Document/v2.3", attestations[0].Statement.GetPredicateType())
+		require.Equal(t, []string{listsProvenanceV1, listsProvenanceV02, listsEverything}, fake.listQuery)
 	})
 
 	t.Run("keeps each bundle's bytes, numbers them, and says where GitHub holds them", func(t *testing.T) {
-		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json"), inline("spdx-sbom.sigstore.json")})
+		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json"), inline("rerun-provenance.sigstore.json")})
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Equal(t, fake.bundle("github-provenance.sigstore.json"), attestations[0].Raw)
 		require.Equal(t, 1, attestations[0].Position)
@@ -178,7 +278,7 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 	t.Run("does not number the only attestation", func(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json")})
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Len(t, attestations, 1)
 		require.Equal(t, 0, attestations[0].Position)
@@ -187,27 +287,27 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 	t.Run("accepts a digest with its algorithm prefix", func(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json")})
 
-		attestations, err := fake.repository().Attestations("sha256:" + strings.ToUpper(artifactDigest))
+		attestations, err := fake.repository().Attestations(KindProvenance, "sha256:"+strings.ToUpper(artifactDigest))
 		require.NoError(t, err)
 		require.Len(t, attestations, 1)
 	})
 
 	t.Run("follows the listing through every page", func(t *testing.T) {
 		fake := newFakeGitHub(t,
-			[]stored{inline("cyclonedx-sbom.sigstore.json")},
 			[]stored{inline("github-provenance.sigstore.json")},
-			[]stored{inline("spdx-sbom.sigstore.json")})
+			[]stored{inline("rerun-provenance.sigstore.json")},
+			[]stored{inline("branch-provenance.sigstore.json")})
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Len(t, attestations, 3)
-		require.Equal(t, []string{"per_page=100", "after=cursor-1&per_page=100", "after=cursor-2&per_page=100"}, fake.listQuery)
+		require.Equal(t, []string{listsProvenanceV1, "after=cursor-1&" + listsProvenanceV1, "after=cursor-2&" + listsProvenanceV1, listsProvenanceV02}, fake.listQuery)
 	})
 
 	t.Run("downloads a bundle GitHub lists by URL, without sending the token there", func(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Len(t, attestations, 1)
 		require.Equal(t, fake.bundle("github-provenance.sigstore.json"), attestations[0].Raw)
@@ -217,7 +317,7 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 	t.Run("uses the inline bundle when GitHub gives both", func(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{{fixture: "github-provenance.sigstore.json", inline: true, blob: true}})
 
-		_, err := fake.repository().Attestations(artifactDigest)
+		_, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Empty(t, fake.blobAuth)
 	})
@@ -226,7 +326,7 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
 		fake.blobBody = func(bundle []byte) []byte { return bundle }
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Len(t, attestations, 1)
 		require.EqualError(t, attestations[0].Unreadable, "the attestation: its bundle could not be downloaded from "+fake.server.URL+"/blobs/github-provenance.sigstore.json: it is not snappy-compressed")
@@ -236,7 +336,7 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
 		fake.blobBody = func([]byte) []byte { return make([]byte, 32<<20+1) }
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.ErrorContains(t, attestations[0].Unreadable, "/blobs/github-provenance.sigstore.json: it is larger than the 32 MiB a bundle may be")
 	})
@@ -245,7 +345,7 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
 		fake.blobBody = func([]byte) []byte { return snappy.Encode(nil, make([]byte, 32<<20+1)) }
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.ErrorContains(t, attestations[0].Unreadable, "/blobs/github-provenance.sigstore.json: it would decompress to more than the 32 MiB a bundle may be")
 	})
@@ -254,7 +354,7 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
 		fake.blobFailures = 2
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Len(t, attestations, 1)
 		require.Len(t, fake.blobAuth, 3)
@@ -264,7 +364,7 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{blob("github-provenance.sigstore.json")})
 		fake.blobFailures = 10
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Len(t, attestations, 1)
 		require.ErrorContains(t, attestations[0].Unreadable, "its bundle could not be downloaded from "+fake.server.URL+"/blobs/github-provenance.sigstore.json: ")
@@ -273,20 +373,20 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 	})
 
 	t.Run("keeps an attestation whose bundle it cannot download, saying why, beside the ones it can", func(t *testing.T) {
-		fake := newFakeGitHub(t, []stored{gone("spdx-sbom.sigstore.json"), blob("github-provenance.sigstore.json")})
+		fake := newFakeGitHub(t, []stored{gone("rerun-provenance.sigstore.json"), blob("github-provenance.sigstore.json")})
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Len(t, attestations, 2)
-		require.EqualError(t, attestations[0].Unreadable, "attestation 1: its bundle could not be downloaded from "+fake.server.URL+"/blobs/spdx-sbom.sigstore.json: 404 Not Found")
+		require.EqualError(t, attestations[0].Unreadable, "attestation 1: its bundle could not be downloaded from "+fake.server.URL+"/blobs/rerun-provenance.sigstore.json: 404 Not Found")
 		require.NoError(t, attestations[1].Unreadable)
 		require.Equal(t, fake.bundle("github-provenance.sigstore.json"), attestations[1].Raw)
 	})
 
 	t.Run("keeps an attestation GitHub lists with neither a bundle nor a URL, beside the ones it can read", func(t *testing.T) {
-		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json"), {fixture: "spdx-sbom.sigstore.json"}})
+		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json"), {fixture: "rerun-provenance.sigstore.json"}})
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Len(t, attestations, 2)
 		require.NoError(t, attestations[0].Unreadable)
@@ -296,7 +396,7 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 	t.Run("says when GitHub holds no attestation for the artifact", func(t *testing.T) {
 		fake := newFakeGitHub(t, []stored{})
 
-		_, err := fake.repository().Attestations(artifactDigest)
+		_, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.EqualError(t, err, "it holds no attestation for the artifact (sha256:"+artifactDigest+")")
 	})
 
@@ -305,16 +405,16 @@ func TestGitHubRepositoryAttestations(t *testing.T) {
 		repository := fake.repository()
 		repository.Name = "gadget"
 
-		_, err := repository.Attestations(artifactDigest)
+		_, err := repository.Attestations(KindProvenance, artifactDigest)
 		require.ErrorContains(t, err, "failed to list its attestations: ")
 		require.ErrorContains(t, err, "404 Not Found")
 		require.ErrorContains(t, err, "Either GitHub holds no attestation for the artifact, or the token cannot read the repository and its attestations (the attestations: read permission)")
 	})
 
 	t.Run("keeps an attestation whose bundle it cannot read, saying why, beside the ones it can", func(t *testing.T) {
-		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json"), inline("trusted_root.json")})
+		fake := newFakeGitHub(t, []stored{inline("github-provenance.sigstore.json"), notABundle()})
 
-		attestations, err := fake.repository().Attestations(artifactDigest)
+		attestations, err := fake.repository().Attestations(KindProvenance, artifactDigest)
 		require.NoError(t, err)
 		require.Len(t, attestations, 2)
 		require.NoError(t, attestations[0].Unreadable)
@@ -360,7 +460,7 @@ func TestFindInGitHubRepository(t *testing.T) {
 	})
 
 	t.Run("passes over an attestation it cannot read when another verifies, and reports it", func(t *testing.T) {
-		fake := newFakeGitHub(t, []stored{inline("trusted_root.json"), inline("github-provenance.sigstore.json")})
+		fake := newFakeGitHub(t, []stored{notABundle(), inline("github-provenance.sigstore.json")})
 
 		found, err := find(t, fake.repository(), KindProvenance)
 		require.NoError(t, err)
@@ -390,7 +490,7 @@ func TestFindInGitHubRepository(t *testing.T) {
 	})
 
 	t.Run("names every attestation it cannot read or verify when none verifies", func(t *testing.T) {
-		fake := newFakeGitHub(t, []stored{inline("trusted_root.json"), inline("wrong-signer-provenance.sigstore.json")})
+		fake := newFakeGitHub(t, []stored{notABundle(), inline("wrong-signer-provenance.sigstore.json")})
 
 		_, err := find(t, fake.repository(), KindProvenance)
 		require.ErrorIs(t, err, ErrFailedVerification)

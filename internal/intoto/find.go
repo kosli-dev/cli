@@ -11,9 +11,10 @@ import (
 // Source supplies the attestations held about an artifact. A source with its
 // own rules for choosing among them is also a Selector.
 type Source interface {
-	// Attestations returns every attestation the source holds that may be
-	// about the artifact with SHA-256 digest. Find checks each one.
-	Attestations(digest string) ([]*Attestation, error)
+	// Attestations returns the attestations the source holds that may be of
+	// kind and about the artifact with SHA-256 digest. Find checks each one,
+	// so a source that cannot narrow by either returns everything it holds.
+	Attestations(kind PredicateKind, digest string) ([]*Attestation, error)
 	// String names the source in messages.
 	String() string
 }
@@ -24,9 +25,9 @@ type BundleFile struct {
 	Path string
 }
 
-// Attestations reads every attestation in the file; the digest selects
-// nothing here.
-func (f BundleFile) Attestations(string) ([]*Attestation, error) {
+// Attestations reads every attestation in the file; the kind and the digest
+// select nothing here.
+func (f BundleFile) Attestations(PredicateKind, string) ([]*Attestation, error) {
 	content, err := os.ReadFile(f.Path)
 	if err != nil {
 		return nil, err
@@ -95,7 +96,7 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 		selection = selector.Selection()
 	}
 
-	attestations, err := source.Attestations(digest)
+	attestations, err := source.Attestations(kind, digest)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", source, err)
 	}
