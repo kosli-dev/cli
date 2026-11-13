@@ -21,13 +21,22 @@ import (
 )
 
 const (
-	intotoFixtures       = "../../internal/intoto/testdata"
-	intotoArtifact       = intotoFixtures + "/artifact.bin"
-	intotoDigest         = "e88951291bca0807a41f3c0144009bfff5c6c77dc1310d52e8c6d62feee960a8"
-	intotoCommit         = "4f9d2a7c1e6b8a3d5f0e2c9b7a1d4e6f8c3b5a70"
-	intotoSigner         = "--certificate-identity https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main --certificate-oidc-issuer https://token.actions.githubusercontent.com"
-	intotoBuildURL       = "https://github.com/acme/widget/actions/runs/1234567890/attempts/1"
-	intotoRerunURL       = "https://github.com/acme/widget/actions/runs/1234567890/attempts/2"
+	intotoFixtures = "../../internal/intoto/testdata"
+	intotoArtifact = intotoFixtures + "/artifact.bin"
+	intotoDigest   = "e88951291bca0807a41f3c0144009bfff5c6c77dc1310d52e8c6d62feee960a8"
+	intotoCommit   = "4f9d2a7c1e6b8a3d5f0e2c9b7a1d4e6f8c3b5a70"
+	intotoSigner   = "--certificate-identity https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main --certificate-oidc-issuer https://token.actions.githubusercontent.com"
+	intotoBuildURL = "https://github.com/acme/widget/actions/runs/1234567890/attempts/1"
+	intotoRerunURL = "https://github.com/acme/widget/actions/runs/1234567890/attempts/2"
+	// intotoDeployURL is another run in the repository, such as a deployment
+	// of what the build at intotoBuildURL made.
+	intotoDeployURL      = "https://github.com/acme/widget/actions/runs/77/attempts/1"
+	intotoBranchURL      = "https://github.com/acme/widget/actions/runs/2222222222/attempts/1"
+	intotoBranchSigner   = "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/feature-x"
+	intotoPullURL        = "https://github.com/acme/widget/actions/runs/3333333333/attempts/1"
+	intotoPullSigner     = "https://github.com/acme/widget/.github/workflows/build.yml@refs/pull/12/merge"
+	intotoMainSigner     = "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main"
+	intotoPinTheSigner   = "No signer is pinned, and the default only accepts an attestation made by the run this command is part of (%s). To record one made by another run, pin its signer: pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key"
 	intotoListingPath    = "/api/v3/repos/acme/widget/attestations/sha256:" + intotoDigest
 	intotoCommitURL      = "https://github.com/acme/widget/commit/" + intotoCommit
 	intotoLogEntryURL    = "https://rekor.localhost/api/v1/log/entries?logIndex=0"
@@ -508,13 +517,8 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceInGitHubActions() {
 			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"verified": "true"`,
 		},
 		{
-			name:        "pins the signer to a workflow in the repository when none is given",
-			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
-			goldenRegex: `(?s)"signer_identity": "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main",\s+"signer_issuer": "https://token.actions.githubusercontent.com",\s+"verified": "true"`,
-		},
-		{
 			name:        "records the build's commit and run, not this job's, when run from another workflow",
-			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run " + intotoSigner),
 			goldenRegex: `(?s)"git_commit": "` + intotoCommit + `".*"build_url": "` + intotoBuildURL + `",\s+"commit_url": "` + intotoCommitURL + `"`,
 		},
 		{
@@ -523,18 +527,95 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceInGitHubActions() {
 			goldenRegex: `"build_url": "` + intotoRerunURL + `"`,
 		},
 	})
+}
+
+func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceDefaultSigner() {
+	// Newest last. The repository's own workflow file signed all three: on
+	// main in the build, then on a branch and in a pull request, which anyone
+	// who can push a branch can have attest the same artifact.
+	suite.githubHolds("github-provenance.sigstore.json", "branch-provenance.sigstore.json", "pull-request-provenance.sigstore.json")
+	defaultSigner := suite.fromGitHub("--predicate-type provenance --name app")
+	otherRuns := func(runURI string, madeBy ...string) string {
+		named := make([]string, len(madeBy)/2)
+		for i := range named {
+			described := "the attestation"
+			if len(named) > 1 {
+				described = fmt.Sprintf("attestation %d", i+1)
+			}
+			named[i] = fmt.Sprintf("%s was made by another run: %s, signed as %s", described, madeBy[2*i], madeBy[2*i+1])
+		}
+		refused := named[0]
+		if len(named) > 1 {
+			refused = fmt.Sprintf("%d attestations could not be accepted: %s", len(named), strings.Join(named, "; "))
+		}
+		return "Error: GitHub repository acme/widget: " + refused + ". " + fmt.Sprintf(intotoPinTheSigner, runURI) + "\n"
+	}
+
+	suite.inGitHubActions(intotoBuildURL)
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "is a workflow in the repository, for what the run this command is part of attested",
+			cmd:         defaultSigner + " --dry-run",
+			goldenRegex: `(?s)^[^\[].*"build_url": "` + intotoBuildURL + `".*"signer_identity": "` + intotoMainSigner + `",\s+"signer_issuer": "https://token.actions.githubusercontent.com",\s+"verified": "true"`,
+		},
+	})
+
+	suite.inGitHubActions(intotoRerunURL)
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			name:        "accepts what an earlier attempt of the run attested",
+			cmd:         defaultSigner + " --dry-run",
+			goldenRegex: `(?s)"build_url": "` + intotoBuildURL + `".*"verified": "true"`,
+		},
+	})
+
+	suite.inGitHubActions(intotoDeployURL)
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			wantError: true,
+			name:      "records nothing from outside the run that attested, naming each attestation and the flags that pin a signer",
+			cmd:       defaultSigner,
+			golden:    otherRuns(intotoDeployURL, intotoBuildURL, intotoMainSigner, intotoBranchURL, intotoBranchSigner, intotoPullURL, intotoPullSigner),
+		},
+		{
+			name:        "records main's attestation from outside its run once that signer is pinned, warning about the other two",
+			cmd:         defaultSigner + " --dry-run " + intotoSigner,
+			goldenRegex: `(?s)^\[warning\] another attestation was not recorded: attestation 2 failed verification: .*refs/heads/feature-x.*\[warning\] another attestation was not recorded: attestation 3 failed verification: .*refs/pull/12/merge.*"build_url": "` + intotoBuildURL + `".*"signer_identity": "` + intotoMainSigner + `"`,
+		},
+	})
+
+	suite.githubHolds("branch-provenance.sigstore.json")
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			wantError: true,
+			name:      "does not accept an attestation a branch made in another run",
+			cmd:       defaultSigner,
+			golden:    otherRuns(intotoDeployURL, intotoBranchURL, intotoBranchSigner),
+		},
+	})
+
+	suite.githubHolds("pull-request-provenance.sigstore.json")
+	runTestCmd(suite.T(), []cmdTestCase{
+		{
+			wantError: true,
+			name:      "does not accept an attestation a pull request made in another run",
+			cmd:       defaultSigner,
+			golden:    otherRuns(intotoDeployURL, intotoPullURL, intotoPullSigner),
+		},
+	})
 
 	suite.githubHolds("wrong-signer-provenance.sigstore.json")
+	suite.inGitHubActions(intotoBuildURL)
 	runTestCmd(suite.T(), []cmdTestCase{
 		{
 			wantError:   true,
-			name:        "refuses an attestation signed by a workflow in another repository under the default signer",
-			cmd:         suite.fromGitHub("--predicate-type provenance --name app"),
-			goldenRegex: `^Error: GitHub repository acme/widget: the attestation failed verification: .*https://github.com/mallory/widget`,
+			name:        "refuses an attestation signed by a workflow in another repository",
+			cmd:         defaultSigner,
+			goldenRegex: `^Error: GitHub repository acme/widget: the attestation failed verification: .*https://github.com/mallory/widget[^\n]*"\n$`,
 		},
 		{
 			name:        "accepts it when that workflow is pinned explicitly",
-			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run --certificate-identity-regexp ^https://github.com/mallory/ --certificate-oidc-issuer https://token.actions.githubusercontent.com"),
+			cmd:         defaultSigner + " --dry-run --certificate-identity-regexp ^https://github.com/mallory/ --certificate-oidc-issuer https://token.actions.githubusercontent.com",
 			goldenRegex: `"signer_identity": "https://github.com/mallory/widget/.github/workflows/build.yml@refs/heads/main"`,
 		},
 	})
@@ -591,15 +672,16 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceChoosesAmongSeveral()
 		},
 	})
 
-	suite.inGitHubActions("https://github.com/acme/deploy/actions/runs/77/attempts/1")
+	suite.inGitHubActions(intotoDeployURL)
 	runTestCmd(suite.T(), []cmdTestCase{
 		{
-			name:        "takes the newest when none was made by the run it is part of",
-			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run"),
+			name:        "takes the newest by the pinned signer when none was made by the run it is part of",
+			cmd:         suite.fromGitHub("--predicate-type provenance --name app --dry-run " + intotoSigner),
 			goldenRegex: `"build_url": "` + intotoRerunURL + `"`,
 		},
 	})
 
+	suite.inGitHubActions(intotoBuildURL)
 	suite.githubHolds("wrong-signer-provenance.sigstore.json", "github-provenance.sigstore.json")
 	runTestCmd(suite.T(), []cmdTestCase{
 		{
@@ -670,7 +752,7 @@ func (suite *AttestInTotoCommandTestSuite) TestGitHubSourceWhenItCannotRecord() 
 			wantError: true,
 			name:      "no signer is pinned outside GitHub Actions, naming the flags that pin one",
 			cmd:       suite.fromGitHub("--source github --predicate-type provenance --name app"),
-			golden:    "Error: --source github needs a signer to verify attestations against. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key. In GitHub Actions the signer defaults to a workflow in the repository itself\n",
+			golden:    "Error: --source github needs a signer to verify attestations against. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key. In GitHub Actions the signer defaults to a workflow in the repository itself, for an attestation the same run made\n",
 		},
 		{
 			wantError: true,

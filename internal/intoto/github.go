@@ -65,16 +65,22 @@ func (g GitHubRepository) Selection() Selection {
 	return Selection{SkipFailed: true, PreferredRun: g.RunURI}
 }
 
-// WorkflowSigner pins the signer to a GitHub Actions workflow in the
-// repository itself, on github.com. It is a safe default for a caller with no
-// policy of its own; a reusable workflow in another repository signs as that
-// repository and needs pinning explicitly.
-func (g GitHubRepository) WorkflowSigner() Policy {
+// DefaultSigner is the signer to trust for a caller with no policy of its own:
+// a GitHub Actions workflow in the repository itself, on github.com, in the
+// run the caller is part of. The identity matches a workflow file on any
+// branch, tag or pull request, which anyone who can push a branch controls, so
+// it is tied to that run; there is no default outside one. A reusable workflow
+// in another repository signs as that repository and needs pinning explicitly.
+func (g GitHubRepository) DefaultSigner() (Policy, error) {
+	if g.RunURI == "" {
+		return Policy{}, fmt.Errorf("%s has no default signer outside a GitHub Actions run to tie it to", g)
+	}
 	// GitHub treats owner and repository names as case-insensitive.
 	return Policy{
 		CertificateOIDCIssuer:     GitHubActionsIssuer,
 		CertificateIdentityRegexp: `(?i)^https://github\.com/` + regexp.QuoteMeta(g.Owner+"/"+g.Name) + `/\.github/workflows/`,
-	}
+		RunInvocationURI:          g.RunURI,
+	}, nil
 }
 
 // githubAttestation is one entry of the attestations API's listing. GitHub

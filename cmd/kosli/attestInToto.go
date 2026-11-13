@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -154,15 +155,22 @@ part of, then one made by any attempt of that run, then the newest.
 The statement must list the artifact as its subject. A signed attestation is verified with
 Sigstore against a signer you pin: ^--certificate-identity^ (or
 ^--certificate-identity-regexp^) with ^--certificate-oidc-issuer^, or ^--key^. There is no
-way to accept any valid certificate. With ^--source github^ in GitHub Actions, a signer you
-do not pin defaults to a workflow in the repository itself: the issuer
-^https://token.actions.githubusercontent.com^ and an identity starting
-^https://github.com/<github-org>/<repository>/.github/workflows/^. Pin the signer yourself
-when a reusable workflow in another repository did the signing. There is no default
-outside GitHub Actions, when ^--github-base-url^ is given, or when the run is on a server
-other than github.com, and the command stops before reading anything unless a signer is
-pinned. An unsigned attestation is refused unless
+way to accept any valid certificate. An unsigned attestation is refused unless
 ^--allow-unsigned^ is given, and is then recorded as unverified.
+
+With ^--source github^ in GitHub Actions, a signer you do not pin defaults to a workflow in
+the repository itself, for an attestation made by the run this command is part of: the
+issuer ^https://token.actions.githubusercontent.com^, an identity starting
+^https://github.com/<github-org>/<repository>/.github/workflows/^, and a certificate issued
+to that run, in any of its attempts. The identity alone is not enough to trust. It matches
+the workflow file on any branch or pull request, so anyone who can push a branch could
+attest the artifact with a predicate of their own. When the run made no attestation of
+the artifact, the command fails and names the flags that pin a signer. Pin the signer
+yourself, to the workflow file and the ref it runs on, to record an attestation another run
+made, such as from a deployment workflow, or one a reusable workflow in another repository
+signed. There is no default outside GitHub Actions, when ^--github-base-url^ is given, or
+when the run is on a server other than github.com, and the command stops before reading
+anything unless a signer is pinned.
 
 In a file, an attestation that fails verification, because another signer made it or it
 was changed after signing, fails the command and nothing is recorded, even when another
@@ -194,8 +202,9 @@ carry can be given with ^--build-url^ and ^--commit-url^.
 ` + fingerprintDesc + kosliIgnoreDesc
 
 const attestInTotoExample = `
-# in GitHub Actions, record the SLSA provenance actions/attest stored for an image, as the artifact named app.
-# The image is named by the digest the build pushed, such as ghcr.io/yourOrg/yourImage@sha256:0123...:
+# in the GitHub Actions run that built an image, record the SLSA provenance actions/attest stored for it,
+# as the artifact named app. The image is named by the digest the build pushed, such as
+# ghcr.io/yourOrg/yourImage@sha256:0123...:
 kosli attest in-toto yourImageName@yourImageDigest \
 	--artifact-type oci \
 	--predicate-type provenance \
@@ -217,7 +226,8 @@ kosli attest in-toto yourImageName@yourImageDigest \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# outside GitHub Actions, read a repository's attestations and pin the workflow that signed them.
+# in another run, such as a deployment, or outside GitHub Actions, read a repository's attestations
+# and pin the workflow that signed them, with the ref it ran on.
 # Giving the digest as the fingerprint skips reading it from the registry:
 kosli attest in-toto \
 	--fingerprint yourArtifactFingerprint \
@@ -227,7 +237,7 @@ kosli attest in-toto \
 	--github-token yourGithubToken \
 	--predicate-type provenance \
 	--name app \
-	--certificate-identity-regexp '^https://github.com/yourGithubOrg/yourGithubRepo/.github/workflows/' \
+	--certificate-identity https://github.com/yourGithubOrg/yourGithubRepo/.github/workflows/build.yml@refs/heads/main \
 	--certificate-oidc-issuer https://token.actions.githubusercontent.com \
 	--flow yourFlowName \
 	--trail yourTrailName \
@@ -440,16 +450,17 @@ func (o *attestInTotoOptions) validateSource() error {
 }
 
 // pinDefaultSigner gives --source github a signer when the caller pinned
-// none: in GitHub Actions, a workflow in the repository itself. Everything
-// GitHub holds is signed, so with no signer at all nothing could be recorded,
-// and saying so here saves fetching attestations to find that out.
+// none: in GitHub Actions, a workflow in the repository itself, in the run
+// this command is part of. Everything GitHub holds is signed, so with no
+// signer at all nothing could be recorded, and saying so here saves fetching
+// attestations to find that out.
 func (o *attestInTotoOptions) pinDefaultSigner() error {
 	if o.source != intotoSourceGitHub || o.policy.PinsSigner() {
 		return nil
 	}
 	runURI, inActions := currentGitHubRun()
 	if !inActions {
-		return fmt.Errorf("--source %s needs a signer to verify attestations against. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key. In GitHub Actions the signer defaults to a workflow in the repository itself", intotoSourceGitHub)
+		return fmt.Errorf("--source %s needs a signer to verify attestations against. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key. In GitHub Actions the signer defaults to a workflow in the repository itself, for an attestation the same run made", intotoSourceGitHub)
 	}
 	// The default names github.com, which another server's workflows do not
 	// sign as, so every attestation would fail on a mismatched identity.
@@ -459,11 +470,14 @@ func (o *attestInTotoOptions) pinDefaultSigner() error {
 	if !strings.HasPrefix(runURI, "https://github.com/") {
 		return fmt.Errorf("--source %s has no default signer in a GitHub Actions run on a server other than github.com: the default is a workflow on github.com. Name the server with --github-base-url, and pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", intotoSourceGitHub)
 	}
-	signer := o.githubRepository().WorkflowSigner()
-	o.policy.CertificateOIDCIssuer = signer.CertificateOIDCIssuer
-	o.policy.CertificateIdentityRegexp = signer.CertificateIdentityRegexp
-	logger.Debug("no signer is pinned, so attestations must be signed by a workflow in the repository: issuer %s, identity matching %s",
-		signer.CertificateOIDCIssuer, signer.CertificateIdentityRegexp)
+	signer, err := o.githubRepository().DefaultSigner()
+	if err != nil {
+		return err
+	}
+	signer.AllowUnsigned = o.policy.AllowUnsigned
+	o.policy = signer
+	logger.Debug("no signer is pinned, so attestations must be signed by a workflow in the repository, in the run %s: issuer %s, identity matching %s",
+		signer.RunInvocationURI, signer.CertificateOIDCIssuer, signer.CertificateIdentityRegexp)
 	return nil
 }
 
@@ -514,6 +528,10 @@ func (o *attestInTotoOptions) run(args []string) error {
 
 	source := o.attestationSource()
 	found, err := intoto.Find(source, o.kind, o.fingerprint, intoto.NewVerifier(o.policy, intotoTrustRoots()))
+	if errors.Is(err, intoto.ErrOtherRun) {
+		// Only the default signer is tied to a run.
+		return fmt.Errorf("%w. No signer is pinned, and the default only accepts an attestation made by the run this command is part of (%s). To record one made by another run, pin its signer: pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", err, o.policy.RunInvocationURI)
+	}
 	if err != nil {
 		return err
 	}

@@ -16,10 +16,19 @@
 #   --source          defaults to github
 #   --github-org      defaults to this repository's owner
 #   --repository      defaults to this repository
-#   the signer        defaults to a workflow in this repository
+#   the signer        defaults to a workflow in this repository, for an
+#                     attestation this run made
 #
-# A reusable workflow in another repository signs as that repository, so pin it:
-#   --certificate-identity-regexp '^https://github.com/yourOrg/shared-workflows/' \
+# The default goes no further than this run, because a workflow file signs as
+# this repository on any branch or pull request. To record the attestation from
+# another run, such as a deployment workflow, pin the workflow that signed it
+# and the ref it ran on:
+#   --certificate-identity https://github.com/yourOrg/yourRepo/.github/workflows/build.yml@refs/heads/main \
+#   --certificate-oidc-issuer https://token.actions.githubusercontent.com
+#
+# A reusable workflow in another repository signs as that repository, so pin it
+# too:
+#   --certificate-identity https://github.com/yourOrg/shared-workflows/.github/workflows/build.yml@refs/heads/main \
 #   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 #
 # The flow's template is expected to declare an artifact named `app` with an
@@ -98,8 +107,9 @@ jobs:
         run: kosli begin trail "${KOSLI_TRAIL}"
 
       # The commit, branch, repository and build URL recorded are the ones the
-      # provenance states, so this step could equally run in a later job or in
-      # another workflow, such as a deployment.
+      # provenance states, so this step could equally run in a later job of
+      # this run. In another workflow, such as a deployment, it also needs the
+      # signer pinned, as described at the top of this file.
       - name: Record the provenance in Kosli, as the artifact named app
         env:
           DIGEST: ${{ steps.build.outputs.digest }}

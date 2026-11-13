@@ -419,18 +419,37 @@ func TestFindInGitHubRepository(t *testing.T) {
 	})
 }
 
-func TestGitHubWorkflowSigner(t *testing.T) {
-	repository := GitHubRepository{Owner: "acme", Name: "widget.js"}
+func TestGitHubDefaultSigner(t *testing.T) {
+	repository := GitHubRepository{Owner: "acme", Name: "widget.js", RunURI: "https://github.com/acme/widget.js/actions/runs/77/attempts/1"}
+	identityRegexp := func(t *testing.T) string {
+		policy, err := repository.DefaultSigner()
+		require.NoError(t, err)
+		return policy.CertificateIdentityRegexp
+	}
 
 	t.Run("pins the GitHub Actions issuer and the repository's own workflows", func(t *testing.T) {
-		policy := repository.WorkflowSigner()
+		policy, err := repository.DefaultSigner()
+		require.NoError(t, err)
 		require.Equal(t, "https://token.actions.githubusercontent.com", policy.CertificateOIDCIssuer)
 		require.Regexp(t, policy.CertificateIdentityRegexp, "https://github.com/acme/widget.js/.github/workflows/build.yml@refs/heads/main")
 		require.NoError(t, policy.Validate())
 	})
 
+	t.Run("is tied to the run the caller is part of, as the identity matches a workflow on any branch or pull request", func(t *testing.T) {
+		policy, err := repository.DefaultSigner()
+		require.NoError(t, err)
+		require.Regexp(t, policy.CertificateIdentityRegexp, "https://github.com/acme/widget.js/.github/workflows/build.yml@refs/heads/feature-x")
+		require.Regexp(t, policy.CertificateIdentityRegexp, "https://github.com/acme/widget.js/.github/workflows/build.yml@refs/pull/12/merge")
+		require.Equal(t, repository.RunURI, policy.RunInvocationURI)
+	})
+
+	t.Run("does not exist for a caller that is part of no run", func(t *testing.T) {
+		_, err := GitHubRepository{Owner: "acme", Name: "widget.js"}.DefaultSigner()
+		require.EqualError(t, err, "GitHub repository acme/widget.js has no default signer outside a GitHub Actions run to tie it to")
+	})
+
 	t.Run("matches the repository's name in any case, as GitHub does", func(t *testing.T) {
-		require.Regexp(t, repository.WorkflowSigner().CertificateIdentityRegexp, "https://github.com/Acme/Widget.JS/.github/workflows/build.yml@refs/heads/main")
+		require.Regexp(t, identityRegexp(t), "https://github.com/Acme/Widget.JS/.github/workflows/build.yml@refs/heads/main")
 	})
 
 	for name, identity := range map[string]string{
@@ -440,7 +459,40 @@ func TestGitHubWorkflowSigner(t *testing.T) {
 		"the repository's name later in another URL":     "https://example.com/https://github.com/acme/widget.js/.github/workflows/build.yml",
 	} {
 		t.Run("does not match "+name, func(t *testing.T) {
-			require.NotRegexp(t, repository.WorkflowSigner().CertificateIdentityRegexp, identity)
+			require.NotRegexp(t, identityRegexp(t), identity)
 		})
 	}
+}
+
+func TestFindInGitHubRepositoryUnderTheDefaultSigner(t *testing.T) {
+	// Newest last: the build on main, then what a branch and a pull request
+	// attested about the same artifact afterwards.
+	held := []stored{inline("github-provenance.sigstore.json"), inline("branch-provenance.sigstore.json"), inline("pull-request-provenance.sigstore.json")}
+	find := func(t *testing.T, runURI string) (*Found, error) {
+		repository := newFakeGitHub(t, held).repository()
+		repository.RunURI = runURI
+		signer, err := repository.DefaultSigner()
+		require.NoError(t, err)
+		return Find(repository, KindProvenance, artifactDigest, NewVerifier(signer, fixtureTrust(t)))
+	}
+
+	t.Run("records what the run it is part of attested, not the newer attestations other runs made", func(t *testing.T) {
+		found, err := find(t, fixtureRunURI)
+		require.NoError(t, err)
+		require.Equal(t, fixtureIdentity, found.Evidence.SignerIdentity)
+		require.Equal(t, fixtureRunURI, found.Evidence.RunInvocationURI)
+		require.Empty(t, found.Rejected)
+	})
+
+	t.Run("records what an earlier attempt of the run attested", func(t *testing.T) {
+		found, err := find(t, fixtureRerunURI)
+		require.NoError(t, err)
+		require.Equal(t, fixtureRunURI, found.Evidence.RunInvocationURI)
+	})
+
+	t.Run("records nothing from another run, such as a deployment, though the repository's own workflows signed all three", func(t *testing.T) {
+		_, err := find(t, "https://github.com/acme/widget/actions/runs/77/attempts/1")
+		require.ErrorIs(t, err, ErrOtherRun)
+		require.ErrorContains(t, err, "GitHub repository acme/widget: 3 attestations could not be accepted: attestation 1 was made by another run: "+fixtureRunURI+", signed as "+fixtureIdentity+"; attestation 2 was made by another run: ")
+	})
 }
