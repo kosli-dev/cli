@@ -58,8 +58,8 @@ type apiClient interface {
 
 // Client fetches Cloud Run data from GCP. The optional resolver, when set,
 // is consulted for any tag-pinned image whose digest cannot be parsed from
-// the image string alone — it queries the OCI Distribution endpoint of the
-// hosting registry to look up the current sha256. The optional tagResolver,
+// the image string alone — it asks the hosting registry for the current
+// sha256. The optional tagResolver,
 // when set (via the --resolve-names flag at construction time), is consulted
 // for any digest-pinned image to recover a tag pointing at the same digest,
 // so the artifact's display name surfaces the deploy-time tag (commit SHA
