@@ -117,6 +117,11 @@ func (g GitHubRepository) Attestations(kind PredicateKind, digest string) ([]*At
 		// GitHub answers 404 both when nothing matches the filter and when the
 		// token cannot read the repository, and does not document how the
 		// filter matches. The whole listing tells the two apart.
+		//
+		// Every bundle in it is then downloaded, whatever its kind, so that the
+		// error can name the predicate types GitHub holds instead. That cost is
+		// a deliberate trade-off: it is paid only here, where no filter found
+		// anything, which ends in an error unless a filter missed an attestation.
 		listed, err = listGitHubAttestations(ctx, client, path, "")
 		if err != nil {
 			return nil, describeListError(err)
