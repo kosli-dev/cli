@@ -221,11 +221,10 @@ type tagResolver interface {
 }
 
 // gcpArtifactRegistryTagResolver implements tagResolver against
-// Artifact Registry (*-docker.pkg.dev). The legacy Container Registry
-// hosts (gcr.io family) do not expose an equivalent reverse-lookup
-// API, so they are rejected with errNonGCPRegistry. The HTTP client
-// is shared with the forward (gcpRegistryResolver) path so a single
-// connection pool serves every per-artifact API call in the snapshot.
+// Artifact Registry (*-docker.pkg.dev) and the gcr.io hosts it serves.
+// The HTTP client is shared with the forward (gcpRegistryResolver) path
+// so a single connection pool serves every per-artifact API call in the
+// snapshot.
 type gcpArtifactRegistryTagResolver struct {
 	tokens oauth2.TokenSource
 	client *requests.Client
@@ -303,34 +302,25 @@ type digestPinnedRefParts struct {
 	digest   string // "sha256:<hex>"
 }
 
-// splitDigestPinnedAR parses a digest-pinned Artifact Registry image
-// reference into its constituent parts. Rejects non-AR hosts (including
-// gcr.io, since the legacy GCR API does not expose tag reverse-lookup),
-// non-digest-pinned references, and references with too few path
-// segments.
+// splitDigestPinnedAR parses a digest-pinned image reference into the
+// Artifact Registry resources that hold it. Rejects hosts the Artifact
+// Registry API does not serve, non-digest-pinned references, and
+// references with too few path segments.
 func splitDigestPinnedAR(image string) (digestPinnedRefParts, error) {
 	idx := strings.Index(image, sha256Marker)
 	if idx < 0 {
 		return digestPinnedRefParts{}, fmt.Errorf("image %q is not digest-pinned", image)
 	}
-	ref := image[:idx]
-	digestPart := image[idx+1:] // strip "@" → "sha256:<hex>"
-
-	parts := strings.SplitN(ref, "/", 4)
-	if len(parts) < 4 {
-		return digestPinnedRefParts{}, fmt.Errorf("image %q has too few path segments for AR", image)
-	}
-	host, project, repo, imagePath := parts[0], parts[1], parts[2], parts[3]
-
-	location := strings.TrimSuffix(host, "-docker.pkg.dev")
-	if location == host {
-		return digestPinnedRefParts{}, fmt.Errorf("host %q is not Artifact Registry (tag resolution unsupported)", host)
+	host, path, _ := strings.Cut(image[:idx], "/")
+	img, err := artifactRegistryRepoFor(host, path)
+	if err != nil {
+		return digestPinnedRefParts{}, err
 	}
 	return digestPinnedRefParts{
-		project:  project,
-		location: location,
-		repo:     repo,
-		image:    imagePath,
-		digest:   digestPart,
+		project:  img.project,
+		location: img.location,
+		repo:     img.repo,
+		image:    img.image,
+		digest:   image[idx+1:], // strip "@" → "sha256:<hex>"
 	}, nil
 }

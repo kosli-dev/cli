@@ -193,19 +193,46 @@ func TestSplitDigestPinnedAR_TagPinnedRejected(t *testing.T) {
 	require.Contains(t, err.Error(), "not digest-pinned")
 }
 
+func TestSplitDigestPinnedAR_GCRHosts(t *testing.T) {
+	cases := []struct {
+		host     string
+		location string
+	}{
+		{"gcr.io", "us"},
+		{"us.gcr.io", "us"},
+		{"eu.gcr.io", "europe"},
+		{"asia.gcr.io", "asia"},
+	}
+	for _, c := range cases {
+		t.Run(c.host, func(t *testing.T) {
+			parts, err := splitDigestPinnedAR(c.host + "/proj/team/img@sha256:abc")
+			require.NoError(t, err)
+			require.Equal(t, digestPinnedRefParts{
+				project: "proj", location: c.location, repo: c.host, image: "team/img", digest: "sha256:abc",
+			}, parts)
+		})
+	}
+}
+
 func TestSplitDigestPinnedAR_NonARHostRejected(t *testing.T) {
-	// 4 path segments so the parser passes the segment-count check and
-	// reaches the host check. Refs from GCR or other registries do not
-	// share AR's region-prefixed pkg.dev host pattern.
-	_, err := splitDigestPinnedAR("eu.gcr.io/proj/repo/img@sha256:abc")
+	_, err := splitDigestPinnedAR("docker.io/proj/repo/img@sha256:abc")
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "not Artifact Registry")
+	require.Contains(t, err.Error(), "not served by the Artifact Registry API")
 }
 
 func TestSplitDigestPinnedAR_TooFewSegmentsRejected(t *testing.T) {
-	_, err := splitDigestPinnedAR("europe-west1-docker.pkg.dev/proj@sha256:abc")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "too few path segments")
+	for _, image := range []string{
+		"europe-west1-docker.pkg.dev/proj@sha256:abc",
+		"europe-west1-docker.pkg.dev/proj/repo@sha256:abc",
+		"gcr.io/proj@sha256:abc",
+		"gcr.io@sha256:abc",
+	} {
+		t.Run(image, func(t *testing.T) {
+			_, err := splitDigestPinnedAR(image)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "too few segments")
+		})
+	}
 }
 
 // --- pickLatestTag ---
