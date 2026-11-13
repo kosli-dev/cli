@@ -114,6 +114,11 @@ type attestInTotoOptions struct {
 	annotations          map[string]string
 	externalURLs         map[string]string
 	externalFingerprints map[string]string
+
+	// github is the repository --source github reads, in the GitHub Actions
+	// run this command is part of. validate settles both once, so that the
+	// default signer is pinned to the repository and run actually read.
+	github intoto.GitHubRepository
 }
 
 const attestInTotoShortDesc = `Record an in-toto attestation, such as SLSA provenance or an SBOM, that a build already produced.  `
@@ -377,7 +382,8 @@ func addSignerPolicyFlags(cmd *cobra.Command, policy *intoto.Policy) {
 // validate checks everything that needs nothing from the attestation, so a
 // mistake costs neither a fingerprint calculation nor a file read.
 func (o *attestInTotoOptions) validate() error {
-	if err := o.validateSource(); err != nil {
+	runURI, inActions := currentGitHubRun()
+	if err := o.validateSource(runURI, inActions); err != nil {
 		return err
 	}
 
@@ -390,8 +396,10 @@ func (o *attestInTotoOptions) validate() error {
 	if err := o.policy.Validate(); err != nil {
 		return err
 	}
-	if err := o.pinDefaultSigner(); err != nil {
-		return err
+	if o.source == intotoSourceGitHub {
+		if err := o.pinDefaultSigner(inActions); err != nil {
+			return err
+		}
 	}
 
 	if kind == intoto.KindProvenance && !templateArtifactNamePattern.MatchString(o.name) {
@@ -419,11 +427,12 @@ func (o *attestInTotoOptions) validate() error {
 
 // validateSource settles which source the attestation is read from and
 // checks the flags that source needs. With no --source, a --bundle means the
-// file; otherwise GitHub Actions means GitHub's attestations.
-func (o *attestInTotoOptions) validateSource() error {
+// file; otherwise GitHub Actions means GitHub's attestations. runURI is the
+// GitHub Actions run this command is part of, when inActions.
+func (o *attestInTotoOptions) validateSource(runURI string, inActions bool) error {
 	if o.source == "" {
 		o.source = intotoSourceBundle
-		if _, inActions := currentGitHubRun(); inActions && o.bundlePath == "" {
+		if inActions && o.bundlePath == "" {
 			o.source = intotoSourceGitHub
 		}
 	}
@@ -443,6 +452,7 @@ func (o *attestInTotoOptions) validateSource() error {
 		if o.githubToken == "" {
 			return fmt.Errorf("--github-token is required with --source %s", intotoSourceGitHub)
 		}
+		o.github = o.githubRepository(runURI)
 	default:
 		return fmt.Errorf("--source %q is not supported. Must be one of: %s", o.source, strings.Join(intotoSources, ", "))
 	}
@@ -454,11 +464,10 @@ func (o *attestInTotoOptions) validateSource() error {
 // this command is part of. Everything GitHub holds is signed, so with no
 // signer at all nothing could be recorded, and saying so here saves fetching
 // attestations to find that out.
-func (o *attestInTotoOptions) pinDefaultSigner() error {
-	if o.source != intotoSourceGitHub || o.policy.PinsSigner() {
+func (o *attestInTotoOptions) pinDefaultSigner(inActions bool) error {
+	if o.policy.PinsSigner() {
 		return nil
 	}
-	runURI, inActions := currentGitHubRun()
 	if !inActions {
 		return fmt.Errorf("--source %s needs a signer to verify attestations against. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key. In GitHub Actions the signer defaults to a workflow in the repository itself, for an attestation the same run made", intotoSourceGitHub)
 	}
@@ -467,10 +476,10 @@ func (o *attestInTotoOptions) pinDefaultSigner() error {
 	if o.githubBaseURL != "" {
 		return fmt.Errorf("--source %s has no default signer when --github-base-url is given: the default is a workflow on github.com. Pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", intotoSourceGitHub)
 	}
-	if !strings.HasPrefix(runURI, "https://github.com/") {
+	if !strings.HasPrefix(o.github.RunURI, "https://github.com/") {
 		return fmt.Errorf("--source %s has no default signer in a GitHub Actions run on a server other than github.com: the default is a workflow on github.com. Name the server with --github-base-url, and pass --certificate-identity or --certificate-identity-regexp with --certificate-oidc-issuer, or --key", intotoSourceGitHub)
 	}
-	signer, err := o.githubRepository().DefaultSigner()
+	signer, err := o.github.DefaultSigner()
 	if err != nil {
 		return err
 	}
@@ -484,16 +493,17 @@ func (o *attestInTotoOptions) pinDefaultSigner() error {
 // attestationSource is where --source says to read the attestation from.
 func (o *attestInTotoOptions) attestationSource() intoto.Source {
 	if o.source == intotoSourceGitHub {
-		return o.githubRepository()
+		return o.github
 	}
 	return intoto.BundleFile{Path: o.bundlePath}
 }
 
-func (o *attestInTotoOptions) githubRepository() intoto.GitHubRepository {
+// githubRepository is the repository the flags name, read as part of the
+// GitHub Actions run at runURI, which is empty outside one.
+func (o *attestInTotoOptions) githubRepository(runURI string) intoto.GitHubRepository {
 	// NewGithubConfig strips the owner from --repository, which GitHub Actions
 	// defaults to owner/name.
 	config := ghUtils.NewGithubConfig(o.githubToken, o.githubAPI(), o.githubOrg, o.repository, global.Debug)
-	runURI, _ := currentGitHubRun()
 	return intoto.GitHubRepository{
 		Owner:   config.Org,
 		Name:    config.Repository,
