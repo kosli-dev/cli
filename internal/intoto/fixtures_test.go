@@ -50,6 +50,12 @@ const (
 	fixtureOtherIdentity = "https://github.com/mallory/widget/.github/workflows/build.yml@refs/heads/main"
 	fixtureRunURI        = "https://github.com/acme/widget/actions/runs/1234567890/attempts/1"
 	fixtureRerunURI      = "https://github.com/acme/widget/actions/runs/1234567890/attempts/2"
+	// A workflow file on a branch or a pull request signs as the repository
+	// too, in a run of its own.
+	fixtureBranchIdentity      = "https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/feature-x"
+	fixtureBranchRunURI        = "https://github.com/acme/widget/actions/runs/2222222222/attempts/1"
+	fixturePullRequestIdentity = "https://github.com/acme/widget/.github/workflows/build.yml@refs/pull/12/merge"
+	fixturePullRequestRunURI   = "https://github.com/acme/widget/actions/runs/3333333333/attempts/1"
 )
 
 var (
@@ -269,6 +275,10 @@ func TestRegenerateFixtures(t *testing.T) {
 		indent(t, s.bundle(statement("github-provenance.json"), fixtureOtherIdentity, time.Minute)))
 	writeFixture(t, "rerun-provenance.sigstore.json",
 		indent(t, s.bundleFromRun(statement("rerun-provenance.json"), fixtureIdentity, fixtureRerunURI, 2*time.Minute)))
+	writeFixture(t, "branch-provenance.sigstore.json",
+		indent(t, s.bundleFromRun(statement("github-provenance.json"), fixtureBranchIdentity, fixtureBranchRunURI, 3*time.Minute)))
+	writeFixture(t, "pull-request-provenance.sigstore.json",
+		indent(t, s.bundleFromRun(statement("github-provenance.json"), fixturePullRequestIdentity, fixturePullRequestRunURI, 4*time.Minute)))
 	writeFixture(t, "tampered-provenance.sigstore.json",
 		indent(t, tamper(t, s.bundle(statement("github-provenance.json"), fixtureIdentity, time.Minute),
 			"4f9d2a7c1e6b8a3d5f0e2c9b7a1d4e6f8c3b5a70", "0000000000000000000000000000000000000000")))

@@ -11,9 +11,10 @@ import (
 // Source supplies the attestations held about an artifact. A source with its
 // own rules for choosing among them is also a Selector.
 type Source interface {
-	// Attestations returns every attestation the source holds that may be
-	// about the artifact with SHA-256 digest. Find checks each one.
-	Attestations(digest string) ([]*Attestation, error)
+	// Attestations returns the attestations the source holds that may be of
+	// kind and about the artifact with SHA-256 digest. Find checks each one,
+	// so a source that cannot narrow by either returns everything it holds.
+	Attestations(kind PredicateKind, digest string) ([]*Attestation, error)
 	// String names the source in messages.
 	String() string
 }
@@ -24,9 +25,9 @@ type BundleFile struct {
 	Path string
 }
 
-// Attestations reads every attestation in the file; the digest selects
-// nothing here.
-func (f BundleFile) Attestations(string) ([]*Attestation, error) {
+// Attestations reads every attestation in the file; the kind and the digest
+// select nothing here.
+func (f BundleFile) Attestations(PredicateKind, string) ([]*Attestation, error) {
 	content, err := os.ReadFile(f.Path)
 	if err != nil {
 		return nil, err
@@ -43,10 +44,10 @@ func (f BundleFile) String() string {
 // file, where every attestation is expected to verify.
 type Selection struct {
 	// SkipFailed passes over an attestation that fails verification, whose
-	// signature cannot be checked, or that the source marked Unreadable, when
-	// another one verifies. It suits a store that several signers write to,
-	// where an attestation by another workflow says nothing against the one
-	// the policy pins.
+	// signature cannot be checked, that a run other than the policy's made,
+	// or that the source marked Unreadable, when another one verifies. It
+	// suits a store that several signers write to, where an attestation by
+	// another workflow says nothing against the one the policy pins.
 	SkipFailed bool
 	// PreferredRun is the run-invocation URI of the CI run the caller is part
 	// of. An attestation whose certificate names it is chosen ahead of a newer
@@ -70,7 +71,8 @@ type Found struct {
 	// Rejected holds why other attestations of the same kind about the same
 	// artifact were not chosen, such as being unsigned or, from a source that
 	// skips them, failing verification, and why any the source holds could not
-	// be read, so a caller can report them.
+	// be read, so a caller can report them. One passed over only because
+	// another run made it is left out.
 	Rejected []error
 }
 
@@ -83,9 +85,10 @@ type Found struct {
 // If any signed one fails verification, or its signature cannot be checked,
 // Find returns that and chooses none: a signature that is bad, or that nobody
 // could check, is a stronger signal than a missing one, so an unsigned or
-// verified alternative is not recorded in its place. An attestation of any
-// kind that the source marked Unreadable counts the same way. A source whose
-// Selection skips failures relaxes this only when another attestation
+// verified alternative is not recorded in its place. One made by a run other
+// than the one the verifier's policy is tied to counts the same way, and so
+// does an attestation of any kind that the source marked Unreadable. A source
+// whose Selection skips failures relaxes this only when another attestation
 // verifies; an unsigned one still does not stand in for one that failed.
 func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) (*Found, error) {
 	var selection Selection
@@ -93,7 +96,7 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 		selection = selector.Selection()
 	}
 
-	attestations, err := source.Attestations(digest)
+	attestations, err := source.Attestations(kind, digest)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", source, err)
 	}
@@ -124,7 +127,7 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 	for _, candidate := range candidates {
 		evidence, err := verifier.Verify(candidate, digest)
 		switch {
-		case errors.Is(err, ErrFailedVerification), errors.Is(err, ErrCannotVerify):
+		case errors.Is(err, ErrFailedVerification), errors.Is(err, ErrCannotVerify), errors.Is(err, ErrOtherRun):
 			unverifiable = append(unverifiable, err)
 		case err != nil:
 			rejected = append(rejected, err)
@@ -134,7 +137,13 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 		}
 	}
 	if selection.SkipFailed && anyVerified {
-		rejected = append(rejected, unverifiable...)
+		for _, err := range unverifiable {
+			// A store holds what every earlier run attested about the artifact
+			// too, which is not worth a report on each later run.
+			if !errors.Is(err, ErrOtherRun) {
+				rejected = append(rejected, err)
+			}
+		}
 		unverifiable = nil
 	}
 	if len(unverifiable) == 1 {
@@ -156,7 +165,7 @@ func Find(source Source, kind PredicateKind, digest string, verifier *Verifier) 
 			return 0
 		case e.RunInvocationURI == selection.PreferredRun:
 			return 2
-		case withoutAttempt(e.RunInvocationURI) == withoutAttempt(selection.PreferredRun):
+		case sameRun(e.RunInvocationURI, selection.PreferredRun):
 			return 1
 		}
 		return 0
@@ -184,6 +193,13 @@ func withoutAttempt(runURI string) string {
 		return runURI[:i]
 	}
 	return runURI
+}
+
+// sameRun reports whether two run-invocation URIs name the same GitHub
+// Actions run, in whichever attempts. GitHub treats the owner and repository
+// names in them as case-insensitive.
+func sameRun(runURI, otherRunURI string) bool {
+	return strings.EqualFold(withoutAttempt(runURI), withoutAttempt(otherRunURI))
 }
 
 // joinedErrors reports several errors on one line, which reads best on a

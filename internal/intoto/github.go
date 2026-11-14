@@ -65,16 +65,22 @@ func (g GitHubRepository) Selection() Selection {
 	return Selection{SkipFailed: true, PreferredRun: g.RunURI}
 }
 
-// WorkflowSigner pins the signer to a GitHub Actions workflow in the
-// repository itself, on github.com. It is a safe default for a caller with no
-// policy of its own; a reusable workflow in another repository signs as that
-// repository and needs pinning explicitly.
-func (g GitHubRepository) WorkflowSigner() Policy {
+// DefaultSigner is the signer to trust for a caller with no policy of its own:
+// a GitHub Actions workflow in the repository itself, on github.com, in the
+// run the caller is part of. The identity matches a workflow file on any
+// branch, tag or pull request, which anyone who can push a branch controls, so
+// it is tied to that run; there is no default outside one. A reusable workflow
+// in another repository signs as that repository and needs pinning explicitly.
+func (g GitHubRepository) DefaultSigner() (Policy, error) {
+	if g.RunURI == "" {
+		return Policy{}, fmt.Errorf("%s has no default signer outside a GitHub Actions run to tie it to", g)
+	}
 	// GitHub treats owner and repository names as case-insensitive.
 	return Policy{
 		CertificateOIDCIssuer:     GitHubActionsIssuer,
 		CertificateIdentityRegexp: `(?i)^https://github\.com/` + regexp.QuoteMeta(g.Owner+"/"+g.Name) + `/\.github/workflows/`,
-	}
+		RunInvocationURI:          g.RunURI,
+	}, nil
 }
 
 // githubAttestation is one entry of the attestations API's listing. GitHub
@@ -85,10 +91,31 @@ type githubAttestation struct {
 	BundleURL string          `json:"bundle_url"`
 }
 
-// Attestations returns every attestation GitHub holds in the repository for
-// the artifact with SHA-256 digest. One whose bundle cannot be downloaded or
-// does not parse is returned Unreadable.
-func (g GitHubRepository) Attestations(digest string) ([]*Attestation, error) {
+// identity recognises an attestation that another listing gave too: by where
+// its bundle is downloaded from, or failing that by the bundle itself. It is
+// empty for an entry with neither. A download URL is signed afresh for each
+// listing, so its query is no part of it, which leaves two attestations in
+// one listing free to share an identity.
+func (a githubAttestation) identity() string {
+	if a.BundleURL == "" {
+		if string(a.Bundle) == "null" {
+			return ""
+		}
+		return string(a.Bundle)
+	}
+	if parsed, err := url.Parse(a.BundleURL); err == nil {
+		parsed.RawQuery = ""
+		return parsed.String()
+	}
+	return a.BundleURL
+}
+
+// Attestations returns the attestations of kind that GitHub holds in the
+// repository for the artifact with SHA-256 digest, without fetching the ones
+// of other kinds. When it holds none of kind it returns them all, so that a
+// caller can say what GitHub holds instead. One whose bundle cannot be
+// downloaded or does not parse is returned Unreadable.
+func (g GitHubRepository) Attestations(kind PredicateKind, digest string) ([]*Attestation, error) {
 	digest = normaliseDigest(digest)
 	ctx := context.Background()
 	client, err := ghUtils.NewGithubClientFromToken(ctx, g.Token, g.BaseURL, g.Debug)
@@ -97,14 +124,47 @@ func (g GitHubRepository) Attestations(digest string) ([]*Attestation, error) {
 	}
 
 	path := fmt.Sprintf("repos/%s/%s/attestations/sha256:%s", url.PathEscape(g.Owner), url.PathEscape(g.Name), digest)
-	listed, err := listGitHubAttestations(ctx, client, path)
-	if err != nil {
-		return nil, err
+	// A server that ignores the filter, as an older GitHub Enterprise Server
+	// may, answers each of these listings with everything it holds. An entry
+	// is skipped only when an earlier listing gave it: the entries of one
+	// listing are different attestations, however alike they look.
+	var listed []githubAttestation
+	inEarlierListing := map[string]bool{}
+	for _, predicateType := range kind.predicateTypes() {
+		ofType, err := listGitHubAttestations(ctx, client, path, predicateType)
+		if err != nil {
+			return nil, describeListError(err)
+		}
+		for _, entry := range ofType {
+			if identity := entry.identity(); identity == "" || !inEarlierListing[identity] {
+				listed = append(listed, entry)
+			}
+		}
+		for _, entry := range ofType {
+			if identity := entry.identity(); identity != "" {
+				inEarlierListing[identity] = true
+			}
+		}
+	}
+	if len(listed) == 0 {
+		// GitHub answers 404 both when nothing matches the filter and when the
+		// token cannot read the repository, and does not document how the
+		// filter matches. The whole listing tells the two apart.
+		//
+		// Every bundle in it is then downloaded, whatever its kind, so that the
+		// error can name the predicate types GitHub holds instead. That cost is
+		// a deliberate trade-off: it is paid only here, where no filter found
+		// anything, which ends in an error unless a filter missed an attestation.
+		listed, err = listGitHubAttestations(ctx, client, path, "")
+		if err != nil {
+			return nil, describeListError(err)
+		}
 	}
 	if len(listed) == 0 {
 		return nil, fmt.Errorf("it holds no attestation for the artifact (sha256:%s)", digest)
 	}
 
+	blobStore := newBundleClient()
 	bundles := make([]json.RawMessage, len(listed))
 	missing := make([]error, len(listed))
 	for i, entry := range listed {
@@ -112,7 +172,7 @@ func (g GitHubRepository) Attestations(digest string) ([]*Attestation, error) {
 		case len(entry.Bundle) > 0 && string(entry.Bundle) != "null":
 			bundles[i] = entry.Bundle
 		case entry.BundleURL != "":
-			bundles[i], missing[i] = downloadBundle(ctx, entry.BundleURL)
+			bundles[i], missing[i] = downloadBundle(ctx, blobStore, entry.BundleURL)
 		default:
 			missing[i] = errors.New("GitHub lists neither a bundle nor a URL to download one from")
 		}
@@ -130,9 +190,16 @@ func (g GitHubRepository) Attestations(digest string) ([]*Attestation, error) {
 	return attestations, nil
 }
 
-func listGitHubAttestations(ctx context.Context, client *gh.Client, path string) ([]githubAttestation, error) {
+// listGitHubAttestations lists what GitHub holds at path, through every page.
+// A predicateType narrows the listing to the attestations whose predicate
+// type starts with it, and is empty to list them all. GitHub answers a filter
+// that matches nothing with 404, which is returned here as an empty listing.
+func listGitHubAttestations(ctx context.Context, client *gh.Client, path, predicateType string) ([]githubAttestation, error) {
 	var listed []githubAttestation
 	query := url.Values{"per_page": {fmt.Sprint(githubAttestationsPerPage)}}
+	if predicateType != "" {
+		query.Set("predicate_type", predicateType)
+	}
 	for {
 		request, err := client.NewRequest(ctx, http.MethodGet, path+"?"+query.Encode(), nil)
 		if err != nil {
@@ -143,7 +210,11 @@ func listGitHubAttestations(ctx context.Context, client *gh.Client, path string)
 		}
 		response, err := client.Do(request, &page)
 		if err != nil {
-			return nil, describeListError(err)
+			var refused *gh.ErrorResponse
+			if predicateType != "" && errors.As(err, &refused) && refused.Response != nil && refused.Response.StatusCode == http.StatusNotFound {
+				return listed, nil
+			}
+			return nil, err
 		}
 		listed = append(listed, page.Attestations...)
 
@@ -168,10 +239,24 @@ func describeListError(err error) error {
 	return fmt.Errorf("failed to list its attestations: %w", err)
 }
 
+// newBundleClient returns the client that downloads the bundles GitHub stores
+// apart from its API. One is shared by every download of a listing, so that
+// they reuse its connections.
+func newBundleClient() *retryablehttp.Client {
+	client := retryablehttp.NewClient()
+	client.Logger = nil
+	client.HTTPClient.Timeout = bundleDownloadTimeout
+	client.RetryMax = bundleRetries
+	client.RetryWaitMin = bundleRetryWait
+	client.RetryWaitMax = bundleRetryWait
+	client.ErrorHandler = retryablehttp.PassthroughErrorHandler
+	return client
+}
+
 // downloadBundle fetches a bundle GitHub stores apart from its API. The URL
 // is signed and points at blob storage, so the request carries no token. The
 // body is the bundle's JSON, snappy-compressed.
-func downloadBundle(ctx context.Context, bundleURL string) ([]byte, error) {
+func downloadBundle(ctx context.Context, client *retryablehttp.Client, bundleURL string) ([]byte, error) {
 	// The URL's query is its signature, which does not belong in a message.
 	shown := bundleURL
 	if parsed, err := url.Parse(bundleURL); err == nil {
@@ -181,14 +266,6 @@ func downloadBundle(ctx context.Context, bundleURL string) ([]byte, error) {
 	fail := func(format string, args ...any) ([]byte, error) {
 		return nil, fmt.Errorf("its bundle could not be downloaded from %s: %s", shown, fmt.Sprintf(format, args...))
 	}
-
-	client := retryablehttp.NewClient()
-	client.Logger = nil
-	client.HTTPClient.Timeout = bundleDownloadTimeout
-	client.RetryMax = bundleRetries
-	client.RetryWaitMin = bundleRetryWait
-	client.RetryWaitMax = bundleRetryWait
-	client.ErrorHandler = retryablehttp.PassthroughErrorHandler
 
 	request, err := retryablehttp.NewRequestWithContext(ctx, http.MethodGet, bundleURL, nil)
 	if err != nil {

@@ -56,6 +56,19 @@ func (k PredicateKind) Matches(predicateType string) bool {
 	return false
 }
 
+// predicateTypes lists the predicate types of this kind, each without the
+// version a producer may append, for a source that can narrow what it returns
+// to the predicate types starting with one.
+func (k PredicateKind) predicateTypes() []string {
+	switch k {
+	case KindProvenance:
+		return []string{slsaProvenanceV1, slsaProvenanceV02}
+	case KindSBOM:
+		return []string{spdxDocument, cycloneDXBOM}
+	}
+	return nil
+}
+
 func hasVersionedPrefix(predicateType, base string) bool {
 	return predicateType == base || strings.HasPrefix(predicateType, base+"/")
 }

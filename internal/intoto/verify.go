@@ -36,6 +36,12 @@ type Policy struct {
 	// AllowUnsigned accepts attestations with no signature, recorded as
 	// unverified.
 	AllowUnsigned bool
+	// RunInvocationURI narrows the signer to one CI run: the certificate must
+	// have been issued to the run at this run-invocation URI, in any of its
+	// attempts. No flag sets it. It goes with an identity that names a
+	// workflow whatever branch or pull request it runs on, which is only safe
+	// to trust for what the caller's own run attested.
+	RunInvocationURI string
 }
 
 // Validate checks the policy's parts make sense together. It needs nothing
@@ -109,6 +115,11 @@ var ErrFailedVerification = errors.New("failed verification")
 // nothing about whether the signature is good.
 var ErrCannotVerify = errors.New("could not be verified")
 
+// ErrOtherRun marks an attestation whose signature is good and whose signer
+// the policy pins, but which was made by a run other than the one the policy
+// is tied to.
+var ErrOtherRun = errors.New("was made by another run")
+
 // Verifier checks attestations against a policy.
 type Verifier struct {
 	policy Policy
@@ -125,7 +136,8 @@ func NewVerifier(policy Policy, trust *TrustRoots) *Verifier {
 // the policy pins. An empty digest checks the signature alone, for an
 // attestation recorded on a trail rather than an artifact. A signature that
 // does not verify is an ErrFailedVerification; one that cannot be checked is
-// an ErrCannotVerify.
+// an ErrCannotVerify; a good one from a run the policy is not tied to is an
+// ErrOtherRun.
 func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
 	if digest != "" {
 		if err := a.RequireSubject(digest); err != nil {
@@ -159,6 +171,13 @@ func (v *Verifier) Verify(a *Attestation, digest string) (*Evidence, error) {
 		evidence.SignerIdentity = summary.SubjectAlternativeName
 		evidence.SignerIssuer = summary.Issuer
 		evidence.RunInvocationURI = summary.RunInvocationURI
+	}
+	if run := v.policy.RunInvocationURI; run != "" && !sameRun(evidence.RunInvocationURI, run) {
+		madeBy := evidence.RunInvocationURI
+		if madeBy == "" {
+			madeBy = "its certificate names no run"
+		}
+		return nil, fmt.Errorf("%s %w: %s, signed as %s", a.Describe(), ErrOtherRun, madeBy, evidence.SignerIdentity)
 	}
 	for _, ts := range result.VerifiedTimestamps {
 		switch ts.Type {

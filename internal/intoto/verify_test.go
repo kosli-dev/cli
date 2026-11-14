@@ -122,6 +122,68 @@ func TestVerifySignedBundle(t *testing.T) {
 	})
 }
 
+// ownRunSigner trusts the repository's workflows, as its identity matches them
+// on any branch or pull request, but only for what the run at fixtureRunURI
+// attested.
+var ownRunSigner = Policy{
+	CertificateIdentityRegexp: `^https://github\.com/acme/widget/\.github/workflows/`,
+	CertificateOIDCIssuer:     fixtureIssuer,
+	RunInvocationURI:          fixtureRunURI,
+}
+
+func TestVerifyUnderAPolicyTiedToARun(t *testing.T) {
+	t.Run("accepts an attestation the run made", func(t *testing.T) {
+		evidence, err := verifyFixture(t, ownRunSigner, "github-provenance.sigstore.json")
+		require.NoError(t, err)
+		require.True(t, evidence.Verified)
+	})
+
+	t.Run("accepts an attestation another attempt of the run made", func(t *testing.T) {
+		evidence, err := verifyFixture(t, ownRunSigner, "rerun-provenance.sigstore.json")
+		require.NoError(t, err)
+		require.Equal(t, fixtureRerunURI, evidence.RunInvocationURI)
+	})
+
+	t.Run("accepts an attestation the run made when the repository's name differs only in its letters' case, as GitHub's names do", func(t *testing.T) {
+		policy := ownRunSigner
+		policy.RunInvocationURI = "https://github.com/Acme/Widget/actions/runs/1234567890/attempts/1"
+		_, err := verifyFixture(t, policy, "github-provenance.sigstore.json")
+		require.NoError(t, err)
+	})
+
+	for name, tc := range map[string]struct{ fixture, runURI, identity string }{
+		"a branch":       {"branch-provenance.sigstore.json", fixtureBranchRunURI, fixtureBranchIdentity},
+		"a pull request": {"pull-request-provenance.sigstore.json", fixturePullRequestRunURI, fixturePullRequestIdentity},
+	} {
+		t.Run("refuses an attestation another run made from "+name+", naming the run and the signer", func(t *testing.T) {
+			_, err := verifyFixture(t, ownRunSigner, tc.fixture)
+			require.ErrorIs(t, err, ErrOtherRun)
+			require.NotErrorIs(t, err, ErrFailedVerification)
+			require.EqualError(t, err, "the attestation was made by another run: "+tc.runURI+", signed as "+tc.identity)
+		})
+	}
+
+	t.Run("refuses an attestation another run made though the same workflow on the same branch signed it", func(t *testing.T) {
+		policy := ownRunSigner
+		policy.RunInvocationURI = "https://github.com/acme/widget/actions/runs/42/attempts/1"
+		_, err := verifyFixture(t, policy, "github-provenance.sigstore.json")
+		require.ErrorIs(t, err, ErrOtherRun)
+	})
+
+	t.Run("still refuses another signer's attestation as a failed verification", func(t *testing.T) {
+		_, err := verifyFixture(t, ownRunSigner, "wrong-signer-provenance.sigstore.json")
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.NotErrorIs(t, err, ErrOtherRun)
+	})
+
+	t.Run("accepts an attestation from any run when the policy names none", func(t *testing.T) {
+		policy := ownRunSigner
+		policy.RunInvocationURI = ""
+		_, err := verifyFixture(t, policy, "branch-provenance.sigstore.json")
+		require.NoError(t, err)
+	})
+}
+
 func TestVerifyKeySignedEnvelope(t *testing.T) {
 	t.Run("verifies a DSSE envelope with the key that signed it", func(t *testing.T) {
 		evidence, err := verifyFixture(t, Policy{KeyPath: filepath.Join("testdata", "key.pub")}, "key-signed-provenance.dsse.json")
@@ -329,6 +391,13 @@ func TestFind(t *testing.T) {
 		require.ErrorContains(t, err, "attestation 2 failed verification: ")
 	})
 
+	t.Run("refuses the file when another run made a candidate and the policy is tied to a run, though this run made one too", func(t *testing.T) {
+		source := BundleFile{Path: jsonlFile(t, "github-provenance.sigstore.json", "branch-provenance.sigstore.json")}
+		_, err := Find(source, KindProvenance, artifactDigest, NewVerifier(ownRunSigner, fixtureTrust(t)))
+		require.ErrorIs(t, err, ErrOtherRun)
+		require.ErrorContains(t, err, "attestation 2 was made by another run: ")
+	})
+
 	t.Run("names every candidate that failed verification", func(t *testing.T) {
 		path := jsonlFile(t, "wrong-signer-provenance.sigstore.json", "tampered-provenance.sigstore.json")
 
@@ -440,6 +509,37 @@ func TestFindBySourceSelection(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, found.Position)
 		require.Equal(t, fixtureRunURI, found.Evidence.RunInvocationURI)
+	})
+
+	t.Run("chooses the run's own attestation under a policy tied to the run, without reporting what other runs made", func(t *testing.T) {
+		found, err := find(t, ownRunSigner, fixtureRunURI, "branch-provenance.sigstore.json", "github-provenance.sigstore.json", "pull-request-provenance.sigstore.json")
+		require.NoError(t, err)
+		require.Equal(t, 2, found.Position)
+		require.Equal(t, fixtureIdentity, found.Evidence.SignerIdentity)
+		require.Empty(t, found.Rejected)
+	})
+
+	t.Run("still reports another signer's attestation beside the run's own", func(t *testing.T) {
+		found, err := find(t, ownRunSigner, fixtureRunURI, "wrong-signer-provenance.sigstore.json", "branch-provenance.sigstore.json", "github-provenance.sigstore.json")
+		require.NoError(t, err)
+		require.Equal(t, 3, found.Position)
+		require.Len(t, found.Rejected, 1)
+		require.ErrorContains(t, found.Rejected[0], "attestation 1 failed verification: ")
+	})
+
+	t.Run("records nothing under a policy tied to the run when only other runs attested, though theirs are newer and validly signed", func(t *testing.T) {
+		_, err := find(t, ownRunSigner, fixtureRunURI, "branch-provenance.sigstore.json", "pull-request-provenance.sigstore.json")
+		require.ErrorIs(t, err, ErrOtherRun)
+		require.ErrorContains(t, err, ": 2 attestations could not be accepted: attestation 1 was made by another run: "+fixtureBranchRunURI+", signed as "+fixtureBranchIdentity+
+			"; attestation 2 was made by another run: "+fixturePullRequestRunURI+", signed as "+fixturePullRequestIdentity)
+	})
+
+	t.Run("names another run's attestation beside one that failed verification when none is accepted", func(t *testing.T) {
+		_, err := find(t, ownRunSigner, fixtureRunURI, "branch-provenance.sigstore.json", "wrong-signer-provenance.sigstore.json")
+		require.ErrorIs(t, err, ErrOtherRun)
+		require.ErrorIs(t, err, ErrFailedVerification)
+		require.ErrorContains(t, err, ": 2 attestations could not be accepted: attestation 1 was made by another run: ")
+		require.ErrorContains(t, err, "; attestation 2 failed verification: ")
 	})
 
 	t.Run("chooses the newest when none is from the run it is part of", func(t *testing.T) {

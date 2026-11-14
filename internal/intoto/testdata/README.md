@@ -28,6 +28,8 @@ Sigstore signature is checked against the time Rekor logged it.
 | `trusted_root.json` | The trust root the signed fixtures verify against. |
 | `github-provenance.sigstore.json` | SLSA v1 provenance from GitHub Actions (`actions/attest-build-provenance`), signed by `https://github.com/acme/widget/.github/workflows/build.yml@refs/heads/main`. |
 | `rerun-provenance.sigstore.json` | The same build's provenance from attempt 2 of the run, logged a minute after attempt 1's. Its certificate names attempt 2 as the run. |
+| `branch-provenance.sigstore.json` | The same provenance statement, signed by that workflow file on a branch (`@refs/heads/feature-x`) in another run, and logged after both attempts of the build. It is what anyone who can push a branch can make. |
+| `pull-request-provenance.sigstore.json` | The same again from a pull request (`@refs/pull/12/merge`), in a third run, logged last. |
 | `buildkit-provenance.sigstore.json` | SLSA v1 provenance from BuildKit, signed by the same workflow. |
 | `slsa-v0.2-provenance.sigstore.json` | SLSA v0.2 provenance from the SLSA GitHub generator. |
 | `spdx-sbom.sigstore.json`, `cyclonedx-sbom.sigstore.json` | SBOM attestations (`actions/attest-sbom`). |
