@@ -56,7 +56,8 @@ job names and are case-sensitive.
 
 Pass ^--resolve-names^ to rewrite digest-pinned Service artifact names back
 to their deploy-time tags (commit SHA / version) via an Artifact Registry
-reverse-lookup. Only supported for Artifact Registry hosts.`
+reverse-lookup. Supported for Artifact Registry (^*-docker.pkg.dev^) and
+^gcr.io^ hosts.`
 
 const snapshotCloudRunExample = `
 # report every Cloud Run service and job in a project + region:

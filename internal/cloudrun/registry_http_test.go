@@ -173,3 +173,41 @@ func TestResolve_NonGCPRegistrySendsNoRequest(t *testing.T) {
 	require.ErrorIs(t, err, errNonGCPRegistry)
 	require.Empty(t, registry.requested)
 }
+
+func TestLatestTag_GCRHost(t *testing.T) {
+	registry := &fakeRegistry{responses: map[string]fakeResponse{
+		"artifactregistry.googleapis.com/v1/projects/proj/locations/europe/repositories/eu.gcr.io/dockerImages/team%2Fimg@sha256:" + testHex: {
+			status: http.StatusOK, body: `{"tags":["v1"]}`,
+		},
+	}}
+	r := &gcpArtifactRegistryTagResolver{tokens: staticToken(), client: newFakeRegistryClient(t, registry), log: newDiscardLogger(t)}
+
+	tag, err := r.LatestTag("eu.gcr.io/proj/team/img@sha256:" + testHex)
+
+	require.NoError(t, err)
+	require.Equal(t, "v1", tag)
+}
+
+func TestLatestTag_PlainImagePathIsSentUnescaped(t *testing.T) {
+	registry := &fakeRegistry{responses: map[string]fakeResponse{
+		"artifactregistry.googleapis.com/v1/projects/proj/locations/europe-west1/repositories/repo/dockerImages/hello-world_v2.app@sha256:" + testHex: {
+			status: http.StatusOK, body: `{"tags":["v1"]}`,
+		},
+	}}
+	r := &gcpArtifactRegistryTagResolver{tokens: staticToken(), client: newFakeRegistryClient(t, registry), log: newDiscardLogger(t)}
+
+	tag, err := r.LatestTag("europe-west1-docker.pkg.dev/proj/repo/hello-world_v2.app@sha256:" + testHex)
+
+	require.NoError(t, err)
+	require.Equal(t, "v1", tag)
+}
+
+func TestLatestTag_NonGCPRegistrySendsNoRequest(t *testing.T) {
+	registry := &fakeRegistry{}
+	r := &gcpArtifactRegistryTagResolver{tokens: staticToken(), client: newFakeRegistryClient(t, registry), log: newDiscardLogger(t)}
+
+	_, err := r.LatestTag("docker.io/library/nginx@sha256:" + testHex)
+
+	require.Error(t, err)
+	require.Empty(t, registry.requested)
+}
