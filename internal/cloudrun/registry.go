@@ -291,15 +291,12 @@ func pickLatestTag(tags []string) (string, error) {
 	return sorted[0], nil
 }
 
-// digestPinnedRefParts holds the AR-resource-name components extracted
-// from a digest-pinned image reference, ready to interpolate into the
+// digestPinnedRefParts names a digest-pinned image by the Artifact
+// Registry resources that hold it, ready to interpolate into the
 // dockerImages.get resource URL.
 type digestPinnedRefParts struct {
-	project  string
-	location string
-	repo     string
-	image    string
-	digest   string // "sha256:<hex>"
+	arImage
+	digest string // "sha256:<hex>"
 }
 
 // splitDigestPinnedAR parses a digest-pinned image reference into the
@@ -316,11 +313,6 @@ func splitDigestPinnedAR(image string) (digestPinnedRefParts, error) {
 	if err != nil {
 		return digestPinnedRefParts{}, err
 	}
-	return digestPinnedRefParts{
-		project:  img.project,
-		location: img.location,
-		repo:     img.repo,
-		image:    img.image,
-		digest:   image[idx+1:], // strip "@" → "sha256:<hex>"
-	}, nil
+	// image[idx+1:] strips "@", leaving "sha256:<hex>".
+	return digestPinnedRefParts{arImage: img, digest: image[idx+1:]}, nil
 }

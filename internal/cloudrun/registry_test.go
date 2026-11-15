@@ -208,7 +208,8 @@ func TestSplitDigestPinnedAR_GCRHosts(t *testing.T) {
 			parts, err := splitDigestPinnedAR(c.host + "/proj/team/img@sha256:abc")
 			require.NoError(t, err)
 			require.Equal(t, digestPinnedRefParts{
-				project: "proj", location: c.location, repo: c.host, image: "team/img", digest: "sha256:abc",
+				arImage: arImage{project: "proj", location: c.location, repo: c.host, image: "team/img"},
+				digest:  "sha256:abc",
 			}, parts)
 		})
 	}
