@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -154,10 +155,11 @@ func (r *gcpArtifactRegistryTagResolver) LatestTag(image string) (string, error)
 	// dockerImages.get returns a single DockerImage by exact resource name.
 	// The resource name is "<image>@sha256:<hex>" within the repo; "@" and
 	// ":" are allowed in URL path segments per RFC 3986 and Google's
-	// gateway accepts them unescaped.
+	// gateway accepts them unescaped. A "/" in the image path has to be
+	// "%2F": the resource name is a single path segment.
 	u := fmt.Sprintf(
 		"https://artifactregistry.googleapis.com/v1/projects/%s/locations/%s/repositories/%s/dockerImages/%s@%s",
-		parts.project, parts.location, parts.repo, parts.image, parts.digest,
+		parts.project, parts.location, parts.repo, url.PathEscape(parts.image), parts.digest,
 	)
 
 	res, err := r.client.Do(&requests.RequestParams{
