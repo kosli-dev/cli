@@ -273,7 +273,7 @@ kosli attest in-toto app.tar.gz \
 	--bundle app-sbom.sigstore.json \
 	--predicate-type sbom \
 	--name app.sbom \
-	--certificate-identity-regexp '^https://github.com/yourOrg/yourRepo/' \
+	--certificate-identity https://github.com/yourOrg/yourRepo/.github/workflows/build.yml@refs/heads/main \
 	--certificate-oidc-issuer https://token.actions.githubusercontent.com \
 	--flow yourFlowName \
 	--trail yourTrailName \
