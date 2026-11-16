@@ -9,10 +9,16 @@ on:
 jobs:
   claude:
     # Only fire on PR comments (issue_comment also fires on plain issues)
-    # that actually mention @claude.
+    # that actually mention @claude. The author_association gate keeps
+    # outside users, and Claude's own comments, from starting a run.
     if: >-
       contains(github.event.comment.body, '@claude') &&
-      (github.event.issue.pull_request || github.event.pull_request)
+      (github.event.issue.pull_request || github.event.pull_request) &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+    # Runs on the same PR share one sticky comment, so they queue.
+    concurrency:
+      group: claude-manual-${{ github.event.issue.number || github.event.pull_request.number }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -22,7 +28,12 @@ jobs:
       id-token: write
       actions: read
     steps:
-      - uses: actions/checkout@v7
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0   # full history so re-reviews can diff since the last comment
 
@@ -38,10 +49,16 @@ jobs:
             --max-turns 40
             --max-budget-usd 5
             --model claude-opus-5-5
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(go build:*),Bash(go vet:*),Bash(go mod tidy:*),Bash(git diff:*),Bash(golangci-lint:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(go build:*),Bash(go vet:*),Bash(go mod tidy:*),Bash(git diff:*),Bash(golangci-lint:*)"
           prompt: |
             REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
+            PR NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+
+            A comment mentioning @claude triggered this run. Follow the request in that comment first:
+            - If it asks a question or for something specific, do that and skip the review phases below.
+            - If it asks for a review (for example "@claude review"), run the full review below.
+
+            This workflow is review-only: you cannot commit or push. Offer fixes as inline suggestions.
 
             Read CLAUDE.md in the repo root for build commands, architecture details, and testing patterns.
             Use this context to assess whether the PR follows established conventions.
@@ -75,8 +92,7 @@ jobs:
             Note: The PR branch is already checked out in the current working directory.
             Be concise and actionable. Prefer inline suggestions where possible; add a short summary at the end.
 
-            Use `gh pr comment --edit-last --create-if-none` for top-level feedback,
-            so the summary replaces the previous run's summary instead of stacking.
+            Post top-level feedback by updating your tracking comment; create no other top-level comments.
             Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
             Only post GitHub comments - don't submit review text as messages.
 
