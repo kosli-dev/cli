@@ -593,6 +593,41 @@ func TestAttestJiraWarnsOnUnconfirmedIssue(t *testing.T) {
 	require.NotContains(t, errOut, "secret", "the API token must not appear in the warning")
 }
 
+// TestAttestJiraDoesNotWarnOnBranchSlug covers the branch names Jira's "Create branch"
+// button generates: a key followed by a hyphenated word is reported only at debug level,
+// because no flag can silence a warning for it.
+func TestAttestJiraDoesNotWarnOnBranchSlug(t *testing.T) {
+	jiraServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"key":"EX-1","fields":{}}`))
+	}))
+	defer jiraServer.Close()
+
+	tmpDir, err := os.MkdirTemp("", "testDir")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tmpDir), "failed to remove temp dir %s", tmpDir)
+	}()
+
+	_, workTree, fs, err := testHelpers.InitializeGitRepo(tmpDir)
+	require.NoError(t, err)
+	commitSha, err := testHelpers.CommitToRepo(workTree, fs, "EX-1-add-login fix the thing")
+	require.NoError(t, err)
+
+	command := fmt.Sprintf(`attest jira --name foo --flow flow --trail trail
+		--org org --api-token DRY_RUN --repo-root %s --commit %s
+		--jira-base-url %s --jira-username user@example.com --jira-api-token secret`,
+		tmpDir, commitSha, jiraServer.URL)
+
+	_, _, _, errOut, err := executeCommandC(command)
+	require.NoError(t, err)
+	require.NotContains(t, errOut, "hyphenated word")
+
+	_, _, _, debugOut, err := executeCommandC(command + " --debug")
+	require.NoError(t, err)
+	require.Contains(t, debugOut, "hyphenated word")
+}
+
 // TestAttestJiraAssertNamesUnconfirmedIssues covers the --assert failure as a whole - the
 // headline, the per-issue lines and the reasons are assembled in run(), and the assert block
 // is guarded by !global.DryRun, so the dry-run test above never reaches it.
