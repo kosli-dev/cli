@@ -44,7 +44,6 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           use_sticky_comment: true
-          allowed_bots: 'kosli-ai-agent'
           claude_args: >-
             --max-turns 40
             --max-budget-usd 5
