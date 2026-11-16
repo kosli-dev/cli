@@ -15,7 +15,7 @@ jobs:
       contains(github.event.comment.body, '@claude') &&
       (github.event.issue.pull_request || github.event.pull_request) &&
       github.event.comment.author_association == 'MEMBER'
-    # Runs on the same PR share one sticky comment, so they queue.
+    # One run per PR at a time.
     concurrency:
       group: claude-manual-${{ github.event.issue.number || github.event.pull_request.number }}
       cancel-in-progress: false
@@ -43,7 +43,6 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
-          use_sticky_comment: true
           claude_args: >-
             --max-turns 40
             --max-budget-usd 5
