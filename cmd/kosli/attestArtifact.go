@@ -384,7 +384,7 @@ func (o *attestArtifactOptions) run(args []string) error {
 		Token:   global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	// run is only reached after a build command succeeded.
+	// A build command, if given, has already succeeded by the time run is reached.
 	if err != nil && len(o.buildCmd) > 0 && !o.failOnAttestError {
 		logger.Warn("the build succeeded but the attestation was not recorded: %s", err)
 		return nil
