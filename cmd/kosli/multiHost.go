@@ -30,8 +30,11 @@ import (
 
 func isMultiHost() bool {
 	// Returns true iff the CLI execution is multi-host, multi-api-token
-	opts := getMultiOpts()
-	return hasMultipleHosts(opts.hosts, opts.apiTokens)
+	return getMultiOpts().multiHost()
+}
+
+func (o MultiOpts) multiHost() bool {
+	return hasMultipleHosts(o.hosts, o.apiTokens)
 }
 
 func hasMultipleHosts(hosts, apiTokens []string) bool {
@@ -133,6 +136,9 @@ type MultiOpts struct {
 	hosts     []string
 	apiTokens []string
 	debug     bool
+	// buildCommand is set for attest artifact with a build command, which
+	// attests to every host itself so the build runs once.
+	buildCommand bool
 }
 
 func getMultiOpts() MultiOpts {
@@ -173,12 +179,17 @@ func getMultiOpts() MultiOpts {
 	}
 
 	fakeError := errors.New("")
+	var buildCommand bool
 
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		// Call initialize() to bind cobra and viper
 		err := initialize(cmd, writer, writer)
 		if err != nil {
 			return err
+		}
+		if cmd.CommandPath() == "kosli attest artifact" {
+			_, buildCmd, _ := splitArtifactAndBuildArgs(cmd.ArgsLenAtDash(), args)
+			buildCommand = len(buildCmd) > 0
 		}
 		return fakeError
 	}
@@ -197,8 +208,9 @@ func getMultiOpts() MultiOpts {
 	}
 
 	return MultiOpts{
-		hosts:     strings.Split(global.Host, ","),
-		apiTokens: strings.Split(global.ApiToken, ","),
-		debug:     global.Debug,
+		hosts:        strings.Split(global.Host, ","),
+		apiTokens:    strings.Split(global.ApiToken, ","),
+		debug:        global.Debug,
+		buildCommand: buildCommand,
 	}
 }

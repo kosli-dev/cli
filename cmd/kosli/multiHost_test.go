@@ -323,3 +323,32 @@ func charAt(s string, n int) string {
 // 	stdOut: BadFlagLines(),
 // 	err:    error(nil),
 // },
+
+// TestGetMultiOptsDetectsBuildCommand pins which calls main keeps out of
+// runMultiHost: only attest artifact with a build command, which attests to
+// every host itself so its build runs once.
+func TestGetMultiOptsDetectsBuildCommand(t *testing.T) {
+	hostFlags := []string{"--host=http://a.example.com,http://b.example.com", "--api-token=one,two", "--org=" + orgName}
+	for _, tt := range []struct {
+		name string
+		args []string
+		want bool
+	}{
+		{name: "attest artifact with a build command", args: []string{"attest", "artifact", "app", "--artifact-type", "file"}, want: true},
+		{name: "attest artifact without a build command", args: []string{"attest", "artifact", "app", "--artifact-type", "file"}, want: false},
+		{name: "another command", args: []string{"fingerprint", "app", "--artifact-type", "file"}, want: false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			args := append(append([]string{"kosli"}, tt.args...), hostFlags...)
+			if tt.want {
+				args = append(args, "--", "make", "build")
+			}
+			defer func(original []string) { os.Args = original }(os.Args)
+			os.Args = args
+
+			opts := getMultiOpts()
+			assert.True(t, opts.multiHost())
+			assert.Equal(t, tt.want, opts.buildCommand)
+		})
+	}
+}

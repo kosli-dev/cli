@@ -29,7 +29,7 @@ func init() {
 
 func main() {
 	var err error
-	if isMultiHost() {
+	if opts := getMultiOpts(); opts.multiHost() && !opts.buildCommand {
 		var output string
 		output, err = runMultiHost(os.Args)
 		fmt.Print(output)

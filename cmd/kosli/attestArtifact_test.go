@@ -8,7 +8,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -209,12 +211,6 @@ func TestAttestArtifactBuildCommandValidation(t *testing.T) {
 			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint %s %s -- true", sha, singleHost),
 			golden:    "Error: --fingerprint cannot be combined with a build command\n",
 		},
-		{
-			wantError: true,
-			name:      "fails when a build command is used with multiple hosts",
-			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file %s --host http://localhost:8001,http://localhost:8001 --api-token a,b -- true", baseArgs),
-			golden:    "Error: a build command is not supported with multiple hosts yet\n",
-		},
 	}
 	runTestCmd(t, tests)
 }
@@ -389,6 +385,97 @@ func TestAttestArtifactFailOnAttestErrorByStatus(t *testing.T) {
 		},
 	}
 	runTestCmd(t, tests)
+}
+
+// fakeKosliHost records what each attestation request carried.
+type fakeKosliHost struct {
+	url      string
+	mu       sync.Mutex
+	tokens   []string
+	clients  []string
+	payloads []string
+}
+
+func (h *fakeKosliHost) requests() int {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return len(h.tokens)
+}
+
+func newFakeKosliHost(t *testing.T, status int) *fakeKosliHost {
+	host := &fakeKosliHost{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		host.mu.Lock()
+		host.tokens = append(host.tokens, r.Header.Get("Authorization"))
+		host.clients = append(host.clients, r.Header.Get("X-Kosli-Client"))
+		host.payloads = append(host.payloads, string(body))
+		host.mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_, _ = fmt.Fprintf(w, `{"message": "status %d from %s"}`, status, r.Host)
+	}))
+	t.Cleanup(server.Close)
+	host.url = server.URL
+	return host
+}
+
+// TestAttestArtifactBuildCommandMultiHost runs one build and attests it to every
+// host in a comma-separated --host/--api-token list.
+func TestAttestArtifactBuildCommandMultiHost(t *testing.T) {
+	run := func(t *testing.T, first, second *fakeKosliHost, extraFlags string) (output string, failed bool) {
+		dir := t.TempDir()
+		out := filepath.Join(dir, "out.bin")
+		builds := filepath.Join(dir, "builds.txt")
+		cmd := fmt.Sprintf("attest artifact %s --artifact-type file --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --flow attest-artifact --trail test-123 --repo-root ../.. --org docs-cmd-test-user --max-api-retries 0 --host %s,%s --api-token token-one,token-two %s -- sh -c 'echo build >> %s; cp testdata/file1 %s' token-one token-two",
+			out, first.url, second.url, extraFlags, builds, out)
+		_, output, _, _, err := executeCommandC(cmd)
+		buildLog, readErr := os.ReadFile(builds)
+		require.NoError(t, readErr)
+		require.Equal(t, "build\n", string(buildLog), "the build must run exactly once")
+		return output, err != nil
+	}
+
+	t.Run("attests to every host with its own token", func(t *testing.T) {
+		first, second := newFakeKosliHost(t, http.StatusCreated), newFakeKosliHost(t, http.StatusCreated)
+		output, failed := run(t, first, second, "")
+		require.False(t, failed, output)
+		require.Equal(t, []string{"Bearer token-one"}, first.tokens)
+		require.Equal(t, []string{"Bearer token-two"}, second.tokens)
+		require.NotEmpty(t, first.clients[0], "usage headers must reach the first host")
+		require.NotEmpty(t, second.clients[0], "usage headers must reach the second host")
+		require.Equal(t, 1, strings.Count(output, "was attested with fingerprint"), output)
+		for _, payload := range append(first.payloads, second.payloads...) {
+			require.Contains(t, payload, `"build_command":"sh -c echo build`)
+			require.NotContains(t, payload, "token-one")
+			require.NotContains(t, payload, "token-two")
+		}
+	})
+
+	t.Run("attests to the other hosts and names the one that failed", func(t *testing.T) {
+		first, second := newFakeKosliHost(t, http.StatusCreated), newFakeKosliHost(t, http.StatusServiceUnavailable)
+		output, failed := run(t, first, second, "")
+		require.True(t, failed)
+		require.Equal(t, 1, first.requests())
+		require.Equal(t, 1, second.requests())
+		require.Contains(t, output, "["+second.url+"]")
+		require.NotContains(t, output, "["+first.url+"]")
+	})
+
+	t.Run("warns about a host that is down with --fail-on-attest-error=false", func(t *testing.T) {
+		first, second := newFakeKosliHost(t, http.StatusServiceUnavailable), newFakeKosliHost(t, http.StatusCreated)
+		output, failed := run(t, first, second, "--fail-on-attest-error=false")
+		require.False(t, failed, output)
+		require.Regexp(t, `\[warning\] \[`+regexp.QuoteMeta(first.url)+`\] the build succeeded but the attestation was not recorded`, output)
+		require.Equal(t, 1, second.requests())
+	})
+
+	t.Run("still fails on a 4xx from one host with --fail-on-attest-error=false", func(t *testing.T) {
+		first, second := newFakeKosliHost(t, http.StatusCreated), newFakeKosliHost(t, http.StatusUnauthorized)
+		output, failed := run(t, first, second, "--fail-on-attest-error=false")
+		require.True(t, failed)
+		require.Contains(t, output, "["+second.url+"]")
+	})
 }
 
 func TestMaskSecrets(t *testing.T) {
