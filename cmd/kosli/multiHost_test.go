@@ -93,7 +93,7 @@ func (suite *MultiHostTestSuite) TestIsMultiHost() {
 
 			defer func(original []string) { os.Args = original }(os.Args)
 			os.Args = args
-			actual := isMultiHost()
+			actual := getMultiOpts().multiHost()
 
 			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestIsMultiHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.want, actual))
 		})
@@ -323,3 +323,33 @@ func charAt(s string, n int) string {
 // 	stdOut: BadFlagLines(),
 // 	err:    error(nil),
 // },
+
+// TestGetMultiOptsDetectsBuildCommand pins which calls main keeps out of
+// runMultiHost: only attest artifact with a build command, which attests to
+// every host itself so its build runs once.
+func TestGetMultiOptsDetectsBuildCommand(t *testing.T) {
+	hostFlags := []string{"--host=http://a.example.com,http://b.example.com", "--api-token=one,two", "--org=" + orgName}
+	for _, tt := range []struct {
+		name    string
+		command []string
+		args    []string
+		want    bool
+	}{
+		{name: "attest artifact with a build command", command: []string{"attest", "artifact"}, args: []string{"app", "--artifact-type", "file", "--", "make", "build"}, want: true},
+		{name: "attest artifact without a build command", command: []string{"attest", "artifact"}, args: []string{"app", "--artifact-type", "file"}, want: false},
+		{name: "legacy -- NAME form is not a build command", command: []string{"attest", "artifact"}, args: []string{"--artifact-type", "file", "--", "-app"}, want: false},
+		{name: "another command", command: []string{"fingerprint"}, args: []string{"app", "--artifact-type", "file"}, want: false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			// Host flags go before any "--", where they are still parsed as flags.
+			args := append(append(append([]string{"kosli"}, tt.command...), hostFlags...), tt.args...)
+			defer func(original []string) { os.Args = original }(os.Args)
+			os.Args = args
+
+			opts := getMultiOpts()
+			assert.True(t, opts.multiHost())
+			assert.Equal(t, tt.want, opts.buildCommand)
+			assert.Equal(t, !tt.want, opts.runsPerHost())
+		})
+	}
+}

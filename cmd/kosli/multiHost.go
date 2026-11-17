@@ -28,10 +28,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func isMultiHost() bool {
-	// Returns true iff the CLI execution is multi-host, multi-api-token
-	opts := getMultiOpts()
-	return hasMultipleHosts(opts.hosts, opts.apiTokens)
+// multiHost reports whether the CLI execution is multi-host, multi-api-token.
+func (o MultiOpts) multiHost() bool {
+	return hasMultipleHosts(o.hosts, o.apiTokens)
+}
+
+// runsPerHost reports whether main should run the command once per host with
+// runMultiHost. attest artifact with a build command is the exception: it
+// attests to every host itself, so its build runs once.
+func (o MultiOpts) runsPerHost() bool {
+	return o.multiHost() && !o.buildCommand
 }
 
 func hasMultipleHosts(hosts, apiTokens []string) bool {
@@ -133,6 +139,8 @@ type MultiOpts struct {
 	hosts     []string
 	apiTokens []string
 	debug     bool
+	// buildCommand is set for attest artifact with a build command; see runsPerHost.
+	buildCommand bool
 }
 
 func getMultiOpts() MultiOpts {
@@ -143,7 +151,7 @@ func getMultiOpts() MultiOpts {
 	// For any error, return MultiOpts{} which will have
 	//   - hosts == nil, so len(hosts) == 0
 	//   - apiTokens == nil, so len(apiTokens) == 0
-	// so isMultiHost() will return false.
+	// so multiHost() will return false.
 
 	// There is a logger.Error(..) call at the end of main. Restore it to
 	// the original global logger so the error messages actually appear.
@@ -173,12 +181,17 @@ func getMultiOpts() MultiOpts {
 	}
 
 	fakeError := errors.New("")
+	var buildCommand bool
 
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		// Call initialize() to bind cobra and viper
 		err := initialize(cmd, writer, writer)
 		if err != nil {
 			return err
+		}
+		if cmd.CommandPath() == "kosli attest artifact" {
+			_, buildCmd, _ := splitArtifactAndBuildArgs(cmd.ArgsLenAtDash(), args)
+			buildCommand = len(buildCmd) > 0
 		}
 		return fakeError
 	}
@@ -197,8 +210,9 @@ func getMultiOpts() MultiOpts {
 	}
 
 	return MultiOpts{
-		hosts:     strings.Split(global.Host, ","),
-		apiTokens: strings.Split(global.ApiToken, ","),
-		debug:     global.Debug,
+		hosts:        strings.Split(global.Host, ","),
+		apiTokens:    strings.Split(global.ApiToken, ","),
+		debug:        global.Debug,
+		buildCommand: buildCommand,
 	}
 }

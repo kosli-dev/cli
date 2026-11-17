@@ -40,6 +40,7 @@ type attestArtifactOptions struct {
 	buildCmd             []string
 	recordBuildCommand   bool
 	failOnAttestError    bool
+	usageHeaders         map[string]string
 }
 
 type AttestArtifactPayload struct {
@@ -177,6 +178,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
+			o.usageHeaders = usageHeaders(cmd)
 			args = args[:len(args)-len(o.buildCmd)]
 			if len(o.buildCmd) > 0 {
 				if err := o.runBuild(args[0], cmd.InOrStdin(), out, cmd.ErrOrStderr()); err != nil {
@@ -242,10 +244,6 @@ func validateBuildCommand(buildCmd []string, fingerprint string) error {
 	if fingerprint != "" {
 		return fmt.Errorf("--fingerprint cannot be combined with a build command")
 	}
-	// Multi-host mode re-runs the command per host and appends host flags after "--".
-	if hasMultipleHosts(strings.Split(global.Host, ","), strings.Split(global.ApiToken, ",")) {
-		return fmt.Errorf("a build command is not supported with multiple hosts yet")
-	}
 	return nil
 }
 
@@ -276,7 +274,9 @@ func (o *attestArtifactOptions) runBuild(artifactName string, stdin io.Reader, s
 		logger.Warn("artifact %s was not modified by the build command", artifactName)
 	}
 
-	cmdline := maskSecrets(strings.Join(o.buildCmd, " "), os.Environ(), os.Getenv("KOSLI_API_TOKEN"), global.ApiToken)
+	_, tokens := attestHosts()
+	secrets := append(strings.Split(os.Getenv("KOSLI_API_TOKEN"), ","), tokens...)
+	cmdline := maskSecrets(strings.Join(o.buildCmd, " "), os.Environ(), secrets...)
 	o.annotations = addBuildAnnotations(o.annotations, cmdline, result.Duration, o.recordBuildCommand)
 	return nil
 }
@@ -373,27 +373,68 @@ func (o *attestArtifactOptions) run(args []string) error {
 		logger.Warn("Repo URL will not be reported, %s", err.Error())
 	}
 
-	url, err := url.JoinPath(global.Host, "api/v2/artifacts", global.Org, o.flowName)
+	hosts, tokens := attestHosts()
+	var failures []string
+	for i, host := range hosts {
+		label := ""
+		if len(hosts) > 1 {
+			label = "[" + host + "] "
+			kosliClient.SetUsageHeaders(host, o.usageHeaders)
+		}
+		// The root command only sees the whole token list, so a DRY_RUN token for
+		// one host is checked here, as runMultiHost's per-host runs would.
+		dryRun := global.DryRun || tokens[i] == "DRY_RUN"
+		err := o.attestTo(host, tokens[i], dryRun)
+		switch {
+		case err == nil:
+			// Like runMultiHost, only the primary host's output is shown without --debug.
+			if dryRun {
+				break
+			}
+			if i == 0 {
+				logger.Info("artifact %s was attested with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
+			} else {
+				logger.Debug("%sartifact %s was attested with fingerprint: %s", label, o.payload.Filename, o.payload.Fingerprint)
+			}
+		// A build command, if given, has already succeeded by the time run is reached.
+		case len(o.buildCmd) > 0 && !o.failOnAttestError && !isSetupError(err):
+			logger.Warn("%sthe build succeeded but the attestation was not recorded: %s", label, err)
+		case len(hosts) == 1:
+			return err
+		default:
+			failures = append(failures, fmt.Sprintf("[%s]\n%s", host, err))
+		}
+	}
+	if len(failures) > 0 {
+		return errors.New(strings.Join(failures, "\n"))
+	}
+	return nil
+}
+
+// attestHosts returns the hosts to attest to with their API tokens. A build
+// command bypasses runMultiHost, so the build runs once, and its attestation is
+// sent here to every host when --host and --api-token are comma-separated
+// lists of the same length.
+func attestHosts() (hosts, tokens []string) {
+	hosts, tokens = strings.Split(global.Host, ","), strings.Split(global.ApiToken, ",")
+	if hasMultipleHosts(hosts, tokens) {
+		return hosts, tokens
+	}
+	return []string{global.Host}, []string{global.ApiToken}
+}
+
+func (o *attestArtifactOptions) attestTo(host, token string, dryRun bool) error {
+	url, err := url.JoinPath(host, "api/v2/artifacts", global.Org, o.flowName)
 	if err != nil {
 		return err
 	}
-
-	reqParams := &requests.RequestParams{
+	_, err = kosliClient.Do(&requests.RequestParams{
 		Method:  http.MethodPost,
 		URL:     url,
 		Payload: o.payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	// A build command, if given, has already succeeded by the time run is reached.
-	if err != nil && len(o.buildCmd) > 0 && !o.failOnAttestError && !isSetupError(err) {
-		logger.Warn("the build succeeded but the attestation was not recorded: %s", err)
-		return nil
-	}
-	if err == nil && !global.DryRun {
-		logger.Info("artifact %s was attested with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
-	}
+		DryRun:  dryRun,
+		Token:   token,
+	})
 	return err
 }
 
