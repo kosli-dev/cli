@@ -371,6 +371,11 @@ func TestAttestArtifactFailOnAttestErrorByStatus(t *testing.T) {
 			goldenRegex: `\[warning\] the build succeeded but the attestation was not recorded: .*429`,
 		},
 		{
+			name:        "warns on a lock conflict",
+			cmd:         fmt.Sprintf("attest artifact %s %s --host %s -- cp testdata/file1 %s", out, args, kosliAnswering(http.StatusConflict), out),
+			goldenRegex: `\[warning\] the build succeeded but the attestation was not recorded: .*409`,
+		},
+		{
 			wantError:   true,
 			name:        "still fails on an invalid token",
 			cmd:         fmt.Sprintf("attest artifact %s %s --host %s -- cp testdata/file1 %s", out, args, kosliAnswering(http.StatusUnauthorized), out),

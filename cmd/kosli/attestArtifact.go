@@ -74,8 +74,8 @@ Its fingerprint is calculated after the build. The build command and its duratio
 values of environment variables whose names look secret (e.g. containing TOKEN, SECRET, PASS, KEY or AUTH); a secret
 typed literally in the command is recorded as is, so use ^--record-build-command=false^ to leave out the command.
 If the build fails, nothing is attested and Kosli exits with the build's exit code. With
-^--fail-on-attest-error=false^, an unreachable Kosli or a Kosli server error after a successful build prints a
-warning and exits 0; a 4xx response such as an invalid token still fails.`
+^--fail-on-attest-error=false^, a network error, or a 5xx, 429 or 409 (lock conflict) response from Kosli, after
+a successful build prints a warning and exits 0; any other 4xx response, such as an invalid token, still fails.`
 
 const attestArtifactExample = `
 # Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
