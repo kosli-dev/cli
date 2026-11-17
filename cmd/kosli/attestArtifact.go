@@ -38,6 +38,7 @@ type attestArtifactOptions struct {
 	repoNameExplicit     bool
 	buildCmd             []string
 	recordBuildCommand   bool
+	failOnAttestError    bool
 }
 
 type AttestArtifactPayload struct {
@@ -71,7 +72,8 @@ Its fingerprint is calculated after the build. The build command and its duratio
 ^build_command^ and ^build_duration_seconds^ annotations. Masking in ^build_command^ only covers the API token and the
 values of environment variables whose names look secret (e.g. containing TOKEN, SECRET, PASS, KEY or AUTH); a secret
 typed literally in the command is recorded as is, so use ^--record-build-command=false^ to leave out the command.
-If the build fails, nothing is attested and Kosli exits with the build's exit code.`
+If the build fails, nothing is attested and Kosli exits with the build's exit code. With
+^--fail-on-attest-error=false^, a failed request to Kosli after a successful build prints a warning and exits 0.`
 
 const attestArtifactExample = `
 # Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
@@ -198,6 +200,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
 	cmd.Flags().BoolVar(&o.recordBuildCommand, "record-build-command", true, recordBuildCommandFlag)
+	cmd.Flags().BoolVar(&o.failOnAttestError, "fail-on-attest-error", true, failOnAttestErrorFlag)
 	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
 	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), attestationRepoNameFlag)
 	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
@@ -381,6 +384,11 @@ func (o *attestArtifactOptions) run(args []string) error {
 		Token:   global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
+	// run is only reached after a build command succeeded.
+	if err != nil && len(o.buildCmd) > 0 && !o.failOnAttestError {
+		logger.Warn("the build succeeded but the attestation was not recorded: %s", err)
+		return nil
+	}
 	if err == nil && !global.DryRun {
 		logger.Info("artifact %s was attested with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
 	}

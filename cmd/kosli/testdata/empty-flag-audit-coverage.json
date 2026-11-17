@@ -95,6 +95,7 @@
   "exclude": "stringSlice",
   "external-fingerprint": "stringToString",
   "external-url": "stringToString",
+  "fail-on-attest-error": "bool",
   "fingerprint": "string",
   "flow": "string",
   "name": "string",
