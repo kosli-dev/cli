@@ -28,13 +28,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func isMultiHost() bool {
-	// Returns true iff the CLI execution is multi-host, multi-api-token
-	return getMultiOpts().multiHost()
-}
-
+// multiHost reports whether the CLI execution is multi-host, multi-api-token.
 func (o MultiOpts) multiHost() bool {
 	return hasMultipleHosts(o.hosts, o.apiTokens)
+}
+
+// runsPerHost reports whether main should run the command once per host with
+// runMultiHost. attest artifact with a build command is the exception: it
+// attests to every host itself, so its build runs once.
+func (o MultiOpts) runsPerHost() bool {
+	return o.multiHost() && !o.buildCommand
 }
 
 func hasMultipleHosts(hosts, apiTokens []string) bool {
@@ -136,8 +139,7 @@ type MultiOpts struct {
 	hosts     []string
 	apiTokens []string
 	debug     bool
-	// buildCommand is set for attest artifact with a build command, which
-	// attests to every host itself so the build runs once.
+	// buildCommand is set for attest artifact with a build command; see runsPerHost.
 	buildCommand bool
 }
 
@@ -149,7 +151,7 @@ func getMultiOpts() MultiOpts {
 	// For any error, return MultiOpts{} which will have
 	//   - hosts == nil, so len(hosts) == 0
 	//   - apiTokens == nil, so len(apiTokens) == 0
-	// so isMultiHost() will return false.
+	// so multiHost() will return false.
 
 	// There is a logger.Error(..) call at the end of main. Restore it to
 	// the original global logger so the error messages actually appear.
