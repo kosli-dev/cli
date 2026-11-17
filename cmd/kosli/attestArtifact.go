@@ -381,11 +381,14 @@ func (o *attestArtifactOptions) run(args []string) error {
 			label = "[" + host + "] "
 			kosliClient.SetUsageHeaders(host, o.usageHeaders)
 		}
-		err := o.attestTo(host, tokens[i])
+		// The root command only sees the whole token list, so a DRY_RUN token for
+		// one host is checked here, as runMultiHost's per-host runs would.
+		dryRun := global.DryRun || tokens[i] == "DRY_RUN"
+		err := o.attestTo(host, tokens[i], dryRun)
 		switch {
 		case err == nil:
 			// Like runMultiHost, only the primary host's output is shown without --debug.
-			if global.DryRun {
+			if dryRun {
 				break
 			}
 			if i == 0 {
@@ -420,7 +423,7 @@ func attestHosts() (hosts, tokens []string) {
 	return []string{global.Host}, []string{global.ApiToken}
 }
 
-func (o *attestArtifactOptions) attestTo(host, token string) error {
+func (o *attestArtifactOptions) attestTo(host, token string, dryRun bool) error {
 	url, err := url.JoinPath(host, "api/v2/artifacts", global.Org, o.flowName)
 	if err != nil {
 		return err
@@ -429,7 +432,7 @@ func (o *attestArtifactOptions) attestTo(host, token string) error {
 		Method:  http.MethodPost,
 		URL:     url,
 		Payload: o.payload,
-		DryRun:  global.DryRun,
+		DryRun:  dryRun,
 		Token:   token,
 	})
 	return err
