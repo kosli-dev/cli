@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -73,7 +74,8 @@ Its fingerprint is calculated after the build. The build command and its duratio
 values of environment variables whose names look secret (e.g. containing TOKEN, SECRET, PASS, KEY or AUTH); a secret
 typed literally in the command is recorded as is, so use ^--record-build-command=false^ to leave out the command.
 If the build fails, nothing is attested and Kosli exits with the build's exit code. With
-^--fail-on-attest-error=false^, a failed request to Kosli after a successful build prints a warning and exits 0.`
+^--fail-on-attest-error=false^, an unreachable Kosli or a Kosli server error after a successful build prints a
+warning and exits 0; a 4xx response such as an invalid token still fails.`
 
 const attestArtifactExample = `
 # Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
@@ -385,7 +387,7 @@ func (o *attestArtifactOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	// A build command, if given, has already succeeded by the time run is reached.
-	if err != nil && len(o.buildCmd) > 0 && !o.failOnAttestError {
+	if err != nil && len(o.buildCmd) > 0 && !o.failOnAttestError && !isSetupError(err) {
 		logger.Warn("the build succeeded but the attestation was not recorded: %s", err)
 		return nil
 	}
@@ -393,4 +395,16 @@ func (o *attestArtifactOptions) run(args []string) error {
 		logger.Info("artifact %s was attested with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
 	}
 	return err
+}
+
+// isSetupError reports a 4xx response other than 429, such as an invalid token
+// or an unknown flow: a mistake that persists until fixed, not an outage.
+// Responses the client retries (5xx, 429, 409) arrive as a plain error once
+// it gives up, so they are not APIErrors here.
+func isSetupError(err error) bool {
+	var apiErr *requests.APIError
+	if !errors.As(err, &apiErr) {
+		return false
+	}
+	return apiErr.StatusCode >= 400 && apiErr.StatusCode < 500 && apiErr.StatusCode != http.StatusTooManyRequests
 }
