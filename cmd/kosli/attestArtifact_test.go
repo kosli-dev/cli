@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -299,6 +301,94 @@ func TestAttestArtifactMissingArtifactFailsUnderDryRun(t *testing.T) {
 	code, ok := buildExitCode(innerMain(cmd, append([]string{"kosli"}, args...)))
 	require.True(t, ok)
 	require.Equal(t, 1, code)
+}
+
+// TestAttestArtifactFailOnAttestError sends the attestation to a port nothing
+// listens on, so the Kosli request fails without a server.
+func TestAttestArtifactFailOnAttestError(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "out.bin")
+	annotated := filepath.Join(t.TempDir(), "annotated.bin")
+	args := "--artifact-type file --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --flow attest-artifact --trail test-123 --repo-root ../.. --host http://localhost:1 --max-api-retries 0 --org docs-cmd-test-user --api-token secret-token"
+
+	tests := []cmdTestCase{
+		{
+			name:        "warns instead of failing when the build succeeded and the flag is false",
+			cmd:         fmt.Sprintf("attest artifact %s %s --fail-on-attest-error=false -- cp testdata/file1 %s", out, args, out),
+			goldenRegex: `\[warning\] the build succeeded but the attestation was not recorded: .*connection refused`,
+		},
+		{
+			wantError:   true,
+			name:        "fails on a failed Kosli request by default",
+			cmd:         fmt.Sprintf("attest artifact %s %s -- cp testdata/file1 %s", out, args, out),
+			goldenRegex: `Error: .*connection refused`,
+		},
+		{
+			wantError:   true,
+			name:        "still fails without a build command",
+			cmd:         fmt.Sprintf("attest artifact testdata/file1 %s --fail-on-attest-error=false", args),
+			goldenRegex: `Error: .*connection refused`,
+		},
+		{
+			wantError: true,
+			name:      "still fails on invalid input after the build",
+			cmd:       fmt.Sprintf("attest artifact %s %s --fail-on-attest-error=false --annotate foo.bar=baz -- cp testdata/file1 %s", annotated, args, annotated),
+			golden:    "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.bar'. Key can only contain [A-Za-z0-9_]\n",
+		},
+		{
+			wantError: true,
+			name:      "still fails with the build's exit code when the build fails",
+			cmd:       fmt.Sprintf("attest artifact %s %s --fail-on-attest-error=false -- sh -c 'exit 3'", out, args),
+			golden:    "Error: build command failed with exit code 3\n",
+		},
+	}
+	runTestCmd(t, tests)
+}
+
+// TestAttestArtifactFailOnAttestErrorByStatus checks which Kosli responses
+// --fail-on-attest-error=false softens: an outage does, a setup mistake does not.
+func TestAttestArtifactFailOnAttestErrorByStatus(t *testing.T) {
+	kosliAnswering := func(status int) string {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(status)
+			_, _ = fmt.Fprintf(w, `{"message": "status %d from the stub"}`, status)
+		}))
+		t.Cleanup(server.Close)
+		return server.URL
+	}
+	out := filepath.Join(t.TempDir(), "out.bin")
+	args := "--artifact-type file --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --flow attest-artifact --trail test-123 --repo-root ../.. --max-api-retries 0 --org docs-cmd-test-user --api-token secret-token --fail-on-attest-error=false"
+
+	tests := []cmdTestCase{
+		{
+			name:        "warns on a server error",
+			cmd:         fmt.Sprintf("attest artifact %s %s --host %s -- cp testdata/file1 %s", out, args, kosliAnswering(http.StatusServiceUnavailable), out),
+			goldenRegex: `\[warning\] the build succeeded but the attestation was not recorded: .*503`,
+		},
+		{
+			name:        "warns on rate limiting",
+			cmd:         fmt.Sprintf("attest artifact %s %s --host %s -- cp testdata/file1 %s", out, args, kosliAnswering(http.StatusTooManyRequests), out),
+			goldenRegex: `\[warning\] the build succeeded but the attestation was not recorded: .*429`,
+		},
+		{
+			name:        "warns on a lock conflict",
+			cmd:         fmt.Sprintf("attest artifact %s %s --host %s -- cp testdata/file1 %s", out, args, kosliAnswering(http.StatusConflict), out),
+			goldenRegex: `\[warning\] the build succeeded but the attestation was not recorded: .*409`,
+		},
+		{
+			wantError:   true,
+			name:        "still fails on an invalid token",
+			cmd:         fmt.Sprintf("attest artifact %s %s --host %s -- cp testdata/file1 %s", out, args, kosliAnswering(http.StatusUnauthorized), out),
+			goldenRegex: `Error: status 401 from the stub`,
+		},
+		{
+			wantError:   true,
+			name:        "still fails on an unknown flow",
+			cmd:         fmt.Sprintf("attest artifact %s %s --host %s -- cp testdata/file1 %s", out, args, kosliAnswering(http.StatusNotFound), out),
+			goldenRegex: `Error: status 404 from the stub`,
+		},
+	}
+	runTestCmd(t, tests)
 }
 
 func TestMaskSecrets(t *testing.T) {

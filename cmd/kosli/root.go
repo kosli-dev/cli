@@ -337,6 +337,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	externalURLFlag                 = "[optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint"
 	annotationFlag                  = "[optional] Annotate the attestation with data using key=value."
 	recordBuildCommandFlag          = "[defaulted] [experimental] Record the build command given after -- in the build_command annotation, with secret values masked. Subject to change."
+	failOnAttestErrorFlag           = "[defaulted] [experimental] With a build command, fail when the request to Kosli fails. Set to false to print a warning and exit 0 after a successful build, so a Kosli outage does not fail the build. Only a network error, or a 5xx, 429 or 409 (lock conflict) response after the client's retries, is softened; any other 4xx response, such as an invalid token (401) or an unknown flow (404), still fails. Subject to change."
 	attestationDescription          = "[optional] attestation description"
 	attestationOverrideReasonFlag   = "The reason for overriding the attestation."
 	newComplianceStatusFlag         = "The new compliance status to set on the attestation."
