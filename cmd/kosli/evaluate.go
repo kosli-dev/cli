@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// evaluateTrailDeprecation is shared by evaluate trail and evaluate trails,
+// which evaluate client-side; evaluate policy evaluates the same trails in Kosli.
+const evaluateTrailDeprecation = "use 'kosli evaluate policy --context trail=FLOW-NAME/TRAIL-NAME' instead, which evaluates the policy in Kosli"
+
 const evaluateShortDesc = `Evaluate data against Rego policies.`
 
 // Backtick breaks (`"` + "`x`" + `"`) are needed to embed markdown
@@ -17,8 +21,9 @@ change without notice. Pin a CLI version if you depend on it from CI.
 
 Evaluate trail data or local JSON input against custom Rego policies.
 
-Use ` + "`evaluate trail`" + ` or ` + "`evaluate trails`" + ` to fetch data from Kosli and evaluate it.
+Use ` + "`evaluate policy`" + ` to evaluate a policy against trails in Kosli.
 Use ` + "`evaluate input`" + ` to evaluate a local JSON file or stdin without any API calls.
+` + "`evaluate trail`" + ` and ` + "`evaluate trails`" + ` are deprecated; use ` + "`evaluate policy`" + ` instead.
 
 The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` rule.
 An optional ` + "`violations`" + ` rule (a set of strings) can provide human-readable denial reasons.

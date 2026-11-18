@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+var evaluateTrailsNotice = `Command "trails" is deprecated, ` + evaluateTrailDeprecation + "\n"
+
 type EvaluateTrailsCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
@@ -37,19 +39,19 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsCmd() {
 			wantError: true,
 			name:      "missing trail name argument fails",
 			cmd:       fmt.Sprintf(`evaluate trails --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: requires at least 1 arg(s), only received 0\n",
+			golden:    evaluateTrailsNotice + "Error: requires at least 1 arg(s), only received 0\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --flow flag fails",
 			cmd:       fmt.Sprintf(`evaluate trails %s %s`, suite.trailName, suite.defaultKosliArguments),
-			golden:    "Error: required flag(s) \"flow\", \"policy\" not set\n",
+			golden:    evaluateTrailsNotice + "Error: required flag(s) \"flow\", \"policy\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --policy flag fails",
 			cmd:       fmt.Sprintf(`evaluate trails %s --flow %s %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: required flag(s) \"policy\" not set\n",
+			golden:    evaluateTrailsNotice + "Error: required flag(s) \"policy\" not set\n",
 		},
 		{
 			wantError: true,
@@ -60,7 +62,7 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsCmd() {
 			wantError: true,
 			name:      "evaluating a non-existing trail fails",
 			cmd:       fmt.Sprintf(`evaluate trails non-existent --flow %s --policy testdata/policies/allow-all.rego %s`, suite.flowName, suite.defaultKosliArguments),
-			golden:    fmt.Sprintf("Error: Trail with name 'non-existent' does not exist for Organization '%s' and Flow '%s'\n", global.Org, suite.flowName),
+			golden:    evaluateTrailsNotice + fmt.Sprintf("Error: Trail with name 'non-existent' does not exist for Organization '%s' and Flow '%s'\n", global.Org, suite.flowName),
 		},
 		{
 			name: "with --policy allow-all exits 0",
@@ -91,7 +93,7 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsCmd() {
 			wantError: true,
 			name:      "with --output invalid returns error",
 			cmd:       fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --output invalid %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: unsupported output format: invalid\n",
+			golden:    evaluateTrailsNotice + "Error: unsupported output format: invalid\n",
 		},
 		{
 			name:       "with --policy and --show-input --output json includes input in JSON output",

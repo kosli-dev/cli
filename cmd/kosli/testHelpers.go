@@ -87,7 +87,22 @@ func executeCommandStdinC(cmd string, stdin string) (*cobra.Command, string, str
 
 	c, err := root.ExecuteC()
 
-	return c, combinedBuf.String(), outBuf.String(), errBuf.String(), err
+	stdout, stderr := moveDeprecationNoticeToStderr(c, outBuf.String(), errBuf.String())
+	return c, combinedBuf.String(), stdout, stderr, err
+}
+
+// moveDeprecationNoticeToStderr puts cobra's deprecated-command notice where a
+// user sees it. Cobra writes it to OutOrStderr, which is stderr in production
+// (main never calls SetOut) but stdout here, because the harness calls SetOut.
+func moveDeprecationNoticeToStderr(c *cobra.Command, stdout, stderr string) (string, string) {
+	if c == nil || c.Deprecated == "" {
+		return stdout, stderr
+	}
+	notice := fmt.Sprintf("Command %q is deprecated, %s\n", c.Name(), c.Deprecated)
+	if !strings.HasPrefix(stdout, notice) {
+		return stdout, stderr
+	}
+	return strings.TrimPrefix(stdout, notice), notice + stderr
 }
 
 // runTestCmd runs a table of cmd test cases
@@ -127,7 +142,7 @@ func runTestCmd(t *testing.T, tests []cmdTestCase) {
 				require.Regexp(t, tt.goldenRegex, combined)
 			} else if len(tt.goldenJson) > 0 {
 				for _, check := range tt.goldenJson {
-					goldenJsonContains(t, combined, check.Path, check.Want)
+					goldenJsonContains(t, stdout, check.Path, check.Want)
 				}
 			}
 			if tt.goldenStdout != "" {

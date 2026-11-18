@@ -137,6 +137,25 @@ func (suite *EvaluateServerSideTestSuite) TestTheFlagIsInHelp() {
 	}
 }
 
+// Both commands are deprecated, and the notice must stay off stdout so that
+// --output json can still be piped into another tool.
+func (suite *EvaluateServerSideTestSuite) TestTheDeprecationNoticeNamesEvaluatePolicyOnStderr() {
+	for _, command := range []string{"trail", "trails"} {
+		suite.Run(command, func() {
+			server, _ := newFakeEvaluations(suite.T(), verdictAllowed)
+			cmd := strings.Replace(suite.serverSideCmd(server.URL, "--output json"),
+				"evaluate trail ", "evaluate "+command+" ", 1)
+
+			_, _, stdout, stderr, err := executeCommandC(cmd)
+
+			require.NoError(suite.T(), err)
+			require.Contains(suite.T(), stderr,
+				fmt.Sprintf("Command %q is deprecated, use 'kosli evaluate policy", command))
+			require.Equal(suite.T(), localAllowedJSON, stdout)
+		})
+	}
+}
+
 // `evaluate input` names no trails, so there is no evaluation to create from
 // it and the flag must not be there to reach for.
 func (suite *EvaluateServerSideTestSuite) TestEvaluateInputHasNoSuchFlag() {
@@ -188,10 +207,10 @@ func (suite *EvaluateServerSideTestSuite) TestItPrintsTheSameJsonAsTheLocalPath(
 		suite.Run(test.name, func() {
 			server, _ := newFakeEvaluations(suite.T(), test.verdict)
 
-			_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, "--output json"))
+			_, _, stdout, _, err := executeCommandC(suite.serverSideCmd(server.URL, "--output json"))
 
 			require.NoError(suite.T(), err)
-			require.Equal(suite.T(), localAllowedJSON, combined)
+			require.Equal(suite.T(), localAllowedJSON, stdout)
 		})
 	}
 }
@@ -231,11 +250,11 @@ func (suite *EvaluateServerSideTestSuite) TestADenialStillAssertsInJson() {
 func (suite *EvaluateServerSideTestSuite) TestEveryOutputIsPrintedInJson() {
 	server, _ := newFakeEvaluations(suite.T(), verdictDeniedWithOutputs)
 
-	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, "--output json --no-assert"))
+	_, _, stdout, _, err := executeCommandC(suite.serverSideCmd(server.URL, "--output json --no-assert"))
 
 	require.NoError(suite.T(), err)
 	var printed map[string]any
-	require.NoError(suite.T(), json.Unmarshal([]byte(combined), &printed))
+	require.NoError(suite.T(), json.Unmarshal([]byte(stdout), &printed))
 	require.Equal(suite.T(), map[string]any{
 		"allow":      false,
 		"violations": []any{"change is not approved"},
@@ -272,11 +291,11 @@ func (suite *EvaluateServerSideTestSuite) TestAStructuredViolationIsPrintedAsJso
 func (suite *EvaluateServerSideTestSuite) TestAnOutputNamedLikeAReservedKeyIsLeftOut() {
 	server, _ := newFakeEvaluations(suite.T(), verdictDeniedReservedOutputs)
 
-	_, combined, _, _, err := executeCommandC(suite.serverSideCmd(server.URL, "--output json --no-assert"))
+	_, _, stdout, _, err := executeCommandC(suite.serverSideCmd(server.URL, "--output json --no-assert"))
 
 	require.NoError(suite.T(), err)
 	var printed map[string]any
-	require.NoError(suite.T(), json.Unmarshal([]byte(combined), &printed))
+	require.NoError(suite.T(), json.Unmarshal([]byte(stdout), &printed))
 	require.Equal(suite.T(), map[string]any{
 		"allow":      false,
 		"violations": []any{"change is not approved"},

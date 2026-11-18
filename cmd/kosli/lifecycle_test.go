@@ -139,3 +139,27 @@ func TestLifecycleNoBetaTextPrefix(t *testing.T) {
 		}
 	}
 }
+
+func TestEvaluateTrailCommandsAreDeprecatedInFavourOfEvaluatePolicy(t *testing.T) {
+	global = &GlobalOpts{}
+	cmds := map[string]*cobra.Command{
+		"evaluate trail":  newEvaluateTrailCmd(io.Discard),
+		"evaluate trails": newEvaluateTrailsCmd(io.Discard),
+	}
+	for name, cmd := range cmds {
+		if !strings.Contains(deprecationHint(cmd), "kosli evaluate policy") {
+			t.Errorf("expected %q to be deprecated with a hint naming 'kosli evaluate policy', got %q", name, cmd.Deprecated)
+		}
+	}
+}
+
+func TestEvaluateHelpPointsAtEvaluatePolicyForTrailsInKosli(t *testing.T) {
+	global = &GlobalOpts{}
+	long := newEvaluateCmd(io.Discard).Long
+	if !strings.Contains(long, "Use `evaluate policy` to evaluate a policy against trails in Kosli.") {
+		t.Errorf("expected evaluate help to point at evaluate policy, got:\n%s", long)
+	}
+	if strings.Contains(long, "Use `evaluate trail` or `evaluate trails`") {
+		t.Errorf("expected evaluate help to stop recommending the deprecated commands, got:\n%s", long)
+	}
+}
