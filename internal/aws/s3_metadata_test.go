@@ -471,8 +471,8 @@ func (suite *S3MetadataTestSuite) TestSkippingUnusableWarnsWithTheSkippedKeys() 
 	data, warnings, err := snapshotSkippingUnusable(suite.T(), client)
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), data, 1)
-	require.Equal(suite.T(), "[warning] skipped 3 of 6 objects in bucket ["+fakeS3TestBucketName+"] that have no usable SHA256 "+
-		"checksum, so the fingerprint does not cover them:\n[object-0.txt]\n[object-2.txt]\n[object-4.txt]\n", warnings)
+	require.Equal(suite.T(), "[warning] skipped 3 of the 6 objects whose checksum was read in bucket ["+fakeS3TestBucketName+"]; they have no usable "+
+		"SHA256 checksum, so the fingerprint does not cover them:\n[object-0.txt]\n[object-2.txt]\n[object-4.txt]\n", warnings)
 
 	suite.Run("nothing is logged when every checksum is usable", func() {
 		_, warnings, err := snapshotSkippingUnusable(suite.T(), checksummedBucket(objects))
@@ -489,7 +489,7 @@ func (suite *S3MetadataTestSuite) TestSkippingUnusableWarnsWithTheSkippedKeys() 
 			Checksums: fullObjectChecksums(map[string][]byte{"kept.txt": []byte("k")})}
 		_, warnings, err := snapshotSkippingUnusable(suite.T(), client)
 		require.NoError(suite.T(), err)
-		require.Contains(suite.T(), warnings, "skipped 40 of 41 objects")
+		require.Contains(suite.T(), warnings, "skipped 40 of the 41 objects")
 		require.Contains(suite.T(), warnings, "[object-09.txt]\n(and 30 more)\n")
 		require.NotContains(suite.T(), warnings, "[object-10.txt]")
 	})
@@ -501,7 +501,7 @@ func (suite *S3MetadataTestSuite) TestSkippingUnusableWarnsWithTheSkippedKeys() 
 		delete(checksums, "lib.js")
 		_, warnings, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: ignoring, Checksums: checksums})
 		require.NoError(suite.T(), err)
-		require.Contains(suite.T(), warnings, "skipped 1 of 2 objects")
+		require.Contains(suite.T(), warnings, "skipped 1 of the 2 objects")
 		require.NotContains(suite.T(), warnings, "logs/a.log")
 	})
 }
@@ -519,7 +519,7 @@ func (suite *S3MetadataTestSuite) TestSkippingEveryObjectReportsAnEmptySnapshot(
 			require.NoError(suite.T(), err)
 			require.Empty(suite.T(), data)
 			require.NotNil(suite.T(), data, "the payload must carry an empty list, not null")
-			require.Contains(suite.T(), warnings, fmt.Sprintf("skipped %d of %d objects", len(t.objects), len(t.objects)))
+			require.Contains(suite.T(), warnings, fmt.Sprintf("skipped %d of the %d objects", len(t.objects), len(t.objects)))
 			require.Contains(suite.T(), warnings, "[README.md]")
 			require.Contains(suite.T(), warnings, "[warning] no object in bucket ["+fakeS3TestBucketName+"] is left to fingerprint; reporting an empty snapshot\n")
 		})

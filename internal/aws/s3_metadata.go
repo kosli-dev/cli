@@ -146,7 +146,7 @@ func skippedS3ObjectsWarning(bucket string, fingerprint s3Fingerprint) string {
 		shown = shown[:maxReportedS3KeyProblems]
 		suffix = fmt.Sprintf("\n(and %d more)", len(fingerprint.skipped)-maxReportedS3KeyProblems)
 	}
-	return fmt.Sprintf("skipped %d of %d objects in bucket [%s] that have no usable SHA256 checksum, so the "+
-		"fingerprint does not cover them:\n[%s]%s",
+	return fmt.Sprintf("skipped %d of the %d objects whose checksum was read in bucket [%s]; they have no usable SHA256 "+
+		"checksum, so the fingerprint does not cover them:\n[%s]%s",
 		len(fingerprint.skipped), fingerprint.read, bucket, strings.Join(shown, "]\n["), suffix)
 }

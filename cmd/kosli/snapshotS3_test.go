@@ -175,13 +175,13 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 		{
 			name: "--skip-unusable-checksums reports the objects that have a stored checksum",
 			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --fingerprint-source metadata --skip-unusable-checksums`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
-			golden: "[warning] skipped 1 of 2 objects in bucket [kosli-cli-public] that have no usable SHA256 checksum, so the fingerprint does not cover them:\n[dummy/dummy_2/template.yml]\n" +
+			golden: "[warning] skipped 1 of the 2 objects whose checksum was read in bucket [kosli-cli-public]; they have no usable SHA256 checksum, so the fingerprint does not cover them:\n[dummy/dummy_2/template.yml]\n" +
 				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
 		{
 			name: "--skip-unusable-checksums reports an empty snapshot when no object has a stored checksum",
 			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include dummy --fingerprint-source metadata --skip-unusable-checksums`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
-			golden: "[warning] skipped 1 of 1 objects in bucket [kosli-cli-public] that have no usable SHA256 checksum, so the fingerprint does not cover them:\n[dummy/dummy_2/template.yml]\n" +
+			golden: "[warning] skipped 1 of the 1 objects whose checksum was read in bucket [kosli-cli-public]; they have no usable SHA256 checksum, so the fingerprint does not cover them:\n[dummy/dummy_2/template.yml]\n" +
 				"[warning] no object in bucket [kosli-cli-public] is left to fingerprint; reporting an empty snapshot\n" +
 				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
