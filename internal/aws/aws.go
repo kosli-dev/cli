@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -506,24 +507,42 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 		return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
 	}
 
-	newest := objects[0].lastModified
+	newest := newestS3Modification(objects)
+	if newest.IsZero() {
+		return s3Data, fmt.Errorf("bucket [%s] reported no modification time for any matching object", bucket)
+	}
+
+	fingerprint, err := fingerprintS3Tree(client, source, bucket, objects, limits, logger)
+	if err != nil {
+		return s3Data, err
+	}
+	if len(fingerprint.skipped) > 0 {
+		logger.Warn("%s", skippedS3ObjectsWarning(bucket, fingerprint))
+		if len(fingerprint.fingerprinted) == 0 {
+			logger.Warn("no object in bucket [%s] is left to fingerprint; reporting an empty snapshot", bucket)
+			return s3Data, nil
+		}
+		newest = newestS3Modification(fingerprint.fingerprinted)
+		if newest.IsZero() {
+			return s3Data, fmt.Errorf("bucket [%s] reported no modification time for any fingerprinted object", bucket)
+		}
+	}
+
+	s3Data = append(s3Data, &S3Data{Digests: map[string]string{fingerprint.artifactName: fingerprint.sha256}, LastModifiedTimestamp: newest.Unix()})
+
+	return s3Data, nil
+}
+
+// newestS3Modification returns the latest modification time among objects, or
+// the zero time when none reported one.
+func newestS3Modification(objects []s3Object) time.Time {
+	var newest time.Time
 	for _, object := range objects {
 		if object.lastModified.After(newest) {
 			newest = object.lastModified
 		}
 	}
-	if newest.IsZero() {
-		return s3Data, fmt.Errorf("bucket [%s] reported no modification time for any matching object", bucket)
-	}
-
-	artifactName, sha256, err := fingerprintS3Tree(client, source, bucket, objects, limits, logger)
-	if err != nil {
-		return s3Data, err
-	}
-
-	s3Data = append(s3Data, &S3Data{Digests: map[string]string{artifactName: sha256}, LastModifiedTimestamp: newest.Unix()})
-
-	return s3Data, nil
+	return newest
 }
 
 // s3Object is one listed object that survived the include and exclude filters.
@@ -615,6 +634,23 @@ type s3DigestSource struct {
 	// usesDisk means an object's listed size occupies temp disk while sha256
 	// runs, so it counts against DownloadLimits.BytesInFlight.
 	usesDisk bool
+	// skipUnusable leaves an object whose sha256 fails with an
+	// unusableChecksumError out of the fingerprint instead of failing it.
+	skipUnusable bool
+}
+
+// s3Fingerprint is the outcome of fingerprinting a bucket's objects.
+type s3Fingerprint struct {
+	// artifactName and sha256 are empty when no object was fingerprinted.
+	artifactName string
+	sha256       string
+	// fingerprinted holds the objects the fingerprint was computed over, in
+	// listing order.
+	fingerprinted []s3Object
+	// skipped holds the keys left out for an unusable checksum, sorted.
+	skipped []string
+	// read counts the objects whose digest was asked of the source.
+	read int
 }
 
 // downloadDigests is the content-mode source: download, hash, remove.
@@ -629,7 +665,8 @@ func downloadDigests(downloader S3DownloadAPI, bucket string, logger *logger.Log
 
 // fingerprintS3Objects fingerprints the objects with the download source.
 func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
-	return fingerprintS3Tree(downloader, downloadDigests(downloader, bucket, logger), bucket, objects, limits, logger)
+	fingerprint, err := fingerprintS3Tree(downloader, downloadDigests(downloader, bucket, logger), bucket, objects, limits, logger)
+	return fingerprint.artifactName, fingerprint.sha256, err
 }
 
 // fingerprintS3Tree fingerprints the objects as the directory their keys
@@ -640,19 +677,22 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 //
 // The root .kosli_ignore is always downloaded, whatever the source, because its
 // rules decide which other objects are fetched at all.
-func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
+//
+// With source.skipUnusable, the objects it cannot supply a digest for are
+// dropped and the rest are fingerprinted as if the bucket never held them.
+func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (s3Fingerprint, error) {
 	keys := make([]string, len(objects))
 	for i, object := range objects {
 		keys[i] = object.key
 	}
 	paths, err := virtualPathsForS3Keys(keys)
 	if err != nil {
-		return "", "", err
+		return s3Fingerprint{}, err
 	}
 
 	tempDir, err := os.MkdirTemp("", "bucketContent")
 	if err != nil {
-		return "", "", err
+		return s3Fingerprint{}, err
 	}
 	defer func() {
 		if err := os.RemoveAll(tempDir); err != nil {
@@ -675,10 +715,15 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 			fetch = downloadDigests(downloader, bucket, logger)
 		}
 		sha256, err := fetch.sha256(context.TODO(), tempDir, objects[0])
-		if err != nil {
-			return "", "", err
+		var unusableErr unusableChecksumError
+		if source.skipUnusable && errors.As(err, &unusableErr) {
+			logger.Debug("%s", err)
+			return s3Fingerprint{skipped: keys, read: 1}, nil
 		}
-		return file.Name(), sha256, nil
+		if err != nil {
+			return s3Fingerprint{}, err
+		}
+		return s3Fingerprint{artifactName: file.Name(), sha256: sha256, fingerprinted: objects, read: 1}, nil
 	}
 
 	var rules []string
@@ -699,7 +744,7 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 			return nil
 		}, logger)
 		if err != nil {
-			return "", "", err
+			return s3Fingerprint{}, err
 		}
 		contentSha256[key] = sha256
 		logger.Debug("object key [%s] is the bucket's %s -- excluding paths: %s", key, digest.IgnoreFileName, rules)
@@ -707,7 +752,7 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 
 	needed, err := digest.FilesNeedingContent(files, rules)
 	if err != nil {
-		return "", "", ignoreRuleError(err)
+		return s3Fingerprint{}, ignoreRuleError(err)
 	}
 
 	var toDownload []int
@@ -725,15 +770,53 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 
 	// Each fetch writes its own slot, so the manifest stays in listing order
 	// however the fetches interleave.
-	if err := fetchS3DigestsInParallel(source, tempDir, objects, toDownload, files, limits, logger); err != nil {
-		return "", "", err
+	skipped, err := fetchS3DigestsInParallel(source, tempDir, objects, toDownload, files, limits, logger)
+	if err != nil {
+		return s3Fingerprint{}, err
 	}
 
+	fingerprint := s3Fingerprint{read: len(toDownload)}
+	if len(skipped) > 0 {
+		objects, files, fingerprint.skipped = withoutSkippedS3Objects(objects, files, skipped)
+	}
+	fingerprint.fingerprinted = objects
+
+	// Skipping can leave one object, which is fingerprinted as that file, or none.
+	if len(files) == 0 {
+		return fingerprint, nil
+	}
+	if file, ok := digest.SingleVirtualFile(files); ok {
+		fingerprint.artifactName, fingerprint.sha256 = file.Name(), file.Sha256
+		return fingerprint, nil
+	}
 	sha256, err := digest.VirtualDirSha256(files, rules, logger)
 	if err != nil {
-		return "", "", ignoreRuleError(err)
+		return s3Fingerprint{}, ignoreRuleError(err)
 	}
-	return bucket, sha256, nil
+	fingerprint.artifactName, fingerprint.sha256 = bucket, sha256
+	return fingerprint, nil
+}
+
+// withoutSkippedS3Objects drops the objects at the skipped indexes, and their
+// files, and returns the dropped keys sorted.
+func withoutSkippedS3Objects(objects []s3Object, files []digest.VirtualFile, skipped []int) ([]s3Object, []digest.VirtualFile, []string) {
+	drop := make(map[int]bool, len(skipped))
+	keys := make([]string, 0, len(skipped))
+	for _, i := range skipped {
+		drop[i] = true
+		keys = append(keys, objects[i].key)
+	}
+	sort.Strings(keys)
+
+	keptObjects := make([]s3Object, 0, len(objects)-len(skipped))
+	keptFiles := make([]digest.VirtualFile, 0, len(files)-len(skipped))
+	for i := range objects {
+		if !drop[i] {
+			keptObjects = append(keptObjects, objects[i])
+			keptFiles = append(keptFiles, files[i])
+		}
+	}
+	return keptObjects, keptFiles, keys
 }
 
 // ignoreRuleError names the bucket's ignore file when one of its rules cannot
@@ -750,9 +833,10 @@ func ignoreRuleError(err error) error {
 // bounds fetches and goroutines alike, a weighted semaphore bounds the listed
 // bytes of sources that use the disk, and the first transport error cancels the
 // context so nothing further starts. unusableChecksumErrors are collected
-// and reported together instead.
+// and reported together instead, or, with source.skipUnusable, returned as the
+// indexes of the objects to leave out.
 func fetchS3DigestsInParallel(source s3DigestSource, tempDir string, objects []s3Object, indexes []int,
-	files []digest.VirtualFile, limits DownloadLimits, logger *logger.Logger) error {
+	files []digest.VirtualFile, limits DownloadLimits, logger *logger.Logger) ([]int, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -768,6 +852,7 @@ func fetchS3DigestsInParallel(source s3DigestSource, tempDir string, objects []s
 	var (
 		unusableMu sync.Mutex
 		unusable   []error
+		skipped    []int
 	)
 
 	work := make(chan int)
@@ -797,6 +882,7 @@ func fetchS3DigestsInParallel(source s3DigestSource, tempDir string, objects []s
 				case errors.As(err, &unusableErr):
 					unusableMu.Lock()
 					unusable = append(unusable, err)
+					skipped = append(skipped, i)
 					unusableMu.Unlock()
 				default:
 					fail(err)
@@ -819,13 +905,19 @@ feed:
 
 	select {
 	case err := <-firstErr:
-		return err
+		return nil, err
 	default:
 	}
-	if len(unusable) > 0 {
-		return combineUnusableChecksumErrors(unusable)
+	if len(unusable) == 0 {
+		return nil, nil
 	}
-	return nil
+	if !source.skipUnusable {
+		return nil, combineUnusableChecksumErrors(unusable)
+	}
+	for _, err := range unusable {
+		logger.Debug("%s", err)
+	}
+	return skipped, nil
 }
 
 // downloadAndHashS3Object fetches one object into a fresh temp file, lets

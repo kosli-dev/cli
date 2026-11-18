@@ -1009,7 +1009,8 @@
   "exclude-regex": "stringSlice",
   "fingerprint-source": "string",
   "include": "stringSlice",
-  "include-regex": "stringSlice"
+  "include-regex": "stringSlice",
+  "skip-unusable-checksums": "bool"
  },
  "snapshot server": {
   "dry-run": "bool",

@@ -172,6 +172,25 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include dummy --fingerprint-source metadata`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
 			golden:    "Error: object key [dummy/dummy_2/template.yml] has no SHA256 checksum, so its fingerprint cannot be read from S3 metadata. Upload it with one: aws s3api put-object --bucket kosli-cli-public --key dummy/dummy_2/template.yml --body <file> --checksum-algorithm SHA256; or fingerprint by downloading the objects instead\n",
 		},
+		{
+			name: "--skip-unusable-checksums reports the objects that have a stored checksum",
+			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --fingerprint-source metadata --skip-unusable-checksums`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "[warning] skipped 1 of 2 objects in bucket [kosli-cli-public] that have no usable SHA256 checksum, so the fingerprint does not cover them:\n[dummy/dummy_2/template.yml]\n" +
+				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
+		},
+		{
+			name: "--skip-unusable-checksums reports an empty snapshot when no object has a stored checksum",
+			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include dummy --fingerprint-source metadata --skip-unusable-checksums`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "[warning] skipped 1 of 1 objects in bucket [kosli-cli-public] that have no usable SHA256 checksum, so the fingerprint does not cover them:\n[dummy/dummy_2/template.yml]\n" +
+				"[warning] no object in bucket [kosli-cli-public] is left to fingerprint; reporting an empty snapshot\n" +
+				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
+		},
+		{
+			wantError: true,
+			name:      "--skip-unusable-checksums fails without --fingerprint-source metadata",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --skip-unusable-checksums`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: --skip-unusable-checksums can only be used with --fingerprint-source metadata\n",
+		},
 	}
 
 	for _, t := range tests {

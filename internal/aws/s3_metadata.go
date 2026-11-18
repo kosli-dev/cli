@@ -17,18 +17,24 @@ import (
 // object's SHA256 from the checksum S3 stores for it instead of downloading
 // the object. Every contributing object needs a full-object SHA256 checksum.
 // Reading one needs s3:GetObject, the same permission as a download.
-func (staticCreds *AWSStaticCreds) GetS3DataFromMetadata(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, logger *logger.Logger) ([]*S3Data, error) {
+//
+// With skipUnusableChecksums, an object without such a checksum is left out
+// with a warning instead of failing the snapshot, and the result is empty when
+// that leaves no object.
+func (staticCreds *AWSStaticCreds) GetS3DataFromMetadata(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, skipUnusableChecksums bool, logger *logger.Logger) ([]*S3Data, error) {
 	client, err := NewS3ClientFunc(staticCreds)
 	if err != nil {
 		return []*S3Data{}, err
 	}
-	return getS3DataFromMetadataClient(client, bucket, includePaths, includeRegex, excludePaths, excludeRegex, limits, logger)
+	return getS3DataFromMetadataClient(client, bucket, includePaths, includeRegex, excludePaths, excludeRegex, limits, skipUnusableChecksums, logger)
 }
 
 // getS3DataFromMetadataClient harvests bucket content using the provided client,
 // reading digests from stored checksums.
-func getS3DataFromMetadataClient(client S3API, bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, logger *logger.Logger) ([]*S3Data, error) {
-	return getS3DataWithSource(client, metadataDigests(client, bucket, logger), bucket, includePaths, includeRegex, excludePaths, excludeRegex, limits, logger)
+func getS3DataFromMetadataClient(client S3API, bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, skipUnusableChecksums bool, logger *logger.Logger) ([]*S3Data, error) {
+	source := metadataDigests(client, bucket, logger)
+	source.skipUnusable = skipUnusableChecksums
+	return getS3DataWithSource(client, source, bucket, includePaths, includeRegex, excludePaths, excludeRegex, limits, logger)
 }
 
 // metadataDigests is the source that reads each object's stored SHA256 with a
@@ -130,4 +136,17 @@ func combineUnusableChecksumErrors(errs []error) error {
 	}
 	return fmt.Errorf("%d objects cannot be fingerprinted from S3 metadata:\n%s%s",
 		len(messages), strings.Join(shown, "\n"), suffix)
+}
+
+// skippedS3ObjectsWarning names the objects a fingerprint left out, listing at
+// most maxReportedS3KeyProblems of them.
+func skippedS3ObjectsWarning(bucket string, fingerprint s3Fingerprint) string {
+	shown, suffix := fingerprint.skipped, ""
+	if len(shown) > maxReportedS3KeyProblems {
+		shown = shown[:maxReportedS3KeyProblems]
+		suffix = fmt.Sprintf("\n(and %d more)", len(fingerprint.skipped)-maxReportedS3KeyProblems)
+	}
+	return fmt.Sprintf("skipped %d of %d objects in bucket [%s] that have no usable SHA256 checksum, so the "+
+		"fingerprint does not cover them:\n[%s]%s",
+		len(fingerprint.skipped), fingerprint.read, bucket, strings.Join(shown, "]\n["), suffix)
 }
