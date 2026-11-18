@@ -83,11 +83,12 @@ type evaluateTrailsOptions struct {
 func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 	o := new(evaluateTrailsOptions)
 	cmd := &cobra.Command{
-		Use:     "trails TRAIL-NAME [TRAIL-NAME...]",
-		Short:   evaluateTrailsShortDesc,
-		Long:    evaluateTrailsLongDesc,
-		Example: evaluateTrailsExample,
-		Args:    cobra.MinimumNArgs(1),
+		Use:        "trails TRAIL-NAME [TRAIL-NAME...]",
+		Short:      evaluateTrailsShortDesc,
+		Long:       evaluateTrailsLongDesc,
+		Deprecated: evaluateTrailDeprecation,
+		Example:    evaluateTrailsExample,
+		Args:       cobra.MinimumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
