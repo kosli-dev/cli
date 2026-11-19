@@ -34,7 +34,7 @@ spec:
           imagePullSecrets:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- /* fsGroup is a pod-level field; reporterConfig.securityContext.fsGroup is still read so existing values keep working. */}}
+          {{- /* fsGroup is pod-only; reporterConfig.securityContext.fsGroup stays supported for existing values files. */}}
           {{- $podSecurityContext := deepCopy (.Values.podSecurityContext | default dict) }}
           {{- $containerSecurityContext := .Values.reporterConfig.securityContext | default dict }}
           {{- if and (hasKey $containerSecurityContext "fsGroup") (not (hasKey $podSecurityContext "fsGroup")) }}

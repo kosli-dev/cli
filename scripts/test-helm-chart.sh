@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Renders the k8s-reporter chart with different values and asserts on the CronJob.
-# Uses only scalar yq paths, which mikefarah yq (CI) and python yq read alike.
+# Render tests for the k8s-reporter chart.
+# Scalar yq paths only: mikefarah yq (CI) and python yq print those alike.
 set -euo pipefail
 
 chart="$(cd "$(dirname "$0")/.." && pwd)/charts/k8s-reporter"

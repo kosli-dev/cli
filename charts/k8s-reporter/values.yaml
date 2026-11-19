@@ -10,7 +10,7 @@ image:
   # -- the kosli reporter image tag, overrides the image tag whose default is the chart appVersion.
   tag: "" # defaults to chart appVersion
 
-# -- names of existing Secrets in the same namespace used to pull the reporter image, e.g. when mirroring it to a private registry.
+# -- existing Secrets in the same namespace used to pull the reporter image, e.g. from a private registry mirror.
 imagePullSecrets: []
   # - name: my-registry-credentials
 
@@ -83,7 +83,7 @@ reporterConfig:
   # -- whether the reporter prints debug logs
   debug: false
 
-  # -- the container-level security context for the reporter. Any field of the Kubernetes container `securityContext` is accepted and rendered verbatim.
+  # -- the container-level security context for the reporter, rendered verbatim.
   # Set to null to disable security context entirely (not recommended).
   # Pod-only fields such as `supplementalGroups` belong in `podSecurityContext`.
   # For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift
@@ -111,7 +111,7 @@ reporterConfig:
     # Helm's deep merge with chart defaults.
     runAsUser: 1000
 
-# -- the pod-level security context for the reporter pod, rendered verbatim. Use it for pod-only fields such as `fsGroup`, `supplementalGroups` or `sysctls`.
+# -- the pod-level security context for the reporter, rendered verbatim, for pod-only fields such as `fsGroup` or `supplementalGroups`.
 podSecurityContext: {}
   # fsGroup: 2000
 
