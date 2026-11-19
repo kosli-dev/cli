@@ -116,7 +116,6 @@ Sends a `cli-release` event to `kosli-dev/docs` so the Mintlify docs site can re
 ### 10. Reporter dispatches
 
 Triggers downstream repository workflows to update:
-- `kosli-dev/terraform-aws-evidence-reporter` — evidence reporter Lambda package
 - `kosli-dev/terraform-aws-kosli-reporter` — environment reporter package
 - Uploads a new CLI Lambda layer to AWS
 
