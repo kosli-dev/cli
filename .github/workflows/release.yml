@@ -265,23 +265,6 @@ jobs:
           event-type: cli-release
           client-payload: '{"kosli_cli_tag": "${{ needs.pre-build.outputs.tag }}"}'
 
-  evidence-reporter-upload-package-and-deploy:
-    needs: [pre-build, goreleaser, environment-reporter-upload-layer]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
-        with:
-          egress-policy: audit
-
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
-        with:
-          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
-          repository: kosli-dev/terraform-aws-evidence-reporter
-          event-type: upload-package
-          client-payload: '{"kosli_cli_tag": "${{ needs.pre-build.outputs.tag }}"}'
-
   environment-reporter-upload-package-and-deploy:
     needs: [pre-build, goreleaser, environment-reporter-upload-layer]
     runs-on: ubuntu-latest
@@ -323,7 +306,6 @@ jobs:
         goreleaser,
         binary-provenance,
         docs-repo-dispatch,
-        evidence-reporter-upload-package-and-deploy,
         environment-reporter-upload-package-and-deploy,
         environment-reporter-upload-layer
       ]
@@ -352,7 +334,6 @@ jobs:
         goreleaser,
         binary-provenance,
         docs-repo-dispatch,
-        evidence-reporter-upload-package-and-deploy,
         environment-reporter-upload-package-and-deploy,
         environment-reporter-upload-layer
       ]
