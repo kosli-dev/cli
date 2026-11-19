@@ -30,6 +30,12 @@ spec:
             {{- end }}
         spec:
           serviceAccountName: {{ include "reporter.serviceAccountName" . }}
+          {{- /* fsGroup is a pod-level field; reporterConfig.securityContext.fsGroup is still read so existing values keep working. */}}
+          {{- $legacyFsGroup := pick (.Values.reporterConfig.securityContext | default dict) "fsGroup" }}
+          {{- with merge (deepCopy (.Values.podSecurityContext | default dict)) $legacyFsGroup }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.nodeSelector }}
           nodeSelector:
             {{- toYaml . | nindent 12 }}
@@ -72,23 +78,9 @@ spec:
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
-            {{- if .Values.reporterConfig.securityContext }}
+            {{- with omit (.Values.reporterConfig.securityContext | default dict) "fsGroup" }}
             securityContext:
-              {{- if hasKey .Values.reporterConfig.securityContext "allowPrivilegeEscalation" }}
-              allowPrivilegeEscalation: {{ .Values.reporterConfig.securityContext.allowPrivilegeEscalation }}
-              {{- end }}
-              {{- if hasKey .Values.reporterConfig.securityContext "runAsNonRoot" }}
-              runAsNonRoot: {{ .Values.reporterConfig.securityContext.runAsNonRoot }}
-              {{- end }}
-              {{- if hasKey .Values.reporterConfig.securityContext "runAsUser" }}
-              runAsUser: {{ .Values.reporterConfig.securityContext.runAsUser }}
-              {{- end }}
-              {{- if hasKey .Values.reporterConfig.securityContext "runAsGroup" }}
-              runAsGroup: {{ .Values.reporterConfig.securityContext.runAsGroup }}
-              {{- end }}
-              {{- if hasKey .Values.reporterConfig.securityContext "fsGroup" }}
-              fsGroup: {{ .Values.reporterConfig.securityContext.fsGroup }}
-              {{- end }}
+              {{- toYaml . | nindent 14 }}
             {{- end }}
             env:
               - name: KOSLI_ORG

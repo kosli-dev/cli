@@ -77,7 +77,7 @@ reporterConfig:
   # -- the http proxy url
   httpProxy: ""
 
-  # -- the security context for the reporter cronjob.
+  # -- the container-level security context for the reporter. Any field of the Kubernetes container `securityContext` is accepted and rendered verbatim.
   # Set to null or {} to disable security context entirely (not recommended).
   # For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift
   # assign the UID from the allowed range. Simply omitting runAsUser from your
@@ -87,6 +87,12 @@ reporterConfig:
   #     allowPrivilegeEscalation: false
   #     runAsNonRoot: true
   #     runAsUser: null
+  # Example for a namespace enforcing the `restricted` Pod Security Standard:
+  #   securityContext:
+  #     capabilities:
+  #       drop: [ALL]
+  #     seccompProfile:
+  #       type: RuntimeDefault
   securityContext:
     # -- whether to allow privilege escalation
     allowPrivilegeEscalation: false
@@ -97,6 +103,10 @@ reporterConfig:
     # automatic UID assignment. Simply omitting this field will not work due to
     # Helm's deep merge with chart defaults.
     runAsUser: 1000
+
+# -- the pod-level security context for the reporter pod, rendered verbatim. Use it for pod-only fields such as `fsGroup`, `supplementalGroups` or `sysctls`.
+podSecurityContext: {}
+  # fsGroup: 2000
 
 # -- map of plain environment variables to inject into the reporter container.
 # For a single-tenant Kosli instance, set `KOSLI_HOST` to `https://INSTANCE_NAME.kosli.com`.
