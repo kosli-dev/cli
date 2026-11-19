@@ -80,6 +80,8 @@ reporterConfig:
   dryRun: false
   # -- the http proxy url
   httpProxy: ""
+  # -- whether the reporter prints debug logs
+  debug: false
 
   # -- the container-level security context for the reporter. Any field of the Kubernetes container `securityContext` is accepted and rendered verbatim.
   # Set to null to disable security context entirely (not recommended).

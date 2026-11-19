@@ -108,4 +108,10 @@ assert_line "numeric org name renders as a string" \
 assert_line "org name renders quoted" \
   'value: "placeholder"'
 
+assert "default args end at the config file" \
+  "$container.args[4]" null
+assert "debug appends --debug to the args" \
+  "$container.args[4]" --debug \
+  --set reporterConfig.debug=true
+
 exit $status

@@ -239,6 +239,7 @@ cronSchedule: "*/15 * * * *"
 | podSecurityContext | object | `{}` | the pod-level security context for the reporter pod, rendered verbatim. Use it for pod-only fields such as `fsGroup`, `supplementalGroups` or `sysctls`. |
 | podTemplateAnnotations | object | `{}` | annotations to add to the reporter pod template (applied to each Job pod that the CronJob creates) |
 | reporterConfig.autoEnvironment | bool | `false` | create each Kosli environment (type K8S) if it does not already exist, before reporting the snapshot |
+| reporterConfig.debug | bool | `false` | whether the reporter prints debug logs |
 | reporterConfig.dryRun | bool | `false` | whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli. |
 | reporterConfig.environmentDescription | string | `""` | description applied to every environment auto-created in this run. Only used when `autoEnvironment` is true; existing environments are never modified. Note: a single value is shared by all environments created during the run. |
 | reporterConfig.environments | list | `[]` | List of Kosli environments to report to. Each entry has required 'name' and optional namespace selectors. Use one entry to report a single environment; use multiple entries to report to multiple environments with different selectors. Per entry: name (required), namespaces, namespacesRegex, excludeNamespaces, excludeNamespacesRegex (optional). Leave namespace fields unset for an entry to report the entire cluster to that environment. |

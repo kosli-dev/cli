@@ -124,6 +124,9 @@ spec:
             - --http-proxy
             - {{ .Values.reporterConfig.httpProxy | quote }}
             {{- end }}
+            {{- if .Values.reporterConfig.debug }}
+            - --debug
+            {{- end }}
             resources:
 {{ toYaml .Values.resources | indent 14 }}
           restartPolicy: Never
