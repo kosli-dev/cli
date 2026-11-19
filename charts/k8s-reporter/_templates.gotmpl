@@ -27,6 +27,12 @@ Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentNam
 Version 2.7.0 stops passing them, which removes that warning. Nothing else changes: the reporter created environments with scaling off before this version and still does. The value is still accepted, but it does nothing and will be removed in a future major version. Remove it from your values.
 {{- end }}
 
+{{ define "body.securityContextV29" -}}
+Version 2.9.0 renders every key under `reporterConfig.securityContext` onto the reporter container. Earlier versions rendered five keys and silently dropped the rest.
+
+Check your values before upgrading: a misspelled key, or a pod-only field such as `supplementalGroups`, `fsGroupChangePolicy` or `sysctls` under `reporterConfig.securityContext`, now makes `helm upgrade` fail Kubernetes validation with an `unknown field` error. Move pod-only fields to the new `podSecurityContext` value. `fsGroup` is the exception: the chart still accepts it under `reporterConfig.securityContext` and renders it on the pod.
+{{- end }}
+
 {{ define "body.upgradeCmd" -}}
 ```shell
 helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
@@ -126,6 +132,10 @@ If upgrading from v1.x to v2.0.0, migrate your values to the **environments** li
 ### Deprecated and ignored in v2.7.0: `reporterConfig.includeScaling`
 
 {{ template "body.deprecatedIncludeScaling" . }}
+
+### Changed in v2.9.0: `reporterConfig.securityContext` is rendered verbatim
+
+{{ template "body.securityContextV29" . }}
 {{- end }}
 
 {{ define "extra.uninstall" -}}

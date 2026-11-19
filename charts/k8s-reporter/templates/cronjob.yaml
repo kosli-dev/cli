@@ -30,6 +30,20 @@ spec:
             {{- end }}
         spec:
           serviceAccountName: {{ include "reporter.serviceAccountName" . }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- /* fsGroup is pod-only; reporterConfig.securityContext.fsGroup stays supported for existing values files. */}}
+          {{- $podSecurityContext := deepCopy (.Values.podSecurityContext | default dict) }}
+          {{- $containerSecurityContext := .Values.reporterConfig.securityContext | default dict }}
+          {{- if and (hasKey $containerSecurityContext "fsGroup") (not (hasKey $podSecurityContext "fsGroup")) }}
+          {{- $_ := set $podSecurityContext "fsGroup" $containerSecurityContext.fsGroup }}
+          {{- end }}
+          {{- with $podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.nodeSelector }}
           nodeSelector:
             {{- toYaml . | nindent 12 }}
@@ -72,27 +86,13 @@ spec:
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
-            {{- if .Values.reporterConfig.securityContext }}
+            {{- with omit (.Values.reporterConfig.securityContext | default dict) "fsGroup" }}
             securityContext:
-              {{- if hasKey .Values.reporterConfig.securityContext "allowPrivilegeEscalation" }}
-              allowPrivilegeEscalation: {{ .Values.reporterConfig.securityContext.allowPrivilegeEscalation }}
-              {{- end }}
-              {{- if hasKey .Values.reporterConfig.securityContext "runAsNonRoot" }}
-              runAsNonRoot: {{ .Values.reporterConfig.securityContext.runAsNonRoot }}
-              {{- end }}
-              {{- if hasKey .Values.reporterConfig.securityContext "runAsUser" }}
-              runAsUser: {{ .Values.reporterConfig.securityContext.runAsUser }}
-              {{- end }}
-              {{- if hasKey .Values.reporterConfig.securityContext "runAsGroup" }}
-              runAsGroup: {{ .Values.reporterConfig.securityContext.runAsGroup }}
-              {{- end }}
-              {{- if hasKey .Values.reporterConfig.securityContext "fsGroup" }}
-              fsGroup: {{ .Values.reporterConfig.securityContext.fsGroup }}
-              {{- end }}
+              {{- toYaml . | nindent 14 }}
             {{- end }}
             env:
               - name: KOSLI_ORG
-                value: {{ required ".Values.reporterConfig.kosliOrg is required" .Values.reporterConfig.kosliOrg }}
+                value: {{ required ".Values.reporterConfig.kosliOrg is required" .Values.reporterConfig.kosliOrg | quote }}
               - name: KOSLI_API_TOKEN
                 valueFrom:
                   secretKeyRef:
@@ -123,6 +123,9 @@ spec:
             {{- if .Values.reporterConfig.httpProxy }}
             - --http-proxy
             - {{ .Values.reporterConfig.httpProxy | quote }}
+            {{- end }}
+            {{- if .Values.reporterConfig.debug }}
+            - --debug
             {{- end }}
             resources:
 {{ toYaml .Values.resources | indent 14 }}

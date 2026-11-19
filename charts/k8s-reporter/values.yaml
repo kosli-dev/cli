@@ -10,6 +10,10 @@ image:
   # -- the kosli reporter image tag, overrides the image tag whose default is the chart appVersion.
   tag: "" # defaults to chart appVersion
 
+# -- existing Secrets in the same namespace used to pull the reporter image, e.g. from a private registry mirror.
+imagePullSecrets: []
+  # - name: my-registry-credentials
+
 # -- overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one
 nameOverride: ""
 # -- overrides the fullname used for the created k8s resources. It has higher precedence than `nameOverride`
@@ -76,9 +80,12 @@ reporterConfig:
   dryRun: false
   # -- the http proxy url
   httpProxy: ""
+  # -- whether the reporter prints debug logs
+  debug: false
 
-  # -- the security context for the reporter cronjob.
-  # Set to null or {} to disable security context entirely (not recommended).
+  # -- the container-level security context for the reporter, rendered verbatim.
+  # Set to null to disable security context entirely (not recommended).
+  # Pod-only fields such as `supplementalGroups` belong in `podSecurityContext`.
   # For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift
   # assign the UID from the allowed range. Simply omitting runAsUser from your
   # values override will not work because Helm deep-merges with these defaults.
@@ -87,6 +94,12 @@ reporterConfig:
   #     allowPrivilegeEscalation: false
   #     runAsNonRoot: true
   #     runAsUser: null
+  # Example for a namespace enforcing the `restricted` Pod Security Standard:
+  #   securityContext:
+  #     capabilities:
+  #       drop: [ALL]
+  #     seccompProfile:
+  #       type: RuntimeDefault
   securityContext:
     # -- whether to allow privilege escalation
     allowPrivilegeEscalation: false
@@ -97,6 +110,10 @@ reporterConfig:
     # automatic UID assignment. Simply omitting this field will not work due to
     # Helm's deep merge with chart defaults.
     runAsUser: 1000
+
+# -- the pod-level security context for the reporter, rendered verbatim, for pod-only fields such as `fsGroup` or `supplementalGroups`.
+podSecurityContext: {}
+  # fsGroup: 2000
 
 # -- map of plain environment variables to inject into the reporter container.
 # For a single-tenant Kosli instance, set `KOSLI_HOST` to `https://INSTANCE_NAME.kosli.com`.

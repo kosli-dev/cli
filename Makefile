@@ -1,4 +1,4 @@
-.PHONY: help build clean clean-cache deps fmt lint vet vet_all docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single licenses upgrade-deps helm-lint helm-docs docs release suggest-version-ai
+.PHONY: help build clean clean-cache deps fmt lint vet vet_all docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single licenses upgrade-deps helm-lint helm-test helm-docs docs release suggest-version-ai
 .DEFAULT: help
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
@@ -214,6 +214,9 @@ helm-lint: ## Lint Helm chart
 	@cd charts/k8s-reporter && helm lint . \
 		--set reporterConfig.kosliOrg=placeholder \
 		--set 'reporterConfig.environments[0].name=placeholder'
+
+helm-test: ## Test Helm chart rendering (requires helm and yq)
+	@./scripts/test-helm-chart.sh
 
 helm-docs: helm-lint ## Update Helm docs
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md

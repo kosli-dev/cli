@@ -1,0 +1,38 @@
+name: helm chart test
+
+on:
+  pull_request:
+    paths:
+      - 'charts/**'
+      - 'scripts/test-helm-chart.sh'
+      - '.github/workflows/helm-chart-test.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Helm
+        uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
+        with:
+          version: 'latest'
+
+      - name: Lint
+        run: make helm-lint
+
+      # The render tests read the output with the yq preinstalled on ubuntu-latest.
+      - name: Test
+        run: make helm-test
