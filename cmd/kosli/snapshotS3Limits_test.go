@@ -44,3 +44,26 @@ func TestDefaultMetadataConcurrencyIsWiderThanTheDownloadDefault(t *testing.T) {
 func TestDownloadConcurrencyHelpStatesTheMetadataDefault(t *testing.T) {
 	require.Contains(t, downloadConcurrencyFlag, fmt.Sprintf("defaults to %d", aws.DefaultMetadataConcurrency))
 }
+
+func TestSkipUnusableChecksumsNeedsTheMetadataSource(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		source  string
+		skip    bool
+		wantErr string
+	}{
+		{name: "allowed with the metadata source", source: fingerprintSourceMetadata, skip: true},
+		{name: "rejected with the content source", source: fingerprintSourceContent, skip: true,
+			wantErr: "--skip-unusable-checksums can only be used with --fingerprint-source metadata"},
+		{name: "unset with the content source", source: fingerprintSourceContent},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := (&snapshotS3Options{fingerprintSource: tc.source, skipUnusable: tc.skip}).validateSkipUnusable()
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.EqualError(t, err, tc.wantErr)
+		})
+	}
+}

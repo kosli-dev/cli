@@ -19,6 +19,7 @@ Keys that cannot form a directory tree are rejected and fail the snapshot, namin
 By default each object's SHA256 comes from downloading the object and hashing it. ^--fingerprint-source metadata^ reads the SHA256 checksum S3 stores for the object instead, which skips the download, the temporary disk and the hashing. Everything else, like the keys, the ^.kosli_ignore^ rules, the way digests combine into the fingerprint, is the same in both modes, so the fingerprint is identical and a snapshot matches the artifact you attested either way. Two conditions apply:
 - Every contributing object must carry a full-object SHA256 checksum. S3 only stores one when the upload asked for it, for example ^aws s3api put-object --checksum-algorithm SHA256^. Objects without one fail the snapshot, all named in one run.
 - A multipart upload gets a composite SHA256, which hashes the checksums of the parts rather than the object content, so it cannot serve as the object's fingerprint. Such an object can be collapsed into a single part in place with ^aws s3api copy-object --checksum-algorithm SHA256 --copy-source yourBucket/yourKey --bucket yourBucket --key yourKey^.
+^--skip-unusable-checksums^ relaxes both conditions: an object whose SHA256 checksum is missing, composite or undecodable is left out with a warning that names it, and the snapshot is reported from the remaining objects, as if the bucket did not hold the skipped ones. Such a snapshot has a different fingerprint from an artifact attested from the full bucket content, so it does not match that artifact in Kosli until every object carries a usable checksum. When no object is left, an empty snapshot is reported, so the environment shows the bucket as holding no artifact.
 A root ^.kosli_ignore^ is still downloaded in this mode, because its rules decide which objects contribute; the objects it excludes are never fetched and need no checksum. Reading a checksum does not need fewer permissions than downloading: AWS requires ^s3:GetObject^ for both, and an SSE-KMS encrypted object additionally needs ^kms:GenerateDataKey^ and ^kms:Decrypt^ either way.
 
 ` + kosliIgnoreDescNoExclude
@@ -79,6 +80,15 @@ kosli snapshot s3 yourEnvironmentName \
 	--fingerprint-source metadata \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# report contents of an AWS S3 bucket from the stored SHA256 checksums,
+# leaving out the objects that have no usable one:
+kosli snapshot s3 yourEnvironmentName \
+	--bucket yourBucketName \
+	--fingerprint-source metadata \
+	--skip-unusable-checksums \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 const (
@@ -93,6 +103,7 @@ type snapshotS3Options struct {
 	excludePaths        []string
 	excludeRegex        []string
 	fingerprintSource   string
+	skipUnusable        bool
 	downloadConcurrency int
 	downloadBudget      string
 	downloadLimits      aws.DownloadLimits
@@ -133,6 +144,9 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 					"%s is not a valid fingerprint source. Valid sources are: [%s]",
 					o.fingerprintSource, validS3FingerprintSources))
 			}
+			if err := o.validateSkipUnusable(); err != nil {
+				return err
+			}
 
 			// Changed covers env vars and config too: bindFlags applies them with Flags().Set.
 			return o.resolveDownloadLimits(cmd.Flags().Changed("download-concurrency"))
@@ -148,6 +162,7 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludeBucketPathsFlag)
 	cmd.Flags().StringSliceVar(&o.excludeRegex, "exclude-regex", []string{}, excludeBucketPathsRegexFlag)
 	cmd.Flags().StringVar(&o.fingerprintSource, "fingerprint-source", fingerprintSourceContent, s3FingerprintSourceFlag)
+	cmd.Flags().BoolVar(&o.skipUnusable, "skip-unusable-checksums", false, s3SkipUnusableChecksumsFlag)
 	cmd.Flags().IntVar(&o.downloadConcurrency, "download-concurrency", aws.DefaultDownloadLimits.Concurrency, downloadConcurrencyFlag)
 	cmd.Flags().StringVar(&o.downloadBudget, "download-budget", defaultDownloadBudget, downloadBudgetFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
@@ -163,19 +178,29 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotS3Options) run(args []string) error {
 	envName := args[0]
-	harvest := o.awsStaticCreds.GetS3Data
-	if o.fingerprintSource == fingerprintSourceMetadata {
-		harvest = o.awsStaticCreds.GetS3DataFromMetadata
-	}
-
 	return newSnapshotReporter().report(envName, "S3", func() (any, string, error) {
-		s3Data, err := harvest(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, o.downloadLimits, logger)
+		s3Data, err := o.harvest()
 		if err != nil {
 			return nil, "", err
 		}
 		reported := fmt.Sprintf("bucket %s was reported to environment %s", o.bucket, envName)
 		return &aws.S3EnvRequest{Artifacts: s3Data}, reported, nil
 	})
+}
+
+func (o *snapshotS3Options) harvest() ([]*aws.S3Data, error) {
+	if o.fingerprintSource == fingerprintSourceMetadata {
+		return o.awsStaticCreds.GetS3DataFromMetadata(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex,
+			o.downloadLimits, o.skipUnusable, logger)
+	}
+	return o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, o.downloadLimits, logger)
+}
+
+func (o *snapshotS3Options) validateSkipUnusable() error {
+	if o.skipUnusable && o.fingerprintSource != fingerprintSourceMetadata {
+		return fmt.Errorf("--skip-unusable-checksums can only be used with --fingerprint-source %s", fingerprintSourceMetadata)
+	}
+	return nil
 }
 
 // defaultDownloadBudget is aws.DefaultDownloadLimits.BytesInFlight as the flag

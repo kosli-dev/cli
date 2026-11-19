@@ -1,8 +1,11 @@
 package aws
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -39,7 +42,17 @@ func checksummedBucket(objects map[string][]byte) *FakeS3Client {
 func snapshotMetadata(t *testing.T, client S3API, excludePaths []string) ([]*S3Data, error) {
 	t.Helper()
 	return getS3DataFromMetadataClient(client, fakeS3TestBucketName, nil, nil, excludePaths, nil,
-		DefaultDownloadLimits, logger.NewStandardLogger())
+		DefaultDownloadLimits, false, logger.NewStandardLogger())
+}
+
+// snapshotSkippingUnusable snapshots with unusable checksums skipped and
+// returns what was logged as warnings.
+func snapshotSkippingUnusable(t *testing.T, client S3API) ([]*S3Data, string, error) {
+	t.Helper()
+	var warnings bytes.Buffer
+	data, err := getS3DataFromMetadataClient(client, fakeS3TestBucketName, nil, nil, nil, nil,
+		DefaultDownloadLimits, true, logger.NewLogger(io.Discard, &warnings, false))
+	return data, warnings.String(), err
 }
 
 // The property the feature rests on: stored checksums fingerprint a bucket
@@ -188,7 +201,7 @@ func (suite *S3MetadataTestSuite) TestReadsMetadataNotContent() {
 	client := &countingHeader{S3API: downloads}
 
 	data, err := getS3DataFromMetadataClient(client, fakeS3TestBucketName, nil, nil, []string{"filtered/"}, nil,
-		DefaultDownloadLimits, logger.NewStandardLogger())
+		DefaultDownloadLimits, false, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), data, 1)
 	require.Equal(suite.T(), []string{".kosli_ignore"}, downloads.downloadedKeys(), "only the ignore file may be downloaded")
@@ -204,7 +217,7 @@ func (suite *S3MetadataTestSuite) TestALoneIgnoreFileNeedsNoChecksum() {
 	client := &countingHeader{S3API: downloads}
 
 	metadata, err := getS3DataFromMetadataClient(client, fakeS3TestBucketName, nil, nil, nil, nil,
-		DefaultDownloadLimits, logger.NewStandardLogger())
+		DefaultDownloadLimits, false, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), []string{".kosli_ignore"}, downloads.downloadedKeys())
 	require.Empty(suite.T(), client.calls, "the ignore file must not be read through HeadObject")
@@ -224,7 +237,7 @@ func (suite *S3MetadataTestSuite) TestHeadsAreBoundedByConcurrencyNotBytes() {
 	client := &countingHeader{S3API: checksummedBucket(objects), delay: 5 * time.Millisecond}
 
 	_, err := getS3DataFromMetadataClient(client, fakeS3TestBucketName, nil, nil, nil, nil,
-		DownloadLimits{Concurrency: 4, BytesInFlight: 1}, logger.NewStandardLogger())
+		DownloadLimits{Concurrency: 4, BytesInFlight: 1}, false, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), client.calls, 40)
 	require.LessOrEqual(suite.T(), client.maxInFlight, 4)
@@ -364,6 +377,168 @@ func (suite *S3MetadataTestSuite) TestReportsEveryUnusableObjectTogether() {
 		_, err := snapshotMetadata(suite.T(), client, nil)
 		require.ErrorIs(suite.T(), err, errInjected)
 		require.NotContains(suite.T(), err.Error(), "no SHA256 checksum", "a connection failure is not a per-object report")
+	})
+}
+
+// Skipping an object must leave exactly the snapshot that excluding it leaves,
+// so a skipped object behaves as one the bucket never held.
+func (suite *S3MetadataTestSuite) TestSkippingUnusableMatchesExcludingThem() {
+	composite := func(content []byte) FakeS3Checksum {
+		return FakeS3Checksum{SHA256: base64Sha256(content) + "-2", Type: s3Types.ChecksumTypeComposite}
+	}
+	undecodable := FakeS3Checksum{SHA256: "not base64!", Type: s3Types.ChecksumTypeFullObject}
+	later := fakeS3LastModified.Add(time.Hour)
+
+	for _, t := range []struct {
+		name         string
+		objects      map[string][]byte
+		unusable     map[string]*FakeS3Checksum // nil means no checksum at all
+		lastModified map[string]time.Time
+	}{
+		{
+			name:     "an object with no checksum",
+			objects:  map[string][]byte{"a.txt": []byte("1"), "dir/b.txt": []byte("2"), "dir/c.txt": []byte("3")},
+			unusable: map[string]*FakeS3Checksum{"dir/b.txt": nil},
+		},
+		{
+			name:     "a composite and an undecodable checksum",
+			objects:  map[string][]byte{"a.txt": []byte("1"), "big.bin": []byte("2"), "odd.bin": []byte("3"), "z/y.txt": []byte("4")},
+			unusable: map[string]*FakeS3Checksum{"big.bin": new(composite([]byte("2"))), "odd.bin": &undecodable},
+		},
+		{
+			name:     "one object left is fingerprinted as that file",
+			objects:  map[string][]byte{"a.txt": []byte("1"), "dir/b.txt": []byte("2"), "dir/c.txt": []byte("3")},
+			unusable: map[string]*FakeS3Checksum{"a.txt": nil, "dir/c.txt": nil},
+		},
+		{
+			name:     "a whole prefix skipped",
+			objects:  map[string][]byte{"a.txt": []byte("1"), "b.txt": []byte("2"), "dir/c.txt": []byte("3"), "dir/sub/d.txt": []byte("4")},
+			unusable: map[string]*FakeS3Checksum{"dir/c.txt": nil, "dir/sub/d.txt": nil},
+		},
+		{
+			name: "beside a root .kosli_ignore",
+			objects: map[string][]byte{
+				".kosli_ignore": []byte("logs\n"), "app.js": []byte("app"), "lib/util.js": []byte("util"), "logs/a.log": []byte("a"),
+			},
+			unusable: map[string]*FakeS3Checksum{"lib/util.js": nil},
+		},
+		{
+			name:     "only the root .kosli_ignore left",
+			objects:  map[string][]byte{".kosli_ignore": []byte("logs\n"), "app.js": []byte("app"), "logs/a.log": []byte("a")},
+			unusable: map[string]*FakeS3Checksum{"app.js": nil},
+		},
+		{
+			name:         "the newest object skipped",
+			objects:      map[string][]byte{"a.txt": []byte("1"), "b.txt": []byte("2"), "c.txt": []byte("3")},
+			unusable:     map[string]*FakeS3Checksum{"b.txt": nil},
+			lastModified: map[string]time.Time{"b.txt": later},
+		},
+	} {
+		suite.Run(t.name, func() {
+			checksums := fullObjectChecksums(t.objects)
+			excludeRegex := []string{}
+			for key, checksum := range t.unusable {
+				delete(checksums, key)
+				if checksum != nil {
+					checksums[key] = *checksum
+				}
+				excludeRegex = append(excludeRegex, "^"+regexp.QuoteMeta(key)+"$")
+			}
+			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects, Checksums: checksums, LastModified: t.lastModified}
+
+			excluded, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, excludeRegex,
+				DefaultDownloadLimits, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+
+			skipped, _, err := snapshotSkippingUnusable(suite.T(), client)
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), excluded, skipped)
+		})
+	}
+}
+
+func (suite *S3MetadataTestSuite) TestSkippingUnusableWarnsWithTheSkippedKeys() {
+	objects := map[string][]byte{}
+	for i := 0; i < 6; i++ {
+		objects[fmt.Sprintf("object-%d.txt", i)] = []byte(fmt.Sprintf("content %d", i))
+	}
+	checksums := fullObjectChecksums(objects)
+	delete(checksums, "object-0.txt")
+	delete(checksums, "object-2.txt")
+	checksums["object-4.txt"] = FakeS3Checksum{SHA256: checksums["object-4.txt"].SHA256 + "-3", Type: s3Types.ChecksumTypeComposite}
+	client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects, Checksums: checksums}
+
+	data, warnings, err := snapshotSkippingUnusable(suite.T(), client)
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), data, 1)
+	require.Equal(suite.T(), "[warning] skipped 3 of the 6 objects whose checksum was read in bucket ["+fakeS3TestBucketName+"]; they have no usable "+
+		"SHA256 checksum, so the fingerprint does not cover them:\n[object-0.txt]\n[object-2.txt]\n[object-4.txt]\n", warnings)
+
+	suite.Run("nothing is logged when every checksum is usable", func() {
+		_, warnings, err := snapshotSkippingUnusable(suite.T(), checksummedBucket(objects))
+		require.NoError(suite.T(), err)
+		require.Empty(suite.T(), warnings)
+	})
+
+	suite.Run("the list is capped", func() {
+		many := map[string][]byte{"kept.txt": []byte("k")}
+		for i := 0; i < 40; i++ {
+			many[fmt.Sprintf("object-%02d.txt", i)] = []byte("x")
+		}
+		client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: many,
+			Checksums: fullObjectChecksums(map[string][]byte{"kept.txt": []byte("k")})}
+		_, warnings, err := snapshotSkippingUnusable(suite.T(), client)
+		require.NoError(suite.T(), err)
+		require.Contains(suite.T(), warnings, "skipped 40 of the 41 objects")
+		require.Contains(suite.T(), warnings, "[object-09.txt]\n(and 30 more)\n")
+		require.NotContains(suite.T(), warnings, "[object-10.txt]")
+	})
+
+	suite.Run("an object .kosli_ignore excludes is not read, so not skipped", func() {
+		ignoring := map[string][]byte{".kosli_ignore": []byte("logs\n"), "app.js": []byte("app"), "lib.js": []byte("lib"), "logs/a.log": []byte("a")}
+		checksums := fullObjectChecksums(ignoring)
+		delete(checksums, "logs/a.log")
+		delete(checksums, "lib.js")
+		_, warnings, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: ignoring, Checksums: checksums})
+		require.NoError(suite.T(), err)
+		require.Contains(suite.T(), warnings, "skipped 1 of the 2 objects")
+		require.NotContains(suite.T(), warnings, "logs/a.log")
+	})
+}
+
+func (suite *S3MetadataTestSuite) TestSkippingEveryObjectReportsAnEmptySnapshot() {
+	for _, t := range []struct {
+		name    string
+		objects map[string][]byte
+	}{
+		{name: "a single object", objects: map[string][]byte{"README.md": []byte(fakeReadmeBody)}},
+		{name: "several objects", objects: map[string][]byte{"README.md": []byte(fakeReadmeBody), "dir/notes.txt": []byte(fakeNotesBody)}},
+	} {
+		suite.Run(t.name, func() {
+			data, warnings, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects})
+			require.NoError(suite.T(), err)
+			require.Empty(suite.T(), data)
+			require.NotNil(suite.T(), data, "the payload must carry an empty list, not null")
+			require.Contains(suite.T(), warnings, fmt.Sprintf("skipped %d of the %d objects", len(t.objects), len(t.objects)))
+			require.Contains(suite.T(), warnings, "[README.md]")
+			require.Contains(suite.T(), warnings, "[warning] no object in bucket ["+fakeS3TestBucketName+"] is left to fingerprint; reporting an empty snapshot\n")
+		})
+	}
+}
+
+func (suite *S3MetadataTestSuite) TestSkippingUnusableStillFailsOnOtherErrors() {
+	objects := map[string][]byte{"README.md": []byte(fakeReadmeBody), "notes.txt": []byte(fakeNotesBody)}
+
+	suite.Run("a metadata request failure", func() {
+		for _, objects := range []map[string][]byte{objects, {"README.md": []byte(fakeReadmeBody)}} {
+			_, _, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects, HeadObjectErr: errInjected})
+			require.ErrorIs(suite.T(), err, errInjected)
+		}
+	})
+
+	suite.Run("a bucket with no objects", func() {
+		_, _, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{"dir/": nil}})
+		require.ErrorContains(suite.T(), err, "no matching file or dirs in bucket")
 	})
 }
 
