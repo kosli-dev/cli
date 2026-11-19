@@ -351,7 +351,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			},
 			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests-docker"}},
 			expectedFunctions: []expectedFunction{{name: "cli-tests-docker",
-				fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
+				fingerprint: "81c39092d135020659861cec366f275aba0340cd9644e1856baca6f8a3d296f9"}},
 			requireEnvVars: true,
 		},
 	} {
