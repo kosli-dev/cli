@@ -4,7 +4,7 @@ title: Kubernetes Reporter Helm Chart
 
 # k8s-reporter
 
-![Version: 2.8.0](https://img.shields.io/badge/Version-2.8.0-informational?style=flat-square)
+![Version: 2.9.0](https://img.shields.io/badge/Version-2.9.0-informational?style=flat-square)
 
 A Helm chart for installing the Kosli K8s reporter as a CronJob.
 The chart allows you to create a Kubernetes CronJob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
@@ -229,6 +229,7 @@ cronSchedule: "*/15 * * * *"
 | nodeSelector | object | `{}` | node labels for scheduling the reporter pod. On EKS with Karpenter, use this to pin the reporter to a stable managed node group (e.g. `eks.amazonaws.com/nodegroup: <name>`) so it does not interfere with node consolidation. See [Running on EKS with Karpenter](https://docs.kosli.com/helm/k8s_reporter/karpenter). |
 | podAnnotations | object | `{}` | annotations to add to the CronJob object itself. For pod-level annotations (added to each reporter pod), use `podTemplateAnnotations` instead. |
 | podLabels | object | `{}` | custom labels to add to pods |
+| podSecurityContext | object | `{}` | the pod-level security context for the reporter pod, rendered verbatim. Use it for pod-only fields such as `fsGroup`, `supplementalGroups` or `sysctls`. |
 | podTemplateAnnotations | object | `{}` | annotations to add to the reporter pod template (applied to each Job pod that the CronJob creates) |
 | reporterConfig.autoEnvironment | bool | `false` | create each Kosli environment (type K8S) if it does not already exist, before reporting the snapshot |
 | reporterConfig.dryRun | bool | `false` | whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli. |
@@ -237,7 +238,7 @@ cronSchedule: "*/15 * * * *"
 | reporterConfig.httpProxy | string | `""` | the http proxy url |
 | reporterConfig.includeScaling | boolean | `null` | **Deprecated and ignored** — used to control whether scaling (replica count) changes were recorded for environments auto-created in this run. Scaling events no longer trigger new snapshots and an environment can no longer have scaling capture turned on, so the `--include-scaling` / `--exclude-scaling` flags this passed to the CLI had stopped having any effect. As of chart version 2.7.0 the flags are no longer passed. Setting this value does nothing; remove it from your values. |
 | reporterConfig.kosliOrg | string | `""` | the name of the Kosli org |
-| reporterConfig.securityContext | object | `{"allowPrivilegeEscalation":false,"runAsNonRoot":true,"runAsUser":1000}` | the security context for the reporter cronjob. Set to null or {} to disable security context entirely (not recommended). For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift assign the UID from the allowed range. Simply omitting runAsUser from your values override will not work because Helm deep-merges with these defaults. Example OpenShift override:   securityContext:     allowPrivilegeEscalation: false     runAsNonRoot: true     runAsUser: null |
+| reporterConfig.securityContext | object | `{"allowPrivilegeEscalation":false,"runAsNonRoot":true,"runAsUser":1000}` | the container-level security context for the reporter. Any field of the Kubernetes container `securityContext` is accepted and rendered verbatim. Set to null or {} to disable security context entirely (not recommended). For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift assign the UID from the allowed range. Simply omitting runAsUser from your values override will not work because Helm deep-merges with these defaults. Example OpenShift override:   securityContext:     allowPrivilegeEscalation: false     runAsNonRoot: true     runAsUser: null Example for a namespace enforcing the `restricted` Pod Security Standard:   securityContext:     capabilities:       drop: [ALL]     seccompProfile:       type: RuntimeDefault |
 | reporterConfig.securityContext.allowPrivilegeEscalation | bool | `false` | whether to allow privilege escalation |
 | reporterConfig.securityContext.runAsNonRoot | bool | `true` | whether to run as non root |
 | reporterConfig.securityContext.runAsUser | int | `1000` | the user id to run as. For OpenShift environments with SCC, set to null (runAsUser: null) to allow automatic UID assignment. Simply omitting this field will not work due to Helm's deep merge with chart defaults. |
