@@ -30,9 +30,17 @@ spec:
             {{- end }}
         spec:
           serviceAccountName: {{ include "reporter.serviceAccountName" . }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- /* fsGroup is a pod-level field; reporterConfig.securityContext.fsGroup is still read so existing values keep working. */}}
-          {{- $legacyFsGroup := pick (.Values.reporterConfig.securityContext | default dict) "fsGroup" }}
-          {{- with merge (deepCopy (.Values.podSecurityContext | default dict)) $legacyFsGroup }}
+          {{- $podSecurityContext := deepCopy (.Values.podSecurityContext | default dict) }}
+          {{- $containerSecurityContext := .Values.reporterConfig.securityContext | default dict }}
+          {{- if and (hasKey $containerSecurityContext "fsGroup") (not (hasKey $podSecurityContext "fsGroup")) }}
+          {{- $_ := set $podSecurityContext "fsGroup" $containerSecurityContext.fsGroup }}
+          {{- end }}
+          {{- with $podSecurityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -84,7 +92,7 @@ spec:
             {{- end }}
             env:
               - name: KOSLI_ORG
-                value: {{ required ".Values.reporterConfig.kosliOrg is required" .Values.reporterConfig.kosliOrg }}
+                value: {{ required ".Values.reporterConfig.kosliOrg is required" .Values.reporterConfig.kosliOrg | quote }}
               - name: KOSLI_API_TOKEN
                 valueFrom:
                   secretKeyRef:

@@ -111,6 +111,10 @@ If upgrading from v1.x to v2.0.0, migrate your values to the **environments** li
 
 {{ template "body.deprecatedIncludeScaling" . }}
 
+## Changed in v2.9.0: `reporterConfig.securityContext` is rendered verbatim
+
+{{ template "body.securityContextV29" . }}
+
 ## Upgrade command
 
 {{ template "body.upgradeCmd" . }}

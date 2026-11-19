@@ -29,6 +29,18 @@ assert() {
   fi
 }
 
+# assert_line <description> <expected line, leading whitespace ignored> [helm args...]
+assert_line() {
+  local description="$1" expected="$2"
+  shift 2
+  if render "$@" | sed 's/^ *//' | grep -qxF -- "$expected"; then
+    echo "ok   $description"
+  else
+    echo "FAIL $description: no line '$expected' in the rendered CronJob" >&2
+    status=1
+  fi
+}
+
 assert "default container context forbids privilege escalation" \
   "$container.securityContext.allowPrivilegeEscalation" false
 assert "default container context runs as non root" \
@@ -57,6 +69,10 @@ assert "null securityContext drops the container context" \
   "$container.securityContext" null \
   --set reporterConfig.securityContext=null
 
+assert "empty securityContext keeps the chart defaults" \
+  "$container.securityContext.runAsUser" 1000 \
+  --set-json 'reporterConfig.securityContext={}'
+
 assert "podSecurityContext renders at pod level" \
   "$pod.securityContext.fsGroup" 2000 \
   --set podSecurityContext.fsGroup=2000
@@ -73,5 +89,23 @@ assert "podSecurityContext.fsGroup wins over reporterConfig.securityContext.fsGr
   "$pod.securityContext.fsGroup" 2000 \
   --set podSecurityContext.fsGroup=2000 \
   --set reporterConfig.securityContext.fsGroup=3000
+assert "podSecurityContext.fsGroup 0 wins over reporterConfig.securityContext.fsGroup" \
+  "$pod.securityContext.fsGroup" 0 \
+  --set podSecurityContext.fsGroup=0 \
+  --set reporterConfig.securityContext.fsGroup=3000
+
+assert "default pod has no imagePullSecrets" \
+  "$pod.imagePullSecrets" null
+assert "imagePullSecrets render on the pod" \
+  "$pod.imagePullSecrets[1].name" second \
+  --set 'imagePullSecrets[0].name=first' \
+  --set 'imagePullSecrets[1].name=second'
+
+# yq prints a quoted and an unquoted number alike, so these check the raw line.
+assert_line "numeric org name renders as a string" \
+  'value: "12345"' \
+  --set reporterConfig.kosliOrg=12345
+assert_line "org name renders quoted" \
+  'value: "placeholder"'
 
 exit $status

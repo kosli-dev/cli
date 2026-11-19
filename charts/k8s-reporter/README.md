@@ -96,6 +96,12 @@ helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
 
 Version 2.7.0 stops passing them, which removes that warning. Nothing else changes: the reporter created environments with scaling off before this version and still does. The value is still accepted, but it does nothing and will be removed in a future major version. Remove it from your values.
 
+### Changed in v2.9.0: `reporterConfig.securityContext` is rendered verbatim
+
+Version 2.9.0 renders every key under `reporterConfig.securityContext` onto the reporter container. Earlier versions rendered five keys and silently dropped the rest.
+
+Check your values before upgrading: a misspelled key, or a pod-only field such as `supplementalGroups`, `fsGroupChangePolicy` or `sysctls` under `reporterConfig.securityContext`, now makes `helm upgrade` fail Kubernetes validation with an `unknown field` error. Move pod-only fields to the new `podSecurityContext` value. `fsGroup` is the exception: the chart still accepts it under `reporterConfig.securityContext` and renders it on the pod.
+
 ## Uninstalling chart
 
 ```shell
@@ -223,6 +229,7 @@ cronSchedule: "*/15 * * * *"
 | image.pullPolicy | string | `"IfNotPresent"` | the kosli reporter image pull policy |
 | image.repository | string | `"ghcr.io/kosli-dev/cli"` | the kosli reporter image repository |
 | image.tag | string | `""` | the kosli reporter image tag, overrides the image tag whose default is the chart appVersion. |
+| imagePullSecrets | list | `[]` | names of existing Secrets in the same namespace used to pull the reporter image, e.g. when mirroring it to a private registry. |
 | kosliApiToken.secretKey | string | `"key"` | the name of the key in the secret data which contains the Kosli API token |
 | kosliApiToken.secretName | string | `"kosli-api-token"` | the name of the secret containing the kosli API token |
 | nameOverride | string | `""` | overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one |
@@ -238,7 +245,7 @@ cronSchedule: "*/15 * * * *"
 | reporterConfig.httpProxy | string | `""` | the http proxy url |
 | reporterConfig.includeScaling | boolean | `null` | **Deprecated and ignored** — used to control whether scaling (replica count) changes were recorded for environments auto-created in this run. Scaling events no longer trigger new snapshots and an environment can no longer have scaling capture turned on, so the `--include-scaling` / `--exclude-scaling` flags this passed to the CLI had stopped having any effect. As of chart version 2.7.0 the flags are no longer passed. Setting this value does nothing; remove it from your values. |
 | reporterConfig.kosliOrg | string | `""` | the name of the Kosli org |
-| reporterConfig.securityContext | object | `{"allowPrivilegeEscalation":false,"runAsNonRoot":true,"runAsUser":1000}` | the container-level security context for the reporter. Any field of the Kubernetes container `securityContext` is accepted and rendered verbatim. Set to null or {} to disable security context entirely (not recommended). For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift assign the UID from the allowed range. Simply omitting runAsUser from your values override will not work because Helm deep-merges with these defaults. Example OpenShift override:   securityContext:     allowPrivilegeEscalation: false     runAsNonRoot: true     runAsUser: null Example for a namespace enforcing the `restricted` Pod Security Standard:   securityContext:     capabilities:       drop: [ALL]     seccompProfile:       type: RuntimeDefault |
+| reporterConfig.securityContext | object | `{"allowPrivilegeEscalation":false,"runAsNonRoot":true,"runAsUser":1000}` | the container-level security context for the reporter. Any field of the Kubernetes container `securityContext` is accepted and rendered verbatim. Set to null to disable security context entirely (not recommended). Pod-only fields such as `supplementalGroups` belong in `podSecurityContext`. For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift assign the UID from the allowed range. Simply omitting runAsUser from your values override will not work because Helm deep-merges with these defaults. Example OpenShift override:   securityContext:     allowPrivilegeEscalation: false     runAsNonRoot: true     runAsUser: null Example for a namespace enforcing the `restricted` Pod Security Standard:   securityContext:     capabilities:       drop: [ALL]     seccompProfile:       type: RuntimeDefault |
 | reporterConfig.securityContext.allowPrivilegeEscalation | bool | `false` | whether to allow privilege escalation |
 | reporterConfig.securityContext.runAsNonRoot | bool | `true` | whether to run as non root |
 | reporterConfig.securityContext.runAsUser | int | `1000` | the user id to run as. For OpenShift environments with SCC, set to null (runAsUser: null) to allow automatic UID assignment. Simply omitting this field will not work due to Helm's deep merge with chart defaults. |

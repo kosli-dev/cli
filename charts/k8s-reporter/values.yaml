@@ -10,6 +10,10 @@ image:
   # -- the kosli reporter image tag, overrides the image tag whose default is the chart appVersion.
   tag: "" # defaults to chart appVersion
 
+# -- names of existing Secrets in the same namespace used to pull the reporter image, e.g. when mirroring it to a private registry.
+imagePullSecrets: []
+  # - name: my-registry-credentials
+
 # -- overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one
 nameOverride: ""
 # -- overrides the fullname used for the created k8s resources. It has higher precedence than `nameOverride`
@@ -78,7 +82,8 @@ reporterConfig:
   httpProxy: ""
 
   # -- the container-level security context for the reporter. Any field of the Kubernetes container `securityContext` is accepted and rendered verbatim.
-  # Set to null or {} to disable security context entirely (not recommended).
+  # Set to null to disable security context entirely (not recommended).
+  # Pod-only fields such as `supplementalGroups` belong in `podSecurityContext`.
   # For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift
   # assign the UID from the allowed range. Simply omitting runAsUser from your
   # values override will not work because Helm deep-merges with these defaults.
