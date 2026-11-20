@@ -66,11 +66,11 @@ func newAttestOverrideCmd(out io.Writer) *cobra.Command {
 		},
 	}
 	cmd := &cobra.Command{
-		Use:     "override [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   attestOverrideShortDesc,
-		Long:    attestOverrideLongDesc,
-		Example: attestOverrideExample,
-		Hidden:  true,
+		Use:         "override [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:       attestOverrideShortDesc,
+		Long:        attestOverrideLongDesc,
+		Example:     attestOverrideExample,
+		Annotations: map[string]string{betaCLIAnnotation: ""},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := CustomMaximumNArgs(1, args)
 			if err != nil {
