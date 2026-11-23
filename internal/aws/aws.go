@@ -504,7 +504,13 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 		return s3Data, err
 	}
 	if len(objects) == 0 {
-		return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
+		// A filter that leaves nothing is most likely mistyped; a bucket with
+		// nothing in it is a state to report, or its last snapshot goes stale.
+		if len(includePaths)+len(includeRegex)+len(excludePaths)+len(excludeRegex) > 0 {
+			return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
+		}
+		logger.Warn("bucket [%s] holds no objects; reporting an empty snapshot", bucket)
+		return s3Data, nil
 	}
 
 	newest := newestS3Modification(objects)

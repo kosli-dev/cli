@@ -1148,14 +1148,6 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 			wantLastModified: later.Unix(),
 		},
 		{
-			name: "an empty bucket is an error",
-			objects: map[string][]byte{
-				"dummy/": nil,
-			},
-			wantErr:    true,
-			wantErrMsg: "no matching file or dirs in bucket: [" + fakeS3TestBucketName + "]",
-		},
-		{
 			name: "filtering everything out is an error",
 			objects: map[string][]byte{
 				"README.md": []byte(fakeReadmeBody),
@@ -1234,6 +1226,53 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 			if t.wantLastModified != 0 {
 				require.Equal(suite.T(), t.wantLastModified, data[0].LastModifiedTimestamp)
 			}
+		})
+	}
+}
+
+// An empty bucket is a state the bucket can be in, so it is reported as one;
+// a filter that leaves nothing is more likely a mistake in the filter.
+func (suite *AWSTestSuite) TestGetS3DataFromClientEmptyBucket() {
+	for _, t := range []struct {
+		name    string
+		objects map[string][]byte
+	}{
+		{name: "no objects at all", objects: map[string][]byte{}},
+		{name: "only folder markers", objects: map[string][]byte{"dummy/": nil, "dummy/dummy_2/": nil}},
+	} {
+		suite.Run(t.name+" is reported as an empty snapshot", func() {
+			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects}
+			var warnings bytes.Buffer
+
+			data, err := getS3DataFromClient(client, fakeS3TestBucketName, nil, nil, nil, nil,
+				DefaultDownloadLimits, logger.NewLogger(io.Discard, &warnings, false))
+
+			require.NoError(suite.T(), err)
+			require.Empty(suite.T(), data)
+			require.NotNil(suite.T(), data, "the payload must carry an empty list, not null")
+			require.Equal(suite.T(), "[warning] bucket ["+fakeS3TestBucketName+"] holds no objects; reporting an empty snapshot\n", warnings.String())
+		})
+	}
+
+	for _, t := range []struct {
+		name         string
+		includePaths []string
+		includeRegex []string
+		excludePaths []string
+		excludeRegex []string
+	}{
+		{name: "--include", includePaths: []string{"README.md"}},
+		{name: "--include-regex", includeRegex: []string{`.*\.md$`}},
+		{name: "--exclude", excludePaths: []string{"README.md"}},
+		{name: "--exclude-regex", excludeRegex: []string{`.*\.md$`}},
+	} {
+		suite.Run("with "+t.name+" set it is still an error", func() {
+			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{}}
+
+			_, err := getS3DataFromClient(client, fakeS3TestBucketName, t.includePaths, t.includeRegex,
+				t.excludePaths, t.excludeRegex, DefaultDownloadLimits, logger.NewStandardLogger())
+
+			require.ErrorContains(suite.T(), err, "no matching file or dirs in bucket: ["+fakeS3TestBucketName+"]")
 		})
 	}
 }
