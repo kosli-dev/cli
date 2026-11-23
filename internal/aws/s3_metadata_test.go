@@ -294,6 +294,11 @@ func (suite *S3MetadataTestSuite) TestErrors() {
 			listErr:    errInjected,
 			wantErrMsg: []string{"injected error"},
 		},
+		{
+			name:       "an empty bucket keeps the content-mode message",
+			objects:    map[string][]byte{"dir/": nil},
+			wantErrMsg: []string{"no matching file or dirs in bucket: [" + fakeS3TestBucketName + "]"},
+		},
 	} {
 		suite.Run(t.name, func() {
 			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects, Checksums: t.checksums,
@@ -530,29 +535,11 @@ func (suite *S3MetadataTestSuite) TestSkippingUnusableStillFailsOnOtherErrors() 
 			require.ErrorIs(suite.T(), err, errInjected)
 		}
 	})
-}
 
-// An empty bucket is not an unusable checksum: it is reported as empty with or
-// without --skip-unusable-checksums, and no checksum is read.
-func (suite *S3MetadataTestSuite) TestAnEmptyBucketReportsAnEmptySnapshot() {
-	for _, skipUnusable := range []bool{false, true} {
-		suite.Run(fmt.Sprintf("skipping unusable checksums %t", skipUnusable), func() {
-			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{"dir/": nil}, HeadObjectErr: errInjected}
-			var warnings bytes.Buffer
-
-			data, err := getS3DataFromMetadataClient(client, fakeS3TestBucketName, nil, nil, nil, nil,
-				DefaultDownloadLimits, skipUnusable, logger.NewLogger(io.Discard, &warnings, false))
-
-			require.NoError(suite.T(), err)
-			require.Empty(suite.T(), data)
-			require.NotNil(suite.T(), data, "the payload must carry an empty list, not null")
-			require.Equal(suite.T(), "[warning] bucket ["+fakeS3TestBucketName+"] holds no objects; reporting an empty snapshot\n", warnings.String())
-		})
-	}
-
-	suite.Run("a filter that matches nothing is still an error", func() {
-		_, err := snapshotMetadata(suite.T(), checksummedBucket(map[string][]byte{"README.md": []byte(fakeReadmeBody)}), []string{"README.md"})
-		require.ErrorContains(suite.T(), err, "no matching file or dirs in bucket: ["+fakeS3TestBucketName+"]")
+	suite.Run("a bucket with no objects", func() {
+		_, _, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{"dir/": nil}})
+		require.ErrorContains(suite.T(), err, "no matching file or dirs in bucket")
+		require.ErrorAs(suite.T(), err, &EmptyBucketError{}, "the metadata source reports an empty bucket as the content source does")
 	})
 }
 
