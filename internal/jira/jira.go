@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	jira "github.com/andygrunwald/go-jira"
 	"github.com/kosli-dev/cli/internal/logger"
@@ -290,14 +292,10 @@ func oneLine(text string) string {
 	return flattened
 }
 
-const defaultJiraIssueKeyPattern = `\b[A-Z][A-Z0-9]{1,9}-[0-9]+`
+const defaultJiraIssueKeyPattern = `\b[A-Z][A-Z0-9_]{1,9}-[0-9]+`
 
-var (
-	// compiled once, as the default pattern is a constant
-	defaultJiraIssueKeyRegexp = regexp.MustCompile(defaultJiraIssueKeyPattern)
-	// dashDigitRegexp is compiled once and shared by all isPartialMultiSegment calls
-	dashDigitRegexp = regexp.MustCompile(`^-\d`)
-)
+// Compiled once because the default pattern is constant.
+var defaultJiraIssueKeyRegexp = regexp.MustCompile(defaultJiraIssueKeyPattern)
 
 // makeJiraIssueKeyPattern builds the regex matching Jira issue keys of the given projects.
 // Jira issue keys consist of [project-key]-[sequential-number]; see
@@ -362,63 +360,88 @@ func jiraIssueKeyRegexp(projectKeys []string) *regexp.Regexp {
 	}
 }
 
-// FindJiraIssueKeys finds all Jira issue keys in text, filtering out
-// partial matches from multi-segment identifiers like CVE-2026-41284.
+// FindJiraIssueKeys finds all complete Jira issue keys in text, filtering out
+// partial matches from identifiers like dependency versions and CVE-2026-41284.
 // Matching is case-insensitive: the text is uppercased before the regex
 // is applied, so all returned keys are in canonical uppercase form.
-// A match is discarded if every occurrence in the uppercased text is
-// immediately followed by a hyphen and a digit.
-func FindJiraIssueKeys(text string, projectKeys []string) []string {
+// ambiguousSuffix reports whether a matched key is followed by a hyphenated word,
+// which may be either a branch slug or part of an unrelated identifier.
+func FindJiraIssueKeys(text string, projectKeys []string) (keys []string, ambiguousSuffix bool) {
 	re := jiraIssueKeyRegexp(projectKeys)
 	if re == nil {
-		// project keys were given but none of them is usable, so no key can belong to them
-		return nil
+		return nil, false
 	}
 	upperText := strings.ToUpper(text)
-	candidates := re.FindAllString(upperText, -1)
-
-	// Deduplicate (all candidates are already uppercase).
 	seen := make(map[string]struct{})
-	var unique []string
-	for _, c := range candidates {
-		if _, ok := seen[c]; !ok {
-			seen[c] = struct{}{}
-			unique = append(unique, c)
-		}
-	}
-
-	// Filter out matches that are always followed by -<digit> in the uppercased text.
 	var result []string
-	for _, m := range unique {
-		if isPartialMultiSegment(upperText, m) {
+	for _, location := range re.FindAllStringIndex(upperText, -1) {
+		if !hasJiraIssueKeyStartBoundary(upperText, location[0]) {
 			continue
 		}
-		result = append(result, m)
+		if hasHyphenatedWordSuffix(upperText, location[1]) {
+			ambiguousSuffix = true
+		}
+		if !hasJiraIssueKeyEndBoundary(upperText, location[1]) {
+			continue
+		}
+		key := upperText[location[0]:location[1]]
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		result = append(result, key)
 	}
 
 	sort.Strings(result)
 	if len(result) == 0 {
-		return nil
+		return nil, ambiguousSuffix
 	}
-	return result
+	return result, ambiguousSuffix
 }
 
-// isPartialMultiSegment returns true if every occurrence of match in text
-// is immediately followed by a "-<digit>" suffix, indicating it is part
-// of a longer multi-segment identifier (e.g. CVE-2026-41284).
-// Precondition: match must exist in text (guaranteed when called from FindJiraIssueKeys).
-func isPartialMultiSegment(text, match string) bool {
-	start := 0
-	for {
-		idx := strings.Index(text[start:], match)
-		if idx < 0 {
-			break
-		}
-		afterIdx := start + idx + len(match)
-		if afterIdx >= len(text) || !dashDigitRegexp.MatchString(text[afterIdx:]) {
+// hasJiraIssueKeyStartBoundary rejects a key that continues a longer word or dotted name.
+// A hyphen is allowed so that branch names like bugfix-PROJ-42 keep matching; dependency
+// names like jackson-module-kotlin-3.2.3 are rejected by the end boundary instead.
+func hasJiraIssueKeyStartBoundary(text string, start int) bool {
+	if start > 0 {
+		previous, _ := utf8.DecodeLastRuneInString(text[:start])
+		if unicode.IsLetter(previous) || unicode.IsDigit(previous) || strings.ContainsRune("_.", previous) {
 			return false
 		}
-		start = start + idx + 1
 	}
 	return true
+}
+
+// hasJiraIssueKeyEndBoundary rejects a key whose number continues into a version or a
+// multi-segment ID, such as CVE-2026 in CVE-2026-41284 or LIB-1 in LIB-1.2. A hyphen or
+// period followed by anything other than a digit is allowed, so branch slugs like
+// PROJ-42-add-login and references ending a sentence still match.
+func hasJiraIssueKeyEndBoundary(text string, end int) bool {
+	if end == len(text) {
+		return true
+	}
+	next, size := utf8.DecodeRuneInString(text[end:])
+	if unicode.IsLetter(next) || unicode.IsDigit(next) || next == '_' {
+		return false
+	}
+	if (next == '-' || next == '.') && hasDigitAfter(text[end+size:]) {
+		return false
+	}
+	return true
+}
+
+func hasHyphenatedWordSuffix(text string, end int) bool {
+	if end >= len(text) || text[end] != '-' {
+		return false
+	}
+	next, _ := utf8.DecodeRuneInString(text[end+1:])
+	return unicode.IsLetter(next)
+}
+
+func hasDigitAfter(text string) bool {
+	if text == "" {
+		return false
+	}
+	next, _ := utf8.DecodeRuneInString(text)
+	return unicode.IsDigit(next)
 }
