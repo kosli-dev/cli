@@ -504,6 +504,10 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 		return s3Data, err
 	}
 	if len(objects) == 0 {
+		filtersSet := len(includePaths)+len(includeRegex)+len(excludePaths)+len(excludeRegex) > 0
+		if !filtersSet {
+			return s3Data, EmptyBucketError{Bucket: bucket}
+		}
 		return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
 	}
 
@@ -531,6 +535,17 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 	s3Data = append(s3Data, &S3Data{Digests: map[string]string{fingerprint.artifactName: fingerprint.sha256}, LastModifiedTimestamp: newest.Unix()})
 
 	return s3Data, nil
+}
+
+// EmptyBucketError is returned when a bucket lists no objects and no include
+// or exclude filter is set, so a caller can tell an empty bucket from a filter
+// that matched nothing. Its message is the one both cases have always had.
+type EmptyBucketError struct {
+	Bucket string
+}
+
+func (e EmptyBucketError) Error() string {
+	return fmt.Sprintf("no matching file or dirs in bucket: [%s]", e.Bucket)
 }
 
 // newestS3Modification returns the latest modification time among objects, or
