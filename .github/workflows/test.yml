@@ -78,7 +78,7 @@ jobs:
     steps:
 
     - name: Harden Runner
-      uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+      uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
       with:
         egress-policy: audit
 
@@ -153,7 +153,7 @@ jobs:
     steps:
 
     - name: Harden Runner
-      uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+      uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
       with:
         egress-policy: audit
 
@@ -183,7 +183,7 @@ jobs:
 
     - name: Login to Amazon ECR private
       id: login-ecr-private
-      uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+      uses: aws-actions/amazon-ecr-login@7290e214a610b32bc0eef81748948b6d466a8783 # v2.2.0
 
     - name: Run tests
       env:
@@ -230,7 +230,7 @@ jobs:
     steps:
 
     - name: Harden Runner
-      uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+      uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
       with:
         egress-policy: audit
 
@@ -257,7 +257,7 @@ jobs:
 
       if: ${{ (success() || failure()) && inputs.upload_sarif && hashFiles('snyk-code.sarif') != '' }}
       continue-on-error: true
-      uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+      uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
       with:
         sarif_file: snyk-code.sarif
         category: snyk-code
@@ -283,7 +283,7 @@ jobs:
     steps:
 
     - name: Harden Runner
-      uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+      uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
       with:
         egress-policy: audit
 
