@@ -672,8 +672,8 @@ func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3O
 // fingerprintS3Tree fingerprints the objects as the directory their keys
 // describe, without using a key as a local file name: digest.VirtualDirSha256
 // combines the (key, sha256) pairs from source exactly as digest.DirSha256
-// would on disk. A single object is fingerprinted as that file and named
-// after it.
+// would on disk. A single object is fingerprinted as that file. Either way the
+// artifact is named after the bucket.
 //
 // The root .kosli_ignore is always downloaded, whatever the source, because its
 // rules decide which other objects are fetched at all.
@@ -706,8 +706,8 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 		files[i].Path = paths[object.key]
 	}
 
-	// One object is fingerprinted as that file and named after it, as it was
-	// when the objects were laid out on disk.
+	// One object is fingerprinted as that file, as it was when the objects were
+	// laid out on disk.
 	if file, ok := digest.SingleVirtualFile(files); ok {
 		fetch := source
 		// The ignore file is downloaded even when alone, so no source needs its checksum.
@@ -723,7 +723,7 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 		if err != nil {
 			return s3Fingerprint{}, err
 		}
-		return s3Fingerprint{artifactName: file.Name(), sha256: sha256, fingerprinted: objects, read: 1}, nil
+		return s3Fingerprint{artifactName: bucket, sha256: sha256, fingerprinted: objects, read: 1}, nil
 	}
 
 	var rules []string
@@ -786,7 +786,7 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 		return fingerprint, nil
 	}
 	if file, ok := digest.SingleVirtualFile(files); ok {
-		fingerprint.artifactName, fingerprint.sha256 = file.Name(), file.Sha256
+		fingerprint.artifactName, fingerprint.sha256 = bucket, file.Sha256
 		return fingerprint, nil
 	}
 	sha256, err := digest.VirtualDirSha256(files, rules, logger)

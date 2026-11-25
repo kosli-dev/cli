@@ -426,11 +426,10 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			bucketName:       "kosli-cli-public",
-			includePaths:     []string{"README.md"},
-			requireEnvVars:   true,
-			wantFingerprint:  "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
-			wantArtifactName: "README.md",
+			bucketName:      "kosli-cli-public",
+			includePaths:    []string{"README.md"},
+			requireEnvVars:  true,
+			wantFingerprint: "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
 		},
 	} {
 		suite.Run(t.name, func() {
@@ -1011,27 +1010,24 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 		excludeRegex     []string
 		listErr          error
 		downloadErr      error
-		wantArtifactName string // defaults to the bucket name
 		wantFingerprint  string // only asserted when set
 		wantLastModified int64  // only asserted when non-zero
 		wantErr          bool
 		wantErrMsg       string
 	}{
 		{
-			name: "a single object is fingerprinted as a file and named after it",
+			name: "a single object is fingerprinted as a file and named after the bucket",
 			objects: map[string][]byte{
 				"README.md": []byte(fakeReadmeBody),
 			},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "a single nested object is still fingerprinted as a file",
 			objects: map[string][]byte{
 				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
 			},
-			wantArtifactName: "template.yml",
-			wantFingerprint:  fakeTemplateSha256,
+			wantFingerprint: fakeTemplateSha256,
 		},
 		{
 			name: "multiple objects are fingerprinted as a directory named after the bucket",
@@ -1048,8 +1044,7 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"dummy/dummy_2/":  nil,
 				"dummy/README.md": []byte(fakeReadmeBody),
 			},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "objects spread over several pages are all downloaded",
@@ -1066,9 +1061,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md": []byte(fakeReadmeBody),
 				"notes.txt": []byte(fakeNotesBody),
 			},
-			includePaths:     []string{"README.md"},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			includePaths:    []string{"README.md"},
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "includePaths matches a nested path by prefix",
@@ -1076,9 +1070,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md":                  []byte(fakeReadmeBody),
 				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
 			},
-			includePaths:     []string{"dummy/dummy_2"},
-			wantArtifactName: "template.yml",
-			wantFingerprint:  fakeTemplateSha256,
+			includePaths:    []string{"dummy/dummy_2"},
+			wantFingerprint: fakeTemplateSha256,
 		},
 		{
 			name: "a leading slash in includePaths is ignored",
@@ -1086,9 +1079,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md":                  []byte(fakeReadmeBody),
 				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
 			},
-			includePaths:     []string{"/dummy/dummy_2"},
-			wantArtifactName: "template.yml",
-			wantFingerprint:  fakeTemplateSha256,
+			includePaths:    []string{"/dummy/dummy_2"},
+			wantFingerprint: fakeTemplateSha256,
 		},
 		{
 			name: "includeRegex selects matching objects",
@@ -1096,9 +1088,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md": []byte(fakeReadmeBody),
 				"notes.txt": []byte(fakeNotesBody),
 			},
-			includeRegex:     []string{`.*\.md$`},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			includeRegex:    []string{`.*\.md$`},
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "excludePaths removes matching objects",
@@ -1106,9 +1097,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md": []byte(fakeReadmeBody),
 				"notes.txt": []byte(fakeNotesBody),
 			},
-			excludePaths:     []string{"notes.txt"},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			excludePaths:    []string{"notes.txt"},
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "excludeRegex removes matching objects",
@@ -1116,9 +1106,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md": []byte(fakeReadmeBody),
 				"notes.txt": []byte(fakeNotesBody),
 			},
-			excludeRegex:     []string{`.*\.txt$`},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			excludeRegex:    []string{`.*\.txt$`},
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "the reported timestamp is the newest matched object",
@@ -1222,14 +1211,11 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 			require.NoError(suite.T(), err)
 			require.Len(suite.T(), data, 1)
 
-			wantArtifactName := t.wantArtifactName
-			if wantArtifactName == "" {
-				wantArtifactName = fakeS3TestBucketName
-			}
-			require.Contains(suite.T(), data[0].Digests, wantArtifactName)
-			require.NotEmpty(suite.T(), data[0].Digests[wantArtifactName])
+			require.Len(suite.T(), data[0].Digests, 1, "the bucket is the only artifact")
+			require.Contains(suite.T(), data[0].Digests, fakeS3TestBucketName)
+			require.NotEmpty(suite.T(), data[0].Digests[fakeS3TestBucketName])
 			if t.wantFingerprint != "" {
-				require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[wantArtifactName])
+				require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[fakeS3TestBucketName])
 			}
 			if t.wantLastModified != 0 {
 				require.Equal(suite.T(), t.wantLastModified, data[0].LastModifiedTimestamp)
