@@ -1,14 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -34,6 +38,7 @@ type OpenAPIContractTestSuite struct {
 }
 
 type openAPISchema struct {
+	Paths      map[string]map[string]json.RawMessage `json:"paths"`
 	Components struct {
 		Schemas map[string]componentSchema `json:"schemas"`
 	} `json:"components"`
@@ -109,6 +114,70 @@ func (suite *OpenAPIContractTestSuite) TestPayloadsMatchSchema() {
 			}
 		})
 	}
+}
+
+// TestJSONOutputOperationsExistInSchema guards the API reference links on the
+// CLI reference pages: every operation a command names in its jsonOutputAPI
+// annotation must be an operation the server publishes.
+func (suite *OpenAPIContractTestSuite) TestJSONOutputOperationsExistInSchema() {
+	published := suite.apiReferencePaths()
+	require.NotEmpty(suite.T(), published, "OpenAPI schema should contain operations")
+
+	root, err := newRootCmd(&bytes.Buffer{}, &bytes.Buffer{}, nil)
+	require.NoError(suite.T(), err)
+
+	checked := 0
+	var walk func(cmd *cobra.Command)
+	walk = func(cmd *cobra.Command) {
+		for _, sub := range cmd.Commands() {
+			walk(sub)
+		}
+		for _, operation := range docgen.SplitOperations(cmd.Annotations[docgen.JSONOutputAPIAnnotation]) {
+			checked++
+			require.Truef(suite.T(), published[operation],
+				"%s names API operation %q, which the server's OpenAPI schema does not publish",
+				cmd.CommandPath(), operation)
+		}
+	}
+	walk(root)
+	require.NotZero(suite.T(), checked, "no command names an API operation")
+}
+
+// apiReferencePaths returns the docs-site path of every operation in the
+// schema. The docs site builds each endpoint page's path from the operation's
+// first tag and its summary, so this must keep to the same rule.
+func (suite *OpenAPIContractTestSuite) apiReferencePaths() map[string]bool {
+	paths := map[string]bool{}
+	for _, item := range suite.schema.Paths {
+		for method, raw := range item {
+			switch method {
+			case "get", "post", "put", "patch", "delete":
+			default:
+				continue
+			}
+			var operation struct {
+				Tags    []string `json:"tags"`
+				Summary string   `json:"summary"`
+			}
+			require.NoError(suite.T(), json.Unmarshal(raw, &operation))
+			if len(operation.Tags) == 0 || operation.Summary == "" {
+				continue
+			}
+			paths[apiReferenceSlug(operation.Tags[0])+"/"+apiReferenceSlug(operation.Summary)] = true
+		}
+	}
+	return paths
+}
+
+var (
+	apiReferenceSlugDropped = regexp.MustCompile(`[^a-z0-9\s-]`)
+	apiReferenceSlugSpaces  = regexp.MustCompile(`\s+`)
+)
+
+// apiReferenceSlug lowercases s, drops punctuation and joins words with hyphens.
+func apiReferenceSlug(s string) string {
+	s = apiReferenceSlugDropped.ReplaceAllString(strings.ToLower(s), "")
+	return apiReferenceSlugSpaces.ReplaceAllString(strings.TrimSpace(s), "-")
 }
 
 // jsonFieldNames returns the wire names from a struct's json tags.
