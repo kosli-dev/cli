@@ -198,38 +198,6 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 	}
 }
 
-func (suite *SnapshotS3TestSuite) TestSnapshotS3CmdOnAnEmptyBucket() {
-	bucketName := suite.bucketName
-	aws.NewS3ClientFunc = func(_ *aws.AWSStaticCreds) (aws.S3API, error) {
-		return &aws.FakeS3Client{Bucket: bucketName, Objects: map[string][]byte{}}, nil
-	}
-
-	tests := []cmdTestCase{
-		{
-			wantError: true,
-			name:      "snapshot s3 fails on an empty bucket",
-			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
-			golden:    "Error: no matching file or dirs in bucket: [kosli-cli-public]\n",
-		},
-		{
-			name: "--allow-empty-bucket reports an empty bucket as an empty snapshot",
-			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --allow-empty-bucket`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
-			golden: "[warning] bucket [kosli-cli-public] holds no objects; reporting an empty snapshot\n" +
-				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
-		},
-		{
-			name: "--allow-empty-bucket works with --fingerprint-source metadata",
-			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --fingerprint-source metadata --skip-unusable-checksums --allow-empty-bucket`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
-			golden: "[warning] bucket [kosli-cli-public] holds no objects; reporting an empty snapshot\n" +
-				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
-		},
-	}
-
-	for _, t := range tests {
-		runTestCmd(suite.T(), []cmdTestCase{t})
-	}
-}
-
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestSnapshotS3TestSuite(t *testing.T) {

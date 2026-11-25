@@ -539,7 +539,6 @@ func (suite *S3MetadataTestSuite) TestSkippingUnusableStillFailsOnOtherErrors() 
 	suite.Run("a bucket with no objects", func() {
 		_, _, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{"dir/": nil}})
 		require.ErrorContains(suite.T(), err, "no matching file or dirs in bucket")
-		require.ErrorAs(suite.T(), err, &EmptyBucketError{}, "the metadata source reports an empty bucket as the content source does")
 	})
 }
 

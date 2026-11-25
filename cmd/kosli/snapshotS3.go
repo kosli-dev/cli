@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 
@@ -14,7 +13,6 @@ const snapshotS3ShortDesc = `Report a snapshot of the content of an AWS S3 bucke
 const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc + `
 You can report the entire bucket content, or filter some of the content using ^--include^ / ^--exclude^ (literal prefix match) or ^--include-regex^ / ^--exclude-regex^ (Go regular expressions matched against the full object key).
 In all cases, the content is reported as one artifact. If you wish to report separate files/dirs within the same bucket as separate artifacts, you need to run the command twice.
-A bucket that holds no objects fails the snapshot. With ^--allow-empty-bucket^ it is reported as an empty snapshot instead, with a warning, so the environment shows the bucket as holding no artifact. The flag does not apply when an include or exclude filter leaves no object: that still fails, since the filter is the likelier cause.
 Object keys are never used as local file names: by default each object is downloaded to a temporary file, hashed and removed, and the fingerprint is computed from the keys and the content digests, so any key S3 accepts can be fingerprinted on any operating system.
 Keys that cannot form a directory tree are rejected and fail the snapshot, naming every key involved: a key containing a ^..^ segment, two keys that resolve to the same path (such as ^a//b^ and ^a/b^), or an object whose key is also a prefix of other objects (such as ^a^ beside ^a/b^). A legitimate key of that shape can be left out with ^--exclude-regex^ (anchor and escape it, since the pattern is a regular expression matched against the whole key); when ^--include^ or ^--include-regex^ is set, exclude filters are ignored, so narrow the include filter instead.
 
@@ -91,13 +89,6 @@ kosli snapshot s3 yourEnvironmentName \
 	--skip-unusable-checksums \
 	--api-token yourAPIToken \
 	--org yourOrgName
-
-# report an AWS S3 bucket that may hold no objects, as an empty snapshot when it does:
-kosli snapshot s3 yourEnvironmentName \
-	--bucket yourBucketName \
-	--allow-empty-bucket \
-	--api-token yourAPIToken \
-	--org yourOrgName
 `
 
 const (
@@ -113,7 +104,6 @@ type snapshotS3Options struct {
 	excludeRegex        []string
 	fingerprintSource   string
 	skipUnusable        bool
-	allowEmptyBucket    bool
 	downloadConcurrency int
 	downloadBudget      string
 	downloadLimits      aws.DownloadLimits
@@ -173,7 +163,6 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVar(&o.excludeRegex, "exclude-regex", []string{}, excludeBucketPathsRegexFlag)
 	cmd.Flags().StringVar(&o.fingerprintSource, "fingerprint-source", fingerprintSourceContent, s3FingerprintSourceFlag)
 	cmd.Flags().BoolVar(&o.skipUnusable, "skip-unusable-checksums", false, s3SkipUnusableChecksumsFlag)
-	cmd.Flags().BoolVar(&o.allowEmptyBucket, "allow-empty-bucket", false, s3AllowEmptyBucketFlag)
 	cmd.Flags().IntVar(&o.downloadConcurrency, "download-concurrency", aws.DefaultDownloadLimits.Concurrency, downloadConcurrencyFlag)
 	cmd.Flags().StringVar(&o.downloadBudget, "download-budget", defaultDownloadBudget, downloadBudgetFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
@@ -200,16 +189,6 @@ func (o *snapshotS3Options) run(args []string) error {
 }
 
 func (o *snapshotS3Options) harvest() ([]*aws.S3Data, error) {
-	s3Data, err := o.harvestObjects()
-	var empty aws.EmptyBucketError
-	if o.allowEmptyBucket && errors.As(err, &empty) {
-		logger.Warn("bucket [%s] holds no objects; reporting an empty snapshot", o.bucket)
-		return []*aws.S3Data{}, nil
-	}
-	return s3Data, err
-}
-
-func (o *snapshotS3Options) harvestObjects() ([]*aws.S3Data, error) {
 	if o.fingerprintSource == fingerprintSourceMetadata {
 		return o.awsStaticCreds.GetS3DataFromMetadata(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex,
 			o.downloadLimits, o.skipUnusable, logger)

@@ -3,7 +3,6 @@ package aws
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -1235,40 +1234,6 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 			if t.wantLastModified != 0 {
 				require.Equal(suite.T(), t.wantLastModified, data[0].LastModifiedTimestamp)
 			}
-		})
-	}
-}
-
-// Only a bucket that lists nothing with no filter set is an EmptyBucketError,
-// which is what --allow-empty-bucket turns into an empty snapshot.
-func (suite *AWSTestSuite) TestGetS3DataFromClientTellsAnEmptyBucketFromAFilterThatMatchesNothing() {
-	readme := map[string][]byte{"README.md": []byte(fakeReadmeBody)}
-	for _, t := range []struct {
-		name         string
-		objects      map[string][]byte
-		includePaths []string
-		includeRegex []string
-		excludePaths []string
-		excludeRegex []string
-		wantEmpty    bool
-	}{
-		{name: "no objects at all", objects: map[string][]byte{}, wantEmpty: true},
-		{name: "only folder markers", objects: map[string][]byte{"dummy/": nil, "dummy/dummy_2/": nil}, wantEmpty: true},
-		{name: "--include matches nothing", objects: readme, includePaths: []string{"non-existing.md"}},
-		{name: "--include-regex matches nothing", objects: readme, includeRegex: []string{`.*\.yml$`}},
-		{name: "--exclude removes everything", objects: readme, excludePaths: []string{"README.md"}},
-		{name: "--exclude-regex removes everything", objects: readme, excludeRegex: []string{`.*\.md$`}},
-		{name: "an empty bucket with a filter set", objects: map[string][]byte{}, includePaths: []string{"README.md"}},
-	} {
-		suite.Run(t.name, func() {
-			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects}
-
-			_, err := getS3DataFromClient(client, fakeS3TestBucketName, t.includePaths, t.includeRegex,
-				t.excludePaths, t.excludeRegex, DefaultDownloadLimits, logger.NewStandardLogger())
-
-			require.EqualError(suite.T(), err, "no matching file or dirs in bucket: ["+fakeS3TestBucketName+"]")
-			var empty EmptyBucketError
-			require.Equal(suite.T(), t.wantEmpty, errors.As(err, &empty))
 		})
 	}
 }
