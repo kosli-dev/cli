@@ -384,15 +384,14 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 // wiring works.
 func (suite *AWSTestSuite) TestGetS3Data() {
 	for _, t := range []struct {
-		name             string
-		requireEnvVars   bool // indicates that a test case needs real credentials from env vars
-		creds            *AWSStaticCreds
-		bucketName       string
-		includePaths     []string
-		excludePaths     []string
-		wantFingerprint  string
-		wantArtifactName string
-		wantErr          bool
+		name            string
+		requireEnvVars  bool // indicates that a test case needs real credentials from env vars
+		creds           *AWSStaticCreds
+		bucketName      string
+		includePaths    []string
+		excludePaths    []string
+		wantFingerprint string
+		wantErr         bool
 	}{
 		{
 			name: "invalid credentials causes an error",
@@ -438,13 +437,10 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				if t.wantArtifactName == "" {
-					t.wantArtifactName = t.bucketName
-				}
 				if t.wantFingerprint == "" {
-					require.Contains(suite.T(), data[0].Digests, t.wantArtifactName)
+					require.Contains(suite.T(), data[0].Digests, t.bucketName)
 				} else {
-					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.wantArtifactName])
+					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.bucketName])
 				}
 			}
 		})
