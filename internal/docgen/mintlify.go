@@ -60,6 +60,27 @@ func (MintlifyFormatter) TutorialTip(url string) string {
 	return fmt.Sprintf("<Tip>\nSee the [tutorial](%s) for a walkthrough.\n</Tip>\n\n", url)
 }
 
+// JSONOutput renders the note for a command whose JSON output is the response
+// body of one API operation. operation is the operation's path under
+// /api-reference on the docs site, e.g. "trails/get-trail".
+func (MintlifyFormatter) JSONOutput(operation string) string {
+	return fmt.Sprintf("## JSON output\n\n"+
+		"With `--output json`, this command prints the response of the "+
+		"[%s](/api-reference/%s) API operation as the server returned it. "+
+		"The shape follows the server's published API spec, not the CLI version.\n\n",
+		operationTitle(operation), operation)
+}
+
+// operationTitle turns the last segment of an API reference path into link
+// text: "trails/get-trail" becomes "Get trail".
+func operationTitle(operation string) string {
+	title := strings.ReplaceAll(operation[strings.LastIndex(operation, "/")+1:], "-", " ")
+	if title == "" {
+		return title
+	}
+	return strings.ToUpper(title[:1]) + title[1:]
+}
+
 func (MintlifyFormatter) Synopsis(meta CommandMeta) string {
 	var b strings.Builder
 	if len(meta.Long) > 0 {

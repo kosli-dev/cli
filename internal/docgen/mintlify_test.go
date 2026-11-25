@@ -469,3 +469,15 @@ func TestSanitizeDescription(t *testing.T) {
 		})
 	}
 }
+
+func TestMintlifyJSONOutput(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.JSONOutput("trails/get-trail")
+	want := "## JSON output\n\n" +
+		"With `--output json`, this command prints the response of the " +
+		"[Get trail](/api-reference/trails/get-trail) API operation as the server returned it. " +
+		"The shape follows the server's published API spec, not the CLI version.\n\n"
+	if got != want {
+		t.Errorf("JSONOutput mismatch:\ngot:  %q\nwant: %q", got, want)
+	}
+}
