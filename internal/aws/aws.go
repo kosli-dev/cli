@@ -507,7 +507,7 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 		// A filter that leaves nothing may be mistyped, so that case is a warning.
 		filtersSet := len(includePaths)+len(includeRegex)+len(excludePaths)+len(excludeRegex) > 0
 		if filtersSet {
-			logger.Warn("no object in bucket [%s] is left by the include and exclude filters; reporting it as an empty bucket", bucket)
+			logger.Warn("no object in bucket [%s] matches the include and exclude filters (or the bucket is empty); reporting it as an empty bucket", bucket)
 		} else {
 			logger.Info("bucket [%s] holds no objects; reporting it as an empty bucket", bucket)
 		}

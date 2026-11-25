@@ -114,13 +114,13 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 		{
 			name: "reports an empty bucket, with a warning, when --include does not match any file or dir",
 			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include non-existing.md`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
-			golden: "[warning] no object in bucket [kosli-cli-public] is left by the include and exclude filters; reporting it as an empty bucket\n" +
+			golden: "[warning] no object in bucket [kosli-cli-public] matches the include and exclude filters (or the bucket is empty); reporting it as an empty bucket\n" +
 				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
 		{
 			name: "reports an empty bucket, with a warning, when --exclude-regex removes every file",
 			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --exclude-regex '.*'`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
-			golden: "[warning] no object in bucket [kosli-cli-public] is left by the include and exclude filters; reporting it as an empty bucket\n" +
+			golden: "[warning] no object in bucket [kosli-cli-public] matches the include and exclude filters (or the bucket is empty); reporting it as an empty bucket\n" +
 				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
 		{

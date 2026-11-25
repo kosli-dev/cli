@@ -1215,7 +1215,7 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientReportsNothingToFingerprintAsA
 	readme := map[string][]byte{"README.md": []byte(fakeReadmeBody)}
 	const (
 		emptyBucketLog = "bucket [" + fakeS3TestBucketName + "] holds no objects; reporting it as an empty bucket\n"
-		filteredLog    = "[warning] no object in bucket [" + fakeS3TestBucketName + "] is left by the include and exclude filters; reporting it as an empty bucket\n"
+		filteredLog    = "[warning] no object in bucket [" + fakeS3TestBucketName + "] matches the include and exclude filters (or the bucket is empty); reporting it as an empty bucket\n"
 	)
 	for _, t := range []struct {
 		name         string
