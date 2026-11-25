@@ -490,7 +490,7 @@ func TestMintlifyJSONOutputSeveralOperations(t *testing.T) {
 		"as the server returned it, depending on the flags and arguments given. " +
 		"The shape follows the server's published API spec, not the CLI version.\n\n" +
 		"- [Get artifact by fingerprint](/api-reference/artifacts/get-artifact-by-fingerprint)\n" +
-		"- [Get artifacts by commit sha](/api-reference/artifacts/get-artifacts-by-commit-sha)\n\n"
+		"- [Get artifacts by commit SHA](/api-reference/artifacts/get-artifacts-by-commit-sha)\n\n"
 	if got != want {
 		t.Errorf("JSONOutput mismatch:\ngot:  %q\nwant: %q", got, want)
 	}
@@ -528,5 +528,20 @@ func TestMintlifyJSONOutputBuiltByCLI(t *testing.T) {
 		"The shape follows the CLI version, not the server's API spec.\n\n"
 	if got != want {
 		t.Errorf("JSONOutput mismatch:\ngot:  %q\nwant: %q", got, want)
+	}
+}
+
+func TestOperationTitle(t *testing.T) {
+	for operation, want := range map[string]string{
+		"trails/get-trail":                                        "Get trail",
+		"artifacts/get-artifacts-by-commit-sha":                   "Get artifacts by commit SHA",
+		"search/search-artifacts-by-sha-or-fingerprint":           "Search artifacts by SHA or fingerprint",
+		"user/rotate-a-personal-api-key":                          "Rotate a personal API key",
+		"service-accounts/list-api-keys-for-a-service-account":    "List API keys for a service account",
+		"audit-log/list-membershiprole-change-history-for-an-org": "List membership/role change history for an org",
+	} {
+		if got := OperationTitle(operation); got != want {
+			t.Errorf("OperationTitle(%q) = %q, want %q", operation, got, want)
+		}
 	}
 }

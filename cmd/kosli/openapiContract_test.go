@@ -118,10 +118,11 @@ func (suite *OpenAPIContractTestSuite) TestPayloadsMatchSchema() {
 
 // TestJSONOutputOperationsExistInSchema guards the API reference links on the
 // CLI reference pages: every operation a command names in its jsonOutputAPI
-// annotation must be an operation the server publishes.
+// annotation must be an operation the server publishes, and the link text the
+// docs generator derives for it must be that operation's summary.
 func (suite *OpenAPIContractTestSuite) TestJSONOutputOperationsExistInSchema() {
-	published := suite.apiReferencePaths()
-	require.NotEmpty(suite.T(), published, "OpenAPI schema should contain operations")
+	summaries := suite.apiReferenceSummaries()
+	require.NotEmpty(suite.T(), summaries, "OpenAPI schema should contain operations")
 
 	root, err := newRootCmd(&bytes.Buffer{}, &bytes.Buffer{}, nil)
 	require.NoError(suite.T(), err)
@@ -134,8 +135,12 @@ func (suite *OpenAPIContractTestSuite) TestJSONOutputOperationsExistInSchema() {
 		}
 		for _, operation := range docgen.SplitOperations(cmd.Annotations[docgen.JSONOutputAPIAnnotation]) {
 			checked++
-			require.Truef(suite.T(), published[operation],
+			summary, published := summaries[operation]
+			require.Truef(suite.T(), published,
 				"%s names API operation %q, which the server's OpenAPI schema does not publish",
+				cmd.CommandPath(), operation)
+			require.Equalf(suite.T(), summary, docgen.OperationTitle(operation),
+				"%s: the link text for %q differs from the operation's summary; add the lost word to docgen's titleWords",
 				cmd.CommandPath(), operation)
 		}
 	}
@@ -143,11 +148,11 @@ func (suite *OpenAPIContractTestSuite) TestJSONOutputOperationsExistInSchema() {
 	require.NotZero(suite.T(), checked, "no command names an API operation")
 }
 
-// apiReferencePaths returns the docs-site path of every operation in the
-// schema. The docs site builds each endpoint page's path from the operation's
-// first tag and its summary, so this must keep to the same rule.
-func (suite *OpenAPIContractTestSuite) apiReferencePaths() map[string]bool {
-	paths := map[string]bool{}
+// apiReferenceSummaries maps the docs-site path of every operation in the
+// schema to its summary. The docs site builds each endpoint page's path from
+// the operation's first tag and its summary, so this must keep to the same rule.
+func (suite *OpenAPIContractTestSuite) apiReferenceSummaries() map[string]string {
+	summaries := map[string]string{}
 	for _, item := range suite.schema.Paths {
 		for method, raw := range item {
 			switch method {
@@ -163,10 +168,10 @@ func (suite *OpenAPIContractTestSuite) apiReferencePaths() map[string]bool {
 			if len(operation.Tags) == 0 || operation.Summary == "" {
 				continue
 			}
-			paths[apiReferenceSlug(operation.Tags[0])+"/"+apiReferenceSlug(operation.Summary)] = true
+			summaries[apiReferenceSlug(operation.Tags[0])+"/"+apiReferenceSlug(operation.Summary)] = operation.Summary
 		}
 	}
-	return paths
+	return summaries
 }
 
 var (

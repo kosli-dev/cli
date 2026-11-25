@@ -96,13 +96,27 @@ func (MintlifyFormatter) JSONOutput(operations []string, source string) string {
 }
 
 func operationLink(operation string) string {
-	return fmt.Sprintf("[%s](/api-reference/%s)", operationTitle(operation), operation)
+	return fmt.Sprintf("[%s](/api-reference/%s)", OperationTitle(operation), operation)
 }
 
-// operationTitle turns the last segment of an API reference path into link
-// text: "trails/get-trail" becomes "Get trail".
-func operationTitle(operation string) string {
-	title := strings.ReplaceAll(operation[strings.LastIndex(operation, "/")+1:], "-", " ")
+// titleWords restores what a docs path loses from an operation's summary:
+// the capitals of an acronym and the punctuation inside a word.
+var titleWords = map[string]string{
+	"api":            "API",
+	"sha":            "SHA",
+	"membershiprole": "membership/role",
+}
+
+// OperationTitle turns the last segment of an API reference path into the
+// operation's summary: "trails/get-trail" becomes "Get trail".
+func OperationTitle(operation string) string {
+	words := strings.Split(operation[strings.LastIndex(operation, "/")+1:], "-")
+	for i, word := range words {
+		if restored, ok := titleWords[word]; ok {
+			words[i] = restored
+		}
+	}
+	title := strings.Join(words, " ")
 	if title == "" {
 		return title
 	}
