@@ -528,7 +528,7 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 		}
 	}
 
-	s3Data = append(s3Data, &S3Data{Digests: map[string]string{fingerprint.artifactName: fingerprint.sha256}, LastModifiedTimestamp: newest.Unix()})
+	s3Data = append(s3Data, &S3Data{Digests: map[string]string{bucket: fingerprint.sha256}, LastModifiedTimestamp: newest.Unix()})
 
 	return s3Data, nil
 }
@@ -641,9 +641,8 @@ type s3DigestSource struct {
 
 // s3Fingerprint is the outcome of fingerprinting a bucket's objects.
 type s3Fingerprint struct {
-	// artifactName and sha256 are empty when no object was fingerprinted.
-	artifactName string
-	sha256       string
+	// sha256 is empty when no object was fingerprinted.
+	sha256 string
 	// fingerprinted holds the objects the fingerprint was computed over, in
 	// listing order.
 	fingerprinted []s3Object
@@ -664,16 +663,15 @@ func downloadDigests(downloader S3DownloadAPI, bucket string, logger *logger.Log
 }
 
 // fingerprintS3Objects fingerprints the objects with the download source.
-func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
+func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, error) {
 	fingerprint, err := fingerprintS3Tree(downloader, downloadDigests(downloader, bucket, logger), bucket, objects, limits, logger)
-	return fingerprint.artifactName, fingerprint.sha256, err
+	return fingerprint.sha256, err
 }
 
 // fingerprintS3Tree fingerprints the objects as the directory their keys
 // describe, without using a key as a local file name: digest.VirtualDirSha256
 // combines the (key, sha256) pairs from source exactly as digest.DirSha256
-// would on disk. A single object is fingerprinted as that file. Either way the
-// artifact is named after the bucket.
+// would on disk. A single object is fingerprinted as that file.
 //
 // The root .kosli_ignore is always downloaded, whatever the source, because its
 // rules decide which other objects are fetched at all.
@@ -723,7 +721,7 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 		if err != nil {
 			return s3Fingerprint{}, err
 		}
-		return s3Fingerprint{artifactName: bucket, sha256: sha256, fingerprinted: objects, read: 1}, nil
+		return s3Fingerprint{sha256: sha256, fingerprinted: objects, read: 1}, nil
 	}
 
 	var rules []string
@@ -786,14 +784,14 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 		return fingerprint, nil
 	}
 	if file, ok := digest.SingleVirtualFile(files); ok {
-		fingerprint.artifactName, fingerprint.sha256 = bucket, file.Sha256
+		fingerprint.sha256 = file.Sha256
 		return fingerprint, nil
 	}
 	sha256, err := digest.VirtualDirSha256(files, rules, logger)
 	if err != nil {
 		return s3Fingerprint{}, ignoreRuleError(err)
 	}
-	fingerprint.artifactName, fingerprint.sha256 = bucket, sha256
+	fingerprint.sha256 = sha256
 	return fingerprint, nil
 }
 
