@@ -44,7 +44,8 @@ func SingleVirtualFile(files []VirtualFile) (VirtualFile, bool) {
 }
 
 // VirtualDirSha256 returns the fingerprint DirSha256 would return for a
-// directory containing exactly these files, without touching the disk.
+// directory containing exactly these files, without touching the disk. No
+// files is an empty directory, whose fingerprint is the sha256 of no input.
 //
 // It reproduces calculateDirContentSha256 exactly: walk the tree in
 // filepath.WalkDir order -- which is lexical by name within each directory,
@@ -65,10 +66,6 @@ func SingleVirtualFile(files []VirtualFile) (VirtualFile, bool) {
 // exclusion list without changing its fingerprint. Callers that hold the file's
 // content pass its rules here; the file is an ordinary entry of files.
 func VirtualDirSha256(files []VirtualFile, ignoreRules []string, logger *logger.Logger) (string, error) {
-	if len(files) == 0 {
-		return "", fmt.Errorf("cannot calculate a fingerprint: no files were provided")
-	}
-
 	root, err := buildVirtualTree(files)
 	if err != nil {
 		return "", err
