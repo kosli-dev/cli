@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"sync"
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/kosli"
@@ -141,22 +142,29 @@ func (o *reportArtifactOptions) run(args []string) error {
 	}
 	o.payload.GitCommit = commitObject.Sha1
 
-	previousCommit, err := o.latestCommit(currentBranch(gitView))
-	if err == nil {
-		o.payload.CommitsList, err = gitView.ChangeLog(o.payload.GitCommit, previousCommit, logger)
-		if err != nil && !global.DryRun {
-			return err
-		}
-	} else if !global.DryRun {
-		return err
-	}
-
+	branch := currentBranch(gitView)
+	// go-git does not promise a repository is safe to read from two goroutines.
+	var gitMu sync.Mutex
 	o.payload.RepoUrl, err = gitView.RepoURL()
 	if err != nil {
 		logger.Warn("Repo URL will not be reported, %s", err.Error())
 	}
 
 	return kosliAPI().Send(func(h kosli.Host) error {
+		// Each host's changelog runs from the latest commit that host has seen.
+		payload := o.payload
+		previousCommit, err := o.latestCommit(h, branch)
+		if err == nil {
+			gitMu.Lock()
+			payload.CommitsList, err = gitView.ChangeLog(payload.GitCommit, previousCommit, logger)
+			gitMu.Unlock()
+			if err != nil && !h.DryRun {
+				return err
+			}
+		} else if !h.DryRun {
+			return err
+		}
+
 		url, err := url.JoinPath(h.URL, "api/v2/artifacts", global.Org, o.flowName)
 		if err != nil {
 			return err
@@ -165,7 +173,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 		reqParams := &requests.RequestParams{
 			Method:  http.MethodPost,
 			URL:     url,
-			Payload: o.payload,
+			Payload: payload,
 			DryRun:  h.DryRun,
 			Token:   h.Token,
 		}
@@ -178,8 +186,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 }
 
 // latestCommit retrieves the git commit of the latest artifact for a flow in Kosli
-func (o *reportArtifactOptions) latestCommit(branchName string) (string, error) {
-	h := kosliAPI().Query()
+func (o *reportArtifactOptions) latestCommit(h kosli.Host, branchName string) (string, error) {
 	latestCommitUrl := fmt.Sprintf(
 		"%s/api/v2/artifacts/%s/%s/%s/latest_commit%s",
 		h.URL, global.Org, o.flowName, o.payload.Fingerprint, asBranchParameter(branchName))

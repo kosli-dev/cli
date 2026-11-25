@@ -23,9 +23,8 @@ type Host struct {
 	Token  string
 	DryRun bool
 	client *requests.Client
-	logger *log.Logger
-	// label names the host in its log lines when there are several hosts.
-	label   string
+	// logger names the host in its lines when there are several hosts.
+	logger  *log.Logger
 	primary bool
 }
 
@@ -48,16 +47,16 @@ func (h Host) Client() *requests.Client {
 
 // Info shows the primary's line; a secondary's only shows with --debug.
 func (h Host) Info(format string, v ...any) {
-	if h.primary {
-		h.logger.Info(format, v...)
-		return
-	}
-	h.logger.Debug(h.label+format, v...)
+	h.logger.Info(format, v...)
+}
+
+func (h Host) Debug(format string, v ...any) {
+	h.logger.Debug(format, v...)
 }
 
 // Warn shows for every host, so a secondary's lost evidence is not silent.
 func (h Host) Warn(format string, v ...any) {
-	h.logger.Warn(h.label+format, v...)
+	h.logger.Warn(format, v...)
 }
 
 // Kosli is every host a command talks to, the primary first.
@@ -75,16 +74,17 @@ func New(client *requests.Client, logger *log.Logger, hosts, tokens string, dryR
 	}
 	k := &Kosli{}
 	for i := range hostList {
+		hostLogger := logger
+		if len(hostList) > 1 {
+			hostLogger = logger.ForHost("["+hostList[i]+"] ", i > 0)
+		}
 		h := Host{
 			URL:     hostList[i],
 			Token:   tokenList[i],
 			DryRun:  dryRun || tokenList[i] == "DRY_RUN",
-			client:  client,
-			logger:  logger,
+			client:  client.WithLogger(hostLogger),
+			logger:  hostLogger,
 			primary: i == 0,
-		}
-		if len(hostList) > 1 {
-			h.label = "[" + h.URL + "] "
 		}
 		k.hosts = append(k.hosts, h)
 	}
@@ -93,6 +93,16 @@ func New(client *requests.Client, logger *log.Logger, hosts, tokens string, dryR
 
 func HasMultipleHosts(hosts, tokens []string) bool {
 	return len(hosts) > 1 && len(tokens) > 1 && len(hosts) == len(tokens)
+}
+
+// DryRun reports whether every host is in dry-run, so nothing is written.
+func (k *Kosli) DryRun() bool {
+	for _, h := range k.hosts {
+		if !h.DryRun {
+			return false
+		}
+	}
+	return true
 }
 
 // Query is the host to read from: the primary. Reading every host could give

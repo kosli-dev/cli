@@ -75,13 +75,13 @@ func ensureEnvironment(h kosli.Host, envName, envType string) error {
 
 	if !o.autoEnvironment {
 		if optionalFlagsSet {
-			logger.Warn("--environment-description, --include-scaling and --exclude-scaling are ignored unless --auto-environment is set")
+			h.Warn("--environment-description, --include-scaling and --exclude-scaling are ignored unless --auto-environment is set")
 		}
 		return nil
 	}
 
 	if h.DryRun {
-		logger.Info("dry-run: environment %s would be created with type %s if it does not exist", envName, envType)
+		h.Info("dry-run: environment %s would be created with type %s if it does not exist", envName, envType)
 		return nil
 	}
 
@@ -97,7 +97,7 @@ func ensureEnvironment(h kosli.Host, envName, envType string) error {
 			return fmt.Errorf("environment %s already exists with type %s, which does not match the snapshot type %s", envName, existingType, envType)
 		}
 		if optionalFlagsSet {
-			logger.Warn("environment %s already exists; --environment-description, --include-scaling and --exclude-scaling are ignored", envName)
+			h.Warn("environment %s already exists; --environment-description, --include-scaling and --exclude-scaling are ignored", envName)
 		}
 		return nil
 	}
@@ -129,7 +129,7 @@ func getEnvironmentTypeIfExists(h kosli.Host, envName string) (bool, string, err
 		// environment or bypass the type/logical safety checks.
 		var apiErr *requests.APIError
 		if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
-			logger.Debug("environment %s does not exist yet", envName)
+			h.Debug("environment %s does not exist yet", envName)
 			return false, "", nil
 		}
 		return false, "", err
@@ -180,6 +180,6 @@ func createEnvironmentForSnapshot(h kosli.Host, envName, envType string) error {
 	if _, err := h.Do(reqParams); err != nil {
 		return fmt.Errorf("failed to auto-create environment %s: %v", envName, err)
 	}
-	logger.Info("environment %s was created", envName)
+	h.Info("environment %s was created", envName)
 	return nil
 }

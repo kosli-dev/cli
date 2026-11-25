@@ -5,6 +5,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/evaluations"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/spf13/cobra"
 )
 
@@ -130,19 +131,11 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 			[]evaluations.TrailRef{{Flow: o.flowName, Trail: args[0]}})
 	}
 
-	trailData, err := fetchAndEnrichTrail(o.flowName, args[0], o.attestations)
-	if err != nil {
-		return err
-	}
-
-	params, err := parseParams(o.params)
-	if err != nil {
-		return err
-	}
-
-	input := map[string]any{
-		"trail": trailData,
-	}
-
-	return evaluateAndPrintResult(out, o.policyRef, input, o.output, o.showInput, params, o.assertOnDeny(), o.outputRules)
+	return evaluateTrailsOnEveryHost(out, &o.commonEvaluateOptions, func(h kosli.Host) (map[string]any, error) {
+		trailData, err := fetchAndEnrichTrail(h, o.flowName, args[0], o.attestations)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"trail": trailData}, nil
+	})
 }

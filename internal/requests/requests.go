@@ -74,6 +74,14 @@ type Client struct {
 	usageHeaders  map[string]string
 }
 
+// WithLogger returns a client that shares c's connections, retries and usage
+// headers but logs through l.
+func (c *Client) WithLogger(l *logger.Logger) *Client {
+	clone := *c
+	clone.Logger = l
+	return &clone
+}
+
 // SetUsageHeaders adds headers to every request this client sends to
 // kosliHost, a comma-separated list for several hosts. The same client also
 // calls registries, VCS providers and storage buckets, and those requests

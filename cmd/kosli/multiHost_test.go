@@ -2,14 +2,19 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/kosli"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -20,25 +25,35 @@ import (
 const multiHostFingerprint = "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01"
 
 // recordingKosliHost records the requests a command makes and answers each with
-// the body given for its path, or {} with 200.
+// the body given for its path, or {} with 200. statuses, keyed by method and
+// path, answers with another status.
 type recordingKosliHost struct {
 	mu       sync.Mutex
 	requests []string
+	payloads map[string]string
 	bodies   map[string]string
+	statuses map[string]int
 }
 
 func newRecordingKosliHost(t *testing.T, bodies map[string]string) (*httptest.Server, *recordingKosliHost) {
 	t.Helper()
-	fake := &recordingKosliHost{bodies: bodies}
+	fake := &recordingKosliHost{bodies: bodies, payloads: map[string]string{}, statuses: map[string]int{}}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key := r.Method + " " + r.URL.Path
+		payload, _ := io.ReadAll(r.Body)
 		fake.mu.Lock()
-		fake.requests = append(fake.requests, r.Method+" "+r.URL.Path)
+		fake.requests = append(fake.requests, key)
+		fake.payloads[key] = string(payload)
+		status, failing := fake.statuses[key]
 		fake.mu.Unlock()
 		body, ok := fake.bodies[r.URL.Path]
 		if !ok {
 			body = "{}"
 		}
 		w.Header().Set("Content-Type", "application/json")
+		if failing {
+			w.WriteHeader(status)
+		}
 		_, _ = fmt.Fprint(w, body)
 	}))
 	t.Cleanup(server.Close)
@@ -225,4 +240,104 @@ func TestWithAttachmentUploadIDLeavesTheOriginalPayloadAlone(t *testing.T) {
 	assert.Empty(t, original.AttachmentUploadID)
 	assert.Equal(t, "id-1", cloned.(GenericAttestationPayload).AttachmentUploadID)
 	assert.Equal(t, "x", cloned.attestationName())
+}
+
+func TestATagSendsEveryHostTheTagsToRemoveAsGiven(t *testing.T) {
+	serverA, fakeA := newRecordingKosliHost(t, nil)
+	serverB, fakeB := newRecordingKosliHost(t, nil)
+
+	_, combined, _, _, err := executeCommandC("tag flow my-flow --unset t2 --unset t1 --unset t3 " +
+		multiHostFlags(serverA.URL, serverB.URL))
+
+	require.NoError(t, err)
+	key := "PATCH /api/v2/tags/acme/flow/my-flow"
+	assert.Contains(t, fakeA.payloads[key], `"remove_tags":["t2","t1","t3"]`)
+	assert.Equal(t, fakeA.payloads[key], fakeB.payloads[key])
+	assert.Contains(t, combined, "Tag(s) [t1, t2, t3] removed")
+}
+
+func TestStatusAssertFailsWhenASecondaryHostIsDown(t *testing.T) {
+	serverA, _ := newRecordingKosliHost(t, map[string]string{"/ready": `"OK"`})
+	down := httptest.NewServer(http.NotFoundHandler())
+	down.Close()
+
+	_, _, _, _, err := executeCommandC("status --assert " + multiHostFlags(serverA.URL, down.URL))
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "["+down.URL+"]\nkosli server "+down.URL+" is unresponsive")
+}
+
+func TestEvaluateTrailAssertFailsWhenASecondaryHostDenies(t *testing.T) {
+	trailPath := "/api/v2/trails/acme/my-flow/my-trail"
+	serverA, _ := newRecordingKosliHost(t, map[string]string{trailPath: `{"compliance_status": {"attestations_statuses": [{"attestation_name": "bar", "attestation_id": null}]}}`})
+	serverB, _ := newRecordingKosliHost(t, map[string]string{trailPath: `{"compliance_status": {"attestations_statuses": []}}`})
+
+	policy := filepath.Join(t.TempDir(), "needs-bar.rego")
+	require.NoError(t, os.WriteFile(policy, []byte(`package policy
+
+default allow := false
+
+allow if input.trail.compliance_status.attestations_statuses.bar
+
+violations contains "trail attestation 'bar' not found" if not input.trail.compliance_status.attestations_statuses.bar
+`), 0o600))
+
+	_, combined, _, _, err := executeCommandC("evaluate trail my-trail --flow my-flow --policy " + policy + " " +
+		multiHostFlags(serverA.URL, serverB.URL))
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "["+serverB.URL+"]\npolicy denied")
+	assert.Regexp(t, `RESULT:\s+ALLOWED`, combined)
+}
+
+func TestAllDryRunTokensMakeTheWholeRunADryRun(t *testing.T) {
+	serverA, fakeA := newRecordingKosliHost(t, nil)
+	serverB, fakeB := newRecordingKosliHost(t, nil)
+
+	_, _, _, _, err := executeCommandStdinC(fmt.Sprintf(
+		"delete service-account ci --org acme --host %s,%s --api-token DRY_RUN,DRY_RUN", serverA.URL, serverB.URL), "")
+
+	require.NoError(t, err, "a dry run must not ask for confirmation")
+	assert.Empty(t, fakeA.requests)
+	assert.Empty(t, fakeB.requests)
+}
+
+func TestADeleteFailingPartwayOnASecondaryNamesWhatItHadDeleted(t *testing.T) {
+	serverA, _ := newRecordingKosliHost(t, nil)
+	serverB, fakeB := newRecordingKosliHost(t, nil)
+	fakeB.statuses["DELETE /api/v2/service-accounts/acme/s2"] = http.StatusBadRequest
+
+	_, combined, _, _, err := executeCommandC("delete service-account s1 s2 --assume-yes " +
+		multiHostFlags(serverA.URL, serverB.URL))
+
+	require.Error(t, err)
+	assert.Contains(t, combined, "[warning] ["+serverB.URL+"] Service accounts already deleted before this failure")
+}
+
+func TestReportArtifactSendsEachHostItsOwnChangelog(t *testing.T) {
+	gv, err := gitview.New("../..")
+	require.NoError(t, err)
+	head, err := gv.ResolveRevision("HEAD")
+	require.NoError(t, err)
+	oneBack, err := gv.ResolveRevision("HEAD~1")
+	require.NoError(t, err)
+	threeBack, err := gv.ResolveRevision("HEAD~3")
+	require.NoError(t, err)
+	latest := "/api/v2/artifacts/acme/my-flow/" + multiHostFingerprint + "/latest_commit"
+	serverA, fakeA := newRecordingKosliHost(t, map[string]string{latest: `{"latest_commit": "` + oneBack + `"}`})
+	serverB, fakeB := newRecordingKosliHost(t, map[string]string{latest: `{"latest_commit": "` + threeBack + `"}`})
+
+	_, _, _, _, err = executeCommandC("report artifact app --fingerprint " + multiHostFingerprint +
+		" --flow my-flow --git-commit " + head + " --repo-root ../.. --build-url http://b --commit-url http://c " +
+		multiHostFlags(serverA.URL, serverB.URL))
+
+	require.NoError(t, err)
+	commits := func(fake *recordingKosliHost) int {
+		var sent struct {
+			CommitsList []any `json:"commits_list"`
+		}
+		require.NoError(t, json.Unmarshal([]byte(fake.payloads["POST /api/v2/artifacts/acme/my-flow"]), &sent))
+		return len(sent.CommitsList)
+	}
+	assert.Less(t, commits(fakeA), commits(fakeB))
 }

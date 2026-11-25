@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 
@@ -166,6 +167,36 @@ func (o *tagOptions) run(args []string) error {
 		return fmt.Errorf("the RESOURCE-ID argument is required unless tagging a repo with --repo-id")
 	}
 
+	var addMsg, removedMsg, msg string
+	if len(o.payload.SetTags) > 0 {
+		keys := make([]string, 0, len(o.payload.SetTags))
+		for key := range o.payload.SetTags {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		keysStr := strings.Join(keys, ", ")
+		addMsg = fmt.Sprintf("Tag(s) [%s] added", keysStr)
+	}
+	if len(o.payload.RemoveTags) > 0 {
+		removed := slices.Sorted(slices.Values(o.payload.RemoveTags))
+		keysStr := strings.Join(removed, ", ")
+		removedMsg = fmt.Sprintf("Tag(s) [%s] removed", keysStr)
+	}
+	if addMsg != "" {
+		msg = addMsg
+		if removedMsg != "" {
+			msg += fmt.Sprintf(", and %s", removedMsg)
+		}
+
+	} else {
+		msg = removedMsg
+	}
+	if msg != "" {
+		msg += fmt.Sprintf(" for %s '%s'", o.resourceType, o.resourceID)
+	} else {
+		msg = fmt.Sprintf("No tags were applied for %s '%s'", o.resourceType, o.resourceID)
+	}
+
 	return kosliAPI().Send(func(h kosli.Host) error {
 		// A repo's internal id differs from host to host.
 		resourceID := urlResourceID
@@ -190,35 +221,6 @@ func (o *tagOptions) run(args []string) error {
 		}
 		_, err = h.Do(reqParams)
 		if err == nil && !h.DryRun {
-			var addMsg, removedMsg, msg string
-			if len(o.payload.SetTags) > 0 {
-				keys := make([]string, 0, len(o.payload.SetTags))
-				for key := range o.payload.SetTags {
-					keys = append(keys, key)
-				}
-				sort.Strings(keys)
-				keysStr := strings.Join(keys, ", ")
-				addMsg = fmt.Sprintf("Tag(s) [%s] added", keysStr)
-			}
-			if len(o.payload.RemoveTags) > 0 {
-				sort.Strings(o.payload.RemoveTags)
-				keysStr := strings.Join(o.payload.RemoveTags, ", ")
-				removedMsg = fmt.Sprintf("Tag(s) [%s] removed", keysStr)
-			}
-			if addMsg != "" {
-				msg = addMsg
-				if removedMsg != "" {
-					msg += fmt.Sprintf(", and %s", removedMsg)
-				}
-
-			} else {
-				msg = removedMsg
-			}
-			if msg != "" {
-				msg += fmt.Sprintf(" for %s '%s'", o.resourceType, o.resourceID)
-			} else {
-				msg = fmt.Sprintf("No tags were applied for %s '%s'", o.resourceType, o.resourceID)
-			}
 			h.Info("%s", msg)
 		}
 		return err

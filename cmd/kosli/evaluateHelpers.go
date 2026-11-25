@@ -96,8 +96,7 @@ func (o *commonEvaluateOptions) assertOnDeny() bool {
 	return !o.noAssert
 }
 
-func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (any, error) {
-	h := kosliAPI().Query()
+func fetchAndEnrichTrail(h kosli.Host, flowName, trailName string, attestations []string) (any, error) {
 	trailURL, err := url.JoinPath(h.URL, "api/v2/trails", global.Org, flowName, trailName)
 	if err != nil {
 		return nil, err
@@ -273,6 +272,49 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]an
 	}
 
 	return printEvaluateResult(out, result, input, outputFormat, showInput, params, assertOnDeny, "")
+}
+
+// evaluateTrailsOnEveryHost evaluates the policy here against the trails as
+// each host records them, since hosts can differ. The primary's verdict is
+// printed; under assert, a denial from any host fails the command. Without
+// assert only the primary is read, as nothing else would be shown.
+func evaluateTrailsOnEveryHost(out io.Writer, o *commonEvaluateOptions, inputFrom func(h kosli.Host) (map[string]any, error)) error {
+	if err := validateOutputRules(o.outputRules); err != nil {
+		return err
+	}
+	params, err := parseParams(o.params)
+	if err != nil {
+		return err
+	}
+	policySource, err := loadPolicy(o.policyRef)
+	if err != nil {
+		return err
+	}
+	if len(o.outputRules) > 0 && o.output == "table" {
+		logger.Warn("--output-rule values are only shown with --output json")
+	}
+
+	evaluateOn := func(h kosli.Host) error {
+		input, err := inputFrom(h)
+		if err != nil {
+			return err
+		}
+		result, err := evaluate.Evaluate(string(policySource), input, params, o.outputRules...)
+		if err != nil {
+			return err
+		}
+		w := out
+		if !h.IsPrimary() {
+			w = io.Discard
+		}
+		return printEvaluateResult(w, result, input, o.output, o.showInput, params, o.assertOnDeny(), "")
+	}
+
+	api := kosliAPI()
+	if !o.assertOnDeny() {
+		return evaluateOn(api.Query())
+	}
+	return api.Send(evaluateOn)
 }
 
 // evaluateServerSide asks the Kosli server to evaluate the named trails and

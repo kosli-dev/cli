@@ -78,7 +78,7 @@ func newDeleteServiceAccountCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *deleteServiceAccountOptions) run(in io.Reader, args []string) error {
-	if !o.assumeYes && !global.DryRun {
+	if !o.assumeYes && !kosliAPI().DryRun() {
 		confirmed, err := confirmServiceAccountDeletion(args, in)
 		if err != nil {
 			return err
@@ -94,7 +94,7 @@ func (o *deleteServiceAccountOptions) run(in io.Reader, args []string) error {
 	return kosliAPI().Send(func(h kosli.Host) error {
 		reportAlreadyDeleted := func(i int) {
 			if i > 0 {
-				h.Info("Service accounts already deleted before this failure: %s", strings.Join(styleServiceAccountNames(args[:i]), ", "))
+				h.Warn("Service accounts already deleted before this failure: %s", strings.Join(styleServiceAccountNames(args[:i]), ", "))
 			}
 		}
 

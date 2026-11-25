@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -39,26 +40,26 @@ func newStatusCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *statusOptions) run(out io.Writer) error {
-	h := kosliAPI().Query()
-	url, err := url.JoinPath(h.URL, "ready")
-	if err != nil {
-		return err
-	}
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    url,
-		Token:  h.Token,
-	}
-
-	response, err := h.Do(reqParams)
-	if err != nil {
-		logger.Debug("failed to check Kosli's readiness: %s", err.Error())
-		if o.assert {
-			return fmt.Errorf("kosli server %s is unresponsive", h.URL)
+	// Every host is checked, so --assert fails when any one is down.
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "ready")
+		if err != nil {
+			return err
 		}
-		logger.Info("Kosli is Down")
-	} else {
-		logger.Info("%s", response.Body)
-	}
-	return nil
+		response, err := h.Do(&requests.RequestParams{
+			Method: http.MethodGet,
+			URL:    url,
+			Token:  h.Token,
+		})
+		if err != nil {
+			h.Debug("failed to check Kosli's readiness: %s", err.Error())
+			if o.assert {
+				return fmt.Errorf("kosli server %s is unresponsive", h.URL)
+			}
+			h.Info("Kosli is Down")
+			return nil
+		}
+		h.Info("%s", response.Body)
+		return nil
+	})
 }

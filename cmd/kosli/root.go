@@ -607,7 +607,9 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 				return err
 			}
 
-			if global.ApiToken == "DRY_RUN" {
+			// With several hosts, the whole run is a dry run only when every
+			// token is DRY_RUN; otherwise each host decides for itself.
+			if !slices.ContainsFunc(strings.Split(global.ApiToken, ","), func(t string) bool { return t != "DRY_RUN" }) {
 				global.DryRun = true
 			}
 

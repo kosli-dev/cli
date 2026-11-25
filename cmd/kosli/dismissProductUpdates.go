@@ -86,7 +86,7 @@ func newDismissProductUpdatesCmd(out io.Writer) *cobra.Command {
 func (o *dismissProductUpdatesOptions) run(ids []string) error {
 	if o.all {
 		// The ids come from the server, and a dry run must work without one.
-		if global.DryRun {
+		if kosliAPI().Query().DryRun {
 			logger.Info("############### THIS IS A DRY-RUN  ###############")
 			logger.Info("every unread product update would be dismissed")
 			return nil
@@ -106,7 +106,7 @@ func (o *dismissProductUpdatesOptions) run(ids []string) error {
 	if err := markProductUpdatesSeen(ids); err != nil {
 		return err
 	}
-	if !global.DryRun {
+	if !kosliAPI().Query().DryRun {
 		logger.Info("%d product update(s) dismissed", len(ids))
 	}
 	return nil
