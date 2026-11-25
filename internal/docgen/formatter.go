@@ -8,6 +8,11 @@ import "github.com/spf13/cobra"
 // checks for its presence.
 const DocHiddenAnnotation = "docHidden"
 
+// JSONOutputAPIAnnotation marks a command whose --output json prints an API
+// response body unchanged. Its value is the operation's path under
+// /api-reference on the docs site, e.g. "trails/get-trail".
+const JSONOutputAPIAnnotation = "jsonOutputAPI"
+
 // CommandMeta holds metadata about a cobra command for doc generation.
 type CommandMeta struct {
 	Name       string
@@ -21,6 +26,8 @@ type CommandMeta struct {
 	Runnable   bool
 	Example    string
 	Tutorial   string
+	// JSONOutputAPI is the value of JSONOutputAPIAnnotation, empty when unset.
+	JSONOutputAPI string
 }
 
 // Formatter defines the interface for generating doc output in different formats.
@@ -32,6 +39,7 @@ type Formatter interface {
 	TutorialTip(url string) string
 	Synopsis(meta CommandMeta) string
 	FlagsSection(flags, inherited string) string
+	JSONOutput(operation string) string
 	ExampleUseCases(commandName, example string) string
 	LinkHandler(name string) string
 }

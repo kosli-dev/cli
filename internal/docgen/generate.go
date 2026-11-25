@@ -79,6 +79,11 @@ func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, met
 	flags, inherited := RenderFlagsTables(cmd)
 	buf.WriteString(formatter.FlagsSection(flags, inherited))
 
+	// JSON output note
+	if meta.JSONOutputAPI != "" {
+		buf.WriteString(formatter.JSONOutput(meta.JSONOutputAPI))
+	}
+
 	// Example use cases
 	if len(meta.Example) > 0 {
 		buf.WriteString(formatter.ExampleUseCases(name, meta.Example))

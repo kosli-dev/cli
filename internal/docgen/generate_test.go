@@ -254,3 +254,64 @@ func TestGenMarkdownTreeWithMintlifyFormatter(t *testing.T) {
 		t.Error("expected Mintlify description in front matter")
 	}
 }
+
+func TestGenMarkdownTreeRendersJSONOutput(t *testing.T) {
+	dir := t.TempDir()
+
+	root := &cobra.Command{Use: "root"}
+	withJSON := &cobra.Command{
+		Use:         "withjson",
+		Short:       "Cmd printing an API response",
+		Long:        "long desc",
+		Example:     "root withjson",
+		Annotations: map[string]string{JSONOutputAPIAnnotation: "trails/get-trail"},
+		RunE:        func(cmd *cobra.Command, args []string) error { return nil },
+	}
+	withJSON.Flags().String("output", "table", "The format of the output.")
+	without := &cobra.Command{
+		Use:   "withoutjson",
+		Short: "Cmd without JSON output",
+		Long:  "long desc",
+		RunE:  func(cmd *cobra.Command, args []string) error { return nil },
+	}
+	root.AddCommand(withJSON, without)
+
+	metaFn := func(cmd *cobra.Command) CommandMeta {
+		return CommandMeta{
+			Name:          cmd.CommandPath(),
+			Summary:       cmd.Short,
+			Long:          cmd.Long,
+			UseLine:       cmd.UseLine(),
+			Runnable:      cmd.Runnable(),
+			Example:       cmd.Example,
+			JSONOutputAPI: cmd.Annotations[JSONOutputAPIAnnotation],
+		}
+	}
+
+	if err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn); err != nil {
+		t.Fatalf("GenMarkdownTree error: %v", err)
+	}
+
+	withContent, err := os.ReadFile(filepath.Join(dir, "root_withjson.md"))
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+	page := string(withContent)
+	flags := strings.Index(page, "## Flags")
+	jsonOutput := strings.Index(page, "## JSON output")
+	examples := strings.Index(page, "## Examples Use Cases")
+	if jsonOutput == -1 || !strings.Contains(page, "(/api-reference/trails/get-trail)") {
+		t.Fatalf("expected JSON output section linking to the API operation, got:\n%s", page)
+	}
+	if flags >= jsonOutput || jsonOutput >= examples {
+		t.Errorf("expected JSON output section between flags and examples, got:\n%s", page)
+	}
+
+	withoutContent, err := os.ReadFile(filepath.Join(dir, "root_withoutjson.md"))
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+	if strings.Contains(string(withoutContent), "## JSON output") {
+		t.Errorf("expected no JSON output section, got:\n%s", string(withoutContent))
+	}
+}
