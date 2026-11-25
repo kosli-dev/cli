@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/docgen"
@@ -610,6 +611,10 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 				global.DryRun = true
 			}
 
+			if err := refuseEmptyHostInList(); err != nil {
+				return err
+			}
+
 			kosliClient.SetUsageHeaders(global.Host, usageHeaders(cmd))
 
 			// A value that starts with a dash is the next flag, swallowed as this
@@ -722,6 +727,17 @@ func reportEmptyFlagValue(cmd *cobra.Command, err error) error {
 		return emptyFlagValueError(invalid.GetFlag().Name)
 	}
 	return err
+}
+
+// refuseEmptyHostInList refuses an empty element in a comma-separated --host
+// or --api-token, which the empty-value rule on the whole flag cannot see.
+func refuseEmptyHostInList() error {
+	for name, value := range map[string]string{"host": global.Host, "api-token": global.ApiToken} {
+		if strings.Contains(value, ",") && slices.Contains(strings.Split(value, ","), "") {
+			return emptyFlagValueError(name)
+		}
+	}
+	return nil
 }
 
 func initialize(cmd *cobra.Command, out, errOut io.Writer) error {

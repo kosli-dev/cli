@@ -48,7 +48,8 @@ func newGetFlowCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getFlowOptions) run(out io.Writer, args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/flows", global.Org, args[0])
+	h := kosliAPI().Query()
+	url, err := url.JoinPath(h.URL, "api/v2/flows", global.Org, args[0])
 	if err != nil {
 		return err
 	}
@@ -56,9 +57,9 @@ func (o *getFlowOptions) run(out io.Writer, args []string) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    url,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

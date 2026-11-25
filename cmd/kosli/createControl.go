@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -70,24 +71,26 @@ func newCreateControlCmd(out io.Writer) *cobra.Command {
 
 func (o *createControlOptions) run(args []string) error {
 	o.payload.Identifier = args[0]
-	url, err := url.JoinPath(global.Host, "api/v2/controls", global.Org)
-	if err != nil {
-		return err
-	}
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/controls", global.Org)
+		if err != nil {
+			return err
+		}
 
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPost,
-		URL:     url,
-		Payload: o.payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-		// A 409 here means the identifier already exists — a permanent error,
-		// so surface it immediately rather than retrying.
-		DisableConflictRetry: true,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("control %s was created", o.payload.Identifier)
-	}
-	return err
+		reqParams := &requests.RequestParams{
+			Method:  http.MethodPost,
+			URL:     url,
+			Payload: o.payload,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
+			// A 409 here means the identifier already exists — a permanent error,
+			// so surface it immediately rather than retrying.
+			DisableConflictRetry: true,
+		}
+		_, err = h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			h.Info("control %s was created", o.payload.Identifier)
+		}
+		return err
+	})
 }

@@ -95,7 +95,8 @@ func newCreateApiKeyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *createApiKeyOptions) run(out io.Writer, args []string) error {
-	url, err := o.owner.url()
+	h := kosliAPI().Query()
+	url, err := o.owner.url(h)
 	if err != nil {
 		return err
 	}
@@ -112,11 +113,11 @@ func (o *createApiKeyOptions) run(out io.Writer, args []string) error {
 		Method:  http.MethodPost,
 		URL:     url,
 		Payload: o.payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
+		DryRun:  h.DryRun,
+		Token:   h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
-	if err != nil || global.DryRun {
+	response, err := h.Do(reqParams)
+	if err != nil || h.DryRun {
 		return err
 	}
 

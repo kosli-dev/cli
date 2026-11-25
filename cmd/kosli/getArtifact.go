@@ -120,6 +120,7 @@ func newGetArtifactCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getArtifactOptions) run(out io.Writer, args []string) error {
+	h := kosliAPI().Query()
 	flowName, id, separator, err := handleArtifactExpression(args[0])
 	if err != nil {
 		return err
@@ -131,7 +132,7 @@ func (o *getArtifactOptions) run(out io.Writer, args []string) error {
 		idType = "commit_sha"
 	}
 
-	url, err := neturl.JoinPath(global.Host, "api/v2/artifacts", global.Org, flowName, idType, id)
+	url, err := neturl.JoinPath(h.URL, "api/v2/artifacts", global.Org, flowName, idType, id)
 	if err != nil {
 		return err
 	}
@@ -143,10 +144,10 @@ func (o *getArtifactOptions) run(out io.Writer, args []string) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    url,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
 
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

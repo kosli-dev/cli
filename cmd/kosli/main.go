@@ -28,18 +28,9 @@ func init() {
 }
 
 func main() {
-	var err error
-	if getMultiOpts().runsPerHost() {
-		var output, errOutput string
-		output, errOutput, err = runMultiHost(os.Args)
-		_, _ = fmt.Fprint(logger.ErrOut, errOutput)
-		fmt.Print(output)
-	} else {
-		var cmd *cobra.Command
-		cmd, err = newRootCmd(logger.Out, logger.ErrOut, os.Args[1:])
-		if err == nil {
-			err = innerMain(cmd, os.Args)
-		}
+	cmd, err := newRootCmd(logger.Out, logger.ErrOut, os.Args[1:])
+	if err == nil {
+		err = innerMain(cmd, os.Args)
 	}
 	if code, ok := buildExitCode(err); ok {
 		_, _ = fmt.Fprintf(logger.ErrOut, "Error: %s\n", err)

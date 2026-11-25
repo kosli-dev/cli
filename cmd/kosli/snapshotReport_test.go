@@ -11,6 +11,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/assert"
@@ -67,7 +68,7 @@ type ensureCalls struct {
 	err   error
 }
 
-func (e *ensureCalls) ensure(envName, envType string) error {
+func (e *ensureCalls) ensure(_ kosli.Host, envName, envType string) error {
 	e.calls = append(e.calls, envName+"/"+envType)
 	return e.err
 }
@@ -80,11 +81,8 @@ func newTestSnapshotReporter(t *testing.T, host string, dryRun bool) (*snapshotR
 	require.NoError(t, err)
 	ensured := &ensureCalls{}
 	return &snapshotReporter{
-		client: client,
-		host:   host,
+		kosli:  kosli.New(client, l, host, "secret", dryRun),
 		org:    "acme",
-		token:  "secret",
-		dryRun: dryRun,
 		logger: l,
 		ensure: ensured.ensure,
 	}, ensured, &out
@@ -203,10 +201,10 @@ func TestSnapshotReporterIsSafeForConcurrentReports(t *testing.T) {
 	server, _ := newFakeSnapshotServer(t)
 	reporter, ensured, _ := newTestSnapshotReporter(t, server.URL, false)
 	var mu sync.Mutex
-	reporter.ensure = func(envName, envType string) error {
+	reporter.ensure = func(h kosli.Host, envName, envType string) error {
 		mu.Lock()
 		defer mu.Unlock()
-		return ensured.ensure(envName, envType)
+		return ensured.ensure(h, envName, envType)
 	}
 
 	var wg sync.WaitGroup

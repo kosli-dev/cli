@@ -246,7 +246,7 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 		return err
 	}
 
-	evaluation, err := awaitServerEvaluation(serverEvaluation{
+	request, err := serverEvaluationRequest(serverEvaluation{
 		identifier: identifier,
 		version:    version,
 		policyRefs: policyRefs,
@@ -254,10 +254,13 @@ func (o *evaluatePolicyOptions) run(out io.Writer) error {
 		trails:     trails,
 		decision:   decision,
 	})
-	if err != nil || evaluation == nil {
+	if err != nil {
 		return err
 	}
-	return printEvaluation(out, evaluation, o.output, o.assert)
+
+	return evaluateOnEveryHost(request, o.assert, func(evaluation *evaluations.Evaluation) error {
+		return printEvaluation(out, evaluation, o.output, o.assert)
+	})
 }
 
 // policyReference splits --identifier into the policy's identifier and the

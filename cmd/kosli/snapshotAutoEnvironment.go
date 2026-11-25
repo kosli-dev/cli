@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -60,7 +61,7 @@ func addAutoEnvironmentFlags(cmd *cobra.Command) {
 // reported, when --auto-environment is set. It is a no-op when the flag is not
 // set or when the environment already exists with a matching type. envType is
 // inferred from the snapshot subcommand (e.g. "docker", "K8S").
-func ensureEnvironment(envName, envType string) error {
+func ensureEnvironment(h kosli.Host, envName, envType string) error {
 	o := snapshotAutoEnv
 
 	// Enforce the scaling-flag mutual exclusion unconditionally, mirroring
@@ -79,12 +80,12 @@ func ensureEnvironment(envName, envType string) error {
 		return nil
 	}
 
-	if global.DryRun {
+	if h.DryRun {
 		logger.Info("dry-run: environment %s would be created with type %s if it does not exist", envName, envType)
 		return nil
 	}
 
-	exists, existingType, err := getEnvironmentTypeIfExists(envName)
+	exists, existingType, err := getEnvironmentTypeIfExists(h, envName)
 	if err != nil {
 		return err
 	}
@@ -101,7 +102,7 @@ func ensureEnvironment(envName, envType string) error {
 		return nil
 	}
 
-	return createEnvironmentForSnapshot(envName, envType)
+	return createEnvironmentForSnapshot(h, envName, envType)
 }
 
 // getEnvironmentTypeIfExists fetches the environment's metadata and returns
@@ -109,8 +110,8 @@ func ensureEnvironment(envName, envType string) error {
 // "does not exist" (exists=false, nil error); any other error (auth, network,
 // 5xx after retries) is returned to the caller so it is never mistaken for a
 // missing environment.
-func getEnvironmentTypeIfExists(envName string) (bool, string, error) {
-	reqURL, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName)
+func getEnvironmentTypeIfExists(h kosli.Host, envName string) (bool, string, error) {
+	reqURL, err := url.JoinPath(h.URL, "api/v2/environments", global.Org, envName)
 	if err != nil {
 		return false, "", err
 	}
@@ -118,9 +119,9 @@ func getEnvironmentTypeIfExists(envName string) (bool, string, error) {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    reqURL,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		// Only a genuine 404 means the environment does not exist yet. Any other
 		// error (auth, network, 5xx after retries) is propagated so we never fall
@@ -145,8 +146,8 @@ func getEnvironmentTypeIfExists(envName string) (bool, string, error) {
 // createEnvironmentForSnapshot creates a physical environment of the inferred
 // type, applying the optional --environment-description and scaling flags. It
 // reuses the same payload and endpoint as `kosli create environment`.
-func createEnvironmentForSnapshot(envName, envType string) error {
-	reqURL, err := url.JoinPath(global.Host, "api/v2/environments", global.Org)
+func createEnvironmentForSnapshot(h kosli.Host, envName, envType string) error {
+	reqURL, err := url.JoinPath(h.URL, "api/v2/environments", global.Org)
 	if err != nil {
 		return err
 	}
@@ -174,9 +175,9 @@ func createEnvironmentForSnapshot(envName, envType string) error {
 		Method:  http.MethodPut,
 		URL:     reqURL,
 		Payload: payload,
-		Token:   global.ApiToken,
+		Token:   h.Token,
 	}
-	if _, err := kosliClient.Do(reqParams); err != nil {
+	if _, err := h.Do(reqParams); err != nil {
 		return fmt.Errorf("failed to auto-create environment %s: %v", envName, err)
 	}
 	logger.Info("environment %s was created", envName)

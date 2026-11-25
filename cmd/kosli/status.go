@@ -39,21 +39,22 @@ func newStatusCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *statusOptions) run(out io.Writer) error {
-	url, err := url.JoinPath(global.Host, "ready")
+	h := kosliAPI().Query()
+	url, err := url.JoinPath(h.URL, "ready")
 	if err != nil {
 		return err
 	}
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    url,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
 
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		logger.Debug("failed to check Kosli's readiness: %s", err.Error())
 		if o.assert {
-			return fmt.Errorf("kosli server %s is unresponsive", global.Host)
+			return fmt.Errorf("kosli server %s is unresponsive", h.URL)
 		}
 		logger.Info("Kosli is Down")
 	} else {

@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"path/filepath"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -82,21 +83,23 @@ func (o *allowArtifactOptions) run(args []string) error {
 		}
 	}
 
-	url, err := url.JoinPath(global.Host, "api/v2/allowlists", global.Org, o.environmentName)
-	if err != nil {
-		return err
-	}
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/allowlists", global.Org, o.environmentName)
+		if err != nil {
+			return err
+		}
 
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: o.payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("artifact %s was allow listed in environment: %s", o.payload.Fingerprint, o.environmentName)
-	}
-	return err
+		reqParams := &requests.RequestParams{
+			Method:  http.MethodPut,
+			URL:     url,
+			Payload: o.payload,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
+		}
+		_, err = h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			h.Info("artifact %s was allow listed in environment: %s", o.payload.Fingerprint, o.environmentName)
+		}
+		return err
+	})
 }

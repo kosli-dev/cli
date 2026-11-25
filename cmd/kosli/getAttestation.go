@@ -126,9 +126,10 @@ func newGetAttestationCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getAttestationOptions) run(out io.Writer, args []string) error {
+	h := kosliAPI().Query()
 	var url string
 
-	base, err := neturl.JoinPath(global.Host, "api/v2/attestations", global.Org)
+	base, err := neturl.JoinPath(h.URL, "api/v2/attestations", global.Org)
 	if err != nil {
 		return err
 	}
@@ -157,10 +158,10 @@ func (o *getAttestationOptions) run(out io.Writer, args []string) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    url,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
 
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

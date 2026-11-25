@@ -104,24 +104,25 @@ func newGetRegoPolicyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getRegoPolicyOptions) run(out io.Writer, identifier string) error {
+	h := kosliAPI().Query()
 	var endpoint string
 	var err error
 	var printTable output.FormatOutputFunc
 	if o.version > 0 {
-		endpoint, err = regopolicies.VersionURL(global.Host, global.Org, identifier, o.version)
+		endpoint, err = regopolicies.VersionURL(h.URL, global.Org, identifier, o.version)
 		printTable = printRegoPolicyVersionAsTable
 	} else {
-		endpoint, err = regopolicies.PolicyURL(global.Host, global.Org, identifier)
+		endpoint, err = regopolicies.PolicyURL(h.URL, global.Org, identifier)
 		printTable = printRegoPolicyAsTable
 	}
 	if err != nil {
 		return err
 	}
 
-	response, err := kosliClient.Do(&requests.RequestParams{
+	response, err := h.Do(&requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    endpoint,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	})
 	if err != nil {
 		return err
@@ -135,14 +136,15 @@ func (o *getRegoPolicyOptions) run(out io.Writer, identifier string) error {
 }
 
 func (o *getRegoPolicyOptions) runDownload(out io.Writer, identifier string) error {
-	endpoint, err := regopolicies.BundleURL(global.Host, global.Org, identifier, o.version)
+	h := kosliAPI().Query()
+	endpoint, err := regopolicies.BundleURL(h.URL, global.Org, identifier, o.version)
 	if err != nil {
 		return err
 	}
-	response, err := kosliClient.Do(&requests.RequestParams{
+	response, err := h.Do(&requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    endpoint,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	})
 	if err != nil {
 		return err

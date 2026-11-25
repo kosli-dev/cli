@@ -88,7 +88,8 @@ func newDeleteApiKeyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *deleteApiKeyOptions) run(in io.Reader, args []string) error {
-	if !o.assumeYes && !global.DryRun {
+	h := kosliAPI().Query()
+	if !o.assumeYes && !h.DryRun {
 		confirmed, err := confirmApiKeyDeletion(args, o.owner, in)
 		if err != nil {
 			return err
@@ -108,7 +109,7 @@ func (o *deleteApiKeyOptions) run(in io.Reader, args []string) error {
 	}
 
 	for i, keyID := range args {
-		url, err := o.owner.url(keyID)
+		url, err := o.owner.url(h, keyID)
 		if err != nil {
 			reportAlreadyDeleted(i)
 			return err
@@ -117,14 +118,14 @@ func (o *deleteApiKeyOptions) run(in io.Reader, args []string) error {
 		reqParams := &requests.RequestParams{
 			Method: http.MethodDelete,
 			URL:    url,
-			DryRun: global.DryRun,
-			Token:  global.ApiToken,
+			DryRun: h.DryRun,
+			Token:  h.Token,
 		}
-		if _, err := kosliClient.Do(reqParams); err != nil {
+		if _, err := h.Do(reqParams); err != nil {
 			reportAlreadyDeleted(i)
 			return fmt.Errorf("failed to delete API key: %w", err)
 		}
-		if !global.DryRun {
+		if !h.DryRun {
 			styledKey := style(logger.Out, keyID, ansiBold, ansiCyan)
 			if o.owner.personal {
 				logger.Info("Personal API key %s was deleted!", styledKey)

@@ -120,15 +120,16 @@ func (o *listProductUpdatesOptions) validate(cmd *cobra.Command) error {
 }
 
 func (o *listProductUpdatesOptions) run(out io.Writer) error {
-	reqURL, err := url.JoinPath(global.Host, "api/v2/product-updates", global.Org)
+	h := kosliAPI().Query()
+	reqURL, err := url.JoinPath(h.URL, "api/v2/product-updates", global.Org)
 	if err != nil {
 		return err
 	}
 
-	response, err := kosliClient.Do(&requests.RequestParams{
+	response, err := h.Do(&requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    reqURL,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	})
 	if err != nil {
 		return err
@@ -154,7 +155,7 @@ func (o *listProductUpdatesOptions) run(out io.Writer) error {
 		return err
 	}
 	// A count after the JSON would make the output unparseable.
-	if !global.DryRun && o.output != "json" {
+	if !h.DryRun && o.output != "json" {
 		logger.Info("%d product update(s) dismissed", len(selected.unreadIDs))
 	}
 	return nil

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -155,37 +156,40 @@ func (o *reportArtifactOptions) run(args []string) error {
 		logger.Warn("Repo URL will not be reported, %s", err.Error())
 	}
 
-	url, err := url.JoinPath(global.Host, "api/v2/artifacts", global.Org, o.flowName)
-	if err != nil {
-		return err
-	}
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/artifacts", global.Org, o.flowName)
+		if err != nil {
+			return err
+		}
 
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPost,
-		URL:     url,
-		Payload: o.payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("artifact %s was reported with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
-	}
-	return err
+		reqParams := &requests.RequestParams{
+			Method:  http.MethodPost,
+			URL:     url,
+			Payload: o.payload,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
+		}
+		_, err = h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			h.Info("artifact %s was reported with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
+		}
+		return err
+	})
 }
 
 // latestCommit retrieves the git commit of the latest artifact for a flow in Kosli
 func (o *reportArtifactOptions) latestCommit(branchName string) (string, error) {
+	h := kosliAPI().Query()
 	latestCommitUrl := fmt.Sprintf(
 		"%s/api/v2/artifacts/%s/%s/%s/latest_commit%s",
-		global.Host, global.Org, o.flowName, o.payload.Fingerprint, asBranchParameter(branchName))
+		h.URL, global.Org, o.flowName, o.payload.Fingerprint, asBranchParameter(branchName))
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    latestCommitUrl,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return "", err
 	}

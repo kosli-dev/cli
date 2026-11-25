@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -119,11 +120,6 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 
 func (o *createEnvOptions) run(args []string) error {
 	o.payload.Name = args[0]
-	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org)
-	if err != nil {
-		return err
-	}
-
 	if o.includeScaling {
 		var myTrue = true
 		o.payload.IncludeScaling = &myTrue
@@ -137,16 +133,22 @@ func (o *createEnvOptions) run(args []string) error {
 		o.payload.RequireProvenance = &myTrue
 	}
 
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: o.payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("environment %s was created", o.payload.Name)
-	}
-	return err
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/environments", global.Org)
+		if err != nil {
+			return err
+		}
+		reqParams := &requests.RequestParams{
+			Method:  http.MethodPut,
+			URL:     url,
+			Payload: o.payload,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
+		}
+		_, err = h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			h.Info("environment %s was created", o.payload.Name)
+		}
+		return err
+	})
 }

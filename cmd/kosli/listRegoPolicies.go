@@ -104,7 +104,8 @@ func newListRegoPoliciesCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listRegoPoliciesOptions) run(out io.Writer) error {
-	base, err := regopolicies.ListURL(global.Host, global.Org)
+	h := kosliAPI().Query()
+	base, err := regopolicies.ListURL(h.URL, global.Org)
 	if err != nil {
 		return err
 	}
@@ -125,10 +126,10 @@ func (o *listRegoPoliciesOptions) run(out io.Writer) error {
 		params.Set("archived", "true")
 	}
 
-	response, err := kosliClient.Do(&requests.RequestParams{
+	response, err := h.Do(&requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    base + "?" + params.Encode(),
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	})
 	if err != nil {
 		return err

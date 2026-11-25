@@ -5,38 +5,33 @@ import (
 	"net/url"
 	"sync"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 )
 
 // snapshotReporter reports Snapshots of Environments to Kosli.
 type snapshotReporter struct {
-	client *requests.Client
-	host   string
+	kosli  *kosli.Kosli
 	org    string
-	token  string
-	dryRun bool
 	logger *log.Logger
-	// ensure prepares the Environment before its first report, e.g. by
-	// creating it under --auto-environment.
-	ensure func(envName, envType string) error
-	// ensured holds the Environment name and type pairs already prepared, so
-	// watch mode and multi-environment runs prepare each one only before its
-	// first report. A failed ensure is not recorded, so the next report retries.
-	// mu guards it and is held across ensure on purpose: snapshot paths --watch
-	// reports from one goroutine per path, and two concurrent first reports
-	// must not both create the Environment.
+	// ensure prepares the Environment on a host before its first report, e.g.
+	// by creating it under --auto-environment.
+	ensure func(h kosli.Host, envName, envType string) error
+	// ensured holds the host, Environment name and type triples already
+	// prepared, so watch mode and multi-environment runs prepare each one only
+	// before its first report. A failed ensure is not recorded, so the next
+	// report retries. mu guards it and is held across ensure on purpose:
+	// snapshot paths --watch reports from one goroutine per path, and two
+	// concurrent first reports must not both create the Environment.
 	mu      sync.Mutex
 	ensured map[string]bool
 }
 
 func newSnapshotReporter() *snapshotReporter {
 	return &snapshotReporter{
-		client: kosliClient,
-		host:   global.Host,
+		kosli:  kosliAPI(),
 		org:    global.Org,
-		token:  global.ApiToken,
-		dryRun: global.DryRun,
 		logger: logger,
 		ensure: ensureEnvironment,
 	}
@@ -46,42 +41,67 @@ func newSnapshotReporter() *snapshotReporter {
 // Environment type, and the line to log once Kosli has recorded it.
 type snapshotCollector func() (payload any, reported string, err error)
 
+// report collects the Snapshot once, when the first host has its Environment
+// ready, and reports it to every such host.
 func (r *snapshotReporter) report(envName, envType string, collect snapshotCollector) error {
-	if err := r.ensureOnce(envName, envType); err != nil {
-		return err
-	}
-
-	endpoint, err := url.JoinPath(r.host, "api/v2/environments", r.org, envName, "report", envType)
-	if err != nil {
-		return err
-	}
-
-	payload, reported, err := collect()
-	if err != nil {
-		return err
-	}
-
-	_, err = r.client.Do(&requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     endpoint,
-		Payload: payload,
-		DryRun:  r.dryRun,
-		Token:   r.token,
+	var collectErr error
+	collectOnce := sync.OnceValues(func() (snapshot, error) {
+		payload, reported, err := collect()
+		collectErr = err
+		return snapshot{payload, reported}, err
 	})
-	if err == nil && !r.dryRun {
-		r.logger.Info("%s", reported)
+	err := r.kosli.Send(func(h kosli.Host) error {
+		if err := r.ensureOnce(h, envName, envType); err != nil {
+			return err
+		}
+		collected, err := collectOnce()
+		if err != nil {
+			return err
+		}
+		if err := r.put(h, envName, envType, collected.payload); err != nil {
+			return err
+		}
+		if !h.DryRun {
+			h.Info("%s", collected.reported)
+		}
+		return nil
+	})
+	// A failed collection is the same failure on every host, so it is not
+	// repeated per host.
+	if collectErr != nil {
+		return collectErr
 	}
 	return err
 }
 
-func (r *snapshotReporter) ensureOnce(envName, envType string) error {
+type snapshot struct {
+	payload  any
+	reported string
+}
+
+func (r *snapshotReporter) put(h kosli.Host, envName, envType string, payload any) error {
+	endpoint, err := url.JoinPath(h.URL, "api/v2/environments", r.org, envName, "report", envType)
+	if err != nil {
+		return err
+	}
+	_, err = h.Do(&requests.RequestParams{
+		Method:  http.MethodPut,
+		URL:     endpoint,
+		Payload: payload,
+		DryRun:  h.DryRun,
+		Token:   h.Token,
+	})
+	return err
+}
+
+func (r *snapshotReporter) ensureOnce(h kosli.Host, envName, envType string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	key := envName + "/" + envType
+	key := h.URL + "/" + envName + "/" + envType
 	if r.ensured[key] {
 		return nil
 	}
-	if err := r.ensure(envName, envType); err != nil {
+	if err := r.ensure(h, envName, envType); err != nil {
 		return err
 	}
 	if r.ensured == nil {

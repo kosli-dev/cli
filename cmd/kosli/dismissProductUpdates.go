@@ -115,19 +115,20 @@ func (o *dismissProductUpdatesOptions) run(ids []string) error {
 // markProductUpdatesSeen sends ids in requests of at most
 // maxProductUpdateIDsPerRequest.
 func markProductUpdatesSeen(ids []string) error {
-	reqURL, err := url.JoinPath(global.Host, "api/v2/product-updates", global.Org, "seen")
+	h := kosliAPI().Query()
+	reqURL, err := url.JoinPath(h.URL, "api/v2/product-updates", global.Org, "seen")
 	if err != nil {
 		return err
 	}
 
 	for start := 0; start < len(ids); start += maxProductUpdateIDsPerRequest {
 		end := min(start+maxProductUpdateIDsPerRequest, len(ids))
-		_, err := kosliClient.Do(&requests.RequestParams{
+		_, err := h.Do(&requests.RequestParams{
 			Method:  http.MethodPost,
 			URL:     reqURL,
 			Payload: productUpdatesSeenPayload{IDs: ids[start:end]},
-			DryRun:  global.DryRun,
-			Token:   global.ApiToken,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
 		})
 		if err != nil {
 			if start > 0 {
@@ -140,15 +141,16 @@ func markProductUpdatesSeen(ids []string) error {
 }
 
 func unreadProductUpdateIDs() ([]string, error) {
-	reqURL, err := url.JoinPath(global.Host, "api/v2/product-updates", global.Org)
+	h := kosliAPI().Query()
+	reqURL, err := url.JoinPath(h.URL, "api/v2/product-updates", global.Org)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := kosliClient.Do(&requests.RequestParams{
+	response, err := h.Do(&requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    reqURL,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	})
 	if err != nil {
 		return nil, err

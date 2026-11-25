@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -73,37 +74,37 @@ func newCreatePolicyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *createPolicyOptions) run(args []string) error {
-	var reqParams *requests.RequestParams
 	o.payload.Name = args[0]
 	policyFile := args[1]
-
-	url, err := url.JoinPath(global.Host, "api/v2/policies", global.Org)
-	if err != nil {
-		return err
-	}
 
 	form, err := newPolicyForm(o.payload, policyFile)
 	if err != nil {
 		return err
 	}
 
-	reqParams = &requests.RequestParams{
-		Method: http.MethodPut,
-		URL:    url,
-		Form:   form,
-		DryRun: global.DryRun,
-		Token:  global.ApiToken,
-	}
-
-	res, err := kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		verb := "created"
-		if res.Resp.StatusCode == 200 {
-			verb = "updated"
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/policies", global.Org)
+		if err != nil {
+			return err
 		}
-		logger.Info("policy '%s' was %s", o.payload.Name, verb)
-	}
-	return err
+		reqParams := &requests.RequestParams{
+			Method: http.MethodPut,
+			URL:    url,
+			Form:   form,
+			DryRun: h.DryRun,
+			Token:  h.Token,
+		}
+
+		res, err := h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			verb := "created"
+			if res.Resp.StatusCode == 200 {
+				verb = "updated"
+			}
+			h.Info("policy '%s' was %s", o.payload.Name, verb)
+		}
+		return err
+	})
 }
 
 // newPolicyForm constructs a list of FormItems for a policy with a policy file

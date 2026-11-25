@@ -100,6 +100,7 @@ func newRotateApiKeyCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *rotateApiKeyOptions) run(out io.Writer, args []string) error {
+	h := kosliAPI().Query()
 	// Only send grace_period_hours when the user explicitly set it; otherwise
 	// let the server apply its own default.
 	if o.gracePeriodHoursSet {
@@ -119,7 +120,7 @@ func (o *rotateApiKeyOptions) run(out io.Writer, args []string) error {
 	keys := make([]json.RawMessage, 0, len(args))
 	var runErr error
 	for _, keyID := range args {
-		url, err := o.owner.url(keyID, "rotate")
+		url, err := o.owner.url(h, keyID, "rotate")
 		if err != nil {
 			runErr = err
 			break
@@ -129,20 +130,20 @@ func (o *rotateApiKeyOptions) run(out io.Writer, args []string) error {
 			Method:  http.MethodPost,
 			URL:     url,
 			Payload: o.payload,
-			DryRun:  global.DryRun,
-			Token:   global.ApiToken,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
 		}
-		response, err := kosliClient.Do(reqParams)
+		response, err := h.Do(reqParams)
 		if err != nil {
 			runErr = fmt.Errorf("failed to rotate API key: %w", err)
 			break
 		}
-		if !global.DryRun {
+		if !h.DryRun {
 			keys = append(keys, json.RawMessage(response.Body))
 		}
 	}
 
-	if !global.DryRun && len(keys) > 0 {
+	if !h.DryRun && len(keys) > 0 {
 		raw, err := json.Marshal(keys)
 		if err != nil {
 			return err

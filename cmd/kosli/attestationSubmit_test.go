@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/assert"
@@ -191,11 +192,8 @@ func newRetryingTestAttestationSubmitter(t *testing.T, host string, dryRun bool,
 	client, err := requests.NewKosliClient("", retries, false, l)
 	require.NoError(t, err)
 	return &attestationSubmitter{
-		client: client,
-		host:   host,
+		kosli:  kosli.New(client, l, host, "secret", dryRun),
 		org:    "acme",
-		token:  "secret",
-		dryRun: dryRun,
 		logger: l,
 	}, &out
 }
@@ -556,7 +554,7 @@ func TestAttestationSubmitterDebugLogDoesNotShowTheSecurityToken(t *testing.T) {
 	l := log.NewLogger(&out, &out, true)
 	client, err := requests.NewKosliClient("", 0, true, l)
 	require.NoError(t, err)
-	submitter := &attestationSubmitter{client: client, host: server.URL, org: "acme", token: "secret", logger: l}
+	submitter := &attestationSubmitter{kosli: kosli.New(client, l, server.URL, "secret", false), org: "acme", logger: l}
 	submission := genericSubmission("unit-tests")
 	submission.attachments = []string{"testdata/file1"}
 

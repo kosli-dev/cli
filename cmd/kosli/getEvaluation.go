@@ -128,7 +128,8 @@ func (o *getEvaluationOptions) validate() error {
 }
 
 func (o *getEvaluationOptions) run(out io.Writer, id string) error {
-	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
+	h := kosliAPI().Query()
+	client := evaluations.NewClient(h.Client(), h.URL, h.Token, h.DryRun)
 	evaluation, err := client.Get(global.Org, id)
 	if err != nil {
 		return err
@@ -266,7 +267,8 @@ func printEvaluationAsTable(raw string, out io.Writer, page int) error {
 }
 
 func (o *getEvaluationOptions) runFixture(out io.Writer, id string) error {
-	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
+	h := kosliAPI().Query()
+	client := evaluations.NewClient(h.Client(), h.URL, h.Token, h.DryRun)
 	read, err := client.Get(global.Org, id)
 	if err != nil {
 		return err
@@ -324,18 +326,19 @@ func (o *getEvaluationOptions) runFixture(out io.Writer, id string) error {
 // policyFiles is the bundle that ran: an inline policy's files come with the
 // evaluation, and a published version's are read from the rego policy.
 func policyFiles(evaluation evaluationRead) (map[string]string, error) {
+	h := kosliAPI().Query()
 	if evaluation.Policy.Identifier == "" {
 		return evaluation.Policy.Files, nil
 	}
-	endpoint, err := regopolicies.BundleURL(global.Host, global.Org,
+	endpoint, err := regopolicies.BundleURL(h.URL, global.Org,
 		evaluation.Policy.Identifier, evaluation.Policy.Version)
 	if err != nil {
 		return nil, err
 	}
-	response, err := kosliClient.Do(&requests.RequestParams{
+	response, err := h.Do(&requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    endpoint,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	})
 	if err != nil {
 		return nil, err

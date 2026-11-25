@@ -68,6 +68,7 @@ func newGetAttestationTypeCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getAttestationTypeOptions) run(out io.Writer, args []string) error {
+	h := kosliAPI().Query()
 	attestationType := args[0]
 	var version string
 	var err error
@@ -78,7 +79,7 @@ func (o *getAttestationTypeOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	url, err := neturl.JoinPath(global.Host, "api/v2/custom-attestation-types", global.Org, attestationType)
+	url, err := neturl.JoinPath(h.URL, "api/v2/custom-attestation-types", global.Org, attestationType)
 	if err != nil {
 		return err
 	}
@@ -91,9 +92,9 @@ func (o *getAttestationTypeOptions) run(out io.Writer, args []string) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    url,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

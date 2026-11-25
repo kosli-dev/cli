@@ -67,7 +67,8 @@ func newListApiKeysCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listApiKeysOptions) run(out io.Writer, args []string) error {
-	url, err := o.owner.url()
+	h := kosliAPI().Query()
+	url, err := o.owner.url(h)
 	if err != nil {
 		return err
 	}
@@ -75,9 +76,9 @@ func (o *listApiKeysOptions) run(out io.Writer, args []string) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    url,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

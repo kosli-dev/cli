@@ -56,7 +56,8 @@ func newGetTrailCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getTrailOptions) run(out io.Writer, args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/trails", global.Org, o.flowName, args[0])
+	h := kosliAPI().Query()
+	url, err := url.JoinPath(h.URL, "api/v2/trails", global.Org, o.flowName, args[0])
 	if err != nil {
 		return err
 	}
@@ -64,9 +65,9 @@ func (o *getTrailOptions) run(out io.Writer, args []string) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    url,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -84,6 +85,7 @@ func (o *getTrailOptions) run(out io.Writer, args []string) error {
 // summary.md artifact). It is a method so the trail heading can link to the
 // trail page in the Kosli app, which needs the flow name.
 func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page int) error {
+	h := kosliAPI().Query()
 	var trail map[string]any
 	err := json.Unmarshal([]byte(raw), &trail)
 	if err != nil {
@@ -96,7 +98,7 @@ func (o *getTrailOptions) printTrailAsMarkdown(raw string, out io.Writer, page i
 	}
 
 	var b strings.Builder
-	trailURL, err := url.JoinPath(global.Host, global.Org, "flows", o.flowName, "trails", fmt.Sprintf("%v", trail["name"]))
+	trailURL, err := url.JoinPath(h.URL, global.Org, "flows", o.flowName, "trails", fmt.Sprintf("%v", trail["name"]))
 	if err != nil {
 		trailURL = ""
 	}
@@ -314,10 +316,11 @@ func mdAttestationCompliance(status string, isCompliant any, unexpected bool) st
 //   - the attestation reference of attestation events links to the attestation
 //     on the trail page ({trail-url}?attestation_id={id})
 func mdEventDescription(e trailEventFields, trailURL string) string {
+	h := kosliAPI().Query()
 	description := mdCell(e.description)
 
 	if e.environmentName != "" {
-		envURL, err := url.JoinPath(global.Host, global.Org, "environments", e.environmentName, e.snapshotIndex)
+		envURL, err := url.JoinPath(h.URL, global.Org, "environments", e.environmentName, e.snapshotIndex)
 		if err == nil {
 			if e.snapshotIndex == "" {
 				envURL += "/"

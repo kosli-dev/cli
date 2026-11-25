@@ -142,7 +142,8 @@ func (o *logEnvironmentOptions) run(out io.Writer, args []string) error {
 // events
 
 func (o *logEnvironmentOptions) getEnvironmentEvents(out io.Writer, envName, interval string) error {
-	u, err := url.Parse(global.Host)
+	h := kosliAPI().Query()
+	u, err := url.Parse(h.URL)
 	if err != nil {
 		return fmt.Errorf("failed to parse host URL: %w", err)
 	}
@@ -177,9 +178,9 @@ func (o *logEnvironmentOptions) getEnvironmentEvents(out io.Writer, envName, int
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    u.String(),
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

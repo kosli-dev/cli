@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/kosli-dev/cli/internal/docgen"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -180,10 +181,6 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	baseURL, err := url.JoinPath(global.Host, "api/v2/asserts", global.Org, "fingerprint", o.fingerprint)
-	if err != nil {
-		return err
-	}
 	params := url.Values{}
 
 	if o.flowName != "" {
@@ -200,31 +197,38 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	fullURL := baseURL
-	if len(params) > 0 {
-		fullURL += "?" + params.Encode()
-	}
+	// Every host must find the artifact compliant; the primary's report is printed.
+	return kosliAPI().Send(func(h kosli.Host) error {
+		fullURL, err := url.JoinPath(h.URL, "api/v2/asserts", global.Org, "fingerprint", o.fingerprint)
+		if err != nil {
+			return err
+		}
+		if len(params) > 0 {
+			fullURL += "?" + params.Encode()
+		}
 
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    fullURL,
-		Token:  global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
-	if err != nil {
-		return err
-	}
-
-	err = output.FormattedPrint(response.Body, o.output, out, 0,
-		map[string]output.FormatOutputFunc{
-			"table": printAssertAsTable,
-			"json":  output.PrintJson,
+		response, err := h.Do(&requests.RequestParams{
+			Method: http.MethodGet,
+			URL:    fullURL,
+			Token:  h.Token,
 		})
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	return assertCompliant(response.Body)
+		if h.IsPrimary() {
+			err = output.FormattedPrint(response.Body, o.output, out, 0,
+				map[string]output.FormatOutputFunc{
+					"table": printAssertAsTable,
+					"json":  output.PrintJson,
+				})
+			if err != nil {
+				return err
+			}
+		}
+
+		return assertCompliant(response.Body)
+	})
 }
 
 // assertCompliant decodes only the compliant field, so the exit code CI gates

@@ -470,7 +470,7 @@ func TestAttestArtifactBuildCommandMultiHost(t *testing.T) {
 		require.Equal(t, 1, second.requests())
 	})
 
-	t.Run("treats a host whose token is DRY_RUN as a dry run, like runMultiHost", func(t *testing.T) {
+	t.Run("treats a host whose token is DRY_RUN as a dry run", func(t *testing.T) {
 		first, second := newFakeKosliHost(t, http.StatusUnauthorized), newFakeKosliHost(t, http.StatusCreated)
 		output, failed := run(t, first, second, "--api-token DRY_RUN,token-two")
 		require.False(t, failed, output)

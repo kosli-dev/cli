@@ -147,11 +147,12 @@ func newGetSnapshotCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentGetOptions) run(out io.Writer, args []string) error {
+	h := kosliAPI().Query()
 	envName, id, err := handleSnapshotExpressions(args[0])
 	if err != nil {
 		return err
 	}
-	url, err := url.JoinPath(global.Host, "api/v2/snapshots", global.Org, envName, id)
+	url, err := url.JoinPath(h.URL, "api/v2/snapshots", global.Org, envName, id)
 	if err != nil {
 		return err
 	}
@@ -159,9 +160,9 @@ func (o *environmentGetOptions) run(out io.Writer, args []string) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    url,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

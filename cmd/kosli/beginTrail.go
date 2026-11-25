@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -120,13 +121,9 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *beginTrailOptions) run(args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/trails", global.Org, o.flow)
-	if err != nil {
-		return err
-	}
-
 	o.payload.Name = args[0]
 
+	var err error
 	o.payload.UserData, err = LoadOptionalJsonData(o.userDataFile)
 	if err != nil {
 		return err
@@ -161,21 +158,27 @@ func (o *beginTrailOptions) run(args []string) error {
 		return err
 	}
 
-	reqParams := &requests.RequestParams{
-		Method: http.MethodPut,
-		URL:    url,
-		Form:   form,
-		DryRun: global.DryRun,
-		Token:  global.ApiToken,
-	}
-
-	res, err := kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		verb := "begun"
-		if res.Resp.StatusCode == 200 {
-			verb = "updated"
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/trails", global.Org, o.flow)
+		if err != nil {
+			return err
 		}
-		logger.Info("trail '%s' was %s", o.payload.Name, verb)
-	}
-	return err
+		reqParams := &requests.RequestParams{
+			Method: http.MethodPut,
+			URL:    url,
+			Form:   form,
+			DryRun: h.DryRun,
+			Token:  h.Token,
+		}
+
+		res, err := h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			verb := "begun"
+			if res.Resp.StatusCode == 200 {
+				verb = "updated"
+			}
+			h.Info("trail '%s' was %s", o.payload.Name, verb)
+		}
+		return err
+	})
 }

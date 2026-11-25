@@ -114,6 +114,7 @@ func newListReposCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listReposOptions) run(out io.Writer) error {
+	h := kosliAPI().Query()
 	params := neturl.Values{}
 	params.Set("page", fmt.Sprintf("%d", o.pageNumber))
 	params.Set("per_page", fmt.Sprintf("%d", o.pageLimit))
@@ -135,7 +136,7 @@ func (o *listReposOptions) run(out io.Writer) error {
 	for _, tag := range o.tags {
 		params.Add("tag", tag)
 	}
-	base, err := neturl.JoinPath(global.Host, "api/v2/repos", global.Org)
+	base, err := neturl.JoinPath(h.URL, "api/v2/repos", global.Org)
 	if err != nil {
 		return err
 	}
@@ -144,9 +145,9 @@ func (o *listReposOptions) run(out io.Writer) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    reqURL,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

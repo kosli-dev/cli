@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/spf13/cobra"
 )
 
@@ -39,12 +40,12 @@ func (o *apiKeyOwner) validate() error {
 }
 
 // url builds the owner's API key collection URL, followed by elem.
-func (o *apiKeyOwner) url(elem ...string) (string, error) {
+func (o *apiKeyOwner) url(h kosli.Host, elem ...string) (string, error) {
 	base := []string{"api/v2/service-accounts", global.Org, o.serviceAccount, "api-keys"}
 	if o.personal {
 		base = []string{"api/v2/user/api-keys"}
 	}
-	return url.JoinPath(global.Host, append(base, elem...)...)
+	return url.JoinPath(h.URL, append(base, elem...)...)
 }
 
 // apiKeyResponse models the JSON returned by the create and rotate endpoints.

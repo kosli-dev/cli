@@ -85,7 +85,8 @@ func newListArtifactsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listArtifactsOptions) run(out io.Writer) error {
-	base, err := url.JoinPath(global.Host, "api/v2/artifacts", global.Org)
+	h := kosliAPI().Query()
+	base, err := url.JoinPath(h.URL, "api/v2/artifacts", global.Org)
 	if err != nil {
 		return err
 	}
@@ -102,9 +103,9 @@ func (o *listArtifactsOptions) run(out io.Writer) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    reqURL,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

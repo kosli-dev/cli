@@ -104,10 +104,11 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *searchOptions) run(out io.Writer, args []string) error {
+	h := kosliAPI().Query()
 	var err error
 	search_value := args[0]
 
-	url, err := url.JoinPath(global.Host, "api/v2/search", global.Org, "sha", search_value)
+	url, err := url.JoinPath(h.URL, "api/v2/search", global.Org, "sha", search_value)
 	if err != nil {
 		return err
 	}
@@ -115,9 +116,9 @@ func (o *searchOptions) run(out io.Writer, args []string) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    url,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

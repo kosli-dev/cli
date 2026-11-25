@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -63,32 +64,34 @@ func run(out io.Writer, args []string) error {
 	if err != nil {
 		return err
 	}
-	url, err := url.JoinPath(global.Host, "api/v2/snapshots", global.Org, envName, strconv.Itoa(id))
-	if err != nil {
-		return err
-	}
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/snapshots", global.Org, envName, strconv.Itoa(id))
+		if err != nil {
+			return err
+		}
 
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    url,
-		Token:  global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
-	if err != nil {
-		return err
-	}
+		reqParams := &requests.RequestParams{
+			Method: http.MethodGet,
+			URL:    url,
+			Token:  h.Token,
+		}
+		response, err := h.Do(reqParams)
+		if err != nil {
+			return err
+		}
 
-	var environmentData map[string]any
-	err = json.Unmarshal([]byte(response.Body), &environmentData)
-	if err != nil {
-		return err
-	}
+		var environmentData map[string]any
+		err = json.Unmarshal([]byte(response.Body), &environmentData)
+		if err != nil {
+			return err
+		}
 
-	if environmentData["compliant"].(bool) {
-		logger.Info("COMPLIANT")
-	} else {
-		return fmt.Errorf("NON-COMPLIANT")
-	}
+		if environmentData["compliant"].(bool) {
+			h.Info("COMPLIANT")
+		} else {
+			return fmt.Errorf("NON-COMPLIANT")
+		}
 
-	return nil
+		return nil
+	})
 }

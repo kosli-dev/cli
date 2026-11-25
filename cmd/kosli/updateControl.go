@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -66,11 +67,6 @@ func newUpdateControlCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *updateControlOptions) run(cmd *cobra.Command, args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/controls", global.Org, args[0])
-	if err != nil {
-		return err
-	}
-
 	// Only send the fields the user explicitly set, so unset flags leave the
 	// corresponding values unchanged (the server treats an omitted field as
 	// "no change").
@@ -85,16 +81,22 @@ func (o *updateControlOptions) run(cmd *cobra.Command, args []string) error {
 		payload["links"] = o.links
 	}
 
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("control %s was updated", args[0])
-	}
-	return err
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/controls", global.Org, args[0])
+		if err != nil {
+			return err
+		}
+		reqParams := &requests.RequestParams{
+			Method:  http.MethodPut,
+			URL:     url,
+			Payload: payload,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
+		}
+		_, err = h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			h.Info("control %s was updated", args[0])
+		}
+		return err
+	})
 }

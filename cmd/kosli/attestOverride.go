@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -130,26 +131,27 @@ func newAttestOverrideCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *attestOverrideOptions) run(args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/attestations", global.Org, o.flowName, "trail", o.trailName, "override")
+	err := o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err
 	}
 
-	err = o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
-	if err != nil {
-		return err
-	}
-
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPost,
-		URL:     url,
-		Payload: o.payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("attestation '%s' has been overridden in trail: %s", o.payload.AttestationName, o.trailName)
-	}
-	return wrapAttestationError(err)
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/attestations", global.Org, o.flowName, "trail", o.trailName, "override")
+		if err != nil {
+			return err
+		}
+		reqParams := &requests.RequestParams{
+			Method:  http.MethodPost,
+			URL:     url,
+			Payload: o.payload,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
+		}
+		_, err = h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			h.Info("attestation '%s' has been overridden in trail: %s", o.payload.AttestationName, o.trailName)
+		}
+		return wrapAttestationError(err)
+	})
 }

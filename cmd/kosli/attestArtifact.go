@@ -17,6 +17,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/buildexec"
 	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -40,7 +41,6 @@ type attestArtifactOptions struct {
 	buildCmd             []string
 	recordBuildCommand   bool
 	failOnAttestError    bool
-	usageHeaders         map[string]string
 }
 
 type AttestArtifactPayload struct {
@@ -178,7 +178,6 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.repoNameExplicit = cmd.Flags().Changed("repository")
-			o.usageHeaders = usageHeaders(cmd)
 			args = args[:len(args)-len(o.buildCmd)]
 			if len(o.buildCmd) > 0 {
 				if err := o.runBuild(args[0], cmd.InOrStdin(), out, cmd.ErrOrStderr()); err != nil {
@@ -274,8 +273,10 @@ func (o *attestArtifactOptions) runBuild(artifactName string, stdin io.Reader, s
 		logger.Warn("artifact %s was not modified by the build command", artifactName)
 	}
 
-	_, tokens := attestHosts()
-	secrets := append(strings.Split(os.Getenv("KOSLI_API_TOKEN"), ","), tokens...)
+	secrets := strings.Split(os.Getenv("KOSLI_API_TOKEN"), ",")
+	for _, h := range kosliAPI().Hosts() {
+		secrets = append(secrets, h.Token)
+	}
 	cmdline := maskSecrets(strings.Join(o.buildCmd, " "), os.Environ(), secrets...)
 	o.annotations = addBuildAnnotations(o.annotations, cmdline, result.Duration, o.recordBuildCommand)
 	return nil
@@ -373,67 +374,33 @@ func (o *attestArtifactOptions) run(args []string) error {
 		logger.Warn("Repo URL will not be reported, %s", err.Error())
 	}
 
-	hosts, tokens := attestHosts()
-	var failures []string
-	for i, host := range hosts {
-		label := ""
-		if len(hosts) > 1 {
-			label = "[" + host + "] "
-			kosliClient.SetUsageHeaders(host, o.usageHeaders)
-		}
-		// The root command only sees the whole token list, so a DRY_RUN token for
-		// one host is checked here, as runMultiHost's per-host runs would.
-		dryRun := global.DryRun || tokens[i] == "DRY_RUN"
-		err := o.attestTo(host, tokens[i], dryRun)
+	return kosliAPI().Send(func(h kosli.Host) error {
+		err := o.attestTo(h)
 		switch {
 		case err == nil:
-			// Like runMultiHost, only the primary host's output is shown without --debug.
-			if dryRun {
-				break
-			}
-			if i == 0 {
-				logger.Info("artifact %s was attested with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
-			} else {
-				logger.Debug("%sartifact %s was attested with fingerprint: %s", label, o.payload.Filename, o.payload.Fingerprint)
+			if !h.DryRun {
+				h.Info("artifact %s was attested with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
 			}
 		// A build command, if given, has already succeeded by the time run is reached.
 		case len(o.buildCmd) > 0 && !o.failOnAttestError && !isSetupError(err):
-			logger.Warn("%sthe build succeeded but the attestation was not recorded: %s", label, err)
-		case len(hosts) == 1:
-			return err
-		default:
-			failures = append(failures, fmt.Sprintf("[%s]\n%s", host, err))
+			h.Warn("the build succeeded but the attestation was not recorded: %s", err)
+			return nil
 		}
-	}
-	if len(failures) > 0 {
-		return errors.New(strings.Join(failures, "\n"))
-	}
-	return nil
+		return err
+	})
 }
 
-// attestHosts returns the hosts to attest to with their API tokens. A build
-// command bypasses runMultiHost, so the build runs once, and its attestation is
-// sent here to every host when --host and --api-token are comma-separated
-// lists of the same length.
-func attestHosts() (hosts, tokens []string) {
-	hosts, tokens = strings.Split(global.Host, ","), strings.Split(global.ApiToken, ",")
-	if hasMultipleHosts(hosts, tokens) {
-		return hosts, tokens
-	}
-	return []string{global.Host}, []string{global.ApiToken}
-}
-
-func (o *attestArtifactOptions) attestTo(host, token string, dryRun bool) error {
-	url, err := url.JoinPath(host, "api/v2/artifacts", global.Org, o.flowName)
+func (o *attestArtifactOptions) attestTo(h kosli.Host) error {
+	url, err := url.JoinPath(h.URL, "api/v2/artifacts", global.Org, o.flowName)
 	if err != nil {
 		return err
 	}
-	_, err = kosliClient.Do(&requests.RequestParams{
+	_, err = h.Do(&requests.RequestParams{
 		Method:  http.MethodPost,
 		URL:     url,
 		Payload: o.payload,
-		DryRun:  dryRun,
-		Token:   token,
+		DryRun:  h.DryRun,
+		Token:   h.Token,
 	})
 	return err
 }

@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -90,34 +91,36 @@ func (o *deleteServiceAccountOptions) run(in io.Reader, args []string) error {
 
 	// deletion is destructive and one-way: on any failure mid-batch, make clear
 	// which service accounts were already deleted before it.
-	reportAlreadyDeleted := func(i int) {
-		if i > 0 {
-			logger.Info("Service accounts already deleted before this failure: %s", strings.Join(styleServiceAccountNames(args[:i]), ", "))
-		}
-	}
-
-	for i, name := range args {
-		url, err := url.JoinPath(global.Host, "api/v2/service-accounts", global.Org, name)
-		if err != nil {
-			reportAlreadyDeleted(i)
-			return err
+	return kosliAPI().Send(func(h kosli.Host) error {
+		reportAlreadyDeleted := func(i int) {
+			if i > 0 {
+				h.Info("Service accounts already deleted before this failure: %s", strings.Join(styleServiceAccountNames(args[:i]), ", "))
+			}
 		}
 
-		reqParams := &requests.RequestParams{
-			Method: http.MethodDelete,
-			URL:    url,
-			DryRun: global.DryRun,
-			Token:  global.ApiToken,
+		for i, name := range args {
+			url, err := url.JoinPath(h.URL, "api/v2/service-accounts", global.Org, name)
+			if err != nil {
+				reportAlreadyDeleted(i)
+				return err
+			}
+
+			reqParams := &requests.RequestParams{
+				Method: http.MethodDelete,
+				URL:    url,
+				DryRun: h.DryRun,
+				Token:  h.Token,
+			}
+			if _, err := h.Do(reqParams); err != nil {
+				reportAlreadyDeleted(i)
+				return fmt.Errorf("failed to delete service account: %w", err)
+			}
+			if !h.DryRun {
+				h.Info("service account %s was deleted!", style(logger.Out, name, ansiBold, ansiCyan))
+			}
 		}
-		if _, err := kosliClient.Do(reqParams); err != nil {
-			reportAlreadyDeleted(i)
-			return fmt.Errorf("failed to delete service account: %w", err)
-		}
-		if !global.DryRun {
-			logger.Info("service account %s was deleted!", style(logger.Out, name, ansiBold, ansiCyan))
-		}
-	}
-	return nil
+		return nil
+	})
 }
 
 // styleServiceAccountNames styles service account names for user-facing

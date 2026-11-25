@@ -1,405 +1,228 @@
 package main
 
 import (
-	"encoding/json"
+	"bytes"
+	"errors"
 	"fmt"
-	"os"
-	"strings"
+	"net/http"
+	"net/http/httptest"
+	"sync"
+	"sync/atomic"
 	"testing"
 
-	"github.com/kosli-dev/cli/internal/version"
+	"github.com/kosli-dev/cli/internal/kosli"
+	log "github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/require"
 )
 
-type MultiHostTestSuite struct {
-	suite.Suite
+const multiHostFingerprint = "1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01"
+
+// recordingKosliHost records the requests a command makes and answers each with
+// the body given for its path, or {} with 200.
+type recordingKosliHost struct {
+	mu       sync.Mutex
+	requests []string
+	bodies   map[string]string
 }
 
-const localHost = "http://localhost:8001"
-const apiToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
-const orgName = "docs-cmd-test-user"
-
-func (suite *MultiHostTestSuite) TestIsMultiHost() {
-
-	for _, t := range []struct {
-		name     string
-		args     []string
-		host     string
-		apiToken string
-		want     bool
-	}{
-		{
-			name:     "True when two hosts and two api-tokens",
-			args:     []string{"status"},
-			host:     fmt.Sprintf("%s,%s", localHost, localHost),
-			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
-			want:     true,
-		},
-		{
-			name:     "True when three hosts and three api-tokens",
-			args:     []string{"status"},
-			host:     fmt.Sprintf("%s,%s,%s", localHost, localHost, localHost),
-			apiToken: fmt.Sprintf("%s,%s,%s", apiToken, apiToken, apiToken),
-			want:     true,
-		},
-		{
-			name:     "False when one host and two api-tokens",
-			args:     []string{"status"},
-			host:     localHost,
-			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
-			want:     false,
-		},
-		{
-			name:     "False when three hosts and two api-tokens",
-			args:     []string{"status"},
-			host:     fmt.Sprintf("%s,%s,%s", localHost, localHost, localHost),
-			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
-			want:     false,
-		},
-		{
-			name:     "False when one api-token and two hostnames",
-			args:     []string{"status"},
-			host:     fmt.Sprintf("%s,%s", localHost, localHost),
-			apiToken: apiToken,
-			want:     false,
-		},
-		{
-			name:     "False when three api-tokens and two hostnames",
-			args:     []string{"status"},
-			host:     fmt.Sprintf("%s,%s", localHost, localHost),
-			apiToken: fmt.Sprintf("%s,%s,%s", apiToken, apiToken, apiToken),
-			want:     false,
-		},
-		{
-			name:     "True when unknown command",
-			args:     []string{"not-a-command"},
-			host:     fmt.Sprintf("%s,%s", localHost, localHost),
-			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
-			want:     true,
-		},
-		{
-			name:     "False when unknown flag",
-			args:     []string{"status", "--not-a-flag"},
-			host:     fmt.Sprintf("%s,%s", localHost, localHost),
-			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
-			want:     false,
-		},
-	} {
-		suite.Run(t.name, func() {
-			host := fmt.Sprintf("--host=%s", t.host)
-			apiToken := fmt.Sprintf("--api-token=%s", t.apiToken)
-			org := fmt.Sprintf("--org=%s", orgName)
-			args := append(t.args, host, apiToken, org)
-
-			defer func(original []string) { os.Args = original }(os.Args)
-			os.Args = args
-			actual := getMultiOpts().multiHost()
-
-			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestIsMultiHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.want, actual))
-		})
-	}
-}
-
-func (suite *MultiHostTestSuite) TestRunDoubledHost() {
-
-	MultiHost := fmt.Sprintf("--host=%s,%s", localHost, localHost)
-	doubledApiToken := fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken)
-	org := fmt.Sprintf("--org=%s", orgName)
-
-	doubledArgs := func(args []string) []string {
-		return append(args, MultiHost, doubledApiToken, org)
-	}
-
-	for _, t := range []struct {
-		name   string
-		args   []string
-		stdOut []string
-		err    error
-	}{
-		{
-			name:   "only returns primary call output when both (2) calls succeed",
-			args:   doubledArgs([]string{"kosli", "status"}),
-			stdOut: []string{"OK", ""},
-			err:    error(nil),
-		},
-	} {
-		defer func(original []string) { os.Args = original }(os.Args)
-		os.Args = t.args
-		output, _, err := runMultiHost(t.args)
-
-		assert.Equal(suite.T(), t.err, err, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.err, err))
-
-		lines := strings.Split(output, "\n")
-		d := diff(t.stdOut, lines)
-		assert.Equal(suite.T(), "", d, fmt.Sprintf("TestRunDoubleHost: %s\n%s\n", t.name, d))
-	}
-}
-
-// TestRunMultiHostRefusesAnEmptyHostInTheList pins that an empty element in the
-// --host list is refused. This file splits the list rather than pflag, so what
-// catches the empty element is the per-host call: each element is appended as
-// that call's own --host, and an empty one is refused as it is set. The error
-// names the host it came from, which for this element is empty.
-func (suite *MultiHostTestSuite) TestRunMultiHostRefusesAnEmptyHostInTheList() {
-	args := []string{
-		"kosli", "status",
-		fmt.Sprintf("--host=%s,,%s", localHost, localHost),
-		fmt.Sprintf("--api-token=%s,%s,%s", apiToken, apiToken, apiToken),
-		fmt.Sprintf("--org=%s", orgName),
-	}
-
-	defer func(original []string) { os.Args = original }(os.Args)
-	os.Args = args
-	_, _, err := runMultiHost(args)
-
-	assert.EqualError(suite.T(), err,
-		"\n[]\n[kosli status cli-version="+version.GetVersion()+"] flag '--host' was given an empty value")
-}
-
-// TestRunDoubledHostAcceptsSpaceSeparatedBoolFlag checks that a boolean flag
-// written in the space form is honoured on the multi-host path too. --debug is
-// false here, so the output must be the bare fingerprint: no per-host [debug]
-// prefix and no secondary-call output. fingerprint is used because it needs no
-// server, so the two hosts are never contacted.
-func (suite *MultiHostTestSuite) TestRunDoubledHostAcceptsSpaceSeparatedBoolFlag() {
-	args := []string{
-		"kosli", "fingerprint", "testdata/person-schema.json",
-		"--artifact-type", "file",
-		"--debug", "false",
-		fmt.Sprintf("--host=%s,%s", localHost, localHost),
-		fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken),
-		fmt.Sprintf("--org=%s", orgName),
-	}
-	want := []string{"1bef738d0bb1e690500f99a5b57d958caf3a5eb3e00d9012e1f4369fc6812e01", ""}
-
-	defer func(original []string) { os.Args = original }(os.Args)
-	os.Args = args
-	output, _, err := runMultiHost(args)
-
-	assert.Equal(suite.T(), error(nil), err)
-	assert.Equal(suite.T(), "", diff(want, strings.Split(output, "\n")))
-}
-
-// TestRunDoubledHostKeepsStderrOutOfStdout checks that the primary call's
-// stderr stays on stderr, so a warning cannot corrupt --output json on stdout.
-// evaluate input is used because it is deprecated (so it warns on stderr) and
-// needs no server, so the two hosts are never contacted.
-func (suite *MultiHostTestSuite) TestRunDoubledHostKeepsStderrOutOfStdout() {
-	args := []string{
-		"kosli", "evaluate", "input",
-		"--input-file", "testdata/evaluate/trail-input.json",
-		"--policy", "testdata/policies/allow-all.rego",
-		"--output", "json",
-		fmt.Sprintf("--host=%s,%s", localHost, localHost),
-		fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken),
-		fmt.Sprintf("--org=%s", orgName),
-	}
-
-	defer func(original []string) { os.Args = original }(os.Args)
-	os.Args = args
-	stdOut, stdErr, err := runMultiHost(args)
-
-	assert.Equal(suite.T(), error(nil), err)
-	assert.True(suite.T(), json.Valid([]byte(stdOut)), "stdout is not JSON: %q", stdOut)
-	assert.Equal(suite.T(), evaluateInputNotice, stdErr)
-}
-
-// TestRunDoubledHostDebugGoesToStderr checks that with --debug every host's
-// debug lines go to stderr, each under its own host header, and stay off
-// stdout. fingerprint is used because it needs no server.
-func (suite *MultiHostTestSuite) TestRunDoubledHostDebugGoesToStderr() {
-	primary, secondary := "http://localhost:8001", "http://localhost:8002"
-	args := []string{
-		"kosli", "fingerprint", "testdata/person-schema.json",
-		"--artifact-type", "file",
-		"--debug",
-		fmt.Sprintf("--host=%s,%s", primary, secondary),
-		fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken),
-		fmt.Sprintf("--org=%s", orgName),
-	}
-
-	defer func(original []string) { os.Args = original }(os.Args)
-	os.Args = args
-	stdOut, stdErr, err := runMultiHost(args)
-
-	assert.Equal(suite.T(), error(nil), err)
-	assert.NotContains(suite.T(), stdOut, "calculated fingerprint")
-	assert.Contains(suite.T(), stdErr, fmt.Sprintf("[debug] [%s]\n", primary))
-	assert.Contains(suite.T(), stdErr, fmt.Sprintf("[debug] [%s]\n", secondary))
-	assert.Equal(suite.T(), 2, strings.Count(stdErr, "[debug] calculated fingerprint"))
-}
-
-func (suite *MultiHostTestSuite) TestRunTripledHost() {
-
-	multiHost := fmt.Sprintf("--host=%s,%s,%s", localHost, localHost, localHost)
-	multiApiToken := fmt.Sprintf("--api-token=%s,%s,%s", apiToken, apiToken, apiToken)
-	org := fmt.Sprintf("--org=%s", orgName)
-
-	tripledArgs := func(args []string) []string {
-		return append(args, multiHost, multiApiToken, org)
-	}
-
-	for _, t := range []struct {
-		name   string
-		args   []string
-		stdOut []string
-		err    error
-	}{
-		{
-			name:   "only returns primary call output when all three calls succeed",
-			args:   tripledArgs([]string{"kosli", "status"}),
-			stdOut: []string{"OK", ""},
-			err:    error(nil),
-		},
-	} {
-		defer func(original []string) { os.Args = original }(os.Args)
-		os.Args = t.args
-		output, _, err := runMultiHost(t.args)
-
-		assert.Equal(suite.T(), t.err, err, fmt.Sprintf("TestRunTripledHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.err, err))
-
-		lines := strings.Split(output, "\n")
-		d := diff(t.stdOut, lines)
-		assert.Equal(suite.T(), "", d, fmt.Sprintf("TestRunTripledHost: %s\n%s\n", t.name, d))
-	}
-}
-
-func TestMultiHostTestSuite(t *testing.T) {
-	suite.Run(t, new(MultiHostTestSuite))
-}
-
-// func StatusDebugLines() []string {
-// 	return []string{
-// 		fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost),
-// 		"OK",
-// 		"",
-// 		fmt.Sprintf("[debug] [%s]", localHost),
-// 		fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost),
-// 		"OK",
-// 		"",
-// 	}
-// }
-
-func HelpStatusLines() []string {
-	return []string{
-		"Check the status of a Kosli server.  ",
-		"The status is logged and the command always exits with 0 exit code.  ",
-		"If you like to assert the Kosli server status, you can use the ^--assert^ flag or the \"kosli assert status\" command.",
-		"",
-		"Usage:",
-		"  kosli status [flags]",
-		"",
-		"Flags:",
-		"      --assert   [optional] Exit with non-zero code if Kosli server is not responding.",
-		"  -h, --help     help for status",
-		"",
-		"Global Flags:",
-		"  -a, --api-token string      The Kosli API token.",
-		"  -c, --config-file string    [optional] The Kosli config file path. (default \"kosli\")",
-		"      --debug                 [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)",
-		"  -H, --host string           [defaulted] The Kosli endpoint. (default \"https://app.kosli.com\")",
-		"  -r, --max-api-retries int   [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)",
-		"      --org string            The Kosli organization.",
-		"",
-	}
-}
-
-func diff(expect []string, actual []string) string {
-	if len(expect) != len(actual) {
-		return fmt.Sprintf("len(expect)==%v, len(actual)==%v\n", len(expect), len(actual))
-	}
-	for i := 0; i < len(expect); i++ {
-		e := expect[i]
-		a := actual[i]
-		d := diffLine(i, e, a)
-		if d != "" {
-			return d
+func newRecordingKosliHost(t *testing.T, bodies map[string]string) (*httptest.Server, *recordingKosliHost) {
+	t.Helper()
+	fake := &recordingKosliHost{bodies: bodies}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fake.mu.Lock()
+		fake.requests = append(fake.requests, r.Method+" "+r.URL.Path)
+		fake.mu.Unlock()
+		body, ok := fake.bodies[r.URL.Path]
+		if !ok {
+			body = "{}"
 		}
-	}
-	return ""
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, body)
+	}))
+	t.Cleanup(server.Close)
+	return server, fake
 }
 
-func diffLine(n int, expect string, actual string) string {
-	m := max(len(expect), len(actual))
-	for i := 0; i < m; i++ {
-		e := charAt(expect, i)
-		a := charAt(actual, i)
-		if e != a {
-			msg := []string{
-				fmt.Sprintf("line: %v", n),
-				fmt.Sprintf("expect: '%v'", expect),
-				fmt.Sprintf("actual: '%v'", actual),
-				fmt.Sprintf("len(expect): %v", len(expect)),
-				fmt.Sprintf("len(actual): %v", len(actual)),
-				fmt.Sprintf("expect[%v]: %v", i, e),
-				fmt.Sprintf("actual[%v]: %v", i, a),
-			}
-			return strings.Join(msg, "\n")
+func multiHostFlags(a, b string) string {
+	return fmt.Sprintf("--host %s,%s --api-token one,two --org acme --max-api-retries 0", a, b)
+}
+
+func newTwoHostKosli(t *testing.T, a, b string) (*kosli.Kosli, *bytes.Buffer) {
+	t.Helper()
+	var out bytes.Buffer
+	l := log.NewLogger(&out, &out, false)
+	client, err := requests.NewKosliClient("", 0, false, l)
+	require.NoError(t, err)
+	return kosli.New(client, l, a+","+b, "one,two", false), &out
+}
+
+func TestAReadAsksOnlyThePrimaryHost(t *testing.T) {
+	serverA, fakeA := newRecordingKosliHost(t, nil)
+	serverB, fakeB := newRecordingKosliHost(t, nil)
+
+	_, _, _, _, err := executeCommandC("get flow my-flow " + multiHostFlags(serverA.URL, serverB.URL))
+
+	require.NoError(t, err)
+	assert.Equal(t, []string{"GET /api/v2/flows/acme/my-flow"}, fakeA.requests)
+	assert.Empty(t, fakeB.requests)
+}
+
+func TestAWriteIsSentToEveryHost(t *testing.T) {
+	serverA, fakeA := newRecordingKosliHost(t, nil)
+	serverB, fakeB := newRecordingKosliHost(t, nil)
+
+	_, combined, _, _, err := executeCommandC("archive flow my-flow " + multiHostFlags(serverA.URL, serverB.URL))
+
+	require.NoError(t, err)
+	assert.Equal(t, []string{"PUT /api/v2/flows/acme/my-flow/archive"}, fakeA.requests)
+	assert.Equal(t, fakeA.requests, fakeB.requests)
+	assert.Equal(t, "flow my-flow was archived\n", combined)
+}
+
+func TestAnAssertFailsWhenASecondaryHostDisagrees(t *testing.T) {
+	path := "/api/v2/asserts/acme/fingerprint/" + multiHostFingerprint
+	serverA, _ := newRecordingKosliHost(t, map[string]string{path: `{"compliant": true}`})
+	serverB, _ := newRecordingKosliHost(t, map[string]string{path: `{"compliant": false}`})
+
+	_, _, _, _, err := executeCommandC("assert artifact --fingerprint " + multiHostFingerprint + " --output json " +
+		multiHostFlags(serverA.URL, serverB.URL))
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "["+serverB.URL+"]\nArtifact is not compliant")
+}
+
+func TestATagLooksUpTheRepoIDOnEachHost(t *testing.T) {
+	serverA, fakeA := newRecordingKosliHost(t, map[string]string{"/api/v2/repos/acme/my-repo": `{"id": "id-on-a"}`})
+	serverB, fakeB := newRecordingKosliHost(t, map[string]string{"/api/v2/repos/acme/my-repo": `{"id": "id-on-b"}`})
+
+	_, _, _, _, err := executeCommandC("tag repo my-repo --set team=a " + multiHostFlags(serverA.URL, serverB.URL))
+
+	require.NoError(t, err)
+	assert.Contains(t, fakeA.requests, "PATCH /api/v2/tags/acme/repo/id-on-a")
+	assert.Contains(t, fakeB.requests, "PATCH /api/v2/tags/acme/repo/id-on-b")
+}
+
+func TestAnEmptyHostInTheListIsRefused(t *testing.T) {
+	_, _, _, _, err := executeCommandC("status --host http://a,,http://b --api-token 1,2,3")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "flag '--host' was given an empty value")
+}
+
+func TestAttestationSubmitterSendsTheSameAttestationToEveryHost(t *testing.T) {
+	serverA, fakeA := newFakeAttestationServer(t)
+	serverB, fakeB := newFakeAttestationServer(t)
+	submitter, _ := newTestAttestationSubmitter(t, serverA.URL, false)
+	submitter.kosli, _ = newTwoHostKosli(t, serverA.URL, serverB.URL)
+	submission := genericSubmission("unit-tests")
+	submission.attachments = []string{"testdata/file1", "testdata/folder1"}
+
+	require.NoError(t, submitter.submit(submission))
+
+	require.Len(t, fakeA.recorded, 1)
+	require.Len(t, fakeB.recorded, 1)
+	assert.Equal(t, fakeA.recorded[0].dataJSON, fakeB.recorded[0].dataJSON)
+	assert.Equal(t, fakeA.putBody, fakeB.putBody, "every host is sent the one tarball")
+	assert.Empty(t, submission.payload.(*GenericAttestationPayload).AttachmentUploadID,
+		"each host's upload id goes in a copy of the payload")
+}
+
+func TestAttestationSubmitterNamesTheHostThatRejectedTheAttestation(t *testing.T) {
+	serverA, _ := newFakeAttestationServer(t)
+	serverB, fakeB := newFakeAttestationServer(t)
+	fakeB.status = http.StatusBadRequest
+	fakeB.body = `{"message": "no such flow"}`
+	submitter, _ := newTestAttestationSubmitter(t, serverA.URL, false)
+	submitter.kosli, _ = newTwoHostKosli(t, serverA.URL, serverB.URL)
+
+	err := submitter.submit(genericSubmission("unit-tests"))
+
+	assert.EqualError(t, err, "["+serverB.URL+"]\nno such flow")
+}
+
+func TestAttestationSubmitterLogsOnlyThePrimarysSuccess(t *testing.T) {
+	serverA, _ := newFakeAttestationServer(t)
+	serverB, _ := newFakeAttestationServer(t)
+	submitter, _ := newTestAttestationSubmitter(t, serverA.URL, false)
+	var out *bytes.Buffer
+	submitter.kosli, out = newTwoHostKosli(t, serverA.URL, serverB.URL)
+
+	require.NoError(t, submitter.submit(genericSubmission("unit-tests")))
+
+	assert.Equal(t, "generic attestation 'unit-tests' is reported to trail: my-trail\n", out.String())
+}
+
+func TestSnapshotReporterCollectsOnceAndReportsToEveryHost(t *testing.T) {
+	serverA, fakeA := newFakeSnapshotServer(t)
+	serverB, fakeB := newFakeSnapshotServer(t)
+	reporter, ensured, _ := newTestSnapshotReporter(t, serverA.URL, false)
+	reporter.kosli, _ = newTwoHostKosli(t, serverA.URL, serverB.URL)
+	var collected atomic.Int32
+
+	err := reporter.report("prod", "docker", func() (any, string, error) {
+		collected.Add(1)
+		return twoContainers()
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, int32(1), collected.Load())
+	assert.Equal(t, []string{"prod/docker", "prod/docker"}, ensured.calls)
+	require.Len(t, fakeA.recorded, 1)
+	require.Len(t, fakeB.recorded, 1)
+	assert.Equal(t, fakeA.recorded[0].body, fakeB.recorded[0].body)
+}
+
+func TestSnapshotReporterStillReportsToTheHostsItCouldPrepare(t *testing.T) {
+	serverA, fakeA := newFakeSnapshotServer(t)
+	serverB, fakeB := newFakeSnapshotServer(t)
+	reporter, _, _ := newTestSnapshotReporter(t, serverA.URL, false)
+	reporter.kosli, _ = newTwoHostKosli(t, serverA.URL, serverB.URL)
+	reporter.ensure = func(h kosli.Host, envName, envType string) error {
+		if h.URL == serverA.URL {
+			return errors.New("environment prod already exists with type K8S")
 		}
+		return nil
 	}
-	return ""
+
+	err := reporter.report("prod", "docker", twoContainers)
+
+	assert.EqualError(t, err, "["+serverA.URL+"]\nenvironment prod already exists with type K8S")
+	assert.Empty(t, fakeA.recorded)
+	assert.Len(t, fakeB.recorded, 1)
 }
 
-func charAt(s string, n int) string {
-	if n >= len(s) {
-		return "nil"
-	}
-	c := s[n]
-	if c == '\t' {
-		return "TAB"
-	}
-	if c == '\n' {
-		return "NL"
-	}
-	return fmt.Sprintf("%v", c)
+func TestSnapshotReporterDoesNotCollectWhenNoHostIsReady(t *testing.T) {
+	reporter, _, _ := newTestSnapshotReporter(t, "http://a", false)
+	reporter.kosli, _ = newTwoHostKosli(t, "http://a", "http://b")
+	reporter.ensure = func(kosli.Host, string, string) error { return errors.New("unauthorized") }
+
+	err := reporter.report("prod", "docker", func() (any, string, error) {
+		t.Error("collected a snapshot no host could take")
+		return nil, "", nil
+	})
+
+	assert.EqualError(t, err, "[http://a]\nunauthorized\n[http://b]\nunauthorized")
 }
 
-// {
-// 	name:   "in debug mode also returns secondary call output",
-// 	args:   doubledArgs([]string{"kosli", "status", "--debug"}),
-// 	stdOut: StatusDebugLines(),
-// 	err:    error(nil),
-// },
-// {
-// 	name:   "--help prints output once",
-// 	args:   doubledArgs([]string{"kosli", "status", "--help"}),
-// 	stdOut: HelpStatusLines(),
-// 	err:    error(nil),
-// },
-// {
-// 	name:   "bad-flag never gets to call runMultiHost() because isMultiHost() returns false",
-// 	args:   doubledArgs([]string{"kosli", "status", "--bad-flag"}),
-// 	stdOut: BadFlagLines(),
-// 	err:    error(nil),
-// },
+func TestSnapshotReporterReportsAFailedCollectionOnce(t *testing.T) {
+	reporter, _, _ := newTestSnapshotReporter(t, "http://a", false)
+	reporter.kosli, _ = newTwoHostKosli(t, "http://a", "http://b")
 
-// TestGetMultiOptsDetectsBuildCommand pins which calls main keeps out of
-// runMultiHost: only attest artifact with a build command, which attests to
-// every host itself so its build runs once.
-func TestGetMultiOptsDetectsBuildCommand(t *testing.T) {
-	hostFlags := []string{"--host=http://a.example.com,http://b.example.com", "--api-token=one,two", "--org=" + orgName}
-	for _, tt := range []struct {
-		name    string
-		command []string
-		args    []string
-		want    bool
-	}{
-		{name: "attest artifact with a build command", command: []string{"attest", "artifact"}, args: []string{"app", "--artifact-type", "file", "--", "make", "build"}, want: true},
-		{name: "attest artifact without a build command", command: []string{"attest", "artifact"}, args: []string{"app", "--artifact-type", "file"}, want: false},
-		{name: "legacy -- NAME form is not a build command", command: []string{"attest", "artifact"}, args: []string{"--artifact-type", "file", "--", "-app"}, want: false},
-		{name: "another command", command: []string{"fingerprint"}, args: []string{"app", "--artifact-type", "file"}, want: false},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			// Host flags go before any "--", where they are still parsed as flags.
-			args := append(append(append([]string{"kosli"}, tt.command...), hostFlags...), tt.args...)
-			defer func(original []string) { os.Args = original }(os.Args)
-			os.Args = args
+	err := reporter.report("prod", "docker", func() (any, string, error) {
+		return nil, "", errors.New("docker is not running")
+	})
 
-			opts := getMultiOpts()
-			assert.True(t, opts.multiHost())
-			assert.Equal(t, tt.want, opts.buildCommand)
-			assert.Equal(t, !tt.want, opts.runsPerHost())
-		})
-	}
+	assert.EqualError(t, err, "docker is not running")
+}
+
+func TestWithAttachmentUploadIDLeavesTheOriginalPayloadAlone(t *testing.T) {
+	original := GenericAttestationPayload{CommonAttestationPayload: &CommonAttestationPayload{AttestationName: "x"}}
+
+	cloned := withAttachmentUploadID(original, "id-1")
+
+	assert.Empty(t, original.AttachmentUploadID)
+	assert.Equal(t, "id-1", cloned.(GenericAttestationPayload).AttachmentUploadID)
+	assert.Equal(t, "x", cloned.attestationName())
 }

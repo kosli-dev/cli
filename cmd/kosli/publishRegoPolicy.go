@@ -9,6 +9,7 @@ import (
 	"slices"
 
 	"github.com/kosli-dev/cli/internal/docgen"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/regopolicies"
 	"github.com/spf13/cobra"
@@ -166,62 +167,69 @@ func (o *publishRegoPolicyOptions) run(out io.Writer, identifier string) error {
 		return err
 	}
 
-	client := regopolicies.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
-	published, err := client.Publish(global.Org, regopolicies.PublishRequest{
-		Identifier:  identifier,
-		Name:        o.name,
-		Description: o.description,
-		InputSchema: o.inputSchema,
-		Comment:     o.comment,
-		Files:       files,
-	})
-	if err != nil {
-		return err
-	}
-	if published == nil {
-		// Nil on a dry run.
-		return nil
-	}
-	if published.Version < 1 {
-		// Versions count from 1, so any read would be of a version that does not exist.
-		return errors.New("the Kosli server accepted the publish but named no version, so it cannot be read back")
-	}
-
-	// Publishing the content of the newest version answers with that version, which can be terminal.
-	version := published
-	if !version.IsTerminal() {
-		version, err = client.WaitForTerminal(context.Background(), global.Org, identifier,
-			published.Version, regoPolicyWaitOptions)
-		if err != nil {
-			if printErr := o.printIfJSON(out, published); printErr != nil {
-				return printErr
-			}
-			var stillPending *regopolicies.StillPendingError
-			if errors.As(err, &stillPending) {
-				return err
-			}
-			return fmt.Errorf("rego policy '%s' version %d was published, but could not be read back: %w",
-				identifier, published.Version, err)
+	return kosliAPI().Send(func(h kosli.Host) error {
+		// Each host publishes and reads back its own version; the primary's is printed.
+		w := out
+		if !h.IsPrimary() {
+			w = io.Discard
 		}
-	}
-	if version.Status != regopolicies.StatusValid {
-		if err := o.printIfJSON(out, version); err != nil {
+		client := regopolicies.NewClient(h.Client(), h.URL, h.Token, h.DryRun)
+		published, err := client.Publish(global.Org, regopolicies.PublishRequest{
+			Identifier:  identifier,
+			Name:        o.name,
+			Description: o.description,
+			InputSchema: o.inputSchema,
+			Comment:     o.comment,
+			Files:       files,
+		})
+		if err != nil {
 			return err
 		}
-		return notValidError(identifier, version)
-	}
-
-	// A new version is stored pending and with the comment it was sent, so a
-	// terminal answer, or one with another comment, is an existing version.
-	commentDropped := o.comment != "" && published.Comment != o.comment
-	note := ""
-	if published.IsTerminal() || commentDropped {
-		note = "nothing new was stored, as the files and input schema are the same as this version"
-		if commentDropped {
-			note += ", so --comment was not kept"
+		if published == nil {
+			// Nil on a dry run.
+			return nil
 		}
-	}
-	return printVersion(out, version, note)
+		if published.Version < 1 {
+			// Versions count from 1, so any read would be of a version that does not exist.
+			return errors.New("the Kosli server accepted the publish but named no version, so it cannot be read back")
+		}
+
+		// Publishing the content of the newest version answers with that version, which can be terminal.
+		version := published
+		if !version.IsTerminal() {
+			version, err = client.WaitForTerminal(context.Background(), global.Org, identifier,
+				published.Version, regoPolicyWaitOptions)
+			if err != nil {
+				if printErr := o.printIfJSON(w, published); printErr != nil {
+					return printErr
+				}
+				var stillPending *regopolicies.StillPendingError
+				if errors.As(err, &stillPending) {
+					return err
+				}
+				return fmt.Errorf("rego policy '%s' version %d was published, but could not be read back: %w",
+					identifier, published.Version, err)
+			}
+		}
+		if version.Status != regopolicies.StatusValid {
+			if err := o.printIfJSON(w, version); err != nil {
+				return err
+			}
+			return notValidError(identifier, version)
+		}
+
+		// A new version is stored pending and with the comment it was sent, so a
+		// terminal answer, or one with another comment, is an existing version.
+		commentDropped := o.comment != "" && published.Comment != o.comment
+		note := ""
+		if published.IsTerminal() || commentDropped {
+			note = "nothing new was stored, as the files and input schema are the same as this version"
+			if commentDropped {
+				note += ", so --comment was not kept"
+			}
+		}
+		return printVersion(w, version, note)
+	})
 }
 
 // printIfJSON gives a script the version even when the command fails, as JSON

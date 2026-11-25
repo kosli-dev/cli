@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -225,22 +226,24 @@ func (o *createAttestationTypeOptions) run(args []string) error {
 		return err
 	}
 
-	url, err := url.JoinPath(global.Host, "api/v2/custom-attestation-types", global.Org)
-	if err != nil {
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/custom-attestation-types", global.Org)
+		if err != nil {
+			return err
+		}
+		reqParams := &requests.RequestParams{
+			Method: http.MethodPost,
+			URL:    url,
+			Form:   form,
+			DryRun: h.DryRun,
+			Token:  h.Token,
+		}
+		_, err = h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			h.Info("attestation-type %s was created", o.payload.TypeName)
+		}
 		return err
-	}
-	reqParams := &requests.RequestParams{
-		Method: http.MethodPost,
-		URL:    url,
-		Form:   form,
-		DryRun: global.DryRun,
-		Token:  global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("attestation-type %s was created", o.payload.TypeName)
-	}
-	return err
+	})
 }
 
 func prepareAttestationTypeForm(payload any, schemaFilePath string) ([]requests.FormItem, error) {

@@ -19,6 +19,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/evaluate"
 	"github.com/kosli-dev/cli/internal/evaluations"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -96,7 +97,8 @@ func (o *commonEvaluateOptions) assertOnDeny() bool {
 }
 
 func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (any, error) {
-	trailURL, err := url.JoinPath(global.Host, "api/v2/trails", global.Org, flowName, trailName)
+	h := kosliAPI().Query()
+	trailURL, err := url.JoinPath(h.URL, "api/v2/trails", global.Org, flowName, trailName)
 	if err != nil {
 		return nil, err
 	}
@@ -104,9 +106,9 @@ func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (any
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    trailURL,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return nil, err
 	}
@@ -124,17 +126,17 @@ func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (any
 	if len(ids) > 0 {
 		details := make(map[string]any)
 		for _, id := range ids {
-			detailURL, err := url.JoinPath(global.Host, "api/v2/attestations", global.Org)
+			detailURL, err := url.JoinPath(h.URL, "api/v2/attestations", global.Org)
 			if err != nil {
 				return nil, err
 			}
 			q := url.Values{}
 			q.Set("attestation_id", id)
 			detailURL += "?" + q.Encode()
-			detailResp, err := kosliClient.Do(&requests.RequestParams{
+			detailResp, err := h.Do(&requests.RequestParams{
 				Method: http.MethodGet,
 				URL:    detailURL,
-				Token:  global.ApiToken,
+				Token:  h.Token,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to fetch attestation detail for %s: %w", id, err)
@@ -304,20 +306,48 @@ type serverEvaluation struct {
 // runServerEvaluation prints the outcome as the local evaluate trail path does,
 // so the two paths print the same bytes for the same verdict.
 func runServerEvaluation(out io.Writer, spec serverEvaluation) error {
-	evaluation, err := awaitServerEvaluation(spec)
-	if err != nil || evaluation == nil {
+	request, err := serverEvaluationRequest(spec)
+	if err != nil {
 		return err
 	}
-	return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
-		spec.output, false, nil, spec.assertOnDeny, evaluation.DecisionAttestationID)
+	return evaluateOnEveryHost(request, spec.assertOnDeny, func(evaluation *evaluations.Evaluation) error {
+		return printEvaluateResult(out, serverVerdict(evaluation.Result), nil,
+			spec.output, false, nil, spec.assertOnDeny, evaluation.DecisionAttestationID)
+	})
 }
 
-// awaitServerEvaluation is shared by every command that evaluates away from
-// this machine, so they cannot drift on what they send or on which outcome is
-// a verdict. It returns nil after a dry run, which sends nothing.
-func awaitServerEvaluation(spec serverEvaluation) (*evaluations.Evaluation, error) {
+// evaluateOnEveryHost has every host evaluate the same request. print shows
+// the primary's evaluation and returns its --assert failure; under assert, a
+// secondary's denial fails the command too. Nothing is printed after a dry
+// run, which sends nothing.
+func evaluateOnEveryHost(request evaluations.CreateRequest, assert bool, print func(*evaluations.Evaluation) error) error {
+	api := kosliAPI()
+	results, err := kosli.Each(api, func(h kosli.Host) (*evaluations.Evaluation, error) {
+		evaluation, err := awaitEvaluationOn(h, request)
+		if err == nil && evaluation != nil && assert && !h.IsPrimary() && !evaluation.Result.Allow {
+			return evaluation, fmt.Errorf("policy denied")
+		}
+		return evaluation, err
+	})
+	if results[0] == nil {
+		return err
+	}
+	printErr := print(results[0])
+	if printErr == nil {
+		return err
+	}
+	if len(api.Hosts()) > 1 {
+		printErr = fmt.Errorf("[%s]\n%w", api.Query().URL, printErr)
+	}
+	if err != nil {
+		return fmt.Errorf("%s\n%s", printErr, err)
+	}
+	return printErr
+}
+
+func serverEvaluationRequest(spec serverEvaluation) (evaluations.CreateRequest, error) {
 	if len(spec.trails) > maxServerSideTrails {
-		return nil, fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
+		return evaluations.CreateRequest{}, fmt.Errorf("a server-side evaluation takes at most %d trails, got %d",
 			maxServerSideTrails, len(spec.trails))
 	}
 
@@ -325,26 +355,32 @@ func awaitServerEvaluation(spec serverEvaluation) (*evaluations.Evaluation, erro
 	// and a remote policy fetched first would be thrown away by a typo in it.
 	params, err := parseParams(spec.params)
 	if err != nil {
-		return nil, err
+		return evaluations.CreateRequest{}, err
 	}
 
 	var files map[string]string
 	if spec.identifier == "" {
 		files, err = policyBundle(spec.policyRefs)
 		if err != nil {
-			return nil, err
+			return evaluations.CreateRequest{}, err
 		}
 	}
 
-	client := evaluations.NewClient(kosliClient, global.Host, global.ApiToken, global.DryRun)
-	created, err := client.Create(global.Org, evaluations.CreateRequest{
+	return evaluations.CreateRequest{
 		Trails:     spec.trails,
 		Files:      files,
 		Identifier: spec.identifier,
 		Version:    spec.version,
 		Params:     params,
 		Decision:   spec.decision,
-	})
+	}, nil
+}
+
+// awaitEvaluationOn creates the evaluation on one host and waits for its
+// verdict. It returns nil after a dry run, which sends nothing.
+func awaitEvaluationOn(h kosli.Host, request evaluations.CreateRequest) (*evaluations.Evaluation, error) {
+	client := evaluations.NewClient(h.Client(), h.URL, h.Token, h.DryRun)
+	created, err := client.Create(global.Org, request)
 	if err != nil {
 		return nil, serverSideRequestError(err)
 	}

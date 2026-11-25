@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -38,22 +39,24 @@ func newArchiveControlCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			url, err := url.JoinPath(global.Host, "api/v2/controls", global.Org, args[0], "archive")
-			if err != nil {
-				return err
-			}
+			return kosliAPI().Send(func(h kosli.Host) error {
+				url, err := url.JoinPath(h.URL, "api/v2/controls", global.Org, args[0], "archive")
+				if err != nil {
+					return err
+				}
 
-			reqParams := &requests.RequestParams{
-				Method: http.MethodPost,
-				URL:    url,
-				DryRun: global.DryRun,
-				Token:  global.ApiToken,
-			}
-			_, err = kosliClient.Do(reqParams)
-			if err == nil && !global.DryRun {
-				logger.Info("control %s was archived", args[0])
-			}
-			return err
+				reqParams := &requests.RequestParams{
+					Method: http.MethodPost,
+					URL:    url,
+					DryRun: h.DryRun,
+					Token:  h.Token,
+				}
+				_, err = h.Do(reqParams)
+				if err == nil && !h.DryRun {
+					h.Info("control %s was archived", args[0])
+				}
+				return err
+			})
 		},
 	}
 	addDryRunFlag(cmd)

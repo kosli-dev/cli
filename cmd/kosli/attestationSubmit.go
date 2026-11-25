@@ -6,8 +6,10 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
@@ -16,21 +18,15 @@ import (
 
 // attestationSubmitter records Attestations on Trails.
 type attestationSubmitter struct {
-	client *requests.Client
-	host   string
+	kosli  *kosli.Kosli
 	org    string
-	token  string
-	dryRun bool
 	logger *log.Logger
 }
 
 func newAttestationSubmitter() *attestationSubmitter {
 	return &attestationSubmitter{
-		client: kosliClient,
-		host:   global.Host,
+		kosli:  kosliAPI(),
 		org:    global.Org,
-		token:  global.ApiToken,
-		dryRun: global.DryRun,
 		logger: logger,
 	}
 }
@@ -60,78 +56,98 @@ type attestationPayload interface {
 	setAttachmentUploadID(id string)
 }
 
+// submit packages the attachments once, then records the same Attestation on
+// every host concurrently, each with its own upload of them.
 func (s *attestationSubmitter) submit(a attestationSubmission) error {
-	endpoint, err := url.JoinPath(s.host, "api/v2/attestations", s.org, a.flow, "trail", a.trail, a.slug)
-	if err != nil {
-		return err
+	if a.evidence != nil && len(a.attachments) > 0 {
+		return fmt.Errorf("an attestation carries either in-memory evidence or attachments, not both")
+	}
+	evidencePath := ""
+	if len(a.attachments) > 0 {
+		path, cleanupNeeded, err := getPathOfEvidenceFileToUpload(a.attachments, s.logger)
+		if err != nil {
+			return err
+		}
+		if cleanupNeeded {
+			defer func() {
+				if err := os.Remove(path); err != nil {
+					s.logger.Warn("failed to remove evidence file: %v", err)
+				}
+			}()
+		}
+		evidencePath = path
 	}
 
-	form, err := s.form(a)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.client.Do(&requests.RequestParams{
-		Method: http.MethodPost,
-		URL:    endpoint,
-		Form:   form,
-		DryRun: s.dryRun,
-		Token:  s.token,
-	})
-	if err == nil && !s.dryRun {
-		s.logger.Info("%s attestation '%s' is reported to trail: %s", a.label, a.payload.attestationName(), a.trail)
-	}
-	if !s.dryRun {
-		for _, failure := range a.assertFailures {
-			if err != nil {
-				err = fmt.Errorf("%s\nError: %s", err.Error(), failure.Error())
-			} else {
-				err = failure
+	err := s.kosli.Send(func(h kosli.Host) error {
+		err := s.submitTo(h, a, evidencePath)
+		if err == nil && !h.DryRun {
+			h.Info("%s attestation '%s' is reported to trail: %s", a.label, a.payload.attestationName(), a.trail)
+		}
+		if !h.DryRun {
+			for _, failure := range a.assertFailures {
+				if err != nil {
+					err = fmt.Errorf("%s\nError: %s", err.Error(), failure.Error())
+				} else {
+					err = failure
+				}
 			}
 		}
-	}
+		return err
+	})
 	return wrapAttestationError(err)
 }
 
-// form returns the multipart form for a. Attachments are uploaded first and
-// named by id in the payload, so the form carries no file for them.
-func (s *attestationSubmitter) form(a attestationSubmission) ([]requests.FormItem, error) {
-	form := []requests.FormItem{
-		{Type: "field", FieldName: "data_json", Content: a.payload},
+func (s *attestationSubmitter) submitTo(h kosli.Host, a attestationSubmission, evidencePath string) error {
+	endpoint, err := url.JoinPath(h.URL, "api/v2/attestations", s.org, a.flow, "trail", a.trail, a.slug)
+	if err != nil {
+		return err
 	}
 
-	if a.evidence != nil && len(a.attachments) > 0 {
-		return nil, fmt.Errorf("an attestation carries either in-memory evidence or attachments, not both")
+	payload := a.payload
+	uploadID := ""
+	switch {
+	case a.evidence != nil:
+		uploadID, err = s.uploadBytes(h, *a.evidence)
+	case evidencePath != "":
+		uploadID, err = s.uploadAttachment(h, evidencePath)
 	}
-	if a.evidence != nil {
-		uploadID, err := s.uploadBytes(*a.evidence)
-		if err != nil {
-			return nil, err
-		}
-		a.payload.setAttachmentUploadID(uploadID)
-		return form, nil
+	if err != nil {
+		return err
 	}
-	if len(a.attachments) == 0 {
-		return form, nil
+	if uploadID != "" {
+		payload = withAttachmentUploadID(payload, uploadID)
 	}
 
-	evidencePath, cleanupNeeded, err := getPathOfEvidenceFileToUpload(a.attachments, s.logger)
-	if err != nil {
-		return nil, err
+	_, err = h.Do(&requests.RequestParams{
+		Method: http.MethodPost,
+		URL:    endpoint,
+		Form:   []requests.FormItem{{Type: "field", FieldName: "data_json", Content: payload}},
+		DryRun: h.DryRun,
+		Token:  h.Token,
+	})
+	return err
+}
+
+// withAttachmentUploadID returns a copy of p naming the upload id. Every host
+// mints its own id, so the payload the hosts share is never changed.
+func withAttachmentUploadID(p attestationPayload, id string) attestationPayload {
+	v := reflect.ValueOf(p)
+	if v.Kind() == reflect.Pointer {
+		v = v.Elem()
 	}
-	if cleanupNeeded {
-		defer func() {
-			if err := os.Remove(evidencePath); err != nil {
-				s.logger.Warn("failed to remove evidence file: %v", err)
-			}
-		}()
+	clone := reflect.New(v.Type())
+	clone.Elem().Set(v)
+	common := clone.Elem().FieldByName("CommonAttestationPayload")
+	if common.IsValid() && common.Kind() == reflect.Pointer && !common.IsNil() {
+		copied := *common.Interface().(*CommonAttestationPayload)
+		common.Set(reflect.ValueOf(&copied))
 	}
-	uploadID, err := s.uploadAttachment(evidencePath)
-	if err != nil {
-		return nil, err
+	cloned := clone.Interface().(attestationPayload)
+	cloned.setAttachmentUploadID(id)
+	if reflect.ValueOf(p).Kind() == reflect.Pointer {
+		return cloned
 	}
-	a.payload.setAttachmentUploadID(uploadID)
-	return form, nil
+	return clone.Elem().Interface().(attestationPayload)
 }
 
 // wrapAttestationError turns the server's binding error into one naming the

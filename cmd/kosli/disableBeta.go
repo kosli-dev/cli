@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -44,25 +45,27 @@ func newDisableExperimentalCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *betaOptions) run(args []string) error {
-	url, err := url.JoinPath(global.Host, "api/v2/organizations", global.Org, "experimental_features")
-	if err != nil {
-		return err
-	}
-	action := "enabled"
-	if !o.payload.Enabled {
-		action = "disabled"
-	}
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := url.JoinPath(h.URL, "api/v2/organizations", global.Org, "experimental_features")
+		if err != nil {
+			return err
+		}
+		action := "enabled"
+		if !o.payload.Enabled {
+			action = "disabled"
+		}
 
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: o.payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("beta features have been %s for organization: %s", action, global.Org)
-	}
-	return err
+		reqParams := &requests.RequestParams{
+			Method:  http.MethodPut,
+			URL:     url,
+			Payload: o.payload,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
+		}
+		_, err = h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			h.Info("beta features have been %s for organization: %s", action, global.Org)
+		}
+		return err
+	})
 }

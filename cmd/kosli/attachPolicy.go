@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -64,26 +65,28 @@ func newAttachPolicyCmd(out io.Writer) *cobra.Command {
 
 func (o *attachPolicyOptions) run(args []string) error {
 	var err error
-	for _, env := range o.environments {
-		url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, env, "policies")
-		if err != nil {
-			return err
+	o.payload.PolicyNames = []string{args[0]}
+	return kosliAPI().Send(func(h kosli.Host) error {
+		for _, env := range o.environments {
+			url, err := url.JoinPath(h.URL, "api/v2/environments", global.Org, env, "policies")
+			if err != nil {
+				return err
+			}
+			reqParams := &requests.RequestParams{
+				Method:  http.MethodPost,
+				URL:     url,
+				Payload: o.payload,
+				DryRun:  h.DryRun,
+				Token:   h.Token,
+			}
+			_, err = h.Do(reqParams)
+			if err != nil {
+				break
+			}
 		}
-		o.payload.PolicyNames = []string{args[0]}
-		reqParams := &requests.RequestParams{
-			Method:  http.MethodPost,
-			URL:     url,
-			Payload: o.payload,
-			DryRun:  global.DryRun,
-			Token:   global.ApiToken,
+		if err == nil && !h.DryRun {
+			h.Info("policy '%s' is attached to environments: %s", args[0], o.environments)
 		}
-		_, err = kosliClient.Do(reqParams)
-		if err != nil {
-			break
-		}
-	}
-	if err == nil && !global.DryRun {
-		logger.Info("policy '%s' is attached to environments: %s", args[0], o.environments)
-	}
-	return err
+		return err
+	})
 }

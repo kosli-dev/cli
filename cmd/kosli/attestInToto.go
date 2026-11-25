@@ -16,6 +16,7 @@ import (
 	ghUtils "github.com/kosli-dev/cli/internal/github"
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/intoto"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/types"
 	"github.com/spf13/cobra"
@@ -675,21 +676,23 @@ func (o *attestInTotoOptions) recordProvenance(args []string, found *intoto.Foun
 			provenance.Repository.URL, provenance.Repository.Provider, true)
 	}
 
-	endpoint, err := url.JoinPath(global.Host, "api/v2/artifacts", global.Org, o.flowName)
-	if err != nil {
+	return kosliAPI().Send(func(h kosli.Host) error {
+		endpoint, err := url.JoinPath(h.URL, "api/v2/artifacts", global.Org, o.flowName)
+		if err != nil {
+			return err
+		}
+		_, err = h.Do(&requests.RequestParams{
+			Method:  http.MethodPost,
+			URL:     endpoint,
+			Payload: payload,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
+		})
+		if err == nil && !h.DryRun {
+			h.Info("artifact %s was attested with fingerprint: %s", payload.Filename, payload.Fingerprint)
+		}
 		return err
-	}
-	_, err = kosliClient.Do(&requests.RequestParams{
-		Method:  http.MethodPost,
-		URL:     endpoint,
-		Payload: payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
 	})
-	if err == nil && !global.DryRun {
-		logger.Info("artifact %s was attested with fingerprint: %s", payload.Filename, payload.Fingerprint)
-	}
-	return err
 }
 
 // commitInfo returns the details of the commit the provenance names. They are

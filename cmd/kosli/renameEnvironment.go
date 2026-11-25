@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -51,24 +52,26 @@ func newRenameEnvironmentCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, args[0], "rename")
-			if err != nil {
-				return err
-			}
 			payload.NewName = args[1]
 
-			reqParams := &requests.RequestParams{
-				Method:  http.MethodPut,
-				URL:     url,
-				Payload: payload,
-				DryRun:  global.DryRun,
-				Token:   global.ApiToken,
-			}
-			_, err = kosliClient.Do(reqParams)
-			if err == nil && !global.DryRun {
-				logger.Info("environment %s was renamed to %s", args[0], payload.NewName)
-			}
-			return err
+			return kosliAPI().Send(func(h kosli.Host) error {
+				url, err := url.JoinPath(h.URL, "api/v2/environments", global.Org, args[0], "rename")
+				if err != nil {
+					return err
+				}
+				reqParams := &requests.RequestParams{
+					Method:  http.MethodPut,
+					URL:     url,
+					Payload: payload,
+					DryRun:  h.DryRun,
+					Token:   h.Token,
+				}
+				_, err = h.Do(reqParams)
+				if err == nil && !h.DryRun {
+					h.Info("environment %s was renamed to %s", args[0], payload.NewName)
+				}
+				return err
+			})
 		},
 	}
 	addDryRunFlag(cmd)

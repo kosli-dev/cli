@@ -8,6 +8,7 @@ import (
 	neturl "net/url"
 
 	"github.com/kosli-dev/cli/internal/docgen"
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -84,6 +85,7 @@ func newGetRepoCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getRepoOptions) run(out io.Writer, args []string) error {
+	h := kosliAPI().Query()
 	// the endpoint's path is the repo name; when fetching by internal id the
 	// server keys off the ?id= query param and ignores the path, so the id
 	// intentionally doubles as the path segment instead of a placeholder
@@ -91,7 +93,7 @@ func (o *getRepoOptions) run(out io.Writer, args []string) error {
 	if len(args) == 1 {
 		pathName = args[0]
 	}
-	reqURL, err := neturl.JoinPath(global.Host, "api/v2/repos", global.Org, pathName)
+	reqURL, err := neturl.JoinPath(h.URL, "api/v2/repos", global.Org, pathName)
 	if err != nil {
 		return err
 	}
@@ -108,9 +110,9 @@ func (o *getRepoOptions) run(out io.Writer, args []string) error {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    reqURL,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -124,8 +126,8 @@ func (o *getRepoOptions) run(out io.Writer, args []string) error {
 
 // fetchRepoInnerID resolves a repo name to its internal id via the get repo
 // endpoint. An empty provider means no provider disambiguation.
-func fetchRepoInnerID(org, repoName, provider string) (string, error) {
-	reqURL, err := neturl.JoinPath(global.Host, "api/v2/repos", org, repoName)
+func fetchRepoInnerID(h kosli.Host, org, repoName, provider string) (string, error) {
+	reqURL, err := neturl.JoinPath(h.URL, "api/v2/repos", org, repoName)
 	if err != nil {
 		return "", err
 	}
@@ -138,9 +140,9 @@ func fetchRepoInnerID(org, repoName, provider string) (string, error) {
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    reqURL,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return "", err
 	}

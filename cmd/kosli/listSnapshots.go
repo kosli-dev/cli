@@ -95,7 +95,8 @@ func (o *listSnapshotsOptions) run(out io.Writer, args []string) error {
 }
 
 func (o *listSnapshotsOptions) getSnapshotsList(out io.Writer, envName, interval string) error {
-	base, err := url.JoinPath(global.Host, "api/v2/snapshots", global.Org, envName)
+	h := kosliAPI().Query()
+	base, err := url.JoinPath(h.URL, "api/v2/snapshots", global.Org, envName)
 	if err != nil {
 		return err
 	}
@@ -109,9 +110,9 @@ func (o *listSnapshotsOptions) getSnapshotsList(out io.Writer, envName, interval
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    reqURL,
-		Token:  global.ApiToken,
+		Token:  h.Token,
 	}
-	response, err := kosliClient.Do(reqParams)
+	response, err := h.Do(reqParams)
 	if err != nil {
 		return err
 	}

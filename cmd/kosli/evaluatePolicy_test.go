@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -1085,4 +1086,34 @@ func TestEvaluatorLoads(t *testing.T) {
 
 func TestEvaluatePolicyCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(EvaluatePolicyCommandTestSuite))
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) multiHostCmd(a, b, extra string) string {
+	return fmt.Sprintf(
+		"evaluate policy --context trail=my-flow/my-trail "+
+			"--path testdata/policies/allow-all.rego "+
+			"--host %s,%s --org test-org --api-token one,two --max-api-retries 0 %s",
+		a, b, extra)
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestEveryHostEvaluatesTheSameRequest() {
+	serverA, fakeA := newFakeEvaluations(suite.T(), verdictAllowed)
+	serverB, fakeB := newFakeEvaluations(suite.T(), verdictAllowed)
+
+	_, combined, _, _, err := executeCommandC(suite.multiHostCmd(serverA.URL, serverB.URL, ""))
+
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), fakeA.created, 1)
+	require.Equal(suite.T(), fakeA.created, fakeB.created)
+	require.Equal(suite.T(), 1, strings.Count(combined, "RESULT:"), "only the primary's verdict is printed")
+}
+
+func (suite *EvaluatePolicyCommandTestSuite) TestAssertFailsOnADenialFromASecondaryHost() {
+	serverA, _ := newFakeEvaluations(suite.T(), verdictAllowed)
+	serverB, _ := newFakeEvaluations(suite.T(), verdictDenied)
+
+	_, combined, _, _, err := executeCommandC(suite.multiHostCmd(serverA.URL, serverB.URL, "--assert"))
+
+	require.EqualError(suite.T(), err, "["+serverB.URL+"]\npolicy denied")
+	require.Regexp(suite.T(), `RESULT:\s+ALLOWED`, combined)
 }

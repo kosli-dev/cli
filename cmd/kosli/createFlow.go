@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/spf13/cobra"
@@ -101,16 +102,12 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *createFlowOptions) run(args []string) error {
-	var reqParams *requests.RequestParams
-	var url string
-	var err error
 	o.payload.Name = args[0]
 
+	var urlPath []string
+	var form []requests.FormItem
 	if o.TemplateFile != "" || o.UseEmptyTemplate {
-		url, err = neturl.JoinPath(global.Host, "api/v2/flows", global.Org, "template_file")
-		if err != nil {
-			return err
-		}
+		urlPath = []string{"api/v2/flows", global.Org, "template_file"}
 		if o.TemplateFile == "" {
 			tmpDir, err := os.MkdirTemp("", "default-template")
 			if err != nil {
@@ -129,45 +126,44 @@ func (o *createFlowOptions) run(args []string) error {
 			}()
 		}
 
-		form, err := newFlowForm(o.payload, o.TemplateFile, false)
+		var err error
+		form, err = newFlowForm(o.payload, o.TemplateFile, false)
 		if err != nil {
 			return err
-		}
-
-		reqParams = &requests.RequestParams{
-			Method: http.MethodPut,
-			URL:    url,
-			Form:   form,
-			DryRun: global.DryRun,
-			Token:  global.ApiToken,
 		}
 	} else {
 		// legacy flows
 		logger.Warn("creating a flow without --template-file or --use-empty-template uses a deprecated API endpoint and will stop working in a future release; please provide a template")
-		url, err = neturl.JoinPath(global.Host, "api/v2/flows", global.Org)
+		urlPath = []string{"api/v2/flows", global.Org}
+		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
+	}
+
+	return kosliAPI().Send(func(h kosli.Host) error {
+		url, err := neturl.JoinPath(h.URL, urlPath...)
 		if err != nil {
 			return err
 		}
-		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
-
-		reqParams = &requests.RequestParams{
-			Method:  http.MethodPut,
-			URL:     url,
-			Payload: o.payload,
-			DryRun:  global.DryRun,
-			Token:   global.ApiToken,
+		reqParams := &requests.RequestParams{
+			Method: http.MethodPut,
+			URL:    url,
+			DryRun: h.DryRun,
+			Token:  h.Token,
 		}
-	}
-
-	res, err := kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		verb := "created"
-		if res.Resp.StatusCode == 200 {
-			verb = "updated"
+		if form != nil {
+			reqParams.Form = form
+		} else {
+			reqParams.Payload = o.payload
 		}
-		logger.Info("flow '%s' was %s", o.payload.Name, verb)
-	}
-	return err
+		res, err := h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			verb := "created"
+			if res.Resp.StatusCode == 200 {
+				verb = "updated"
+			}
+			h.Info("flow '%s' was %s", o.payload.Name, verb)
+		}
+		return err
+	})
 }
 
 // injectArtifactIntoTemplateIfNotExisting injects 'artifact' into the template if it is not there.

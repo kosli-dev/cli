@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -69,24 +70,29 @@ type Client struct {
 	Debug         bool
 	Logger        *logger.Logger
 	HttpClient    *http.Client
-	usageHost     *url.URL
+	usageHosts    []*url.URL
 	usageHeaders  map[string]string
 }
 
 // SetUsageHeaders adds headers to every request this client sends to
-// kosliHost. The same client also calls registries, VCS providers and storage
-// buckets, and those requests never carry them. An unparseable kosliHost
-// disables the headers rather than failing the command.
+// kosliHost, a comma-separated list for several hosts. The same client also
+// calls registries, VCS providers and storage buckets, and those requests
+// never carry them. An unparseable kosliHost disables the headers rather than
+// failing the command.
 func (c *Client) SetUsageHeaders(kosliHost string, headers map[string]string) {
-	host, err := url.Parse(kosliHost)
-	if err != nil || host.Hostname() == "" {
-		if c.Logger != nil {
-			c.Logger.Debug("usage headers disabled: [%s] is not a URL with a host", kosliHost)
+	var hosts []*url.URL
+	for _, h := range strings.Split(kosliHost, ",") {
+		host, err := url.Parse(h)
+		if err != nil || host.Hostname() == "" {
+			if c.Logger != nil {
+				c.Logger.Debug("usage headers disabled: [%s] is not a URL with a host", kosliHost)
+			}
+			c.usageHosts, c.usageHeaders = nil, nil
+			return
 		}
-		c.usageHost, c.usageHeaders = nil, nil
-		return
+		hosts = append(hosts, host)
 	}
-	c.usageHost, c.usageHeaders = host, headers
+	c.usageHosts, c.usageHeaders = hosts, headers
 }
 
 // usageHeaderTransport applies the usage headers on every hop, because
@@ -102,7 +108,7 @@ func (t *usageHeaderTransport) RoundTrip(req *http.Request) (*http.Response, err
 		return t.next.RoundTrip(req)
 	}
 	req = req.Clone(req.Context())
-	toKosli := sameHost(req.URL, c.usageHost)
+	toKosli := slices.ContainsFunc(c.usageHosts, func(h *url.URL) bool { return sameHost(req.URL, h) })
 	for k, v := range c.usageHeaders {
 		if toKosli {
 			req.Header.Set(k, v)

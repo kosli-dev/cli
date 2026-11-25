@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -150,18 +151,14 @@ func (o *tagOptions) run(args []string) error {
 	// not unique across VCS providers): use --repo-id as-is, or resolve the
 	// repo name to it first
 	var urlResourceID string
+	lookUpRepoID := false
 	switch {
 	case len(args) == 2 && o.repoID != "":
 		return fmt.Errorf("exactly one of the RESOURCE-ID argument or --repo-id must be provided")
 	case len(args) == 2:
 		o.resourceID = args[1]
 		urlResourceID = o.resourceID
-		if isRepo && !global.DryRun {
-			urlResourceID, err = fetchRepoInnerID(global.Org, o.resourceID, o.provider)
-			if err != nil {
-				return err
-			}
-		}
+		lookUpRepoID = isRepo
 	case o.repoID != "":
 		o.resourceID = o.repoID
 		urlResourceID = o.repoID
@@ -169,52 +166,63 @@ func (o *tagOptions) run(args []string) error {
 		return fmt.Errorf("the RESOURCE-ID argument is required unless tagging a repo with --repo-id")
 	}
 
-	url, err := url.JoinPath(global.Host, "api/v2/tags", global.Org, o.resourceType, urlResourceID)
-	if err != nil {
+	return kosliAPI().Send(func(h kosli.Host) error {
+		// A repo's internal id differs from host to host.
+		resourceID := urlResourceID
+		if lookUpRepoID && !h.DryRun {
+			id, err := fetchRepoInnerID(h, global.Org, o.resourceID, o.provider)
+			if err != nil {
+				return err
+			}
+			resourceID = id
+		}
+		url, err := url.JoinPath(h.URL, "api/v2/tags", global.Org, o.resourceType, resourceID)
+		if err != nil {
+			return err
+		}
+
+		reqParams := &requests.RequestParams{
+			Method:  http.MethodPatch,
+			URL:     url,
+			Payload: o.payload,
+			DryRun:  h.DryRun,
+			Token:   h.Token,
+		}
+		_, err = h.Do(reqParams)
+		if err == nil && !h.DryRun {
+			var addMsg, removedMsg, msg string
+			if len(o.payload.SetTags) > 0 {
+				keys := make([]string, 0, len(o.payload.SetTags))
+				for key := range o.payload.SetTags {
+					keys = append(keys, key)
+				}
+				sort.Strings(keys)
+				keysStr := strings.Join(keys, ", ")
+				addMsg = fmt.Sprintf("Tag(s) [%s] added", keysStr)
+			}
+			if len(o.payload.RemoveTags) > 0 {
+				sort.Strings(o.payload.RemoveTags)
+				keysStr := strings.Join(o.payload.RemoveTags, ", ")
+				removedMsg = fmt.Sprintf("Tag(s) [%s] removed", keysStr)
+			}
+			if addMsg != "" {
+				msg = addMsg
+				if removedMsg != "" {
+					msg += fmt.Sprintf(", and %s", removedMsg)
+				}
+
+			} else {
+				msg = removedMsg
+			}
+			if msg != "" {
+				msg += fmt.Sprintf(" for %s '%s'", o.resourceType, o.resourceID)
+			} else {
+				msg = fmt.Sprintf("No tags were applied for %s '%s'", o.resourceType, o.resourceID)
+			}
+			h.Info("%s", msg)
+		}
 		return err
-	}
-
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPatch,
-		URL:     url,
-		Payload: o.payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		var addMsg, removedMsg, msg string
-		if len(o.payload.SetTags) > 0 {
-			keys := make([]string, 0, len(o.payload.SetTags))
-			for key := range o.payload.SetTags {
-				keys = append(keys, key)
-			}
-			sort.Strings(keys)
-			keysStr := strings.Join(keys, ", ")
-			addMsg = fmt.Sprintf("Tag(s) [%s] added", keysStr)
-		}
-		if len(o.payload.RemoveTags) > 0 {
-			sort.Strings(o.payload.RemoveTags)
-			keysStr := strings.Join(o.payload.RemoveTags, ", ")
-			removedMsg = fmt.Sprintf("Tag(s) [%s] removed", keysStr)
-		}
-		if addMsg != "" {
-			msg = addMsg
-			if removedMsg != "" {
-				msg += fmt.Sprintf(", and %s", removedMsg)
-			}
-
-		} else {
-			msg = removedMsg
-		}
-		if msg != "" {
-			msg += fmt.Sprintf(" for %s '%s'", o.resourceType, o.resourceID)
-		} else {
-			msg = fmt.Sprintf("No tags were applied for %s '%s'", o.resourceType, o.resourceID)
-		}
-		logger.Info("%s", msg)
-	}
-	return err
+	})
 }
 
 func validateResourceType(resourceType string) error {
