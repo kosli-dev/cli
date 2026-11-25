@@ -998,7 +998,6 @@
   "watch": "bool"
  },
  "snapshot s3": {
-  "allow-empty-bucket": "bool",
   "aws-key-id": "string",
   "aws-region": "string",
   "aws-secret-key": "string",
