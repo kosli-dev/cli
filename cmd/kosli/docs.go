@@ -64,17 +64,18 @@ func (o *docsOptions) run() error {
 
 		metaFn := func(cmd *cobra.Command) docgen.CommandMeta {
 			return docgen.CommandMeta{
-				Name:       cmd.CommandPath(),
-				Beta:       isBeta(cmd),
-				Deprecated: isDeprecated(cmd),
-				DeprecMsg:  deprecationHint(cmd),
-				Hidden:     isDocHidden(cmd),
-				Summary:    cmd.Short,
-				Long:       cmd.Long,
-				UseLine:    cmd.UseLine(),
-				Runnable:   cmd.Runnable(),
-				Example:    cmd.Example,
-				Tutorial:   cmd.Annotations["tutorialURL"],
+				Name:          cmd.CommandPath(),
+				Beta:          isBeta(cmd),
+				Deprecated:    isDeprecated(cmd),
+				DeprecMsg:     deprecationHint(cmd),
+				Hidden:        isDocHidden(cmd),
+				Summary:       cmd.Short,
+				Long:          cmd.Long,
+				UseLine:       cmd.UseLine(),
+				Runnable:      cmd.Runnable(),
+				Example:       cmd.Example,
+				Tutorial:      cmd.Annotations["tutorialURL"],
+				JSONOutputAPI: cmd.Annotations[docgen.JSONOutputAPIAnnotation],
 			}
 		}
 

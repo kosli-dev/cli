@@ -93,6 +93,24 @@ func (suite *DocsCommandTestSuite) TestDocsCmdDeprecated() {
 	require.NoError(suite.T(), err)
 }
 
+func (suite *DocsCommandTestSuite) TestDocsCmdJSONOutput() {
+	global = &GlobalOpts{}
+	tempDirName := suite.T().TempDir()
+
+	o := &docsOptions{
+		dest:            tempDirName,
+		topCmd:          newGetTrailCmd(os.Stdout),
+		generateHeaders: true,
+	}
+	err := o.run()
+	require.NoError(suite.T(), err)
+
+	actualFile := filepath.Join(tempDirName, "trail.md")
+	require.FileExists(suite.T(), actualFile)
+	err = compareTwoFiles(actualFile, goldenPath("output/docs/mintlify/trail.md"))
+	require.NoError(suite.T(), err)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestDocsCommandTestSuite(t *testing.T) {

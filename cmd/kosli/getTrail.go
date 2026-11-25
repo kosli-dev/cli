@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -28,6 +29,9 @@ func newGetTrailCmd(out io.Writer) *cobra.Command {
 		Short: getTrailDesc,
 		Long:  getTrailDesc,
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "trails/get-trail",
+		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
