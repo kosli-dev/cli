@@ -96,6 +96,7 @@ func (suite *S3MetadataTestSuite) TestMatchesContentMode() {
 			excludePaths: []string{"filtered/"},
 		},
 		{name: "an empty bucket", objects: map[string][]byte{"dir/": nil}},
+		{name: "filters that leave nothing", objects: map[string][]byte{"filtered/out.txt": []byte("o")}, excludePaths: []string{"filtered/"}},
 	} {
 		suite.Run(t.name, func() {
 			content, err := getS3DataFromClient(checksummedBucket(t.objects), fakeS3TestBucketName, nil, nil, t.excludePaths, nil,

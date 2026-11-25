@@ -1137,15 +1137,6 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 			wantLastModified: later.Unix(),
 		},
 		{
-			name: "filtering everything out is an error",
-			objects: map[string][]byte{
-				"README.md": []byte(fakeReadmeBody),
-			},
-			includePaths: []string{"non-existing.md"},
-			wantErr:      true,
-			wantErrMsg:   "no matching file or dirs in bucket: [" + fakeS3TestBucketName + "]",
-		},
-		{
 			name: "an invalid include regex is an error",
 			objects: map[string][]byte{
 				"README.md": []byte(fakeReadmeBody),
@@ -1221,9 +1212,15 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 const fakeEmptyBucketSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 // A bucket with nothing to fingerprint is still the one artifact of the
-// snapshot.
+// snapshot, whether it lists no objects or the filters leave none. Only the
+// log line tells the two apart, since a filter that leaves nothing may be
+// mistyped.
 func (suite *AWSTestSuite) TestGetS3DataFromClientReportsNothingToFingerprintAsAnEmptyBucket() {
-	const emptyBucketLog = "bucket [" + fakeS3TestBucketName + "] holds no objects; reporting it as an empty bucket\n"
+	readme := map[string][]byte{"README.md": []byte(fakeReadmeBody)}
+	const (
+		emptyBucketLog = "bucket [" + fakeS3TestBucketName + "] holds no objects; reporting it as an empty bucket\n"
+		filteredLog    = "[warning] no object in bucket [" + fakeS3TestBucketName + "] is left by the include and exclude filters; reporting it as an empty bucket\n"
+	)
 	for _, t := range []struct {
 		name         string
 		objects      map[string][]byte
@@ -1236,6 +1233,11 @@ func (suite *AWSTestSuite) TestGetS3DataFromClientReportsNothingToFingerprintAsA
 	}{
 		{name: "no objects at all", objects: map[string][]byte{}, wantInfo: emptyBucketLog},
 		{name: "only folder markers", objects: map[string][]byte{"dummy/": nil, "dummy/dummy_2/": nil}, wantInfo: emptyBucketLog},
+		{name: "--include matches nothing", objects: readme, includePaths: []string{"non-existing.md"}, wantWarning: filteredLog},
+		{name: "--include-regex matches nothing", objects: readme, includeRegex: []string{`.*\.yml$`}, wantWarning: filteredLog},
+		{name: "--exclude removes everything", objects: readme, excludePaths: []string{"README.md"}, wantWarning: filteredLog},
+		{name: "--exclude-regex removes everything", objects: readme, excludeRegex: []string{`.*\.md$`}, wantWarning: filteredLog},
+		{name: "an empty bucket with a filter set", objects: map[string][]byte{}, includePaths: []string{"README.md"}, wantWarning: filteredLog},
 	} {
 		suite.Run(t.name, func() {
 			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects}
