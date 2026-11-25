@@ -112,10 +112,16 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 			golden: "bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
 		{
-			wantError: true,
-			name:      "fails when --include does not match any file or dir",
-			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include non-existing.md`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
-			golden:    "Error: no matching file or dirs in bucket: [kosli-cli-public]\n",
+			name: "reports an empty bucket, with a warning, when --include does not match any file or dir",
+			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include non-existing.md`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "[warning] no object in bucket [kosli-cli-public] is left by the include and exclude filters; reporting it as an empty bucket\n" +
+				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
+		},
+		{
+			name: "reports an empty bucket, with a warning, when --exclude-regex removes every file",
+			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --exclude-regex '.*'`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "[warning] no object in bucket [kosli-cli-public] is left by the include and exclude filters; reporting it as an empty bucket\n" +
+				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
 		{
 			name:   "can snapshot entire bucket except a subset of files/dirs using --exclude",
@@ -179,10 +185,10 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
 		{
-			name: "--skip-unusable-checksums reports an empty snapshot when no object has a stored checksum",
+			name: "--skip-unusable-checksums reports an empty bucket when no object has a stored checksum",
 			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include dummy --fingerprint-source metadata --skip-unusable-checksums`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
 			golden: "[warning] skipped 1 of the 1 objects whose checksum was read in bucket [kosli-cli-public]; they have no usable SHA256 checksum, so the fingerprint does not cover them:\n[dummy/dummy_2/template.yml]\n" +
-				"[warning] no object in bucket [kosli-cli-public] is left to fingerprint; reporting an empty snapshot\n" +
+				"[warning] no object in bucket [kosli-cli-public] is left to fingerprint; reporting it as an empty bucket\n" +
 				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
 		{
@@ -190,6 +196,34 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 			name:      "--skip-unusable-checksums fails without --fingerprint-source metadata",
 			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --skip-unusable-checksums`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
 			golden:    "Error: --skip-unusable-checksums can only be used with --fingerprint-source metadata\n",
+		},
+	}
+
+	for _, t := range tests {
+		runTestCmd(suite.T(), []cmdTestCase{t})
+	}
+}
+
+// Also confirms the server accepts the empty-directory fingerprint and the
+// zero timestamp an empty bucket is reported with.
+func (suite *SnapshotS3TestSuite) TestSnapshotS3CmdOnAnEmptyBucket() {
+	bucketName := suite.bucketName
+	aws.NewS3ClientFunc = func(_ *aws.AWSStaticCreds) (aws.S3API, error) {
+		return &aws.FakeS3Client{Bucket: bucketName, Objects: map[string][]byte{"dummy/": nil}}, nil
+	}
+
+	tests := []cmdTestCase{
+		{
+			name: "snapshot s3 reports an empty bucket",
+			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "bucket [kosli-cli-public] holds no objects; reporting it as an empty bucket\n" +
+				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
+		},
+		{
+			name: "snapshot s3 reports an empty bucket with --fingerprint-source metadata",
+			cmd:  fmt.Sprintf(`snapshot s3 %s %s --bucket %s --fingerprint-source metadata`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "bucket [kosli-cli-public] holds no objects; reporting it as an empty bucket\n" +
+				"bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
 	}
 
