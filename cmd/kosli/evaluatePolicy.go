@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/digest"
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/evaluations"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/spf13/cobra"
@@ -155,6 +156,9 @@ type evaluatePolicyOptions struct {
 func newEvaluatePolicyCmd(out io.Writer) *cobra.Command {
 	o := new(evaluatePolicyOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputSourceAnnotation: docgen.JSONOutputSourceCLI,
+		},
 		Use:     "policy",
 		Short:   evaluatePolicyShortDesc,
 		Long:    evaluatePolicyLongDesc,

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -34,6 +35,9 @@ type policyVersion struct {
 func newGetPolicyCmd(out io.Writer) *cobra.Command {
 	o := new(getPolicyOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "policies/get-policy",
+		},
 		Use:   "policy POLICY-NAME",
 		Short: getPolicyDesc,
 		Long:  getPolicyDesc,

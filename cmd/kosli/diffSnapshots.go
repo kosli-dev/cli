@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -87,6 +88,9 @@ type DiffArtifact struct {
 func newDiffSnapshotsCmd(out io.Writer) *cobra.Command {
 	o := new(diffSnapshotsOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "envdiff/get-environment-diff",
+		},
 		Use:     "snapshots SNAPPISH_1 SNAPPISH_2",
 		Short:   diffSnapshotsDescShort,
 		Long:    diffSnapshotsDesc,

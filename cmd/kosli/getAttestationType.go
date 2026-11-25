@@ -8,6 +8,7 @@ import (
 	neturl "net/url"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -41,6 +42,9 @@ type getAttestationTypeOptions struct {
 func newGetAttestationTypeCmd(out io.Writer) *cobra.Command {
 	o := new(getAttestationTypeOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "custom-attestation-types/get-custom-attestation-type",
+		},
 		Use:     "attestation-type TYPE-NAME",
 		Short:   getAttestationTypeShortDesc,
 		Long:    getAttestationTypeLongDesc,

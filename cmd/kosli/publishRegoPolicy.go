@@ -8,6 +8,7 @@ import (
 	"io"
 	"slices"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/regopolicies"
 	"github.com/spf13/cobra"
@@ -108,12 +109,15 @@ type publishRegoPolicyOptions struct {
 func newPublishRegoPolicyCmd(out io.Writer) *cobra.Command {
 	o := new(publishRegoPolicyOptions)
 	cmd := &cobra.Command{
-		Use:         "rego-policy IDENTIFIER",
-		Short:       publishRegoPolicyShortDesc,
-		Long:        publishRegoPolicyLongDesc,
-		Example:     publishRegoPolicyExample,
-		Args:        cobra.ExactArgs(1),
-		Annotations: map[string]string{betaCLIAnnotation: ""},
+		Use:     "rego-policy IDENTIFIER",
+		Short:   publishRegoPolicyShortDesc,
+		Long:    publishRegoPolicyLongDesc,
+		Example: publishRegoPolicyExample,
+		Args:    cobra.ExactArgs(1),
+		Annotations: map[string]string{
+			betaCLIAnnotation:                 "",
+			docgen.JSONOutputSourceAnnotation: docgen.JSONOutputSourceCLI,
+		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

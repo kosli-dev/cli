@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -75,12 +76,15 @@ type listControlsResponse struct {
 func newListControlsCmd(out io.Writer) *cobra.Command {
 	o := new(listControlsOptions)
 	cmd := &cobra.Command{
-		Use:         "controls",
-		Short:       listControlsShortDesc,
-		Long:        listControlsLongDesc,
-		Example:     listControlsExample,
-		Args:        cobra.NoArgs,
-		Annotations: map[string]string{betaCLIAnnotation: ""},
+		Use:     "controls",
+		Short:   listControlsShortDesc,
+		Long:    listControlsLongDesc,
+		Example: listControlsExample,
+		Args:    cobra.NoArgs,
+		Annotations: map[string]string{
+			betaCLIAnnotation:              "",
+			docgen.JSONOutputAPIAnnotation: "controls/list-controls",
+		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	neturl "net/url"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -48,6 +49,9 @@ type getRepoOptions struct {
 func newGetRepoCmd(out io.Writer) *cobra.Command {
 	o := new(getRepoOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "repos/get-a-repo",
+		},
 		Use:     "repo [REPO-NAME]",
 		Short:   getRepoShortDesc,
 		Long:    getRepoLongDesc,

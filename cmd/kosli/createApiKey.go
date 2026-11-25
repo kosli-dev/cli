@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -59,6 +60,9 @@ type createApiKeyPayload struct {
 func newCreateApiKeyCmd(out io.Writer) *cobra.Command {
 	o := new(createApiKeyOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "service-accounts/create-an-api-key-for-a-service-account,user/create-a-personal-api-key",
+		},
 		Use:     "api-key",
 		Aliases: []string{"ak"},
 		Short:   createApiKeyShortDesc,

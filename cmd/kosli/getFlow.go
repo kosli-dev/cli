@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -22,6 +23,9 @@ type getFlowOptions struct {
 func newGetFlowCmd(out io.Writer) *cobra.Command {
 	o := new(getFlowOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "flows/get-flow",
+		},
 		Use:   "flow FLOW-NAME",
 		Short: getFlowDesc,
 		Long:  getFlowDesc,

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	neturl "net/url"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -76,6 +77,9 @@ type listAttestationsResponse struct {
 func newGetAttestationCmd(out io.Writer) *cobra.Command {
 	o := new(getAttestationOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "attestation/get-trail-attestation,attestation/get-artifact-attestation,attestation/list-attestations",
+		},
 		Use:     "attestation [ATTESTATION-NAME]",
 		Short:   getAttestationShortDesc,
 		Long:    getAttestationLongDesc,

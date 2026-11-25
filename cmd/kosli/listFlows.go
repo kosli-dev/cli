@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -58,6 +59,9 @@ type listFlowsOptions struct {
 func newListFlowsCmd(out io.Writer) *cobra.Command {
 	o := new(listFlowsOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "flows/list-flows",
+		},
 		Use:     "flows",
 		Short:   listFlowsShortDesc,
 		Long:    listFlowsLongDesc,

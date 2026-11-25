@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -80,13 +81,17 @@ type productUpdate struct {
 func newListProductUpdatesCmd(out io.Writer) *cobra.Command {
 	o := new(listProductUpdatesOptions)
 	cmd := &cobra.Command{
-		Use:         "product-updates",
-		Aliases:     []string{"pu", "pr-up"},
-		Short:       listProductUpdatesShortDesc,
-		Long:        listProductUpdatesLongDesc,
-		Example:     listProductUpdatesExample,
-		Args:        cobra.NoArgs,
-		Annotations: map[string]string{betaCLIAnnotation: ""},
+		Use:     "product-updates",
+		Aliases: []string{"pu", "pr-up"},
+		Short:   listProductUpdatesShortDesc,
+		Long:    listProductUpdatesLongDesc,
+		Example: listProductUpdatesExample,
+		Args:    cobra.NoArgs,
+		Annotations: map[string]string{
+			betaCLIAnnotation:                 "",
+			docgen.JSONOutputAPIAnnotation:    "product-updates/list-product-updates",
+			docgen.JSONOutputSourceAnnotation: docgen.JSONOutputSourceDerived,
+		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

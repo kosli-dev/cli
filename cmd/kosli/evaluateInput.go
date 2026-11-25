@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -91,6 +92,9 @@ kosli evaluate input \
 func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 	o := new(evaluateInputOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputSourceAnnotation: docgen.JSONOutputSourceCLI,
+		},
 		Use:     "input",
 		Short:   evaluateInputShortDesc,
 		Long:    evaluateInputLongDesc,

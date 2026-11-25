@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -59,6 +60,9 @@ type listSnapshotsOptions struct {
 func newListSnapshotsCmd(out io.Writer) *cobra.Command {
 	o := new(listSnapshotsOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "snapshots/list-snapshots",
+		},
 		Use:     "snapshots ENV_NAME",
 		Short:   listSnapshotsShortDesc,
 		Long:    listSnapshotsLongDesc,

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -39,6 +40,9 @@ type listApiKeysOptions struct {
 func newListApiKeysCmd(out io.Writer) *cobra.Command {
 	o := new(listApiKeysOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "service-accounts/list-api-keys-for-a-service-account,user/list-personal-api-keys",
+		},
 		Use:     "api-keys",
 		Aliases: []string{"ak", "aks", "api-key"},
 		Short:   listApiKeysShortDesc,

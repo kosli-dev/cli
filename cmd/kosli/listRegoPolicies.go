@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/regopolicies"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -65,12 +66,15 @@ type listRegoPoliciesResponse struct {
 func newListRegoPoliciesCmd(out io.Writer) *cobra.Command {
 	o := new(listRegoPoliciesOptions)
 	cmd := &cobra.Command{
-		Use:         "rego-policies",
-		Short:       listRegoPoliciesShortDesc,
-		Long:        listRegoPoliciesLongDesc,
-		Example:     listRegoPoliciesExample,
-		Args:        cobra.NoArgs,
-		Annotations: map[string]string{betaCLIAnnotation: ""},
+		Use:     "rego-policies",
+		Short:   listRegoPoliciesShortDesc,
+		Long:    listRegoPoliciesLongDesc,
+		Example: listRegoPoliciesExample,
+		Args:    cobra.NoArgs,
+		Annotations: map[string]string{
+			betaCLIAnnotation:              "",
+			docgen.JSONOutputAPIAnnotation: "rego-policies/list-rego-policies",
+		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

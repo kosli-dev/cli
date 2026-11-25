@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -92,6 +93,9 @@ type artifactEvent struct {
 func newGetArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(getArtifactOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "artifacts/get-artifact-by-fingerprint,artifacts/get-artifacts-by-commit-sha",
+		},
 		Use:     "artifact EXPRESSION",
 		Short:   getArtifactShortDesc,
 		Long:    getArtifactLongDesc,

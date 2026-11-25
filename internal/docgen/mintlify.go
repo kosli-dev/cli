@@ -60,6 +60,69 @@ func (MintlifyFormatter) TutorialTip(url string) string {
 	return fmt.Sprintf("<Tip>\nSee the [tutorial](%s) for a walkthrough.\n</Tip>\n\n", url)
 }
 
+// JSONOutput renders the note saying what decides the shape of a command's
+// JSON output. Each operation is its path under /api-reference on the docs
+// site, e.g. "trails/get-trail". source is a JSONOutputSource* value, or empty
+// when the command prints an API response body unchanged.
+func (MintlifyFormatter) JSONOutput(operations []string, source string) string {
+	const intro = "## JSON output\n\nWith `--output json`, this command "
+	if source == JSONOutputSourceCLI {
+		return intro + "prints JSON that the CLI builds itself. " +
+			"The shape follows the CLI version, not the server's API spec.\n\n"
+	}
+
+	one, several := "prints the response of the %s API operation as the server returned it. ",
+		"prints the response of one of these API operations as the server returned it, "+
+			"depending on the flags and arguments given. "
+	governedBy := "The shape follows the server's published API spec, not the CLI version.\n\n"
+	if source == JSONOutputSourceDerived {
+		one, several = "builds its output from the response of the %s API operation, "+
+			"selecting or combining what the server returned. ",
+			"builds its output from the responses of these API operations, "+
+				"selecting or combining what the server returned. "
+		governedBy = "The fields follow the server's published API spec, not the CLI version.\n\n"
+	}
+
+	if len(operations) == 1 {
+		return intro + fmt.Sprintf(one, operationLink(operations[0])) + governedBy
+	}
+	var b strings.Builder
+	b.WriteString(intro + several + governedBy)
+	for _, operation := range operations {
+		fmt.Fprintf(&b, "- %s\n", operationLink(operation))
+	}
+	b.WriteString("\n")
+	return b.String()
+}
+
+func operationLink(operation string) string {
+	return fmt.Sprintf("[%s](/api-reference/%s)", OperationTitle(operation), operation)
+}
+
+// titleWords restores what a docs path loses from an operation's summary:
+// the capitals of an acronym and the punctuation inside a word.
+var titleWords = map[string]string{
+	"api":            "API",
+	"sha":            "SHA",
+	"membershiprole": "membership/role",
+}
+
+// OperationTitle turns the last segment of an API reference path into the
+// operation's summary: "trails/get-trail" becomes "Get trail".
+func OperationTitle(operation string) string {
+	words := strings.Split(operation[strings.LastIndex(operation, "/")+1:], "-")
+	for i, word := range words {
+		if restored, ok := titleWords[word]; ok {
+			words[i] = restored
+		}
+	}
+	title := strings.Join(words, " ")
+	if title == "" {
+		return title
+	}
+	return strings.ToUpper(title[:1]) + title[1:]
+}
+
 func (MintlifyFormatter) Synopsis(meta CommandMeta) string {
 	var b strings.Builder
 	if len(meta.Long) > 0 {

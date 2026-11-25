@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -21,6 +22,9 @@ type listAttestationTypesOptions struct {
 func newListAttestationTypesCmd(out io.Writer) *cobra.Command {
 	o := new(listAttestationTypesOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "custom-attestation-types/list-custom-attestation-types",
+		},
 		Use:   "attestation-types",
 		Short: listAttestationTypesDesc,
 		Long:  listAttestationTypesDesc,

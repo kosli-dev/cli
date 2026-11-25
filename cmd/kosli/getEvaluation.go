@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/evaluations"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/regopolicies"
@@ -71,12 +72,15 @@ type getEvaluationOptions struct {
 func newGetEvaluationCmd(out io.Writer) *cobra.Command {
 	o := new(getEvaluationOptions)
 	cmd := &cobra.Command{
-		Use:         "evaluation EVALUATION-ID",
-		Short:       getEvaluationShortDesc,
-		Long:        getEvaluationLongDesc,
-		Example:     getEvaluationExample,
-		Args:        cobra.ExactArgs(1),
-		Annotations: map[string]string{betaCLIAnnotation: ""},
+		Use:     "evaluation EVALUATION-ID",
+		Short:   getEvaluationShortDesc,
+		Long:    getEvaluationLongDesc,
+		Example: getEvaluationExample,
+		Args:    cobra.ExactArgs(1),
+		Annotations: map[string]string{
+			betaCLIAnnotation:              "",
+			docgen.JSONOutputAPIAnnotation: "evaluations/get-an-evaluation",
+		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

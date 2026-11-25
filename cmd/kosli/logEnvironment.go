@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -97,6 +98,9 @@ type logEnvironmentOptions struct {
 func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
 	o := new(logEnvironmentOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "environments/list-environment-events",
+		},
 		Use:     "environment ENV_NAME",
 		Aliases: []string{"env"},
 		Short:   logEnvironmentShortDesc,
