@@ -95,6 +95,7 @@ func (suite *S3MetadataTestSuite) TestMatchesContentMode() {
 			objects:      map[string][]byte{"README.md": []byte("r"), "filtered/out.txt": []byte("o"), "keep/in.txt": []byte("i")},
 			excludePaths: []string{"filtered/"},
 		},
+		{name: "an empty bucket", objects: map[string][]byte{"dir/": nil}},
 	} {
 		suite.Run(t.name, func() {
 			content, err := getS3DataFromClient(checksummedBucket(t.objects), fakeS3TestBucketName, nil, nil, t.excludePaths, nil,
@@ -104,6 +105,7 @@ func (suite *S3MetadataTestSuite) TestMatchesContentMode() {
 			metadata, err := snapshotMetadata(suite.T(), checksummedBucket(t.objects), t.excludePaths)
 			require.NoError(suite.T(), err)
 
+			require.Len(suite.T(), content, 1)
 			require.Equal(suite.T(), content, metadata, "metadata mode must produce exactly what content mode produces")
 		})
 	}
@@ -293,11 +295,6 @@ func (suite *S3MetadataTestSuite) TestErrors() {
 			checksums:  fullObjectChecksums(map[string][]byte{"README.md": readme}),
 			listErr:    errInjected,
 			wantErrMsg: []string{"injected error"},
-		},
-		{
-			name:       "an empty bucket keeps the content-mode message",
-			objects:    map[string][]byte{"dir/": nil},
-			wantErrMsg: []string{"no matching file or dirs in bucket: [" + fakeS3TestBucketName + "]"},
 		},
 	} {
 		suite.Run(t.name, func() {
@@ -534,11 +531,6 @@ func (suite *S3MetadataTestSuite) TestSkippingUnusableStillFailsOnOtherErrors() 
 			_, _, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects, HeadObjectErr: errInjected})
 			require.ErrorIs(suite.T(), err, errInjected)
 		}
-	})
-
-	suite.Run("a bucket with no objects", func() {
-		_, _, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{"dir/": nil}})
-		require.ErrorContains(suite.T(), err, "no matching file or dirs in bucket")
 	})
 }
 

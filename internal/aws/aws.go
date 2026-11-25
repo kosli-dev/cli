@@ -504,7 +504,12 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 		return s3Data, err
 	}
 	if len(objects) == 0 {
-		return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
+		filtersSet := len(includePaths)+len(includeRegex)+len(excludePaths)+len(excludeRegex) > 0
+		if filtersSet {
+			return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
+		}
+		logger.Info("bucket [%s] holds no objects; reporting it as an empty bucket", bucket)
+		return emptyS3Bucket(bucket, logger)
 	}
 
 	newest := newestS3Modification(objects)
@@ -531,6 +536,18 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 	s3Data = append(s3Data, &S3Data{Digests: map[string]string{bucket: fingerprint.sha256}, LastModifiedTimestamp: newest.Unix()})
 
 	return s3Data, nil
+}
+
+// emptyS3Bucket is what a bucket with nothing to fingerprint is reported as:
+// still the one artifact of the snapshot, fingerprinted as an empty directory.
+// No object supplies a modification time, so the timestamp is zero, which also
+// keeps successive snapshots of an empty bucket identical.
+func emptyS3Bucket(bucket string, logger *logger.Logger) ([]*S3Data, error) {
+	sha256, err := digest.VirtualDirSha256(nil, nil, logger)
+	if err != nil {
+		return []*S3Data{}, err
+	}
+	return []*S3Data{{Digests: map[string]string{bucket: sha256}, LastModifiedTimestamp: 0}}, nil
 }
 
 // newestS3Modification returns the latest modification time among objects, or

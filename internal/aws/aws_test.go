@@ -1137,14 +1137,6 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 			wantLastModified: later.Unix(),
 		},
 		{
-			name: "an empty bucket is an error",
-			objects: map[string][]byte{
-				"dummy/": nil,
-			},
-			wantErr:    true,
-			wantErrMsg: "no matching file or dirs in bucket: [" + fakeS3TestBucketName + "]",
-		},
-		{
 			name: "filtering everything out is an error",
 			objects: map[string][]byte{
 				"README.md": []byte(fakeReadmeBody),
@@ -1220,6 +1212,45 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 			if t.wantLastModified != 0 {
 				require.Equal(suite.T(), t.wantLastModified, data[0].LastModifiedTimestamp)
 			}
+		})
+	}
+}
+
+// fakeEmptyBucketSha256 is the fingerprint of an empty directory, which a
+// bucket with nothing to fingerprint is reported with.
+const fakeEmptyBucketSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+// A bucket with nothing to fingerprint is still the one artifact of the
+// snapshot.
+func (suite *AWSTestSuite) TestGetS3DataFromClientReportsNothingToFingerprintAsAnEmptyBucket() {
+	const emptyBucketLog = "bucket [" + fakeS3TestBucketName + "] holds no objects; reporting it as an empty bucket\n"
+	for _, t := range []struct {
+		name         string
+		objects      map[string][]byte
+		includePaths []string
+		includeRegex []string
+		excludePaths []string
+		excludeRegex []string
+		wantInfo     string
+		wantWarning  string
+	}{
+		{name: "no objects at all", objects: map[string][]byte{}, wantInfo: emptyBucketLog},
+		{name: "only folder markers", objects: map[string][]byte{"dummy/": nil, "dummy/dummy_2/": nil}, wantInfo: emptyBucketLog},
+	} {
+		suite.Run(t.name, func() {
+			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects}
+			var info, warnings bytes.Buffer
+
+			data, err := getS3DataFromClient(client, fakeS3TestBucketName, t.includePaths, t.includeRegex,
+				t.excludePaths, t.excludeRegex, DefaultDownloadLimits, logger.NewLogger(&info, &warnings, false))
+
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), []*S3Data{{
+				Digests:               map[string]string{fakeS3TestBucketName: fakeEmptyBucketSha256},
+				LastModifiedTimestamp: 0,
+			}}, data)
+			require.Equal(suite.T(), t.wantInfo, info.String())
+			require.Equal(suite.T(), t.wantWarning, warnings.String())
 		})
 	}
 }
