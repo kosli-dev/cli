@@ -43,6 +43,14 @@ The fingerprint format itself is fixed. An S3 snapshot must match the fingerprin
 
 ## Guarantees
 
+> **Amended 2026-11-25.** The artifact name and the empty case described in this record have since
+> changed; the fingerprint calculation has not. An S3 snapshot now always reports exactly one
+> artifact, named after the bucket, including when a single object is reported (previously named
+> after the object). A bucket with nothing to fingerprint, because it holds no objects or because
+> the filters or skipped checksums leave none, is reported with the fingerprint of an empty
+> directory and a timestamp of 0 instead of failing. So "keeps its fingerprint and artifact name"
+> below now holds for the fingerprint only in the single-object case.
+
 The attest side is unchanged: `kosli attest artifact --artifact-type dir` still runs `DirSha256` on a real directory, and that defines the format. The snapshot side re-derives the same value from the bucket. Three guarantees follow, each with the test that holds it:
 
 - **Snapshot equals attestation.** `VirtualDirSha256` of the bucket's `(path, sha256)` pairs equals `DirSha256` of the directory those objects were uploaded from, and a single object equals `FileSha256` plus its basename. Held by the materialise-then-compare tests in `internal/digest` (`TestVirtualDirTestSuite`, `TestVirtualIgnoreTestSuite`) and by `TestMatchesAttestedDirectory` in `internal/aws`, which hashes a directory, uploads its files to the fake bucket and snapshots it.
