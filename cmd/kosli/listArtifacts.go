@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -56,6 +57,9 @@ type listArtifactsOptions struct {
 func newListArtifactsCmd(out io.Writer) *cobra.Command {
 	o := new(listArtifactsOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "artifacts/list-artifacts",
+		},
 		Use:     "artifacts",
 		Short:   listArtifactsShortDesc,
 		Long:    listArtifactsLongDesc,

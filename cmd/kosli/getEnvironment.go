@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -21,6 +22,9 @@ type getEnvironmentOptions struct {
 func newGetEnvironmentCmd(out io.Writer) *cobra.Command {
 	o := new(getEnvironmentOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "environments/get-environment",
+		},
 		Use:     "environment ENVIRONMENT-NAME",
 		Aliases: []string{"env"},
 		Short:   getEnvironmentDesc,

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -120,6 +121,9 @@ kosli get snapshot yourEnvironmentName@{3.weeks.ago}
 func newGetSnapshotCmd(out io.Writer) *cobra.Command {
 	o := new(environmentGetOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "snapshots/get-snapshot",
+		},
 		Use:     "snapshot ENVIRONMENT-NAME-OR-EXPRESSION",
 		Short:   getSnapshotDescShort,
 		Long:    getSnapshotDesc,

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -76,6 +77,9 @@ You can use short git commit or artifact fingerprint shas, but you must provide 
 func newSearchCmd(out io.Writer) *cobra.Command {
 	o := new(searchOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "search/search-artifacts-by-sha-or-fingerprint",
+		},
 		Use:     "search {GIT-COMMIT | FINGERPRINT}",
 		Aliases: []string{"se"},
 		Short:   searchShortDesc,

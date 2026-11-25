@@ -7,6 +7,7 @@ import (
 	"net/http"
 	neturl "net/url"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -80,6 +81,9 @@ type listReposOptions struct {
 func newListReposCmd(out io.Writer) *cobra.Command {
 	o := new(listReposOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "repos/list-repos",
+		},
 		Use:     "repos",
 		Short:   listReposShortDesc,
 		Long:    listReposLongDesc,

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -34,6 +35,9 @@ type defaultOrg struct {
 func newGetDefaultOrgCmd(out io.Writer) *cobra.Command {
 	o := new(getDefaultOrgOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "user/get-default-organization",
+		},
 		Use:     "default-org",
 		Short:   getDefaultOrgShortDesc,
 		Long:    getDefaultOrgLongDesc,

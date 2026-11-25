@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -121,6 +122,9 @@ type listAuditLogsResponse struct {
 func newListAuditLogsCmd(out io.Writer) *cobra.Command {
 	o := new(listAuditLogsOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "audit-log/list-membershiprole-change-history-for-an-org",
+		},
 		Use:     "audit-logs",
 		Aliases: []string{"al", "als", "audit-log"},
 		Short:   listAuditLogsShortDesc,

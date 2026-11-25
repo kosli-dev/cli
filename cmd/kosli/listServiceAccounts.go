@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -32,6 +33,9 @@ type listServiceAccountsOptions struct {
 func newListServiceAccountsCmd(out io.Writer) *cobra.Command {
 	o := new(listServiceAccountsOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "service-accounts/list-service-accounts-in-an-organization",
+		},
 		Use:     "service-accounts",
 		Aliases: []string{"sa", "sas", "service-account"},
 		Short:   listServiceAccountsShortDesc,

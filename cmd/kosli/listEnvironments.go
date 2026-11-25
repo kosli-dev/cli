@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -81,6 +82,9 @@ type paginatedEnvsResponse struct {
 func newListEnvironmentsCmd(out io.Writer) *cobra.Command {
 	o := new(environmentLsOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "environments/list-environments",
+		},
 		Use:     "environments",
 		Aliases: []string{"env", "envs"},
 		Short:   listEnvironmentsShortDesc,

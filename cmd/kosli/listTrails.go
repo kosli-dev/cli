@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -101,6 +102,9 @@ type listTrailsResponse struct {
 func newListTrailsCmd(out io.Writer) *cobra.Command {
 	o := new(listTrailsOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation: "trails/list-trails-for-organization",
+		},
 		Use:     "trails",
 		Short:   listTrailsShortDesc,
 		Long:    listTrailsLongDesc,
