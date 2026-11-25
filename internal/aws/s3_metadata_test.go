@@ -504,7 +504,7 @@ func (suite *S3MetadataTestSuite) TestSkippingUnusableWarnsWithTheSkippedKeys() 
 	})
 }
 
-func (suite *S3MetadataTestSuite) TestSkippingEveryObjectReportsAnEmptySnapshot() {
+func (suite *S3MetadataTestSuite) TestSkippingEveryObjectReportsAnEmptyBucket() {
 	for _, t := range []struct {
 		name    string
 		objects map[string][]byte
@@ -515,11 +515,13 @@ func (suite *S3MetadataTestSuite) TestSkippingEveryObjectReportsAnEmptySnapshot(
 		suite.Run(t.name, func() {
 			data, warnings, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects})
 			require.NoError(suite.T(), err)
-			require.Empty(suite.T(), data)
-			require.NotNil(suite.T(), data, "the payload must carry an empty list, not null")
+			require.Equal(suite.T(), []*S3Data{{
+				Digests:               map[string]string{fakeS3TestBucketName: fakeEmptyBucketSha256},
+				LastModifiedTimestamp: 0,
+			}}, data)
 			require.Contains(suite.T(), warnings, fmt.Sprintf("skipped %d of the %d objects", len(t.objects), len(t.objects)))
 			require.Contains(suite.T(), warnings, "[README.md]")
-			require.Contains(suite.T(), warnings, "[warning] no object in bucket ["+fakeS3TestBucketName+"] is left to fingerprint; reporting an empty snapshot\n")
+			require.Contains(suite.T(), warnings, "[warning] no object in bucket ["+fakeS3TestBucketName+"] is left to fingerprint; reporting it as an empty bucket\n")
 		})
 	}
 }

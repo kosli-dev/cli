@@ -526,8 +526,8 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 	if len(fingerprint.skipped) > 0 {
 		logger.Warn("%s", skippedS3ObjectsWarning(bucket, fingerprint))
 		if len(fingerprint.fingerprinted) == 0 {
-			logger.Warn("no object in bucket [%s] is left to fingerprint; reporting an empty snapshot", bucket)
-			return s3Data, nil
+			logger.Warn("no object in bucket [%s] is left to fingerprint; reporting it as an empty bucket", bucket)
+			return emptyS3Bucket(bucket, logger)
 		}
 		newest = newestS3Modification(fingerprint.fingerprinted)
 		if newest.IsZero() {
