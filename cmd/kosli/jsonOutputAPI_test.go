@@ -44,7 +44,35 @@ var jsonOutputAPIs = map[string]string{
 	"list api-keys":          "service-accounts/list-api-keys-for-a-service-account,user/list-personal-api-keys",
 	"get artifact":           "artifacts/get-artifact-by-fingerprint,artifacts/get-artifacts-by-commit-sha",
 	"get attestation":        "attestation/get-trail-attestation,attestation/get-artifact-attestation,attestation/list-attestations",
+	"list product-updates":   "product-updates/list-product-updates",
+	"rotate api-key":         "service-accounts/rotate-an-api-key-for-a-service-account,user/rotate-a-personal-api-key",
 	"get rego-policy":        "rego-policies/get-a-rego-policy,rego-policies/get-a-version-of-a-rego-policy",
+}
+
+// jsonOutputSources maps each command whose JSON is not an API response body
+// as sent to what builds it.
+var jsonOutputSources = map[string]string{
+	"list product-updates": docgen.JSONOutputSourceDerived,
+	"rotate api-key":       docgen.JSONOutputSourceDerived,
+	"evaluate input":       docgen.JSONOutputSourceCLI,
+	"evaluate policy":      docgen.JSONOutputSourceCLI,
+	"evaluate trail":       docgen.JSONOutputSourceCLI,
+	"evaluate trails":      docgen.JSONOutputSourceCLI,
+	"publish rego-policy":  docgen.JSONOutputSourceCLI,
+}
+
+func TestJSONOutputSourceAnnotations(t *testing.T) {
+	root, err := newRootCmd(&bytes.Buffer{}, &bytes.Buffer{}, nil)
+	require.NoError(t, err)
+
+	for path, source := range jsonOutputSources {
+		t.Run(path, func(t *testing.T) {
+			cmd, remaining, err := root.Find(strings.Fields(path))
+			require.NoError(t, err)
+			require.Empty(t, remaining, "command not found")
+			require.Equal(t, source, cmd.Annotations[docgen.JSONOutputSourceAnnotation])
+		})
+	}
 }
 
 func TestJSONOutputAPIAnnotations(t *testing.T) {

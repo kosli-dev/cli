@@ -80,8 +80,9 @@ func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, met
 	buf.WriteString(formatter.FlagsSection(flags, inherited))
 
 	// JSON output note
-	if operations := SplitOperations(meta.JSONOutputAPI); len(operations) > 0 {
-		buf.WriteString(formatter.JSONOutput(operations))
+	operations := SplitOperations(meta.JSONOutputAPI)
+	if len(operations) > 0 || meta.JSONOutputSource == JSONOutputSourceCLI {
+		buf.WriteString(formatter.JSONOutput(operations, meta.JSONOutputSource))
 	}
 
 	// Example use cases

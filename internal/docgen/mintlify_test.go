@@ -472,7 +472,7 @@ func TestSanitizeDescription(t *testing.T) {
 
 func TestMintlifyJSONOutput(t *testing.T) {
 	f := MintlifyFormatter{}
-	got := f.JSONOutput([]string{"trails/get-trail"})
+	got := f.JSONOutput([]string{"trails/get-trail"}, "")
 	want := "## JSON output\n\n" +
 		"With `--output json`, this command prints the response of the " +
 		"[Get trail](/api-reference/trails/get-trail) API operation as the server returned it. " +
@@ -484,13 +484,48 @@ func TestMintlifyJSONOutput(t *testing.T) {
 
 func TestMintlifyJSONOutputSeveralOperations(t *testing.T) {
 	f := MintlifyFormatter{}
-	got := f.JSONOutput([]string{"artifacts/get-artifact-by-fingerprint", "artifacts/get-artifacts-by-commit-sha"})
+	got := f.JSONOutput([]string{"artifacts/get-artifact-by-fingerprint", "artifacts/get-artifacts-by-commit-sha"}, "")
 	want := "## JSON output\n\n" +
 		"With `--output json`, this command prints the response of one of these API operations " +
 		"as the server returned it, depending on the flags and arguments given. " +
 		"The shape follows the server's published API spec, not the CLI version.\n\n" +
 		"- [Get artifact by fingerprint](/api-reference/artifacts/get-artifact-by-fingerprint)\n" +
 		"- [Get artifacts by commit sha](/api-reference/artifacts/get-artifacts-by-commit-sha)\n\n"
+	if got != want {
+		t.Errorf("JSONOutput mismatch:\ngot:  %q\nwant: %q", got, want)
+	}
+}
+
+func TestMintlifyJSONOutputDerived(t *testing.T) {
+	f := MintlifyFormatter{}
+	const fields = "The fields follow the server's published API spec, not the CLI version.\n\n"
+
+	got := f.JSONOutput([]string{"product-updates/list-product-updates"}, JSONOutputSourceDerived)
+	want := "## JSON output\n\n" +
+		"With `--output json`, this command builds its output from the response of the " +
+		"[List product updates](/api-reference/product-updates/list-product-updates) API operation, " +
+		"selecting or combining what the server returned. " + fields
+	if got != want {
+		t.Errorf("JSONOutput mismatch:\ngot:  %q\nwant: %q", got, want)
+	}
+
+	got = f.JSONOutput([]string{"a/rotate-x", "b/rotate-y"}, JSONOutputSourceDerived)
+	want = "## JSON output\n\n" +
+		"With `--output json`, this command builds its output from the responses of these API operations, " +
+		"selecting or combining what the server returned. " + fields +
+		"- [Rotate x](/api-reference/a/rotate-x)\n" +
+		"- [Rotate y](/api-reference/b/rotate-y)\n\n"
+	if got != want {
+		t.Errorf("JSONOutput mismatch:\ngot:  %q\nwant: %q", got, want)
+	}
+}
+
+func TestMintlifyJSONOutputBuiltByCLI(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.JSONOutput(nil, JSONOutputSourceCLI)
+	want := "## JSON output\n\n" +
+		"With `--output json`, this command prints JSON that the CLI builds itself. " +
+		"The shape follows the CLI version, not the server's API spec.\n\n"
 	if got != want {
 		t.Errorf("JSONOutput mismatch:\ngot:  %q\nwant: %q", got, want)
 	}

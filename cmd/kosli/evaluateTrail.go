@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/evaluations"
 	"github.com/spf13/cobra"
 )
@@ -90,6 +91,9 @@ type evaluateTrailOptions struct {
 func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 	o := new(evaluateTrailOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputSourceAnnotation: docgen.JSONOutputSourceCLI,
+		},
 		Use:        "trail TRAIL-NAME",
 		Short:      evaluateTrailShortDesc,
 		Long:       evaluateTrailLongDesc,

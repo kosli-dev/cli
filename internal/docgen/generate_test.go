@@ -281,17 +281,25 @@ func TestGenMarkdownTreeRendersJSONOutput(t *testing.T) {
 		Annotations: map[string]string{JSONOutputAPIAnnotation: "a/get-x, b/get-y"},
 		RunE:        func(cmd *cobra.Command, args []string) error { return nil },
 	}
-	root.AddCommand(withJSON, several, without)
+	builtByCLI := &cobra.Command{
+		Use:         "clijson",
+		Short:       "Cmd building its own JSON",
+		Long:        "long desc",
+		Annotations: map[string]string{JSONOutputSourceAnnotation: JSONOutputSourceCLI},
+		RunE:        func(cmd *cobra.Command, args []string) error { return nil },
+	}
+	root.AddCommand(withJSON, several, builtByCLI, without)
 
 	metaFn := func(cmd *cobra.Command) CommandMeta {
 		return CommandMeta{
-			Name:          cmd.CommandPath(),
-			Summary:       cmd.Short,
-			Long:          cmd.Long,
-			UseLine:       cmd.UseLine(),
-			Runnable:      cmd.Runnable(),
-			Example:       cmd.Example,
-			JSONOutputAPI: cmd.Annotations[JSONOutputAPIAnnotation],
+			Name:             cmd.CommandPath(),
+			Summary:          cmd.Short,
+			Long:             cmd.Long,
+			UseLine:          cmd.UseLine(),
+			Runnable:         cmd.Runnable(),
+			Example:          cmd.Example,
+			JSONOutputAPI:    cmd.Annotations[JSONOutputAPIAnnotation],
+			JSONOutputSource: cmd.Annotations[JSONOutputSourceAnnotation],
 		}
 	}
 
@@ -322,6 +330,14 @@ func TestGenMarkdownTreeRendersJSONOutput(t *testing.T) {
 		if !strings.Contains(string(severalContent), link) {
 			t.Errorf("expected link %s, got:\n%s", link, string(severalContent))
 		}
+	}
+
+	cliContent, err := os.ReadFile(filepath.Join(dir, "root_clijson.md"))
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+	if !strings.Contains(string(cliContent), "the CLI builds itself") {
+		t.Errorf("expected CLI-built JSON output note, got:\n%s", string(cliContent))
 	}
 
 	withoutContent, err := os.ReadFile(filepath.Join(dir, "root_withoutjson.md"))

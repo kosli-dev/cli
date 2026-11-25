@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -67,6 +68,10 @@ type rotateApiKeyPayload struct {
 func newRotateApiKeyCmd(out io.Writer) *cobra.Command {
 	o := new(rotateApiKeyOptions)
 	cmd := &cobra.Command{
+		Annotations: map[string]string{
+			docgen.JSONOutputAPIAnnotation:    "service-accounts/rotate-an-api-key-for-a-service-account,user/rotate-a-personal-api-key",
+			docgen.JSONOutputSourceAnnotation: docgen.JSONOutputSourceDerived,
+		},
 		Use:     "api-key KEY-ID [KEY-ID...]",
 		Aliases: []string{"ak"},
 		Short:   rotateApiKeyShortDesc,

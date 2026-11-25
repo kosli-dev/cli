@@ -60,21 +60,34 @@ func (MintlifyFormatter) TutorialTip(url string) string {
 	return fmt.Sprintf("<Tip>\nSee the [tutorial](%s) for a walkthrough.\n</Tip>\n\n", url)
 }
 
-// JSONOutput renders the note for a command whose JSON output is the response
-// body of an API operation. Each operation is its path under /api-reference on
-// the docs site, e.g. "trails/get-trail".
-func (MintlifyFormatter) JSONOutput(operations []string) string {
-	const heading = "## JSON output\n\n"
-	const governedBy = "The shape follows the server's published API spec, not the CLI version.\n\n"
+// JSONOutput renders the note saying what decides the shape of a command's
+// JSON output. Each operation is its path under /api-reference on the docs
+// site, e.g. "trails/get-trail". source is a JSONOutputSource* value, or empty
+// when the command prints an API response body unchanged.
+func (MintlifyFormatter) JSONOutput(operations []string, source string) string {
+	const intro = "## JSON output\n\nWith `--output json`, this command "
+	if source == JSONOutputSourceCLI {
+		return intro + "prints JSON that the CLI builds itself. " +
+			"The shape follows the CLI version, not the server's API spec.\n\n"
+	}
+
+	one, several := "prints the response of the %s API operation as the server returned it. ",
+		"prints the response of one of these API operations as the server returned it, "+
+			"depending on the flags and arguments given. "
+	governedBy := "The shape follows the server's published API spec, not the CLI version.\n\n"
+	if source == JSONOutputSourceDerived {
+		one, several = "builds its output from the response of the %s API operation, "+
+			"selecting or combining what the server returned. ",
+			"builds its output from the responses of these API operations, "+
+				"selecting or combining what the server returned. "
+		governedBy = "The fields follow the server's published API spec, not the CLI version.\n\n"
+	}
+
 	if len(operations) == 1 {
-		return heading + fmt.Sprintf("With `--output json`, this command prints the response of the "+
-			"%s API operation as the server returned it. ", operationLink(operations[0])) + governedBy
+		return intro + fmt.Sprintf(one, operationLink(operations[0])) + governedBy
 	}
 	var b strings.Builder
-	b.WriteString(heading)
-	b.WriteString("With `--output json`, this command prints the response of one of these API operations " +
-		"as the server returned it, depending on the flags and arguments given. ")
-	b.WriteString(governedBy)
+	b.WriteString(intro + several + governedBy)
 	for _, operation := range operations {
 		fmt.Fprintf(&b, "- %s\n", operationLink(operation))
 	}
