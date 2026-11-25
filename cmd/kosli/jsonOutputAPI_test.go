@@ -38,6 +38,13 @@ var jsonOutputAPIs = map[string]string{
 	"list trails":            "trails/list-trails-for-organization",
 	"log environment":        "environments/list-environment-events",
 	"search":                 "search/search-artifacts-by-sha-or-fingerprint",
+	"get evaluation":         "evaluations/get-an-evaluation",
+	"create api-key":         "service-accounts/create-an-api-key-for-a-service-account,user/create-a-personal-api-key",
+	"get api-key":            "service-accounts/get-an-api-key-for-a-service-account,user/get-a-personal-api-key",
+	"list api-keys":          "service-accounts/list-api-keys-for-a-service-account,user/list-personal-api-keys",
+	"get artifact":           "artifacts/get-artifact-by-fingerprint,artifacts/get-artifacts-by-commit-sha",
+	"get attestation":        "attestation/get-trail-attestation,attestation/get-artifact-attestation,attestation/list-attestations",
+	"get rego-policy":        "rego-policies/get-a-rego-policy,rego-policies/get-a-version-of-a-rego-policy",
 }
 
 func TestJSONOutputAPIAnnotations(t *testing.T) {

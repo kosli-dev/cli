@@ -80,8 +80,8 @@ func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, met
 	buf.WriteString(formatter.FlagsSection(flags, inherited))
 
 	// JSON output note
-	if meta.JSONOutputAPI != "" {
-		buf.WriteString(formatter.JSONOutput(meta.JSONOutputAPI))
+	if operations := SplitOperations(meta.JSONOutputAPI); len(operations) > 0 {
+		buf.WriteString(formatter.JSONOutput(operations))
 	}
 
 	// Example use cases
@@ -96,4 +96,15 @@ func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, met
 
 	_, err := fmt.Fprint(w, buf.String())
 	return err
+}
+
+// SplitOperations returns the API operations listed in a JSONOutputAPIAnnotation value.
+func SplitOperations(value string) []string {
+	var operations []string
+	for _, operation := range strings.Split(value, ",") {
+		if operation = strings.TrimSpace(operation); operation != "" {
+			operations = append(operations, operation)
+		}
+	}
+	return operations
 }

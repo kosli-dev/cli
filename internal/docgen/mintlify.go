@@ -61,14 +61,29 @@ func (MintlifyFormatter) TutorialTip(url string) string {
 }
 
 // JSONOutput renders the note for a command whose JSON output is the response
-// body of one API operation. operation is the operation's path under
-// /api-reference on the docs site, e.g. "trails/get-trail".
-func (MintlifyFormatter) JSONOutput(operation string) string {
-	return fmt.Sprintf("## JSON output\n\n"+
-		"With `--output json`, this command prints the response of the "+
-		"[%s](/api-reference/%s) API operation as the server returned it. "+
-		"The shape follows the server's published API spec, not the CLI version.\n\n",
-		operationTitle(operation), operation)
+// body of an API operation. Each operation is its path under /api-reference on
+// the docs site, e.g. "trails/get-trail".
+func (MintlifyFormatter) JSONOutput(operations []string) string {
+	const heading = "## JSON output\n\n"
+	const governedBy = "The shape follows the server's published API spec, not the CLI version.\n\n"
+	if len(operations) == 1 {
+		return heading + fmt.Sprintf("With `--output json`, this command prints the response of the "+
+			"%s API operation as the server returned it. ", operationLink(operations[0])) + governedBy
+	}
+	var b strings.Builder
+	b.WriteString(heading)
+	b.WriteString("With `--output json`, this command prints the response of one of these API operations " +
+		"as the server returned it, depending on the flags and arguments given. ")
+	b.WriteString(governedBy)
+	for _, operation := range operations {
+		fmt.Fprintf(&b, "- %s\n", operationLink(operation))
+	}
+	b.WriteString("\n")
+	return b.String()
+}
+
+func operationLink(operation string) string {
+	return fmt.Sprintf("[%s](/api-reference/%s)", operationTitle(operation), operation)
 }
 
 // operationTitle turns the last segment of an API reference path into link

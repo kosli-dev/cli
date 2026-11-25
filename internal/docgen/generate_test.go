@@ -274,7 +274,14 @@ func TestGenMarkdownTreeRendersJSONOutput(t *testing.T) {
 		Long:  "long desc",
 		RunE:  func(cmd *cobra.Command, args []string) error { return nil },
 	}
-	root.AddCommand(withJSON, without)
+	several := &cobra.Command{
+		Use:         "severaljson",
+		Short:       "Cmd printing one of several API responses",
+		Long:        "long desc",
+		Annotations: map[string]string{JSONOutputAPIAnnotation: "a/get-x, b/get-y"},
+		RunE:        func(cmd *cobra.Command, args []string) error { return nil },
+	}
+	root.AddCommand(withJSON, several, without)
 
 	metaFn := func(cmd *cobra.Command) CommandMeta {
 		return CommandMeta{
@@ -305,6 +312,16 @@ func TestGenMarkdownTreeRendersJSONOutput(t *testing.T) {
 	}
 	if flags >= jsonOutput || jsonOutput >= examples {
 		t.Errorf("expected JSON output section between flags and examples, got:\n%s", page)
+	}
+
+	severalContent, err := os.ReadFile(filepath.Join(dir, "root_severaljson.md"))
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+	for _, link := range []string{"(/api-reference/a/get-x)", "(/api-reference/b/get-y)"} {
+		if !strings.Contains(string(severalContent), link) {
+			t.Errorf("expected link %s, got:\n%s", link, string(severalContent))
+		}
 	}
 
 	withoutContent, err := os.ReadFile(filepath.Join(dir, "root_withoutjson.md"))

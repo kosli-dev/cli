@@ -10,7 +10,8 @@ const DocHiddenAnnotation = "docHidden"
 
 // JSONOutputAPIAnnotation marks a command whose --output json prints an API
 // response body unchanged. Its value is the operation's path under
-// /api-reference on the docs site, e.g. "trails/get-trail".
+// /api-reference on the docs site, e.g. "trails/get-trail". A command whose
+// flags or arguments choose between operations lists them, comma-separated.
 const JSONOutputAPIAnnotation = "jsonOutputAPI"
 
 // CommandMeta holds metadata about a cobra command for doc generation.
@@ -39,7 +40,7 @@ type Formatter interface {
 	TutorialTip(url string) string
 	Synopsis(meta CommandMeta) string
 	FlagsSection(flags, inherited string) string
-	JSONOutput(operation string) string
+	JSONOutput(operations []string) string
 	ExampleUseCases(commandName, example string) string
 	LinkHandler(name string) string
 }

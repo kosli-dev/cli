@@ -472,11 +472,25 @@ func TestSanitizeDescription(t *testing.T) {
 
 func TestMintlifyJSONOutput(t *testing.T) {
 	f := MintlifyFormatter{}
-	got := f.JSONOutput("trails/get-trail")
+	got := f.JSONOutput([]string{"trails/get-trail"})
 	want := "## JSON output\n\n" +
 		"With `--output json`, this command prints the response of the " +
 		"[Get trail](/api-reference/trails/get-trail) API operation as the server returned it. " +
 		"The shape follows the server's published API spec, not the CLI version.\n\n"
+	if got != want {
+		t.Errorf("JSONOutput mismatch:\ngot:  %q\nwant: %q", got, want)
+	}
+}
+
+func TestMintlifyJSONOutputSeveralOperations(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.JSONOutput([]string{"artifacts/get-artifact-by-fingerprint", "artifacts/get-artifacts-by-commit-sha"})
+	want := "## JSON output\n\n" +
+		"With `--output json`, this command prints the response of one of these API operations " +
+		"as the server returned it, depending on the flags and arguments given. " +
+		"The shape follows the server's published API spec, not the CLI version.\n\n" +
+		"- [Get artifact by fingerprint](/api-reference/artifacts/get-artifact-by-fingerprint)\n" +
+		"- [Get artifacts by commit sha](/api-reference/artifacts/get-artifacts-by-commit-sha)\n\n"
 	if got != want {
 		t.Errorf("JSONOutput mismatch:\ngot:  %q\nwant: %q", got, want)
 	}
