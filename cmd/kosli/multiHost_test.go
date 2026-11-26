@@ -341,3 +341,37 @@ func TestReportArtifactSendsEachHostItsOwnChangelog(t *testing.T) {
 	}
 	assert.Less(t, commits(fakeA), commits(fakeB))
 }
+
+func TestAWarningOnTwoHostsStaysOffStdout(t *testing.T) {
+	_, _, stdout, stderr, err := executeCommandC("evaluate input" +
+		" --input-file testdata/evaluate/trail-input.json" +
+		" --policy testdata/policies/allow-all.rego --output json " +
+		multiHostFlags("http://a", "http://b"))
+
+	require.NoError(t, err)
+	assert.True(t, json.Valid([]byte(stdout)), "stdout is not JSON: %q", stdout)
+	assert.Equal(t, evaluateInputNotice, stderr)
+}
+
+func TestDebugOnTwoHostsGoesToStderr(t *testing.T) {
+	serverA, _ := newRecordingKosliHost(t, nil)
+	serverB, _ := newRecordingKosliHost(t, nil)
+
+	_, _, stdout, stderr, err := executeCommandC("archive flow my-flow --debug " +
+		multiHostFlags(serverA.URL, serverB.URL))
+
+	require.NoError(t, err)
+	assert.NotContains(t, stdout, "[debug]")
+	assert.Contains(t, stderr, "[debug] ["+serverB.URL+"] flow my-flow was archived")
+}
+
+func TestARegoPolicyArchiveIsSentToEveryHost(t *testing.T) {
+	serverA, fakeA := newRecordingKosliHost(t, nil)
+	serverB, fakeB := newRecordingKosliHost(t, nil)
+
+	_, _, _, _, err := executeCommandC("archive rego-policy my-policy " + multiHostFlags(serverA.URL, serverB.URL))
+
+	require.NoError(t, err)
+	assert.Equal(t, []string{"POST /api/v2/rego-policies/acme/my-policy/archive"}, fakeA.requests)
+	assert.Equal(t, fakeA.requests, fakeB.requests)
+}

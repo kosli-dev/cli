@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/kosli"
 	"github.com/kosli-dev/cli/internal/regopolicies"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -48,24 +49,26 @@ func newRegoPolicyArchiveStateCmd(verb, short, long, example string) *cobra.Comm
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			policy, err := regopolicies.PolicyURL(global.Host, global.Org, args[0])
-			if err != nil {
+			return kosliAPI().Send(func(h kosli.Host) error {
+				policy, err := regopolicies.PolicyURL(h.URL, global.Org, args[0])
+				if err != nil {
+					return err
+				}
+				endpoint, err := url.JoinPath(policy, verb)
+				if err != nil {
+					return err
+				}
+				_, err = h.Do(&requests.RequestParams{
+					Method: http.MethodPost,
+					URL:    endpoint,
+					DryRun: h.DryRun,
+					Token:  h.Token,
+				})
+				if err == nil && !h.DryRun {
+					h.Info("rego policy %s was %sd", args[0], verb)
+				}
 				return err
-			}
-			endpoint, err := url.JoinPath(policy, verb)
-			if err != nil {
-				return err
-			}
-			_, err = kosliClient.Do(&requests.RequestParams{
-				Method: http.MethodPost,
-				URL:    endpoint,
-				DryRun: global.DryRun,
-				Token:  global.ApiToken,
 			})
-			if err == nil && !global.DryRun {
-				logger.Info("rego policy %s was %sd", args[0], verb)
-			}
-			return err
 		},
 	}
 	addDryRunFlag(cmd)
