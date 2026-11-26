@@ -10,16 +10,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func TestLifecycleEvaluateIsBeta(t *testing.T) {
-	cmd := newEvaluateCmd(io.Discard)
-	if !isBeta(cmd) {
-		t.Error("expected evaluate command to be beta")
+func TestLifecycleEvaluatePolicyIsNotBeta(t *testing.T) {
+	global = &GlobalOpts{}
+	root := newEvaluateCmd(io.Discard)
+	cmd, _, err := root.Find([]string{"policy"})
+	if err != nil {
+		t.Fatal(err)
 	}
-	// subcommands inherit beta via parent walk
-	for _, sub := range cmd.Commands() {
-		if !isBeta(sub) {
-			t.Errorf("expected subcommand %q to inherit beta", sub.Name())
+	if isBeta(cmd) {
+		t.Error("expected evaluate policy to no longer be beta")
+	}
+}
+
+func TestLifecycleEvaluateInputTrailAndTrailsStayBeta(t *testing.T) {
+	global = &GlobalOpts{}
+	root := newEvaluateCmd(io.Discard)
+	for _, name := range []string{"input", "trail", "trails"} {
+		cmd, _, err := root.Find([]string{name})
+		if err != nil {
+			t.Fatal(err)
 		}
+		if !isBeta(cmd) {
+			t.Errorf("expected evaluate %s to be beta", name)
+		}
+	}
+}
+
+func TestEvaluateInputIsDeprecatedInFavourOfOpaEval(t *testing.T) {
+	global = &GlobalOpts{}
+	cmd := newEvaluateInputCmd(io.Discard)
+	if !strings.Contains(deprecationHint(cmd), "opa eval") {
+		t.Errorf("expected evaluate input to be deprecated with a hint naming 'opa eval', got %q", cmd.Deprecated)
 	}
 }
 

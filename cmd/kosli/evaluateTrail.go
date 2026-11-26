@@ -92,6 +92,7 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 	o := new(evaluateTrailOptions)
 	cmd := &cobra.Command{
 		Annotations: map[string]string{
+			betaCLIAnnotation:                 "",
 			docgen.JSONOutputSourceAnnotation: docgen.JSONOutputSourceCLI,
 		},
 		Use:        "trail TRAIL-NAME",

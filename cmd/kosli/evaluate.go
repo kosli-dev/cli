@@ -10,20 +10,21 @@ import (
 // which evaluate client-side; evaluate policy evaluates the same trails in Kosli.
 const evaluateTrailDeprecation = "use 'kosli evaluate policy --context trail=FLOW-NAME/TRAIL-NAME' instead, which evaluates the policy in Kosli"
 
+// evaluateInputDeprecation names the tool that evaluates local JSON input
+// against a Rego policy without Kosli.
+const evaluateInputDeprecation = "use 'opa eval' directly instead"
+
 const evaluateShortDesc = `Evaluate data against Rego policies.`
 
 // Backtick breaks (`"` + "`x`" + `"`) are needed to embed markdown
 // inline code spans inside raw string literals.
 const evaluateLongDesc = evaluateShortDesc + `
 
-This command is in BETA. Behaviour, flags, and the policy input shape may
-change without notice. Pin a CLI version if you depend on it from CI.
-
 Evaluate trail data or local JSON input against custom Rego policies.
 
 Use ` + "`evaluate policy`" + ` to evaluate a policy against trails in Kosli.
-Use ` + "`evaluate input`" + ` to evaluate a local JSON file or stdin without any API calls.
 ` + "`evaluate trail`" + ` and ` + "`evaluate trails`" + ` are deprecated; use ` + "`evaluate policy`" + ` instead.
+` + "`evaluate input`" + ` is deprecated; use ` + "`opa eval`" + ` directly to evaluate local JSON input.
 
 The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` rule.
 An optional ` + "`violations`" + ` rule (a set of strings) can provide human-readable denial reasons.
@@ -42,10 +43,9 @@ logic reusable across environments with different tolerances.`
 
 func newEvaluateCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:         "evaluate",
-		Short:       evaluateShortDesc,
-		Long:        evaluateLongDesc,
-		Annotations: map[string]string{betaCLIAnnotation: ""},
+		Use:   "evaluate",
+		Short: evaluateShortDesc,
+		Long:  evaluateLongDesc,
 	}
 
 	// Add subcommands

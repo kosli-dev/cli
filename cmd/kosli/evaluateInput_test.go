@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -14,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
+
+var evaluateInputNotice = `Command "input" is deprecated, ` + evaluateInputDeprecation + "\n"
 
 type EvaluateInputCommandTestSuite struct {
 	suite.Suite
@@ -25,7 +28,7 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			wantError: true,
 			name:      "missing --policy flag fails",
 			cmd:       "evaluate input",
-			golden:    "Error: required flag(s) \"policy\" not set\n",
+			golden:    evaluateInputNotice + "Error: required flag(s) \"policy\" not set\n",
 		},
 		{
 			name:        "allow-all policy with input file returns ALLOWED",
@@ -193,7 +196,7 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			name:         "--output-rule is left out of table output, with a hint",
 			cmd:          "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-with-report.rego --output-rule report",
 			goldenStdout: "RESULT:  ALLOWED\n",
-			goldenStderr: "[warning] --output-rule values are only shown with --output json\n",
+			goldenStderr: evaluateInputNotice + "[warning] --output-rule values are only shown with --output json\n",
 		},
 	}
 	runTestCmd(suite.T(), tests)
@@ -224,7 +227,7 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmdOPAContract() {
 			// Anchored at the start of the combined output: --no-assert
 			// suppresses a deny, not a broken policy, and nothing — least of
 			// all a RESULT line — precedes the error.
-			goldenRegex: `\AError: policy evaluation failed`,
+			goldenRegex: `\A` + regexp.QuoteMeta(evaluateInputNotice) + `Error: policy evaluation failed`,
 		},
 		{
 			// The policy lives in internal/evaluate's testdata, which owns it:
