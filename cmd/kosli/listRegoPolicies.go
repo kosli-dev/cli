@@ -80,7 +80,6 @@ func newListRegoPoliciesCmd(out io.Writer) *cobra.Command {
 		Example: listRegoPoliciesExample,
 		Args:    cobra.NoArgs,
 		Annotations: map[string]string{
-			betaCLIAnnotation:              "",
 			docgen.JSONOutputAPIAnnotation: "rego-policies/list-rego-policies",
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {

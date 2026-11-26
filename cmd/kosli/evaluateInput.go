@@ -93,13 +93,15 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 	o := new(evaluateInputOptions)
 	cmd := &cobra.Command{
 		Annotations: map[string]string{
+			betaCLIAnnotation:                 "",
 			docgen.JSONOutputSourceAnnotation: docgen.JSONOutputSourceCLI,
 		},
-		Use:     "input",
-		Short:   evaluateInputShortDesc,
-		Long:    evaluateInputLongDesc,
-		Example: evaluateInputExample,
-		Args:    cobra.NoArgs,
+		Use:        "input",
+		Deprecated: evaluateInputDeprecation,
+		Short:      evaluateInputShortDesc,
+		Long:       evaluateInputLongDesc,
+		Example:    evaluateInputExample,
+		Args:       cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out, cmd.InOrStdin())
 		},

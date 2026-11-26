@@ -115,7 +115,6 @@ func newPublishRegoPolicyCmd(out io.Writer) *cobra.Command {
 		Example: publishRegoPolicyExample,
 		Args:    cobra.ExactArgs(1),
 		Annotations: map[string]string{
-			betaCLIAnnotation:                 "",
 			docgen.JSONOutputSourceAnnotation: docgen.JSONOutputSourceCLI,
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {

@@ -10,16 +10,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func TestLifecycleEvaluateIsBeta(t *testing.T) {
-	cmd := newEvaluateCmd(io.Discard)
-	if !isBeta(cmd) {
-		t.Error("expected evaluate command to be beta")
+func TestLifecycleEvaluatePolicyIsNotBeta(t *testing.T) {
+	global = &GlobalOpts{}
+	root := newEvaluateCmd(io.Discard)
+	cmd, _, err := root.Find([]string{"policy"})
+	if err != nil {
+		t.Fatal(err)
 	}
-	// subcommands inherit beta via parent walk
-	for _, sub := range cmd.Commands() {
-		if !isBeta(sub) {
-			t.Errorf("expected subcommand %q to inherit beta", sub.Name())
+	if isBeta(cmd) {
+		t.Error("expected evaluate policy to no longer be beta")
+	}
+}
+
+func TestLifecycleEvaluateInputTrailAndTrailsStayBeta(t *testing.T) {
+	global = &GlobalOpts{}
+	root := newEvaluateCmd(io.Discard)
+	for _, name := range []string{"input", "trail", "trails"} {
+		cmd, _, err := root.Find([]string{name})
+		if err != nil {
+			t.Fatal(err)
 		}
+		if !isBeta(cmd) {
+			t.Errorf("expected evaluate %s to be beta", name)
+		}
+	}
+}
+
+func TestEvaluateInputIsDeprecatedInFavourOfOpaEval(t *testing.T) {
+	global = &GlobalOpts{}
+	cmd := newEvaluateInputCmd(io.Discard)
+	if !strings.Contains(deprecationHint(cmd), "opa eval") {
+		t.Errorf("expected evaluate input to be deprecated with a hint naming 'opa eval', got %q", cmd.Deprecated)
 	}
 }
 
@@ -45,14 +66,14 @@ func TestLifecycleAttestInTotoIsBetaAndVisible(t *testing.T) {
 	}
 }
 
-func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
+func TestLifecycleAttestDecisionIsVisibleAndNotBeta(t *testing.T) {
 	global = &GlobalOpts{}
 	cmd := newAttestDecisionCmd(io.Discard)
 	if cmd.Hidden {
 		t.Error("expected attest decision to be visible (not Hidden)")
 	}
-	if !isBeta(cmd) {
-		t.Error("expected attest decision to be beta")
+	if isBeta(cmd) {
+		t.Error("expected attest decision to no longer be beta")
 	}
 	if _, ok := cmd.Annotations[docgen.DocHiddenAnnotation]; ok {
 		t.Error("expected attest decision to no longer carry the docHidden annotation")
@@ -62,14 +83,14 @@ func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
 	}
 }
 
-func TestLifecyclePublishRegoPolicyIsBetaAndVisible(t *testing.T) {
+func TestLifecyclePublishRegoPolicyIsVisibleAndNotBeta(t *testing.T) {
 	global = &GlobalOpts{}
 	cmd := newPublishRegoPolicyCmd(io.Discard)
 	if cmd.Hidden {
 		t.Error("expected publish rego-policy to be visible (not Hidden)")
 	}
-	if !isBeta(cmd) {
-		t.Error("expected publish rego-policy to be beta")
+	if isBeta(cmd) {
+		t.Error("expected publish rego-policy to no longer be beta")
 	}
 
 	dir := t.TempDir()
@@ -95,7 +116,7 @@ func TestLifecycleSnapshotGKEIsBetaAndVisible(t *testing.T) {
 	}
 }
 
-func TestLifecycleControlCommandsAreBeta(t *testing.T) {
+func TestLifecycleControlCommandsAreNotBeta(t *testing.T) {
 	global = &GlobalOpts{}
 	cmds := map[string]*cobra.Command{
 		"create control":    newCreateControlCmd(io.Discard),
@@ -106,8 +127,8 @@ func TestLifecycleControlCommandsAreBeta(t *testing.T) {
 		"unarchive control": newUnarchiveControlCmd(io.Discard),
 	}
 	for name, cmd := range cmds {
-		if !isBeta(cmd) {
-			t.Errorf("expected %q to be marked beta while controls is behind a feature flag", name)
+		if isBeta(cmd) {
+			t.Errorf("expected %q to no longer be marked beta", name)
 		}
 	}
 }

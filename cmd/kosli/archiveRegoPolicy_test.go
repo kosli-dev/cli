@@ -25,7 +25,7 @@ func (suite *ArchiveRegoPolicyCommandTestSuite) verbCmd(verb, host, args string)
 		verb, args, host)
 }
 
-func (suite *ArchiveRegoPolicyCommandTestSuite) TestItIsVisibleAndBeta() {
+func (suite *ArchiveRegoPolicyCommandTestSuite) TestItIsVisibleAndNotBeta() {
 	for _, verb := range regoPolicyArchiveVerbs {
 		root, err := newRootCmd(io.Discard, io.Discard, nil)
 		require.NoError(suite.T(), err)
@@ -34,7 +34,7 @@ func (suite *ArchiveRegoPolicyCommandTestSuite) TestItIsVisibleAndBeta() {
 
 		require.Equal(suite.T(), "rego-policy", cmd.Name(), verb)
 		require.False(suite.T(), cmd.Hidden, verb)
-		require.Contains(suite.T(), cmd.Annotations, betaCLIAnnotation, verb)
+		require.NotContains(suite.T(), cmd.Annotations, betaCLIAnnotation, verb)
 	}
 }
 

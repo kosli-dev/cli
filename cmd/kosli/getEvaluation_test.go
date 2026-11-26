@@ -61,14 +61,14 @@ func (suite *GetEvaluationCommandTestSuite) getCmd(host, args string) string {
 		args, host)
 }
 
-func (suite *GetEvaluationCommandTestSuite) TestItIsBeta() {
+func (suite *GetEvaluationCommandTestSuite) TestItIsNotBeta() {
 	root, err := newRootCmd(io.Discard, io.Discard, nil)
 	require.NoError(suite.T(), err)
 	cmd, _, err := root.Find([]string{"get", "evaluation"})
 	require.NoError(suite.T(), err)
 
 	require.Equal(suite.T(), "evaluation", cmd.Name())
-	require.Contains(suite.T(), cmd.Annotations, betaCLIAnnotation)
+	require.NotContains(suite.T(), cmd.Annotations, betaCLIAnnotation)
 }
 
 func (suite *GetEvaluationCommandTestSuite) TestItNeedsTheOrgAndApiToken() {

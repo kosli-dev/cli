@@ -37,7 +37,6 @@ func newGetControlCmd(out io.Writer) *cobra.Command {
 		Example: getControlExample,
 		Args:    cobra.ExactArgs(1),
 		Annotations: map[string]string{
-			betaCLIAnnotation:              "",
 			docgen.JSONOutputAPIAnnotation: "controls/get-a-control",
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {

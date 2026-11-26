@@ -34,7 +34,7 @@ func (suite *ListRegoPoliciesCommandTestSuite) listCmd(host, args string) string
 		args, host)
 }
 
-func (suite *ListRegoPoliciesCommandTestSuite) TestItIsVisibleAndBeta() {
+func (suite *ListRegoPoliciesCommandTestSuite) TestItIsVisibleAndNotBeta() {
 	root, err := newRootCmd(io.Discard, io.Discard, nil)
 	require.NoError(suite.T(), err)
 	cmd, _, err := root.Find([]string{"list", "rego-policies"})
@@ -42,7 +42,7 @@ func (suite *ListRegoPoliciesCommandTestSuite) TestItIsVisibleAndBeta() {
 
 	require.Equal(suite.T(), "rego-policies", cmd.Name())
 	require.False(suite.T(), cmd.Hidden)
-	require.Contains(suite.T(), cmd.Annotations, betaCLIAnnotation)
+	require.NotContains(suite.T(), cmd.Annotations, betaCLIAnnotation)
 }
 
 func (suite *ListRegoPoliciesCommandTestSuite) TestItNeedsTheOrgAndApiToken() {
