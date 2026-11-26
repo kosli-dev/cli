@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -125,7 +126,7 @@ func (suite *MultiHostTestSuite) TestRunDoubledHost() {
 	} {
 		defer func(original []string) { os.Args = original }(os.Args)
 		os.Args = t.args
-		output, err := runMultiHost(t.args)
+		output, _, err := runMultiHost(t.args)
 
 		assert.Equal(suite.T(), t.err, err, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.err, err))
 
@@ -150,7 +151,7 @@ func (suite *MultiHostTestSuite) TestRunMultiHostRefusesAnEmptyHostInTheList() {
 
 	defer func(original []string) { os.Args = original }(os.Args)
 	os.Args = args
-	_, err := runMultiHost(args)
+	_, _, err := runMultiHost(args)
 
 	assert.EqualError(suite.T(), err,
 		"\n[]\n[kosli status cli-version="+version.GetVersion()+"] flag '--host' was given an empty value")
@@ -174,10 +175,59 @@ func (suite *MultiHostTestSuite) TestRunDoubledHostAcceptsSpaceSeparatedBoolFlag
 
 	defer func(original []string) { os.Args = original }(os.Args)
 	os.Args = args
-	output, err := runMultiHost(args)
+	output, _, err := runMultiHost(args)
 
 	assert.Equal(suite.T(), error(nil), err)
 	assert.Equal(suite.T(), "", diff(want, strings.Split(output, "\n")))
+}
+
+// TestRunDoubledHostKeepsStderrOutOfStdout checks that the primary call's
+// stderr stays on stderr, so a warning cannot corrupt --output json on stdout.
+// evaluate input is used because it is deprecated (so it warns on stderr) and
+// needs no server, so the two hosts are never contacted.
+func (suite *MultiHostTestSuite) TestRunDoubledHostKeepsStderrOutOfStdout() {
+	args := []string{
+		"kosli", "evaluate", "input",
+		"--input-file", "testdata/evaluate/trail-input.json",
+		"--policy", "testdata/policies/allow-all.rego",
+		"--output", "json",
+		fmt.Sprintf("--host=%s,%s", localHost, localHost),
+		fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken),
+		fmt.Sprintf("--org=%s", orgName),
+	}
+
+	defer func(original []string) { os.Args = original }(os.Args)
+	os.Args = args
+	stdOut, stdErr, err := runMultiHost(args)
+
+	assert.Equal(suite.T(), error(nil), err)
+	assert.True(suite.T(), json.Valid([]byte(stdOut)), "stdout is not JSON: %q", stdOut)
+	assert.Equal(suite.T(), evaluateInputNotice, stdErr)
+}
+
+// TestRunDoubledHostDebugGoesToStderr checks that with --debug every host's
+// debug lines go to stderr, each under its own host header, and stay off
+// stdout. fingerprint is used because it needs no server.
+func (suite *MultiHostTestSuite) TestRunDoubledHostDebugGoesToStderr() {
+	primary, secondary := "http://localhost:8001", "http://localhost:8002"
+	args := []string{
+		"kosli", "fingerprint", "testdata/person-schema.json",
+		"--artifact-type", "file",
+		"--debug",
+		fmt.Sprintf("--host=%s,%s", primary, secondary),
+		fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken),
+		fmt.Sprintf("--org=%s", orgName),
+	}
+
+	defer func(original []string) { os.Args = original }(os.Args)
+	os.Args = args
+	stdOut, stdErr, err := runMultiHost(args)
+
+	assert.Equal(suite.T(), error(nil), err)
+	assert.NotContains(suite.T(), stdOut, "calculated fingerprint")
+	assert.Contains(suite.T(), stdErr, fmt.Sprintf("[debug] [%s]\n", primary))
+	assert.Contains(suite.T(), stdErr, fmt.Sprintf("[debug] [%s]\n", secondary))
+	assert.Equal(suite.T(), 2, strings.Count(stdErr, "[debug] calculated fingerprint"))
 }
 
 func (suite *MultiHostTestSuite) TestRunTripledHost() {
@@ -205,7 +255,7 @@ func (suite *MultiHostTestSuite) TestRunTripledHost() {
 	} {
 		defer func(original []string) { os.Args = original }(os.Args)
 		os.Args = t.args
-		output, err := runMultiHost(t.args)
+		output, _, err := runMultiHost(t.args)
 
 		assert.Equal(suite.T(), t.err, err, fmt.Sprintf("TestRunTripledHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.err, err))
 

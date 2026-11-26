@@ -44,7 +44,7 @@ func hasMultipleHosts(hosts, apiTokens []string) bool {
 	return len(hosts) > 1 && len(apiTokens) > 1 && len(hosts) == len(apiTokens)
 }
 
-func runMultiHost(args []string) (string, error) {
+func runMultiHost(args []string) (string, string, error) {
 	// Calls "innerMain" at least twice:
 	//  - with the 0th host/api-token (primary)
 	//  - with the 1st, 2nd, 3rd, etc host/api-token (secondaries)
@@ -61,24 +61,29 @@ func runMultiHost(args []string) (string, error) {
 	}
 
 	args0 := argsAppendHostApiTokenFlags(0)
-	stdOut, stdErr := runBufferedInnerMain(args0)
+	stdOut, stdErr, err0 := runBufferedInnerMain(args0)
 
 	var errorMessage string
 
-	if stdErr != nil {
+	if err0 != nil {
 		errorMessage = fmt.Sprintf("[%s]\n", opts.hosts[0])
-		errorMessage += stdErr.Error()
+		errorMessage += err0.Error()
 	}
 
 	secondariesOut := ""
+	secondariesErr := ""
 	for i := 1; i < len(opts.hosts); i++ {
 		argsN := argsAppendHostApiTokenFlags(i)
-		outputN, errN := runBufferedInnerMain(argsN)
+		outputN, stdErrN, errN := runBufferedInnerMain(argsN)
 
 		// Return subsidiary-call's output in debug mode only.
 		if opts.debug && outputN != "" {
 			secondariesOut += fmt.Sprintf("\n[debug] [%s]", opts.hosts[i])
 			secondariesOut += fmt.Sprintf("\n%s", outputN)
+		}
+		if opts.debug && stdErrN != "" {
+			secondariesErr += fmt.Sprintf("\n[debug] [%s]", opts.hosts[i])
+			secondariesErr += fmt.Sprintf("\n%s", stdErrN)
 		}
 
 		// Make origin of subsidiary-call failure clear.
@@ -93,38 +98,41 @@ func runMultiHost(args []string) (string, error) {
 		// in debug mode - we could be producing JSON.
 		stdOut = fmt.Sprintf("\n[debug] [%s]", opts.hosts[0]) + stdOut + "\n" + secondariesOut
 	}
+	if secondariesErr != "" {
+		stdErr = fmt.Sprintf("\n[debug] [%s]\n", opts.hosts[0]) + stdErr + secondariesErr
+	}
 
 	var err error
 	if errorMessage != "" {
 		err = errors.New(errorMessage)
 	}
 
-	return stdOut, err
+	return stdOut, stdErr, err
 }
 
-func runBufferedInnerMain(args []string) (string, error) {
+func runBufferedInnerMain(args []string) (string, string, error) {
 	// There is a logger.Error(..) call at the end of main. It must be restored to
 	// the original global logger so the error messages actually appear.
 	globalLogger := &logger
 	defer func(original *log.Logger) { *globalLogger = original }(logger)
 
-	// Use a buffered Writer so output printing is decided by the caller.
-	var buffer bytes.Buffer
-	writer := io.Writer(&buffer)
-	logger = log.NewLogger(writer, writer, false)
+	// Use buffered Writers so output printing is decided by the caller.
+	// stdout and stderr are kept apart so a warning cannot corrupt, eg, JSON output.
+	var outBuffer, errBuffer bytes.Buffer
+	logger = log.NewLogger(&outBuffer, &errBuffer, false)
 
 	// newRootCmd(out, args) does _not_ use its args parameter.
 	// So we have to set os.Args here.
 	defer func(original []string) { os.Args = original }(os.Args)
 	os.Args = args
 
-	// Create a cmd writing to the buffered Writer
+	// Create a cmd writing to the buffered Writers
 	cmd, err := newRootCmd(logger.Out, logger.ErrOut, nil)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	cmd.SetOut(writer)
-	cmd.SetErr(writer)
+	cmd.SetOut(&outBuffer)
+	cmd.SetErr(&errBuffer)
 
 	// Reset global back when done
 	globalPtr := &global
@@ -132,7 +140,25 @@ func runBufferedInnerMain(args []string) (string, error) {
 
 	// innerMain uses its argument for custom error messages
 	err = innerMain(cmd, args)
-	return fmt.Sprint(&buffer), err
+	// SetOut also redirects cobra's deprecated-command notice, so move it back.
+	executedCmd, _, _ := cmd.Find(normalizeBoolFlagArgs(cmd, args[1:]))
+	stdOut, stdErr := moveDeprecationNoticeToStderr(executedCmd, fmt.Sprint(&outBuffer), fmt.Sprint(&errBuffer))
+	return stdOut, stdErr, err
+}
+
+// moveDeprecationNoticeToStderr puts cobra's deprecated-command notice where a
+// user sees it. Cobra writes it to OutOrStderr, which is stderr when SetOut has
+// not been called (single-host main) but stdout once it has, as in
+// runBufferedInnerMain and the test harness.
+func moveDeprecationNoticeToStderr(c *cobra.Command, stdout, stderr string) (string, string) {
+	if c == nil || c.Deprecated == "" {
+		return stdout, stderr
+	}
+	notice := fmt.Sprintf("Command %q is deprecated, %s\n", c.Name(), c.Deprecated)
+	if !strings.HasPrefix(stdout, notice) {
+		return stdout, stderr
+	}
+	return strings.TrimPrefix(stdout, notice), notice + stderr
 }
 
 type MultiOpts struct {
