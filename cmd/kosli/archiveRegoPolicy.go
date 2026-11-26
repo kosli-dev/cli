@@ -32,7 +32,7 @@ func newArchiveRegoPolicyCmd(out io.Writer) *cobra.Command {
 }
 
 // newRegoPolicyArchiveStateCmd makes the command that posts to the policy's
-// archive or unarchive endpoint, as verb names.
+// archive or unarchive endpoint; verb is the endpoint's final path segment.
 func newRegoPolicyArchiveStateCmd(verb, short, long, example string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:         "rego-policy POLICY-IDENTIFIER",
