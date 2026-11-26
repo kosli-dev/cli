@@ -21,6 +21,7 @@ func newArchiveCmd(out io.Writer) *cobra.Command {
 		newArchiveEnvironmentCmd(out),
 		newArchiveAttestationTypeCmd(out),
 		newArchiveControlCmd(out),
+		newArchiveRegoPolicyCmd(out),
 	)
 	return cmd
 }
