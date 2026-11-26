@@ -14,6 +14,7 @@ import (
 type fakeRegoPolicyRead struct {
 	body        string
 	status      int
+	method      string
 	escapedPath string
 	query       url.Values
 	calls       int
@@ -24,6 +25,7 @@ func newFakeRegoPolicyRead(t *testing.T, body string) (*httptest.Server, *fakeRe
 	fake := &fakeRegoPolicyRead{body: body, status: http.StatusOK}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fake.calls++
+		fake.method = r.Method
 		fake.escapedPath = r.URL.EscapedPath()
 		fake.query = r.URL.Query()
 		w.WriteHeader(fake.status)

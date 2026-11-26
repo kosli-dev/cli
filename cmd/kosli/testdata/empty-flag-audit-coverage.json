@@ -30,6 +30,9 @@
   "org": "string",
   "quiet": "bool"
  },
+ "archive rego-policy": {
+  "dry-run": "bool"
+ },
  "assert artifact": {
   "artifact-type": "string",
   "dry-run": "bool",
@@ -816,6 +819,7 @@
   "output": "string"
  },
  "list rego-policies": {
+  "archived": "bool",
   "output": "string",
   "page": "int",
   "page-limit": "int",
@@ -1029,6 +1033,9 @@
   "unset": "stringSlice"
  },
  "unarchive control": {
+  "dry-run": "bool"
+ },
+ "unarchive rego-policy": {
   "dry-run": "bool"
  },
  "update control": {

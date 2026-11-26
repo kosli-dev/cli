@@ -174,6 +174,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	regoPolicySearchFlag            = "[optional] Only list rego policies whose name or identifier contains this substring (case-insensitive)."
 	regoPolicySortFlag              = "[optional] The field to sort rego policies by. Valid values are: [updated_at, identifier]. (defaults to updated_at)"
 	regoPolicySortDirectionFlag     = "[optional] The direction to sort rego policies in. Valid values are: [asc, desc]. (defaults to desc)"
+	regoPolicyArchivedFlag          = "[optional] List archived rego policies instead of active ones."
 	outputFlagWithMarkdown          = "[defaulted] The format of the output. Valid formats are: [table, json, markdown]."
 	searchByNameFlag                = "[optional] Only list flows whose name contains this substring. The Kosli API supports alphanumeric characters and '-'."
 	ignoreCaseFlag                  = "[optional] Perform case-insensitive matching for --name. By default matching is case sensitive."

@@ -139,6 +139,15 @@ func (suite *ListRegoPoliciesCommandTestSuite) TestItSendsThePagingSearchAndSort
 	}, fake.query)
 }
 
+func (suite *ListRegoPoliciesCommandTestSuite) TestItAsksForArchivedPoliciesOnlyWithArchived() {
+	server, fake := newFakeRegoPolicyRead(suite.T(), regoPoliciesPage)
+
+	_, _, _, _, err := executeCommandC(suite.listCmd(server.URL, "--archived"))
+
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), []string{"true"}, fake.query["archived"])
+}
+
 func (suite *ListRegoPoliciesCommandTestSuite) TestItRefusesAPageOrPageLimitThatIsNotPositive() {
 	for _, args := range []string{"--page 0", "--page-limit 0"} {
 		server, fake := newFakeRegoPolicyRead(suite.T(), regoPoliciesPage)

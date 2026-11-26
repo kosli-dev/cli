@@ -19,7 +19,8 @@ const listRegoPoliciesShortDesc = `List rego policies for an org.`
 
 const listRegoPoliciesLongDesc = listRegoPoliciesShortDesc + `
 The results are paginated; use ^--page^ and ^--page-limit^ to navigate the pages.
-By default, the policies changed most recently are listed first.`
+By default, the policies changed most recently are listed first, and archived policies are
+left out; use ^--archived^ to list only archived ones.`
 
 const listRegoPoliciesExample = `
 # list the first page of rego policies for an org:
@@ -41,6 +42,12 @@ kosli list rego-policies \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
+# list archived rego policies instead of active ones:
+kosli list rego-policies \
+	--archived \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # list rego policies in identifier order:
 kosli list rego-policies \
 	--sort identifier \
@@ -54,6 +61,7 @@ type listRegoPoliciesOptions struct {
 	search        string
 	sort          string
 	sortDirection string
+	archived      bool
 }
 
 type listRegoPoliciesResponse struct {
@@ -91,6 +99,7 @@ func newListRegoPoliciesCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.search, "search", "", regoPolicySearchFlag)
 	cmd.Flags().StringVar(&o.sort, "sort", "", regoPolicySortFlag)
 	cmd.Flags().StringVar(&o.sortDirection, "sort-direction", "", regoPolicySortDirectionFlag)
+	cmd.Flags().BoolVar(&o.archived, "archived", false, regoPolicyArchivedFlag)
 
 	return cmd
 }
@@ -112,6 +121,9 @@ func (o *listRegoPoliciesOptions) run(out io.Writer) error {
 	}
 	if o.sortDirection != "" {
 		params.Set("sort_direction", o.sortDirection)
+	}
+	if o.archived {
+		params.Set("archived", "true")
 	}
 
 	response, err := kosliClient.Do(&requests.RequestParams{

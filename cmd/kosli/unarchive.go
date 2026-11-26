@@ -18,6 +18,7 @@ func newUnarchiveCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newUnarchiveControlCmd(out),
+		newUnarchiveRegoPolicyCmd(out),
 	)
 	return cmd
 }
