@@ -73,7 +73,6 @@ func newGetRegoPolicyCmd(out io.Writer) *cobra.Command {
 		Example: getRegoPolicyExample,
 		Args:    cobra.ExactArgs(1),
 		Annotations: map[string]string{
-			betaCLIAnnotation:              "",
 			docgen.JSONOutputAPIAnnotation: "rego-policies/get-a-rego-policy,rego-policies/get-a-version-of-a-rego-policy",
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {

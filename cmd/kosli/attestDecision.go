@@ -90,11 +90,10 @@ func newAttestDecisionCmd(out io.Writer) *cobra.Command {
 		},
 	}
 	cmd := &cobra.Command{
-		Use:         "decision [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:       attestDecisionShortDesc,
-		Long:        attestDecisionLongDesc,
-		Example:     attestDecisionExample,
-		Annotations: map[string]string{betaCLIAnnotation: ""},
+		Use:     "decision [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:   attestDecisionShortDesc,
+		Long:    attestDecisionLongDesc,
+		Example: attestDecisionExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := CustomMaximumNArgs(1, args)
 			if err != nil {

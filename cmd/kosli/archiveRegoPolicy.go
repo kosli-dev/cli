@@ -35,12 +35,11 @@ func newArchiveRegoPolicyCmd(out io.Writer) *cobra.Command {
 // archive or unarchive endpoint; verb is the endpoint's final path segment.
 func newRegoPolicyArchiveStateCmd(verb, short, long, example string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:         "rego-policy POLICY-IDENTIFIER",
-		Short:       short,
-		Long:        long,
-		Example:     example,
-		Args:        cobra.ExactArgs(1),
-		Annotations: map[string]string{betaCLIAnnotation: ""},
+		Use:     "rego-policy POLICY-IDENTIFIER",
+		Short:   short,
+		Long:    long,
+		Example: example,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

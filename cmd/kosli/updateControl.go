@@ -40,12 +40,11 @@ type updateControlOptions struct {
 func newUpdateControlCmd(out io.Writer) *cobra.Command {
 	o := new(updateControlOptions)
 	cmd := &cobra.Command{
-		Use:         "control CONTROL-IDENTIFIER",
-		Short:       updateControlShortDesc,
-		Long:        updateControlLongDesc,
-		Example:     updateControlExample,
-		Args:        cobra.ExactArgs(1),
-		Annotations: map[string]string{betaCLIAnnotation: ""},
+		Use:     "control CONTROL-IDENTIFIER",
+		Short:   updateControlShortDesc,
+		Long:    updateControlLongDesc,
+		Example: updateControlExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := RequireGlobalFlags(global, []string{"Org", "ApiToken"}); err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())

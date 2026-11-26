@@ -78,7 +78,6 @@ func newGetEvaluationCmd(out io.Writer) *cobra.Command {
 		Example: getEvaluationExample,
 		Args:    cobra.ExactArgs(1),
 		Annotations: map[string]string{
-			betaCLIAnnotation:              "",
 			docgen.JSONOutputAPIAnnotation: "evaluations/get-an-evaluation",
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {

@@ -82,7 +82,6 @@ func newListControlsCmd(out io.Writer) *cobra.Command {
 		Example: listControlsExample,
 		Args:    cobra.NoArgs,
 		Annotations: map[string]string{
-			betaCLIAnnotation:              "",
 			docgen.JSONOutputAPIAnnotation: "controls/list-controls",
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {

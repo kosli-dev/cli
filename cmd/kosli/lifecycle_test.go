@@ -45,14 +45,14 @@ func TestLifecycleAttestInTotoIsBetaAndVisible(t *testing.T) {
 	}
 }
 
-func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
+func TestLifecycleAttestDecisionIsVisibleAndNotBeta(t *testing.T) {
 	global = &GlobalOpts{}
 	cmd := newAttestDecisionCmd(io.Discard)
 	if cmd.Hidden {
 		t.Error("expected attest decision to be visible (not Hidden)")
 	}
-	if !isBeta(cmd) {
-		t.Error("expected attest decision to be beta")
+	if isBeta(cmd) {
+		t.Error("expected attest decision to no longer be beta")
 	}
 	if _, ok := cmd.Annotations[docgen.DocHiddenAnnotation]; ok {
 		t.Error("expected attest decision to no longer carry the docHidden annotation")
@@ -62,14 +62,14 @@ func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
 	}
 }
 
-func TestLifecyclePublishRegoPolicyIsBetaAndVisible(t *testing.T) {
+func TestLifecyclePublishRegoPolicyIsVisibleAndNotBeta(t *testing.T) {
 	global = &GlobalOpts{}
 	cmd := newPublishRegoPolicyCmd(io.Discard)
 	if cmd.Hidden {
 		t.Error("expected publish rego-policy to be visible (not Hidden)")
 	}
-	if !isBeta(cmd) {
-		t.Error("expected publish rego-policy to be beta")
+	if isBeta(cmd) {
+		t.Error("expected publish rego-policy to no longer be beta")
 	}
 
 	dir := t.TempDir()
@@ -95,7 +95,7 @@ func TestLifecycleSnapshotGKEIsBetaAndVisible(t *testing.T) {
 	}
 }
 
-func TestLifecycleControlCommandsAreBeta(t *testing.T) {
+func TestLifecycleControlCommandsAreNotBeta(t *testing.T) {
 	global = &GlobalOpts{}
 	cmds := map[string]*cobra.Command{
 		"create control":    newCreateControlCmd(io.Discard),
@@ -106,8 +106,8 @@ func TestLifecycleControlCommandsAreBeta(t *testing.T) {
 		"unarchive control": newUnarchiveControlCmd(io.Discard),
 	}
 	for name, cmd := range cmds {
-		if !isBeta(cmd) {
-			t.Errorf("expected %q to be marked beta while controls is behind a feature flag", name)
+		if isBeta(cmd) {
+			t.Errorf("expected %q to no longer be marked beta", name)
 		}
 	}
 }
