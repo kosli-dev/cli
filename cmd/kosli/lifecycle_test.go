@@ -62,6 +62,17 @@ func TestLifecycleAttestDecisionIsBetaAndVisible(t *testing.T) {
 	}
 }
 
+func TestLifecycleAttestOverrideIsBetaAndVisible(t *testing.T) {
+	global = &GlobalOpts{}
+	cmd := newAttestOverrideCmd(io.Discard)
+	if cmd.Hidden {
+		t.Error("expected attest override to be visible (not Hidden)")
+	}
+	if !isBeta(cmd) {
+		t.Error("expected attest override to be beta")
+	}
+}
+
 func TestLifecyclePublishRegoPolicyIsBetaAndVisible(t *testing.T) {
 	global = &GlobalOpts{}
 	cmd := newPublishRegoPolicyCmd(io.Discard)
