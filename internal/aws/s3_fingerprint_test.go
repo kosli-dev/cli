@@ -75,45 +75,40 @@ func snapshotFake(t *testing.T, client S3API) (artifactName, fingerprint string)
 // every existing environment snapshot on the server was computed this way.
 func (suite *S3FingerprintTestSuite) TestPinnedFingerprints() {
 	for _, t := range []struct {
-		name             string
-		objects          map[string][]byte
-		wantArtifactName string
-		wantFingerprint  string
+		name            string
+		objects         map[string][]byte
+		wantFingerprint string
 	}{
 		{
 			name: "unusual key shapes fold as filepath.Join folded them",
 			objects: map[string][]byte{
 				"/lead.txt": []byte("u\n"), "a//b": []byte("o\n"), "./c.txt": []byte("t\n"), `d\e.txt`: []byte("n\n"),
 			},
-			wantArtifactName: fakeS3TestBucketName,
-			wantFingerprint:  "27e2d8aa07677b7818b8cf101b45c928aa8fbf7d17a8c8efc84469e24a106ec3",
+			wantFingerprint: "27e2d8aa07677b7818b8cf101b45c928aa8fbf7d17a8c8efc84469e24a106ec3",
 		},
 		{
 			name: "a dot sorts before a slash",
 			objects: map[string][]byte{
 				"a.txt": []byte("1"), "a/z": []byte("2"), "a/b/c": []byte("3"), "b": []byte("4"),
 			},
-			wantArtifactName: fakeS3TestBucketName,
-			wantFingerprint:  "aaddb8f3e299e12316d42fa9ac36d4ed7d38c34e7ec002239269c86a033bb9fd",
+			wantFingerprint: "aaddb8f3e299e12316d42fa9ac36d4ed7d38c34e7ec002239269c86a033bb9fd",
 		},
 		{
 			name: "nested prefixes with folder markers",
 			objects: map[string][]byte{
 				"dir/": nil, "dir/sub/": nil, "dir/sub/x.yml": []byte("x"), "dir/y.txt": []byte("y"), "README.md": []byte("r"),
 			},
-			wantArtifactName: fakeS3TestBucketName,
-			wantFingerprint:  "c26910cdb177dde3c6493d18ba1e916b04715cdfc535e4552b5f9831590e933a",
+			wantFingerprint: "c26910cdb177dde3c6493d18ba1e916b04715cdfc535e4552b5f9831590e933a",
 		},
 		{
-			name:             "a single object is the file, named by its base name",
-			objects:          map[string][]byte{"only/one/file.bin": []byte("solo")},
-			wantArtifactName: "file.bin",
-			wantFingerprint:  "5364f2f2fc4f54e9d47ad29cfb08ef430c8153394bf2a0dff5cbe77a0ffef861",
+			name:            "a single object is fingerprinted as the file, named after the bucket",
+			objects:         map[string][]byte{"only/one/file.bin": []byte("solo")},
+			wantFingerprint: "5364f2f2fc4f54e9d47ad29cfb08ef430c8153394bf2a0dff5cbe77a0ffef861",
 		},
 	} {
 		suite.Run(t.name, func() {
 			name, sha := snapshotFake(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects})
-			require.Equal(suite.T(), t.wantArtifactName, name)
+			require.Equal(suite.T(), fakeS3TestBucketName, name)
 			require.Equal(suite.T(), t.wantFingerprint, sha)
 		})
 	}
@@ -154,7 +149,7 @@ func (suite *S3FingerprintTestSuite) TestMatchesAttestedDirectory() {
 
 		name, sha := snapshotFake(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName,
 			Objects: map[string][]byte{"builds/v1/release.bin": []byte("the release")}})
-		require.Equal(suite.T(), "release.bin", name)
+		require.Equal(suite.T(), fakeS3TestBucketName, name)
 		require.Equal(suite.T(), attestedFile, sha)
 	})
 }

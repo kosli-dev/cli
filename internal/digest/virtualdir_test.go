@@ -105,6 +105,21 @@ func (suite *VirtualDirTestSuite) TestVirtualDirSha256MatchesDirSha256() {
 	}
 }
 
+// An S3 bucket with nothing to fingerprint is reported with this value, so it
+// has to be what an empty directory fingerprints to on disk.
+func (suite *VirtualDirTestSuite) TestVirtualDirSha256OfNoFilesMatchesAnEmptyDirectory() {
+	want, err := DirSha256(suite.tmpDir, []string{}, logger.NewStandardLogger())
+	require.NoError(suite.T(), err)
+
+	for _, files := range [][]VirtualFile{nil, {}} {
+		got, err := VirtualDirSha256(files, nil, logger.NewStandardLogger())
+		require.NoError(suite.T(), err)
+		require.Equal(suite.T(), want, got)
+	}
+	require.Equal(suite.T(), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", want,
+		"the fingerprint of an empty directory must not move")
+}
+
 // TestVirtualDirSha256IgnoresInputOrder pins that the result depends on the tree,
 // not on the order S3 happened to list the objects in.
 func (suite *VirtualDirTestSuite) TestVirtualDirSha256IgnoresInputOrder() {
@@ -134,11 +149,6 @@ func (suite *VirtualDirTestSuite) TestVirtualDirSha256Errors() {
 		files      []VirtualFile
 		wantErrMsg string
 	}{
-		{
-			name:       "no files",
-			files:      []VirtualFile{},
-			wantErrMsg: "no files",
-		},
 		{
 			name: "a duplicate path",
 			files: []VirtualFile{

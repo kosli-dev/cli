@@ -19,8 +19,8 @@ import (
 // Reading one needs s3:GetObject, the same permission as a download.
 //
 // With skipUnusableChecksums, an object without such a checksum is left out
-// with a warning instead of failing the snapshot, and the result is empty when
-// that leaves no object.
+// with a warning instead of failing the snapshot, and the bucket is reported
+// as empty when that leaves no object.
 func (staticCreds *AWSStaticCreds) GetS3DataFromMetadata(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, limits DownloadLimits, skipUnusableChecksums bool, logger *logger.Logger) ([]*S3Data, error) {
 	client, err := NewS3ClientFunc(staticCreds)
 	if err != nil {

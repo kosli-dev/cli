@@ -384,15 +384,14 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 // wiring works.
 func (suite *AWSTestSuite) TestGetS3Data() {
 	for _, t := range []struct {
-		name             string
-		requireEnvVars   bool // indicates that a test case needs real credentials from env vars
-		creds            *AWSStaticCreds
-		bucketName       string
-		includePaths     []string
-		excludePaths     []string
-		wantFingerprint  string
-		wantArtifactName string
-		wantErr          bool
+		name            string
+		requireEnvVars  bool // indicates that a test case needs real credentials from env vars
+		creds           *AWSStaticCreds
+		bucketName      string
+		includePaths    []string
+		excludePaths    []string
+		wantFingerprint string
+		wantErr         bool
 	}{
 		{
 			name: "invalid credentials causes an error",
@@ -426,11 +425,10 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			bucketName:       "kosli-cli-public",
-			includePaths:     []string{"README.md"},
-			requireEnvVars:   true,
-			wantFingerprint:  "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
-			wantArtifactName: "README.md",
+			bucketName:      "kosli-cli-public",
+			includePaths:    []string{"README.md"},
+			requireEnvVars:  true,
+			wantFingerprint: "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
 		},
 	} {
 		suite.Run(t.name, func() {
@@ -439,13 +437,10 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				if t.wantArtifactName == "" {
-					t.wantArtifactName = t.bucketName
-				}
 				if t.wantFingerprint == "" {
-					require.Contains(suite.T(), data[0].Digests, t.wantArtifactName)
+					require.Contains(suite.T(), data[0].Digests, t.bucketName)
 				} else {
-					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.wantArtifactName])
+					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.bucketName])
 				}
 			}
 		})
@@ -1011,27 +1006,24 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 		excludeRegex     []string
 		listErr          error
 		downloadErr      error
-		wantArtifactName string // defaults to the bucket name
 		wantFingerprint  string // only asserted when set
 		wantLastModified int64  // only asserted when non-zero
 		wantErr          bool
 		wantErrMsg       string
 	}{
 		{
-			name: "a single object is fingerprinted as a file and named after it",
+			name: "a single object is fingerprinted as a file and named after the bucket",
 			objects: map[string][]byte{
 				"README.md": []byte(fakeReadmeBody),
 			},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "a single nested object is still fingerprinted as a file",
 			objects: map[string][]byte{
 				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
 			},
-			wantArtifactName: "template.yml",
-			wantFingerprint:  fakeTemplateSha256,
+			wantFingerprint: fakeTemplateSha256,
 		},
 		{
 			name: "multiple objects are fingerprinted as a directory named after the bucket",
@@ -1048,8 +1040,7 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"dummy/dummy_2/":  nil,
 				"dummy/README.md": []byte(fakeReadmeBody),
 			},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "objects spread over several pages are all downloaded",
@@ -1066,9 +1057,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md": []byte(fakeReadmeBody),
 				"notes.txt": []byte(fakeNotesBody),
 			},
-			includePaths:     []string{"README.md"},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			includePaths:    []string{"README.md"},
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "includePaths matches a nested path by prefix",
@@ -1076,9 +1066,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md":                  []byte(fakeReadmeBody),
 				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
 			},
-			includePaths:     []string{"dummy/dummy_2"},
-			wantArtifactName: "template.yml",
-			wantFingerprint:  fakeTemplateSha256,
+			includePaths:    []string{"dummy/dummy_2"},
+			wantFingerprint: fakeTemplateSha256,
 		},
 		{
 			name: "a leading slash in includePaths is ignored",
@@ -1086,9 +1075,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md":                  []byte(fakeReadmeBody),
 				"dummy/dummy_2/template.yml": []byte(fakeTemplateBody),
 			},
-			includePaths:     []string{"/dummy/dummy_2"},
-			wantArtifactName: "template.yml",
-			wantFingerprint:  fakeTemplateSha256,
+			includePaths:    []string{"/dummy/dummy_2"},
+			wantFingerprint: fakeTemplateSha256,
 		},
 		{
 			name: "includeRegex selects matching objects",
@@ -1096,9 +1084,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md": []byte(fakeReadmeBody),
 				"notes.txt": []byte(fakeNotesBody),
 			},
-			includeRegex:     []string{`.*\.md$`},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			includeRegex:    []string{`.*\.md$`},
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "excludePaths removes matching objects",
@@ -1106,9 +1093,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md": []byte(fakeReadmeBody),
 				"notes.txt": []byte(fakeNotesBody),
 			},
-			excludePaths:     []string{"notes.txt"},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			excludePaths:    []string{"notes.txt"},
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "excludeRegex removes matching objects",
@@ -1116,9 +1102,8 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 				"README.md": []byte(fakeReadmeBody),
 				"notes.txt": []byte(fakeNotesBody),
 			},
-			excludeRegex:     []string{`.*\.txt$`},
-			wantArtifactName: "README.md",
-			wantFingerprint:  fakeReadmeSha256,
+			excludeRegex:    []string{`.*\.txt$`},
+			wantFingerprint: fakeReadmeSha256,
 		},
 		{
 			name: "the reported timestamp is the newest matched object",
@@ -1146,23 +1131,6 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 			},
 			excludePaths:     []string{"skip.txt"},
 			wantLastModified: later.Unix(),
-		},
-		{
-			name: "an empty bucket is an error",
-			objects: map[string][]byte{
-				"dummy/": nil,
-			},
-			wantErr:    true,
-			wantErrMsg: "no matching file or dirs in bucket: [" + fakeS3TestBucketName + "]",
-		},
-		{
-			name: "filtering everything out is an error",
-			objects: map[string][]byte{
-				"README.md": []byte(fakeReadmeBody),
-			},
-			includePaths: []string{"non-existing.md"},
-			wantErr:      true,
-			wantErrMsg:   "no matching file or dirs in bucket: [" + fakeS3TestBucketName + "]",
 		},
 		{
 			name: "an invalid include regex is an error",
@@ -1222,18 +1190,65 @@ func (suite *AWSTestSuite) TestGetS3DataFromClient() {
 			require.NoError(suite.T(), err)
 			require.Len(suite.T(), data, 1)
 
-			wantArtifactName := t.wantArtifactName
-			if wantArtifactName == "" {
-				wantArtifactName = fakeS3TestBucketName
-			}
-			require.Contains(suite.T(), data[0].Digests, wantArtifactName)
-			require.NotEmpty(suite.T(), data[0].Digests[wantArtifactName])
+			require.Len(suite.T(), data[0].Digests, 1, "the bucket is the only artifact")
+			require.Contains(suite.T(), data[0].Digests, fakeS3TestBucketName)
+			require.NotEmpty(suite.T(), data[0].Digests[fakeS3TestBucketName])
 			if t.wantFingerprint != "" {
-				require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[wantArtifactName])
+				require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[fakeS3TestBucketName])
 			}
 			if t.wantLastModified != 0 {
 				require.Equal(suite.T(), t.wantLastModified, data[0].LastModifiedTimestamp)
 			}
+		})
+	}
+}
+
+// fakeEmptyBucketSha256 is the fingerprint of an empty directory, which a
+// bucket with nothing to fingerprint is reported with.
+const fakeEmptyBucketSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+// A bucket with nothing to fingerprint is still the one artifact of the
+// snapshot, whether it lists no objects or the filters leave none. Only the
+// log line tells the two apart, since a filter that leaves nothing may be
+// mistyped.
+func (suite *AWSTestSuite) TestGetS3DataFromClientReportsNothingToFingerprintAsAnEmptyBucket() {
+	readme := map[string][]byte{"README.md": []byte(fakeReadmeBody)}
+	const (
+		emptyBucketLog = "bucket [" + fakeS3TestBucketName + "] holds no objects; reporting it as an empty bucket\n"
+		filteredLog    = "[warning] no object in bucket [" + fakeS3TestBucketName + "] matches the include and exclude filters (or the bucket is empty); reporting it as an empty bucket\n"
+	)
+	for _, t := range []struct {
+		name         string
+		objects      map[string][]byte
+		includePaths []string
+		includeRegex []string
+		excludePaths []string
+		excludeRegex []string
+		wantInfo     string
+		wantWarning  string
+	}{
+		{name: "no objects at all", objects: map[string][]byte{}, wantInfo: emptyBucketLog},
+		{name: "only folder markers", objects: map[string][]byte{"dummy/": nil, "dummy/dummy_2/": nil}, wantInfo: emptyBucketLog},
+		{name: "--include matches nothing", objects: readme, includePaths: []string{"non-existing.md"}, wantWarning: filteredLog},
+		{name: "--include-regex matches nothing", objects: readme, includeRegex: []string{`.*\.yml$`}, wantWarning: filteredLog},
+		{name: "--exclude removes everything", objects: readme, excludePaths: []string{"README.md"}, wantWarning: filteredLog},
+		{name: "--exclude-regex removes everything", objects: readme, excludeRegex: []string{`.*\.md$`}, wantWarning: filteredLog},
+		{name: "an empty bucket with a filter set", objects: map[string][]byte{}, includePaths: []string{"README.md"}, wantWarning: filteredLog},
+	} {
+		suite.Run(t.name, func() {
+			client := &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects}
+			var info, warnings bytes.Buffer
+
+			data, err := getS3DataFromClient(client, fakeS3TestBucketName, t.includePaths, t.includeRegex,
+				t.excludePaths, t.excludeRegex, DefaultDownloadLimits, logger.NewLogger(&info, &warnings, false))
+
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), []*S3Data{{
+				Digests:               map[string]string{fakeS3TestBucketName: fakeEmptyBucketSha256},
+				LastModifiedTimestamp: 0,
+			}}, data)
+			require.Equal(suite.T(), t.wantInfo, info.String())
+			require.Equal(suite.T(), t.wantWarning, warnings.String())
 		})
 	}
 }

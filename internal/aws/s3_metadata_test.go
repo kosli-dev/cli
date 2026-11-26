@@ -95,6 +95,8 @@ func (suite *S3MetadataTestSuite) TestMatchesContentMode() {
 			objects:      map[string][]byte{"README.md": []byte("r"), "filtered/out.txt": []byte("o"), "keep/in.txt": []byte("i")},
 			excludePaths: []string{"filtered/"},
 		},
+		{name: "an empty bucket", objects: map[string][]byte{"dir/": nil}},
+		{name: "filters that leave nothing", objects: map[string][]byte{"filtered/out.txt": []byte("o")}, excludePaths: []string{"filtered/"}},
 	} {
 		suite.Run(t.name, func() {
 			content, err := getS3DataFromClient(checksummedBucket(t.objects), fakeS3TestBucketName, nil, nil, t.excludePaths, nil,
@@ -104,6 +106,7 @@ func (suite *S3MetadataTestSuite) TestMatchesContentMode() {
 			metadata, err := snapshotMetadata(suite.T(), checksummedBucket(t.objects), t.excludePaths)
 			require.NoError(suite.T(), err)
 
+			require.Len(suite.T(), content, 1)
 			require.Equal(suite.T(), content, metadata, "metadata mode must produce exactly what content mode produces")
 		})
 	}
@@ -113,41 +116,36 @@ func (suite *S3MetadataTestSuite) TestMatchesContentMode() {
 // must reproduce them from checksums alone.
 func (suite *S3MetadataTestSuite) TestPinnedFingerprints() {
 	for _, t := range []struct {
-		name             string
-		objects          map[string][]byte
-		wantArtifactName string
-		wantFingerprint  string
+		name            string
+		objects         map[string][]byte
+		wantFingerprint string
 	}{
 		{
-			name:             "unusual key shapes fold as filepath.Join folded them",
-			objects:          map[string][]byte{"/lead.txt": []byte("u\n"), "a//b": []byte("o\n"), "./c.txt": []byte("t\n"), `d\e.txt`: []byte("n\n")},
-			wantArtifactName: fakeS3TestBucketName,
-			wantFingerprint:  "27e2d8aa07677b7818b8cf101b45c928aa8fbf7d17a8c8efc84469e24a106ec3",
+			name:            "unusual key shapes fold as filepath.Join folded them",
+			objects:         map[string][]byte{"/lead.txt": []byte("u\n"), "a//b": []byte("o\n"), "./c.txt": []byte("t\n"), `d\e.txt`: []byte("n\n")},
+			wantFingerprint: "27e2d8aa07677b7818b8cf101b45c928aa8fbf7d17a8c8efc84469e24a106ec3",
 		},
 		{
-			name:             "a dot sorts before a slash",
-			objects:          map[string][]byte{"a.txt": []byte("1"), "a/z": []byte("2"), "a/b/c": []byte("3"), "b": []byte("4")},
-			wantArtifactName: fakeS3TestBucketName,
-			wantFingerprint:  "aaddb8f3e299e12316d42fa9ac36d4ed7d38c34e7ec002239269c86a033bb9fd",
+			name:            "a dot sorts before a slash",
+			objects:         map[string][]byte{"a.txt": []byte("1"), "a/z": []byte("2"), "a/b/c": []byte("3"), "b": []byte("4")},
+			wantFingerprint: "aaddb8f3e299e12316d42fa9ac36d4ed7d38c34e7ec002239269c86a033bb9fd",
 		},
 		{
-			name:             "nested prefixes with folder markers",
-			objects:          map[string][]byte{"dir/": nil, "dir/sub/": nil, "dir/sub/x.yml": []byte("x"), "dir/y.txt": []byte("y"), "README.md": []byte("r")},
-			wantArtifactName: fakeS3TestBucketName,
-			wantFingerprint:  "c26910cdb177dde3c6493d18ba1e916b04715cdfc535e4552b5f9831590e933a",
+			name:            "nested prefixes with folder markers",
+			objects:         map[string][]byte{"dir/": nil, "dir/sub/": nil, "dir/sub/x.yml": []byte("x"), "dir/y.txt": []byte("y"), "README.md": []byte("r")},
+			wantFingerprint: "c26910cdb177dde3c6493d18ba1e916b04715cdfc535e4552b5f9831590e933a",
 		},
 		{
-			name:             "a single object is the file, named by its base name",
-			objects:          map[string][]byte{"only/one/file.bin": []byte("solo")},
-			wantArtifactName: "file.bin",
-			wantFingerprint:  "5364f2f2fc4f54e9d47ad29cfb08ef430c8153394bf2a0dff5cbe77a0ffef861",
+			name:            "a single object is fingerprinted as the file, named after the bucket",
+			objects:         map[string][]byte{"only/one/file.bin": []byte("solo")},
+			wantFingerprint: "5364f2f2fc4f54e9d47ad29cfb08ef430c8153394bf2a0dff5cbe77a0ffef861",
 		},
 	} {
 		suite.Run(t.name, func() {
 			data, err := snapshotMetadata(suite.T(), checksummedBucket(t.objects), nil)
 			require.NoError(suite.T(), err)
 			require.Len(suite.T(), data, 1)
-			require.Equal(suite.T(), map[string]string{t.wantArtifactName: t.wantFingerprint}, data[0].Digests)
+			require.Equal(suite.T(), map[string]string{fakeS3TestBucketName: t.wantFingerprint}, data[0].Digests)
 		})
 	}
 }
@@ -293,11 +291,6 @@ func (suite *S3MetadataTestSuite) TestErrors() {
 			checksums:  fullObjectChecksums(map[string][]byte{"README.md": readme}),
 			listErr:    errInjected,
 			wantErrMsg: []string{"injected error"},
-		},
-		{
-			name:       "an empty bucket keeps the content-mode message",
-			objects:    map[string][]byte{"dir/": nil},
-			wantErrMsg: []string{"no matching file or dirs in bucket: [" + fakeS3TestBucketName + "]"},
 		},
 	} {
 		suite.Run(t.name, func() {
@@ -506,7 +499,7 @@ func (suite *S3MetadataTestSuite) TestSkippingUnusableWarnsWithTheSkippedKeys() 
 	})
 }
 
-func (suite *S3MetadataTestSuite) TestSkippingEveryObjectReportsAnEmptySnapshot() {
+func (suite *S3MetadataTestSuite) TestSkippingEveryObjectReportsAnEmptyBucket() {
 	for _, t := range []struct {
 		name    string
 		objects map[string][]byte
@@ -517,11 +510,13 @@ func (suite *S3MetadataTestSuite) TestSkippingEveryObjectReportsAnEmptySnapshot(
 		suite.Run(t.name, func() {
 			data, warnings, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: t.objects})
 			require.NoError(suite.T(), err)
-			require.Empty(suite.T(), data)
-			require.NotNil(suite.T(), data, "the payload must carry an empty list, not null")
+			require.Equal(suite.T(), []*S3Data{{
+				Digests:               map[string]string{fakeS3TestBucketName: fakeEmptyBucketSha256},
+				LastModifiedTimestamp: 0,
+			}}, data)
 			require.Contains(suite.T(), warnings, fmt.Sprintf("skipped %d of the %d objects", len(t.objects), len(t.objects)))
 			require.Contains(suite.T(), warnings, "[README.md]")
-			require.Contains(suite.T(), warnings, "[warning] no object in bucket ["+fakeS3TestBucketName+"] is left to fingerprint; reporting an empty snapshot\n")
+			require.Contains(suite.T(), warnings, "[warning] no object in bucket ["+fakeS3TestBucketName+"] is left to fingerprint; reporting it as an empty bucket\n")
 		})
 	}
 }
@@ -534,11 +529,6 @@ func (suite *S3MetadataTestSuite) TestSkippingUnusableStillFailsOnOtherErrors() 
 			_, _, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: objects, HeadObjectErr: errInjected})
 			require.ErrorIs(suite.T(), err, errInjected)
 		}
-	})
-
-	suite.Run("a bucket with no objects", func() {
-		_, _, err := snapshotSkippingUnusable(suite.T(), &FakeS3Client{Bucket: fakeS3TestBucketName, Objects: map[string][]byte{"dir/": nil}})
-		require.ErrorContains(suite.T(), err, "no matching file or dirs in bucket")
 	})
 }
 

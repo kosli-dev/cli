@@ -504,7 +504,14 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 		return s3Data, err
 	}
 	if len(objects) == 0 {
-		return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
+		// A filter that leaves nothing may be mistyped, so that case is a warning.
+		filtersSet := len(includePaths)+len(includeRegex)+len(excludePaths)+len(excludeRegex) > 0
+		if filtersSet {
+			logger.Warn("no object in bucket [%s] matches the include and exclude filters (or the bucket is empty); reporting it as an empty bucket", bucket)
+		} else {
+			logger.Info("bucket [%s] holds no objects; reporting it as an empty bucket", bucket)
+		}
+		return emptyS3Bucket(bucket, logger)
 	}
 
 	newest := newestS3Modification(objects)
@@ -519,8 +526,8 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 	if len(fingerprint.skipped) > 0 {
 		logger.Warn("%s", skippedS3ObjectsWarning(bucket, fingerprint))
 		if len(fingerprint.fingerprinted) == 0 {
-			logger.Warn("no object in bucket [%s] is left to fingerprint; reporting an empty snapshot", bucket)
-			return s3Data, nil
+			logger.Warn("no object in bucket [%s] is left to fingerprint; reporting it as an empty bucket", bucket)
+			return emptyS3Bucket(bucket, logger)
 		}
 		newest = newestS3Modification(fingerprint.fingerprinted)
 		if newest.IsZero() {
@@ -528,9 +535,21 @@ func getS3DataWithSource(client S3API, source s3DigestSource, bucket string, inc
 		}
 	}
 
-	s3Data = append(s3Data, &S3Data{Digests: map[string]string{fingerprint.artifactName: fingerprint.sha256}, LastModifiedTimestamp: newest.Unix()})
+	s3Data = append(s3Data, &S3Data{Digests: map[string]string{bucket: fingerprint.sha256}, LastModifiedTimestamp: newest.Unix()})
 
 	return s3Data, nil
+}
+
+// emptyS3Bucket is what a bucket with nothing to fingerprint is reported as:
+// still the one artifact of the snapshot, fingerprinted as an empty directory.
+// No object supplies a modification time, so the timestamp is zero, which also
+// keeps successive snapshots of an empty bucket identical.
+func emptyS3Bucket(bucket string, logger *logger.Logger) ([]*S3Data, error) {
+	sha256, err := digest.VirtualDirSha256(nil, nil, logger)
+	if err != nil {
+		return []*S3Data{}, err
+	}
+	return []*S3Data{{Digests: map[string]string{bucket: sha256}, LastModifiedTimestamp: 0}}, nil
 }
 
 // newestS3Modification returns the latest modification time among objects, or
@@ -641,9 +660,8 @@ type s3DigestSource struct {
 
 // s3Fingerprint is the outcome of fingerprinting a bucket's objects.
 type s3Fingerprint struct {
-	// artifactName and sha256 are empty when no object was fingerprinted.
-	artifactName string
-	sha256       string
+	// sha256 is empty when no object was fingerprinted.
+	sha256 string
 	// fingerprinted holds the objects the fingerprint was computed over, in
 	// listing order.
 	fingerprinted []s3Object
@@ -664,16 +682,15 @@ func downloadDigests(downloader S3DownloadAPI, bucket string, logger *logger.Log
 }
 
 // fingerprintS3Objects fingerprints the objects with the download source.
-func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, string, error) {
+func fingerprintS3Objects(downloader S3DownloadAPI, bucket string, objects []s3Object, limits DownloadLimits, logger *logger.Logger) (string, error) {
 	fingerprint, err := fingerprintS3Tree(downloader, downloadDigests(downloader, bucket, logger), bucket, objects, limits, logger)
-	return fingerprint.artifactName, fingerprint.sha256, err
+	return fingerprint.sha256, err
 }
 
 // fingerprintS3Tree fingerprints the objects as the directory their keys
 // describe, without using a key as a local file name: digest.VirtualDirSha256
 // combines the (key, sha256) pairs from source exactly as digest.DirSha256
-// would on disk. A single object is fingerprinted as that file and named
-// after it.
+// would on disk. A single object is fingerprinted as that file.
 //
 // The root .kosli_ignore is always downloaded, whatever the source, because its
 // rules decide which other objects are fetched at all.
@@ -706,8 +723,8 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 		files[i].Path = paths[object.key]
 	}
 
-	// One object is fingerprinted as that file and named after it, as it was
-	// when the objects were laid out on disk.
+	// One object is fingerprinted as that file, as it was when the objects were
+	// laid out on disk.
 	if file, ok := digest.SingleVirtualFile(files); ok {
 		fetch := source
 		// The ignore file is downloaded even when alone, so no source needs its checksum.
@@ -723,7 +740,7 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 		if err != nil {
 			return s3Fingerprint{}, err
 		}
-		return s3Fingerprint{artifactName: file.Name(), sha256: sha256, fingerprinted: objects, read: 1}, nil
+		return s3Fingerprint{sha256: sha256, fingerprinted: objects, read: 1}, nil
 	}
 
 	var rules []string
@@ -786,14 +803,14 @@ func fingerprintS3Tree(downloader S3DownloadAPI, source s3DigestSource, bucket s
 		return fingerprint, nil
 	}
 	if file, ok := digest.SingleVirtualFile(files); ok {
-		fingerprint.artifactName, fingerprint.sha256 = file.Name(), file.Sha256
+		fingerprint.sha256 = file.Sha256
 		return fingerprint, nil
 	}
 	sha256, err := digest.VirtualDirSha256(files, rules, logger)
 	if err != nil {
 		return s3Fingerprint{}, ignoreRuleError(err)
 	}
-	fingerprint.artifactName, fingerprint.sha256 = bucket, sha256
+	fingerprint.sha256 = sha256
 	return fingerprint, nil
 }
 
