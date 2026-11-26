@@ -12,7 +12,7 @@ const snapshotS3ShortDesc = `Report a snapshot of the content of an AWS S3 bucke
 
 const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc + `
 You can report the entire bucket content, or filter some of the content using ^--include^ / ^--exclude^ (literal prefix match) or ^--include-regex^ / ^--exclude-regex^ (Go regular expressions matched against the full object key).
-In all cases, the content is reported as one artifact, named after the bucket. If you wish to report separate files/dirs within the same bucket as separate artifacts, you need to run the command twice.
+In all cases, the content is reported as one artifact, named after the bucket. To report separate files/dirs within the same bucket as separate artifacts, run the command once per subset (e.g. with ^--include^), each against a different environment, since a snapshot replaces the environment's previous one.
 The fingerprint is the one ^kosli fingerprint^ gives for a local copy of the reported content: ^--artifact-type file^ when a single object is reported, ^--artifact-type dir^ otherwise.
 A bucket with nothing to report is not an error. Whether it holds no objects or the filters leave none, it is still reported as one artifact named after the bucket, with the fingerprint of an empty directory (^e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855^) and a timestamp of 0. When filters are what left nothing, a warning is logged, since a mistyped filter has the same effect.
 Object keys are never used as local file names: by default each object is downloaded to a temporary file, hashed and removed, and the fingerprint is computed from the keys and the content digests, so any key S3 accepts can be fingerprinted on any operating system.
@@ -37,7 +37,7 @@ kosli snapshot s3 yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report what is running in an AWS S3 bucket (AWS auth provided in flags):
+# report the contents of an entire AWS S3 bucket (AWS auth provided in flags):
 kosli snapshot s3 yourEnvironmentName \
 	--bucket yourBucketName \
 	--aws-key-id yourAWSAccessKeyID \
