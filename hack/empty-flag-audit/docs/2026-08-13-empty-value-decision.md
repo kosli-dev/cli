@@ -16,11 +16,14 @@ An audit easily found nineteen cases so far:
 
 1. the server accepts an empty value it should refuse.  
   **Proposal** - _not_ covered in this document:
-    - add schema `minLength: 1` on `filename`, `template`, `remove_tags`
+    - refuse an empty `filename` and an empty `template` attestation name
+    - `remove_tags` turned out not to need it, see below
     - decide empty query params
     - leave the 6 description fields alone
     - measured in
   `hack/empty-flag-audit/docs/2026-08-15-auditing-empty-values-at-the-api.md`
+    - what was done, and the trap in the original wording, in "Refusing an empty
+  value on the server" below
 
 2. the CLI passes an empty value to the server where it should send nothing.  
   **Proposal** - _not_ covered in this document:
@@ -199,6 +202,46 @@ It matters most on the flags carrying a verdict - `--compliant`,
 `--new-compliance-status`, `--no-assert`. The only fix is to stop accepting the
 bare form on those flags, requiring `--compliant=true`, which is a separate
 decision.
+
+## Refusing an empty value on the server (done 2026-08-19)
+
+Problem 1's proposal above originally read "add schema `minLength: 1` on
+`filename`, `template`, `remove_tags`". Two of the three landed; the wording of
+the third was a trap worth recording, because it would have caused an outage.
+
+**The trap: a model that validates a write may also validate a read.** A Pydantic
+constraint is not a rule about incoming requests. It is a rule about every
+construction of that model, and in this codebase several models are built both
+from a request and from a stored document. Adding a constraint there does not
+reject bad input; it rejects **data already in the database**, turning a bad
+record into one that cannot be loaded at all. That is strictly worse: a wrong
+requirement becomes a failed read, and one record can break a listing for
+everyone in the org, which is the shape of
+[server issue 6503](https://github.com/kosli-dev/server/issues/6503).
+
+So the question to ask of any empty-value constraint is not "is this field
+user-supplied?" but "is this class ever constructed from Mongo?".
+
+| Field | Where the constraint went | Why |
+|---|---|---|
+| `filename` | `min_length=1` on `CreateArtifact` | Bound only as a FastAPI request body, constructed nowhere else. `ArtifactResponseBase` carries the same field and **is** built from stored artifacts, so it was left permissive on purpose. |
+| template attestation name | a check on the write path in `common/flow.py`, not on the model | `Attestation` is built when a stored template is read back, and no shape difference distinguishes a write from reading a legacy record, so there was no model-level place to put it. |
+| `remove_tags` | nothing | Measured: an empty entry removes no tag, so it does not reach the record. Refusing it is tidiness, not a fix. |
+
+Both fixes carry a test that loads the bad value from the stored shape and
+asserts it still works, and both were checked by restoring the constraint and
+watching that test fail. A constraint of this kind that has not been checked that
+way has not been checked.
+
+Everything above is about newly submitted values. Records already holding an
+empty value stay as they are, and reading them keeps working. Cleaning them up
+would be a migration, which nobody has asked for.
+
+Confirmed by measurement rather than by the tests alone: `replay.py` re-run
+against a server carrying both fixes answers "the server refuses it" for all five
+rows that reach `filename` and `template`, taking the acceptances from 25 to 22.
+See "What the re-run changed" in
+`2026-08-15-auditing-empty-values-at-the-api.md`.
 
 ## The one capability this removes
 
