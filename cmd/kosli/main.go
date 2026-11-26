@@ -30,8 +30,9 @@ func init() {
 func main() {
 	var err error
 	if getMultiOpts().runsPerHost() {
-		var output string
-		output, err = runMultiHost(os.Args)
+		var output, errOutput string
+		output, errOutput, err = runMultiHost(os.Args)
+		_, _ = fmt.Fprint(logger.ErrOut, errOutput)
 		fmt.Print(output)
 	} else {
 		var cmd *cobra.Command
