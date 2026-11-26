@@ -205,6 +205,31 @@ func (suite *MultiHostTestSuite) TestRunDoubledHostKeepsStderrOutOfStdout() {
 	assert.Equal(suite.T(), evaluateInputNotice, stdErr)
 }
 
+// TestRunDoubledHostDebugGoesToStderr checks that with --debug every host's
+// debug lines go to stderr, each under its own host header, and stay off
+// stdout. fingerprint is used because it needs no server.
+func (suite *MultiHostTestSuite) TestRunDoubledHostDebugGoesToStderr() {
+	primary, secondary := "http://localhost:8001", "http://localhost:8002"
+	args := []string{
+		"kosli", "fingerprint", "testdata/person-schema.json",
+		"--artifact-type", "file",
+		"--debug",
+		fmt.Sprintf("--host=%s,%s", primary, secondary),
+		fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken),
+		fmt.Sprintf("--org=%s", orgName),
+	}
+
+	defer func(original []string) { os.Args = original }(os.Args)
+	os.Args = args
+	stdOut, stdErr, err := runMultiHost(args)
+
+	assert.Equal(suite.T(), error(nil), err)
+	assert.NotContains(suite.T(), stdOut, "calculated fingerprint")
+	assert.Contains(suite.T(), stdErr, fmt.Sprintf("[debug] [%s]\n", primary))
+	assert.Contains(suite.T(), stdErr, fmt.Sprintf("[debug] [%s]\n", secondary))
+	assert.Equal(suite.T(), 2, strings.Count(stdErr, "[debug] calculated fingerprint"))
+}
+
 func (suite *MultiHostTestSuite) TestRunTripledHost() {
 
 	multiHost := fmt.Sprintf("--host=%s,%s,%s", localHost, localHost, localHost)

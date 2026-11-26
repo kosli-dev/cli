@@ -141,9 +141,24 @@ func runBufferedInnerMain(args []string) (string, string, error) {
 	// innerMain uses its argument for custom error messages
 	err = innerMain(cmd, args)
 	// SetOut also redirects cobra's deprecated-command notice, so move it back.
-	executedCmd, _, _ := cmd.Find(args[1:])
+	executedCmd, _, _ := cmd.Find(normalizeBoolFlagArgs(cmd, args[1:]))
 	stdOut, stdErr := moveDeprecationNoticeToStderr(executedCmd, fmt.Sprint(&outBuffer), fmt.Sprint(&errBuffer))
 	return stdOut, stdErr, err
+}
+
+// moveDeprecationNoticeToStderr puts cobra's deprecated-command notice where a
+// user sees it. Cobra writes it to OutOrStderr, which is stderr when SetOut has
+// not been called (single-host main) but stdout once it has, as in
+// runBufferedInnerMain and the test harness.
+func moveDeprecationNoticeToStderr(c *cobra.Command, stdout, stderr string) (string, string) {
+	if c == nil || c.Deprecated == "" {
+		return stdout, stderr
+	}
+	notice := fmt.Sprintf("Command %q is deprecated, %s\n", c.Name(), c.Deprecated)
+	if !strings.HasPrefix(stdout, notice) {
+		return stdout, stderr
+	}
+	return strings.TrimPrefix(stdout, notice), notice + stderr
 }
 
 type MultiOpts struct {

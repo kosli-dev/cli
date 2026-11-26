@@ -91,20 +91,6 @@ func executeCommandStdinC(cmd string, stdin string) (*cobra.Command, string, str
 	return c, combinedBuf.String(), stdout, stderr, err
 }
 
-// moveDeprecationNoticeToStderr puts cobra's deprecated-command notice where a
-// user sees it. Cobra writes it to OutOrStderr, which is stderr in production
-// (main never calls SetOut) but stdout here, because the harness calls SetOut.
-func moveDeprecationNoticeToStderr(c *cobra.Command, stdout, stderr string) (string, string) {
-	if c == nil || c.Deprecated == "" {
-		return stdout, stderr
-	}
-	notice := fmt.Sprintf("Command %q is deprecated, %s\n", c.Name(), c.Deprecated)
-	if !strings.HasPrefix(stdout, notice) {
-		return stdout, stderr
-	}
-	return strings.TrimPrefix(stdout, notice), notice + stderr
-}
-
 // runTestCmd runs a table of cmd test cases
 func runTestCmd(t *testing.T, tests []cmdTestCase) {
 	t.Helper()
