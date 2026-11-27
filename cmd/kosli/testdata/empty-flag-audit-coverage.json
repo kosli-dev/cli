@@ -848,6 +848,14 @@
   "page-limit": "int",
   "reverse": "bool"
  },
+ "list trail-events": {
+  "after": "string",
+  "before": "string",
+  "flow": "string",
+  "output": "string",
+  "page-limit": "int",
+  "sort": "string"
+ },
  "list trails": {
   "fingerprint": "string",
   "flow": "string",

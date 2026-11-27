@@ -11,7 +11,7 @@ const logDesc = `All Kosli log commands.`
 func newLogCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "log",
-		Aliases: []string{"lo"},
+		Aliases: []string{"lo", "logs"},
 		Short:   logDesc,
 		Long:    logDesc,
 	}

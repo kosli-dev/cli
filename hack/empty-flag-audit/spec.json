@@ -2876,6 +2876,50 @@
     ],
     "verify": []
   },
+  "list trail-events": {
+    "args": [
+      "{trail}"
+    ],
+    "flags": {
+      "flow": "{flow}"
+    },
+    "flags_to_test": [
+      "after",
+      "before",
+      "flow",
+      "output",
+      "page-limit",
+      "sort"
+    ],
+    "flag_values": {
+      "after": "not-a-cursor",
+      "before": "not-a-cursor",
+      "flow": "{flow}",
+      "output": "json",
+      "page-limit": "5",
+      "sort": "oldest"
+    },
+    "setup": [
+      {
+        "argv": [
+          "create",
+          "flow",
+          "{flow}",
+          "--use-empty-template"
+        ]
+      },
+      {
+        "argv": [
+          "begin",
+          "trail",
+          "{trail}",
+          "--flow",
+          "{flow}"
+        ]
+      }
+    ],
+    "verify": []
+  },
   "rename flow": {
     "args": [
       "{flow}",
