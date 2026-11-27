@@ -88,6 +88,7 @@ func newListTrailEventsCmd(out io.Writer) *cobra.Command {
 	o := new(listTrailEventsOptions)
 	cmd := &cobra.Command{
 		Use:     "trail-events TRAIL-NAME",
+		Aliases: []string{"te"},
 		Short:   listTrailEventsShortDesc,
 		Long:    listTrailEventsLongDesc,
 		Example: listTrailEventsExample,

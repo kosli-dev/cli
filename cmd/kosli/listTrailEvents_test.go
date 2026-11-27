@@ -41,6 +41,14 @@ func (s *trailEventsStub) run(args string) (string, error) {
 	return combined, err
 }
 
+func TestListTrailEventsAlias(t *testing.T) {
+	stub := newTrailEventsStub(t, http.StatusOK, emptyTrailEventsPage)
+	_, _, _, _, err := executeCommandC(fmt.Sprintf(
+		"list te my-trail --flow my-flow --host %s --org my-org --api-token secret --max-api-retries 0", stub.server.URL))
+	require.NoError(t, err)
+	require.Equal(t, "/api/v2/trails/my-org/my-flow/my-trail/events", stub.path)
+}
+
 func TestListTrailEventsRequest(t *testing.T) {
 	t.Run("json output is the response body of the events endpoint", func(t *testing.T) {
 		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[{"type":"trail_reported","timestamp":1.5}],"_links":{"self":{"href":"x"}}}`)
