@@ -39,6 +39,7 @@ func newListCmd(out io.Writer) *cobra.Command {
 		newListFlowsCmd(out),
 		newListSnapshotsCmd(out),
 		newListTrailsCmd(out),
+		newListTrailEventsCmd(out),
 		newListPoliciesCmd(out),
 		newListAttestationTypesCmd(out),
 		newListControlsCmd(out),
