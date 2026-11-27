@@ -21,9 +21,10 @@ import (
 // CI-detected name) can't be reproduced under KOSLI_TESTS, which zeroes flag
 // defaults; that logic is covered directly by TestMergeGitRepoInfo. This suite
 // instead guards the command wiring: an explicit --repository must reach
-// repo_info.name. Because the CI base name here is non-empty, a missing
-// `repoNameExplicit` assignment would leave the base name in place and fail the
-// explicit-override cases.
+// repo_info.name. Because the CI base name here is non-empty, a path that lost
+// track of --repository being passed would leave the base name in place and
+// fail the explicit-override cases. `begin trail` and `attest artifact` record
+// that in a `repoNameExplicit` field their RunE has to set.
 type RepoInfoWiringTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
@@ -84,6 +85,12 @@ func (suite *RepoInfoWiringTestSuite) TestRepoInfoNameWiring() {
 			name:        "attest generic: explicit --repository overrides the CI-detected name",
 			cmd:         "attest generic --fingerprint " + fingerprint + " --name foo --flow f --trail t --repository my/explicit-repo" + suite.defaultKosliArguments,
 			goldenRegex: `"name": "my/explicit-repo"`,
+		},
+		{
+			wantError:   true,
+			name:        "attest generic: an explicit --repo-url is validated (the guard that needs no server)",
+			cmd:         "attest generic --fingerprint " + fingerprint + " --name foo --flow f --trail t --repo-url not-a-url" + suite.defaultKosliArguments,
+			goldenRegex: `--repo-url 'not-a-url' is not a valid URL`,
 		},
 		{
 			name:        "begin trail: CI-detected full-path name is used by default",

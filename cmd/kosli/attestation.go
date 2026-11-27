@@ -75,8 +75,6 @@ type CommonAttestationOptions struct {
 	repoName                string
 	repoURL                 string
 	repoProvider            string
-	repoURLExplicit         bool
-	repoNameExplicit        bool
 	noCommitInfo            bool
 	// flags lets run tell a passed flag from a defaulted one.
 	flags *pflag.FlagSet
@@ -140,10 +138,10 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
 
-	if err := validateRepoFlags(o.repoURL, o.repoProvider, o.repoURLExplicit); err != nil {
+	if err := validateRepoFlags(o.repoURL, o.repoProvider, o.explicit("repo-url")); err != nil {
 		return err
 	}
-	payload.GitRepoInfo = mergeGitRepoInfo(payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider, o.repoNameExplicit)
+	payload.GitRepoInfo = mergeGitRepoInfo(payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider, o.explicit("repository"))
 
 	return o.loadUserDataURLsAndAnnotations(payload)
 }
