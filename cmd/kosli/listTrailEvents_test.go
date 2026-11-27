@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -152,8 +153,8 @@ func TestListTrailEventsPaging(t *testing.T) {
 		out, err := stub.run("my-trail --flow my-flow")
 		require.NoError(t, err)
 		require.Equal(t, ""+
-			"TIMESTAMP                      TYPE            NAME  COMPLIANCE  ENVIRONMENT  COMMIT\n"+
-			"Sat, 16 Jan 2016 00:00:00 UTC  trail_reported                                 \n"+
+			"EVENT          TYPE   TIMESTAMP                      COMMIT  COMPLIANCE\n"+
+			"Trail started  trail  Sat, 16 Jan 2016 00:00:00 UTC          \n"+
 			"\n"+
 			"Next page: --after nxt=\n"+
 			"Previous page: --before prv=\n", out)
@@ -176,62 +177,114 @@ func TestListTrailEventsPaging(t *testing.T) {
 	})
 }
 
+const testTimestamp = "Sat, 16 Jan 2016 00:00:00 UTC"
+
 func TestListTrailEventsTable(t *testing.T) {
-	t.Run("table is the default output", func(t *testing.T) {
-		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[
-			{"type":"trail_attestation_reported","timestamp":1700000002.5,"template_reference_name":"bar",
-			 "git_commit_info":{"sha1":"0fc1ba9876f91b215679f3649b8668085d820ab5"}},
-			{"type":"attestation_overridden","timestamp":1700000001,"attestation_name":"foo"},
-			{"type":"artifact_attestation_reported","timestamp":1700000001,"template_reference_name":"foo","artifact_name":"cli-image"},
-			{"type":"trail_reported","timestamp":1700000000}
-		],"_links":{"self":{"href":"x"}}}`)
+	t.Run("the columns are those of the events list in the Kosli UI", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[{"type":"trail_reported","timestamp":1700000000}],"_links":{}}`)
 		out, err := stub.run("my-trail --flow my-flow")
 		require.NoError(t, err)
-		require.Equal(t, ""+
-			"TIMESTAMP                      TYPE                           NAME  COMPLIANCE  ENVIRONMENT  COMMIT\n"+
-			"Sat, 16 Jan 2016 00:00:00 UTC  trail_attestation_reported     bar                            0fc1ba9\n"+
-			"Sat, 16 Jan 2016 00:00:00 UTC  attestation_overridden         foo                            \n"+
-			"Sat, 16 Jan 2016 00:00:00 UTC  artifact_attestation_reported  foo                            \n"+
-			"Sat, 16 Jan 2016 00:00:00 UTC  trail_reported                                                \n", out)
+		require.Equal(t, []string{"EVENT", "TYPE", "TIMESTAMP", "COMMIT", "COMPLIANCE"},
+			strings.Fields(strings.SplitN(out, "\n", 2)[0]))
 	})
 
-	t.Run("rows show compliance and environment where the event has them", func(t *testing.T) {
-		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[
-			{"type":"trail_attestation_reported","timestamp":1700000005,"template_reference_name":"bar","is_compliant":true,
-			 "git_commit_info":{"sha1":"0fc1ba9876f91b215679f3649b8668085d820ab5"}},
-			{"type":"artifact_attestation_reported","timestamp":1700000004,"template_reference_name":"foo","is_compliant":false},
-			{"type":"attestation_overridden","timestamp":1700000003,"attestation_name":"foo","new_compliance_status":true},
-			{"type":"artifact_deployment_reported","timestamp":1700000002,"environment_name":"production"},
-			{"type":"artifact_started_running","timestamp":1700000001,"template_reference_name":"cli","environment_name":"staging"},
-			{"type":"trail_reported","timestamp":1700000000}
-		],"_links":{}}`)
-		out, err := stub.run("my-trail --flow my-flow")
-		require.NoError(t, err)
-
-		// Compared by field, as the timestamp is always the first six.
-		rows := [][]string{}
-		for _, line := range strings.Split(strings.TrimSpace(out), "\n") {
-			rows = append(rows, strings.Fields(line))
-		}
-		require.Equal(t, []string{"TIMESTAMP", "TYPE", "NAME", "COMPLIANCE", "ENVIRONMENT", "COMMIT"}, rows[0])
-		require.Equal(t, [][]string{
-			{"trail_attestation_reported", "bar", "compliant", "0fc1ba9"},
-			{"artifact_attestation_reported", "foo", "non-compliant"},
-			{"attestation_overridden", "foo", "compliant"},
-			{"artifact_deployment_reported", "production"},
-			{"artifact_started_running", "cli", "staging"},
-			{"trail_reported"},
-		}, [][]string{rows[1][6:], rows[2][6:], rows[3][6:], rows[4][6:], rows[5][6:], rows[6][6:]})
-	})
-
-	t.Run("an artifact event is named by its artifact when it has no template name", func(t *testing.T) {
-		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[
-			{"type":"artifact_creation_reported","timestamp":1700000000,"artifact_name":"cli-image"}
-		],"_links":{}}`)
-		out, err := stub.run("my-trail --flow my-flow")
-		require.NoError(t, err)
-		require.Contains(t, out, "artifact_creation_reported  cli-image")
-	})
+	for _, tc := range []struct {
+		name  string
+		event string
+		want  []string
+	}{
+		{
+			name:  "a trail starting",
+			event: `{"type":"trail_reported","timestamp":1700000000,"git_commit_info":{"sha1":"0fc1ba9876f91b215679f3649b8668085d820ab5"}}`,
+			want:  []string{"Trail started", "trail", testTimestamp, "0fc1ba9", ""},
+		},
+		{
+			name:  "a trail update without a commit",
+			event: `{"type":"trail_updated","timestamp":1700000000}`,
+			want:  []string{"Trail updated", "trail", testTimestamp, "", ""},
+		},
+		{
+			name: "a compliant trail attestation",
+			event: `{"type":"trail_attestation_reported","timestamp":1700000000,"template_reference_name":"bar",
+				"attestation_type":"generic","is_compliant":true,"type_mismatch":false,
+				"git_commit_info":{"sha1":"0fc1ba9876f91b215679f3649b8668085d820ab5"}}`,
+			want: []string{"bar", "generic", testTimestamp, "0fc1ba9", "COMPLIANT"},
+		},
+		{
+			name: "a non-compliant artifact attestation of a custom type",
+			event: `{"type":"artifact_attestation_reported","timestamp":1700000000,"target_artifact":"cli",
+				"template_reference_name":"scan","attestation_type":"custom:my-scan","is_compliant":false,"type_mismatch":false}`,
+			want: []string{"cli.scan", "custom:my-scan", testTimestamp, "", "NON-COMPLIANT"},
+		},
+		{
+			name: "an attestation for an artifact not yet reported, of a system type",
+			event: `{"type":"trail_attestation_for_artifact_reported","timestamp":1700000000,"target_artifact":"cli",
+				"template_reference_name":"tests","attestation_type":"system:junit","is_compliant":true,"type_mismatch":false}`,
+			want: []string{"cli.tests", "junit", testTimestamp, "", "COMPLIANT"},
+		},
+		{
+			name: "a compliant attestation of the wrong type",
+			event: `{"type":"trail_attestation_reported","timestamp":1700000000,"template_reference_name":"bar",
+				"attestation_type":"generic","is_compliant":true,"type_mismatch":true}`,
+			want: []string{"bar", "generic", testTimestamp, "", "NON-COMPLIANT"},
+		},
+		{
+			name: "an override of an artifact attestation",
+			event: `{"type":"attestation_overridden","timestamp":1700000000,"target_artifact":"cli",
+				"attestation_name":"scan","new_compliance_status":true}`,
+			want: []string{"cli.scan", "override", testTimestamp, "", "COMPLIANT"},
+		},
+		{
+			name:  "an override of a trail attestation to non-compliant",
+			event: `{"type":"attestation_overridden","timestamp":1700000000,"attestation_name":"bar","new_compliance_status":false}`,
+			want:  []string{"bar", "override", testTimestamp, "", "NON-COMPLIANT"},
+		},
+		{
+			name:  "an artifact",
+			event: `{"type":"artifact_creation_reported","timestamp":1700000000,"template_reference_name":"cli","artifact_name":"cli-image"}`,
+			want:  []string{"cli", "artifact", testTimestamp, "", ""},
+		},
+		{
+			name:  "a deployment",
+			event: `{"type":"artifact_deployment_reported","timestamp":1700000000,"deployment_number":3,"environment_name":"production"}`,
+			want:  []string{"Deployment #3 to production", "deployment", testTimestamp, "", ""},
+		},
+		{
+			name:  "an approval that was reviewed",
+			event: `{"type":"artifact_approval_reported","timestamp":1700000000,"approval_number":2,"reviewer":"sami"}`,
+			want:  []string{"Approval #2 created by sami", "approval", testTimestamp, "", ""},
+		},
+		{
+			name:  "an approval awaiting review",
+			event: `{"type":"artifact_approval_reported","timestamp":1700000000,"approval_number":2}`,
+			want:  []string{"Approval #2 requested", "approval", testTimestamp, "", ""},
+		},
+		{
+			name: "an artifact starting to run",
+			event: `{"type":"artifact_started_running","timestamp":1700000000,"template_reference_name":"cli",
+				"environment_name":"labs-prod","snapshot_index":28}`,
+			want: []string{"cli started running in labs-prod#28", "environment", testTimestamp, "", ""},
+		},
+		{
+			name: "an artifact that stopped running",
+			event: `{"type":"artifact_stopped_running","timestamp":1700000000,"template_reference_name":"cli",
+				"environment_name":"labs-prod","snapshot_index":29}`,
+			want: []string{"cli exited from labs-prod#29", "environment", testTimestamp, "", ""},
+		},
+		{
+			name:  "an event type this CLI does not know",
+			event: `{"type":"trail_archived","timestamp":1700000000}`,
+			want:  []string{"trail_archived", "", testTimestamp, "", ""},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			event := trailEvent{}
+			require.NoError(t, json.Unmarshal([]byte(tc.event), &event))
+			row, err := event.row()
+			require.NoError(t, err)
+			require.Equal(t, tc.want, row)
+		})
+	}
 
 	t.Run("an empty page says so", func(t *testing.T) {
 		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[],"_links":{"self":{"href":"x"}}}`)
@@ -300,7 +353,7 @@ func (suite *ListTrailEventsCommandTestSuite) TestListTrailEventsCmd() {
 		{
 			name:        "listing events with --page-limit 1 prints the cursor of the next page",
 			cmd:         fmt.Sprintf(`list trail-events %s --flow %s --page-limit 1 %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			goldenRegex: "trail_attestation_reported +bar +compliant +0fc1ba9\n\nNext page: --after \\S+\n$",
+			goldenRegex: "bar +generic +Sat, 16 Jan 2016 00:00:00 UTC +0fc1ba9 +COMPLIANT\n\nNext page: --after \\S+\n$",
 		},
 		{
 			wantError:   true,

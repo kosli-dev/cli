@@ -160,41 +160,75 @@ type trailEvent struct {
 	Timestamp             json.Number `json:"timestamp"`
 	TemplateReferenceName string      `json:"template_reference_name"`
 	AttestationName       string      `json:"attestation_name"`
-	ArtifactName          string      `json:"artifact_name"`
+	AttestationType       string      `json:"attestation_type"`
+	TargetArtifact        string      `json:"target_artifact"`
 	EnvironmentName       string      `json:"environment_name"`
+	SnapshotIndex         int         `json:"snapshot_index"`
+	DeploymentNumber      int         `json:"deployment_number"`
+	ApprovalNumber        int         `json:"approval_number"`
+	Reviewer              string      `json:"reviewer"`
 	IsCompliant           *bool       `json:"is_compliant"`
+	TypeMismatch          bool        `json:"type_mismatch"`
 	NewComplianceStatus   *bool       `json:"new_compliance_status"`
 	GitCommitInfo         *struct {
 		Sha1 string `json:"sha1"`
 	} `json:"git_commit_info"`
 }
 
-// name is what the event is about: a template name where the event type has
-// one, since that is the name the trail's compliance is reported under.
-func (e trailEvent) name() string {
-	for _, name := range []string{e.TemplateReferenceName, e.AttestationName, e.ArtifactName} {
-		if name != "" {
-			return name
+// title returns the name and the type label the Kosli UI gives the event in a
+// trail's events list. Keep in sync with eventTitle in the server's
+// js/frontend-trails/src/trails/events.ts.
+func (e trailEvent) title() (name, typeLabel string) {
+	switch e.Type {
+	case "trail_reported":
+		return "Trail started", "trail"
+	case "trail_updated":
+		return "Trail updated", "trail"
+	case "trail_attestation_reported":
+		return e.TemplateReferenceName, strings.TrimPrefix(e.AttestationType, "system:")
+	case "trail_attestation_for_artifact_reported", "artifact_attestation_reported":
+		return e.TargetArtifact + "." + e.TemplateReferenceName, strings.TrimPrefix(e.AttestationType, "system:")
+	case "attestation_overridden":
+		if e.TargetArtifact == "" {
+			return e.AttestationName, "override"
 		}
+		return e.TargetArtifact + "." + e.AttestationName, "override"
+	case "artifact_creation_reported":
+		return e.TemplateReferenceName, "artifact"
+	case "artifact_deployment_reported":
+		return fmt.Sprintf("Deployment #%d to %s", e.DeploymentNumber, e.EnvironmentName), "deployment"
+	case "artifact_approval_reported":
+		if e.Reviewer == "" {
+			return fmt.Sprintf("Approval #%d requested", e.ApprovalNumber), "approval"
+		}
+		return fmt.Sprintf("Approval #%d created by %s", e.ApprovalNumber, e.Reviewer), "approval"
+	case "artifact_started_running":
+		return fmt.Sprintf("%s started running in %s#%d", e.TemplateReferenceName, e.EnvironmentName, e.SnapshotIndex), "environment"
+	case "artifact_stopped_running":
+		return fmt.Sprintf("%s exited from %s#%d", e.TemplateReferenceName, e.EnvironmentName, e.SnapshotIndex), "environment"
+	default:
+		// A type added to the API after this CLI was built.
+		return e.Type, ""
 	}
-	return ""
 }
 
-// compliance is the compliance the event reported: that of an attestation, or
-// the one an override replaced it with. Other event types report none.
+// compliance is the event's own result: an override's new status, or an
+// attestation's, which a type other than the template's makes non-compliant.
+// Other event types have none.
 func (e trailEvent) compliance() string {
-	compliant := e.IsCompliant
-	if compliant == nil {
-		compliant = e.NewComplianceStatus
-	}
+	compliant := false
 	switch {
-	case compliant == nil:
-		return ""
-	case *compliant:
-		return "compliant"
+	case e.NewComplianceStatus != nil:
+		compliant = *e.NewComplianceStatus
+	case e.IsCompliant != nil:
+		compliant = *e.IsCompliant && !e.TypeMismatch
 	default:
-		return "non-compliant"
+		return ""
 	}
+	if compliant {
+		return "COMPLIANT"
+	}
+	return "NON-COMPLIANT"
 }
 
 func (e trailEvent) shortCommit() string {
@@ -202,6 +236,16 @@ func (e trailEvent) shortCommit() string {
 		return ""
 	}
 	return fmt.Sprintf("%.7s", e.GitCommitInfo.Sha1)
+}
+
+// row returns the event's cells under the table's header.
+func (e trailEvent) row() ([]string, error) {
+	timestamp, err := formattedTimestamp(e.Timestamp, true)
+	if err != nil {
+		return nil, err
+	}
+	name, typeLabel := e.title()
+	return []string{name, typeLabel, timestamp, e.shortCommit(), e.compliance()}, nil
 }
 
 type listTrailEventsResponse struct {
@@ -249,16 +293,14 @@ func printTrailEventsAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
-	header := []string{"TIMESTAMP", "TYPE", "NAME", "COMPLIANCE", "ENVIRONMENT", "COMMIT"}
+	header := []string{"EVENT", "TYPE", "TIMESTAMP", "COMMIT", "COMPLIANCE"}
 	rows := []string{}
 	for _, event := range response.Events {
-		timestamp, err := formattedTimestamp(event.Timestamp, true)
+		row, err := event.row()
 		if err != nil {
 			return err
 		}
-		rows = append(rows, strings.Join([]string{
-			timestamp, event.Type, event.name(), event.compliance(), event.EnvironmentName, event.shortCommit(),
-		}, "\t"))
+		rows = append(rows, strings.Join(row, "\t"))
 	}
 	tabFormattedPrint(out, header, append(rows, response.cursorHints()...))
 

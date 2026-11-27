@@ -1,3 +1,3 @@
-TIMESTAMP\s+TYPE\s+NAME\s+COMPLIANCE\s+ENVIRONMENT\s+COMMIT
-Sat, 16 Jan 2016 00:00:00 UTC\s+trail_attestation_reported\s+bar\s+compliant\s+0fc1ba9
-Sat, 16 Jan 2016 00:00:00 UTC\s+trail_reported.*
+EVENT\s+TYPE\s+TIMESTAMP\s+COMMIT\s+COMPLIANCE
+bar\s+generic\s+Sat, 16 Jan 2016 00:00:00 UTC\s+0fc1ba9\s+COMPLIANT
+Trail started\s+trail\s+Sat, 16 Jan 2016 00:00:00 UTC.*
