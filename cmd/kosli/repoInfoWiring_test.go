@@ -88,7 +88,7 @@ func (suite *RepoInfoWiringTestSuite) TestRepoInfoNameWiring() {
 		},
 		{
 			wantError:   true,
-			name:        "attest generic: an explicit --repo-url is validated",
+			name:        "attest generic: an explicit --repo-url is validated (the guard that needs no server)",
 			cmd:         "attest generic --fingerprint " + fingerprint + " --name foo --flow f --trail t --repo-url not-a-url" + suite.defaultKosliArguments,
 			goldenRegex: `--repo-url 'not-a-url' is not a valid URL`,
 		},
