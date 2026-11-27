@@ -25,6 +25,13 @@ kosli list trail-events yourTrailName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
+# list the events of a trail, oldest first:
+kosli list trail-events yourTrailName \
+	--flow yourFlowName \
+	--sort oldest \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # list the events of a trail (in JSON):
 kosli list trail-events yourTrailName \
 	--flow yourFlowName \
@@ -36,6 +43,14 @@ kosli list trail-events yourTrailName \
 type listTrailEventsOptions struct {
 	output   string
 	flowName string
+	sort     string
+}
+
+func (o *listTrailEventsOptions) validate(cmd *cobra.Command) error {
+	if o.sort != "newest" && o.sort != "oldest" {
+		return ErrorBeforePrintingUsage(cmd, "--sort must be one of: newest, oldest")
+	}
+	return nil
 }
 
 func newListTrailEventsCmd(out io.Writer) *cobra.Command {
@@ -54,7 +69,7 @@ func newListTrailEventsCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			return nil
+			return o.validate(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out, args)
@@ -63,6 +78,7 @@ func newListTrailEventsCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().StringVar(&o.sort, "sort", "newest", trailEventsSortFlag)
 
 	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
@@ -73,14 +89,16 @@ func newListTrailEventsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listTrailEventsOptions) run(out io.Writer, args []string) error {
-	url, err := neturl.JoinPath(global.Host, "api/v2/trails", global.Org, o.flowName, args[0], "events")
+	base, err := neturl.JoinPath(global.Host, "api/v2/trails", global.Org, o.flowName, args[0], "events")
 	if err != nil {
 		return err
 	}
+	q := neturl.Values{}
+	q.Set("sort", o.sort)
 
 	response, err := kosliClient.Do(&requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    base + "?" + q.Encode(),
 		Token:  global.ApiToken,
 	})
 	if err != nil {

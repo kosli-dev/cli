@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,17 +12,21 @@ import (
 )
 
 // trailEventsStub serves body with status for every request and records the
-// last request URI it was asked for.
+// path and query of each request it was asked for.
 type trailEventsStub struct {
-	server     *httptest.Server
-	requestURI string
+	server   *httptest.Server
+	requests int
+	path     string
+	query    url.Values
 }
 
 func newTrailEventsStub(t *testing.T, status int, body string) *trailEventsStub {
 	t.Helper()
 	stub := &trailEventsStub{}
 	stub.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		stub.requestURI = r.RequestURI
+		stub.requests++
+		stub.path = r.URL.Path
+		stub.query = r.URL.Query()
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
 		_, _ = w.Write([]byte(body))
@@ -41,7 +46,7 @@ func TestListTrailEventsRequest(t *testing.T) {
 		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[{"type":"trail_reported","timestamp":1.5}],"_links":{"self":{"href":"x"}}}`)
 		out, err := stub.run("my-trail --flow my-flow --output json")
 		require.NoError(t, err)
-		require.Equal(t, "/api/v2/trails/my-org/my-flow/my-trail/events", stub.requestURI)
+		require.Equal(t, "/api/v2/trails/my-org/my-flow/my-trail/events", stub.path)
 		require.JSONEq(t, `{"events":[{"type":"trail_reported","timestamp":1.5}],"_links":{"self":{"href":"x"}}}`, out)
 	})
 
@@ -50,6 +55,32 @@ func TestListTrailEventsRequest(t *testing.T) {
 		out, err := stub.run("my-trail --flow my-flow --output json")
 		require.Error(t, err)
 		require.Contains(t, out, "Trail 'my-trail' not found")
+	})
+}
+
+const emptyTrailEventsPage = `{"events":[],"_links":{"self":{"href":"x"}}}`
+
+func TestListTrailEventsSort(t *testing.T) {
+	t.Run("events are requested newest first by default", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, emptyTrailEventsPage)
+		_, err := stub.run("my-trail --flow my-flow")
+		require.NoError(t, err)
+		require.Equal(t, "newest", stub.query.Get("sort"))
+	})
+
+	t.Run("--sort oldest requests them oldest first", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, emptyTrailEventsPage)
+		_, err := stub.run("my-trail --flow my-flow --sort oldest")
+		require.NoError(t, err)
+		require.Equal(t, "oldest", stub.query.Get("sort"))
+	})
+
+	t.Run("an unknown order fails without a request", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, emptyTrailEventsPage)
+		out, err := stub.run("my-trail --flow my-flow --sort sideways")
+		require.Error(t, err)
+		require.Contains(t, out, "Error: --sort must be one of: newest, oldest\n")
+		require.Zero(t, stub.requests)
 	})
 }
 
@@ -121,6 +152,20 @@ func (suite *ListTrailEventsCommandTestSuite) TestListTrailEventsCmd() {
 				{"events.[0].type", "trail_attestation_reported"},
 				{"events.[1].type", "trail_reported"},
 			},
+		},
+		{
+			name: "listing events with --sort oldest starts at the event that began the trail",
+			cmd:  fmt.Sprintf(`list trail-events %s --flow %s --sort oldest --output json %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{
+				{"events.[0].type", "trail_reported"},
+				{"events.[1].type", "trail_attestation_reported"},
+			},
+		},
+		{
+			wantError:   true,
+			name:        "listing events fails with an unknown --sort",
+			cmd:         fmt.Sprintf(`list trail-events %s --flow %s --sort sideways %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: "^Error: --sort must be one of: newest, oldest\n",
 		},
 		{
 			name:       "listing events prints a table",

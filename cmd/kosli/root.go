@@ -142,6 +142,7 @@ Paths the list already matches stay excluded whatever is later added there, so k
 	flowNameFlagOptional            = "[optional] The Kosli flow name."
 	fingerprintInTrailsFlag         = "[optional] The SHA256 fingerprint of the artifact to filter trails by."
 	flowTagFlag                     = "[optional] A key=value flow tag to filter trails by."
+	trailEventsSortFlag             = "[defaulted] The order of the events: newest or oldest first. Valid values are: [newest, oldest]."
 	trailNameFlag                   = "The Kosli trail name."
 	trailNameFlagOptional           = "[optional] The Kosli trail name."
 	templateArtifactName            = "The name of the artifact in the yml template file."
