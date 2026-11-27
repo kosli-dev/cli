@@ -84,6 +84,80 @@ func TestListTrailEventsSort(t *testing.T) {
 	})
 }
 
+func TestListTrailEventsPaging(t *testing.T) {
+	t.Run("a page holds 50 events by default", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, emptyTrailEventsPage)
+		_, err := stub.run("my-trail --flow my-flow")
+		require.NoError(t, err)
+		require.Equal(t, "50", stub.query.Get("per_page"))
+		require.False(t, stub.query.Has("after"))
+		require.False(t, stub.query.Has("before"))
+	})
+
+	t.Run("--page-limit sets the page size", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, emptyTrailEventsPage)
+		_, err := stub.run("my-trail --flow my-flow --page-limit 7")
+		require.NoError(t, err)
+		require.Equal(t, "7", stub.query.Get("per_page"))
+	})
+
+	for _, limit := range []string{"0", "101"} {
+		t.Run("--page-limit "+limit+" fails without a request", func(t *testing.T) {
+			stub := newTrailEventsStub(t, http.StatusOK, emptyTrailEventsPage)
+			out, err := stub.run("my-trail --flow my-flow --page-limit " + limit)
+			require.Error(t, err)
+			require.Contains(t, out, "Error: --page-limit must be between 1 and 100\n")
+			require.Zero(t, stub.requests)
+		})
+	}
+
+	t.Run("--after sends the cursor of the next page", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, emptyTrailEventsPage)
+		_, err := stub.run("my-trail --flow my-flow --after abc=")
+		require.NoError(t, err)
+		require.Equal(t, "abc=", stub.query.Get("after"))
+		require.False(t, stub.query.Has("before"))
+	})
+
+	t.Run("--before sends the cursor of the previous page", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, emptyTrailEventsPage)
+		_, err := stub.run("my-trail --flow my-flow --before abc=")
+		require.NoError(t, err)
+		require.Equal(t, "abc=", stub.query.Get("before"))
+		require.False(t, stub.query.Has("after"))
+	})
+
+	t.Run("--after with --before fails without a request", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, emptyTrailEventsPage)
+		out, err := stub.run("my-trail --flow my-flow --after a --before b")
+		require.Error(t, err)
+		require.Contains(t, out, "Error: only one of --after, --before is allowed\n")
+		require.Zero(t, stub.requests)
+	})
+
+	t.Run("the table ends with the cursors of the pages either side", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[{"type":"trail_reported","timestamp":1700000000}],"_links":{
+			"self":{"href":"http://kosli/api/v2/trails/o/f/t/events?after=cur%3D"},
+			"prev":{"href":"http://kosli/api/v2/trails/o/f/t/events?sort=newest&before=prv%3D"},
+			"next":{"href":"http://kosli/api/v2/trails/o/f/t/events?sort=newest&after=nxt%3D"}}}`)
+		out, err := stub.run("my-trail --flow my-flow")
+		require.NoError(t, err)
+		require.Equal(t, ""+
+			"TIMESTAMP                      TYPE            NAME  COMMIT\n"+
+			"Sat, 16 Jan 2016 00:00:00 UTC  trail_reported        \n"+
+			"\n"+
+			"Next page: --after nxt=\n"+
+			"Previous page: --before prv=\n", out)
+	})
+
+	t.Run("the API's message for an invalid cursor is printed", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusBadRequest, `{"message":"Invalid cursor."}`)
+		out, err := stub.run("my-trail --flow my-flow --after nonsense")
+		require.Error(t, err)
+		require.Contains(t, out, "Invalid cursor.")
+	})
+}
+
 func TestListTrailEventsTable(t *testing.T) {
 	t.Run("table is the default output", func(t *testing.T) {
 		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[
@@ -166,6 +240,38 @@ func (suite *ListTrailEventsCommandTestSuite) TestListTrailEventsCmd() {
 			name:        "listing events fails with an unknown --sort",
 			cmd:         fmt.Sprintf(`list trail-events %s --flow %s --sort sideways %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
 			goldenRegex: "^Error: --sort must be one of: newest, oldest\n",
+		},
+		{
+			name: "listing events with --page-limit 1 returns one event and a link to the next page",
+			cmd:  fmt.Sprintf(`list trail-events %s --flow %s --page-limit 1 --output json %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{
+				{"events", "length:1"},
+				{"events.[0].type", "trail_attestation_reported"},
+				{"_links.next.href", "not-nil"},
+			},
+		},
+		{
+			name:        "listing events with --page-limit 1 prints the cursor of the next page",
+			cmd:         fmt.Sprintf(`list trail-events %s --flow %s --page-limit 1 %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: "trail_attestation_reported +bar +0fc1ba9\n\nNext page: --after \\S+\n$",
+		},
+		{
+			wantError:   true,
+			name:        "listing events fails with an invalid cursor",
+			cmd:         fmt.Sprintf(`list trail-events %s --flow %s --after nonsense %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: "^Error: Invalid cursor\\.",
+		},
+		{
+			wantError:   true,
+			name:        "listing events fails with both cursors",
+			cmd:         fmt.Sprintf(`list trail-events %s --flow %s --after a --before b %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: "^Error: only one of --after, --before is allowed\n",
+		},
+		{
+			wantError:   true,
+			name:        "listing events fails with a --page-limit over 100",
+			cmd:         fmt.Sprintf(`list trail-events %s --flow %s --page-limit 101 %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: "^Error: --page-limit must be between 1 and 100\n",
 		},
 		{
 			name:       "listing events prints a table",
