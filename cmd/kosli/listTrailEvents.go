@@ -7,6 +7,7 @@ import (
 	"net/http"
 	neturl "net/url"
 	"strconv"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/kosli-dev/cli/internal/output"
@@ -160,6 +161,9 @@ type trailEvent struct {
 	TemplateReferenceName string      `json:"template_reference_name"`
 	AttestationName       string      `json:"attestation_name"`
 	ArtifactName          string      `json:"artifact_name"`
+	EnvironmentName       string      `json:"environment_name"`
+	IsCompliant           *bool       `json:"is_compliant"`
+	NewComplianceStatus   *bool       `json:"new_compliance_status"`
 	GitCommitInfo         *struct {
 		Sha1 string `json:"sha1"`
 	} `json:"git_commit_info"`
@@ -174,6 +178,23 @@ func (e trailEvent) name() string {
 		}
 	}
 	return ""
+}
+
+// compliance is the compliance the event reported: that of an attestation, or
+// the one an override replaced it with. Other event types report none.
+func (e trailEvent) compliance() string {
+	compliant := e.IsCompliant
+	if compliant == nil {
+		compliant = e.NewComplianceStatus
+	}
+	switch {
+	case compliant == nil:
+		return ""
+	case *compliant:
+		return "compliant"
+	default:
+		return "non-compliant"
+	}
 }
 
 func (e trailEvent) shortCommit() string {
@@ -228,14 +249,16 @@ func printTrailEventsAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
-	header := []string{"TIMESTAMP", "TYPE", "NAME", "COMMIT"}
+	header := []string{"TIMESTAMP", "TYPE", "NAME", "COMPLIANCE", "ENVIRONMENT", "COMMIT"}
 	rows := []string{}
 	for _, event := range response.Events {
 		timestamp, err := formattedTimestamp(event.Timestamp, true)
 		if err != nil {
 			return err
 		}
-		rows = append(rows, fmt.Sprintf("%s\t%s\t%s\t%s", timestamp, event.Type, event.name(), event.shortCommit()))
+		rows = append(rows, strings.Join([]string{
+			timestamp, event.Type, event.name(), event.compliance(), event.EnvironmentName, event.shortCommit(),
+		}, "\t"))
 	}
 	tabFormattedPrint(out, header, append(rows, response.cursorHints()...))
 

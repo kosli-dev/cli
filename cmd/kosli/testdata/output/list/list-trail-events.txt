@@ -1,3 +1,3 @@
-TIMESTAMP                      TYPE                        NAME  COMMIT
-Sat, 16 Jan 2016 00:00:00 UTC  trail_attestation_reported  bar   0fc1ba9
-Sat, 16 Jan 2016 00:00:00 UTC  trail_reported.*
+TIMESTAMP\s+TYPE\s+NAME\s+COMPLIANCE\s+ENVIRONMENT\s+COMMIT
+Sat, 16 Jan 2016 00:00:00 UTC\s+trail_attestation_reported\s+bar\s+compliant\s+0fc1ba9
+Sat, 16 Jan 2016 00:00:00 UTC\s+trail_reported.*

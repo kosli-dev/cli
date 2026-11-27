@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -151,8 +152,8 @@ func TestListTrailEventsPaging(t *testing.T) {
 		out, err := stub.run("my-trail --flow my-flow")
 		require.NoError(t, err)
 		require.Equal(t, ""+
-			"TIMESTAMP                      TYPE            NAME  COMMIT\n"+
-			"Sat, 16 Jan 2016 00:00:00 UTC  trail_reported        \n"+
+			"TIMESTAMP                      TYPE            NAME  COMPLIANCE  ENVIRONMENT  COMMIT\n"+
+			"Sat, 16 Jan 2016 00:00:00 UTC  trail_reported                                 \n"+
 			"\n"+
 			"Next page: --after nxt=\n"+
 			"Previous page: --before prv=\n", out)
@@ -187,11 +188,40 @@ func TestListTrailEventsTable(t *testing.T) {
 		out, err := stub.run("my-trail --flow my-flow")
 		require.NoError(t, err)
 		require.Equal(t, ""+
-			"TIMESTAMP                      TYPE                           NAME  COMMIT\n"+
-			"Sat, 16 Jan 2016 00:00:00 UTC  trail_attestation_reported     bar   0fc1ba9\n"+
-			"Sat, 16 Jan 2016 00:00:00 UTC  attestation_overridden         foo   \n"+
-			"Sat, 16 Jan 2016 00:00:00 UTC  artifact_attestation_reported  foo   \n"+
-			"Sat, 16 Jan 2016 00:00:00 UTC  trail_reported                       \n", out)
+			"TIMESTAMP                      TYPE                           NAME  COMPLIANCE  ENVIRONMENT  COMMIT\n"+
+			"Sat, 16 Jan 2016 00:00:00 UTC  trail_attestation_reported     bar                            0fc1ba9\n"+
+			"Sat, 16 Jan 2016 00:00:00 UTC  attestation_overridden         foo                            \n"+
+			"Sat, 16 Jan 2016 00:00:00 UTC  artifact_attestation_reported  foo                            \n"+
+			"Sat, 16 Jan 2016 00:00:00 UTC  trail_reported                                                \n", out)
+	})
+
+	t.Run("rows show compliance and environment where the event has them", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[
+			{"type":"trail_attestation_reported","timestamp":1700000005,"template_reference_name":"bar","is_compliant":true,
+			 "git_commit_info":{"sha1":"0fc1ba9876f91b215679f3649b8668085d820ab5"}},
+			{"type":"artifact_attestation_reported","timestamp":1700000004,"template_reference_name":"foo","is_compliant":false},
+			{"type":"attestation_overridden","timestamp":1700000003,"attestation_name":"foo","new_compliance_status":true},
+			{"type":"artifact_deployment_reported","timestamp":1700000002,"environment_name":"production"},
+			{"type":"artifact_started_running","timestamp":1700000001,"template_reference_name":"cli","environment_name":"staging"},
+			{"type":"trail_reported","timestamp":1700000000}
+		],"_links":{}}`)
+		out, err := stub.run("my-trail --flow my-flow")
+		require.NoError(t, err)
+
+		// Compared by field, as the timestamp is always the first six.
+		rows := [][]string{}
+		for _, line := range strings.Split(strings.TrimSpace(out), "\n") {
+			rows = append(rows, strings.Fields(line))
+		}
+		require.Equal(t, []string{"TIMESTAMP", "TYPE", "NAME", "COMPLIANCE", "ENVIRONMENT", "COMMIT"}, rows[0])
+		require.Equal(t, [][]string{
+			{"trail_attestation_reported", "bar", "compliant", "0fc1ba9"},
+			{"artifact_attestation_reported", "foo", "non-compliant"},
+			{"attestation_overridden", "foo", "compliant"},
+			{"artifact_deployment_reported", "production"},
+			{"artifact_started_running", "cli", "staging"},
+			{"trail_reported"},
+		}, [][]string{rows[1][6:], rows[2][6:], rows[3][6:], rows[4][6:], rows[5][6:], rows[6][6:]})
 	})
 
 	t.Run("an artifact event is named by its artifact when it has no template name", func(t *testing.T) {
@@ -270,7 +300,7 @@ func (suite *ListTrailEventsCommandTestSuite) TestListTrailEventsCmd() {
 		{
 			name:        "listing events with --page-limit 1 prints the cursor of the next page",
 			cmd:         fmt.Sprintf(`list trail-events %s --flow %s --page-limit 1 %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			goldenRegex: "trail_attestation_reported +bar +0fc1ba9\n\nNext page: --after \\S+\n$",
+			goldenRegex: "trail_attestation_reported +bar +compliant +0fc1ba9\n\nNext page: --after \\S+\n$",
 		},
 		{
 			wantError:   true,
