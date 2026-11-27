@@ -150,6 +150,15 @@ func TestListTrailEventsPaging(t *testing.T) {
 			"Previous page: --before prv=\n", out)
 	})
 
+	t.Run("an empty page still prints the cursor that leads back", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[],"_links":{
+			"self":{"href":"http://kosli/api/v2/trails/o/f/t/events?after=cur%3D"},
+			"prev":{"href":"http://kosli/api/v2/trails/o/f/t/events?before=prv%3D"}}}`)
+		out, err := stub.run("my-trail --flow my-flow --after cur=")
+		require.NoError(t, err)
+		require.Equal(t, "No events were found.\n\nPrevious page: --before prv=\n", out)
+	})
+
 	t.Run("the API's message for an invalid cursor is printed", func(t *testing.T) {
 		stub := newTrailEventsStub(t, http.StatusBadRequest, `{"message":"Invalid cursor."}`)
 		out, err := stub.run("my-trail --flow my-flow --after nonsense")

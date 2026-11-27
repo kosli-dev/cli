@@ -21,6 +21,7 @@ Each event has a ^type^, a ^timestamp^ and, when it was reported for a commit, i
 
 The events are paged by cursor. A page that has a next page ends with the ^--after^ value that fetches it,
 and a page that has a previous page with the ^--before^ value that fetches it.
+A cursor holds only a position, so repeat the ^--sort^ and ^--page-limit^ of the command that printed it.
 In JSON output the same cursors are the ^after^ and ^before^ query parameters of ^_links.next.href^ and ^_links.prev.href^.`
 
 const listTrailEventsExample = `
@@ -44,7 +45,8 @@ kosli list trail-events yourTrailName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list the next page of events, with the cursor the previous command printed:
+# list the next page of events, with the cursor the previous command printed
+# and the same --sort and --page-limit:
 kosli list trail-events yourTrailName \
 	--flow yourFlowName \
 	--page-limit 10 \
@@ -197,6 +199,22 @@ func (r *listTrailEventsResponse) cursor(link, param string) string {
 	return href.Query().Get(param)
 }
 
+// cursorHints returns the lines that tell a table reader how to reach the
+// pages either side, the first led by a blank line, or none at the only page.
+func (r *listTrailEventsResponse) cursorHints() []string {
+	hints := []string{}
+	if next := r.cursor("next", "after"); next != "" {
+		hints = append(hints, "Next page: --after "+next)
+	}
+	if prev := r.cursor("prev", "before"); prev != "" {
+		hints = append(hints, "Previous page: --before "+prev)
+	}
+	if len(hints) > 0 {
+		hints[0] = "\n" + hints[0]
+	}
+	return hints
+}
+
 func printTrailEventsAsTable(raw string, out io.Writer, page int) error {
 	response := &listTrailEventsResponse{}
 	if err := json.Unmarshal([]byte(raw), response); err != nil {
@@ -205,6 +223,7 @@ func printTrailEventsAsTable(raw string, out io.Writer, page int) error {
 
 	if len(response.Events) == 0 {
 		logger.Info("No events were found.")
+		tabFormattedPrint(out, []string{}, response.cursorHints())
 		return nil
 	}
 
@@ -217,15 +236,7 @@ func printTrailEventsAsTable(raw string, out io.Writer, page int) error {
 		}
 		rows = append(rows, fmt.Sprintf("%s\t%s\t%s\t%s", timestamp, event.Type, event.name(), event.shortCommit()))
 	}
-	separator := "\n"
-	if next := response.cursor("next", "after"); next != "" {
-		rows = append(rows, fmt.Sprintf("%sNext page: --after %s", separator, next))
-		separator = ""
-	}
-	if prev := response.cursor("prev", "before"); prev != "" {
-		rows = append(rows, fmt.Sprintf("%sPrevious page: --before %s", separator, prev))
-	}
-	tabFormattedPrint(out, header, rows)
+	tabFormattedPrint(out, header, append(rows, response.cursorHints()...))
 
 	return nil
 }
