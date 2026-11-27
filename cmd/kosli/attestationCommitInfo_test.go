@@ -257,7 +257,7 @@ func (suite *AttestationCommitInfoTestSuite) TestNoCommitInfoWithExplicitCommitF
 	suite.inRepoB(func() {
 		_, _, _, _, err := executeCommandC(suite.attestGeneric("--no-commit-info --commit " + suite.headHash))
 		suite.Require().Error(err)
-		suite.Equal("--no-commit-info cannot be combined with --commit, which KOSLI_COMMIT or the config file also set", err.Error())
+		suite.Equal("--no-commit-info cannot be combined with --commit, whether passed as a flag or set through KOSLI_COMMIT or the config file", err.Error())
 	})
 }
 
@@ -266,7 +266,7 @@ func (suite *AttestationCommitInfoTestSuite) TestNoCommitInfoWithCommitFromEnvVa
 		suite.T().Setenv("KOSLI_COMMIT", suite.headHash)
 		_, _, _, _, err := executeCommandC(suite.attestGeneric("--no-commit-info"))
 		suite.Require().Error(err)
-		suite.Contains(err.Error(), "which KOSLI_COMMIT or the config file also set")
+		suite.Contains(err.Error(), "set through KOSLI_COMMIT or the config file")
 	})
 }
 
