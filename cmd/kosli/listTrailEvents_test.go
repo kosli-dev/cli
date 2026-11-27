@@ -53,6 +53,42 @@ func TestListTrailEventsRequest(t *testing.T) {
 	})
 }
 
+func TestListTrailEventsTable(t *testing.T) {
+	t.Run("table is the default output", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[
+			{"type":"trail_attestation_reported","timestamp":1700000002.5,"template_reference_name":"bar",
+			 "git_commit_info":{"sha1":"0fc1ba9876f91b215679f3649b8668085d820ab5"}},
+			{"type":"attestation_overridden","timestamp":1700000001,"attestation_name":"foo"},
+			{"type":"artifact_attestation_reported","timestamp":1700000001,"template_reference_name":"foo","artifact_name":"cli-image"},
+			{"type":"trail_reported","timestamp":1700000000}
+		],"_links":{"self":{"href":"x"}}}`)
+		out, err := stub.run("my-trail --flow my-flow")
+		require.NoError(t, err)
+		require.Equal(t, ""+
+			"TIMESTAMP                      TYPE                           NAME  COMMIT\n"+
+			"Sat, 16 Jan 2016 00:00:00 UTC  trail_attestation_reported     bar   0fc1ba9\n"+
+			"Sat, 16 Jan 2016 00:00:00 UTC  attestation_overridden         foo   \n"+
+			"Sat, 16 Jan 2016 00:00:00 UTC  artifact_attestation_reported  foo   \n"+
+			"Sat, 16 Jan 2016 00:00:00 UTC  trail_reported                       \n", out)
+	})
+
+	t.Run("an artifact event is named by its artifact when it has no template name", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[
+			{"type":"artifact_creation_reported","timestamp":1700000000,"artifact_name":"cli-image"}
+		],"_links":{}}`)
+		out, err := stub.run("my-trail --flow my-flow")
+		require.NoError(t, err)
+		require.Contains(t, out, "artifact_creation_reported  cli-image")
+	})
+
+	t.Run("an empty page says so", func(t *testing.T) {
+		stub := newTrailEventsStub(t, http.StatusOK, `{"events":[],"_links":{"self":{"href":"x"}}}`)
+		out, err := stub.run("my-trail --flow my-flow")
+		require.NoError(t, err)
+		require.Equal(t, "No events were found.\n", out)
+	})
+}
+
 type ListTrailEventsCommandTestSuite struct {
 	suite.Suite
 	flowName              string
@@ -85,6 +121,11 @@ func (suite *ListTrailEventsCommandTestSuite) TestListTrailEventsCmd() {
 				{"events.[0].type", "trail_attestation_reported"},
 				{"events.[1].type", "trail_reported"},
 			},
+		},
+		{
+			name:       "listing events prints a table",
+			cmd:        fmt.Sprintf(`list trail-events %s --flow %s %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenFile: "output/list/list-trail-events.txt",
 		},
 		{
 			wantError: true,

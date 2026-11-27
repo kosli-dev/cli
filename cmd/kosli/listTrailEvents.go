@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	neturl "net/url"
@@ -60,7 +62,7 @@ func newListTrailEventsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.output, "output", "o", "json", outputFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 
 	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
@@ -87,6 +89,65 @@ func (o *listTrailEventsOptions) run(out io.Writer, args []string) error {
 
 	return output.FormattedPrint(response.Body, o.output, out, 0,
 		map[string]output.FormatOutputFunc{
-			"json": output.PrintJson,
+			"table": printTrailEventsAsTable,
+			"json":  output.PrintJson,
 		})
+}
+
+type trailEvent struct {
+	Type                  string      `json:"type"`
+	Timestamp             json.Number `json:"timestamp"`
+	TemplateReferenceName string      `json:"template_reference_name"`
+	AttestationName       string      `json:"attestation_name"`
+	ArtifactName          string      `json:"artifact_name"`
+	GitCommitInfo         *struct {
+		Sha1 string `json:"sha1"`
+	} `json:"git_commit_info"`
+}
+
+// name is what the event is about: a template name where the event type has
+// one, since that is the name the trail's compliance is reported under.
+func (e trailEvent) name() string {
+	for _, name := range []string{e.TemplateReferenceName, e.AttestationName, e.ArtifactName} {
+		if name != "" {
+			return name
+		}
+	}
+	return ""
+}
+
+func (e trailEvent) shortCommit() string {
+	if e.GitCommitInfo == nil {
+		return ""
+	}
+	return fmt.Sprintf("%.7s", e.GitCommitInfo.Sha1)
+}
+
+type listTrailEventsResponse struct {
+	Events []trailEvent `json:"events"`
+}
+
+func printTrailEventsAsTable(raw string, out io.Writer, page int) error {
+	response := &listTrailEventsResponse{}
+	if err := json.Unmarshal([]byte(raw), response); err != nil {
+		return err
+	}
+
+	if len(response.Events) == 0 {
+		logger.Info("No events were found.")
+		return nil
+	}
+
+	header := []string{"TIMESTAMP", "TYPE", "NAME", "COMMIT"}
+	rows := []string{}
+	for _, event := range response.Events {
+		timestamp, err := formattedTimestamp(event.Timestamp, true)
+		if err != nil {
+			return err
+		}
+		rows = append(rows, fmt.Sprintf("%s\t%s\t%s\t%s", timestamp, event.Type, event.name(), event.shortCommit()))
+	}
+	tabFormattedPrint(out, header, rows)
+
+	return nil
 }

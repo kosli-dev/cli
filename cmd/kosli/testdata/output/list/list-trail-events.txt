@@ -1,0 +1,3 @@
+TIMESTAMP                      TYPE                        NAME  COMMIT
+Sat, 16 Jan 2016 00:00:00 UTC  trail_attestation_reported  bar   0fc1ba9
+Sat, 16 Jan 2016 00:00:00 UTC  trail_reported.*
