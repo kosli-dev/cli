@@ -111,7 +111,7 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 			return fmt.Errorf("--no-commit-info cannot be used: the commit is required to %s", o.commitRequiredFor)
 		}
 		if o.explicit("commit") {
-			return fmt.Errorf("--no-commit-info cannot be combined with --commit")
+			return fmt.Errorf("--no-commit-info cannot be combined with --commit, which KOSLI_COMMIT or the config file also set")
 		}
 		payload.GitRepoInfo, err = o.explicitGitRepoInfo()
 		if err != nil {

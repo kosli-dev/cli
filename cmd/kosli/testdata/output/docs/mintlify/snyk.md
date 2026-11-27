@@ -37,6 +37,8 @@ If `--commit` is only defaulted from CI and `--repo-root` is left at `.`, a miss
 prints a warning and the attestation is sent without commit info.
 Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` is required to facilitate
 binding the attestation to the right artifact.
+Use `--no-commit-info` when the job that attests runs in a different repository from the one the trail belongs to:
+the attestation is then sent without commit info and without the repository info defaulted from the CI environment.
 You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
 To record repository information, all three of `--repo-id`, `--repo-url`, and `--repository` must be set together.
 These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
@@ -58,6 +60,7 @@ In other CI systems, set them explicitly to capture repository metadata.
 | `-f`, `--flow` | string | The Kosli flow name. |
 | `-h`, `--help` | bool | help for snyk |
 | `-n`, `--name` | string | The name of the attestation as declared in the flow or trail yaml template. |
+| `--no-commit-info` | bool | [optional] Send the attestation without git commit info and without the repository info defaulted from the CI environment. Use it when the job that attests runs in a different repository from the one the trail belongs to. Repository flags that are passed explicitly are still sent. Cannot be combined with `--commit`. |
 | `-o`, `--origin-url` | string | [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: [docs](/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables) ). |
 | `--redact-commit-info` | strings | [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch]. |
 | `--registry-password` | string | [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry and it is not already accessible via Docker/Podman auth files or a credential helper. |
