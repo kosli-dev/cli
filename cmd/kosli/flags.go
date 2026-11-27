@@ -103,6 +103,7 @@ func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payloa
 	cmd.Flags().StringVarP(&payload.ArtifactFingerprint, "fingerprint", "F", "", attestationFingerprintFlag)
 	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), commitFlagDesc)
 	cmd.Flags().StringSliceVar(&o.redactedCommitInfo, "redact-commit-info", []string{}, attestationRedactCommitInfoFlag)
+	cmd.Flags().BoolVar(&o.noCommitInfo, "no-commit-info", false, attestationNoCommitInfoFlag)
 	cmd.Flags().StringVarP(&payload.OriginURL, "origin-url", "o", DefaultValue(ci, "build-url"), attestationOriginUrlFlag)
 	cmd.Flags().StringVarP(&o.attestationNameTemplate, "name", "n", "", attestationNameFlag)
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)

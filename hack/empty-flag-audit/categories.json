@@ -98,6 +98,7 @@
  "namespaces-regex": "filter",
  "new-compliance-status": "switch",
  "no-assert": "switch",
+ "no-commit-info": "switch",
  "organization": "identity",
  "origin-url": "location",
  "original-attestation-type": "identity",

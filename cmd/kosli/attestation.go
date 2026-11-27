@@ -24,6 +24,8 @@ If ^--commit^ is only defaulted from CI and ^--repo-root^ is left at ^.^, a miss
 prints a warning and the attestation is sent without commit info.
 Note that when the attestation is reported for an artifact that does not yet exist in Kosli, ^--commit^ is required to facilitate
 binding the attestation to the right artifact.
+Use ^--no-commit-info^ when the job that attests runs in a different repository from the one the trail belongs to:
+the attestation is then sent without commit info and without the repository info defaulted from the CI environment.
 ` + commitDetailsDesc
 
 const commitRequiredDesc = `This command always requires ^--commit^ (defaulted in some CIs) and access to the git repository containing it.
@@ -75,6 +77,7 @@ type CommonAttestationOptions struct {
 	repoProvider            string
 	repoURLExplicit         bool
 	repoNameExplicit        bool
+	noCommitInfo            bool
 	// flags lets run tell a passed flag from a defaulted one.
 	flags *pflag.FlagSet
 	// commitRequiredFor completes "the commit is required to ..."; empty when
@@ -103,6 +106,20 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 		}
 	}
 
+	if o.noCommitInfo {
+		if o.commitRequiredFor != "" {
+			return fmt.Errorf("--no-commit-info cannot be used: the commit is required to %s", o.commitRequiredFor)
+		}
+		if o.explicit("commit") {
+			return fmt.Errorf("--no-commit-info cannot be combined with --commit")
+		}
+		payload.GitRepoInfo, err = o.explicitGitRepoInfo()
+		if err != nil {
+			return err
+		}
+		return o.loadUserDataURLsAndAnnotations(payload)
+	}
+
 	if o.commitSHA != "" {
 		payload.Commit, err = commitInfoRequest{
 			repoRoot:    o.srcRepoRoot,
@@ -128,6 +145,36 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	}
 	payload.GitRepoInfo = mergeGitRepoInfo(payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider, o.repoNameExplicit)
 
+	return o.loadUserDataURLsAndAnnotations(payload)
+}
+
+func (o *CommonAttestationOptions) explicit(flag string) bool {
+	return o.flags != nil && o.flags.Changed(flag)
+}
+
+// explicitGitRepoInfo builds the repo info from the repo flags that were
+// passed, leaving out any the CI environment only defaulted: those describe
+// the repository the job runs in.
+func (o *CommonAttestationOptions) explicitGitRepoInfo() (*gitview.GitRepoInfo, error) {
+	passed := func(flag, value string) string {
+		if o.explicit(flag) {
+			return value
+		}
+		return ""
+	}
+	repoID, repoName := passed("repo-id", o.repoID), passed("repository", o.repoName)
+	repoURL, repoProvider := passed("repo-url", o.repoURL), passed("repo-provider", o.repoProvider)
+	if repoID == "" && repoName == "" && repoURL == "" && repoProvider == "" {
+		return nil, nil
+	}
+	if err := validateRepoFlags(repoURL, repoProvider, true); err != nil {
+		return nil, err
+	}
+	return mergeGitRepoInfo(nil, repoID, repoName, repoURL, repoProvider, true), nil
+}
+
+func (o *CommonAttestationOptions) loadUserDataURLsAndAnnotations(payload *CommonAttestationPayload) error {
+	var err error
 	payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to load user data. %s", err)

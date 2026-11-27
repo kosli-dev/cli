@@ -186,6 +186,94 @@ func (suite *AttestationCommitInfoTestSuite) TestCommandsNeedingTheCommitFailWit
 	suite.Contains(err.Error(), "the commit is required to find pull requests")
 }
 
+// inRepoB runs f as in a GitHub Actions job of a repository other than the
+// one the trail belongs to, checked out at the working directory.
+func (suite *AttestationCommitInfoTestSuite) inRepoB(f func()) {
+	suite.T().Chdir("../..")
+	suite.T().Setenv("GITHUB_SERVER_URL", "https://github.com")
+	suite.T().Setenv("GITHUB_REPOSITORY", "acme/repo-b")
+	suite.T().Setenv("GITHUB_REPOSITORY_ID", "222")
+	suite.T().Setenv("GITHUB_RUN_ID", "9")
+	suite.inCI(suite.headHash, f)
+}
+
+func (suite *AttestationCommitInfoTestSuite) TestCIDefaultsAreSentWithoutNoCommitInfo() {
+	suite.inRepoB(func() {
+		_, out, _, _, err := executeCommandC(suite.attestGeneric(""))
+		suite.Require().NoError(err)
+		suite.Contains(out, `"sha1": "`+suite.headHash+`"`)
+		suite.Contains(out, `"name": "acme/repo-b"`)
+	})
+}
+
+func (suite *AttestationCommitInfoTestSuite) TestNoCommitInfoDropsCommitAndCIRepoInfo() {
+	suite.inRepoB(func() {
+		_, out, _, _, err := executeCommandC(suite.attestGeneric("--no-commit-info"))
+		suite.Require().NoError(err)
+		suite.Contains(out, "THIS IS A DRY-RUN")
+		suite.NotContains(out, "git_commit_info")
+		suite.NotContains(out, "repo_info")
+		suite.NotContains(out, "[warning]")
+		// Where the attestation was sent from stays true, whichever repository it is about.
+		suite.Contains(out, `"origin_url": "https://github.com/acme/repo-b/actions/runs/9"`)
+	})
+}
+
+func (suite *AttestationCommitInfoTestSuite) TestNoCommitInfoWithoutRepositoryDoesNotWarn() {
+	suite.inRepoB(func() {
+		suite.T().Chdir(suite.T().TempDir())
+		_, out, _, _, err := executeCommandC(suite.attestGeneric("--no-commit-info"))
+		suite.Require().NoError(err)
+		suite.NotContains(out, "git_commit_info")
+		suite.NotContains(out, "[warning]")
+	})
+}
+
+func (suite *AttestationCommitInfoTestSuite) TestNoCommitInfoKeepsExplicitRepoFlags() {
+	suite.inRepoB(func() {
+		_, out, _, _, err := executeCommandC(suite.attestGeneric(
+			"--no-commit-info --repository acme/repo-a --repo-url https://github.com/acme/repo-a --repo-id 111 --repo-provider github"))
+		suite.Require().NoError(err)
+		suite.NotContains(out, "git_commit_info")
+		suite.Contains(out, `"name": "acme/repo-a"`)
+		suite.Contains(out, `"url": "https://github.com/acme/repo-a"`)
+		suite.Contains(out, `"id": "111"`)
+		suite.NotContains(out, `"222"`)
+	})
+}
+
+// One explicit repo flag must not be completed from the CI's values for the
+// repository the attestation is being kept apart from.
+func (suite *AttestationCommitInfoTestSuite) TestNoCommitInfoDoesNotMixExplicitAndCIRepoInfo() {
+	suite.inRepoB(func() {
+		_, out, _, _, err := executeCommandC(suite.attestGeneric("--no-commit-info --repository acme/repo-a"))
+		suite.Require().NoError(err)
+		suite.NotContains(out, "repo_info")
+		suite.NotContains(out, `"222"`)
+	})
+}
+
+func (suite *AttestationCommitInfoTestSuite) TestNoCommitInfoWithExplicitCommitFails() {
+	suite.inRepoB(func() {
+		_, _, _, _, err := executeCommandC(suite.attestGeneric("--no-commit-info --commit " + suite.headHash))
+		suite.Require().Error(err)
+		suite.Equal("--no-commit-info cannot be combined with --commit", err.Error())
+	})
+}
+
+func (suite *AttestationCommitInfoTestSuite) TestNoCommitInfoFailsOnCommandsNeedingTheCommit() {
+	suite.inRepoB(func() {
+		for _, tc := range []struct{ cmd, need string }{
+			{"attest pullrequest github --no-commit-info --name foo --flow f --trail t --github-token tok --github-org o --repository r" + suite.defaultKosliArguments, "find pull requests"},
+			{"attest jira --no-commit-info --name foo --flow f --trail t --jira-base-url https://x.atlassian.net --jira-username u --jira-api-token tok" + suite.defaultKosliArguments, "search for Jira issue keys"},
+		} {
+			_, _, _, _, err := executeCommandC(tc.cmd)
+			suite.Require().Error(err, tc.cmd)
+			suite.Equal("--no-commit-info cannot be used: the commit is required to "+tc.need, err.Error(), tc.cmd)
+		}
+	})
+}
+
 func TestAttestationCommitInfoTestSuite(t *testing.T) {
 	suite.Run(t, new(AttestationCommitInfoTestSuite))
 }

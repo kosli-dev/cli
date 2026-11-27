@@ -24,6 +24,7 @@
       "fingerprint",
       "flow",
       "name",
+      "no-commit-info",
       "origin-url",
       "redact-commit-info",
       "registry-password",
@@ -62,7 +63,8 @@
       "repo-url": "http://example.com",
       "repository": "probe-repository",
       "trail": "{trail}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "true"
     },
     "setup": [
       {
@@ -575,6 +577,7 @@
       "fingerprint",
       "flow",
       "name",
+      "no-commit-info",
       "origin-url",
       "redact-commit-info",
       "registry-password",
@@ -615,7 +618,8 @@
       "repository": "probe-repository",
       "trail": "{trail}",
       "type": "{name}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "true"
     },
     "setup": [
       {
@@ -709,6 +713,7 @@
       "fingerprint",
       "flow",
       "name",
+      "no-commit-info",
       "origin-url",
       "redact-commit-info",
       "registry-password",
@@ -748,7 +753,8 @@
       "repo-url": "http://example.com",
       "repository": "probe-repository",
       "trail": "{trail}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "true"
     },
     "setup": [
       {
@@ -843,6 +849,7 @@
       "jira-trailer",
       "jira-username",
       "name",
+      "no-commit-info",
       "origin-url",
       "redact-commit-info",
       "registry-password",
@@ -890,7 +897,8 @@
       "repo-url": "http://example.com",
       "repository": "probe-repository",
       "trail": "{trail}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "false"
     },
     "setup": [
       {
@@ -948,6 +956,7 @@
       "fingerprint",
       "flow",
       "name",
+      "no-commit-info",
       "origin-url",
       "redact-commit-info",
       "registry-password",
@@ -989,7 +998,8 @@
       "results-dir": "cmd/kosli/testdata/junit",
       "trail": "{trail}",
       "upload-results": "true",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "true"
     },
     "setup": [
       {
@@ -1071,6 +1081,7 @@
       "fingerprint",
       "flow",
       "name",
+      "no-commit-info",
       "origin-url",
       "redact-commit-info",
       "registry-password",
@@ -1112,7 +1123,8 @@
       "scan-results": "cmd/kosli/testdata/snyk_scan_example.json",
       "trail": "{trail}",
       "upload-results": "true",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "true"
     },
     "setup": [
       {
@@ -1171,6 +1183,7 @@
       "flow",
       "max-wait",
       "name",
+      "no-commit-info",
       "origin-url",
       "pull-request",
       "redact-commit-info",
@@ -1225,7 +1238,8 @@
       "sonar-server-url": "probe-sonar-server-url",
       "sonar-working-dir": "probe-sonar-working-dir",
       "trail": "{trail}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "true"
     },
     "setup": [
       {
@@ -3787,6 +3801,7 @@
       "flow",
       "name",
       "new-compliance-status",
+      "no-commit-info",
       "origin-url",
       "original-attestation-type",
       "reason",
@@ -3829,7 +3844,8 @@
       "repo-url": "http://example.com",
       "repository": "probe-repository",
       "trail": "{trail}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "true"
     },
     "setup": [
       {
@@ -4133,6 +4149,7 @@
       "fingerprint",
       "flow",
       "name",
+      "no-commit-info",
       "origin-url",
       "project",
       "redact-commit-info",
@@ -4175,7 +4192,8 @@
       "repo-url": "http://example.com",
       "repository": "probe-repository",
       "trail": "{trail}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "false"
     },
     "setup": [
       {
@@ -4242,6 +4260,7 @@
       "fingerprint",
       "flow",
       "name",
+      "no-commit-info",
       "origin-url",
       "redact-commit-info",
       "registry-password",
@@ -4284,7 +4303,8 @@
       "repo-url": "http://example.com",
       "repository": "probe-repository",
       "trail": "{trail}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "false"
     },
     "setup": [
       {
@@ -4349,6 +4369,7 @@
       "github-org",
       "github-token",
       "name",
+      "no-commit-info",
       "origin-url",
       "redact-commit-info",
       "registry-password",
@@ -4390,7 +4411,8 @@
       "repo-url": "http://example.com",
       "repository": "probe-repository",
       "trail": "{trail}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "false"
     },
     "setup": [
       {
@@ -4456,6 +4478,7 @@
       "gitlab-org",
       "gitlab-token",
       "name",
+      "no-commit-info",
       "origin-url",
       "redact-commit-info",
       "registry-password",
@@ -4497,7 +4520,8 @@
       "repo-url": "http://example.com",
       "repository": "probe-repository",
       "trail": "{trail}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "false"
     },
     "setup": [
       {
@@ -5082,6 +5106,7 @@
       "flow",
       "key",
       "name",
+      "no-commit-info",
       "origin-url",
       "redact-commit-info",
       "registry-password",
@@ -5125,7 +5150,8 @@
       "repository": "probe-repository",
       "sbom-file": "cmd/kosli/testdata/sbom/cyclonedx.json",
       "trail": "{trail}",
-      "user-data": "cmd/kosli/testdata/person-schema.json"
+      "user-data": "cmd/kosli/testdata/person-schema.json",
+      "no-commit-info": "true"
     },
     "setup": [
       {
